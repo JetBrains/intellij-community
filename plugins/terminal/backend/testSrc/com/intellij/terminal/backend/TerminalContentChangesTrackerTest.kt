@@ -1,16 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
-import com.intellij.terminal.backend.util.scrollDown
-import com.intellij.terminal.backend.util.write
+import com.intellij.terminal.backend.util.*
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import junit.framework.TestCase.assertEquals
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 internal class TerminalContentChangesTrackerTest {
+  @Before
+  fun setUp() {
+    startTestFusActivity()
+  }
+
+  @After
+  fun tearDown() {
+    stopTestFusActivity()
+  }
+
   @Test
   fun `test writing`() {
     val textBuffer = createTextBuffer(width = 10, height = 5, maxHistoryLinesCount = 3)
@@ -132,7 +142,9 @@ internal class TerminalContentChangesTrackerTest {
     contentChangesTracker.getContentUpdate()
 
     // Test
+    backendOutputTestFusActivity!!.charProcessingStarted()
     textBuffer.clearHistory()
+    backendOutputTestFusActivity!!.charProcessingFinished()
     val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
 
     val expectedText = """
@@ -162,7 +174,9 @@ internal class TerminalContentChangesTrackerTest {
     contentChangesTracker.getContentUpdate()
 
     // Test
+    backendOutputTestFusActivity!!.charProcessingStarted()
     textBuffer.clearScreenAndHistoryBuffers()
+    backendOutputTestFusActivity!!.charProcessingFinished()
     textBuffer.write("newFirst", 1, 0)
     val update = contentChangesTracker.getContentUpdate() ?: error("Update is null")
 
@@ -177,7 +191,6 @@ internal class TerminalContentChangesTrackerTest {
 
   private fun createChangesTracker(textBuffer: TerminalTextBuffer): TerminalContentChangesTracker {
     val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
-    val fusActivity = ReworkedTerminalUsageCollector.startBackendOutputActivity()
-    return TerminalContentChangesTracker(textBuffer, discardedHistoryTracker, fusActivity)
+    return TerminalContentChangesTracker(textBuffer, discardedHistoryTracker, backendOutputTestFusActivity!!)
   }
 }
