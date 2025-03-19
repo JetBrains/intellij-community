@@ -102,6 +102,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Install = load("expui/actions/install.svg", "actions/install.svg", -1205666017, 2);
     /** 16x16 */ public static final @NotNull Icon IntentionBulb = load("expui/codeInsight/intentionBulb.svg", "actions/intentionBulb.svg", -42443329, 2);
     /** 16x16 */ public static final @NotNull Icon IntentionBulbGrey = load("expui/codeInsight/intentionBulbGrey.svg", "actions/intentionBulbGrey.svg", 738364044, 2);
+    /** 16x16 */ public static final @NotNull Icon Learn = load("expui/actions/learn.svg", "actions/learn.svg", -1694136226, 2);
     /** 16x16 */ public static final @NotNull Icon Lightning = load("expui/actions/lightning.svg", "actions/lightning.svg", 1372299981, 2);
     /** 16x16 */ public static final @NotNull Icon ListChanges = load("expui/vcs/changes.svg", "actions/listChanges.svg", -1946328934, 2);
     /** 16x16 */ public static final @NotNull Icon ListFiles = load("expui/general/listFiles.svg", "actions/listFiles.svg", -1292692624, 2);

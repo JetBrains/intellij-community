@@ -86,6 +86,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:Install:javax.swing.Icon
 - sf:IntentionBulb:javax.swing.Icon
 - sf:IntentionBulbGrey:javax.swing.Icon
+- sf:Learn:javax.swing.Icon
 - sf:Lightning:javax.swing.Icon
 - sf:ListChanges:javax.swing.Icon
 - sf:ListFiles:javax.swing.Icon

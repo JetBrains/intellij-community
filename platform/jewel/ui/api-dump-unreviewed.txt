@@ -2249,6 +2249,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:Install:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IntentionBulb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:IntentionBulbGrey:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:Learn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Lightning:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ListChanges:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ListFiles:org.jetbrains.jewel.ui.icon.IntelliJIconKey

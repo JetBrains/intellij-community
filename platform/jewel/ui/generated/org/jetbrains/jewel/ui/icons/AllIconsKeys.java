@@ -95,6 +95,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Install = new IntelliJIconKey("actions/install.svg", "expui/actions/install.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey IntentionBulb = new IntelliJIconKey("actions/intentionBulb.svg", "expui/codeInsight/intentionBulb.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey IntentionBulbGrey = new IntelliJIconKey("actions/intentionBulbGrey.svg", "expui/codeInsight/intentionBulbGrey.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey Learn = new IntelliJIconKey("actions/learn.svg", "expui/actions/learn.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Lightning = new IntelliJIconKey("actions/lightning.svg", "expui/actions/lightning.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ListChanges = new IntelliJIconKey("actions/listChanges.svg", "expui/vcs/changes.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ListFiles = new IntelliJIconKey("actions/listFiles.svg", "expui/general/listFiles.svg", AllIconsKeys.class);
