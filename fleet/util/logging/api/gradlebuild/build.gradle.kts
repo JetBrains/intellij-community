@@ -26,6 +26,10 @@ jpsModule {
 }
 
 kotlin {
+  sourceSets.wasmJsMain.dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-browser:0.3")
+  }
+
   // KOTLIN__MARKER_START
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
