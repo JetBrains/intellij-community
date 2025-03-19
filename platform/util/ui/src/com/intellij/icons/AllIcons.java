@@ -197,11 +197,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SearchWithHistory = load("expui/inline/searchHistory.svg", "actions/searchWithHistory.svg", 1432525015, 0);
     /** 16x16 */ public static final @NotNull Icon Selectall = load("expui/actions/selectAll.svg", "actions/selectall.svg", -42839868, 2);
     /** 16x16 */ public static final @NotNull Icon SetDefault = load("expui/actions/checked.svg", "actions/setDefault.svg", -1583117311, 2);
-    /** 14x14 */ public static final @NotNull Icon Share = load("actions/share.png", 0, 1);
+    /** 14x14 */ public static final @NotNull Icon Share = load("expui/general/show.svg", "actions/share.png", 0, 1);
     /** 16x16 */ public static final @NotNull Icon ShortcutFilter = load("expui/actions/shortcutFilter.svg", "actions/shortcutFilter.svg", -1865443324, 2);
     /** 16x16 */ public static final @NotNull Icon Show = load("expui/general/show.svg", "actions/show.svg", 106880337, 2);
     /** 16x16 */ public static final @NotNull Icon ShowAsTree = load("expui/general/showAsTree.svg", "actions/showAsTree.svg", -1651129437, 2);
-    /** 16x16 */ public static final @NotNull Icon ShowCode = load("actions/showCode.svg", 960964407, 2);
+    /** 16x16 */ public static final @NotNull Icon ShowCode = load("expui/actions/toggleVisibility.svg", "actions/showCode.svg", 960964407, 2);
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("expui/actions/showImportStatements.svg", "actions/showImportStatements.svg", 703949292, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", "actions/showReadAccess.svg", -1565481823, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", "actions/showWriteAccess.svg", 13731892, 2);
@@ -226,7 +226,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Undo = load("expui/general/undo.svg", "actions/undo.svg", -1189463185, 2);
     /** 16x16 */ public static final @NotNull Icon Uninstall = load("expui/actions/uninstall.svg", "actions/uninstall.svg", -536173621, 2);
     /** 16x16 */ public static final @NotNull Icon Unselectall = load("expui/actions/unselectAll.svg", "actions/unselectall.svg", 1710075134, 2);
-    /** 14x14 */ public static final @NotNull Icon Unshare = load("actions/unshare.png", 0, 1);
+    /** 14x14 */ public static final @NotNull Icon Unshare = load("expui/actions/unshare.svg", "actions/unshare.png", 0, 1);
     /** 16x16 */ public static final @NotNull Icon Upload = load("expui/general/upload.svg", "actions/upload.svg", -1680651230, 2);
     /** 16x16 */ public static final @NotNull Icon Words = load("expui/inline/exactWords.svg", "actions/words.svg", -2038279531, 0);
     /** 16x16 */ public static final @NotNull Icon WordsHovered = load("expui/inline/exactWords.svg", "actions/wordsHovered.svg", 1488302022, 0);
