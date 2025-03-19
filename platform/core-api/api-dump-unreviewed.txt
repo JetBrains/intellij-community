@@ -4380,6 +4380,7 @@ com.intellij.psi.codeStyle.DocCommentSettings
 - a:isLeadingAsteriskEnabled():Z
 - a:isRemoveEmptyTags():Z
 - a:setDocFormattingEnabled(Z):V
+- setRemoveEmptyLines(Z):V
 - a:setRemoveEmptyTags(Z):V
 f:com.intellij.psi.codeStyle.DocCommentSettings$Defaults
 - com.intellij.psi.codeStyle.DocCommentSettings
