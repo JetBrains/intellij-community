@@ -17,17 +17,17 @@ import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TypeParameterLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KDocParameterNamePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 
 internal open class FirKDocParameterNameContributor(
     parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KDocParameterNamePositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KDocNameReferencePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(
-        positionContext: KDocParameterNamePositionContext,
+        positionContext: KDocNameReferencePositionContext,
         weighingContext: WeighingContext,
     ) {
         if (positionContext.explicitReceiver != null) return
