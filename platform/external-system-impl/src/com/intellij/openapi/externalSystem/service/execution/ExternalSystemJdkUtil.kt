@@ -4,10 +4,16 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,16 +25,32 @@ import org.jetbrains.annotations.ApiStatus
  */
 @Deprecated("Use resolveJdkInfo instead")
 fun SdkLookupProvider.nonblockingResolveJdkInfo(projectSdk: Sdk?, jdkReference: String?): SdkInfo {
-  return resolveJdkInfo(projectSdk, jdkReference)
+  return runBlockingCancellable {
+    resolveJdkInfo(null, projectSdk, jdkReference)
+  }
 }
 
-fun SdkLookupProvider.resolveJdkInfo(projectSdk: Sdk?, jdkReference: String?): SdkInfo {
+suspend fun SdkLookupProvider.resolveJdkInfo(project: Project?, projectSdk: Sdk?, jdkReference: String?): SdkInfo {
   return when (jdkReference) {
-    USE_JAVA_HOME -> createJdkInfo(JAVA_HOME, getJavaHome())
+    USE_JAVA_HOME -> resolveJavaHomeJdkInfo(project)
     USE_PROJECT_JDK -> resolveProjectJdkInfo(projectSdk)
     USE_INTERNAL_JAVA -> createSdkInfo(getInternalJdk())
     else -> resolveSdkInfoBySdkName(jdkReference)
   }
+}
+
+private suspend fun SdkLookupProvider.resolveJavaHomeJdkInfo(project: Project?): SdkInfo {
+  val eelDescriptor = project?.getEelDescriptor() ?: LocalEelDescriptor
+  val eel = eelDescriptor.upgrade()
+  val environment = eel.exec.fetchLoginShellEnvVariables()
+  val jdkPathEnvValue = environment[JAVA_HOME]
+  if (jdkPathEnvValue == null) {
+    return SdkInfo.Undefined
+  }
+  val jdkPath = eel.fs.getPath(jdkPathEnvValue)
+    .asNioPath()
+    .toString()
+  return createJdkInfo(JAVA_HOME, jdkPath)
 }
 
 private fun getInternalJdk(): Sdk {

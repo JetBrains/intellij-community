@@ -16,15 +16,17 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
@@ -101,12 +103,12 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     // Gradle JDK configuration validation since this will be delegated to Gradle
     if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return null
 
-    val sdkInfo = resolveGradleJvmInfo(project, projectSettings, task, taskNotificationListener)
-    checkGradleJvmInfo(projectSettings, task, sdkInfo)
+    val sdkInfo = runBlockingCancellable { resolveGradleJvmInfo(project, projectSettings, task, taskNotificationListener) }
+    checkGradleJvmInfo(project, projectSettings, task, sdkInfo)
     return sdkInfo
   }
 
-  private fun resolveGradleJvmInfo(
+  private suspend fun resolveGradleJvmInfo(
     project: Project,
     projectSettings: GradleProjectSettings,
     task: ExternalSystemTask,
@@ -132,6 +134,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
   }
 
   private fun checkGradleJvmInfo(
+    project: Project,
     projectSettings: GradleProjectSettings,
     task: ExternalSystemTask,
     sdkInfo: SdkInfo?,
@@ -146,7 +149,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
     checkForWslJdkOnWindows(homePath.toCanonicalPath(), projectSettings.externalProjectPath, task)
-    if (!JdkUtil.checkForJdk(homePath, isWindowsJDKRequired(projectSettings.externalProjectPath))) {
+    if (!JdkUtil.checkForJdk(homePath, project.isWindowsJDKRequired())) {
       LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
@@ -166,11 +169,8 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     }
   }
 
-  private fun isWindowsJDKRequired(externalProjectPath: String): Boolean {
-    if (WSLUtil.isSystemCompatible() && WslPath.isWslUncPath(externalProjectPath)) {
-      return false
-    }
-    return SystemInfo.isWindows
+  private fun Project.isWindowsJDKRequired(): Boolean {
+    return EelPath.OS.WINDOWS == getEelDescriptor().operatingSystem
   }
 
   private class GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : GradleServerConfigurationProvider {

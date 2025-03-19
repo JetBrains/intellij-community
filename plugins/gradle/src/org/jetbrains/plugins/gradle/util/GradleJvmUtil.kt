@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.service.execution.resolveJdkInfo
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
@@ -30,10 +31,12 @@ const val USE_GRADLE_LOCAL_JAVA_HOME = "#GRADLE_LOCAL_JAVA_HOME"
  */
 @Deprecated("Use resolveGradleJvmInfo instead")
 fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
-  return resolveGradleJvmInfo(project, externalProjectPath, gradleJvm)
+  return runBlockingCancellable {
+    resolveGradleJvmInfo(project, externalProjectPath, gradleJvm)
+  }
 }
 
-fun SdkLookupProvider.resolveGradleJvmInfo(project: Project, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
+suspend fun SdkLookupProvider.resolveGradleJvmInfo(project: Project, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
   val projectSdk = ProjectRootManager.getInstance(project).projectSdk
   return resolveGradleJvmInfo(project, projectSdk, externalProjectPath, gradleJvm)
 }
@@ -47,10 +50,12 @@ fun SdkLookupProvider.resolveGradleJvmInfo(project: Project, externalProjectPath
  */
 @Deprecated("Use resolveGradleJvmInfo instead")
 fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, projectSdk: Sdk?, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
-  return resolveGradleJvmInfo(project, projectSdk, externalProjectPath, gradleJvm)
+  return runBlockingCancellable {
+    resolveGradleJvmInfo(project, projectSdk, externalProjectPath, gradleJvm)
+  }
 }
 
-fun SdkLookupProvider.resolveGradleJvmInfo(project: Project, projectSdk: Sdk?, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
+suspend fun SdkLookupProvider.resolveGradleJvmInfo(project: Project, projectSdk: Sdk?, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
   if (gradleJvm == null) return getSdkInfo()
 
   val resolvedSdkInfo = GradleJvmResolver.EP_NAME.extensionList
@@ -58,7 +63,7 @@ fun SdkLookupProvider.resolveGradleJvmInfo(project: Project, projectSdk: Sdk?, e
     ?.getResolvedSdkInfo(project, projectSdk, externalProjectPath, this)
   if (resolvedSdkInfo != null) return resolvedSdkInfo
 
-  return resolveJdkInfo(projectSdk, gradleJvm)
+  return resolveJdkInfo(project, projectSdk, gradleJvm)
 }
 
 fun GradlePropertiesFile.getJavaHome(project: Project, externalProjectPath: String?): String? {
