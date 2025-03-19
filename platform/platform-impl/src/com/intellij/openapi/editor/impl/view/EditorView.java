@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
@@ -75,6 +76,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   private final Object myLock = new Object();
 
+  private @Nullable Runnable myPaintCallback;
+
   public EditorView(@NotNull EditorImpl editor) {
     this(editor, editor.getEditorModel());
   }
@@ -97,6 +100,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
+  }
+
+  /**
+   * @see EditorImpl#setPaintCallback(Runnable)
+   */
+  @ApiStatus.Internal
+  public void setPaintCallback(@Nullable Runnable paintCallback) {
+    myPaintCallback = paintCallback;
   }
 
   @RequiresEdt
@@ -211,6 +222,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
     myPainter.paint(g);
+    if (myPaintCallback != null) {
+      myPaintCallback.run();
+    }
   }
 
   @RequiresEdt

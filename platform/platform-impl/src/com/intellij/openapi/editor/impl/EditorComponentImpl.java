@@ -81,6 +81,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   private final EditorImpl editor;
 
+  private @Nullable Runnable myRepaintCallback;
+
   public EditorComponentImpl(@NotNull EditorImpl editor) {
     this.editor = editor;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.INPUT_METHOD_EVENT_MASK);
@@ -134,6 +136,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
 
     setupEditorSwingCaretUpdatesCourierIfRequired();
+  }
+
+  void setRepaintCallback(@Nullable Runnable repaintCallback) {
+    myRepaintCallback = repaintCallback;
   }
 
   @Override
@@ -282,6 +288,9 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     int topOverhang = Math.max(0, editor.myView.getTopOverhang());
     int bottomOverhang = Math.max(0, editor.myView.getBottomOverhang());
     repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
+    if (myRepaintCallback != null && isShowing() && width > 0 && height > 0) {
+      myRepaintCallback.run();
+    }
   }
 
   //--implementation of Scrollable interface--------------------------------------
