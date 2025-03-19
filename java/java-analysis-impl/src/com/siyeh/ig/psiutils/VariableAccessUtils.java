@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +34,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class VariableAccessUtils {
 
@@ -104,8 +101,7 @@ public final class VariableAccessUtils {
         return variableIsAssigned(variable, aClass);
       }
       return DeclarationSearchUtils.isTooExpensiveToSearch(variable, false) || ReferencesSearch.search(variable).anyMatch(reference -> {
-        final PsiExpression expression = ObjectUtils.tryCast(reference.getElement(), PsiExpression.class);
-        return expression != null && PsiUtil.isAccessedForWriting(expression);
+        return reference.getElement() instanceof PsiExpression expression && PsiUtil.isAccessedForWriting(expression);
       });
     }
     final PsiElement context =
@@ -489,11 +485,7 @@ public final class VariableAccessUtils {
         expression = operand;
       }
     }
-    if (!(expression instanceof PsiReferenceExpression reference)) {
-      return false;
-    }
-    final PsiVariable initialization = ObjectUtils.tryCast(reference.resolve(), PsiVariable.class);
-    if (initialization == null) {
+    if (!(expression instanceof PsiReferenceExpression reference) || !(reference.resolve() instanceof PsiVariable initialization)) {
       return false;
     }
     if (!(initialization instanceof PsiResourceVariable) && variable instanceof PsiResourceVariable) {
@@ -596,13 +588,12 @@ public final class VariableAccessUtils {
 
   private static boolean variableMayChange(PsiCodeBlock containingScope, PsiExpression qualifier, PsiVariable variable) {
     while (variable != null) {
-      if (!variable.hasModifierProperty(PsiModifier.FINAL) &&
-          variableIsAssigned(variable, containingScope, false)) {
+      if (!variable.hasModifierProperty(PsiModifier.FINAL) && variableIsAssigned(variable, containingScope, false)) {
         return true;
       }
       if (!(qualifier instanceof PsiReferenceExpression qualifierReference)) break;
       qualifier = PsiUtil.skipParenthesizedExprDown(qualifierReference.getQualifierExpression());
-      variable = ObjectUtils.tryCast(qualifierReference.resolve(), PsiVariable.class);
+      variable = qualifierReference.resolve() instanceof PsiVariable v ? v : null;
     }
     return false;
   }
@@ -648,9 +639,8 @@ public final class VariableAccessUtils {
   public static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(reference.getParent());
     if (PsiUtil.isAccessedForWriting(reference)) {
-      PsiAssignmentExpression assignmentExpression = tryCast(parent, PsiAssignmentExpression.class);
-      if (assignmentExpression == null) return false;
-      PsiExpression rValue = assignmentExpression.getRExpression();
+      if (!(parent instanceof PsiAssignmentExpression assignment)) return false;
+      PsiExpression rValue = assignment.getRExpression();
       if (rValue == null) return false;
       PsiType rValueType = rValue.getType();
       return rValueType != null && targetType.isAssignableFrom(rValueType);
