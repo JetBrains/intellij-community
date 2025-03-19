@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.longestUnsafeDollarSequenceLengthForPlainTextConversion
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.findPrefixLengthForPlainTextConversion
 import org.jetbrains.kotlin.idea.quickfix.AddInterpolationPrefixFix
 import org.jetbrains.kotlin.idea.quickfix.UnresolvedInvocationQuickFix
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
@@ -45,8 +45,8 @@ internal object UnresolvedInvocationQuickFixFactories {
         if (stringTemplateExpression.isSingleQuoted()) return null
         if (stringTemplateExpression.entries.filterIsInstance<KtBlockStringTemplateEntry>().isNotEmpty()) return null
         if (containsResolvedReferences(stringTemplateExpression)) return null
-        val longestSequence = longestUnsafeDollarSequenceLengthForPlainTextConversion(stringTemplateExpression)
-        return AddInterpolationPrefixFix(stringTemplateExpression, prefixLength = longestSequence + 1)
+        val prefixLength = findPrefixLengthForPlainTextConversion(stringTemplateExpression)
+        return AddInterpolationPrefixFix(stringTemplateExpression, prefixLength)
     }
 
     private fun containsResolvedReferences(stringTemplateExpression: KtStringTemplateExpression): Boolean {

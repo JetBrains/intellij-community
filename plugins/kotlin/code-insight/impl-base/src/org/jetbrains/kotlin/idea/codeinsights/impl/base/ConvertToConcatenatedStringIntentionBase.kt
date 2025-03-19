@@ -129,10 +129,9 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
                         psiFactory, concatenatedText, prefixLength = 1, isMultiQuoted = !first.isSingleQuoted()
                     )
                     // all interpolations have been split into individual expressions, strings contain only text by now
-                    val unsafePrefix = longestUnsafeDollarSequenceLengthForPlainTextConversion(tempStringForPrefixEstimation)
-                    val safePrefix = unsafePrefix + 1
+                    val prefixLength = findPrefixLengthForPlainTextConversion(tempStringForPrefixEstimation)
                     val merged = createStringTemplate(
-                        psiFactory, concatenatedText, prefixLength = safePrefix, isMultiQuoted = !first.isSingleQuoted()
+                        psiFactory, concatenatedText, prefixLength = prefixLength, isMultiQuoted = !first.isSingleQuoted()
                     )
                     mergedOperands.add(merged)
                 }

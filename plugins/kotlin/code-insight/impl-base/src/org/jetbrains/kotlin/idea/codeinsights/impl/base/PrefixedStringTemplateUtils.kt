@@ -210,8 +210,9 @@ private fun KtLiteralStringTemplateEntry.escapeSpecialCharacters(): List<EntryUp
 
 private fun KtStringTemplateEntry.unescapeIfPossible(newPrefixLength: Int): KtStringTemplateEntry {
     fun previousDollarsCount(): Int {
-        if (this.prevSibling !is KtLiteralStringTemplateEntry) return 0
-        return this.prevSibling.text.takeLastWhile { it == '$' }.length
+        val prevSibling = prevSibling
+        if (prevSibling !is KtLiteralStringTemplateEntry) return 0
+        return prevSibling.trailingDollarsLength
     }
 
     return when (this) {
@@ -281,7 +282,7 @@ fun prepareMultiDollarConversionInfo(element: KtStringTemplateExpression, useFal
  * If no such prefix exists, the [DEFAULT_INTERPOLATION_PREFIX_LENGTH] if [useFallbackPrefix] is `true`, or `null` otherwise.
  */
 private fun findSuitablePrefixLength(element: KtStringTemplateExpression, useFallbackPrefix: Boolean): Int? {
-    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLengthForSafeConversion(
+    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLengthForConservativeConversion(
         element, INTERPOLATION_PREFIX_LENGTH_THRESHOLD
     )
     if (longestUnsafeDollarSequence >= INTERPOLATION_PREFIX_LENGTH_THRESHOLD) {
@@ -340,13 +341,14 @@ fun simplifyDollarEntries(element: KtStringTemplateExpression): KtStringTemplate
 }
 
 /**
- * Counts the maximum number of **unsafe** dollars for replacement that preserves interpolation entries and simplifies escaping.
- *
- * This means that:
- * * Escaped dollars and interpolated single-char dollars are treated as regular character dollars
- * * Dollars sequences before the rest of the interpolation entries are disregarded (because the entries will remain)
+ * Finds prefix length for a conversion that doesn't preserve interpolation entries.
+ * In other words, the prefix length with which the string will only contain plain text after the conversion.
  */
-fun longestUnsafeDollarSequenceLengthForSafeConversion(
+fun findPrefixLengthForPlainTextConversion(element: KtStringTemplateExpression): Int {
+    return longestUnsafeDollarSequenceLengthForPlainTextConversion(element) + 1
+}
+
+private fun longestUnsafeDollarSequenceLengthForConservativeConversion(
     element: KtStringTemplateExpression,
     threshold: Int = Int.MAX_VALUE
 ): Int {
@@ -358,11 +360,9 @@ fun longestUnsafeDollarSequenceLengthForSafeConversion(
             is KtSimpleNameStringTemplateEntry -> {
                 current = 0
             }
-
             is KtEscapeStringTemplateEntry -> {
                 if (entry.isEscapedDollar()) current++ else current = 0
             }
-
             is KtBlockStringTemplateEntry -> {
                 when {
                     entry.isInterpolatedDollarLiteralExpression() -> current++
@@ -371,37 +371,29 @@ fun longestUnsafeDollarSequenceLengthForSafeConversion(
                     }
                 }
             }
-
             is KtLiteralStringTemplateEntry -> {
                 when {
                     entry.canBeConsideredIdentifierOrBlock() -> {
                         if (current > longest) longest = current
-                        if (longest >= threshold) break
-                        current = entry.text.takeLastWhile { it == '$' }.length
+                        current = entry.trailingDollarsLength
                     }
-
                     entry.text.all { it == '$' } -> {
                         current += entry.text.length
                     }
-
                     entry.text.endsWith('$') -> {
-                        current = entry.text.takeLastWhile { it == '$' }.length
+                        current = entry.trailingDollarsLength
                     }
-
                     else -> current = 0
                 }
             }
         }
+        if (longest >= threshold) break
     }
 
     return longest
 }
 
-/**
- * Counts the maximum number of **unsafe** dollars for replacement without preserving interpolation entries.
- * In other words, the maximum prefix length with which the string will still have some interpolation.
- */
-fun longestUnsafeDollarSequenceLengthForPlainTextConversion(
+private fun longestUnsafeDollarSequenceLengthForPlainTextConversion(
     element: KtStringTemplateExpression,
     threshold: Int = Int.MAX_VALUE
 ): Int {
@@ -425,13 +417,13 @@ fun longestUnsafeDollarSequenceLengthForPlainTextConversion(
                 when {
                     entry.canBeConsideredIdentifierOrBlock() -> {
                         if (current > longest) longest = current
-                        current = entry.text.takeLastWhile { it == '$' }.length
+                        current = entry.trailingDollarsLength
                     }
                     entry.text.all { it == '$' } -> {
                         current += entry.text.length
                     }
                     entry.text.endsWith('$') -> {
-                        current = entry.text.takeLastWhile { it == '$' }.length
+                        current = entry.trailingDollarsLength
                     }
                     else -> {
                         current = 0
@@ -464,9 +456,13 @@ private fun KtEscapeStringTemplateEntry.isEscapedDollar(): Boolean = unescapedVa
  * By the time we check the entry, previous siblings will have been replaced with dollar literals if that is possible.
  */
 private fun KtStringTemplateEntry.isSafeToReplaceWithDollar(prefixLength: Int): Boolean {
+    val prevSibling = prevSibling
     if (prevSibling !is KtLiteralStringTemplateEntry) return true
     val nextSiblingStringLiteral = nextSibling as? KtLiteralStringTemplateEntry ?: return true
     if (!nextSiblingStringLiteral.canBeConsideredIdentifierOrBlock()) return true
-    val trailingDollarsLength = prevSibling.text.takeLastWhile { it.toString() == "$" }.length
+    val trailingDollarsLength = prevSibling.trailingDollarsLength
     return trailingDollarsLength + 1 < prefixLength
 }
+
+private val KtStringTemplateEntry.trailingDollarsLength: Int
+    get() = text.takeLastWhile { it.toString() == "$" }.length

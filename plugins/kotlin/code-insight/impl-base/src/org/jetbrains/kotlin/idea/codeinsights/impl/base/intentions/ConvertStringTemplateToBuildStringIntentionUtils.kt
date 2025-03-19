@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.longestUnsafeDollarSequenceLengthForPlainTextConversion
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.findPrefixLengthForPlainTextConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.psi.generateBuildStringCall
 import org.jetbrains.kotlin.psi.*
 
@@ -21,8 +21,7 @@ private fun createOperands(element: KtStringTemplateExpression): List<KtExpressi
     fun addStringOperand() {
         if (stringBuilder.isNotEmpty()) {
             val withOriginalPrefix = createStringTemplate(psiFactory, stringBuilder.toString(), oldPrefixLength)
-            val unsafeSequenceLength = longestUnsafeDollarSequenceLengthForPlainTextConversion(withOriginalPrefix)
-            val minimalSafePrefixLength = unsafeSequenceLength + 1
+            val minimalSafePrefixLength = findPrefixLengthForPlainTextConversion(withOriginalPrefix)
             when {
                 minimalSafePrefixLength < oldPrefixLength -> {
                     val withSmallerPrefix = createStringTemplate(psiFactory, stringBuilder.toString(), minimalSafePrefixLength)
