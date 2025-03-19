@@ -2482,8 +2482,8 @@ java_import(
 
 java_import(
   name = "jbr-api",
-  jars = ["@jbr-api-1_2_0_http//file"],
-  srcjar = "@jbr-api-1_2_0-sources_http//file",
+  jars = ["@jbr-api-1_5_0_http//file"],
+  srcjar = "@jbr-api-1_5_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3332,7 +3332,7 @@ kt_jvm_import(
 )
 
 java_library(
-  name = "kotlin-base-scripting-amper-dependency-resolution",
+  name = "kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
   exports = [
     ":dependency-resolution-jvm-0_6_0-dev-2523_http_import",
     ":concurrency-jvm-0_6_0-dev-2523_http_import",

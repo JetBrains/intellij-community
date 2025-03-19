@@ -57,6 +57,8 @@ jvm_library(
     "//platform/platform-impl/ui:ide-ui",
     "//platform/kernel/shared:kernel",
     "//platform/project/shared:project",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   exports = ["//plugins/terminal/completion"],
   runtime_deps = [":terminal_resources"]
@@ -117,6 +119,8 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/kernel/shared:kernel",
     "//platform/project/shared:project",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   runtime_deps = [
     ":terminal_resources",
