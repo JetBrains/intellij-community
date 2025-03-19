@@ -7,7 +7,6 @@ import fleet.rpc.client.proxy.*
 import fleet.rpc.core.*
 import fleet.rpc.serializer
 import fleet.util.UID
-import fleet.util.async.coroutineNameAppended
 import fleet.util.async.resource
 import fleet.util.async.use
 import fleet.util.async.withSupervisor

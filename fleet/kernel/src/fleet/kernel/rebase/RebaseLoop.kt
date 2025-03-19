@@ -56,10 +56,10 @@ suspend fun withRebaseLoop(
     }.use { rebaseLoop ->
       rebaseLoop.invokeOnCompletion { c ->
         if (c !is CancellationException) {
-          RebaseLogger.logger.error(c) { "rebase loop finished abnormally" }
+          logger.error(c) { "rebase loop finished abnormally" }
         }
         else {
-          RebaseLogger.logger.info("rebase loop exit")
+          logger.info("rebase loop exit")
         }
       }
       ready.await()
@@ -100,7 +100,7 @@ internal data class RebaseLoopState(
   }
 }
 
-object RebaseLogger {
+internal object RebaseLogger {
   val logger = logger<RebaseLogger>()
 }
 
@@ -288,7 +288,7 @@ data class ClientClock(
   }
 
   fun tick(): ClientClock = copy(vectorClock = vectorClock.tick(clientId))
-  fun tick(origin: UID) = copy(vectorClock = vectorClock.tick(origin))
+  fun tick(origin: UID): ClientClock = copy(vectorClock = vectorClock.tick(origin))
   fun compressed(): CompressedVectorClock = vectorClock.compress(clientId)
 
   fun index(): Long = vectorClock.clock[clientId] ?: 0L

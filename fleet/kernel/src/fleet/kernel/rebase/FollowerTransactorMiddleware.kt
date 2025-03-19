@@ -8,10 +8,15 @@ import fleet.kernel.*
 import fleet.util.UID
 import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import fleet.fastutil.ints.MutableIntMap
+import fleet.util.logging.logger
 
 class FollowerTransactorMiddleware(
-  private val instructionEncoder: InstructionEncoder
+  private val instructionEncoder: InstructionEncoder,
 ) : TransactorMiddleware {
+
+  companion object {
+    private val logger = logger<FollowerTransactorMiddleware>()
+  }
 
   override fun ChangeScope.performChange(next: ChangeScope.() -> Unit): Unit = run {
     val idMapping: MutableIntMap<UID> = Int2ObjectOpenHashMap()
@@ -85,6 +90,7 @@ class FollowerTransactorMiddleware(
               .takeIf { it.isNotEmpty() }
               ?.let { sharedInstructions ->
                 val newHand = connection.clientClock.tick()
+                logger.trace { "Change ticks ${newHand.clientId} -> ${newHand.index()}" }
                 connection[RemoteKernelConnectionEntity.ClientClockAttr] = newHand
                 Transaction(
                   instructions = sharedInstructions,
