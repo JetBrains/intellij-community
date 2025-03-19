@@ -177,6 +177,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                                                                   .withIcon(command.icon ?: Lightning)
                                                                   .withInsertHandler(CommandInsertHandler(command))
                                                                   .withBoldness(true),
+                                                                command,
                                                                 adjustedParameters.hostAdjustedOffset,
                                                                 commandCompletionFactory.suffix().toString() +
                                                                 (commandCompletionFactory.filterSuffix() ?: ""),

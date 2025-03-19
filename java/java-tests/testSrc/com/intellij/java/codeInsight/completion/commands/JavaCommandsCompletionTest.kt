@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.completion.commands
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -11,12 +12,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.documentation.AsyncDocumentation
+import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.replaceService
 import com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection
+import kotlinx.coroutines.runBlocking
 import javax.swing.JComponent
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
@@ -309,24 +313,36 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testRedCode() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-    myFixture.configureByText(JavaFileType.INSTANCE, """
+
+    runBlocking {
+      val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
           int y = 10L<caret>
         } 
       }
       """.trimIndent())
-    myFixture.doHighlighting()
-    myFixture.type(".")
-    val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Convert literal to", ignoreCase = true) })
-    myFixture.checkResult("""
+      myFixture.doHighlighting()
+      myFixture.type(".")
+      val elements = myFixture.completeBasic()
+      val item = elements.first { element -> element.lookupString.contains("Convert literal to", ignoreCase = true) }
+      val documentationProvider = CommandCompletionDocumentationProvider()
+      val documentationTarget = documentationProvider.documentationTarget(psiFile, item, editor.caretModel.offset)
+      val documentation = documentationTarget?.computeDocumentation() as? AsyncDocumentation
+      assertNotNull(documentation)
+      val resultDocumentation = documentation?.supplier?.invoke() as? DocumentationData
+      assertNotNull(resultDocumentation)
+      val expected = "<div style=\"min-width: 150px; max-width: 250px;\"> <div style=\"width: 95%; background-color:#ffffff; line-height: 1.3200000524520874\"><div style=\"background-color:#ffffff;color:#000000\"><pre style=\"font-family:'JetBrains Mono',monospace;\"><span style=\"font-size: 90%; color:#999999;\">  2  </span><span style=\"color:#000080;font-weight:bold;\">int&#32;</span>y&#32;=&#32;<span style=\"color:#0000ff;background-color:#cad9fa;\">10</span><span style=\"color:#0000ff;\">&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;</span></pre></div><br/></div></div>"
+      assertEquals(expected, resultDocumentation?.html ?: "")
+      selectItem(item)
+      myFixture.checkResult("""
       class A { 
         void foo() {
           int y = 10
         } 
       }
     """.trimIndent())
+    }
   }
 
   fun testChangeSignature() {

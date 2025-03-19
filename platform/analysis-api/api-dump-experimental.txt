@@ -51,6 +51,8 @@
 - a:getName():java.lang.String
 - getPriority():java.lang.Integer
 - supportsReadOnly():Z
+*:com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
+- a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 *f:com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - <init>(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I):V
 - f:component1():com.intellij.openapi.util.TextRange

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescriptor
@@ -10,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection.runA
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.addAvailableFixesForGroups
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -29,7 +31,8 @@ internal class DirectErrorFixCompletionCommand(
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup,
   private val myOffset: Int? = null,
-) : CompletionCommand() {
+  private val previewProvider: () -> IntentionPreviewInfo?,
+) : CompletionCommand(), CompletionCommandWithPreview {
 
   override val i18nName: @Nls String
     get() = name
@@ -70,5 +73,9 @@ internal class DirectErrorFixCompletionCommand(
     }
     if (action == null) return
     ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelPsiFile, topLevelEditor, action, name)
+  }
+
+  override fun getPreview(): IntentionPreviewInfo? {
+    return previewProvider()
   }
 }

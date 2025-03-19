@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.IntentionsInfo
 import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.ProblemDescriptor
@@ -234,7 +235,10 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                 priority = priority,
                 icon = icon,
                 highlightInfo = HighlightInfoLookup(textRange, level.attributesKey, priority),
-                targetOffset = currentOffset))
+                targetOffset = currentOffset,
+                previewProvider = {
+                  IntentionPreviewComputable(psiFile.project, action, psiFile, editor, offset).call()
+                }))
             }
           }
         }
@@ -276,7 +280,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
               for (descriptor in intentionsCache.errorFixes) {
                 val command = IntentionCompletionCommand(descriptor, 50, AllIcons.Actions.QuickfixBulb,
                                                          HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
-                                                                             CodeInsightColors.ERRORS_ATTRIBUTES, 100), offset)
+                                                                             CodeInsightColors.ERRORS_ATTRIBUTES, 100), offset) { null }
                 result.add(command)
               }
             }
@@ -294,7 +298,10 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                                                           priority = 100,
                                                           icon = AllIcons.Actions.QuickfixBulb,
                                                           highlightInfo = HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
-                                                                                              CodeInsightColors.ERRORS_ATTRIBUTES, 100))
+                                                                                              CodeInsightColors.ERRORS_ATTRIBUTES, 100),
+                                                          previewProvider = {
+                                                            IntentionPreviewComputable(psiFile.project, descriptor.action, psiFile, editor, offset).call()
+                                                          })
             result.add(command)
           }
         }
@@ -400,7 +407,10 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             if (intention.action is EmptyIntentionAction ||
                 intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
             val intentionCommand =
-              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, null, currentOffset)
+              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, null, currentOffset) {
+                editor.caretModel.moveToOffset(currentOffset)
+                IntentionPreviewComputable(psiFile.project, intention.action, psiFile, editor, currentOffset).call()
+              }
             result.put(intention.text, intentionCommand)
           }
         }

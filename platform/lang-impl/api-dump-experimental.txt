@@ -143,6 +143,12 @@ c:com.intellij.codeInsight.actions.VcsFacade
 *f:com.intellij.codeInsight.codeVision.CodeVisionProvider$Companion
 - sf:EP_NAME:java.lang.String
 - f:getProvidersExtensionPoint():com.intellij.openapi.extensions.ExtensionPointName
+*f:com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider
+- com.intellij.platform.backend.documentation.LookupElementDocumentationTargetProvider
+- <init>():V
+- documentationTarget(com.intellij.psi.PsiFile,com.intellij.codeInsight.lookup.LookupElement,I):com.intellij.platform.backend.documentation.DocumentationTarget
+*f:com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProviderKt
+- sf:combineFragments(java.util.List,java.util.List):java.util.List
 *a:com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
 - com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
 - com.intellij.openapi.project.DumbAware
@@ -600,6 +606,24 @@ f:com.intellij.ide.impl.StructureViewWrapperImpl
 - a:reformatRange(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.actions.lists.JoinOrSplit):V
 *f:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext$Companion
 - f:getEXTENSION():com.intellij.lang.LanguageExtension
+f:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
+- *s:appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(java.lang.StringBuilder,com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.String,Z,F,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties):java.lang.StringBuilder
+- *s:getHtmlContent(com.intellij.psi.PsiFile,java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I,I,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties):java.lang.CharSequence
+- *s:getHtmlContent(java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties):java.lang.CharSequence
+*f:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- java.lang.Record
+- <init>(Z,Z,Z,Z,Z,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler):V
+- defaultFontSize():Z
+- s:defaultProperties():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- f:equals(java.lang.Object):Z
+- generateBackground():Z
+- generateFontFamily():Z
+- generateHtmlTags():Z
+- generateMainTags():Z
+- f:hashCode():I
+- textHandler():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler
+*:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler
+- a:handleText(I,I,java.lang.StringBuilder,java.lang.Runnable):V
 *:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 - *sf:Companion:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Companion
 - a:blockingGetSdk():com.intellij.openapi.projectRoots.Sdk
@@ -665,6 +689,8 @@ com.intellij.platform.backend.documentation.DocumentationResult$Documentation
 - a:getDocumentationRange():com.intellij.openapi.util.TextRange
 - a:getOwnerTarget():com.intellij.platform.backend.documentation.DocumentationTarget
 - a:renderText():java.lang.String
+*:com.intellij.platform.backend.documentation.LookupElementDocumentationTargetProvider
+- a:documentationTarget(com.intellij.psi.PsiFile,com.intellij.codeInsight.lookup.LookupElement,I):com.intellij.platform.backend.documentation.DocumentationTarget
 *:com.intellij.platform.backend.documentation.SymbolDocumentationTargetProvider
 - documentationTarget(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.platform.backend.documentation.DocumentationTarget
 - documentationTargets(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.List

@@ -757,6 +757,8 @@
 
     <codeInsight.completion.command.provider language="" implementationClass="com.intellij.codeInsight.completion.command.commands.ExtensionPointCommandProvider" />
     <codeInsight.completion.command.provider language="" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
+    <platform.backend.documentation.lookupElementTargetProvider
+      implementation="com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider"/>
 
     <nonWriteAccessTypedHandler implementation="com.intellij.codeInsight.completion.command.CommandCompletionNonWriteAccessTypedHandler" id="commandCompletion"/>
 

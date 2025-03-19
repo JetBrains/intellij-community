@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.PossiblyDumbAware
@@ -119,3 +120,11 @@ data class HighlightInfoLookup(
   val attributesKey: TextAttributesKey,
   val priority: Int, //higher is on the top
 )
+
+
+/**
+ * Represents a command for code completion with a preview feature.
+ */
+interface CompletionCommandWithPreview {
+  fun getPreview(): IntentionPreviewInfo?
+}

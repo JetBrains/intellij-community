@@ -23,6 +23,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 internal class CommandCompletionLookupElement(
   lookupElement: LookupElement,
+  val command: CompletionCommand,
   val hostStartOffset: Int,
   val suffix: String,
   val icon: Icon?,

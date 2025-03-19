@@ -3,10 +3,12 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler.availableFor
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.InspectionEngine.inspectEx
 import com.intellij.codeInspection.ProblemDescriptor
@@ -37,7 +39,8 @@ internal class DirectInspectionFixCompletionCommand(
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup,
   private val targetOffset: Int,
-) : CompletionCommand() {
+  private val previewProvider: () -> IntentionPreviewInfo?,
+) : CompletionCommand(), CompletionCommandWithPreview {
 
   override val i18nName: @Nls String
     get() = name
@@ -115,5 +118,9 @@ internal class DirectInspectionFixCompletionCommand(
     else {
       editor.caretModel.moveToOffset(offset)
     }
+  }
+
+  override fun getPreview(): IntentionPreviewInfo? {
+    return previewProvider()
   }
 }
