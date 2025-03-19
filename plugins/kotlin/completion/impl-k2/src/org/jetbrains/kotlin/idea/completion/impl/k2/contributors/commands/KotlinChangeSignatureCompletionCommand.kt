@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommand
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ui.EDT
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -13,8 +15,14 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 
 internal class KotlinChangeSignatureCompletionCommand : AbstractChangeSignatureCompletionCommand() {
     override fun findChangeSignatureOffset(offset: Int, file: PsiFile): Int? {
-        if (offset == 0) return null
-        val element = getContext(offset, file) ?: return null
+        var currentOffset = offset
+        if (currentOffset == 0) return null
+        var element = getContext(currentOffset, file) ?: return null
+        if (element is PsiWhiteSpace) {
+            element = PsiTreeUtil.prevVisibleLeaf(element) ?: return null
+            currentOffset = element.textRange.startOffset
+        }
+
         val callExpression = element.parentOfType<KtCallExpression>()
         if (callExpression != null &&
             (EDT.isCurrentThreadEdt() ||
@@ -22,16 +30,17 @@ internal class KotlinChangeSignatureCompletionCommand : AbstractChangeSignatureC
                         callExpression.referenceExpression()?.mainReference?.resolve()?.isWritable == true
                     })
         ) {
-            if (callExpression.textRange.endOffset == offset) {
+            if (callExpression.textRange.endOffset == currentOffset) {
                 return callExpression.valueArgumentList?.textRange?.startOffset
             } else {
-                return offset
+                return currentOffset
             }
         }
         val method = element.parentOfType<KtNamedFunction>()
         if (method == null) return null
-        if ((method.valueParameterList?.textRange?.endOffset ?: 0) >= offset) return offset
-        if (method.textRange?.endOffset == offset) return method.valueParameterList?.textRange?.endOffset
+        if ((method.valueParameterList?.textRange?.endOffset ?: 0) >= currentOffset ||
+            method.textRange?.endOffset == currentOffset
+        ) return method.valueParameterList?.textRange?.endOffset
         return null
     }
 }

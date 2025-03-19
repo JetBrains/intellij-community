@@ -232,7 +232,7 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
         parent = parent.getParent();
       }
       while (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
-      if (parent instanceof PsiParameterList ||
+      if (parent instanceof PsiParameterList list && PsiTreeUtil.isAncestor(list, lastElement, false) ||
           (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
         return false;
       }

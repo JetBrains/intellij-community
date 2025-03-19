@@ -5,25 +5,32 @@ import com.intellij.codeInsight.completion.command.commands.AbstractChangeSignat
 import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 
 internal class JavaChangeSignatureCompletionCommand : AbstractChangeSignatureCompletionCommand() {
   override fun findChangeSignatureOffset(offset: Int, file: PsiFile): Int? {
-    if (offset == 0) return null
-    val element = getContext(offset, file) ?: return null
+    var currentOffset = offset
+    if (currentOffset == 0) return null
+    var element = getContext(currentOffset, file) ?: return null
+    if (element is PsiWhiteSpace) {
+      element = PsiTreeUtil.prevVisibleLeaf(element) ?: return null
+      currentOffset = element.textRange.startOffset
+    }
     val callExpression = element.parentOfType<PsiCallExpression>()
     if (callExpression != null && callExpression.resolveMethod()?.isWritable == true) {
-      if (callExpression.textRange.endOffset == offset) {
+      if (callExpression.textRange.endOffset == currentOffset) {
         return callExpression.getArgumentList()?.textRange?.startOffset
       }
       else {
-        return offset
+        return currentOffset
       }
     }
     val method = element.parentOfType<PsiMethod>()
     if (method == null) return null
-    if ((method.body?.lBrace?.textRange?.startOffset ?: 0) > offset) return offset
-    if (method.body?.rBrace?.textRange?.endOffset == offset) return method.parameterList.textRange?.startOffset
+    if ((method.body?.lBrace?.textRange?.startOffset ?: 0) >= currentOffset ||
+        method.body?.rBrace?.textRange?.endOffset == currentOffset) return method.parameterList.textRange?.startOffset
     return null
   }
 }
