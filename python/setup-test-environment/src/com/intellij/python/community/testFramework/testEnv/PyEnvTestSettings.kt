@@ -33,13 +33,13 @@ data class PyEnvTestSettings(
   @TestOnly
   @get:JvmName("getPythons")
   internal val pythons: List<File> = foldersWithPythons
-    .asSequence()
-    .filter { if (PyTestEnvVars.PYCHARM_PY_VERSION.isSet()) it.name.endsWith(PyTestEnvVars.PYCHARM_PY_VERSION.getValue()!!) else true }
-    .filter(File::exists)
-    .flatMap { it.listFiles()?.toList() ?: emptyList() }
-    .plus(additionalInterpreters)
-    .filter { it.isDirectory && !it.name.startsWith('.') }
-    .toList()
+      .asSequence()
+      .filter(File::exists)
+      .flatMap { it.listFiles()?.toList() ?: emptyList() }
+      .plus(additionalInterpreters)
+      .filter { if (PyTestEnvVars.PYCHARM_PY_VERSION.isSet()) it.path.contains(PyTestEnvVars.PYCHARM_PY_VERSION.getValue()!!) else true }
+      .filter { it.isDirectory && !it.name.startsWith('.') }
+      .toList()
 
   /**
    * Configuration in readable format
