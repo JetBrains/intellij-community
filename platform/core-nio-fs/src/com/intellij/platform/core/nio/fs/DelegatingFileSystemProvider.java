@@ -32,7 +32,8 @@ import java.util.concurrent.ExecutorService;
 public abstract class DelegatingFileSystemProvider<
   P extends DelegatingFileSystemProvider<P, F>,
   F extends DelegatingFileSystem<P>
-  > extends FileSystemProvider {
+  > extends FileSystemProvider
+  implements RoutingAwareFileSystemProvider {
 
   /**
    * @return A delegating file system which is bound to this provider.
@@ -61,6 +62,11 @@ public abstract class DelegatingFileSystemProvider<
    */
   @Contract("null -> null; !null -> !null")
   protected abstract @Nullable Path toDelegatePath(@Nullable Path path);
+
+  @Override
+  public boolean canHandleRouting() {
+    return getDelegate(null, null) instanceof RoutingAwareFileSystemProvider rafsp && rafsp.canHandleRouting();
+  }
 
   @Override
   public @Nullable F newFileSystem(Path path, Map<String, ?> env) throws IOException {
