@@ -7,6 +7,7 @@ import com.intellij.grazie.utils.LinkedSet
 
 
 internal interface LanguageModelDictionary : WordList, FrequencyMetadata {
+  val totalFrequency: Int
   val allWords: Set<String>
 }
 
@@ -23,6 +24,8 @@ internal class SimpleLanguageModelDictionary(private val words: Map<String, Int>
   override fun getFrequency(word: String): Int? = words[word]
 
   override fun contains(word: String, caseSensitive: Boolean): Boolean = allWords.any { it.startsWith(word, false)}
+
+  override val totalFrequency = words.values.sum()
 
   override fun suggest(word: String): LinkedSet<String> = words.keys
     .filterTo(LinkedHashSet()) {
