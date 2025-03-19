@@ -420,7 +420,6 @@ class ListComboBoxUiTest {
         composeRule.waitForIdle()
         popupMenu.assertIsDisplayed()
 
-        // Verify first item is visible in the popup
         composeRule.onAllNodesWithText("Item 1", useUnmergedTree = true).onLast().assertIsDisplayed()
 
         // Verify selection state through selectedIndex and text field
@@ -448,40 +447,33 @@ class ListComboBoxUiTest {
             }
         }
 
-        // Wait for initial composition
         composeRule.waitForIdle()
 
-        // Request focus and verify initial state
         focusRequester.requestFocus()
         composeRule.waitForIdle()
 
         textField.assertIsDisplayed().assertIsFocused()
         popupMenu.assertDoesNotExist()
 
-        // Press down to open popup
         textField.performKeyInput {
             keyDown(Key.DirectionDown)
             keyUp(Key.DirectionDown)
         }
         composeRule.waitForIdle()
 
-        // Verify popup is open and first item is selected
         popupMenu.assertIsDisplayed()
         composeRule.onAllNodesWithText("Item 1", useUnmergedTree = true).onLast().assertIsDisplayed()
         assert(selectedIndex == 0) { "Expected selectedIndex to be 0 after opening popup, but was $selectedIndex" }
 
-        // Press down again to select second item
         textField.performKeyInput {
             keyDown(Key.DirectionDown)
             keyUp(Key.DirectionDown)
         }
         composeRule.waitForIdle()
 
-        // Verify second item is selected
         composeRule.onAllNodesWithText("Item 2", useUnmergedTree = true).onLast().assertIsDisplayed()
         assert(selectedIndex == 1) { "Expected selectedIndex to be 1 after second down press, but was $selectedIndex" }
 
-        // Verify the text field shows the right item
         textField.assertTextEquals("Item 2")
     }
 
