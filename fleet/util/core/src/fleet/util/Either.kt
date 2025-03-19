@@ -15,6 +15,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.error
+import kotlin.jvm.JvmInline
 
 /**
  * Same as [Result], but non-throwable based. Can store any kind of errors
