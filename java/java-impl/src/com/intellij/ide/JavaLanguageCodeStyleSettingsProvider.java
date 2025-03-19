@@ -448,7 +448,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
 
       @Override
       public void setRemoveEmptyLines(boolean removeEmptyLines) {
-        mySettings.JD_KEEP_TRAILING_EMPTY_LINES = !removeEmptyLines;
+        mySettings.setKeepTrailingEmptyLines(!removeEmptyLines);
       }
 
       @Override
