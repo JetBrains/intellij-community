@@ -18,6 +18,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -28,6 +29,7 @@ internal class TerminalSessionController(
   private val blocksModel: TerminalBlocksModel,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
+  private val fusActivity: FrontendOutputActivity,
 ) {
 
   private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
@@ -70,9 +72,12 @@ internal class TerminalSessionController(
         }
       }
       is TerminalContentUpdatedEvent -> {
+        fusActivity.eventReceived(event)
         updateOutputModel { model ->
+          fusActivity.beforeModelUpdate()
           val styles = event.styles.map { it.toStyleRange() }
           model.updateContent(event.startLineLogicalIndex, event.text, styles)
+          fusActivity.afterModelUpdate()
         }
       }
       is TerminalCursorPositionChangedEvent -> {

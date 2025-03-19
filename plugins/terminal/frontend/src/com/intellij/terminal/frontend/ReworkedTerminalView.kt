@@ -43,6 +43,7 @@ import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlin
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
@@ -127,6 +128,12 @@ internal class ReworkedTerminalView(
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
+    val fusActivity = ReworkedTerminalUsageCollector.startFrontendOutputActivity(
+      sessionFuture,
+      outputEditor = outputEditor as EditorImpl,
+      alternateBufferEditor = alternateBufferEditor as EditorImpl,
+    )
+
     controller = TerminalSessionController(
       sessionModel,
       outputModel,
@@ -134,6 +141,7 @@ internal class ReworkedTerminalView(
       blocksModel,
       settings,
       coroutineScope.childScope("TerminalSessionController"),
+      fusActivity,
     )
 
     sessionFuture.thenAccept { session ->
