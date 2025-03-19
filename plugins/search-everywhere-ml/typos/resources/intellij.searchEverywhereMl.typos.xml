@@ -31,5 +31,12 @@
             internal="true">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
+
+    <action id="com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.CorpusToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+
   </actions>
 </idea-plugin>
