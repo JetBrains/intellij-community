@@ -48,7 +48,7 @@ suspend fun startServerKernel(scope: CoroutineScope): KernelStarted {
 private suspend fun startKernel(scope: CoroutineScope, middleware: TransactorMiddleware, partition: Part): KernelStarted {
   val kernelContextDeferred = CompletableDeferred<CoroutineContext>()
   scope.launch {
-    withTransactor(emptyList(), middleware = middleware, defaultPart = partition) { _ ->
+    withTransactor(middleware = middleware, defaultPart = partition) { _ ->
       withRete {
         kernelContextDeferred.complete(this.coroutineContext.kernelCoroutineContext())
         awaitCancellation()

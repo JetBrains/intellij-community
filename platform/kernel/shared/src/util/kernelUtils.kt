@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend CoroutineScope.() -> T) {
-  withTransactor(emptyList(), middleware = middleware) { _ ->
+  withTransactor(middleware = middleware) { _ ->
     withRete {
       body()
     }

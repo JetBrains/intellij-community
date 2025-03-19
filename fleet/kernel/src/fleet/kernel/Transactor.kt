@@ -18,7 +18,6 @@ import fleet.reporting.shared.tracing.span
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.util.*
 import fleet.util.async.catching
-import fleet.util.async.coroutineNameAppended
 import fleet.util.async.use
 import fleet.util.channels.channels
 import fleet.util.channels.consumeEach
@@ -314,7 +313,6 @@ sealed interface SubscriptionEvent {
  * Consider adding KernelMiddleware if additional routine has to be performed on every [Transactor.changeAsync]
  */
 suspend fun <T> withTransactor(
-  entityClasses: List<EntityTypeDefinition>,
   middleware: TransactorMiddleware = TransactorMiddleware.Identity,
   defaultPart: Int = CommonPart,
   body: suspend CoroutineScope.(Transactor) -> T,
