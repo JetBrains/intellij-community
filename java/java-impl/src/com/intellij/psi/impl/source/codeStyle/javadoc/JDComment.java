@@ -172,17 +172,13 @@ public class JDComment {
   private void addSuffixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String indent) {
     addEmptyLinesIfNeeded(sb, prefix, mySuffixEmptyLineCount);
     if (myMarkdown) {
-      while (!sb.isEmpty() && isWhitespace(sb.charAt(sb.length() - 1))) {
+      while (!sb.isEmpty() && Character.isWhitespace(sb.charAt(sb.length() - 1))) {
         sb.deleteCharAt(sb.length() - 1);
       }
     }
     else if (shouldAddExtraLines(myPrefixEmptyLineCount)) {
       sb.append(indent);
     }
-  }
-
-  private static boolean isWhitespace(char c) {
-    return c == ' ' || c == '\n';
   }
 
   private void addEmptyLinesIfNeeded(StringBuilder sb, String emptyLine, int lineCount) {
