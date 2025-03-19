@@ -584,6 +584,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "branched/ifWhen/ifToWhen/whenGuards", // K2-only
                     "concatenationToBuildCollection", // K2-only
                     "convertStringTemplateToBuildStringMultiDollarPrefix", // K2-only
+                    "convertToConcatenatedStringMultiDollarPrefix", // K2-only
                 )
             )
         }

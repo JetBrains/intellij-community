@@ -13144,4 +13144,88 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix")
+    public static class ConvertToConcatenatedStringMultiDollarPrefix extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("blockEntriesWithSimpleNames.kt")
+        public void testBlockEntriesWithSimpleNames() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/blockEntriesWithSimpleNames.kt");
+        }
+
+        @TestMetadata("differentEntries.kt")
+        public void testDifferentEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/differentEntries.kt");
+        }
+
+        @TestMetadata("differentPrefixes.kt")
+        public void testDifferentPrefixes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/differentPrefixes.kt");
+        }
+
+        @TestMetadata("firstNestedInterpolationIsNotString.kt")
+        public void testFirstNestedInterpolationIsNotString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/firstNestedInterpolationIsNotString.kt");
+        }
+
+        @TestMetadata("hiddenNestedDollarSequence.kt")
+        public void testHiddenNestedDollarSequence() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/hiddenNestedDollarSequence.kt");
+        }
+
+        @TestMetadata("inapplicableNoExpression.kt")
+        public void testInapplicableNoExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/inapplicableNoExpression.kt");
+        }
+
+        @TestMetadata("interpolatedStringsInsideInterpolation.kt")
+        public void testInterpolatedStringsInsideInterpolation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/interpolatedStringsInsideInterpolation.kt");
+        }
+
+        @TestMetadata("multiLevelNesting.kt")
+        public void testMultiLevelNesting() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/multiLevelNesting.kt");
+        }
+
+        @TestMetadata("multilineTemplate.kt")
+        public void testMultilineTemplate() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/multilineTemplate.kt");
+        }
+
+        @TestMetadata("nestedMultiDollar.kt")
+        public void testNestedMultiDollar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/nestedMultiDollar.kt");
+        }
+
+        @TestMetadata("nestedStringEmptyBraces.kt")
+        public void testNestedStringEmptyBraces() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/nestedStringEmptyBraces.kt");
+        }
+
+        @TestMetadata("prefixOptimizations.kt")
+        public void testPrefixOptimizations() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/prefixOptimizations.kt");
+        }
+
+        @TestMetadata("simpleNameEntries.kt")
+        public void testSimpleNameEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/simpleNameEntries.kt");
+        }
+
+        @TestMetadata("tripleAndDoubleQuotedMix.kt")
+        public void testTripleAndDoubleQuotedMix() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/tripleAndDoubleQuotedMix.kt");
+        }
+    }
 }

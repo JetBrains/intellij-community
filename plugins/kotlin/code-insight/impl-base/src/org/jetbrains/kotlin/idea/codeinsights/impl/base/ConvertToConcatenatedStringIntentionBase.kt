@@ -8,11 +8,10 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getContentRange
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
 abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAction<KtStringTemplateExpression>(
@@ -27,43 +26,27 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
 
     override fun isElementApplicable(element: KtStringTemplateExpression, context: ActionContext): Boolean {
         if (element.lastChild.node.elementType != KtTokens.CLOSING_QUOTE) return false // not available for unclosed literal
-        if (element.interpolationPrefix?.textLength?.let { it > 1 } == true) return false // not supported for multi-dollar strings
         return element.entries.any { it is KtStringTemplateEntryWithExpression }
     }
 
     override fun invoke(context: ActionContext, element: KtStringTemplateExpression, updater: ModPsiUpdater) {
         checkNotNull(element.text) { "Failed to get template expression's text" }
-        val tripleQuoted = !element.isSingleQuoted()
-        val quote = if (tripleQuoted) "\"\"\"" else "\""
+        val psiFactory = KtPsiFactory(element.project)
+        val oldPrefixLength = element.interpolationPrefix?.textLength ?: 1
+
         val entries = element.entries.filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
+        val convertFirstEntryExplicitly = entries.firstOrNull().needsExplicitToStringConversion()
+        val unmergedOperandsQueue = ArrayDeque<KtExpression>()
 
-        val convertFirstEntryExplicitly = (entries.firstOrNull() as? KtStringTemplateEntryWithExpression)?.expression?.let {
-            !isExpressionOfStringType(it)
-        } ?: false
-
-        val entryTexts = entries.mapIndexed { index, entry ->
-            val entryText = entry.toSeparateString(quote, convertExplicitly = (index == 0) && convertFirstEntryExplicitly)
-            val entryIsString = entryText.startsWith(quote) && entryText.endsWith(quote) && entry.isStringLiteral()
-            entryText to entryIsString
+        entries.flatMapTo(unmergedOperandsQueue) { topLevelEntry ->
+            topLevelEntry.toOperandExpressions(psiFactory, oldPrefixLength, isSingleQuoted = element.isSingleQuoted())
         }
+        if (convertFirstEntryExplicitly) convertFirstToString(unmergedOperandsQueue, psiFactory)
 
-        // merge all consecutive string literals
-        val targetTexts = entryTexts.foldIndexed(mutableListOf<String>()) { index, texts, (currText, currIsString) ->
-            val prevIsString = entryTexts.getOrNull(index - 1)?.second ?: false
-            val nextIsString = entryTexts.getOrNull(index + 1)?.second ?: false
-            var textToBeMerged = currText
-            if (currIsString && nextIsString) textToBeMerged = textToBeMerged.removeSuffix(quote)
-            if (currIsString && prevIsString) {
-                textToBeMerged = textToBeMerged.removePrefix(quote)
-                texts[texts.lastIndex] += textToBeMerged
-            } else {
-                texts.add(textToBeMerged)
-            }
-            texts
-        }
-
-        val text = targetTexts.joinToString("+")
-        val replacement = KtPsiFactory(element.project).createExpression(text).safeDeparenthesizeOperands()
+        val mergedOperands = mergeStringGroups(unmergedOperandsQueue, psiFactory)
+        val replacement = psiFactory
+            .createExpression(mergedOperands.joinToString(separator = " + ") { it.text })
+            .safeDeparenthesizeOperands()
         element.replace(replacement)
     }
 
@@ -83,25 +66,90 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
         return this
     }
 
-    private fun KtStringTemplateEntry.isStringLiteral(): Boolean = expression == null || expression is KtStringTemplateExpression
-
-    private fun KtStringTemplateEntry.toSeparateString(quote: String, convertExplicitly: Boolean): String {
-        if (this !is KtStringTemplateEntryWithExpression) return text.quote(quote)
-
-        val expression = expression!! // checked before
-
-        val text = if (needsParenthesis(expression))
-            "(${expression.text})"
-        else
-            expression.text
-
-        return if (convertExplicitly)
-            "$text.toString()"
-        else
-            text
+    private fun KtStringTemplateEntry?.needsExplicitToStringConversion(): Boolean {
+        if (this !is KtStringTemplateEntryWithExpression) return false
+        val expression = expression ?: return false
+        return !isExpressionOfStringType(expression)
+                || expression is KtStringTemplateExpression && expression.entries.firstOrNull().needsExplicitToStringConversion()
     }
 
-    private fun needsParenthesis(expression: KtExpression): Boolean = when (expression) {
+    private fun KtStringTemplateEntry.toOperandExpressions(
+        psiFactory: KtPsiFactory,
+        oldPrefixLength: Int,
+        isSingleQuoted: Boolean,
+    ): List<KtExpression> {
+        return when {
+            this is KtStringTemplateEntryWithExpression -> {
+                val expression = expression ?: return emptyList()
+                if (expression is KtStringTemplateExpression) {
+                    expression.entries
+                        .filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
+                        .flatMap { nestedEntry ->
+                            nestedEntry.toOperandExpressions(
+                                psiFactory,
+                                oldPrefixLength = expression.interpolationPrefix?.textLength ?: 1,
+                                isSingleQuoted = expression.isSingleQuoted(),
+                            )
+                        }
+                } else {
+                    val text = if (needsParentheses(expression)) "(${expression.text})" else expression.text
+                    listOf(psiFactory.createExpression(text))
+                }
+            }
+
+            else -> listOf(createStringTemplate(psiFactory, text, oldPrefixLength, isMultiQuoted = !isSingleQuoted))
+        }
+    }
+
+    private fun createStringTemplate(
+        psiFactory: KtPsiFactory, content: String, prefixLength: Int, isMultiQuoted: Boolean
+    ): KtStringTemplateExpression = when {
+        prefixLength > 1 -> psiFactory.createMultiDollarStringTemplate(content, prefixLength, forceMultiQuoted = isMultiQuoted)
+        isMultiQuoted -> psiFactory.createRawStringTemplate(content)
+        else -> psiFactory.createStringTemplate(content)
+    }
+
+    private fun mergeStringGroups(unmergedOperandsQueue: ArrayDeque<KtExpression>, psiFactory: KtPsiFactory): List<KtExpression> {
+        val mergedOperands = mutableListOf<KtExpression>()
+        while (unmergedOperandsQueue.isNotEmpty()) {
+            val first = unmergedOperandsQueue.removeFirst()
+            when {
+                first is KtStringTemplateExpression -> {
+                    val group = mutableListOf(first)
+                    @Suppress("UNCHECKED_CAST")
+                    val nextAcceptableStrings = unmergedOperandsQueue.takeWhile { next ->
+                        next is KtStringTemplateExpression && next.isSingleQuoted() == first.isSingleQuoted()
+                    } as List<KtStringTemplateExpression>
+                    repeat(nextAcceptableStrings.size) { unmergedOperandsQueue.removeFirst() }
+                    group.addAll(nextAcceptableStrings)
+                    val concatenatedText = group.joinToString(separator = "") {
+                        it.getContentRange().substring(it.text)
+                    }
+                    val tempStringForPrefixEstimation = createStringTemplate(
+                        psiFactory, concatenatedText, prefixLength = 1, isMultiQuoted = !first.isSingleQuoted()
+                    )
+                    // all interpolations have been split into individual expressions, strings contain only text by now
+                    val unsafePrefix = longestUnsafeDollarSequenceLengthForPlainTextConversion(tempStringForPrefixEstimation)
+                    val safePrefix = unsafePrefix + 1
+                    val merged = createStringTemplate(
+                        psiFactory, concatenatedText, prefixLength = safePrefix, isMultiQuoted = !first.isSingleQuoted()
+                    )
+                    mergedOperands.add(merged)
+                }
+                else -> mergedOperands.add(first)
+            }
+        }
+
+        return mergedOperands
+    }
+
+    private fun convertFirstToString(unmergedOperandsQueue: ArrayDeque<KtExpression>, psiFactory: KtPsiFactory) {
+        if (unmergedOperandsQueue.isEmpty()) return
+        val first = unmergedOperandsQueue.removeFirst()
+        unmergedOperandsQueue.addFirst(psiFactory.createExpression("${first.text}.toString()"))
+    }
+
+    private fun needsParentheses(expression: KtExpression): Boolean = when (expression) {
         is KtPostfixExpression -> false
         is KtAnnotatedExpression,
         is KtLabeledExpression,
@@ -111,12 +159,10 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
         else -> false
     }
 
-    private fun String.quote(quote: String): String = quote + this + quote
-
     /**
      * Tells whether given [expression] is of the string type.
      *
-     * Called from cancellable modal progress and under read action, so it's safe to use resolve here.
+     * Called from mod command invoke that will be executed on a background thread.
      */
     abstract fun isExpressionOfStringType(expression: KtExpression): Boolean
 }

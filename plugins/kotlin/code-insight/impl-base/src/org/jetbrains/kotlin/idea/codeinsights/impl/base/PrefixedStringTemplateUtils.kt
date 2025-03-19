@@ -251,7 +251,6 @@ fun KtLiteralStringTemplateEntry.canBeConsideredIdentifierOrBlock(): Boolean =
     text.firstOrNull()?.canBeStartOfIdentifierOrBlock() == true
 
 fun Char.canBeStartOfIdentifierOrBlock(): Boolean {
-    @Suppress("KotlinConstantConditions") // K2 inspection false positive, `isLetter` returns false for these chars KTIJ-31678
     return isLetter() || this == '_' || this == '{' || this == '`'
 }
 

@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+fun test(a: Any, b: Any, c: Any) {
+    $$"""
+        |First line: $${a}$
+        |Second line: $${b}$
+        |Third line: $${c}$
+        |\t\n\\\b Escaping shouldn't work.
+        |$${"Nested simple line with an expression ${1 + 1} and some text. \\\b\t\n Escaping shoud work here"}
+    """<caret>.trimMargin()
+}
