@@ -62,6 +62,7 @@
   - name: intellij.jsp.spi
   - name: intellij.java.uast
   - name: intellij.java.typeMigration
+  - name: intellij.java.ultimate.icons
   - name: intellij.java.jam
   - name: intellij.java.jam.impl
   - name: intellij.java.duplicatesDetection
