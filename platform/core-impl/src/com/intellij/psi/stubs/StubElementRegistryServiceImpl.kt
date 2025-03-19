@@ -16,7 +16,8 @@ open class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl()
   @Volatile private lateinit var factories: Map<IElementType, StubElementFactory<*, *>>
   @Volatile private lateinit var lightFactories: Map<IElementType, LightStubElementFactory<*, *>>
   @Volatile private lateinit var type2serializerMap: Map<IElementType, ObjectStubSerializer<*, *>>
-  @Volatile private lateinit var serializer2typeMap: Map<ObjectStubSerializer<*, *>, IElementType>
+  @Volatile protected lateinit var serializer2typeMap: Map<ObjectStubSerializer<*, *>, IElementType>
+    private set
 
   init {
     STUB_REGISTRY_EP.addChangeListener(Runnable { init() }, this)
