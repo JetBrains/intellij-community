@@ -105,7 +105,9 @@ internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
     is EelPlatform.Darwin -> JavaHomeFinderMac(systemInfoProvider)
 
     is EelPlatform.Linux -> {
-      val checkPaths = JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS.toMutableSet()
+      val checkPaths = JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS.map {
+        EelPath.parse(it, descriptor).asNioPath().toString()
+      }.toMutableSet()
       val userHome = eel.fs.user.home
       checkPaths.add(userHome.resolve(".jdks").asNioPath().toString())
       JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(*checkPaths.toTypedArray())
