@@ -142,17 +142,14 @@ public class JDComment {
     {
       addPrefixEmptyLinesIfNeeded(sb, emptyLine, indent);
       sb.insert(0, myFirstLine + '\n');
-
-      if (!shouldAddExtraLines(myPrefixEmptyLineCount)) {
-        sb.append(indent);
-      }
+      sb.append(indent);
     } else {
       sb.replace(0, prefix.length(), myFirstLine + " ");
       sb.deleteCharAt(sb.length()-1);
       addPrefixEmptyLinesIfNeeded(sb, emptyLine, indent);
     }
 
-    addSuffixEmptyLinesIfNeeded(sb, emptyLine, indent);
+    addSuffixEmptyLinesIfNeeded(sb, emptyLine);
 
     sb.append(' ').append(myEndLine);
 
@@ -169,15 +166,12 @@ public class JDComment {
     sb.insert(0, emptyLinePrefixBuilder);
   }
 
-  private void addSuffixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String indent) {
+  private void addSuffixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String prefix) {
     addEmptyLinesIfNeeded(sb, prefix, mySuffixEmptyLineCount);
-    if (myMarkdown) {
+    if (myMarkdown && shouldAddExtraLines(mySuffixEmptyLineCount)) {
       while (!sb.isEmpty() && Character.isWhitespace(sb.charAt(sb.length() - 1))) {
         sb.deleteCharAt(sb.length() - 1);
       }
-    }
-    else if (shouldAddExtraLines(myPrefixEmptyLineCount)) {
-      sb.append(indent);
     }
   }
 
