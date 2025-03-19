@@ -35,7 +35,8 @@ internal class TerminalCursorPositionTrackerTest {
 
     // We expect that moving cursor position to the next line creates this line in the TextBuffer,
     // and it is being caught by the TerminalContentChangesTracker.
-    assertThat(contentUpdate).isEqualTo(TerminalContentUpdatedEvent("", emptyList(), 1))
+    // The strange 6/5 combination of character indices corresponds to the cursor position change without any characters read.
+    assertThat(contentUpdate).isEqualTo(TerminalContentUpdatedEvent("", emptyList(), 1, 6L, 5L))
     assertThat(cursorUpdate).isEqualTo(TerminalCursorPositionChangedEvent(1, 0))
   }
 }

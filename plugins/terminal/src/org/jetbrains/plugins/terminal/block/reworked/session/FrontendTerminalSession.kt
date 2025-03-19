@@ -19,7 +19,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
  * Normally, it should be located in the frontend module, but it can't be moved there
  * because it should be accessible from the shared terminal widget creating API with a lot of external usages.
  */
-internal class FrontendTerminalSession(private val id: TerminalSessionId) : TerminalSession {
+internal class FrontendTerminalSession(internal val id: TerminalSessionId) : TerminalSession {
   @Volatile
   override var isClosed: Boolean = false
     private set
