@@ -955,8 +955,10 @@ Android Studio: don't register IntelliJ fork -->
 
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvider"/>
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.NewInlaySettingsProvider"/>
+<!-- Android Studio b/395576525
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionSettingsService"
                         serviceImplementation="com.intellij.internal.statistic.StatisticsRegionSettingsServiceImpl" preload="notLightEdit"/>
+Android Studio b/395576525 -->
     <applicationService serviceInterface="com.intellij.internal.statistic.JetBrainsConsentProvider"
                         serviceImplementation="com.intellij.internal.statistic.EmptyJetBrainsConsentProvider"/>
     <statistics.validation.customValidationRule
