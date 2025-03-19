@@ -191,11 +191,11 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey SearchWithHistory = new IntelliJIconKey("actions/searchWithHistory.svg", "expui/inline/searchHistory.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Selectall = new IntelliJIconKey("actions/selectall.svg", "expui/actions/selectAll.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey SetDefault = new IntelliJIconKey("actions/setDefault.svg", "expui/actions/checked.svg", AllIconsKeys.class);
-    /** 14x14 */ public static final @NotNull IntelliJIconKey Share = new IntelliJIconKey("actions/share.png", "actions/share.png", AllIconsKeys.class);
+    /** 14x14 */ public static final @NotNull IntelliJIconKey Share = new IntelliJIconKey("actions/share.png", "expui/general/show.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShortcutFilter = new IntelliJIconKey("actions/shortcutFilter.svg", "expui/actions/shortcutFilter.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Show = new IntelliJIconKey("actions/show.svg", "expui/general/show.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShowAsTree = new IntelliJIconKey("actions/showAsTree.svg", "expui/general/showAsTree.svg", AllIconsKeys.class);
-    /** 16x16 */ public static final @NotNull IntelliJIconKey ShowCode = new IntelliJIconKey("actions/showCode.svg", "actions/showCode.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey ShowCode = new IntelliJIconKey("actions/showCode.svg", "expui/actions/toggleVisibility.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShowImportStatements = new IntelliJIconKey("actions/showImportStatements.svg", "expui/actions/showImportStatements.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShowReadAccess = new IntelliJIconKey("actions/showReadAccess.svg", "expui/actions/showReadAccess.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShowWriteAccess = new IntelliJIconKey("actions/showWriteAccess.svg", "expui/actions/showWriteAccess.svg", AllIconsKeys.class);
@@ -220,7 +220,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Undo = new IntelliJIconKey("actions/undo.svg", "expui/general/undo.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Uninstall = new IntelliJIconKey("actions/uninstall.svg", "expui/actions/uninstall.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Unselectall = new IntelliJIconKey("actions/unselectall.svg", "expui/actions/unselectAll.svg", AllIconsKeys.class);
-    /** 14x14 */ public static final @NotNull IntelliJIconKey Unshare = new IntelliJIconKey("actions/unshare.png", "actions/unshare.png", AllIconsKeys.class);
+    /** 14x14 */ public static final @NotNull IntelliJIconKey Unshare = new IntelliJIconKey("actions/unshare.png", "expui/actions/unshare.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Upload = new IntelliJIconKey("actions/upload.svg", "expui/general/upload.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Words = new IntelliJIconKey("actions/words.svg", "expui/inline/exactWords.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey WordsHovered = new IntelliJIconKey("actions/wordsHovered.svg", "expui/inline/exactWords.svg", AllIconsKeys.class);
