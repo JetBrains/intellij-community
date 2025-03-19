@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio.telemetry
 
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
@@ -31,9 +31,6 @@ class TracingFileSystemProvider(
   override fun toDelegatePath(path: Path?): Path? = path
 
   override fun toString(): String = """${javaClass.simpleName}($delegate)"""
-
-  override fun canHandleRouting(): Boolean =
-    (delegate as? RoutingAwareFileSystemProvider)?.canHandleRouting() == true
 
   override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
     TracingSeekableByteChannel(this, Measurer.measure(providerNewByteChannel) {

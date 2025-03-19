@@ -8,8 +8,6 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.CaseSensitivityAttribute
-import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -60,7 +58,7 @@ class IjentWslNioFileSystemProvider(
 
   override fun toString(): String = """${javaClass.simpleName}(${wslId})"""
 
-  override fun canHandleRouting(): Boolean = true
+  override fun canHandleRouting(path: Path): Boolean = true
 
   internal fun toIjentNioPath(path: Path): IjentNioPath = path.toIjentPath()
 

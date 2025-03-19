@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.Contract;
@@ -34,12 +34,6 @@ class CorePosixFilteringFileSystemProvider
   private final FileSystemProvider myFileSystemProvider;
 
   CorePosixFilteringFileSystemProvider(FileSystemProvider provider) { myFileSystemProvider = provider; }
-
-  @Override
-  public boolean canHandleRouting() {
-    return myFileSystemProvider instanceof RoutingAwareFileSystemProvider &&
-           ((RoutingAwareFileSystemProvider)myFileSystemProvider).canHandleRouting();
-  }
 
   private static FileAttribute<?>[] filterAttrs(FileAttribute<?>... attrs) {
     return Arrays.stream(attrs).filter(attr -> !attr.name().startsWith("posix:")).toArray(FileAttribute<?>[]::new);

@@ -173,7 +173,9 @@ public final class MultiRoutingFileSystemProvider
       path1 = path1.toAbsolutePath();
     }
 
-    FileSystemProvider provider1 = myFileSystem.getBackend(path1.toString()).provider();
+    String path1String = path1.toString();
+    FileSystem backend1 = myFileSystem.getBackend(path1String);
+    FileSystemProvider provider1 = backend1.provider();
     if (path2 == null) {
       return provider1;
     }
@@ -182,35 +184,49 @@ public final class MultiRoutingFileSystemProvider
       path2 = path2.toAbsolutePath();
     }
 
-    FileSystemProvider provider2 = myFileSystem.getBackend(path2.toString()).provider();
+    String path2String = path2.toString();
+    FileSystem backend2 = myFileSystem.getBackend(path2String);
+    FileSystemProvider provider2 = backend2.provider();
 
     if (provider1.equals(provider2)) {
       return provider1;
     }
-    else if (canHandleRouting(provider1)) {
+
+    if (canHandleRouting(provider1, backend2.getPath(path2String))) {
       return provider1;
     }
-    else if (canHandleRouting(provider2)) {
+
+    if (canHandleRouting(provider2, backend1.getPath(path1String))) {
       return provider2;
     }
-    else {
-      throw new IllegalArgumentException(String.format("Provider mismatch: %s != %s", provider1, provider2));
-    }
+
+    throw new IllegalArgumentException(String.format("Provider mismatch: %s != %s", provider1, provider2));
   }
 
   /**
    * `intellij.platform.util` is not available in the boot classpath.
    * Hence, concurrent weak maps from the platform can't be used here.
    */
-  private static final Map<FileSystemProvider, Boolean> ourCanHandleRoutingCache = Collections.synchronizedMap(new WeakHashMap<>());
+  private static final Map<FileSystemProvider, Optional<Method>> ourCanHandleRoutingCache = Collections.synchronizedMap(new WeakHashMap<>());
 
-  private static boolean canHandleRouting(FileSystemProvider provider) {
+  private static boolean canHandleRouting(FileSystemProvider provider, @NotNull Path path) {
     if (provider instanceof RoutingAwareFileSystemProvider) {
       // `instanceof` is still faster than a successful cache hit.
       // Even if `instanceof` misses, its negative impact is negligible. See a benchmark in the commit message.
-      return ((RoutingAwareFileSystemProvider)provider).canHandleRouting();
+      return ((RoutingAwareFileSystemProvider)provider).canHandleRouting(path);
     }
-    return ourCanHandleRoutingCache.computeIfAbsent(provider, MultiRoutingFileSystemProvider::canHandleRoutingImpl);
+    Method method = ourCanHandleRoutingCache
+      .computeIfAbsent(provider, MultiRoutingFileSystemProvider::canHandleRoutingImpl)
+      .orElse(null);
+    if (method == null) {
+      return false;
+    }
+    try {
+      return (boolean)method.invoke(provider, path);
+    }
+    catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -222,15 +238,15 @@ public final class MultiRoutingFileSystemProvider
    * Therefore, the usual expression {@code a instanceof B} doesn't work when {@code a} is an instance of {@code B} loaded by
    * a different classloader.
    */
-  private static boolean canHandleRoutingImpl(FileSystemProvider provider) {
+  private static Optional<Method> canHandleRoutingImpl(FileSystemProvider provider) {
     Class<?> providerClass = provider.getClass();
     do {
       for (Class<?> iface : providerClass.getInterfaces()) {
         if (iface.getName().equals(RoutingAwareFileSystemProvider.class.getName())) {
           try {
-            return (boolean)iface.getMethod("canHandleRouting").invoke(provider);
+            return Optional.of(iface.getMethod("canHandleRouting"));
           }
-          catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+          catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
           }
         }
@@ -238,7 +254,7 @@ public final class MultiRoutingFileSystemProvider
       providerClass = providerClass.getSuperclass();
     }
     while (providerClass != null);
-    return false;
+    return Optional.empty();
   }
 
   @Contract("null -> null; !null -> !null")
