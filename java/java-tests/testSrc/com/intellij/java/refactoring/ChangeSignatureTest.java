@@ -654,6 +654,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testPreserveEmptyTrailingLeadingLinesJavadoc() {
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
   public void testMultilineJavadocWithoutFormatting() { // IDEA-281568
     JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
@@ -900,6 +908,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
     }, false);
+  }
+
+  public void testPreserveEmptyTrailingLeadingLinesJavadocMarkdown() {
+      doTest(null, null, null, method -> new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+        ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+        ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+      }, false);
   }
 
   public void testNoGapsInParameterTagsMarkdown() { // IDEA-139879
