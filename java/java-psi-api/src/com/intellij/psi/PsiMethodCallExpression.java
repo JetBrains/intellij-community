@@ -32,4 +32,9 @@ public interface PsiMethodCallExpression extends PsiCallExpression {
    */
   @NotNull
   PsiReferenceExpression getMethodExpression();
+
+  @Override
+  default JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    return getMethodExpression().multiResolve(incompleteCode);
+  }
 }

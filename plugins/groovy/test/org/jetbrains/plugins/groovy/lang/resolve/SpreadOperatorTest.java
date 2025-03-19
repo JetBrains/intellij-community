@@ -37,7 +37,7 @@ public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
   @Test
   public void spreadMethod() {
     GrMethodCall expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolve(false);
+    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     Assert.assertEquals(0, results.length);
     LightGroovyTestCase.assertType(null, expression.getType());
   }
@@ -45,7 +45,7 @@ public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
   @Test
   public void implicitSpreadMethod() {
     GrMethodCall expression = lastExpression("[[['a']]].getBytes()", GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolve(false);
+    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     Assert.assertEquals(0, results.length);
     LightGroovyTestCase.assertType(null, expression.getType());
   }

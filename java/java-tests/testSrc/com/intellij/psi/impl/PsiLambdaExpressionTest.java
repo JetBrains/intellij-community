@@ -2,7 +2,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiLambdaParameterType;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -50,7 +49,48 @@ public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTe
     PsiReferenceExpression ref =
       PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
     assertNotNull(ref);
-    // Would be nice to have but cannot determine now: functions are different
-    assertTrue(ref.getType() instanceof PsiLambdaParameterType);
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+  }
+
+  public void testLambdaParameterTypeMultiResolveConstructor() {
+    myFixture.configureByText("Test.java", """
+      import java.util.function.Consumer;
+      import java.util.function.Function;
+      
+      class Test {
+          Test(Consumer<String> cons, int a) {}
+          Test(Function<String, String> cons, int a, int b) {}
+          Test(Consumer<String> cons, int a, int b, int c) {}
+      
+          Object test() {
+              return new Test(s -> <caret>s);
+          }
+      }
+      """);
+    PsiReferenceExpression ref =
+      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
+    assertNotNull(ref);
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+  }
+
+  public void testLambdaParameterTypeMultiResolveConstructorDiamond() {
+    myFixture.configureByText("Test.java", """
+      import java.util.function.Consumer;
+      import java.util.function.Function;
+      
+      class Test<T> {
+          Test(Consumer<T> cons, int a) {}
+          Test(Function<T, String> cons, int a, int b) {}
+          Test(Consumer<T> cons, int a, int b, int c) {}
+      
+          Test<String> test() {
+              return new Test<>(s -> <caret>s);
+          }
+      }
+      """);
+    PsiReferenceExpression ref =
+      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
+    assertNotNull(ref);
+    assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
   }
 }

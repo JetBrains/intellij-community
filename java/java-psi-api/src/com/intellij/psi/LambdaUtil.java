@@ -410,8 +410,8 @@ public final class LambdaUtil {
           final PsiCall contextCall = (PsiCall)gParent;
           JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
           PsiElement resultElement = resolveResult.getElement();
-          if (resultElement == null && contextCall instanceof PsiMethodCallExpression) {
-            return tryGetFunctionalTypeFromMultiResolve(expression, tryToSubstitute, (PsiMethodCallExpression)contextCall, lambdaIdx);
+          if (resultElement == null) {
+            return tryGetFunctionalTypeFromMultiResolve(expression, tryToSubstitute, contextCall, lambdaIdx);
           }
           LOG.assertTrue(!(MethodCandidateInfo.isOverloadCheck(contextCall.getArgumentList()) &&
                            resultElement instanceof PsiMethod &&
@@ -446,26 +446,23 @@ public final class LambdaUtil {
    */
   private static @Nullable PsiType tryGetFunctionalTypeFromMultiResolve(PsiElement expression,
                                                                         boolean tryToSubstitute,
-                                                                        PsiMethodCallExpression contextCall,
+                                                                        PsiCall contextCall,
                                                                         int lambdaIdx) {
-    JavaResolveResult[] results = contextCall.getMethodExpression().multiResolve(true);
-    if (results.length > 1) {
-      PsiType firstType = null;
-      for (JavaResolveResult result : results) {
-        PsiType substitutedType = getSubstitutedType(expression, tryToSubstitute, lambdaIdx, result);
-        if (substitutedType == null) {
-          return null;
-        }
-        if (firstType == null) {
-          firstType = substitutedType;
-        }
-        else if (!substitutedType.equals(firstType)) {
-          return null;
-        }
+    JavaResolveResult[] results = getCallCandidates(contextCall);
+    PsiType firstType = null;
+    for (JavaResolveResult result : results) {
+      PsiType substitutedType = getSubstitutedType(expression, tryToSubstitute, lambdaIdx, result);
+      if (substitutedType == null) {
+        return null;
       }
-      return firstType;
+      if (firstType == null) {
+        firstType = substitutedType;
+      }
+      else if (!substitutedType.equals(firstType)) {
+        return null;
+      }
     }
-    return null;
+    return firstType;
   }
 
   private static @Nullable PsiType getSubstitutedType(PsiElement expression,
@@ -514,15 +511,8 @@ public final class LambdaUtil {
           gParent = gParent.getParent();
         }
 
-        JavaResolveResult[] results = null;
-        if (gParent instanceof PsiMethodCallExpression) {
-          results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
-        }
-        else if (gParent instanceof PsiConstructorCall){
-          results = getConstructorCandidates((PsiConstructorCall)gParent);
-        }
-
-        if (results != null) {
+        if (gParent instanceof PsiCall) {
+          JavaResolveResult[] results = getCallCandidates((PsiCall)gParent);
           final Set<PsiType> types = new HashSet<>();
           for (JavaResolveResult result : results) {
             Computable<PsiType> computeType = () -> getSubstitutedType(functionalExpression, true, lambdaIdx, result);
@@ -540,25 +530,25 @@ public final class LambdaUtil {
     return false;
   }
 
-  private static JavaResolveResult @Nullable [] getConstructorCandidates(PsiConstructorCall parentCall) {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(parentCall.getProject());
-    PsiExpressionList argumentList = parentCall.getArgumentList();
-    if (argumentList != null) {
-      PsiClassType classType = null;
-      if (parentCall instanceof PsiNewExpression) {
-        PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parentCall).getClassReference();
-        classType = ref != null ? facade.getElementFactory().createType(ref) : null;
-      }
-      else if (parentCall instanceof PsiEnumConstant) {
-        PsiClass containingClass = ((PsiEnumConstant)parentCall).getContainingClass();
-        classType = containingClass != null ? facade.getElementFactory().createType(containingClass) : null;
-      }
-
-      if (classType != null) {
-        return facade.getResolveHelper().multiResolveConstructor(classType, argumentList, parentCall);
+  private static JavaResolveResult @NotNull [] getCallCandidates(@NotNull PsiCall contextCall) {
+    if (contextCall instanceof PsiNewExpression) {
+      PsiDiamondType diamondType = PsiDiamondType.getDiamondType((PsiNewExpression)contextCall);
+      if (diamondType != null) {
+        JavaResolveResult[] results = diamondType.getStaticFactories();
+        if (results.length > 0) {
+          List<JavaResolveResult> substituted = ContainerUtil.filter(results, result -> {
+            return !ContainerUtil.exists(result.getSubstitutor().getSubstitutionMap().entrySet(),
+                                        e -> PsiUtil.resolveClassInClassTypeOnly(e.getValue()) == e.getKey());
+          });
+          if (!substituted.isEmpty()) {
+            // Prefer only candidates where inference was successful
+            return substituted.toArray(JavaResolveResult.EMPTY_ARRAY);
+          }
+        }
+        return results;
       }
     }
-    return null;
+    return contextCall.multiResolve(true);
   }
 
 

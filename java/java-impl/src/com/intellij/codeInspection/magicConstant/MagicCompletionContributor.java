@@ -92,7 +92,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
       if (call == null) return Collections.emptyList();
 
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
-      JavaResolveResult[] methods = getMethodCandidates(call, resolveHelper);
+      JavaResolveResult[] methods = call.multiResolve(true);
       for (JavaResolveResult resolveResult : methods) {
         PsiElement element = resolveResult.getElement();
         if (!(element instanceof PsiMethod method)) return Collections.emptyList();
@@ -175,26 +175,6 @@ public final class MagicCompletionContributor extends CompletionContributor impl
       }
     }
     return new ArrayList<>(result);
-  }
-
-  private static @NotNull JavaResolveResult @NotNull [] getMethodCandidates(PsiCall call, PsiResolveHelper resolveHelper) {
-    if (call instanceof PsiMethodCallExpression) {
-      return ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true);
-    }
-    if (call instanceof PsiNewExpression) {
-      PsiType type = ((PsiExpression)call).getType();
-      PsiExpressionList argumentList = call.getArgumentList();
-      if (type instanceof PsiClassType && argumentList != null) {
-        return resolveHelper.multiResolveConstructor((PsiClassType)type, argumentList, call);
-      }
-    }
-    if (call instanceof PsiEnumConstant) {
-      JavaResolveResult result = call.resolveMethodGenerics();
-      if (result != JavaResolveResult.EMPTY) {
-        return new JavaResolveResult[]{result};
-      }
-    }
-    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   private static void addCompletionVariants(final @NotNull CompletionParameters parameters,

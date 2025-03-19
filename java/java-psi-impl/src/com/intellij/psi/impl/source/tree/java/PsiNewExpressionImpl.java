@@ -203,8 +203,13 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
 
   @Override
   public @NotNull JavaResolveResult resolveMethodGenerics() {
-    ResolveResult[] results = getConstructorFakeReference().multiResolve(false);
-    return results.length == 1 ? (JavaResolveResult)results[0] : JavaResolveResult.EMPTY;
+    JavaResolveResult[] results = multiResolve(false);
+    return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+  }
+
+  @Override
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    return (JavaResolveResult[])getConstructorFakeReference().multiResolve(incompleteCode);
   }
 
   @Override

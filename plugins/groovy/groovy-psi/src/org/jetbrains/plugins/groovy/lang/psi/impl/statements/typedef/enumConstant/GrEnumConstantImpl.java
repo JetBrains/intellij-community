@@ -133,7 +133,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   @Override
   public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
-    return multiResolve(true);
+    return multiResolveGroovy(true);
   }
 
   @Override
@@ -174,7 +174,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolveGroovy(boolean incompleteCode) {
     return myReference.multiResolve(incompleteCode);
   }
 

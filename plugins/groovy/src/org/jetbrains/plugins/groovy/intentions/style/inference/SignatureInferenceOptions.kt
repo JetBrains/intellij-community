@@ -47,7 +47,7 @@ open class SignatureInferenceContext(val ignored: List<GrMethod>) {
   fun GrExpression.staticType(): PsiType? {
     return when (this) {
       is GrMethodCall -> {
-        val resolveResults = multiResolve(false)
+        val resolveResults = multiResolveGroovy(false)
         val types = resolveResults.mapNotNull { getStaticReturnType(it as? GroovyMethodResult, this) }
         if (types.isEmpty()) {
           return type

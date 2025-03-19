@@ -1153,13 +1153,7 @@ final class ExpressionChecker {
       }
       return;
     }
-    PsiElement place = list;
-    if (constructorCall instanceof PsiNewExpression newExpression) {
-      PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-      if (anonymousClass != null) place = anonymousClass;
-    }
-
-    JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, place);
+    JavaResolveResult[] results = constructorCall.multiResolve(false);
     MethodCandidateInfo result = null;
     if (results.length == 1) result = (MethodCandidateInfo)results[0];
 

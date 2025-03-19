@@ -150,6 +150,7 @@ class NewLambdaHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
   @Test void testStopAtTypeCastWhenSearchForTopMostNode() { doTest(); }
   @Test void testLambdaWithExplicitTypeAndTargetTypeParameter() { doTest(); }
   @Test void testAmbiguousConstructorCallWithLambdaInside() { doTest(); }
+  @Test void testMultiResolveSameFunction() {doTest();}
 
   @Override
   protected @NotNull String getRelativePath() {

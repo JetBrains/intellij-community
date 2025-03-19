@@ -188,4 +188,9 @@ public abstract class PsiDiamondType extends PsiType {
   }
 
   public abstract @Nullable JavaResolveResult getStaticFactory();
+
+  /**
+   * @return array of potentially applicable static factories
+   */
+  public abstract JavaResolveResult @NotNull[] getStaticFactories();
 }

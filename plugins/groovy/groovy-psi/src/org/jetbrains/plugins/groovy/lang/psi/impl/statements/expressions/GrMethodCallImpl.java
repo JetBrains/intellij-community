@@ -79,7 +79,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   }
 
   @Override
-  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolveGroovy(boolean incompleteCode) {
     final GroovyMethodCallReference implicitCallReference = getImplicitCallReference();
     if (implicitCallReference != null) {
       return implicitCallReference.multiResolve(incompleteCode);

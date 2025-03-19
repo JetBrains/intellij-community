@@ -152,7 +152,7 @@ private fun computeInvocationKind(block: GrFunctionalExpression): InvocationKind
   if (call.getArguments()?.none { (it as? ExpressionArgument)?.expression?.skipParenthesesDownOrNull() === block } == true) {
     return UNKNOWN
   }
-  val method = call.multiResolve(false).firstOrNull()?.element as? GrGdkMethod
+  val method = call.multiResolveGroovy(false).firstOrNull()?.element as? GrGdkMethod
   val primaryInvocationKind = when (method?.name) {
     in trustedMethodsForExecutingOnce -> IN_PLACE_ONCE
     in trustedMethodsForExecutingManyTimes -> IN_PLACE_UNKNOWN

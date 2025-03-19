@@ -144,6 +144,11 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   @Override
+  public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    return myReference.multiResolve(incompleteCode);
+  }
+
+  @Override
   public @NotNull JavaResolveResult resolveMethodGenerics() {
     return CachedValuesManager.getCachedValue(this, () -> {
       PsiClass containingClass = getContainingClass();

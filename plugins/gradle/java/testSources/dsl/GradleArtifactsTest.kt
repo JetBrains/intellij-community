@@ -64,7 +64,7 @@ class GradleArtifactsTest : GradleCodeInsightTestCase() {
     // foo configuration doesn't exist
     testJavaProject(gradleVersion) {
       testBuildscript("artifacts { <caret>foo('artifactNotation') }") {
-        assertEmpty(elementUnderCaret(GrMethodCall::class.java).multiResolve(false))
+        assertEmpty(elementUnderCaret(GrMethodCall::class.java).multiResolveGroovy(false))
       }
     }
   }
@@ -80,7 +80,7 @@ class GradleArtifactsTest : GradleCodeInsightTestCase() {
     testJavaProject(gradleVersion) {
       testBuildscript(expression) {
         val call = elementUnderCaret(GrMethodCall::class.java)
-        val result = assertOneElement(call.multiResolve(false))
+        val result = assertOneElement(call.multiResolveGroovy(false))
         val method = assertInstanceOf<PsiMethod>(result.element)
         methodTest(method, "archives", GRADLE_API_ARTIFACT_HANDLER)
         assertTrue(result.isApplicable)
@@ -98,7 +98,7 @@ class GradleArtifactsTest : GradleCodeInsightTestCase() {
     testJavaProject(gradleVersion) {
       testBuildscript(expression) {
         val call = elementUnderCaret(GrMethodCall::class.java)
-        val result = assertOneElement(call.multiResolve(false))
+        val result = assertOneElement(call.multiResolveGroovy(false))
         val method = assertInstanceOf<PsiMethod>(result.element)
         methodTest(method, "archives", GRADLE_API_ARTIFACT_HANDLER)
         assertTrue(result.isApplicable)

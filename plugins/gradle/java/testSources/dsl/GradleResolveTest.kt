@@ -24,7 +24,7 @@ class GradleResolveTest: GradleCodeInsightTestCase() {
     testEmptyProject(gradleVersion) {
       testBuildscript("<caret>new Date()") {
         val expression = elementUnderCaret(GrNewExpression::class.java)
-        val results = expression.multiResolve(false)
+        val results = expression.multiResolveGroovy(false)
         assertEquals(1, results.size)
         val method = assertInstanceOf<PsiMethod>(results[0].element)
         assertTrue(method.isConstructor)
@@ -39,7 +39,7 @@ class GradleResolveTest: GradleCodeInsightTestCase() {
     testEmptyProject(gradleVersion) {
       testBuildscript("<caret>new Date(1l)") {
         val expression = elementUnderCaret(GrNewExpression::class.java)
-        val results = expression.multiResolve(false)
+        val results = expression.multiResolveGroovy(false)
         assertEquals(1, results.size)
         val method = assertInstanceOf<PsiMethod>(results[0].element)
         assertTrue(method.isConstructor)
@@ -58,7 +58,7 @@ class GradleResolveTest: GradleCodeInsightTestCase() {
         }
       """.trimIndent()) {
         val expression = elementUnderCaret(GrMethodCall::class.java)
-        val results = expression.multiResolve(false)
+        val results = expression.multiResolveGroovy(false)
         assertEquals(1, results.size)
         assertInstanceOf<PsiMethod>(results[0].element)
       }
