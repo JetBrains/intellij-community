@@ -6400,6 +6400,42 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-43122
+  public void testPropertyOfImportedClass() {
+    doMultiFileStubAwareTest("str",
+                             """
+                               from mod import A, B
+                               
+                               a = A()
+                               b = B(a)
+                               expr = b.b_attr
+                               """);
+  }
+
+  // PY-43122
+  public void testPropertyOfClass() {
+    doTest("str",
+                             """
+                               class A:
+                                   def __init__(self) -> None:
+                                       pass
+                               
+                                   @property
+                                   def a_property(self) -> str:
+                                       return 'foo'
+                               
+                               
+                               class B:
+                                   def __init__(self, a: A) -> None:
+                                       self.b_attr = a.a_property
+                               
+                               
+                               a = A()
+                               b = B(a)
+                               expr = b.b_attr
+                               """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
