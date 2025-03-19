@@ -18,6 +18,8 @@ data class TerminalContentUpdatedEvent(
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,
+  val firstCharIndex: Long,
+  val lastCharIndex: Long,
 ) : TerminalOutputEvent
 
 @ApiStatus.Internal

@@ -5,21 +5,24 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import com.intellij.platform.rpc.UID
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalInputEvent
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalWriteBytesEvent
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.system.OS
-import com.jetbrains.rhizomedb.EID
 import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.KNOWN_SHELLS
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.getShellNameForStat
 import java.awt.event.KeyEvent
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -43,7 +46,10 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val INPUT_EVENT_ID_FIELD = EventFields.Int("input_event_id")
   private val SESSION_ID = EventFields.Int("session_id")
   private val CHAR_INDEX = EventFields.Long("char_index")
+  private val FIRST_CHAR_INDEX = EventFields.Long("first_char_index")
+  private val LAST_CHAR_INDEX = EventFields.Long("last_char_index")
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MICROSECONDS, "duration_micros")
+  private val REPAINTED_FIELD = EventFields.Boolean("editor_repainted")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -85,6 +91,15 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     SESSION_ID,
     CHAR_INDEX,
     DURATION_FIELD,
+  )
+
+  private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
+    "terminal.frontend.output.latency",
+    SESSION_ID,
+    FIRST_CHAR_INDEX,
+    LAST_CHAR_INDEX,
+    DURATION_FIELD,
+    REPAINTED_FIELD,
   )
 
   @JvmStatic
@@ -139,6 +154,16 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
+  internal fun logFrontendOutputLatency(sessionId: UID, firstCharIndex: Long, lastCharIndex: Long, duration: Duration, repainted: Boolean) {
+    frontendOutputLatencyEvent.log(
+      SESSION_ID with sessionId,
+      FIRST_CHAR_INDEX with firstCharIndex,
+      LAST_CHAR_INDEX with lastCharIndex,
+      DURATION_FIELD with duration,
+      REPAINTED_FIELD with repainted,
+    )
+  }
+
   fun startFrontendTypingActivity(e: KeyEvent): FrontendTypingActivity? {
     ThreadingAssertions.softAssertEventDispatchThread()
     if (e.id != KeyEvent.KEY_TYPED) return null
@@ -172,6 +197,15 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun startBackendOutputActivity(): BackendOutputActivity {
     return BackendOutputActivityImpl()
   }
+
+  @JvmStatic
+  fun startFrontendOutputActivity(
+    sessionFuture: CompletableFuture<TerminalSession>,
+    outputEditor: EditorImpl,
+    alternateBufferEditor: EditorImpl,
+  ): FrontendOutputActivity {
+    return FrontendOutputActivityImpl(sessionFuture, outputEditor, alternateBufferEditor)
+  }
 }
 
 @ApiStatus.Internal
@@ -198,8 +232,16 @@ interface BackendOutputActivity {
   fun charsProcessed(count: Int)
   fun processedCharsReachedTextBuffer()
   fun charProcessingFinished()
+  fun textBufferCharacterIndices(): LongRange
   fun textBufferCollected(event: TerminalContentUpdatedEvent)
   fun eventCollected(event: TerminalContentUpdatedEvent)
+}
+
+@ApiStatus.Internal
+interface FrontendOutputActivity {
+  fun eventReceived(event: TerminalContentUpdatedEvent)
+  fun beforeModelUpdate()
+  fun afterModelUpdate()
 }
 
 private val frontendTypingActivityId = AtomicInteger()
@@ -411,8 +453,8 @@ private class BackendOutputActivityImpl : BackendOutputActivity {
     /**
      * Invoked every time the text buffer is collected ("scrapped").
      */
-    fun textBufferCollected(event: TerminalContentUpdatedEvent, collectedRange: LongRange) {
-      collectedRanges[event.toIdentity()] = collectedRange
+    fun textBufferCollected(event: TerminalContentUpdatedEvent) {
+      collectedRanges[event.toIdentity()] = event.firstCharIndex..event.lastCharIndex
     }
 
     /**
@@ -478,13 +520,14 @@ private class BackendOutputActivityImpl : BackendOutputActivity {
 
   override fun charProcessingFinished() = processingState.charProcessingFinished()
 
+  // cross-state safe interaction: these two functions are called under the same text buffer lock textBufferState is updated under
+
+  override fun textBufferCharacterIndices(): LongRange {
+    return textBufferState.textBufferCollected() ?: LongRange.EMPTY
+  }
+
   override fun textBufferCollected(event: TerminalContentUpdatedEvent) {
-    // cross-state safe interaction: this function is called under the same text buffer lock textBufferState is updated under...
-    val collectedRange = textBufferState.textBufferCollected()
-    if (collectedRange != null) {
-      // ...and this thing is backed by a concurrent map, so it's thread-safe
-      eventFlowState.textBufferCollected(event, collectedRange)
-    }
+    eventFlowState.textBufferCollected(event)
   }
 
   override fun eventCollected(event: TerminalContentUpdatedEvent) {
@@ -499,6 +542,95 @@ private class BackendOutputActivityImpl : BackendOutputActivity {
     if (latency.max != null) {
       ReworkedTerminalUsageCollector.logBackendMaxOutputLatency(sessionId, latency.max.index, latency.max.duration)
     }
+  }
+}
+
+private class FrontendOutputActivityImpl(
+  sessionFuture: CompletableFuture<TerminalSession>,
+  private val outputEditor: EditorImpl,
+  private val alternateBufferEditor: EditorImpl,
+) : FrontendOutputActivity {
+
+  private val sessionId = AtomicReference<UID?>()
+  private val pendingEvents = ArrayBlockingQueue<ReceivedEvent>(100)
+  private val pendingPaints = ArrayBlockingQueue<ReceivedEvent>(100)
+  private var editorRepaintRequests = 0L
+  private var editorRepaintRequestsBeforeModelUpdate = 0L
+
+  init {
+    sessionFuture.whenComplete { session, _ ->
+      sessionId.set((session as? FrontendTerminalSession?)?.id?.uid)
+    }
+    outputEditor.setRepaintCallback { editorRepaintRequested() }
+    alternateBufferEditor.setRepaintCallback { editorRepaintRequested() }
+    outputEditor.setPaintCallback { editorPainted() }
+    alternateBufferEditor.setPaintCallback { editorPainted() }
+  }
+
+  override fun eventReceived(event: TerminalContentUpdatedEvent) {
+    pendingEvents.addDroppingOldest(ReceivedEvent(TimeSource.Monotonic.markNow(), event))
+  }
+
+  override fun beforeModelUpdate() {
+    editorRepaintRequestsBeforeModelUpdate = editorRepaintRequests
+  }
+
+  private fun editorRepaintRequested() {
+    ++editorRepaintRequests
+  }
+
+  override fun afterModelUpdate() {
+    val repaintRequested = editorRepaintRequests > editorRepaintRequestsBeforeModelUpdate
+    val editorShowing = outputEditor.component.isShowing || alternateBufferEditor.component.isShowing
+    if (!editorShowing) {
+      pendingPaints.clear() // editor no longer showing, so if there were unprocessed requests, they won't complete
+    }
+    val repaintExpected = repaintRequested && editorShowing
+    while (true) {
+      val pendingEvent = pendingEvents.poll() ?: break
+      if (repaintExpected) {
+        pendingPaints.addDroppingOldest(pendingEvent)
+      }
+      else {
+        reportLatency(pendingEvent, false)
+      }
+    }
+  }
+
+  private fun editorPainted() {
+    while (true) {
+      val pendingPaint = pendingPaints.poll() ?: break
+      reportLatency(pendingPaint, true)
+    }
+  }
+
+  private fun reportLatency(receivedEvent: ReceivedEvent, painted: Boolean) {
+    val latency = receivedEvent.time.elapsedNow()
+    val sessionId = this.sessionId.get()
+    if (sessionId == null) {
+      LOG.error("For some reason sessionId was not initialized, likely a bug")
+      return
+    }
+    ReworkedTerminalUsageCollector.logFrontendOutputLatency(
+      sessionId = sessionId,
+      firstCharIndex = receivedEvent.event.firstCharIndex,
+      lastCharIndex = receivedEvent.event.lastCharIndex,
+      duration = latency,
+      repainted = painted,
+    )
+  }
+
+  private data class ReceivedEvent(val time: TimeMark, val event: TerminalContentUpdatedEvent)
+}
+
+private fun <T> ArrayBlockingQueue<T>.addDroppingOldest(element: T) {
+  var overflow = false
+  while (!offer(element)) {
+    overflow = true
+    poll()
+  }
+  if (overflow) {
+    LOG.warn("Overflow in the frontend output activity queue, too many requests, maybe the queue is too small?")
   }
 }
 

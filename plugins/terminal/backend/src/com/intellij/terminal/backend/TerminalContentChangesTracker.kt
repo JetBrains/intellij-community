@@ -102,7 +102,8 @@ internal class TerminalContentChangesTracker(
     anyLineChanged = false
 
     val styles = output.styleRanges.map { it.toDto() }
-    val contentUpdatedEvent = TerminalContentUpdatedEvent(output.text, styles, logicalLineIndex)
+    val charRange = fusActivity.textBufferCharacterIndices()
+    val contentUpdatedEvent = TerminalContentUpdatedEvent(output.text, styles, logicalLineIndex, charRange.first, charRange.last)
     fusActivity.textBufferCollected(contentUpdatedEvent)
     return contentUpdatedEvent
   }
