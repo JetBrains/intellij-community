@@ -447,7 +447,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   private static void resolveUrlBasedPointers(@NotNull FilePartNodeRoot root) {
     for (FilePartNode child : root.children) {
       if (child.isUrlBased()) {
-        final var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.myUrl(child.myFileOrUrl));
+        var resolvedChild = VirtualFileManager.getInstance().findFileByUrl(FilePartNode.urlOf(child.fileOrUrl));
         if (resolvedChild != null) {
           child = child.replaceWithFPPN(resolvedChild, root);
         }
@@ -482,7 +482,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
     }
     else {
-      throw new IllegalStateException("Node for " + node.myFileOrUrl + " is not a url-based");
+      throw new IllegalStateException("Node for " + node.fileOrUrl + " is not a url-based");
     }
   }
 

@@ -251,7 +251,7 @@ public final class FilePartNodeRoot extends FilePartNode {
                                                   @Nullable VirtualFile currentFile,
                                                   @NotNull String name) {
     if (currentFile == null) {
-      return new UrlPartNode(name, myUrl(currentNode.myFileOrUrl), currentFS);
+      return new UrlPartNode(name, urlOf(currentNode.fileOrUrl), currentFS);
     }
     int nameId = name.equals(JarFileSystem.JAR_SEPARATOR) ? JAR_SEPARATOR_NAME_ID : getNameId(currentFile);
     return new FilePartNode(nameId, currentFile, currentFS);
@@ -333,9 +333,9 @@ public final class FilePartNodeRoot extends FilePartNode {
     FilePartNode node = pointer.getNode();
     int remainingLeaves = node.removeLeaf(pointer);
     if (remainingLeaves == 0) {
-      VirtualFile file = myFile(node.myFileOrUrl);
+      VirtualFile file = fileOrNull(node.fileOrUrl);
       if (file == null) {
-        removeEmptyNodesByPath(VfsUtilCore.urlToPath(myUrl(node.myFileOrUrl)));
+        removeEmptyNodesByPath(VfsUtilCore.urlToPath(urlOf(node.fileOrUrl)));
       }
       else {
         List<VirtualFile> parts = getHierarchy(file);

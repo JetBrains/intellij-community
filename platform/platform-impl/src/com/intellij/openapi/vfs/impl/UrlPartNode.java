@@ -15,18 +15,20 @@ import org.jetbrains.annotations.NotNull;
 final class UrlPartNode extends FilePartNode {
   private final @NotNull String name;
 
-  UrlPartNode(@NotNull String name, @NotNull String parentUrl, @NotNull NewVirtualFileSystem fs) {
+  UrlPartNode(@NotNull String name,
+              @NotNull String parentUrl,
+              @NotNull NewVirtualFileSystem fs) {
     super(fs);
     this.name = name;
-    myFileOrUrl = childUrl(parentUrl, name, fs);
+    fileOrUrl = childUrl(parentUrl, name, fs);
     if (name.isEmpty()) {
       throw new IllegalArgumentException('\'' + name + '\'');
     }
   }
 
-  @NotNull
+
   @Override
-  CharSequence getName() {
+  @NotNull CharSequence getName() {
     return name;
   }
 
@@ -38,6 +40,6 @@ final class UrlPartNode extends FilePartNode {
 
   @Override
   public @NonNls String toString() {
-    return "UrlPartNode: '"+getName() + "'; children:"+children.length;
+    return "UrlPartNode: '" + getName() + "'; children:" + children.length;
   }
 }
