@@ -2,9 +2,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiClassInitializerImpl;
 import com.intellij.psi.impl.source.tree.java.ClassInitializerElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaClassInitializerElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public class JavaClassInitializerElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaClassInitializerElementType() {
     super("CLASS_INITIALIZER");
   }
@@ -27,10 +25,5 @@ public class JavaClassInitializerElementType extends JavaStubElementType impleme
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new ClassInitializerElement();
-  }
-
-  @Override
-  public PsiClassInitializer createPsi(final @NotNull ASTNode node) {
-    return new PsiClassInitializerImpl(node);
   }
 }

@@ -2,9 +2,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaModifierListElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public class JavaModifierListElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaModifierListElementType() {
     super("MODIFIER_LIST");
   }
@@ -27,10 +25,5 @@ public class JavaModifierListElementType extends JavaStubElementType implements 
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new ModifierListElement();
-  }
-
-  @Override
-  public PsiModifierList createPsi(@NotNull ASTNode node) {
-    return new PsiModifierListImpl(node);
   }
 }

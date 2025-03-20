@@ -3,10 +3,8 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentProviderElementType;
@@ -15,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class MethodReferenceElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public class MethodReferenceElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public MethodReferenceElementType() {
     super("METHOD_REF_EXPRESSION");
   }
@@ -23,11 +21,6 @@ public class MethodReferenceElementType extends JavaStubElementType implements I
   @Override
   public @NotNull Set<IElementType> getParents() {
     return Collections.singleton(BasicJavaElementType.BASIC_METHOD_REF_EXPRESSION);
-  }
-
-  @Override
-  public PsiMethodReferenceExpression createPsi(@NotNull ASTNode node) {
-    return new PsiMethodReferenceExpressionImpl(node);
   }
 
   @Override

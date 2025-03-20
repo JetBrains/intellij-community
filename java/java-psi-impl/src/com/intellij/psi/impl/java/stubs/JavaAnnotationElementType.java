@@ -2,10 +2,8 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentProviderElementType;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaAnnotationElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public class JavaAnnotationElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaAnnotationElementType() {
     super("ANNOTATION");
   }
@@ -27,10 +25,5 @@ public class JavaAnnotationElementType extends JavaStubElementType implements IC
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new AnnotationElement();
-  }
-
-  @Override
-  public PsiAnnotation createPsi(@NotNull ASTNode node) {
-    return new PsiAnnotationImpl(node);
   }
 }

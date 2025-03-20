@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.JavaNonCompositeElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypePsiElementMappingRegistry;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -69,10 +69,10 @@ public class JavaParserDefinition implements ParserDefinition {
   @Override
   public @NotNull PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
-    if (type instanceof JavaNonCompositeElementType) {
-      return ((JavaNonCompositeElementType)type).createPsi(node);
+    PsiElement psi = JavaStubElementTypePsiElementMappingRegistry.getInstance().createPsi(node);
+    if (psi != null) {
+      return psi;
     }
-
     // This exception is caught in com.intellij.psi.impl.source.tree.injected.InjectionRegistrarImpl.findNewInjectionHost
     // Please, check that code if you make any changes here
     throw new IllegalArgumentException("Not a Java node: " + node + " (" + type + ", " + type.getLanguage() + ")");

@@ -2,10 +2,8 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.NameValuePairElement;
-import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentProviderElementType;
@@ -15,15 +13,9 @@ import java.util.Collections;
 import java.util.Set;
 
 public final class JavaNameValuePairType extends JavaStubElementType implements ICompositeElementType,
-                                                                             ParentProviderElementType,
-                                                                             JavaNonCompositeElementType {
+                                                                             ParentProviderElementType {
   public JavaNameValuePairType() {
     super("NAME_VALUE_PAIR", true);
-  }
-
-  @Override
-  public PsiNameValuePair createPsi(@NotNull ASTNode node) {
-    return new PsiNameValuePairImpl(node);
   }
 
   @Override

@@ -4,7 +4,6 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.impl.source.PackageAccessibilityStatementElement;
-import com.intellij.psi.impl.source.PsiPackageAccessibilityStatementImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
@@ -16,8 +15,7 @@ import java.util.Set;
 
 
 public class JavaPackageAccessibilityStatementElementType extends JavaStubElementType implements ICompositeElementType,
-                                                                                              ParentProviderElementType,
-                                                                                              JavaNonCompositeElementType {
+                                                                                              ParentProviderElementType {
   private final IElementType myParentElementType;
 
   public JavaPackageAccessibilityStatementElementType(@NotNull String debugName, @NotNull IElementType parentElementType) {
@@ -25,10 +23,6 @@ public class JavaPackageAccessibilityStatementElementType extends JavaStubElemen
     myParentElementType = parentElementType;
   }
 
-  @Override
-  public PsiPackageAccessibilityStatement createPsi(@NotNull ASTNode node) {
-    return new PsiPackageAccessibilityStatementImpl(node);
-  }
 
   @Override
   public @NotNull ASTNode createCompositeNode() {

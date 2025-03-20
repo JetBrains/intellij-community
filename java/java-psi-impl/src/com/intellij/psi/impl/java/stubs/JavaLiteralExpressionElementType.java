@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
@@ -12,14 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaLiteralExpressionElementType extends JavaStubElementType implements JavaNonCompositeElementType, ParentProviderElementType {
+public class JavaLiteralExpressionElementType extends JavaStubElementType implements ParentProviderElementType {
   public JavaLiteralExpressionElementType() {
     super("LITERAL_EXPRESSION");
-  }
-
-  @Override
-  public PsiElement createPsi(@NotNull ASTNode node) {
-    return new PsiLiteralExpressionImpl(node);
   }
 
   @Override

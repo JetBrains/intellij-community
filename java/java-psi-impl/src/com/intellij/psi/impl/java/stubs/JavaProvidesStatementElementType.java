@@ -2,9 +2,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiProvidesStatement;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiProvidesStatementImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaProvidesStatementElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public class JavaProvidesStatementElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaProvidesStatementElementType() {
     super("PROVIDES_STATEMENT");
   }
@@ -29,8 +27,4 @@ public class JavaProvidesStatementElementType extends JavaStubElementType implem
     return new CompositeElement(this);
   }
 
-  @Override
-  public PsiProvidesStatement createPsi(@NotNull ASTNode node) {
-    return new PsiProvidesStatementImpl(node);
-  }
 }

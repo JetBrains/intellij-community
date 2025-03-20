@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.source.PsiReferenceListImpl;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentProviderElementType;
@@ -13,8 +11,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public abstract class JavaClassReferenceListElementType extends JavaStubElementType implements ICompositeElementType,
-                                                                                            ParentProviderElementType,
-                                                                                            JavaNonCompositeElementType {
+                                                                                            ParentProviderElementType {
   @NotNull private final IElementType myParentElementType;
 
   public JavaClassReferenceListElementType(@NotNull String id, @NotNull IElementType parentElementType) {
@@ -30,11 +27,6 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     if (type == JavaStubElementTypes.PROVIDES_WITH_LIST) return PsiReferenceList.Role.PROVIDES_WITH_LIST;
     if (type == JavaStubElementTypes.PERMITS_LIST) return PsiReferenceList.Role.PERMITS_LIST;
     throw new RuntimeException("Unknown element type: " + type);
-  }
-
-  @Override
-  public PsiReferenceList createPsi(@NotNull ASTNode node) {
-    return new PsiReferenceListImpl(node);
   }
 
   @Override

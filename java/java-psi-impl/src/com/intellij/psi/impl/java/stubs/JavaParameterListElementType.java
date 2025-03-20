@@ -2,9 +2,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiParameterListImpl;
 import com.intellij.psi.impl.source.tree.java.ParameterListElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaParameterListElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public class JavaParameterListElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaParameterListElementType() {
     super("PARAMETER_LIST");
   }
@@ -27,10 +25,5 @@ public class JavaParameterListElementType extends JavaStubElementType implements
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new ParameterListElement();
-  }
-
-  @Override
-  public PsiParameterList createPsi(final @NotNull ASTNode node) {
-    return new PsiParameterListImpl(node);
   }
 }

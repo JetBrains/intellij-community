@@ -2,9 +2,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiImportList;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiImportListImpl;
 import com.intellij.psi.impl.source.tree.java.ImportListElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public final class JavaImportListElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public final class JavaImportListElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaImportListElementType() {
     super("IMPORT_LIST");
   }
@@ -27,10 +25,5 @@ public final class JavaImportListElementType extends JavaStubElementType impleme
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new ImportListElement();
-  }
-
-  @Override
-  public PsiImportList createPsi(final @NotNull ASTNode node) {
-    return new PsiImportListImpl(node);
   }
 }

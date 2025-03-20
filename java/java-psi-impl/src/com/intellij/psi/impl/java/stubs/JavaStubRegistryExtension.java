@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 public class JavaStubRegistryExtension implements StubRegistryExtension {
   @Override
   public void register(@NotNull StubRegistry registry) {
+    JavaStubElementTypePsiElementMappingRegistry.getInstance();
+    
     registry.registerStubSerializer(JavaParserDefinition.JAVA_FILE, new JavaFileSerializer());
 
     registry.registerStubSerializer(JavaStubElementTypes.LITERAL_EXPRESSION, new JavaLiteralExpressionStubSerializer(JavaStubElementTypes.LITERAL_EXPRESSION));

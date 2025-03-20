@@ -2,9 +2,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiJavaModuleImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class JavaModuleElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType, JavaNonCompositeElementType {
+public class JavaModuleElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaModuleElementType() {
     super("MODULE");
   }
@@ -27,10 +25,5 @@ public class JavaModuleElementType extends JavaStubElementType implements ICompo
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new CompositeElement(this);
-  }
-
-  @Override
-  public PsiJavaModule createPsi(@NotNull ASTNode node) {
-    return new PsiJavaModuleImpl(node);
   }
 }
