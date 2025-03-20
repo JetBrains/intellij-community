@@ -196,15 +196,22 @@ fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
 }
 
 fun convertContent(element: KtStringTemplateExpression): String {
+    val escapedDollarReplacementText by lazy {
+        KtPsiFactory(element.project).createMultiDollarBlockStringTemplateEntry(
+            KtPsiFactory(element.project).createExpression("\"$\""),
+            element.entryPrefixLength
+        ).text
+    }
     val text = buildString {
         val entries = element.entries
         for ((index, entry) in entries.withIndex()) {
             val value = entry.value()
 
-            if (value.endsWith("$") && index < entries.size - 1) {
+            if (value.endsWith("$") && index < entries.lastIndex) {
                 val nextChar = entries[index + 1].value().first()
                 if (nextChar.isJavaIdentifierStart() || nextChar == '{') {
-                    append("\${\"$\"}")
+                    append(value.substring(0, value.length - 1))
+                    append(escapedDollarReplacementText)
                     continue
                 }
             }
@@ -225,7 +232,6 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
         return false
     }
     if (!isSingleQuoted()) return false // already raw
-    if (interpolationPrefix != null) return false // unsupported
 
     val escapeEntries = entries.filterIsInstance<KtEscapeStringTemplateEntry>()
     for (entry in escapeEntries) {
@@ -239,7 +245,14 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
 
 fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {
     val text = convertContent(this)
-    return replaced(KtPsiFactory(project).createExpression("\"\"\"" + text + "\"\"\""))
+    val prefixLength = templatePrefixLength
+    val factory = KtPsiFactory(project)
+    val rawReplacement = when {
+        prefixLength > 1 -> factory.createMultiDollarStringTemplate(content = text, prefixLength = prefixLength, forceMultiQuoted = true)
+        else -> factory.createRawStringTemplate(text)
+    }
+    val replacement = if (prefixLength > 1) simplifyDollarEntries(rawReplacement) else rawReplacement
+    return replaced(replacement)
 }
 
 private fun KtExpression?.isPrefixedString(): Boolean =

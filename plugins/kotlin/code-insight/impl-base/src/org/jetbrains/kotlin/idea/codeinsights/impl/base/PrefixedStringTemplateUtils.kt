@@ -460,8 +460,21 @@ private fun KtStringTemplateEntry.isSafeToReplaceWithDollar(prefixLength: Int): 
     if (prevSibling !is KtLiteralStringTemplateEntry) return true
     val nextSiblingStringLiteral = nextSibling as? KtLiteralStringTemplateEntry ?: return true
     if (!nextSiblingStringLiteral.canBeConsideredIdentifierOrBlock()) return true
-    val trailingDollarsLength = prevSibling.trailingDollarsLength
+    val trailingDollarsLength = countTrailingDollarsInPreviousEntries()
     return trailingDollarsLength + 1 < prefixLength
+}
+
+private fun KtStringTemplateEntry.countTrailingDollarsInPreviousEntries(): Int {
+    var count = 0
+    var prev = prevSibling
+    while (prev is KtLiteralStringTemplateEntry) {
+        val trailingDollarsLength = prev.text.takeLastWhile { it.toString() == "$" }.length
+        count += trailingDollarsLength
+        if (prev.textLength == trailingDollarsLength) {
+            prev = prev.prevSibling
+        } else break
+    }
+    return count
 }
 
 private val KtStringTemplateEntry.trailingDollarsLength: Int

@@ -3,7 +3,7 @@
 
 fun main(args: Array<String>) {
     val x = "x"
-    val y = $$"$${x.<caret>length}"
+    val y = $$"""$${x.length}"""
 
     println(y) //ouput is 1
 

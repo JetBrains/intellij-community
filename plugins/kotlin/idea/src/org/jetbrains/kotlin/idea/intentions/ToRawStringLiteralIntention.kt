@@ -27,6 +27,7 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
             // the replacement may make things even worse, suppress the action
             return false
         }
+        if (element.interpolationPrefix != null) return false // K2 only
         val text = element.text
         if (text.startsWith("\"\"\"")) return false // already raw
 

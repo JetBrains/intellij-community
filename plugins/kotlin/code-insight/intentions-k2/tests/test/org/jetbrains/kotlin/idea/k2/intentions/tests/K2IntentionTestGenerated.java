@@ -5785,9 +5785,34 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/dollar2.kt");
         }
 
+        @TestMetadata("multiDollarLongerPrefix.kt")
+        public void testMultiDollarLongerPrefix() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/multiDollarLongerPrefix.kt");
+        }
+
         @TestMetadata("multiDollarPrefix.kt")
         public void testMultiDollarPrefix() throws Exception {
             runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/multiDollarPrefix.kt");
+        }
+
+        @TestMetadata("multiDollarPrefixEscaping.kt")
+        public void testMultiDollarPrefixEscaping() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/multiDollarPrefixEscaping.kt");
+        }
+
+        @TestMetadata("multiDollarPrefixMultipleEscaped.kt")
+        public void testMultiDollarPrefixMultipleEscaped() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/multiDollarPrefixMultipleEscaped.kt");
+        }
+
+        @TestMetadata("multiDollarPrefixSafeDollars.kt")
+        public void testMultiDollarPrefixSafeDollars() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/multiDollarPrefixSafeDollars.kt");
+        }
+
+        @TestMetadata("multiDollarPrefixUnsafeDollars.kt")
+        public void testMultiDollarPrefixUnsafeDollars() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/multiDollarPrefixUnsafeDollars.kt");
         }
 
         @TestMetadata("quotesAndSlashes.kt")
