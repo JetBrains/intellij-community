@@ -42,4 +42,9 @@ internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
   fun updateFrom() = panel.reset()
 }
 
-internal fun getUpdateMethods(): List<UpdateMethod> = listOf(UpdateMethod.MERGE, UpdateMethod.REBASE)
+internal fun getUpdateMethods(): List<UpdateMethod> = listOf(
+  UpdateMethod.MERGE,
+  UpdateMethod.REBASE,
+  UpdateMethod.FETCH_DEFAULT,
+  UpdateMethod.FETCH_ALL,
+)
