@@ -86,7 +86,7 @@ internal class GitCompareWithBranchPopup(
 
   override fun getTreeEmptyText(searchPattern: String?): String = GitBundle.message("git.compare.with.branch.search.not.found", searchPattern)
 
-  override fun createRenderer(treeStep: GitCompareWithBranchPopupStep): GitBranchesTreeRenderer =
+  override fun createRenderer(): GitBranchesTreeRenderer =
     GitBranchesTreePopupMinimalRenderer(treeStep)
 
   override fun getOldUiHeaderComponent(c: JComponent?): JComponent? =

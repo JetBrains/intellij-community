@@ -109,7 +109,7 @@ internal class GitBranchesTreePopup(
     if (nextStep is GitBranchesTreePopupStep) GitBranchesTreePopup(project, nextStep, this, parentValue)
     else super.createPopup(this, nextStep, parentValue)
 
-  override fun createRenderer(treeStep: GitBranchesTreePopupStep): GitBranchesTreeRenderer {
+  override fun createRenderer(): GitBranchesTreeRenderer {
     return GitBranchesTreePopupRenderer(treeStep)
   }
 

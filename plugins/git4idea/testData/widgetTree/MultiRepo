@@ -9,19 +9,20 @@
 -project
 ------
 -Common Local Branches
- master
- -another
-  -group
-   test
- -group
-  test
- test
+ master [nodes/favorite.svg]
+ newBranch [vcs/branchNode.svg]
+ -another [nodes/folder.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+ -group [nodes/folder.svg]
+  test [vcs/branchNode.svg]
+ test [vcs/branchNode.svg]
 -Common Remote Branches
- -origin
-  master
-  -another
-   -group
-    test
-  -group
-   test
-  test
+ -origin [nodes/folder.svg]
+  master [nodes/favorite.svg]
+  -another [nodes/folder.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+  test [vcs/branchNode.svg]

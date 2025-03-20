@@ -8,20 +8,23 @@
 -bro-repo
 -project
 ------
+-Recent Branches in project
+ newBranch [icons/currentBranchLabel.svg]
 -Local Branches in project
- master
- -another
-  -group
-   test
- -group
-  test
- test
+ newBranch [icons/currentBranchLabel.svg]
+ master [nodes/favorite.svg]
+ -another [nodes/folder.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+ -group [nodes/folder.svg]
+  test [vcs/branchNode.svg]
+ test [vcs/branchNode.svg]
 -Remote Branches in project
- -origin
-  master
-  -another
-   -group
-    test
-  -group
-   test
-  test
+ -origin [nodes/folder.svg]
+  master [nodes/favorite.svg]
+  -another [nodes/folder.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+  test [vcs/branchNode.svg]

@@ -69,6 +69,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.*
@@ -149,7 +150,8 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
 
   protected abstract fun getTreeEmptyText(searchPattern: String?): @Nls String
 
-  protected abstract fun createRenderer(treeStep: T): GitBranchesTreeRenderer
+  @VisibleForTesting
+  internal abstract fun createRenderer(): GitBranchesTreeRenderer
 
   protected open fun createNextStepPopup(nextStep: PopupStep<*>?, parentValue: Any): WizardPopup =
     createPopup(this, nextStep, parentValue)
@@ -198,6 +200,11 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
   protected open fun getOldUiHeaderComponent(c: JComponent?): JComponent? = c
 
   override fun createContent(): JComponent {
+    return installTree()
+  }
+
+  @VisibleForTesting
+  internal fun installTree(): Tree {
     tree = BranchesTree(treeStep.treeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
@@ -394,7 +401,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { JBUI.CurrentTheme.Tree.background(true, true) })
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_FOREGROUND, Supplier { JBUI.CurrentTheme.Tree.foreground(true, true) })
 
-    val renderer = createRenderer(treeStep)
+    val renderer = createRenderer()
 
     ClientProperty.put(this, Control.CUSTOM_CONTROL, Function { renderer.getLeftTreeIconRenderer(it) })
 

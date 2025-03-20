@@ -6,22 +6,22 @@
 -Checkout Tag or Revision…
 ------
 -Recent
- another-branch
+ another-branch [icons/currentBranchLabel.svg]
 -Local
- another-branch
- master
- -another
-  -group
-   test
- -group
-  test
- test
+ another-branch [icons/currentBranchLabel.svg]
+ master [nodes/favorite.svg]
+ -another [nodes/folder.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+ -group [nodes/folder.svg]
+  test [vcs/branchNode.svg]
+ test [vcs/branchNode.svg]
 -Remote
- -origin
-  master
-  -another
-   -group
-    test
-  -group
-   test
-  test
+ -origin [nodes/folder.svg]
+  master [nodes/favorite.svg]
+  -another [nodes/folder.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+  test [vcs/branchNode.svg]

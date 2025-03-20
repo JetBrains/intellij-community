@@ -6,21 +6,21 @@
 -Checkout Tag or Revision…
 ------
 -Local
- master
- d
- -e-group
-  a
- -f-group
-  a
-  b
- a
- b
- Bb
- c
+ master [icons/currentBranchFavoriteLabel.svg]
+ d [nodes/favorite.svg]
+ -e-group [nodes/folder.svg]
+  a [vcs/branchNode.svg]
+ -f-group [nodes/folder.svg]
+  a [vcs/branchNode.svg]
+  b [vcs/branchNode.svg]
+ a [vcs/branchNode.svg]
+ b [vcs/branchNode.svg]
+ Bb [vcs/branchNode.svg]
+ c [vcs/branchNode.svg]
 -Remote
- -origin
-  master
+ -origin [nodes/folder.svg]
+  master [nodes/favorite.svg]
 -Tags
- c-tag
- a-tag
- b-tag
+ c-tag [nodes/favorite.svg]
+ a-tag [icons/branchLabel.svg]
+ b-tag [icons/branchLabel.svg]

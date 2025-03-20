@@ -9,12 +9,12 @@
 -project
 ------
 -Common Local Branches
- master
- b
- e
- a
- c
- d
+ master [nodes/favorite.svg]
+ b [vcs/branchNode.svg]
+ e [nodes/favorite.svg]
+ a [vcs/branchNode.svg]
+ c [vcs/branchNode.svg]
+ d [vcs/branchNode.svg]
 -Common Remote Branches
- -origin
-  master
+ -origin [nodes/folder.svg]
+  master [nodes/favorite.svg]

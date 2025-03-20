@@ -5,15 +5,19 @@
 -New Branch…
 -Checkout Tag or Revision…
 ------
--Local
- master [icons/currentBranchFavoriteLabel.svg]
+-bro-repo
+-project
+------
+-Common Local Branches
+ newBranch [icons/currentBranchLabel.svg]
+ master [nodes/favorite.svg]
  -another [nodes/folder.svg]
   -group [nodes/folder.svg]
    test [vcs/branchNode.svg]
  -group [nodes/folder.svg]
   test [vcs/branchNode.svg]
  test [vcs/branchNode.svg]
--Remote
+-Common Remote Branches
  -origin [nodes/folder.svg]
   master [nodes/favorite.svg]
   -another [nodes/folder.svg]
@@ -22,7 +26,3 @@
   -group [nodes/folder.svg]
    test [vcs/branchNode.svg]
   test [vcs/branchNode.svg]
--Tags
- -group [nodes/folder.svg]
-  v2 [icons/branchLabel.svg]
- v1 [icons/branchLabel.svg]
