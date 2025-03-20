@@ -205,23 +205,16 @@ private fun KtLiteralStringTemplateEntry.escapeSpecialCharacters(): List<EntryUp
 }
 
 private fun KtStringTemplateEntry.unescapeIfPossible(newPrefixLength: Int): KtStringTemplateEntry {
-    fun previousDollarsCount(): Int {
-        val prevSibling = prevSibling
-        if (prevSibling !is KtLiteralStringTemplateEntry) return 0
-        return prevSibling.trailingDollarsLength
-    }
-
     return when (this) {
         is KtEscapeStringTemplateEntry -> {
             if (this.unescapedValue != "$") return this
-            if (previousDollarsCount() + 1 >= newPrefixLength
-                && (nextSibling as? KtLiteralStringTemplateEntry)?.canBeConsideredIdentifierOrBlock() == true
-            ) return this
+            if (!isSafeToReplaceWithDollar(newPrefixLength)) return this
             KtPsiFactory(project).createLiteralStringTemplateEntry("$")
         }
         is KtBlockStringTemplateEntry -> {
             val expression = this.expression ?: return this
             if (expression.text !in dollarLiteralExpressions) return this
+            if (!isSafeToReplaceWithDollar(newPrefixLength)) return this
             KtPsiFactory(project).createLiteralStringTemplateEntry("$")
         }
         else -> this
