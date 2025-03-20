@@ -285,7 +285,7 @@ internal class ReworkedTerminalView(
 
   private fun createOutputEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
     val document = DocumentImpl("", true)
-    val editor = createEditor(document, settings)
+    val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
@@ -299,7 +299,7 @@ internal class ReworkedTerminalView(
 
   private fun createAlternateBufferEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
     val document = DocumentImpl("", true)
-    val editor = createEditor(document, settings)
+    val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.useTerminalDefaultBackground(parentDisposable = this)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
@@ -314,6 +314,7 @@ internal class ReworkedTerminalView(
   private fun createEditor(
     document: Document,
     settings: JBTerminalSystemSettingsProviderBase,
+    parentDisposable: Disposable,
   ): EditorImpl {
     val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
 
@@ -321,9 +322,6 @@ internal class ReworkedTerminalView(
     result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
     result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
 
-    val fontSettingsListenerDisposable = Disposer.newDisposable().also {
-      EditorUtil.disposeWithEditor(result, it)
-    }
     val fontSettingsListener = object : TerminalFontOptionsListener {
       override fun fontOptionsChanged() {
         result.applyFontSettings(settings)
@@ -333,7 +331,7 @@ internal class ReworkedTerminalView(
         }
       }
     }
-    TerminalFontOptions.getInstance().addListener(fontSettingsListener, fontSettingsListenerDisposable)
+    TerminalFontOptions.getInstance().addListener(fontSettingsListener, parentDisposable)
 
     return result
   }
