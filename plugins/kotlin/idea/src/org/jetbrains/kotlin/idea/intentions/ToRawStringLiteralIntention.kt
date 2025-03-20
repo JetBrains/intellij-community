@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertContent
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
@@ -55,27 +55,6 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
         }
 
         editor?.caretModel?.moveToOffset(offset)
-    }
-
-    private fun convertContent(element: KtStringTemplateExpression): String {
-        val text = buildString {
-            val entries = element.entries
-            for ((index, entry) in entries.withIndex()) {
-                val value = entry.value()
-
-                if (value.endsWith("$") && index < entries.size - 1) {
-                    val nextChar = entries[index + 1].value().first()
-                    if (nextChar.isJavaIdentifierStart() || nextChar == '{') {
-                        append("\${\"$\"}")
-                        continue
-                    }
-                }
-
-                append(value)
-            }
-        }
-
-        return StringUtilRt.convertLineSeparators(text, "\n")
     }
 
     private fun KtStringTemplateEntry.value() = if (this is KtEscapeStringTemplateEntry) this.unescapedValue else text

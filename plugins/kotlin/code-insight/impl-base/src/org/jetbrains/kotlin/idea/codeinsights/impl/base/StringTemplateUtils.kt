@@ -195,7 +195,7 @@ fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
             && entries.any { it is KtLiteralStringTemplateEntry }
 }
 
-private fun convertContent(element: KtStringTemplateExpression): String {
+fun convertContent(element: KtStringTemplateExpression): String {
     val text = buildString {
         val entries = element.entries
         for ((index, entry) in entries.withIndex()) {
