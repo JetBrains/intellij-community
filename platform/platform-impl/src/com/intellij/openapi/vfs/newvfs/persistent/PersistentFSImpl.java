@@ -253,14 +253,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void dispose() {
+    //noinspection IncorrectCancellationExceptionHandling
     try {
       disconnect();
     }
     catch (ProcessCanceledException e) {
       // Application may be closed before `LocalFileSystem` gets initialized()
       //noinspection IncorrectCancellationExceptionHandling
-      LOG.warn("Detected cancellation during dispose of PersistentFS. Application was likely closed before VFS got completely initialized",
-               e);
+      LOG.warn("Detected cancellation during dispose of PersistentFS. Application was likely closed before VFS got completely initialized", e);
     }
   }
 
@@ -2138,7 +2138,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
           case VirtualFile.PROP_HIDDEN -> executeSetHidden(file, ((Boolean)newValue).booleanValue());
           case VirtualFile.PROP_SYMLINK_TARGET -> executeSetTarget(file, (String)newValue);
-          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY -> executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);
+          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY -> executeChangeCaseSensitivity((VirtualDirectoryImpl)file, (FileAttributes.CaseSensitivity)newValue);
         }
       }
     }
@@ -2150,10 +2150,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  /**
+   * Update case-sensitivity of the directory, both in persistent VFS structure, and in in-memory cache.
+   * Change doesn't produce a modification event
+   */
   @ApiStatus.Internal
-  public void executeChangeCaseSensitivity(@NotNull VirtualFile file, @NotNull FileAttributes.CaseSensitivity newCaseSensitivity) {
-    VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
-    int fileId = fileId(file);
+  public void executeChangeCaseSensitivity(@NotNull VirtualDirectoryImpl directory,
+                                           @NotNull FileAttributes.CaseSensitivity newCaseSensitivity) {
+    int fileId = fileId(directory);
     vfsPeer.updateRecordFields(fileId, record -> {
       boolean sensitivityChanged = (newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)
                                    ? record.addFlags(Flags.CHILDREN_CASE_SENSITIVE)

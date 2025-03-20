@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -349,10 +349,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     VFilePropertyChangeEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(this, childName);
     if (caseSensitivityEvent != null) {
-
-      changeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
+      //TODO RC: inside generateCaseSensitivityChangedEventForUnknownCase() we update case-sensitivity if it is == FS.default,
+      //         and here we update case-sensitivity if it is !=FS.default -- why such a separation?
+      owningPersistentFS().executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
       // fire event asynchronously to avoid deadlocks with possibly currently held VFP/Refresh queue locks
-      RefreshQueue.getInstance().processEvents(true, List.of(caseSensitivityEvent));
+      RefreshQueue.getInstance().processEvents(/*async: */true, List.of(caseSensitivityEvent));
       // when the case-sensitivity changes, the "children must be sorted by name" invariant must be restored
       resortChildren();
     }
@@ -968,25 +969,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @ApiStatus.Internal
   public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir,
                                                                              @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
-    if (actualCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
-      if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
-        // fire only when the new case sensitivity is different from the default FS sensitivity,
-        // because only in that case the file.isCaseSensitive() value could change
-        return new VFilePropertyChangeEvent(REFRESH_REQUESTOR, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
-                                            FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity);
-      }
-      else {
-        changeCaseSensitivity(dir, actualCaseSensitivity);
-      }
+    if (actualCaseSensitivity == FileAttributes.CaseSensitivity.UNKNOWN) {
+      return null;
     }
-    return null;
-  }
 
-  private static void changeCaseSensitivity(@NotNull VirtualFile vFile,
-                                            @NotNull FileAttributes.CaseSensitivity newValue) {
-    ((PersistentFSImpl)PersistentFS.getInstance()).executeChangeCaseSensitivity(
-      vFile,
-      newValue
-    );
+    if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
+      // fire only when the new case sensitivity is different from the default FS sensitivity,
+      // because only in that case the file.isCaseSensitive() value could change
+      return new VFilePropertyChangeEvent(REFRESH_REQUESTOR, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                          FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity);
+    }
+
+    //TODO RC: why we update the case-sensitivity only if it is == FS.default?
+    //TODO RC: why we update case-sensitivity in method that should be just generating an event?
+    PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
+    persistentFS.executeChangeCaseSensitivity((VirtualDirectoryImpl)dir, actualCaseSensitivity);
+    return null;
   }
 }
