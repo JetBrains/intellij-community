@@ -165,6 +165,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     htmlTabScope.cancel()
     jsRouter?.let { router ->
       contentPanel.jbCefClient.cefClient.removeMessageRouter(router)
+      router.dispose()
     }
   }
   override fun getFile(): VirtualFile = file
