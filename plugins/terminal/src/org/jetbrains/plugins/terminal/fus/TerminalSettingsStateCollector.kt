@@ -8,17 +8,25 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_COLUMN_SPACING
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_FONT_SIZE
+import org.jetbrains.plugins.terminal.DEFAULT_TERMINAL_LINE_SPACING
 import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.Constants
+import org.jetbrains.plugins.terminal.TerminalFontOptions
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
+import org.jetbrains.plugins.terminal.sameColumnSpacings
+import org.jetbrains.plugins.terminal.sameFontSizes
+import org.jetbrains.plugins.terminal.sameLineSpacings
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 
 internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("terminalShell.settings", 2)
+  private val GROUP = EventLogGroup("terminalShell.settings", 3)
 
   private val NON_DEFAULT_OPTIONS = GROUP.registerEvent(
     "non.default.options",
@@ -34,6 +42,22 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
   private val NON_DEFAULT_PROMPT_STYLE = GROUP.registerEvent(
     "non.default.prompt.style",
     EventFields.Enum<TerminalPromptStyle>("style")
+  )
+  private val NON_DEFAULT_FONT_NAME = GROUP.registerEvent(
+    "non.default.font.name",
+    "User modified the default terminal font name",
+  )
+  private val NON_DEFAULT_FONT_SIZE = GROUP.registerEvent(
+    "non.default.font.size", 
+    EventFields.Float("font_size"),
+  )
+  private val NON_DEFAULT_LINE_SPACING = GROUP.registerEvent(
+    "non.default.line.spacing", 
+    EventFields.Float("line_spacing"),
+  )
+  private val NON_DEFAULT_COLUMN_SPACING = GROUP.registerEvent(
+    "non.default.column.spacing", 
+    EventFields.Float("column_spacing"),
   )
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -58,6 +82,34 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
       curValue = BlockTerminalOptions.getInstance().promptStyle,
       defaultValue = BlockTerminalOptions.State().promptStyle
     )
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_FONT_NAME,
+      TerminalFontOptions.getInstance().getSettings().fontFamily,
+      FontPreferences.DEFAULT_FONT_NAME,
+    )
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_FONT_SIZE,
+      TerminalFontOptions.getInstance().getSettings().fontSize,
+      DEFAULT_TERMINAL_FONT_SIZE,
+    ) { a, b -> sameFontSizes(a, b) }
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_LINE_SPACING,
+      TerminalFontOptions.getInstance().getSettings().lineSpacing,
+      DEFAULT_TERMINAL_LINE_SPACING,
+    ) { a, b -> sameLineSpacings(a, b) }
+
+    addIfNotDefault(
+      metrics,
+      NON_DEFAULT_COLUMN_SPACING,
+      TerminalFontOptions.getInstance().getSettings().columnSpacing,
+      DEFAULT_TERMINAL_COLUMN_SPACING,
+    ) { a, b -> sameColumnSpacings(a, b) }
 
     return metrics
   }
@@ -120,6 +172,12 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
 
   private fun <T> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId1<T>, curValue: T, defaultValue: T) {
     if (curValue != defaultValue) {
+      metrics.add(event.metric(curValue))
+    }
+  }
+
+  private fun <T> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId1<T>, curValue: T, defaultValue: T, equality: (T, T) -> Boolean) {
+    if (!equality(curValue, defaultValue)) {
       metrics.add(event.metric(curValue))
     }
   }
