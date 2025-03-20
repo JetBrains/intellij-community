@@ -60,15 +60,11 @@ fun KtStringTemplateExpression.changeInterpolationPrefix(
             }
         }
     }
-    return if (newPrefixLength == 0) {
-        if (isDestinationSingleQuoted) {
-            factory.createStringTemplate(contentText)
-        } else {
-            // hack until KtPsiFactory has a triple-quoted template generation, KTIJ-31681
-            factory.createExpression("\"\"\"$contentText\"\"\"") as KtStringTemplateExpression
-        }
-    } else {
-        factory.createMultiDollarStringTemplate(contentText, newPrefixLength, forceMultiQuoted = !isDestinationSingleQuoted)
+    return when {
+        newPrefixLength != 0 ->
+            factory.createMultiDollarStringTemplate(contentText, newPrefixLength, forceMultiQuoted = !isDestinationSingleQuoted)
+        isDestinationSingleQuoted -> factory.createStringTemplate(contentText)
+        else -> factory.createRawStringTemplate(contentText)
     }
 }
 
