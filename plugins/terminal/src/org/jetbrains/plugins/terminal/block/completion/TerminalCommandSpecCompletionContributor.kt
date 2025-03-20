@@ -48,17 +48,25 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
       val lastBlock = blocksModel.blocks.lastOrNull() ?: return
 
-      val wholeCommand = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
-      val command = wholeCommand.trim().split("\\s+".toRegex()).lastOrNull() ?: ""
+      val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
+      val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
+      val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
 
-      val allTokens = listOf(command)
-      val lookupElement1 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git1"), 100.0)
-      val lookupElement2 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git2"), 90.0)
-      val lookupElement3 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git-lala"), 90.0)
-      result.addElement(lookupElement1)
-      result.addElement(lookupElement2)
-      result.addElement(lookupElement3)
-      submitSuggestions(emptyList(), allTokens, result, ShellType.ZSH)
+      val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
+        tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
+      }
+      else {
+        tokens
+      }
+
+      if (allTokens.isEmpty()) {
+        return
+      }
+      tracer.spanBuilder("terminal-completion-all").use {
+        tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
+          submitSuggestions(emptyList(), allTokens, result, ShellType.ZSH)
+        }
+      }
     }
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
     val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
@@ -276,7 +284,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   private class MyInsertHandler(
     private val suggestion: ShellCompletionSuggestion,
     private val appendPathSeparator: Boolean,
-    private val shellType: ShellType
+    private val shellType: ShellType,
   ) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
       // PowerShell consider both slash and backslash as valid path separators.
@@ -306,7 +314,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val generatorsExecutor: ShellDataGeneratorsExecutor,
     val shellSupport: TerminalShellSupport,
     val parameters: CompletionParameters,
-    val shellType: ShellType
+    val shellType: ShellType,
   ) {
     val project: Project
       get() = parameters.editor.project!!
