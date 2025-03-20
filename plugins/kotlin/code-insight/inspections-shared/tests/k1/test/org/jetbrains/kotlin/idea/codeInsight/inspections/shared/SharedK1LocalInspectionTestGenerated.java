@@ -68,6 +68,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/namedFunctionSyntaxInsteadOfLambda.kt");
         }
 
+        @TestMetadata("noContractFunctionInSources.kt")
+        public void testNoContractFunctionInSources() throws Exception {
+            runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/noContractFunctionInSources.kt");
+        }
+
         @TestMetadata("whileLoop.kt")
         public void testWhileLoop() throws Exception {
             runTest("../testData/inspectionsLocal/ambiguousNonLocalJump/whileLoop.kt");
