@@ -437,7 +437,7 @@ class MavenProjectResolver(private val myProject: Project) {
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProject, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${mavenModel?.dependencies?.size}, managedDeps: ${result.managedDependencies.size}")
 
-    if (null != mavenModel) {
+    if (null != mavenModel && !keepPreviousResolutionResults) {
       MavenServerResultTransformer.getInstance(myProject)
         .transform(mavenModel, mavenProject.file)
 
