@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.nio.file.spi.FileTypeDetector;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 
 /**
@@ -138,7 +137,7 @@ public final class MultiRoutingFileSystemProvider
     return null;
   }
 
-  private static final String KEY_MRFS = "MRFS." + ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+  private static final String KEY_MRFS = "MRFS";
   private static final String KEY_ROOT = "KEY_ROOT";
   private static final String KEY_PREFIX = "KEY_PREFIX";
   private static final String KEY_CASE_SENSITIVE = "KEY_CASE_SENSITIVE";
