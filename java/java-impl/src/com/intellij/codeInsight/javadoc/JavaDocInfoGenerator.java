@@ -1904,14 +1904,20 @@ public class JavaDocInfoGenerator {
     int suffixIndex = text.indexOf(suffix);
     if (suffixIndex >= 0) {
       htmlCodeBlockContents.append(text, 0, suffixIndex);
-      buffer.append(CODE_BLOCK_PREFIX);
-      appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-        doHighlightCodeBlocks(), buffer, myProject, JavaLanguage.INSTANCE,
-        StringUtil.unescapeXmlEntities(StringUtil.replaceUnicodeEscapeSequences(htmlCodeBlockContents.toString()))
-          .replace("&nbsp;", " ")
-          .replace("&#64;", "@")
-      );
-      buffer.append(CODE_BLOCK_SUFFIX);
+      buffer.append(prefix);
+      String contentString = htmlCodeBlockContents.toString();
+      if (contentString.indexOf('<') >= 0 && BLOCKQUOTE_PRE_PREFIX.equals(prefix)) {
+        appendPlainText(buffer, contentString);
+      }
+      else {
+        appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+          doHighlightCodeBlocks(), buffer, myProject, JavaLanguage.INSTANCE,
+          StringUtil.unescapeXmlEntities(StringUtil.replaceUnicodeEscapeSequences(contentString))
+            .replace("&nbsp;", " ")
+            .replace("&#64;", "@")
+        );
+      }
+      buffer.append(suffix);
       appendPlainText(buffer, text.substring(suffixIndex + suffix.length()));
       return null;
     }
