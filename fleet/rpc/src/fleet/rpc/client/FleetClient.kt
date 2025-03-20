@@ -8,6 +8,7 @@ import fleet.rpc.core.*
 import fleet.util.UID
 import fleet.util.async.DelayStrategy
 import fleet.util.async.Resource
+import fleet.util.async.onContext
 import fleet.util.async.resource
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,7 +73,7 @@ fun fleetClient(
         fl.poison()
       }
     }
-  }
+  }.onContext(CoroutineName("fleetClient"))
 
 @Deprecated("the only difference with fleetClient() is that this one puts in on coroutineContext. you can do it yourself. but better don't")
 suspend fun withFleetClient(

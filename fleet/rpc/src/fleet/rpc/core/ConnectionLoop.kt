@@ -67,7 +67,7 @@ fun <T> connectionLoop(
     }.use {
       cc(status)
     }
-  }
+  }.onContext(CoroutineName("connectionLoop"))
 
 @Deprecated("use the new one", replaceWith = ReplaceWith("connectionLoop"))
 fun <T> CoroutineScope.connectionLoopOld(
