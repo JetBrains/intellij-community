@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -20,6 +22,8 @@ class StoreHighlightingResultsCommand(text: String, line: Int) : PlaybackCommand
 
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "storeHighlightingResults"
+    private val LOG: Logger
+      get() = logger<StoreHighlightingResultsCommand>()
   }
 
   @Suppress("TestOnlyProblems")
@@ -31,6 +35,7 @@ class StoreHighlightingResultsCommand(text: String, line: Int) : PlaybackCommand
       fileForStoringHighlights.createNewFile()
     }
 
+    LOG.info("Storing highlighting results to ${fileForStoringHighlights.path}, files exist: ${fileForStoringHighlights.exists()}")
     val editor = FileEditorManager.getInstance(project).selectedTextEditor
     require(editor != null)
     withContext(Dispatchers.EDT) {
