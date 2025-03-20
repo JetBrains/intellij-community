@@ -19,10 +19,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.awt.Point
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
@@ -167,11 +168,11 @@ internal class PythonAddNewEnvironmentPanel(
               .createHtmlTextBalloonBuilder(
                 message("sdk.create.custom.uv.promo"),
                 null,
-                JBUI.CurrentTheme.NotificationWarning.foregroundColor(),
-                JBUI.CurrentTheme.NotificationWarning.backgroundColor(),
+                JBColor.namedColor("GotItTooltip.foreground"),
+                JBColor.namedColor("GotItTooltip.background"),
                 null,
               )
-              .setBorderColor(JBUI.CurrentTheme.NotificationWarning.borderColor())
+              .setBorderColor(JBColor.namedColor("GotItTooltip.borderColor"))
               .setFadeoutTime(15_000)
               .setClickHandler(
                 {
