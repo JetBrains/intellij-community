@@ -153,26 +153,29 @@ else:
 
 def get_clsname_for_code(code, frame):
     clsname = None
-    if len(code.co_varnames) > 0:
-        # We are checking the first argument of the function
-        # (`self` or `cls` for methods).
-        first_arg_name = code.co_varnames[0]
-        if first_arg_name in frame.f_locals:
-            first_arg_obj = frame.f_locals[first_arg_name]
-            if inspect.isclass(first_arg_obj):  # class method
-                first_arg_class = first_arg_obj
-            else:  # instance method
-                first_arg_class = first_arg_obj.__class__
-            func_name = code.co_name
-            if hasattr(first_arg_class, func_name):
-                method = getattr(first_arg_class, func_name)
-                func_code = None
-                if hasattr(method, 'func_code'):  # Python2
-                    func_code = method.func_code
-                elif hasattr(method, '__code__'):  # Python3
-                    func_code = method.__code__
-                if func_code and func_code == code:
-                    clsname = first_arg_class.__name__
+    try:
+        if len(code.co_varnames) > 0:
+            # We are checking the first argument of the function
+            # (`self` or `cls` for methods).
+            first_arg_name = code.co_varnames[0]
+            if first_arg_name in frame.f_locals:
+                first_arg_obj = frame.f_locals[first_arg_name]
+                if inspect.isclass(first_arg_obj):  # class method
+                    first_arg_class = first_arg_obj
+                else:  # instance method
+                    first_arg_class = first_arg_obj.__class__
+                func_name = code.co_name
+                if hasattr(first_arg_class, func_name):
+                    method = getattr(first_arg_class, func_name)
+                    func_code = None
+                    if hasattr(method, 'func_code'):  # Python2
+                        func_code = method.func_code
+                    elif hasattr(method, '__code__'):  # Python3
+                        func_code = method.__code__
+                    if func_code and func_code == code:
+                        clsname = first_arg_class.__name__
+    except Exception as e:
+        pydev_log.warn(str(e))
 
     return clsname
 
