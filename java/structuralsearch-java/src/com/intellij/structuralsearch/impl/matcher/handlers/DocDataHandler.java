@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Handler for doc nodes
  */
 public class DocDataHandler extends MatchingHandler {
-  private static final @NonNls String P_STR = "^\\s*((?:\\w|_|\\-|\\$)+)\\s*(?:=\\s*\"(.*)\"\\s*)?$";
+  private static final @NonNls String P_STR = "^\\s*((?:\\w|_|-|\\$)+)\\s*(?:=\\s*\"(.*)\"\\s*)?$";
   private static final Pattern p = Pattern.compile(
     P_STR,
     Pattern.CASE_INSENSITIVE
@@ -64,7 +64,7 @@ public class DocDataHandler extends MatchingHandler {
       text1 += nextSibling.getText();
 
       nextSibling = nextSibling.getNextSibling();
-      if (nextSibling instanceof PsiDocToken && ((PsiDocToken)nextSibling).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+      if (PsiDocToken.isDocToken(nextSibling, JavaDocTokenType.DOC_COMMENT_DATA)) {
         text1 += nextSibling.getText();
       }
     }

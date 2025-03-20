@@ -53,6 +53,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -124,6 +125,9 @@ public class JavaDocInfoGenerator {
   );
 
   private static final MarkdownToHtmlConverter ourMarkdownConverter = new MarkdownToHtmlConverter(new JavaDocMarkdownFlavourDescriptor());
+  private static final @NotNull TokenSet INLINE_TAG_TOKENS = TokenSet.create(JavaDocTokenType.DOC_INLINE_TAG_END,
+                                                                             JavaDocTokenType.DOC_INLINE_TAG_START,
+                                                                             JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
 
   /**
    * Tags for which javadoc is known to be generated.
@@ -1940,16 +1944,8 @@ public class JavaDocInfoGenerator {
   }
 
   private static void generateUnknownInlineTagValue(StringBuilder buffer, PsiInlineDocTag tag) {
-    var children = tag.getChildren();
-    for (PsiElement child : children) {
-      if (child instanceof PsiDocToken) {
-        var tokenType = ((PsiDocToken)child).getTokenType();
-        if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_END ||
-            tokenType == JavaDocTokenType.DOC_INLINE_TAG_START ||
-            tokenType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
-          continue;
-        }
-      }
+    for (PsiElement child : tag.getChildren()) {
+      if (PsiDocToken.isDocToken(child, INLINE_TAG_TOKENS)) continue;
       appendPlainText(buffer, child.getText());
     }
   }
@@ -2209,13 +2205,9 @@ public class JavaDocInfoGenerator {
 
     for (int i = first + 1, length = elements.length; i < length; i++) {
       final PsiElement element = elements[i];
-      if (element instanceof PsiWhiteSpace) continue;
-      if (element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
-        continue;
-      }
+      if (element instanceof PsiWhiteSpace || PsiDocToken.isDocToken(element, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) continue;
 
       buffer.append(' ');
-
       final String text = element.getText();
       final int indexOfQuote = text.indexOf('"');
       final int until = indexOfQuote == -1 ? text.length() : indexOfQuote;
@@ -2231,8 +2223,7 @@ public class JavaDocInfoGenerator {
   private static int getFirstIndexOfElementWithQuote(PsiElement[] elements) {
     for (int i = 0, length = elements.length; i < length; i++) {
       final PsiElement e = elements[i];
-      if (e instanceof PsiWhiteSpace) continue;
-      if (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+      if (e instanceof PsiWhiteSpace || PsiDocToken.isDocToken(e, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) continue;
 
       if (e.textContains('"')) {
         return i;
@@ -2323,7 +2314,7 @@ public class JavaDocInfoGenerator {
   }
 
   protected boolean isLeadingAsterisks(@Nullable PsiElement element) {
-    return (element instanceof PsiDocToken) && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS;
+    return PsiDocToken.isDocToken(element, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
   }
 
   private static Pair<Pair<String, String>, Integer> findHtmlCodeBlockDelimitersAndIndex(@NotNull String text) {
