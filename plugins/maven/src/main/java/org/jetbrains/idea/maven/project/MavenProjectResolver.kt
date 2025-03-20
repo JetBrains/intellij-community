@@ -202,13 +202,12 @@ class MavenProjectResolver(private val myProject: Project) {
         "Project resolution problems: ${problems.unresolvedArtifacts.size} ${problems.unresolvedArtifactProblems.size} ${problems.repositoryBlockedProblems.size}")
     }
     notifySyncForProblem(problems)
-    val fileToMavenProject = mavenProjects.associateBy { it.file }
     val projectsWithUnresolvedPlugins = ConcurrentLinkedQueue<MavenProject>()
 
     coroutineScope {
       results.forEach {
         launch {
-          collectProjectWithUnresolvedPlugins(it, fileToMavenProject, effectiveRepositoryPath, embedder, tree, projectsWithUnresolvedPlugins)
+          collectProjectWithUnresolvedPlugins(it, effectiveRepositoryPath, embedder, tree, projectsWithUnresolvedPlugins)
         }
       }
     }
@@ -408,7 +407,6 @@ class MavenProjectResolver(private val myProject: Project) {
 
   private suspend fun collectProjectWithUnresolvedPlugins(
     result: MavenProjectResolverResult,
-    fileToMavenProjects: Map<VirtualFile, MavenProject>,
     effectiveRepositoryPath: Path,
     embedder: MavenEmbedderWrapper,
     tree: MavenProjectsTree,
@@ -424,7 +422,7 @@ class MavenProjectResolver(private val myProject: Project) {
       MavenLog.LOG.warn("Maven project virtual file is null for $file")
       return
     }
-    val mavenProject = fileToMavenProjects[virtualFile]
+    val mavenProject = tree.findProject(virtualFile)
     if (mavenProject == null) {
       MavenLog.LOG.warn("Maven project not found for $file")
       return
