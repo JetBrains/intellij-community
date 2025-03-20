@@ -473,6 +473,16 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
   }
 
+  // PY-78250
+  public void testInitializingGenericDataclassWithDefaultType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, this::doTest);
+  }
+
+  // PY-78250
+  public void testInitializingGenericDataclassWithDefaultTypeNoArgument() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, this::doTest);
+  }
+
   // PY-73102
   public void testDeprecatedCall() {
     doMultiFileTest("client.py");
