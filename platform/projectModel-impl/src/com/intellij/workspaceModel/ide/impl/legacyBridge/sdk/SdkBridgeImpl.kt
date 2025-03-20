@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
@@ -26,6 +27,9 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+import com.intellij.workspaceModel.core.fileIndex.impl.LibrariesAndSdkContributors
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -191,6 +195,18 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
     fun EntityStorage.findSdk(sdkEntity: SdkEntity): Sdk? =
       sdkMap.getDataByEntity(sdkEntity)
+
+    /** @return a [Sdk] which contains [set] or null otherwise */
+    fun ImmutableEntityStorage.findSdk(set: WorkspaceFileSet): Sdk? {
+      if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
+        val setImpl = set as? WorkspaceFileSetImpl ?: return null
+        val sdkEntity = setImpl.entityPointer.resolve(this) as? SdkEntity ?: return null
+        return findSdk(sdkEntity)
+      }
+      else {
+        return LibrariesAndSdkContributors.getSdk(set)
+      }
+    }
 
     fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
       val sdkEntitySource = createEntitySourceForSdk()

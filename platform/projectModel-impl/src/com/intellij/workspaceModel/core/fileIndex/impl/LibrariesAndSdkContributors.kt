@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.findSdk
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import java.util.*
@@ -47,7 +48,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
       ProjectRootManagerEx.getInstanceEx(project).removeProjectJdkListener(this)
     }
   }
-  
+
   fun registerFileSets() {
     var noSdkIsUsed = true
     ProjectJdkTable.getInstance().allJdks.forEach { sdk ->
@@ -197,6 +198,7 @@ internal class LibrariesAndSdkContributors(private val project: Project,
       return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<GlobalLibraryPointer>()?.library
     }
 
+    /** Consider using [com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.findSdk] instead */
     internal fun getSdk(fileSet: WorkspaceFileSet): Sdk? {
       return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<SdkPointer>()?.sdk
     }
