@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.memory.InnerClassReferenceVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,8 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final ConvertToRecordProcessor processor = getRecordProcessor(descriptor);
     if (processor == null) return;
-    processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
+    processor.setPrepareSuccessfulSwingThreadCallback(() -> {
+    });
     processor.run();
   }
 
@@ -100,8 +102,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     if (psiClassModifiers == null || psiClassModifiers.hasModifierProperty(ABSTRACT) || psiClassModifiers.hasModifierProperty(SEALED)) {
       return null;
     }
-    // todo support local classes later
-    if (PsiUtil.isLocalClass(psiClass)) return null;
+    if (PsiUtil.isLocalClass(psiClass) && containsOuterNonStaticReferences(psiClass)) return null;
     if (psiClass.getContainingClass() != null && !psiClass.hasModifierProperty(STATIC)) return null;
 
     PsiClass superClass = psiClass.getSuperClass();
@@ -113,7 +114,19 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
     RecordCandidate result = new RecordCandidate(psiClass, suggestAccessorsRenaming);
     if (!result.isValid()) return null;
-    return ClassInheritorsSearch.search(psiClass, false).findFirst() == null ? result : null;
+
+    boolean hasInheritors = ClassInheritorsSearch.search(psiClass, false).findFirst() != null;
+    if (hasInheritors) return null;
+    return result;
+  }
+
+  /**
+   * @see com.siyeh.ig.memory.InnerClassMayBeStaticInspection
+   */
+  private static boolean containsOuterNonStaticReferences(PsiClass psiClass) {
+    InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(psiClass, false);
+    psiClass.accept(visitor);
+    return !visitor.canInnerClassBeStatic();
   }
 
   /**
@@ -130,7 +143,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     private final MultiMap<PsiField, FieldAccessorCandidate> myFieldAccessors = new MultiMap<>(new LinkedHashMap<>());
     private final List<PsiMethod> myOrdinaryMethods = new SmartList<>();
     private final List<RecordConstructorCandidate> myConstructors = new SmartList<>();
-    
+
     private PsiMethod myEqualsMethod;
     private PsiMethod myHashCodeMethod;
 

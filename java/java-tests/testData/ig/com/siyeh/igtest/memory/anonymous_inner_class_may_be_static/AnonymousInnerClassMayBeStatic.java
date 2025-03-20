@@ -4,7 +4,7 @@ import java.util.List;
 
 public class AnonymousInnerClassMayBeStatic {
 
-  public void foo()
+  public void foo(int myParameter)
   {
     final Runnable runnable = new <warning descr="Anonymous class 'Runnable' may be a named 'static' inner class">Runnable</warning>(){
       public void run() {
@@ -17,7 +17,9 @@ public class AnonymousInnerClassMayBeStatic {
     String localVar = "";
     new <warning descr="Anonymous class 'B' may be a named 'static' inner class">B</warning> () {
       void f() {
+        // 'localVar' and 'myParameter' will be suggested to be passed in the new class' constructor during conversion
         System.out.println(localVar);
+        System.out.println(myParameter);
       }
     };
   }
