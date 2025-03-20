@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -155,7 +155,7 @@ abstract class OrderRootComputer<RootEntry> {
                       VirtualFile @NotNull [] roots,
                       @NotNull OrderEntry orderEntry) {
     for (VirtualFile root : roots) {
-      result.add(produceEntry(root, orderEntry));
+      addEntry(result, root, orderEntry);
     }
   }
 
@@ -163,7 +163,7 @@ abstract class OrderRootComputer<RootEntry> {
                       @NotNull Iterable<VirtualFile> roots,
                       @NotNull OrderEntry orderEntry) {
     for (VirtualFile root : roots) {
-      result.add(produceEntry(root, orderEntry));
+      addEntry(result, root, orderEntry);
     }
   }
 
@@ -171,8 +171,13 @@ abstract class OrderRootComputer<RootEntry> {
                             @Nullable VirtualFile root,
                             @NotNull OrderEntry orderEntry) {
     if (root != null) {
-      result.add(produceEntry(root, orderEntry));
+      addEntry(result, root, orderEntry);
     }
+  }
+
+  private void addEntry(@NotNull Collection<? super RootEntry> result, @NotNull VirtualFile root, @NotNull OrderEntry orderEntry) {
+    RootEntry entry = produceEntry(root, orderEntry);
+    result.add(entry);
   }
 
   protected abstract @NotNull RootEntry produceEntry(@NotNull VirtualFile root, @NotNull OrderEntry orderEntry);
