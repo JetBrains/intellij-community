@@ -3,6 +3,7 @@ package com.intellij.toolWindow.xNext.toolbar.actions.statusBar
 
 
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.project.Project
 import com.intellij.toolWindow.xNext.toolbar.actions.toolbar.XNextActionToolbar
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
@@ -12,6 +13,10 @@ internal class XNextBar : JBPanel<JBPanel<*>>() {
   private val toolbar = XNextActionToolbar()
   private val rightPane = XNextStatusBarWidgetPane()
   private val leftPane = JBPanel<JBPanel<*>>()
+
+  fun init(project: Project) {
+    rightPane.init(project)
+  }
 
   init {
     border = JBUI.Borders.empty()

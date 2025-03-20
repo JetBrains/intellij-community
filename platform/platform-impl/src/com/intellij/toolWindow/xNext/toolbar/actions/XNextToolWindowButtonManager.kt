@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.xNext.toolbar.actions
 
+import com.intellij.openapi.project.Project
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.xNext.toolbar.actions.statusBar.XNextBar
@@ -13,6 +14,7 @@ internal class XNextToolWindowButtonManager(paneId: String, isPrimary: Boolean) 
   constructor(paneId: String) : this(paneId, true)
 
   private val xNextToolbar = XNextToolWindowToolbar(paneId, isPrimary)
+  private val xNextBar = XNextBar()
 
   override fun setupToolWindowPane(pane: JComponent) {
     xNextToolbar.topStripe.bottomAnchorDropAreaComponent = pane
@@ -20,9 +22,14 @@ internal class XNextToolWindowButtonManager(paneId: String, isPrimary: Boolean) 
     super.setupToolWindowPane(pane)
   }
 
+  override fun initMoreButton(project: Project) {
+    super.initMoreButton(project)
+    xNextBar.init(project)
+  }
+
   override fun wrapWithControls(pane: ToolWindowPane): JComponent {
     return super.wrapWithControls(pane).apply {
-      add(XNextBar(), BorderLayout.SOUTH)
+      add(xNextBar, BorderLayout.SOUTH)
     }
   }
 }

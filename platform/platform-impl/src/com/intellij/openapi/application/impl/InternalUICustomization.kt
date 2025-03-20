@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.IdeGlassPane
@@ -40,6 +41,7 @@ open class InternalUICustomization {
       return result
     }
   }
+  open fun progressWidget(project: Project): JComponent? = null
 
   open val aiComponentMarker: AiInternalUiComponentMarker = AiInternalUiComponentMarker()
 
