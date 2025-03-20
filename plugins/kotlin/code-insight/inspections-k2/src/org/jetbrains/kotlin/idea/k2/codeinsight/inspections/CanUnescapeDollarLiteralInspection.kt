@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeStartOfIdentifierOrBlock
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.findTextRangesInParentForEscapedDollars
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isEscapedDollar
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.templatePrefixLength
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
@@ -47,7 +48,6 @@ class CanUnescapeDollarLiteralInspection :
             element: KtStringTemplateExpression,
             updater: ModPsiUpdater,
         ) {
-            val prefixLength = element.interpolationPrefix?.textLength ?: 0
             if (element.text != context.oldText) return
 
             val psiFactory = KtPsiFactory(project)
@@ -56,7 +56,7 @@ class CanUnescapeDollarLiteralInspection :
             }
             val updatedTemplateText = element.entries.joinToString("") { it.text }
             val recreatedTemplate = createReplacementTemplate(
-                psiFactory, updatedTemplateText, prefixLength,
+                psiFactory, updatedTemplateText, element.templatePrefixLength,
                 isSingleQuoted = element.isSingleQuoted(),
             )
             element.replace(recreatedTemplate)
@@ -113,7 +113,7 @@ class CanUnescapeDollarLiteralInspection :
      * However, it's still safe to replace all the dollars before the unsafe one.
      */
     override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
-        val prefixLength = element.interpolationPrefix?.textLength ?: 0
+        val prefixLength = element.templatePrefixLength
         var sequentialDollarsCounter = 0
         val confirmedReplaceableIndices = mutableSetOf<Int>()
         val candidateReplaceableIndices = mutableListOf<Int>()

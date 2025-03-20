@@ -400,7 +400,7 @@ private fun longestUnsafeDollarSequenceLengthForPlainTextConversion(
     var longest = 0
     var current = 0
 
-    val entryPrefixLength = element.interpolationPrefix?.textLength ?: 1
+    val entryPrefixLength = element.entryPrefixLength
 
     for (entry in element.entries) {
         when (entry) {
@@ -466,3 +466,9 @@ private fun KtStringTemplateEntry.isSafeToReplaceWithDollar(prefixLength: Int): 
 
 private val KtStringTemplateEntry.trailingDollarsLength: Int
     get() = text.takeLastWhile { it.toString() == "$" }.length
+
+val KtStringTemplateExpression.templatePrefixLength: Int
+    get() = interpolationPrefix?.textLength ?: 0
+
+val KtStringTemplateExpression.entryPrefixLength: Int
+    get() = interpolationPrefix?.textLength ?: 1

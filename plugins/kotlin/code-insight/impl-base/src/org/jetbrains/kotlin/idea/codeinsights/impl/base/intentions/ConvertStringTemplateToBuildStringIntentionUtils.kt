@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.entryPrefixLength
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.findPrefixLengthForPlainTextConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.psi.generateBuildStringCall
 import org.jetbrains.kotlin.psi.*
@@ -16,7 +17,7 @@ private fun createOperands(element: KtStringTemplateExpression): List<KtExpressi
     val operands: MutableList<KtExpression> = mutableListOf()
     val stringBuilder = StringBuilder()
     val psiFactory = KtPsiFactory(element.project)
-    val oldPrefixLength = element.interpolationPrefix?.textLength ?: 1
+    val oldPrefixLength = element.entryPrefixLength
 
     fun addStringOperand() {
         if (stringBuilder.isNotEmpty()) {
