@@ -371,6 +371,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                 <groupId>testParent</groupId>
                 <artifactId>projectParent</artifactId>
                 <version>2</version>
+                <packaging>pom</packaging>
 """.trimIndent())
     createProjectPom("""
           <groupId>test</groupId>
@@ -1333,6 +1334,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   @Test
   fun testActivatingProfilesByDefault() = runBlocking {
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <profiles>
                          <profile>
                            <id>one</id>
@@ -1359,9 +1363,13 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                       <groupId>test</groupId>
                       <artifactId>parent</artifactId>
                       <version>1</version>
+                      <packaging>pom</packaging>
                       """.trimIndent())
 
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <parent>
                          <groupId>test</groupId>
                          <artifactId>parent</artifactId>
@@ -1385,7 +1393,11 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   fun testActivatingProfilesByOS() = runBlocking {
     val os = if (SystemInfo.isWindows) "windows" else if (SystemInfo.isMac) "mac" else "unix"
 
-    createProjectPom("""<profiles>
+    createProjectPom("""
+<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+<profiles>
   <profile>
     <id>one</id>
     <activation>
@@ -1433,6 +1445,9 @@ $os</family></os>
   @Test
   fun testActivatingProfilesByStrictJdkVersion() = runBlocking {
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <profiles>
                          <profile>
                            <id>one</id>
@@ -1545,6 +1560,9 @@ ${System.getProperty("os.name")}</value>
   @Test
   fun testActivateDefaultProfileEventIfThereAreExplicitOnesButAbsent() = runBlocking {
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <profiles>
                          <profile>
                            <id>default</id>
@@ -1617,6 +1635,9 @@ ${System.getProperty("os.name")}</value>
                         """.trimIndent())
 
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <profiles>
                          <profile>
                            <id>explicit</id>
@@ -1668,6 +1689,9 @@ ${System.getProperty("os.name")}</value>
                         """.trimIndent())
 
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <profiles>
                          <profile>
                            <id>default</id>
@@ -1727,9 +1751,13 @@ ${System.getProperty("os.name")}</value>
                       <groupId>test</groupId>
                       <artifactId>parent</artifactId>
                       <version>1</version>
+                      <packaging>pom</packaging>
                       """.trimIndent())
 
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <parent>
                          <groupId>test</groupId>
                          <artifactId>parent</artifactId>
