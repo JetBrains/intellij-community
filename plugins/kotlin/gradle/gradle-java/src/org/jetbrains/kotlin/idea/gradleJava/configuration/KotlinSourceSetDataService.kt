@@ -296,9 +296,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 }
 
                 testOutputPath = (compilerArguments as? K2JSCompilerArguments)?.outputDir
-                    ?: (compilerArguments as? K2JSCompilerArguments)?.outputFile
                 productionOutputPath = (compilerArguments as? K2JSCompilerArguments)?.outputDir
-                    ?: (compilerArguments as? K2JSCompilerArguments)?.outputFile
             }
 
             return kotlinFacet
