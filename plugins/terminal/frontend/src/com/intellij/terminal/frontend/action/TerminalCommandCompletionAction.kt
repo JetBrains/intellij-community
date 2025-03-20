@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.terminal.frontend.TerminalCodeCompletionBase
+import com.intellij.terminal.frontend.TerminalCommandCompletion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
@@ -17,7 +17,7 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
     val editor = e.editor!!
     if (!editor.isSuppressCompletion) {
       if (e.editor?.isReworkedTerminalEditor == true) {
-        val terminalCodeCompletion = TerminalCodeCompletionBase(CompletionType.BASIC, true, false, true)
+        val terminalCodeCompletion = TerminalCommandCompletion(CompletionType.BASIC, true, false, true)
         terminalCodeCompletion.invokeCompletion(e, 1)
       }
       else {

@@ -400,7 +400,7 @@ internal class ReworkedTerminalView(
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
       sink[TerminalInput.KEY] = terminalInput
-      sink[TerminalOutputModelImpl.KEY] = outputModel
+      sink[TerminalOutputModel.KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
     }
 

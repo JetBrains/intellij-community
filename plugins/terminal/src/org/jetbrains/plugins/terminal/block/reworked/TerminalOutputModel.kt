@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalOutputModelState
@@ -41,4 +42,8 @@ interface TerminalOutputModel {
   fun dumpState(): TerminalOutputModelState
 
   fun restoreFromState(state: TerminalOutputModelState)
+
+  companion object {
+    val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
+  }
 }

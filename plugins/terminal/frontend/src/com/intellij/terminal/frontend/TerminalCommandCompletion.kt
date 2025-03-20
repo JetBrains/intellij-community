@@ -30,12 +30,11 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.PsiFileEx
-import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.outputModelImpl
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 
-class TerminalCodeCompletionBase(
+internal class TerminalCommandCompletion(
   val completionType: CompletionType,
   val invokedExplicitly: Boolean,
   val autopopup: Boolean,
@@ -43,7 +42,7 @@ class TerminalCodeCompletionBase(
 ) :
   CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup, synchronous) {
   fun invokeCompletion(e: AnActionEvent, time: Int) {
-    val outputModel = e.outputModelImpl
+    val outputModel = e.terminalOutputModel
                       ?: throw AssertionError("Output model is null during completion")
 
     val commonEditor = e.getData(CommonDataKeys.EDITOR)
@@ -63,11 +62,11 @@ class TerminalCodeCompletionBase(
   }
 
   private fun invokeCompletion(
-    @NotNull project: Project,
-    @NotNull editor: Editor,
+    project: Project,
+    editor: Editor,
     time: Int,
     hasModifiers: Boolean,
-    @NotNull caret: Caret,
+    caret: Caret,
     terminalInput: TerminalInput,
   ) {
     var time = time
@@ -121,11 +120,11 @@ class TerminalCodeCompletionBase(
       var context: CompletionInitializationContextImpl? =
         ProgressIndicatorUtils.withTimeout<CompletionInitializationContextImpl?>(
           calcSyncTimeOut(startingTime).toLong(), Computable {
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
+          PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-            psiFile.putUserData<Boolean?>(PsiFileEx.BATCH_REFERENCE_PROCESSING, true)
-            CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount, psiFile.language)
-          })
+          psiFile.putUserData<Boolean?>(PsiFileEx.BATCH_REFERENCE_PROCESSING, true)
+          CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount, psiFile.language)
+        })
       val hasValidContext = context != null
       if (!hasValidContext) {
         context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
@@ -148,7 +147,7 @@ class TerminalCodeCompletionBase(
     }
   }
 
-  private fun prepareCaret(commonEditor: Editor, outputModel: TerminalOutputModelImpl): Caret {
+  private fun prepareCaret(commonEditor: Editor, outputModel: TerminalOutputModel): Caret {
     val caret = commonEditor.caretModel
     val primaryCaret = caret.primaryCaret
     primaryCaret.moveToOffset(outputModel.cursorOffsetState.value)
