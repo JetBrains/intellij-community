@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <name>Copyright</name>
   <id>com.intellij.copyright</id>
   <category>IDE Settings</category>
