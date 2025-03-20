@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -41,6 +42,9 @@ import com.intellij.util.ui.AvatarIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Graphics2D
@@ -446,15 +450,40 @@ internal fun repaintWhenProjectGradientOffsetChanged(componentToRepaint: JCompon
   }
 }
 
+@OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
-internal class ProjectWidgetGradientLocationService(private val project: Project) {
+internal class ProjectWidgetGradientLocationService(private val project: Project, coroutineScope: CoroutineScope) {
   var gradientOffsetRelativeToRootPane: Float = DEFAULT_GRADIENT_OFFSET
     private set
 
-  fun setProjectWidgetIconCenterRelativeToRootPane(value: Float?) {
-    // Could use a state flow, but no point, really, as the whole thing is EDT, and this is the only use.
+  private val updateFlow = MutableStateFlow<Float?>(null)
+
+  init {
+    coroutineScope.launch(
+      Dispatchers.EDT +
+      CoroutineName("ProjectWidgetGradientLocationService.updateFlow")
+    ) {
+      // This unusual debouncing is needed because the project widget (that determines the location of the gradient)
+      // is sometimes removed and immediately re-added to the toolbar by the toolbar's action update mechanism.
+      // This causes the gradient to jump to its default position and then back to the project widget,
+      // sometimes slowly enough to be actually visible to the user.
+      // Because settings this value to null can only happen when the project widget is removed,
+      // we delay the gradient position update then.
+      // This can happen in two cases.
+      // Either it's an action update, and then we hope that it'll be back within 100 milliseconds;
+      // or the user actually removed the project widget (an uncommon case),
+      // and then it's not the end of the world if the gradient reacts 100 milliseconds later.
+      updateFlow.debounce { if (it == null) 100L else 0L }
+        .collectLatest {
+          setValueNow(it)
+        }
+    }
+  }
+
+  private fun setValueNow(value: Float?) {
+    ThreadingAssertions.assertEventDispatchThread()
     val newValue = value ?: DEFAULT_GRADIENT_OFFSET
-    // And besides, not using a flow allows us to make this nice and safe fuzzy comparison (it's in pixels, so 0.1 is essentially zero).
+    // the usual thing: don't compare floating point values with ==
     if (abs(gradientOffsetRelativeToRootPane - newValue) < 0.1) return
     gradientOffsetRelativeToRootPane = newValue
     for (repaintRoot in ProjectWindowCustomizerService.getInstance().getGradientRepaintRoots()) {
@@ -462,6 +491,10 @@ internal class ProjectWidgetGradientLocationService(private val project: Project
         repaintRoot.repaint()
       }
     }
+  }
+
+  fun setProjectWidgetIconCenterRelativeToRootPane(value: Float?) {
+    updateFlow.value = value
   }
 }
 
