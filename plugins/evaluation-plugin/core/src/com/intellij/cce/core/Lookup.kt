@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.core
 
+import kotlin.math.max
+
 data class Lookup(
   val prefix: String,
   val offset: Int,
@@ -64,7 +66,7 @@ data class Lookup(
       comparator: (String, String) -> Boolean,
       additionalInfo: Map<String, Any> = emptyMap()
     ): Lookup {
-      suggestions.forEach { it.isRelevant = comparator(it.text, expectedText.substring(startOffset - prefix.length)) }
+      suggestions.forEach { it.isRelevant = comparator(it.text, expectedText.substring(max(0, startOffset - prefix.length))) }
 
       return Lookup(
         prefix = prefix,
