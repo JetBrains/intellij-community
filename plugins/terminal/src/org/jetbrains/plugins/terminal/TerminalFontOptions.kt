@@ -29,7 +29,7 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
 
   private val listeners = CopyOnWriteArrayList<TerminalFontOptionsListener>()
 
-  private var columnSpacing = DEFAULT_COLUMN_SPACING
+  private var columnSpacing = DEFAULT_TERMINAL_COLUMN_SPACING
 
   fun addListener(listener: TerminalFontOptionsListener, disposable: Disposable) {
     listeners.add(listener)
@@ -82,8 +82,10 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     // the state is mostly inherited from the console settings
     val defaultState = PersistentTerminalFontPreferences(AppConsoleFontOptions.getInstance().fontPreferences)
     // except the line spacing: it is only inherited if it's different from the default, otherwise we use our own default
-    if (abs(defaultState.LINE_SPACING - FontPreferences.DEFAULT_LINE_SPACING) < 0.0001) {
-      defaultState.LINE_SPACING = DEFAULT_LINE_SPACING
+    val userSetConsoleLineSpacing = defaultState.LINE_SPACING
+    val defaultConsoleLineSpacing = FontPreferences.DEFAULT_LINE_SPACING
+    if (sameLineSpacings(userSetConsoleLineSpacing, defaultConsoleLineSpacing)) {
+      defaultState.LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING
     }
     loadState(defaultState)
   }
@@ -94,6 +96,15 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     }
   }
 }
+
+// readability delegates
+internal fun sameFontSizes(a: Float, b: Float): Boolean = sameFloatValues(a, b)
+internal fun sameLineSpacings(a: Float, b: Float): Boolean = sameFloatValues(a, b)
+internal fun sameColumnSpacings(a: Float, b: Float): Boolean = sameFloatValues(a, b)
+
+// the usual pain with comparing floating values, the threshold is an arbitrary "a difference that small doesn't make sense" value
+private fun sameFloatValues(userSetConsoleLineSpacing: Float, defaultConsoleLineSpacing: Float): Boolean =
+  abs(userSetConsoleLineSpacing - defaultConsoleLineSpacing) < 0.0001
 
 @ApiStatus.Internal
 interface TerminalFontOptionsListener {
@@ -126,13 +137,13 @@ data class TerminalFontSettings(
 class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPreferences {
   @Suppress("unused") // for serialization
   constructor(): super() {
-    LINE_SPACING = DEFAULT_LINE_SPACING // to ensure that values different from OUR default are saved
+    LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING // to ensure that values different from OUR default are saved
   }
 
   constructor(fontPreferences: FontPreferences): super(fontPreferences)
 
-  var COLUMN_SPACING: Float = DEFAULT_COLUMN_SPACING
+  var COLUMN_SPACING: Float = DEFAULT_TERMINAL_COLUMN_SPACING
 }
 
-private const val DEFAULT_LINE_SPACING = 1.0f
-private const val DEFAULT_COLUMN_SPACING = 1.0f
+private const val DEFAULT_TERMINAL_LINE_SPACING = 1.0f
+private const val DEFAULT_TERMINAL_COLUMN_SPACING = 1.0f
