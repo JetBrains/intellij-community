@@ -145,5 +145,6 @@ class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPref
   var COLUMN_SPACING: Float = DEFAULT_TERMINAL_COLUMN_SPACING
 }
 
-private const val DEFAULT_TERMINAL_LINE_SPACING = 1.0f
-private const val DEFAULT_TERMINAL_COLUMN_SPACING = 1.0f
+internal val DEFAULT_TERMINAL_FONT_SIZE: Float get() = FontPreferences.DEFAULT_FONT_SIZE.toFloat()
+internal const val DEFAULT_TERMINAL_LINE_SPACING = 1.0f
+internal const val DEFAULT_TERMINAL_COLUMN_SPACING = 1.0f
