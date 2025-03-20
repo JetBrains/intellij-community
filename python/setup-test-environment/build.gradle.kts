@@ -162,11 +162,11 @@ if (isUnix && !isMacOs) { //qt is for Linux only
   qtTags.add("qt")
 }
 
-createPython("py27", "2.7",
+createPython("python2.7", "2.7",
              listOf(),
              listOf("python2.7"))
 
-createPython("py38", "3.8",
+createPython("python3.8", "3.8",
              listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                     "pytest-xdist", "untangle", "numpy", "pandas") + qtPackages,
              listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
