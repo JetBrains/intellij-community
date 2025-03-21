@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JComponent
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
@@ -163,7 +164,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     //}
   }
 
-  override fun onShown() {
+  override fun onShown(component: JComponent) {
     val modalityState = ModalityState.current().asContextElement()
     model.scope.launch(Dispatchers.EDT + modalityState) {
       // TODO: Check venv set

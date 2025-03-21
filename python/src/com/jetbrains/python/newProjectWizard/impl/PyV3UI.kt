@@ -37,7 +37,7 @@ internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
       }
     }
   }.apply {
-    sdkPanel.onShown()
+    sdkPanel.onShown(this)
   }
 
   val mainPanel: JComponent = _mainPanel

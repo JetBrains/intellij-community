@@ -6,6 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
@@ -15,17 +16,57 @@ import java.nio.file.Path
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.Paths
+import javax.swing.JComponent
+import kotlin.io.path.exists
 
-internal class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("uv", model) {
+
+internal class EnvironmentCreatorUv(
+  model: PythonMutableTargetAddInterpreterModel,
+  private val moduleOrProject: ModuleOrProject?,
+) : CustomNewEnvironmentCreator("uv", model) {
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
   override val installationVersion: String? = null
 
-  override fun onShown() {
+  override fun onShown(component: JComponent) {
     // FIXME: validate base interpreters against pyprojecttoml version. See poetry
     basePythonComboBox.setItems(model.baseInterpreters)
+
+    component.launchOnShow("project path watcher") {
+      model.myProjectPathFlows.projectPathWithDefault.collect {
+        val venvPath = it.resolve(".venv")
+
+        withContext(Dispatchers.IO) {
+          venvExistenceValidationState.set(
+            if (venvPath.exists())
+              VenvExistenceValidationState.Error(Paths.get(".venv"))
+            else
+              VenvExistenceValidationState.Invisible
+          )
+        }
+      }
+    }
+  }
+
+  override fun onVenvSelectExisting() {
+    PythonNewProjectWizardCollector.logExistingVenvFixUsed()
+
+    if (moduleOrProject != null) {
+      model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = UV)
+    }
+    else {
+      model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PYTHON)
+    }
   }
 
   override fun savePathToExecutableToProperties(path: Path?) {

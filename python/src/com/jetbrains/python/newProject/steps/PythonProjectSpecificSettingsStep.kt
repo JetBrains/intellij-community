@@ -177,7 +177,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   }
 
   override fun onPanelSelected() {
-    interpreterPanel?.onShown()
+    interpreterPanel?.onShown(mainPanel)
   }
 
   override fun getSdk(): Sdk {
