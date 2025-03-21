@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
@@ -115,8 +114,8 @@ final class FunctionChecker {
       }
       if (!receiverReferenced && isStaticSelector && !isMethodStatic && !isConstructor) {
         if (functionalInterfaceType instanceof PsiClassType classType && classType.hasParameters()) {
-          // Prefer surrounding error, as it could be more descriptive
-          if (hasSurroundingInferenceError(methodRef)) return;
+          // Prefer the surrounding error, as it could be more descriptive
+          if (ExpressionChecker.hasSurroundingInferenceError(methodRef)) return;
         }
         myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_NON_STATIC_METHOD_IN_STATIC_CONTEXT.create(methodRef, method));
         return;
@@ -261,30 +260,6 @@ final class FunctionChecker {
     }
   }
 
-  private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
-    // Parent resolve failed as well, and it's likely more informative.
-    // Suppress this error to allow reporting from parent
-    return (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument")) ||
-            errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.declaration.for.the.method.reference.not.found"))) &&
-           hasSurroundingInferenceError(methodCall);
-  }
-
-  static boolean hasSurroundingInferenceError(@NotNull PsiElement context) {
-    PsiCall topCall = LambdaUtil.treeWalkUp(context);
-    if (topCall == null) return false;
-    while (context != topCall) {
-      context = context.getParent();
-      if (context instanceof PsiMethodCallExpression call &&
-          call.resolveMethodGenerics() instanceof MethodCandidateInfo info &&
-          info.getInferenceErrorMessage() != null) {
-        // Possibly inapplicable method reference due to the surrounding call inference failure:
-        // suppress method reference error in order to display more relevant inference error.
-        return true;
-      }
-    }
-    return false;
-  }
-
   void checkLambdaTypeApplicability(@NotNull PsiLambdaExpression expression, 
                                     PsiElement parent, 
                                     @NotNull PsiType functionalInterfaceType) {
@@ -297,7 +272,7 @@ final class FunctionChecker {
     Map<PsiElement, @Nls String> returnErrors = null;
     Set<PsiTypeParameter> parentTypeParameters =
       parentCallResolveResult == null ? Set.of() : Set.of(parentCallResolveResult.getElement().getTypeParameters());
-    // If return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
+    // If the return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
     // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
     boolean skipReturnCompatibility = parentCallResolveResult != null &&
                                       PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
@@ -319,7 +294,7 @@ final class FunctionChecker {
                                    @NotNull PsiLambdaExpression lambdaExpression) {
     String errorMessage = resolveResult.getInferenceErrorMessage();
     if (errorMessage == null) return;
-    if (favorParentReport(methodCall, errorMessage)) return;
+    if (ExpressionChecker.favorParentReport(methodCall, errorMessage)) return;
     PsiMethod method = resolveResult.getElement();
     PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
     PsiType actualType =
@@ -384,7 +359,7 @@ final class FunctionChecker {
             myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(referenceNameElement));
           }
         }
-        else if (!(resolvedButNonApplicable && hasSurroundingInferenceError(expression))) {
+        else if (!(resolvedButNonApplicable && ExpressionChecker.hasSurroundingInferenceError(expression))) {
           myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_UNRESOLVED_METHOD.create(expression));
         }
       }

@@ -284,7 +284,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(enumConstant);
     if (!hasErrorResults()) {
       PsiClassType type = factory().createType(requireNonNull(enumConstant.getContainingClass()));
-      myExpressionChecker.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null);
+      myExpressionChecker.checkConstructorCall(type.resolveGenerics(), enumConstant, null);
     }
   }
 

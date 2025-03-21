@@ -400,7 +400,7 @@ final class ExpressionChecker {
     }
 
     PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-    checkConstructorCall(typeResult, expression, classType, classReference);
+    checkConstructorCall(typeResult, expression, classReference);
   }
 
   void checkAmbiguousConstructorCall(@NotNull PsiJavaCodeReferenceElement ref, PsiElement resolved) {
@@ -410,7 +410,7 @@ final class ExpressionChecker {
       if (newExpression.resolveMethod() == null && !PsiTreeUtil.findChildrenOfType(argumentList, PsiFunctionalExpression.class).isEmpty()) {
         PsiType type = newExpression.getType();
         if (type instanceof PsiClassType classType) {
-          checkConstructorCall(classType.resolveGenerics(), newExpression, type, newExpression.getClassReference());
+          checkConstructorCall(classType.resolveGenerics(), newExpression, newExpression.getClassReference());
         }
       }
     }
@@ -940,7 +940,7 @@ final class ExpressionChecker {
       return;
     }
 
-    //do not highlight module keyword if the statement is not complete
+    //do not highlight the 'module' keyword if the statement is not complete
     //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
     if (PsiKeyword.MODULE.equals(ref.getText()) && ref.getParent() instanceof PsiImportStatement &&
         PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
@@ -986,7 +986,7 @@ final class ExpressionChecker {
     }
   }
 
-  private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
+  static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
     // Parent resolve failed as well, and it's likely more informative.
     // Suppress this error to allow reporting from parent
     return (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument")) ||
@@ -1010,9 +1010,9 @@ final class ExpressionChecker {
     return false;
   }
 
-  private void checkIncompatibleType(@NotNull PsiCall methodCall,
-                                     @NotNull MethodCandidateInfo resolveResult,
-                                     @NotNull PsiElement elementToHighlight) {
+  void checkIncompatibleType(@NotNull PsiCall methodCall,
+                             @NotNull MethodCandidateInfo resolveResult,
+                             @NotNull PsiElement elementToHighlight) {
     String errorMessage = resolveResult.getInferenceErrorMessage();
     if (errorMessage == null) return;
     if (favorParentReport(methodCall, errorMessage)) return;
@@ -1119,7 +1119,6 @@ final class ExpressionChecker {
 
   void checkConstructorCall(@NotNull PsiClassType.ClassResolveResult typeResolveResult,
                             @NotNull PsiConstructorCall constructorCall,
-                            @NotNull PsiType type,
                             @Nullable PsiJavaCodeReferenceElement classReference) {
     PsiExpressionList list = constructorCall.getArgumentList();
     if (list == null) return;
