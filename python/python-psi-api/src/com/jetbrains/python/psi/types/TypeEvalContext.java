@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.CollectionFactory;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,8 +43,8 @@ public final class TypeEvalContext {
 
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
-  private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
-  private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
+  private final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
+  private final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
@@ -173,19 +173,22 @@ public final class TypeEvalContext {
       Pair.create(element, this),
       false,
       () -> {
-        synchronized (myEvaluated) {
-          if (myEvaluated.containsKey(element)) {
-            final PyType type = myEvaluated.get(element);
-            assertValid(type, element);
-            return type;
+        PyType cachedType = myEvaluated.get(element);
+        if (cachedType != null) {
+          if (cachedType == PyNullType.INSTANCE) {
+            cachedType = null;
           }
+          assertValid(cachedType, element);
+          return cachedType;
         }
-        final PyType type = element.getType(this, Key.INSTANCE);
+
+        PyType type = element.getType(this, Key.INSTANCE);
         assertValid(type, element);
-        synchronized (myEvaluated) {
-          myEvaluated.put(element, type);
+        if (type == null) {
+          type = PyNullType.INSTANCE;
         }
-        return type;
+        myEvaluated.put(element, type);
+        return type == PyNullType.INSTANCE ? null : type;
       }
     );
   }
@@ -195,19 +198,21 @@ public final class TypeEvalContext {
       Pair.create(callable, this),
       false,
       () -> {
-        synchronized (myEvaluatedReturn) {
-          if (myEvaluatedReturn.containsKey(callable)) {
-            final PyType type = myEvaluatedReturn.get(callable);
-            assertValid(type, callable);
-            return type;
+        PyType cachedType = myEvaluatedReturn.get(callable);
+        if (cachedType != null) {
+          if (cachedType == PyNullType.INSTANCE) {
+            cachedType = null;
           }
+          assertValid(cachedType, callable);
+          return cachedType;
         }
-        final PyType type = callable.getReturnType(this, Key.INSTANCE);
+        PyType type = callable.getReturnType(this, Key.INSTANCE);
+        if (type == null) {
+          type = PyNullType.INSTANCE;
+        }
         assertValid(type, callable);
-        synchronized (myEvaluatedReturn) {
-          myEvaluatedReturn.put(callable, type);
-        }
-        return type;
+        myEvaluatedReturn.put(callable, type);
+        return type == PyNullType.INSTANCE ? null : type;
       }
     );
   }
