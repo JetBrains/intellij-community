@@ -8,4 +8,6 @@ interface ModuleBuilder : ProjectBuilder {
   )
 
   fun sharedSourceRoot(sourceRootId: String)
+
+  fun useSdk(name: String)
 }

@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
 internal class ProjectStructure {
   private val sourceRoots: MutableMap<String, SourceRootBuilderImpl> = mutableMapOf()
+  private val sdks: MutableMap<String, SdkBuilderImpl> = mutableMapOf()
 
   fun findSourceRoot(sourceRootId: String): SourceRootBuilderImpl? =
     sourceRoots[sourceRootId]
@@ -13,4 +14,10 @@ internal class ProjectStructure {
     }
     sourceRoots[sourceRootId] = sourceRootBuilder
   }
+
+  fun addSdk(sdkName: String, sdkBuilder: SdkBuilderImpl) {
+    sdks[sdkName] = sdkBuilder
+  }
+
+  fun getSdk(sdkName: String): SdkBuilderImpl? = sdks[sdkName]
 }

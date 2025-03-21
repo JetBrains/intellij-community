@@ -5,4 +5,5 @@ interface DirectoryBuilder {
   fun dir(name: String, init: DirectoryBuilder.() -> Unit)
 
   fun file(fileName: String, content: String)
+  fun file(fileName: String, content: ByteArray)
 }
