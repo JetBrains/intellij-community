@@ -2667,6 +2667,12 @@ f:com.intellij.modcommand.ModCreateFile$Binary
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 com.intellij.modcommand.ModCreateFile$Content
+f:com.intellij.modcommand.ModCreateFile$Directory
+- java.lang.Record
+- com.intellij.modcommand.ModCreateFile$Content
+- <init>():V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
 f:com.intellij.modcommand.ModCreateFile$Text
 - java.lang.Record
 - com.intellij.modcommand.ModCreateFile$Content

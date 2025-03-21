@@ -182,6 +182,10 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     VirtualFile parent = actualize(file.getParent());
     try {
       return WriteAction.compute(() -> {
+        if (create.content() instanceof ModCreateFile.Directory) {
+          parent.createChildDirectory(this, file.getName());
+          return null;
+        }
         VirtualFile newFile = parent.createChildData(this, file.getName());
         if (create.content() instanceof ModCreateFile.Text text) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
@@ -284,13 +288,17 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
       else if (command instanceof ModCreateFile createFile) {
         VirtualFile vFile = createFile.file();
-        String content =
-          createFile.content() instanceof ModCreateFile.Text text ? text.text() : AnalysisBundle.message("preview.binary.content");
-        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(),
-                                                               getFileNamePresentation(project, vFile),
-                                                               "",
-                                                               content,
-                                                               true));
+        if (createFile.content() instanceof ModCreateFile.Directory) {
+          navigateInfo = new IntentionPreviewInfo.Html(text(AnalysisBundle.message("preview.create.directory", vFile.getPath())));
+        } else {
+          String content =
+            createFile.content() instanceof ModCreateFile.Text text ? text.text() : AnalysisBundle.message("preview.binary.content");
+          customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(),
+                                                                 getFileNamePresentation(project, vFile),
+                                                                 "",
+                                                                 content,
+                                                                 true));
+        }
       }
       else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
         VirtualFile virtualFile = navigate.file();
