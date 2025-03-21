@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.server.security.MavenToken
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -384,10 +385,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
         progressIndication.cancelAndJoin()
       }
     }
-  }
-
-  internal suspend fun interpolateAndAlignModel(model: MavenModel, targetPomDir: File, ourToken: MavenToken): MavenModel {
-    return getOrCreateWrappee().interpolateAndAlignModel(model, targetPomDir, ourToken)
   }
 
   internal suspend fun applyProfiles(

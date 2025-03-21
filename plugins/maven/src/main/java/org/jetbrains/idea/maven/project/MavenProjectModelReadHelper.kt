@@ -8,8 +8,6 @@ import org.jetbrains.idea.maven.model.MavenModel
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 
 interface MavenProjectModelReadHelper {
-  suspend fun interpolate(embedder: MavenEmbedderWrapper, mavenModuleFile: VirtualFile, model: MavenModel): MavenModel
-
   suspend fun assembleInheritance(embedder: MavenEmbedderWrapper, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel
 
   fun filterModules(modules: List<String>, mavenModuleFile: VirtualFile): List<String>

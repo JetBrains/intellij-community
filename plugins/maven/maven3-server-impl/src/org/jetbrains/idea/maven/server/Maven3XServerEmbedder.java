@@ -525,13 +525,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull File dir, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    File baseDir = new File(myEmbedderSettings.getMultiModuleProjectDirectory());
-    return Maven3XProfileUtil.interpolateAndAlignModel(model, baseDir, dir);
-  }
-
-  @Override
   public @NotNull ProfileApplicationResult applyProfiles(@NotNull MavenModel model,
                                                          @NotNull File basedir,
                                                          @NotNull MavenExplicitProfiles explicitProfiles,
