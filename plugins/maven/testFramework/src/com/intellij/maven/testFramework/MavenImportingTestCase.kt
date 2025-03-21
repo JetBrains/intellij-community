@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -143,11 +144,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun assertModules(vararg expectedNames: String) {
-    val actual = ModuleManager.getInstance(project).modules
-    val actualNames: MutableList<String> = ArrayList()
-    for (m in actual) {
-      actualNames.add(m.getName())
-    }
+    val actualNames = project.modules.map { it.name }
     assertUnorderedElementsAreEqual(actualNames, *expectedNames)
   }
 
