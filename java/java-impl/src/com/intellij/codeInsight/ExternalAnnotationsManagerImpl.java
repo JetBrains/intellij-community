@@ -106,14 +106,13 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   private static final NotificationGroup EXTERNAL_ANNOTATIONS_MESSAGES =
     NotificationGroupManager.getInstance().getNotificationGroup("External annotations");
 
-  private final MessageBus myBus;
   private @Nullable VirtualFile myAdditionalAnnotationsRoot;
 
   public ExternalAnnotationsManagerImpl(@NotNull Project project) {
     super(PsiManager.getInstance(project));
 
-    myBus = project.getMessageBus();
-    MessageBusConnection connection = myBus.connect(this);
+    MessageBus bus = project.getMessageBus();
+    MessageBusConnection connection = bus.connect(this);
 
     connection.subscribe(WorkspaceModelTopics.CHANGED, new ExternalAnnotationsRootListener());
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
@@ -147,7 +146,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
           if (event.isFromRefresh() && ANNOTATIONS_XML.equals(name)) {
             dropAnnotationsCache();
-            notifyChangedExternally();
+            myPsiManager.dropPsiCaches();
           }
         }
       }
@@ -180,16 +179,6 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   public void dispose() {
   }
 
-  private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
-    myBus.syncPublisher(TOPIC).afterExternalAnnotationChanging(owner, annotationFQName, successful);
-    myPsiManager.dropPsiCaches();
-  }
-
-  private void notifyChangedExternally() {
-    myBus.syncPublisher(TOPIC).externalAnnotationsChangedExternally();
-    myPsiManager.dropPsiCaches();
-  }
-
   @Override
   public void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                  @NotNull String annotationFQName,
@@ -202,14 +191,14 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getOriginalElement().getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
-      notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+      myPsiManager.dropPsiCaches();
       return;
     }
     final VirtualFile containingVirtualFile = containingFile.getVirtualFile();
     LOG.assertTrue(containingVirtualFile != null);
     final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(containingVirtualFile);
     if (entries.isEmpty()) {
-      notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+      myPsiManager.dropPsiCaches();
       return;
     }
     ExternalAnnotation annotation = new ExternalAnnotation(listOwner, annotationFQName, value);
@@ -223,7 +212,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       }
       else {
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+          myPsiManager.dropPsiCaches();
           return;
         }
         DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
@@ -241,10 +230,10 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   }
 
   /**
-   * Tries to add external annotations into given root if possible.
+   * Tries to add external annotations into a given root if possible.
    * Notifies about each addition result separately.
    */
-  private void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
+  private void annotateExternally(@NotNull VirtualFile root, @NotNull List<ExternalAnnotation> annotations) {
     Project project = myPsiManager.getProject();
 
     Map<Optional<VirtualFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
@@ -284,13 +273,13 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
             @Override
             public void undo() {
               dropAnnotationsCache();
-              notifyChangedExternally();
+              myPsiManager.dropPsiCaches();
             }
 
             @Override
             public void redo() {
               dropAnnotationsCache();
-              notifyChangedExternally();
+              myPsiManager.dropPsiCaches();
             }
           });
         }
@@ -317,44 +306,37 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       .grouping(() -> new TreeMap<>(Comparator.nullsFirst(Comparator.naturalOrder())));
 
     if (rootTag == null) {
-      ownerToAnnotations.values().stream().flatMap(List::stream).forEach(annotation ->
-                                                                           notifyAfterAnnotationChanging(annotation.owner(),
-                                                                                                         annotation.annotationFQName(),
-                                                                                                         false));
+      myPsiManager.dropPsiCaches();
       return;
     }
 
-    List<ExternalAnnotation> savedAnnotations = new ArrayList<>();
     XmlTag startTag = null;
 
     for (Map.Entry<String, List<ExternalAnnotation>> entry : ownerToAnnotations.entrySet()) {
       @NonNls String ownerName = entry.getKey();
       List<ExternalAnnotation> annotationList = entry.getValue();
       for (ExternalAnnotation annotation : annotationList) {
-
         if (ownerName == null) {
-          notifyAfterAnnotationChanging(annotation.owner(), annotation.annotationFQName(), false);
+          myPsiManager.dropPsiCaches();
           continue;
         }
 
         try {
           startTag = addAnnotation(rootTag, ownerName, annotation, startTag);
-          savedAnnotations.add(annotation);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
-          notifyAfterAnnotationChanging(annotation.owner(), annotation.annotationFQName(), false);
+          myPsiManager.dropPsiCaches();
         }
         finally {
-          dropAnnotationsCache();
+          dropCache();
           markForUndo(annotation.owner().getContainingFile());
         }
       }
     }
 
     commitChanges(annotationsFile);
-    savedAnnotations.forEach(annotation ->
-                               notifyAfterAnnotationChanging(annotation.owner(), annotation.annotationFQName(), true));
+    myPsiManager.dropPsiCaches();
   }
 
   @Override
@@ -421,9 +403,9 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
   /**
    * Adds annotation sub tag into curItem or between prevItem and curItem.
-   * Adds into curItem if curItem contains external annotations for owner.
+   * Adds into curItem if curItem contains external annotations for the owner.
    * Adds between curItem and prevItem if owner's external name < cur item owner external name.
-   * Otherwise does nothing, returns null.
+   * Otherwise, does nothing, returns null.
    *
    * @param rootTag    root tag to insert sub tag into
    * @param ownerName  annotation owner
@@ -444,7 +426,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     int compare = ownerName.compareTo(curItemName);
 
     if (compare == 0) {
-      //already have external annotations for owner
+      //already have external annotations for the owner
       return appendItemAnnotation(curItem, annotation);
     }
 
@@ -478,7 +460,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   }
 
   /**
-   * Appends annotation sub tag into itemTag. It can happen only if item tag belongs to annotation owner.
+   * Appends annotation sub tag into itemTag. It can happen only if the item tag belongs to an annotation owner.
    *
    * @param itemTag    item tag with annotations
    * @param annotation external annotation
@@ -498,7 +480,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       }
 
       if (annotationFQName.equals(curAnnotationName)) {
-        // found tag for same annotation, replacing
+        // found tag for the same annotation, replacing
         itemAnnotation.delete();
         break;
       }
@@ -525,7 +507,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     descriptor.setForcedToUseIdeaFileChooser(true);
     final VirtualFile newRoot = FileChooser.chooseFile(descriptor, project, null);
     if (newRoot == null) {
-      notifyAfterAnnotationChanging(annotation.owner(), annotation.annotationFQName(), false);
+      myPsiManager.dropPsiCaches();
       return false;
     }
     WriteCommandAction.writeCommandAction(project).run(() -> appendChosenAnnotationsRoot(entry, newRoot));
@@ -550,11 +532,6 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   private void chooseRootAndAnnotateExternally(VirtualFile @NotNull [] roots, @NotNull ExternalAnnotation annotation) {
     if (roots.length > 1) {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(JavaBundle.message("external.annotations.roots"), roots) {
-        @Override
-        public void canceled() {
-          notifyAfterAnnotationChanging(annotation.owner(), annotation.annotationFQName(), false);
-        }
-
         @Override
         public PopupStep<?> onChosen(@NotNull VirtualFile file, final boolean finalChoice) {
           annotateExternally(file, annotation);
@@ -639,7 +616,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       }
     }
     finally {
-      dropAnnotationsCache();
+      dropCache();
     }
   }
 
@@ -662,7 +639,6 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
       if (files == null) {
-        notifyAfterAnnotationChanging(listOwner, annotationFQN, false);
         return false;
       }
       boolean processedAnything = false;
@@ -690,11 +666,11 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
             }
           });
       }
-      notifyAfterAnnotationChanging(listOwner, annotationFQN, processedAnything);
+      myPsiManager.dropPsiCaches();
       return processedAnything;
     }
     finally {
-      dropAnnotationsCache();
+      dropCache();
     }
   }
 
@@ -803,12 +779,12 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       extension.setExternalAnnotationUrls(ArrayUtil.mergeArrays(extension.getExternalAnnotationsUrls(), vFile.getUrl()));
       model.commit();
     }
-    else if (entry instanceof JdkOrderEntry) {
-      final SdkModificator sdkModificator = ((JdkOrderEntry)entry).getJdk().getSdkModificator();
+    else if (entry instanceof JdkOrderEntry jdkOrderEntry) {
+      final SdkModificator sdkModificator = jdkOrderEntry.getJdk().getSdkModificator();
       sdkModificator.addRoot(vFile, AnnotationOrderRootType.getInstance());
       sdkModificator.commitChanges();
     }
-    dropAnnotationsCache();
+    dropCache();
   }
 
   private void commitChanges(XmlFile xmlFile) {
