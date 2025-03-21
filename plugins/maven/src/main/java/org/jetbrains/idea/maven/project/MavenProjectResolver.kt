@@ -183,19 +183,7 @@ class MavenProjectResolver(private val myProject: Project) {
       updateSnapshots,
       userProperties)
 
-    /*    if (readingProblems.isNotEmpty()) {
-          val pathToMavenProject = mavenProjects.associateBy { it.file.path }
-          val groupedProblems = readingProblems.groupBy { FileUtil.toSystemIndependentName(trimLineAndColumn(it.path)) }
-          for ((path, projectProblems) in groupedProblems) {
-            val mavenProject = pathToMavenProject[path]
-            if (null != mavenProject) {
-              mavenProject.updateState(projectProblems)
-              tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL))
-            }
-          }
-        }*/
-
-    val problems = getProblems(results /*, readingProblems*/)
+    val problems = getProblems(results)
     val problemsExist = !problems.isEmpty
     if (problemsExist) {
       MavenLog.LOG.debug(
@@ -276,12 +264,13 @@ class MavenProjectResolver(private val myProject: Project) {
   }
 
   private val lineColumnRegex = Regex(":[0-9]+:[0-9]+$")
+  private val fileProtocol = "file://"
 
   // trims line and column from file path, e.g., project/pom.xml:12:345 -> project/pom.xml
   private fun trimLineAndColumn(input: String): String {
     // if the input starts with "file://", remove that prefix
-    val withoutFilePrefix = if (input.startsWith("file://")) {
-      input.substring("file://".length)
+    val withoutFilePrefix = if (input.startsWith(fileProtocol)) {
+      input.substring(fileProtocol.length)
     }
     else {
       input
@@ -290,7 +279,7 @@ class MavenProjectResolver(private val myProject: Project) {
     return withoutFilePrefix.replace(lineColumnRegex, "")
   }
 
-  private fun getProblems(results: Collection<MavenProjectResolverResult>/*, problems: Collection<MavenProjectProblem>*/): MavenResolveProblemHolder {
+  private fun getProblems(results: Collection<MavenProjectResolverResult>): MavenResolveProblemHolder {
     val repositoryBlockedProblems: MutableSet<MavenProjectProblem> = HashSet()
     val unresolvedArtifactProblems: MutableSet<MavenProjectProblem> = HashSet()
     val unresolvedArtifacts: MutableSet<MavenArtifact?> = HashSet()
