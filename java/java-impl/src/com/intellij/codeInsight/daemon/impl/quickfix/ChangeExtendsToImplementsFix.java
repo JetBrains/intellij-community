@@ -5,28 +5,24 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * changes 'class a extends b' to 'class a implements b' or vice versa
  */
-public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiClass> {
-  protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
-  private final boolean myToAdd;
-  private final SmartTypePointer myTypeToExtendFrom;
+public class ChangeExtendsToImplementsFix extends PsiBasedModCommandAction<PsiClass> {
+  private final @NotNull SmartTypePointer myTypeToExtendFrom;
 
   public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classTypeToExtendFrom) {
     super(aClass);
-    PsiClass classToExtendFrom = classTypeToExtendFrom.resolve();
-    myClassToExtendFromPointer = classToExtendFrom == null ? null : SmartPointerManager.createPointer(classToExtendFrom);
-    myToAdd = true;
-    PsiClassType typeToExtendFrom = aClass instanceof PsiTypeParameter ? classTypeToExtendFrom
-                                                                : (PsiClassType)GenericsUtil.eliminateWildcards(classTypeToExtendFrom);
+    PsiClassType typeToExtendFrom = aClass instanceof PsiTypeParameter ? 
+                                    classTypeToExtendFrom : (PsiClassType)GenericsUtil.eliminateWildcards(classTypeToExtendFrom);
     myTypeToExtendFrom = SmartTypePointerManager.getInstance(aClass.getProject()).createSmartTypePointer(typeToExtendFrom);
   }
 
@@ -37,13 +33,14 @@ public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiC
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass myClass) {
-    if (myTypeToExtendFrom.getType() == null) return null;
-    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+    PsiType typeToExtendFrom = myTypeToExtendFrom.getType();
+    if (typeToExtendFrom == null) return null;
+    PsiClass classToExtendFrom = PsiUtil.resolveClassInClassTypeOnly(typeToExtendFrom);
     boolean available = classToExtendFrom != null && classToExtendFrom.isValid()
                         && !classToExtendFrom.hasModifierProperty(PsiModifier.FINAL)
                         && (classToExtendFrom.isInterface() ||
                             !myClass.isInterface() && myClass.getExtendsList() != null
-                            && (myClass.getExtendsList().getReferencedTypes().length == 0) == myToAdd);
+                            && myClass.getExtendsList().getReferencedTypes().length == 0);
     if (!available) return null;
     String name = QuickFixBundle.message(
       "exchange.extends.implements.keyword",
@@ -55,21 +52,8 @@ public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiC
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass myClass, @NotNull ModPsiUpdater updater) {
-    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
-
-    PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) && classToExtendFrom != null &&
-                                   myClass.isInterface() != classToExtendFrom.isInterface() ?
-                                   myClass.getImplementsList() : myClass.getExtendsList();
-    PsiReferenceList otherList = extendsList == myClass.getImplementsList() ?
-                                 myClass.getExtendsList() : myClass.getImplementsList();
-    PsiType psiType = myTypeToExtendFrom.getType();
-    if(!(psiType instanceof PsiClassType psiClassType)) return;
-    if (extendsList != null) {
-      ExtendsListFix.modifyList(extendsList, myToAdd, -1, psiClassType);
-    }
-    if (otherList != null) {
-      ExtendsListFix.modifyList(otherList, false, -1, psiClassType);
-    }
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiClass myClass) {
+    if (!(myTypeToExtendFrom.getType() instanceof PsiClassType typeToExtendFrom)) return ModCommand.nop();
+    return new ExtendsListModCommandFix(myClass, typeToExtendFrom, true).perform(context);
   }
 }

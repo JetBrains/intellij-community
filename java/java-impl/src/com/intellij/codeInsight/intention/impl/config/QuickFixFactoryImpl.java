@@ -151,10 +151,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createExtendsListFix(@NotNull PsiClass aClass,
-                                                                                   @NotNull PsiClassType typeToExtendFrom,
-                                                                                   boolean toAdd) {
-    return new ExtendsListFix(aClass, typeToExtendFrom, toAdd);
+  public @NotNull ModCommandAction createExtendsListFix(@NotNull PsiClass aClass,
+                                                        @NotNull PsiClassType typeToExtendFrom,
+                                                        boolean toAdd) {
+    return new ExtendsListModCommandFix(aClass, typeToExtendFrom, toAdd);
   }
 
   @Override

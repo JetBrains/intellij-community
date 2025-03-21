@@ -35,8 +35,8 @@ public class MoveBoundClassToFrontFix extends PsiUpdateModCommandAction<PsiTypeP
   protected void invoke(@NotNull ActionContext context, @NotNull PsiTypeParameter typeParameter, @NotNull ModPsiUpdater updater) {
     PsiReferenceList extendsList = typeParameter.getExtendsList();
     if (!(myTypePointer.getType() instanceof PsiClassType classType)) return;
-    ExtendsListFix.modifyList(extendsList, false, -1, classType);
-    ExtendsListFix.modifyList(extendsList, true, 0, classType);
+    ExtendsListModCommandFix.modifyList(extendsList, false, -1, classType);
+    ExtendsListModCommandFix.modifyList(extendsList, true, 0, classType);
   }
 
   @Override

@@ -78,9 +78,9 @@ public abstract class QuickFixFactory {
                                                                                                     @NotNull PsiType newType,
                                                                                                     boolean fixWholeHierarchy);
 
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createExtendsListFix(@NotNull PsiClass aClass,
-                                                                                            @NotNull PsiClassType typeToExtendFrom,
-                                                                                            boolean toAdd);
+  public abstract @NotNull ModCommandAction createExtendsListFix(@NotNull PsiClass aClass,
+                                                                 @NotNull PsiClassType typeToExtendFrom,
+                                                                 boolean toAdd);
 
   public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRemoveUnusedParameterFix(@NotNull PsiParameter parameter);
 
