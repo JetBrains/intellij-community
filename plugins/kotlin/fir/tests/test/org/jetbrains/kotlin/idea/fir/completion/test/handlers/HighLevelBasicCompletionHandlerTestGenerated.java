@@ -2123,9 +2123,19 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/EnumMember1.kt");
         }
 
+        @TestMetadata("ExistingNonTypeArguments.kt")
+        public void testExistingNonTypeArguments() throws Exception {
+            runTest("../../completion/testData/handlers/ExistingNonTypeArguments.kt");
+        }
+
         @TestMetadata("ExistingSingleBrackets.kt")
         public void testExistingSingleBrackets() throws Exception {
             runTest("../../completion/testData/handlers/ExistingSingleBrackets.kt");
+        }
+
+        @TestMetadata("ExistingTypeArguments.kt")
+        public void testExistingTypeArguments() throws Exception {
+            runTest("../../completion/testData/handlers/ExistingTypeArguments.kt");
         }
 
         @TestMetadata("ExtFunction.kt")
