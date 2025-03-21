@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResul
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
 
@@ -24,6 +23,12 @@ private class SearchEverywhereSpellingCorrectorImpl : SearchEverywhereSpellingCo
            ?: SearchEverywhereSpellCheckResult.NoCorrection
   }
 
+  override fun getAllCorrections(query: String): List<SearchEverywhereSpellCheckResult.Correction> =
+    when (val result = checkSpellingOf(query)) {
+      is SearchEverywhereSpellCheckResult.Correction -> listOf(result)
+      else -> emptyList()
+    }
+
   private fun isAboveMinimumConfidence(suggestedCorrection: SearchEverywhereSpellCheckResult.Correction): Boolean {
     return suggestedCorrection.confidence >= Registry.doubleValue("search.everywhere.ml.typos.min.confidence")
   }
@@ -34,9 +39,9 @@ private class SearchEverywhereSpellingCorrectorImpl : SearchEverywhereSpellingCo
 }
 
 private class SearchEverywhereSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
-  override fun isAvailable(project: Project): Boolean {
+  override fun isAvailable(): Boolean {
     return isTypoFixingEnabled
   }
 
-  override fun create(project: Project): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl()
+  override fun create(): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl()
 }

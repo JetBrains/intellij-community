@@ -4,10 +4,8 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Contract
 import javax.swing.ListCellRenderer
 import javax.swing.text.JTextComponent
 
@@ -16,28 +14,29 @@ interface SearchEverywhereSpellingCorrector {
   companion object {
     private val EP_NAME = ExtensionPointName.create<SearchEverywhereSpellingCorrectorFactory>("com.intellij.searchEverywhereSpellingCorrector")
 
-    @JvmStatic
-    @Contract("null -> null")
-    fun getInstance(project: Project?): SearchEverywhereSpellingCorrector? {
-      if (project == null) return null
+    // Cache the first matching corrector so subsequent calls don’t re-create it.
+    private val cachedInstance: SearchEverywhereSpellingCorrector? by lazy {
+      EP_NAME.extensionList.firstOrNull { it.isAvailable() }?.create()
+    }
 
-      val extensions = EP_NAME.extensionList
-      return extensions.firstOrNull()
-        ?.takeIf { it.isAvailable(project) }
-        ?.create(project)
+    @JvmStatic
+    fun getInstance(): SearchEverywhereSpellingCorrector? {
+      return cachedInstance
     }
   }
 
   fun isAvailableInTab(tabId: String): Boolean
 
   fun checkSpellingOf(query: String): SearchEverywhereSpellCheckResult
+
+  fun getAllCorrections(query: String, maxCorrections: Int): List<SearchEverywhereSpellCheckResult.Correction>
 }
 
 @Internal
 interface SearchEverywhereSpellingCorrectorFactory {
-  fun isAvailable(project: Project): Boolean
+  fun isAvailable(): Boolean
 
-  fun create(project: Project): SearchEverywhereSpellingCorrector
+  fun create(): SearchEverywhereSpellingCorrector
 }
 
 @Internal

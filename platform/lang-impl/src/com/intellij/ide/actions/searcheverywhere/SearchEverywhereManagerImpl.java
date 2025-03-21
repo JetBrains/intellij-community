@@ -80,7 +80,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
-    SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance(project);
+    SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance();
     mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector, SearchFieldStatisticsCollector.getStartMoment(initEvent));
     contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
 

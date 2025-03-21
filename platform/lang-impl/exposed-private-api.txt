@@ -10,7 +10,6 @@ com/intellij/codeInspection/ex/GlobalInspectionContextImpl
 com/intellij/conversion/impl/CachedConversionResult
 com/intellij/facet/frameworks/beans/Artifact
 com/intellij/facet/frameworks/beans/ArtifactItem
-com/intellij/ide/actions/searcheverywhere/SearchEverywhereSpellingCorrector
 com/intellij/ide/util/gotoByName/SelectionPolicy
 com/intellij/internal/statistic/utils/PluginInfo
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
