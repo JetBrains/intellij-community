@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider
+import com.jetbrains.jsonSchema.extension.JsonSchemaShorthandValueHandler
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNode
 import org.intellij.lang.annotations.Language
 
@@ -34,6 +36,21 @@ private fun <T : Any> ExtensionPointName<T>.maskingExtensions(extensions: List<T
   finally {
     Disposer.dispose(disposable)
   }
+}
+
+fun addShorthandValueHandlerForEnabledField(testRootDisposable: Disposable) {
+  val shorthandValueHandler = object : JsonSchemaShorthandValueHandler {
+    override fun isApplicable(file: PsiFile): Boolean = true
+
+    override fun expandShorthandValue(path: List<String>, value: String): JsonSchemaShorthandValueHandler.KeyValue? {
+      if (value == "enabled") {
+        return JsonSchemaShorthandValueHandler.KeyValue("enabled", "true")
+      }
+      return null
+    }
+  }
+
+  ExtensionTestUtil.maskExtensions(JsonSchemaShorthandValueHandler.EXTENSION_POINT_NAME, listOf(shorthandValueHandler), testRootDisposable)
 }
 
 private fun NestedCompletionsNode?.asNestedCompletionsTreeProvider(): JsonSchemaNestedCompletionsTreeProvider = object : JsonSchemaNestedCompletionsTreeProvider {

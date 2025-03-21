@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -342,6 +342,108 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
             }
           },
           "onesBrother": 2
+        }
+      """.trimIndent())
+  }
+
+  fun `test nested completion leads to expanding - single level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    assertThatSchema("""
+      {
+        "properties": {
+          "setting": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "enum": ["enabled"]
+              }
+            ] 
+          }
+        }
+      }
+    """.trimIndent())
+      .withConfiguration(
+        buildNestedCompletionsTree {
+          open("setting")
+        }
+      )
+      .appliedToJsonFile("""
+        {
+          "setting": "enabled"
+          val<caret>
+        }
+      """.trimIndent())
+      .completesTo("""
+        {
+          "setting": {
+            "enabled": true,
+            "value": "<caret>"
+          }
+        }
+      """.trimIndent())
+  }
+
+  fun `test nested completion leads to expanding - multiple level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    assertThatSchema("""
+      {
+        "properties": {
+          "setting": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "customization": {
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "enum": ["enabled"]
+              }
+            ] 
+          }
+        }
+      }
+    """.trimIndent())
+      .withConfiguration(
+        buildNestedCompletionsTree {
+          open("setting") {
+            open("customization")
+          }
+        }
+      )
+      .appliedToJsonFile("""
+        {
+          "setting": "enabled"
+          val<caret>
+        }
+      """.trimIndent())
+      .completesTo("""
+        {
+          "setting": {
+            "enabled": true,
+            "customization": {
+              "value": "<caret>"
+            }
+          }
         }
       """.trimIndent())
   }
