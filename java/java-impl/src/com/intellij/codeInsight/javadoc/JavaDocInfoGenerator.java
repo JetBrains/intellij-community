@@ -82,15 +82,18 @@ import java.util.regex.Pattern;
 
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.*;
 import static com.intellij.lang.documentation.DocumentationMarkup.BOTTOM_ELEMENT;
-import static com.intellij.lang.documentation.QuickDocHighlightingHelper.*;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeBlock;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledInlineCode;
 
 public class JavaDocInfoGenerator {
   private static final Logger LOG = Logger.getInstance(JavaDocInfoGenerator.class);
 
   @ApiStatus.Internal
   public interface InheritDocProvider<T> {
-    Pair<T, InheritDocProvider<T>> getInheritDoc(PsiDocTagValue target);
+    @Nullable
+    Pair<T, InheritDocProvider<T>> getInheritDoc(@Nullable PsiDocTagValue target);
 
+    @Nullable
     PsiClass getElement();
   }
 
@@ -153,12 +156,12 @@ public class JavaDocInfoGenerator {
 
   private static final InheritDocProvider<PsiDocTag> ourEmptyProvider = new InheritDocProvider<>() {
     @Override
-    public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(PsiDocTagValue target) {
+    public @Nullable Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(@Nullable PsiDocTagValue target) {
       return null;
     }
 
     @Override
-    public PsiClass getElement() {
+    public @Nullable PsiClass getElement() {
       return null;
     }
   };
@@ -297,7 +300,7 @@ public class JavaDocInfoGenerator {
   private static InheritDocProvider<PsiElement[]> mapProvider(InheritDocProvider<PsiDocTag> i, boolean dropFirst) {
     return new InheritDocProvider<>() {
       @Override
-      public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc(PsiDocTagValue target) {
+      public @Nullable Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc(@Nullable PsiDocTagValue target) {
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = i.getInheritDoc(target);
         if (pair == null) return null;
 
@@ -315,7 +318,7 @@ public class JavaDocInfoGenerator {
       }
 
       @Override
-      public PsiClass getElement() {
+      public @Nullable PsiClass getElement() {
         return i.getElement();
       }
     };
@@ -1001,12 +1004,12 @@ public class JavaDocInfoGenerator {
     if (tag != null) {
       return new Pair<>(tag, new InheritDocProvider<>() {
         @Override
-        public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(PsiDocTagValue target) {
+        public @Nullable Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(@Nullable PsiDocTagValue target) {
           return findInHierarchy(psiClass, locator);
         }
 
         @Override
-        public PsiClass getElement() {
+        public @NotNull PsiClass getElement() {
           return psiClass;
         }
       });
@@ -1488,12 +1491,12 @@ public class JavaDocInfoGenerator {
       buffer.append(DocumentationMarkup.CONTENT_START);
       generateValue(buffer, comment.getDescriptionElements(), new InheritDocProvider<>() {
         @Override
-        public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc(PsiDocTagValue target) {
+        public @Nullable Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc(@Nullable PsiDocTagValue target) {
           return findInheritDocTag(method, descriptionLocator, target);
         }
 
         @Override
-        public PsiClass getElement() {
+        public @Nullable PsiClass getElement() {
           return method.getContainingClass();
         }
       });
@@ -2501,12 +2504,12 @@ public class JavaDocInfoGenerator {
     if (localTag != null) {
       return new ParamInfo(presentableName, localTag, new InheritDocProvider<>() {
         @Override
-        public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(PsiDocTagValue target) {
+        public @Nullable Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(@Nullable PsiDocTagValue target) {
           return findInheritDocTag(method, tagLocator, target);
         }
 
         @Override
-        public PsiClass getElement() {
+        public @Nullable PsiClass getElement() {
           return method.getContainingClass();
         }
       });
@@ -2534,12 +2537,12 @@ public class JavaDocInfoGenerator {
     PsiDocTag tag = comment == null ? null : new ReturnTagLocator().find(method, comment);
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = tag == null ? null : new Pair<>(tag, new InheritDocProvider<>() {
       @Override
-      public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(PsiDocTagValue target) {
+      public @Nullable Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc(@Nullable PsiDocTagValue target) {
         return findInheritDocTag(method, new ReturnTagLocator(), target);
       }
 
       @Override
-      public PsiClass getElement() {
+      public @Nullable PsiClass getElement() {
         return method.getContainingClass();
       }
     });
@@ -2601,7 +2604,7 @@ public class JavaDocInfoGenerator {
 
       generateValue(buffer, dataElements, 1, tagToInheritDocProvider == null ? null : new InheritDocProvider<>() {
         @Override
-        public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc(PsiDocTagValue target) {
+        public @NotNull Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc(@Nullable PsiDocTagValue target) {
           final PsiElement[] result = Arrays.stream(tagToInheritDocProvider.first.getDataElements())
             .skip(1)
             .toArray(PsiElement[]::new);
@@ -2610,7 +2613,7 @@ public class JavaDocInfoGenerator {
         }
 
         @Override
-        public PsiClass getElement() {
+        public @Nullable PsiClass getElement() {
           return tagToInheritDocProvider.getSecond().getElement();
         }
       });
