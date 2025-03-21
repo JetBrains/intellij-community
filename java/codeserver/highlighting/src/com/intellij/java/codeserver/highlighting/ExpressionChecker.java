@@ -330,10 +330,16 @@ final class ExpressionChecker {
 
     if (mismatchedExpressions.size() == list.getExpressions().length || mismatchedExpressions.isEmpty()) {
       PsiElement anchor = list.getTextRange().isEmpty() ? ObjectUtils.notNull(list.getPrevSibling(), list) : list;
+      if (!mismatchedExpressions.isEmpty() && !context.argCountMismatch() &&
+          ContainerUtil.and(mismatchedExpressions, e -> e.getType() instanceof PsiLambdaParameterType)) {
+        // Likely, the problem is induced
+        return;
+      }
       myVisitor.report(JavaErrorKinds.CALL_WRONG_ARGUMENTS.create(anchor, context));
     }
     else {
       for (PsiExpression wrongArg : mismatchedExpressions) {
+        if (wrongArg.getType() instanceof PsiLambdaParameterType) continue;
         myVisitor.report(JavaErrorKinds.CALL_WRONG_ARGUMENTS.create(wrongArg, context));
       }
     }

@@ -32,10 +32,9 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
                                         @NotNull List<PsiExpression> mismatchedExpressions) {
   @NotNull @Nls String createDescription() {
     PsiMethod resolvedMethod = candidate.getElement();
-    PsiExpression[] expressions = list.getExpressions();
-    PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
-    if (argCountMismatch(parameters, expressions)) {
-      return JavaCompilationErrorBundle.message("call.wrong.arguments.count.mismatch", parameters.length, expressions.length);
+    if (argCountMismatch()) {
+      int parametersCount = resolvedMethod.getParameterList().getParametersCount();
+      return JavaCompilationErrorBundle.message("call.wrong.arguments.count.mismatch", parametersCount, list.getExpressionCount());
     }
     PsiClass parent = resolvedMethod.getContainingClass();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
@@ -43,6 +42,13 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
     String argTypes = JavaErrorFormatUtil.formatArgumentTypes(list, false);
     String methodName = HighlightMessageUtil.getSymbolName(resolvedMethod, substitutor);
     return JavaCompilationErrorBundle.message("call.wrong.arguments", methodName, containerName, argTypes);
+  }
+  
+  public boolean argCountMismatch() {
+    PsiMethod resolvedMethod = candidate.getElement();
+    PsiExpression[] expressions = list.getExpressions();
+    PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
+    return argCountMismatch(parameters, expressions);
   }
 
   @NotNull HtmlChunk createTooltip() {
@@ -69,11 +75,6 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
     PsiMethod method = candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    return createMismatchedArgumentsHtmlTooltip(parameters, substitutor);
-  }
-
-  private @NotNull HtmlChunk createMismatchedArgumentsHtmlTooltip(PsiParameter @NotNull [] parameters,
-                                                                  @NotNull PsiSubstitutor substitutor) {
     PsiExpression[] expressions = list.getExpressions();
     if (argCountMismatch(parameters, expressions)) {
       return createMismatchedArgumentCountTooltip(parameters.length, expressions.length);
