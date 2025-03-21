@@ -446,7 +446,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
 
       ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap);
-      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap, mySystemProperties);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -1288,6 +1288,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Override
   protected ArtifactRepository getLocalRepository() {
     return myLocalRepository;
+  }
+
+  public Properties getSystemProperties() {
+    return mySystemProperties;
   }
 }
 

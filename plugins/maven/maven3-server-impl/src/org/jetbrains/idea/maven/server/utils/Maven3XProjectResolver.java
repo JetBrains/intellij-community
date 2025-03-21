@@ -301,7 +301,7 @@ public class Maven3XProjectResolver {
 
   protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
     if (myWorkspaceMap != null) {
-      session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap));
+      session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap, myEmbedder.getSystemProperties()));
     }
   }
 
