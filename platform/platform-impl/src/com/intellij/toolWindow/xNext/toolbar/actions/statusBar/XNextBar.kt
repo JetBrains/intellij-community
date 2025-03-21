@@ -6,7 +6,6 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.toolWindow.xNext.toolbar.actions.toolbar.XNextActionToolbar
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
-import java.awt.Color
 import javax.swing.JComponent
 
 internal class XNextBar : JBPanel<JBPanel<*>>() {
@@ -25,6 +24,8 @@ internal class XNextBar : JBPanel<JBPanel<*>>() {
 
     add(leftPane)
     add(rightPane.component)
+
+    InternalUICustomization.getInstance()?.installBackgroundUpdater(this)
   }
 
   override fun doLayout() {
@@ -39,11 +40,6 @@ internal class XNextBar : JBPanel<JBPanel<*>>() {
     val size = component.preferredSize
     val y = (height - size.height) / 2
     component.setBounds(getX(size.width), y, size.width, size.height)
-  }
-
-  override fun getBackground(): Color? {
-    return InternalUICustomization.getInstance()?.getCustomMainBackgroundColor()
-           ?: JBUI.CurrentTheme.StatusBar.BACKGROUND
   }
 }
 

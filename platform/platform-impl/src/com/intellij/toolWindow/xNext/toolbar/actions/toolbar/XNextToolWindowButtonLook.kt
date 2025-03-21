@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.Header
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -49,8 +50,8 @@ class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
 
     }
 
-  override fun <ButtonType> paintBackground(g: Graphics, button: ButtonType?) where ButtonType : JComponent?, ButtonType : ActionButtonComponent? {
-    val g = IdeBackgroundUtil.getOriginalGraphics(g)
-    super.paintBackground(g, button)
+  override fun paintLookBackground(g_: Graphics, rect: Rectangle, color: Color) {
+    val g = IdeBackgroundUtil.getOriginalGraphics(g_)
+    super.paintLookBackground(g, rect, color)
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,9 +83,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.*;
 import java.util.List;
 import java.util.Queue;
-import java.util.*;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
@@ -188,10 +189,19 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       new TrafficLightAction(),
       new NavigationGroup(prevErrorAction, nextErrorAction));
 
-    ActionButtonLook editorButtonLook = new EditorToolbarButtonLook(myEditor);
+    InternalUICustomization service = InternalUICustomization.getInstance();
+    ActionButtonLook editorButtonLook = null;
+    if(service != null) {
+      editorButtonLook = service.getEditorToolbarButtonLook();
+    }
+    if(editorButtonLook == null) {
+      editorButtonLook = new EditorToolbarButtonLook(myEditor);
+    }
+
     statusToolbar = new EditorInspectionsActionToolbar(actions, editor, editorButtonLook, nextErrorAction, prevErrorAction);
 
     statusToolbar.setMiniMode(true);
+    statusToolbar.setOrientation(SwingConstants.HORIZONTAL);
     statusToolbar.setCustomButtonLook(editorButtonLook);
     toolbarComponentListener = new ComponentAdapter() {
       @Override
