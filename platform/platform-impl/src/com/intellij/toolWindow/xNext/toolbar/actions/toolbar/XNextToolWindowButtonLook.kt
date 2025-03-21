@@ -48,4 +48,9 @@ class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
       }
 
     }
+
+  override fun <ButtonType> paintBackground(g: Graphics, button: ButtonType?) where ButtonType : JComponent?, ButtonType : ActionButtonComponent? {
+    val g = IdeBackgroundUtil.getOriginalGraphics(g)
+    super.paintBackground(g, button)
   }
+}

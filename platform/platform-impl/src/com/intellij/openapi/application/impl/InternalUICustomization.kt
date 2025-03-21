@@ -60,6 +60,8 @@ open class InternalUICustomization {
   else
     StripesUxCustomizer ()
 
+  open fun installBackgroundUpdater(component: JComponent) {}
+
   open fun frameHeaderBackgroundConverter(color: Color?): Color? = color
 
   open fun transformGraphics(component: JComponent, graphics: Graphics): Graphics = graphics
