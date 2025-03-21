@@ -263,8 +263,7 @@ final class SwitchChecker {
       }
     }
     if (!TypeConversionUtil.isBooleanType(guardingExpr.getType())) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-        guardingExpr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), guardingExpr.getType())));
+      myVisitor.reportIncompatibleType(PsiTypes.booleanType(), guardingExpr.getType(), guardingExpr);
       return;
     }
     Object constVal = JavaPsiFacade.getInstance(myVisitor.project()).getConstantEvaluationHelper().computeConstantExpression(guardingExpr);
@@ -305,8 +304,7 @@ final class SwitchChecker {
         }
         if (label instanceof PsiExpression expr) {
           if (selectorType.equals(PsiTypes.nullType())) {
-            myVisitor.report(
-              JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(selectorType, expr.getType())));
+            myVisitor.reportIncompatibleType(selectorType, expr.getType(), expr);
             continue;
           }
           if (label instanceof PsiReferenceExpression ref) {
@@ -382,14 +380,13 @@ final class SwitchChecker {
             (kind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && !(constValue instanceof Boolean))) {
           PsiType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(selectorType);
           if (unboxedType != null) {
-            myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-              expr, new JavaIncompatibleTypeErrorContext(unboxedType, expr.getType())));
+            myVisitor.reportIncompatibleType(unboxedType, expr.getType(), expr);
           }
         }
         return;
       }
       if (ConstantExpressionUtil.computeCastTo(constValue, selectorType) == null) {
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(selectorType, expr.getType())));
+        myVisitor.reportIncompatibleType(selectorType, expr.getType(), expr);
         return;
       }
       if (kind == JavaPsiSwitchUtil.SelectorKind.INT || kind == JavaPsiSwitchUtil.SelectorKind.STRING) {
@@ -429,8 +426,7 @@ final class SwitchChecker {
             myVisitor.report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(elementToReport, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS));
           }
           else {
-            myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-              elementToReport, new JavaIncompatibleTypeErrorContext(selectorType, patternType)));
+            myVisitor.reportIncompatibleType(selectorType, patternType, elementToReport);
           }
           return;
         }

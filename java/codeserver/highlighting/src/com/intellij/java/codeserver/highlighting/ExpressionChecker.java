@@ -141,8 +141,7 @@ final class ExpressionChecker {
     if (expression != null && myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
       return true;
     }
-    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeErrorContext(lType, rType)));
-    return false;
+    return myVisitor.reportIncompatibleType(lType, rType, elementToHighlight);
   }
 
   void checkMustBeBoolean(@NotNull PsiExpression expr) {
@@ -157,7 +156,7 @@ final class ExpressionChecker {
         if (type == null && myVisitor.isIncompleteModel() && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expr)) {
           return;
         }
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
+        myVisitor.reportIncompatibleType(PsiTypes.booleanType(), type, expr);
       }
     }
   }
@@ -366,7 +365,7 @@ final class ExpressionChecker {
     PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) {
       if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) return;
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(processor, new JavaIncompatibleTypeErrorContext(processorType, type)));
+      myVisitor.reportIncompatibleType(processorType, type, processor);
       return;
     }
 
@@ -566,7 +565,7 @@ final class ExpressionChecker {
         return;
       }
       if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) return;
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(rExpr, new JavaIncompatibleTypeErrorContext(lType, type)));
+      myVisitor.reportIncompatibleType(lType, type, rExpr);
     }
   }
 
@@ -1381,7 +1380,7 @@ final class ExpressionChecker {
       }
       // cannot derive type of conditional expression
       // elseType will never be cast-able to thenType, so no quick fix here
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(thenType, type)));
+      myVisitor.reportIncompatibleType(thenType, type, expression);
     }
   }
 

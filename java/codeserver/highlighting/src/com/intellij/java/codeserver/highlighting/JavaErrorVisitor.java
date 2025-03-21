@@ -6,6 +6,7 @@ import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -1346,6 +1347,16 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!isApplicable(feature)) {
       report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(element, feature));
     }
+  }
+
+  boolean reportIncompatibleType(@NotNull PsiType lType, @Nullable PsiType rType, @NotNull PsiElement elementToHighlight) {
+    if (rType instanceof PsiLambdaParameterType || lType instanceof PsiLambdaParameterType) {
+      // Do not report an incompatible type if the lambda parameter type is not known;
+      // this problem is induced by another problem, which is more useful to report
+      return true;
+    }
+    report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeErrorContext(lType, rType)));
+    return false;
   }
 
   private void checkPreviewFeature(@NotNull PsiElement element) {

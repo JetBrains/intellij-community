@@ -1658,7 +1658,7 @@ public final class JavaErrorKinds {
   }
 
   /**
-   * Context for errors related to annotation value
+   * Context for errors related to the annotation value
    * @param method corresponding annotation method
    * @param expectedType expected value type
    * @param fromDefaultValue if true, the error is reported for the method default value, rather than for use site
@@ -1689,7 +1689,7 @@ public final class JavaErrorKinds {
 
   /**
    * A context for {@link #CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL} error kind
-   * @param psiClass a class where ambiguous call is performed
+   * @param psiClass a class where an ambiguous call is performed
    * @param candidate1 first constructor candidate in super class
    * @param candidate2 second constructor candidate in super class
    */
