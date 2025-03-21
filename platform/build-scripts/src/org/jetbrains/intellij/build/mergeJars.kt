@@ -240,8 +240,7 @@ private suspend fun handleZipSource(
     }
 
     val includeManifest = sources.size == 1
-    val isIncluded = source.filter(name) &&
-                     (includeManifest || name != "META-INF/MANIFEST.MF")
+    val isIncluded = source.filter(name) && (includeManifest || name != "META-INF/MANIFEST.MF")
 
     if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
       return@suspendAwareReadZipFile
@@ -251,7 +250,10 @@ private suspend fun handleZipSource(
     val isSkiko = sourceFileName.startsWith("skiko-awt-runtime-all-") && sourceFileName.endsWith(".jar")
     val shouldStayInJar = if (isSkiko && nativeFileHandler != null) {
       !nativeFileHandler.isNative(name) || nativeFileHandler.isCompatibleWithTargetPlatform(name)
-    } else true
+    }
+    else {
+      true
+    }
 
     if (nativeFileHandler?.isNative(name) == true) {
       if (source.isPreSignedAndExtractedCandidate) {
@@ -274,9 +276,7 @@ private suspend fun handleZipSource(
     }
     else if (shouldStayInJar) {
       packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
-
-      val data = dataSupplier()
-      writeZipData(data)
+      writeZipData(dataSupplier())
     }
   }
 }
