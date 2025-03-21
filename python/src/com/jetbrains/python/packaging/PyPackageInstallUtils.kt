@@ -34,19 +34,18 @@ import javax.swing.UIManager
 
 object PyPackageInstallUtils {
   fun offeredPackageForNotFoundModule(project: Project, sdk: Sdk, moduleName: String): String? {
-    val pipPackageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
-
-    val shouldToInstall = checkShouldToInstall(project, sdk, pipPackageName)
+    val shouldToInstall = checkShouldToInstall(project, sdk, moduleName)
     if (!shouldToInstall)
       return null
-    return pipPackageName
+    return PyPsiPackageUtil.moduleToPackageName(moduleName)
   }
 
-  fun checkShouldToInstall(project: Project, sdk: Sdk, packageName: String): Boolean {
-    return !checkIsInstalled(project, sdk, packageName) && checkExistsInRepository(project, sdk, packageName)
+  fun checkShouldToInstall(project: Project, sdk: Sdk, moduleName: String): Boolean {
+    val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
+    return !checkIsInstalled(project, sdk, packageName) && checkExistsInRepository(packageName)
   }
 
-  fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
+  private fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
     val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
     val normalizedName = normalizePackageName(packageName)
     val isStdLib = PyStdlibUtil.getPackages()?.any { normalizePackageName(it) == normalizedName } == true
@@ -56,18 +55,9 @@ object PyPackageInstallUtils {
     return packageManager.installedPackages.any { normalizePackageName(it.name) == normalizedName }
   }
 
-  fun checkExistsInRepository(project: Project, sdk: Sdk, packageName: String): Boolean {
-    if (!PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
-      return false
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode )
-      return PyPIPackageUtil.INSTANCE.isInPyPI(packageName)
-
-    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
-    val repositoryManager = packageManager.repositoryManager
+  private fun checkExistsInRepository(packageName: String): Boolean {
     val normalizedName = normalizePackageName(packageName)
-    return repositoryManager.allPackages().any { normalizePackageName(it) == normalizedName }
+    return PyPIPackageUtil.INSTANCE.isInPyPI(normalizedName)
   }
 
 
