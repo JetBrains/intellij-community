@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -725,10 +725,11 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
               addSeparatorTextMatchedInAnyOrder(currentElement,
                                                 parent instanceof PsiClass ? PsiMember.class : PsiJavaCodeReferenceElement.class, buf);
             }
-            else if (info.isStatementContext() ||
-                     info.isArgumentContext() ||
-                     parent instanceof PsiPolyadicExpression ||
-                     parent instanceof PsiArrayInitializerExpression) {
+            else if (info.isStatementContext()
+                     || info.isArgumentContext()
+                     || parent instanceof PsiPolyadicExpression
+                     || parent instanceof PsiArrayInitializerExpression
+                     || parent instanceof PsiExpressionList) {
               addSeparatorText(previous, currentElement, buf);
             }
             else {
