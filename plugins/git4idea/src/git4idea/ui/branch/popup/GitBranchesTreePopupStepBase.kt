@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.SpeedSearchFilter
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
@@ -12,7 +13,7 @@ import git4idea.GitBranch
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.tree.GitBranchesTreeModel
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import git4idea.ui.branch.tree.GitBranchesTreeTextProvider
 import git4idea.ui.branch.tree.createTreePathFor
 import javax.swing.tree.TreePath
 
@@ -90,9 +91,12 @@ internal abstract class GitBranchesTreePopupStepBase(
   override fun getSpeedSearchFilter() = SpeedSearchFilter<Any> { node ->
     when (node) {
       is GitBranch -> node.name
-      else -> node?.let { GitBranchesTreeRenderer.getText(node, treeModel, repositories) } ?: ""
+      else -> node?.let { getNodeText(node) } ?: ""
     }
   }
+
+  internal fun getNodeText(node: Any?): @NlsSafe String? =
+    GitBranchesTreeTextProvider.getText(node, selectedRepository, repositories.size > 1, treeModel.isPrefixGrouping)
 
   override fun isAutoSelectionEnabled() = false
 

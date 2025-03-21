@@ -52,7 +52,6 @@ import git4idea.repo.*
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer.Companion.getText
 import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirst
@@ -718,7 +717,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
         null -> ""
         is ItemPresentation -> value.presentableText.orEmpty()
         is GitBranch -> value.name
-        else -> getText(value, treeStep.treeModel, treeStep.affectedRepositories) ?: ""
+        else -> treeStep.getNodeText(value) ?: ""
       }
     }
   }

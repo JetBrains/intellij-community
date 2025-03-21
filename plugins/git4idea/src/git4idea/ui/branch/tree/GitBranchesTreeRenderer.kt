@@ -1,12 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
-import com.intellij.dvcs.DvcsUtil
-import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleColoredComponent
@@ -29,6 +26,7 @@ import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesClippedNamesCache
 import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
+import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.canHighlight
 import java.awt.Component
@@ -40,21 +38,15 @@ import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
 internal abstract class GitBranchesTreeRenderer(
-  protected val project: Project,
-  private val treeModel: GitBranchesTreeModel,
-  private val selectedRepository: GitRepository?,
-  repositories: List<GitRepository>,
+  protected val treePopupStep: GitBranchesTreePopupStepBase,
   private val favoriteToggleOnClickSupported: Boolean = true,
 ) : TreeCellRenderer {
-  private val iconProvider = GitBranchesTreeIconProvider(project)
-  private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
+  private val iconProvider = GitBranchesTreeIconProvider(treePopupStep.project)
 
   private val updateScaleHelper = UpdateScaleHelper()
 
-  protected val affectedRepositories = selectedRepository?.let(::listOf) ?: repositories
-
   private fun getBranchNameClipper(treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? =
-    GitBranchesTreeRendererClipper.create(project, treeNode)
+    GitBranchesTreeRendererClipper.create(treePopupStep.project, treeNode)
 
   fun getLeftTreeIconRenderer(path: TreePath): Control? {
     val lastComponent = path.lastPathComponent
@@ -67,21 +59,18 @@ internal abstract class GitBranchesTreeRenderer(
   fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? = when (treeNode) {
     is GitBranchesTreeModel.BranchesPrefixGroup -> iconProvider.forGroup()
     is RefUnderRepository -> getBranchIcon(treeNode.ref, listOf(treeNode.repository), isSelected)
-    is GitReference -> getBranchIcon(treeNode, affectedRepositories, isSelected)
+    is GitReference -> getBranchIcon(treeNode, selected = isSelected)
     else -> null
   }
 
-  private fun getBranchIcon(reference: GitReference, repositories: List<GitRepository>, isSelected: Boolean): Icon {
-    val isCurrent =
-      selectedRepository?.let { GitRefUtil.getCurrentReference(it) == reference }
-      ?: repositories.all { GitRefUtil.getCurrentReference(it) == reference }
+  private fun getBranchIcon(reference: GitReference,
+                            repositories: List<GitRepository> = treePopupStep.affectedRepositories,
+                            selected: Boolean): Icon {
+    val isCurrent = repositories.all { GitRefUtil.getCurrentReference(it) == reference }
+    val branchManager = treePopupStep.project.service<GitBranchManager>()
+    val isFavorite = repositories.all { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
 
-    val branchManager = project.service<GitBranchManager>()
-    val isFavorite =
-      selectedRepository?.let { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
-      ?: repositories.all { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
-
-    return iconProvider.forRef(reference, current = isCurrent, favorite = isFavorite, favoriteToggleOnClick = favoriteToggleOnClickSupported, selected = isSelected)
+    return iconProvider.forRef(reference, current = isCurrent, favorite = isFavorite, favoriteToggleOnClick = favoriteToggleOnClickSupported, selected = selected)
   }
 
   private fun getNodeIcon(treeNode: Any?, isSelected: Boolean): Icon? {
@@ -127,7 +116,7 @@ internal abstract class GitBranchesTreeRenderer(
       foreground = JBUI.CurrentTheme.Tree.foreground(selected, true)
 
       clear()
-      val text = getText(userObject, treeModel, affectedRepositories).orEmpty()
+      val text = treePopupStep.getNodeText(userObject) ?: ""
 
       if (isDisabledActionItem(userObject)) {
         append(text, SimpleTextAttributes.GRAYED_ATTRIBUTES)
@@ -139,7 +128,7 @@ internal abstract class GitBranchesTreeRenderer(
 
     configureTreeCellComponent(tree, userObject, value, selected, expanded, leaf, row, hasFocus)
 
-    if (value != null && canHighlight(project, tree, userObject)) {
+    if (value != null && canHighlight(treePopupStep.project, tree, userObject)) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
@@ -156,24 +145,6 @@ internal abstract class GitBranchesTreeRenderer(
     @JvmField
     internal val MAIN_ICON = Key.create<Boolean>("MAIN_ICON")
 
-    internal fun getText(treeNode: Any?, model: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
-      val value = treeNode ?: return null
-      return when (value) {
-        is GitRefType -> when {
-          model is GitBranchesTreeSelectedRepoModel -> value.getInRepoText(DvcsUtil.getShortRepositoryName(model.repository))
-          repositories.size > 1 -> value.getCommonText()
-          else -> value.getText()
-        }
-        is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
-        is GitRepository -> DvcsUtil.getShortRepositoryName(value)
-        is GitBranchesTreeModel.RefTypeUnderRepository -> value.type.getText()
-        is RefUnderRepository -> getText(value.ref, model, repositories)
-        is GitReference -> if (model.isPrefixGrouping) value.name.split('/').last() else value.name
-        is PopupFactoryImpl.ActionItem -> value.text
-        is GitBranchesTreeModel.PresentableNode -> value.presentableText
-        else -> null
-      }
-    }
     internal fun isDisabledActionItem(userObject: Any?) = userObject is PopupFactoryImpl.ActionItem && !userObject.isEnabled
   }
 }

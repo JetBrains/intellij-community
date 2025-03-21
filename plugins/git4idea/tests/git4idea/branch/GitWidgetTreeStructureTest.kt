@@ -13,12 +13,11 @@ import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import git4idea.test.*
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import git4idea.ui.branch.popup.GitBranchesTreePopupRenderer
-import git4idea.ui.branch.tree.GitBranchesTreeModel
+import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import java.nio.file.Path
 
@@ -28,6 +27,8 @@ private const val TEST_DATA_SUBFOLDER = "widgetTree"
 class GitWidgetTreeStructureTest : GitPlatformTest() {
   private lateinit var repo: GitRepository
   private lateinit var broRepoPath: Path
+
+  private lateinit var popupStep: GitBranchesTreePopupStepBase
 
   override fun setUp() {
     super.setUp()
@@ -192,13 +193,12 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     val testDataFileName = snapshotName ?: PlatformTestUtil.getTestName(name, false)
     val testData = TestDataUtil.basePath.resolve(TEST_DATA_SUBFOLDER).resolve(testDataFileName)
 
-    val repositories = GitRepositoryManager.getInstance(project).repositories
     val printedTree = invokeAndWaitIfNeeded {
       TreeTestUtil(tree)
         .setSelection(true)
         .setConverter { node: Any ->
           val icon = (tree.cellRenderer as GitBranchesTreeRenderer).getIcon(node, false)
-          val textByRenderer = GitBranchesTreeRenderer.getText(node, tree.model as GitBranchesTreeModel, repositories)
+          val textByRenderer = popupStep.getNodeText(node)
           val text = when {
             textByRenderer != null -> textByRenderer
             node is SeparatorWithText -> "-----"
@@ -221,7 +221,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     return invokeAndWaitIfNeeded {
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
-      val popupStep = GitBranchesTreePopup.createBranchesTreePopupStep(project, repo)
+      popupStep = GitBranchesTreePopup.createBranchesTreePopupStep(project, repo)
       tree.cellRenderer = GitBranchesTreePopupRenderer(popupStep)
       tree.model = popupStep.treeModel
       popupStep.updateTreeModelIfNeeded(tree, filter)

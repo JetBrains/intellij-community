@@ -7,7 +7,7 @@ import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import javax.swing.JTree
 
 internal class GitBranchesTreePopupMinimalRenderer(step: GitBranchesTreePopupStepBase) :
-  GitBranchesTreeRenderer(step.project, step.treeModel, step.selectedRepository, step.repositories, favoriteToggleOnClickSupported = false) {
+  GitBranchesTreeRenderer(step, favoriteToggleOnClickSupported = false) {
 
   override val mainPanel: BorderLayoutPanel =
     JBUI.Panels.simplePanel(mainTextComponent).addToLeft(mainIconComponent).andTransparent()
@@ -21,5 +21,6 @@ internal class GitBranchesTreePopupMinimalRenderer(step: GitBranchesTreePopupSte
     leaf: Boolean,
     row: Int,
     hasFocus: Boolean,
-  ) { }
+  ) {
+  }
 }
