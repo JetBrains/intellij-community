@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
 import org.intellij.lang.annotations.Language
 import java.io.File
@@ -496,30 +497,3 @@ private inline fun File.createTemporarilyWithContent(content: String, block: () 
     delete()
   }
 }
-
-
-val open1ThenOpen2Then3Schema
-  get() = assertThatSchema("""
-     {
-       "properties": {
-         "one": {
-           "properties": {
-             "two": {
-               "properties": {
-                 "three": {
-                   "type": "boolean"
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-   """.trimIndent())
-    .withConfiguration(
-      buildNestedCompletionsTree {
-        open("one") {
-          open("two")
-        }
-      }
-    )

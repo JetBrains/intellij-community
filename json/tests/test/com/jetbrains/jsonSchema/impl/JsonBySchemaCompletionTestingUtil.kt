@@ -9,6 +9,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaShorthandValueHandler
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNode
+import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
 import org.intellij.lang.annotations.Language
 
 
@@ -57,4 +58,32 @@ private fun NestedCompletionsNode?.asNestedCompletionsTreeProvider(): JsonSchema
   override fun getNestedCompletionsRoot(editedFile: PsiFile): NestedCompletionsNode? {
     return this@asNestedCompletionsTreeProvider
   }
+}
+
+object TestSchemas {
+  val open1ThenOpen2Then3Schema
+    get() = assertThatSchema("""
+     {
+       "properties": {
+         "one": {
+           "properties": {
+             "two": {
+               "properties": {
+                 "three": {
+                   "type": "boolean"
+                 }
+               }
+             }
+           }
+         }
+       }
+     }
+    """.trimIndent())
+       .withConfiguration(
+         buildNestedCompletionsTree {
+           open("one") {
+             open("two")
+           }
+         }
+       )
 }
