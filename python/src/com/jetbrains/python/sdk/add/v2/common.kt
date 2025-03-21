@@ -11,9 +11,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
@@ -30,6 +34,10 @@ import com.jetbrains.python.errorProcessing.PyError
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Row
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import javax.swing.JComponent
 
 @Service(Service.Level.APP)
 internal class PythonAddSdkService(val coroutineScope: CoroutineScope)
@@ -43,7 +51,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
     get() = model.propertyGraph
 
   abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink)
-  open fun onShown() {}
+  open fun onShown(component: JComponent) {}
 
   /**
    * Returns created SDK ready to use
@@ -57,7 +65,31 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
-abstract class PythonNewEnvironmentCreator(override val model: PythonMutableTargetAddInterpreterModel) : PythonAddEnvironment(model)
+abstract class PythonNewEnvironmentCreator(override val model: PythonMutableTargetAddInterpreterModel) : PythonAddEnvironment(model) {
+  internal val venvExistenceValidationState: AtomicProperty<VenvExistenceValidationState> =
+    AtomicProperty(VenvExistenceValidationState.Invisible)
+
+  internal fun Row.venvExistenceValidationAlert(validationRequestor: DialogValidationRequestor, onSelectExisting: () -> Unit) {
+    venvExistenceValidationAlert(venvExistenceValidationState, onSelectExisting)
+      .align(Align.FILL)
+      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(venvExistenceValidationState))
+      .cellValidation { component ->
+        addInputRule {
+          if (!component.isVisible) {
+            return@addInputRule null
+          }
+
+          val state = venvExistenceValidationState.get()
+
+          if (state is VenvExistenceValidationState.Error)
+            ValidationInfo("")
+          else
+            null
+        }
+      }
+  }
+}
+
 abstract class PythonExistingEnvironmentConfigurator(model: PythonAddInterpreterModel) : PythonAddEnvironment(model)
 
 
@@ -68,7 +100,7 @@ enum class PythonSupportedEnvironmentManagers(val nameKey: String, val icon: Ico
   PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
   UV("sdk.create.custom.uv", UV_ICON),
   HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo),
-  PYTHON("sdk.create.custom.python", com.jetbrains.python.psi.icons.PythonPsiApiIcons.Python)
+  PYTHON("sdk.create.custom.python", PythonPsiApiIcons.Python)
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {

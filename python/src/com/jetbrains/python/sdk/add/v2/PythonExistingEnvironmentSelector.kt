@@ -13,6 +13,7 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
+import javax.swing.JComponent
 
 class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : PythonExistingEnvironmentConfigurator(model) {
 
@@ -31,7 +32,7 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pyth
     }
   }
 
-  override fun onShown() {
+  override fun onShown(component: JComponent) {
     comboBox.setItems(model.allInterpreters)
   }
 
@@ -48,7 +49,7 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pyth
                                      false,
                                      false,
                                      true,
-                                     //presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
                                      false, // todo fix for wsl
                                      InterpreterCreationMode.CUSTOM)
   }

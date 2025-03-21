@@ -31,6 +31,7 @@ import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
+import javax.swing.JComponent
 
 internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
@@ -42,7 +43,7 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
     addInProjectCheckbox(panel)
   }
 
-  override fun onShown() {
+  override fun onShown(component: JComponent) {
     val moduleDir = when (moduleOrProject) {
       is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.baseDir
       is ModuleOrProject.ProjectOnly -> moduleOrProject.project.projectFile

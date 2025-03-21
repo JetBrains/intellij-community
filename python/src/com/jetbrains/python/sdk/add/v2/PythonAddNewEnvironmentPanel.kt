@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import javax.swing.JComponent
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
@@ -148,14 +149,14 @@ internal class PythonAddNewEnvironmentPanel(
   }
 
 
-  fun onShown() {
+  fun onShown(component: JComponent) {
     val modalityState = ModalityState.current().asContextElement()
     model.scope.launch(Dispatchers.EDT + modalityState) {
       initMutex.withLock {
         if (!initialized) {
           model.initialize()
           pythonBaseVersionComboBox.setItems(model.baseInterpreters)
-          custom.onShown()
+          custom.onShown(component)
           updateVenvLocationHint()
           model.navigator.restoreLastState(allowedInterpreterTypes)
           initialized = true

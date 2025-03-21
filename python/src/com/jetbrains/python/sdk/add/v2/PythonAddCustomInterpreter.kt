@@ -25,6 +25,7 @@ import com.jetbrains.python.sdk.add.v2.uv.UvExistingEnvironmentSelector
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import javax.swing.JComponent
 
 class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null, projectPathFlow: Flow<Path>? = null, private val errorSink: ErrorSink) {
 
@@ -43,7 +44,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     CONDA to CondaNewEnvironmentCreator(model),
     PIPENV to EnvironmentCreatorPip(model),
     POETRY to EnvironmentCreatorPoetry(model, moduleOrProject),
-    UV to EnvironmentCreatorUv(model),
+    UV to EnvironmentCreatorUv(model, moduleOrProject),
     HATCH to HatchNewEnvironmentCreator(model),
   )
 
@@ -128,9 +129,9 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
   }
 
 
-  fun onShown() {
-    newInterpreterCreators.values.forEach(PythonAddEnvironment::onShown)
-    existingInterpreterSelectors.values.forEach(PythonAddEnvironment::onShown)
+  fun onShown(component: JComponent) {
+    newInterpreterCreators.values.forEach { it.onShown(component) }
+    existingInterpreterSelectors.values.forEach { it.onShown(component) }
   }
 
   fun createStatisticsInfo(): InterpreterStatisticsInfo {
