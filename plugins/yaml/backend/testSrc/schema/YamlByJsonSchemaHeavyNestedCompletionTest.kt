@@ -4,6 +4,8 @@ package org.jetbrains.yaml.schema
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.jetbrains.jsonSchema.impl.*
 import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
+import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthand
+import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthandAndCustomization
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
 import org.intellij.lang.annotations.Language
 import java.io.File
@@ -265,34 +267,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTes
   fun `test nested completion leads to expanding - single level nestedness`() {
     addShorthandValueHandlerForEnabledField(testRootDisposable)
 
-    assertThatSchema("""
-      {
-        "properties": {
-          "setting": {
-            "anyOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "value": {
-                    "type": "string"
-                  }
-                }
-              },
-              {
-                "enum": ["enabled"]
-              }
-            ] 
-          }
-        }
-      }
-    """.trimIndent())
-      .withConfiguration(
-        buildNestedCompletionsTree {
-          open("setting")
-        }
-      )
+    settingWithEnabledShorthand
       .appliedToYamlFile("""
         setting: enabled
         val<caret>
@@ -307,40 +282,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTes
   fun `test nested completion leads to expanding - multiple level nestedness`() {
     addShorthandValueHandlerForEnabledField(testRootDisposable)
 
-    assertThatSchema("""
-      {
-        "properties": {
-          "setting": {
-            "anyOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "customization": {
-                    "properties": {
-                      "value": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "enum": ["enabled"]
-              }
-            ] 
-          }
-        }
-      }
-    """.trimIndent())
-      .withConfiguration(
-        buildNestedCompletionsTree {
-          open("setting") {
-            open("customization")
-          }
-        }
-      )
+    settingWithEnabledShorthandAndCustomization
       .appliedToYamlFile("""
         setting: enabled
         val<caret>
