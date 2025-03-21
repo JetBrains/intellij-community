@@ -507,10 +507,9 @@ fun executeOnDMT(
   block: suspend CoroutineScope.() -> Unit,
 ): Job {
   val managerThread = debuggerContext.managerThread!!
-  return managerThread.coroutineScope.launch(
-    context = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, priority),
-    block = block
-  )
+  return managerThread.coroutineScope.launch {
+    withDebugContext(debuggerContext, priority, block)
+  }
 }
 
 /**
@@ -657,11 +656,9 @@ suspend fun <T> withDebugContext(
 ): T {
   val managerThread = debuggerContext.managerThread!!
   val resultPriority = priority ?: priorityInContextOrDefault()
-  return runWithContext(
-    context = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, resultPriority),
-    parentScope = managerThread.coroutineScope,
-    block = block
-  )
+  val provider = DebuggerContextCommandProvider(debuggerContext, resultPriority)
+  val scope = provider.findScope() ?: throw CancellationException()
+  return runWithContext(context = Dispatchers.Debugger(managerThread) + provider, parentScope = scope, block = block)
 }
 
 private suspend fun priorityInContextOrDefault(): PrioritizedTask.Priority {

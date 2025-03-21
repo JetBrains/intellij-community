@@ -105,10 +105,29 @@ internal class DebuggerContextCommandProvider(
   val debuggerContext: DebuggerContextImpl,
   priority: PrioritizedTask.Priority,
 ) : DebuggerDispatchedCommandProvider(priority) {
-  override fun createDebuggerCommand(block: Runnable, cancellationAction: () -> Unit): DebuggerCommandImpl =
-    object : DebuggerContextCommandImpl(debuggerContext) {
-      override val priority: PrioritizedTask.Priority get() = this@DebuggerContextCommandProvider.priority
-      override fun threadAction(suspendContext: SuspendContextImpl) = block.run()
-      override fun commandCancelled() = cancellationAction()
+
+  private val command = object : DebuggerContextCommandImpl(debuggerContext) {
+    lateinit var block: Runnable
+    lateinit var cancellationAction: () -> Unit
+
+    override val priority: PrioritizedTask.Priority get() = this@DebuggerContextCommandProvider.priority
+    override fun threadAction(suspendContext: SuspendContextImpl) = block.run()
+    override fun commandCancelled() = cancellationAction()
+  }
+
+  /**
+   * Finds [CoroutineScope] of the [SuspendContextImpl] that will be used for this command
+   */
+  suspend fun findScope(): CoroutineScope? {
+    // Possible commands reorder due to additional switch to DMT
+    return withDebugContext(debuggerContext.managerThread!!) {
+      command.suspendContext?.coroutineScope
     }
+  }
+
+  override fun createDebuggerCommand(block: Runnable, cancellationAction: () -> Unit): DebuggerCommandImpl {
+    command.block = block
+    command.cancellationAction = cancellationAction
+    return command
+  }
 }
