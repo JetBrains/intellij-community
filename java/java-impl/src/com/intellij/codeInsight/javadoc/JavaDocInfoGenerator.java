@@ -3069,7 +3069,14 @@ public class JavaDocInfoGenerator {
     return pair != null ? pair.first : null;
   }
 
-  public static @Nullable <T> Pair<T, InheritDocProvider<T>> findInheritDocTag(PsiMethod method, DocTagLocator<T> loc, PsiDocTagValue target) {
+  /**
+   * Searches supertypes for the inherited documentation element.
+   * @param method method for which parameter the JavaDoc tag is searched for
+   * @param loc    locator to find the inherited documentation part in a given supertype
+   * @param target optional argument of the {@code @inheritDoc} tag
+   * @return the most specific applicable JavaDoc tag if found, {@code null} otherwise
+   */
+  public static @Nullable <T> Pair<T, InheritDocProvider<T>> findInheritDocTag(@NotNull PsiMethod method, @NotNull DocTagLocator<T> loc, @Nullable PsiDocTagValue target) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
     final var pair = JavaSuperTypeSearchUtil.INSTANCE.automaticSupertypeSearch(aClass, method, target, loc);
