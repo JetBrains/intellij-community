@@ -2,11 +2,8 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTestBase
-import com.jetbrains.jsonSchema.impl.assertThatSchema
+import com.jetbrains.jsonSchema.impl.*
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
-import com.jetbrains.jsonSchema.impl.testNestedCompletionsWithPredefinedCompletionsRoot
-import com.jetbrains.jsonSchema.impl.withConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.File
 
@@ -261,6 +258,97 @@ class YamlByJsonSchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTes
           two:
             three: <selection>false<caret></selection>
         onesBrother: 2
+      """.trimIndent())
+  }
+
+  fun `test nested completion leads to expanding - single level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    assertThatSchema("""
+      {
+        "properties": {
+          "setting": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "enum": ["enabled"]
+              }
+            ] 
+          }
+        }
+      }
+    """.trimIndent())
+      .withConfiguration(
+        buildNestedCompletionsTree {
+          open("setting")
+        }
+      )
+      .appliedToYamlFile("""
+        setting: enabled
+        val<caret>
+      """.trimIndent())
+      .completesTo("""
+        setting:
+          enabled: true
+          value: <caret>
+      """.trimIndent())
+  }
+
+  fun `test nested completion leads to expanding - multiple level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    assertThatSchema("""
+      {
+        "properties": {
+          "setting": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "customization": {
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "enum": ["enabled"]
+              }
+            ] 
+          }
+        }
+      }
+    """.trimIndent())
+      .withConfiguration(
+        buildNestedCompletionsTree {
+          open("setting") {
+            open("customization")
+          }
+        }
+      )
+      .appliedToYamlFile("""
+        setting: enabled
+        val<caret>
+      """.trimIndent())
+      .completesTo("""
+        setting:
+          enabled: true
+          customization:
+            value: <caret>
       """.trimIndent())
   }
 
