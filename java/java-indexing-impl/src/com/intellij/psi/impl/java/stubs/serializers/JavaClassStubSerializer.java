@@ -5,9 +5,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
+import com.intellij.psi.impl.java.stubs.factories.JavaClassStubFactory;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.stubs.*;
@@ -45,7 +45,7 @@ public class JavaClassStubSerializer implements StubSerializer<PsiClassStub<PsiC
     boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
     boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
     boolean isImplicit = PsiClassStubImpl.isImplicit(flags);
-    JavaClassElementType type = typeForClass(isAnonymous, isEnumConst, isImplicit);
+    JavaClassElementType type = JavaClassStubFactory.typeForClass(isAnonymous, isEnumConst, isImplicit);
 
     if (!isAnonymous) {
       String name = dataStream.readNameString();
@@ -91,13 +91,6 @@ public class JavaClassStubSerializer implements StubSerializer<PsiClassStub<PsiC
         sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn);
       }
     }
-  }
-
-  public static @NotNull JavaClassElementType typeForClass(final boolean anonymous, final boolean enumConst, final boolean implicitClass) {
-    return enumConst
-           ? JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER
-           : implicitClass ? JavaStubElementTypes.IMPLICIT_CLASS
-                           : anonymous ? JavaStubElementTypes.ANONYMOUS_CLASS : JavaStubElementTypes.CLASS;
   }
 
   @Override

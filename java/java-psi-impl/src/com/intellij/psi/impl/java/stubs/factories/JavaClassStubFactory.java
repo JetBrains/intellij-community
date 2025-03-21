@@ -6,12 +6,8 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.cache.RecordUtil;
-import com.intellij.psi.impl.java.stubs.JavaClassElementType;
-import com.intellij.psi.impl.java.stubs.JavaStubElementType;
-import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
+import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
-import com.intellij.psi.impl.java.stubs.serializers.JavaClassStubSerializer;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -110,7 +106,7 @@ public class JavaClassStubFactory implements LightStubElementFactory<PsiClassStu
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
                                                    isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord,
                                                    isImplicit, isValueClass);
-    final JavaClassElementType type = JavaClassStubSerializer.typeForClass(isAnonymous, isEnumConst, isImplicit);
+    final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst, isImplicit);
     return new PsiClassStubImpl<>(type, parentStub, qualifiedName, name, baseRef, flags);
   }
 
@@ -124,5 +120,12 @@ public class JavaClassStubFactory implements LightStubElementFactory<PsiClassStu
     final String message =
       "Should not be called. Element=" + psi + "; class" + psi.getClass() + "; file=" + (psi.isValid() ? psi.getContainingFile() : "-");
     throw new UnsupportedOperationException(message);
+  }
+
+  public static @NotNull JavaClassElementType typeForClass(final boolean anonymous, final boolean enumConst, final boolean implicitClass) {
+    return enumConst
+           ? JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER
+           : implicitClass ? JavaStubElementTypes.IMPLICIT_CLASS
+                           : anonymous ? JavaStubElementTypes.ANONYMOUS_CLASS : JavaStubElementTypes.CLASS;
   }
 }
