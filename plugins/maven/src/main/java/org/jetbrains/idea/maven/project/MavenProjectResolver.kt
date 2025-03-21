@@ -211,6 +211,22 @@ class MavenProjectResolver(private val myProject: Project) {
         }
       }
     }
+
+    // reconnect modules
+    results.forEach { aggregator ->
+      val modules = aggregator.mavenModel?.modules
+      if (modules.isNullOrEmpty()) return@forEach
+      val file = aggregator.file?.toPath() ?: return@forEach
+      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file) ?: return@forEach
+      val aggregatorProject = tree.findProject(virtualFile) ?: return@forEach
+      modules.forEach modules@ { modulePath ->
+        val moduleFile = file.parent.resolve(modulePath).resolve("pom.xml")
+        val moduleVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(moduleFile) ?: return@modules
+        val moduleProject = tree.findProject(moduleVirtualFile) ?: return@modules
+        tree.reconnect(aggregatorProject, moduleProject)
+      }
+    }
+
     tree.recalculateMavenIdToProjectMap()
     MavenLog.LOG.debug("Project resolution finished: ${projectsWithUnresolvedPlugins.size}")
     return projectsWithUnresolvedPlugins
@@ -422,8 +438,23 @@ class MavenProjectResolver(private val myProject: Project) {
       MavenLog.LOG.warn("Maven project virtual file is null for $file")
       return
     }
-    val mavenProject = tree.findProject(virtualFile)
-    if (mavenProject == null) {
+    val existingMavenProject = tree.findProject(virtualFile)
+    val mavenProject = if (existingMavenProject == null) {
+      val mavenId = result.mavenModel?.mavenId
+      val newMavenProject = MavenProject(virtualFile)
+      if (mavenId != null) {
+        newMavenProject.updateMavenId(mavenId)
+        tree.putVirtualFileToProjectMapping(newMavenProject, null)
+        newMavenProject
+      }
+      else {
+        null
+      }
+    }
+    else {
+      existingMavenProject
+    }
+    if (null == mavenProject) {
       MavenLog.LOG.warn("Maven project not found for $file")
       return
     }
