@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -61,7 +61,8 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     new ClassFilter("javassist.*"),
     new ClassFilter("org.apache.webbeans.*"),
     new ClassFilter("com.ibm.ws.*"),
-    new ClassFilter("org.mockito.*")
+    new ClassFilter("org.mockito.*"),
+    new ClassFilter("com.jetbrains.internal.IoOverNio*")
   };
 
   public boolean TRACING_FILTERS_ENABLED = true;
