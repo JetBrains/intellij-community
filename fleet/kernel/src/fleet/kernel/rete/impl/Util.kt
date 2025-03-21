@@ -244,37 +244,57 @@ internal class AdaptiveMap<K, V> : MutableMap<K, V> {
   }
 
   override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-    get() = when (state) {
-      EMPTY_STATE -> mutableSetOf()
-      ONE_STATE -> mutableSetOf(object : MutableMap.MutableEntry<K, V> {
-        override val key: K get() = f1 as K
-        override val value: V get() = f2 as V
-        override fun setValue(newValue: V): V {
-          val oldValue = f2 as V
-          f2 = newValue
-          return oldValue
+    get() = object : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
+      override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
+        TODO("Not yet implemented")
+      }
+
+      override val size: Int
+        get() = this@AdaptiveMap.size
+
+      override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> =
+        object : Iterator<MutableMap.MutableEntry<K, V>> by immutableIterator(), MutableIterator<MutableMap.MutableEntry<K, V>> {
+          override fun remove() {
+            TODO("Not yet implemented")
+          }
         }
-      })
-      LIST_STATE -> mutableSetOf<MutableMap.MutableEntry<K, V>>().apply {
-        val r = f1 as ArrayList<Any?>
-        var i = 0
-        while (i < r.size) {
-          val key = r[i] as K
-          val value = r[i + 1] as V
-          add(object : MutableMap.MutableEntry<K, V> {
-            override val key: K get() = key
-            override val value: V get() = value
-            override fun setValue(newValue: V): V {
-              val oldValue = r[i + 1] as V
-              r[i + 1] = newValue
-              return oldValue
+
+      private fun immutableIterator(): Iterator<MutableMap.MutableEntry<K, V>> = when (state) {
+        EMPTY_STATE -> emptyIterator
+        ONE_STATE -> object : Iterator<MutableMap.MutableEntry<K, V>> {
+          var nextCalled = false
+
+          override fun next(): MutableMap.MutableEntry<K, V> {
+            if (nextCalled) {
+              throw NoSuchElementException()
             }
-          })
-          i += 2
+            nextCalled = true
+            return constructMutableEntry(f1 as K, f2 as V)
+          }
+
+          override fun hasNext(): Boolean = !nextCalled
+        }
+        LIST_STATE -> iterator {
+          val r = (f1 as ArrayList<Any?>)
+          var i = 0
+          while (i < r.size) {
+            yield(constructMutableEntry(r[i] as K, r[i + 1] as V))
+            i += 2
+          }
+        }
+        SET_STATE -> (f1 as HashMap<K, V>).iterator()
+        else -> error("unreachable")
+      }
+
+
+      private fun constructMutableEntry(key: K, value: V): MutableMap.MutableEntry<K, V> = object : MutableMap.MutableEntry<K, V> {
+        override val key: K = key
+        override val value: V = value
+
+        override fun setValue(newValue: V): V {
+          TODO("Not yet implemented")
         }
       }
-      SET_STATE -> (f1 as HashMap<K, V>).entries
-      else -> error("unreachable")
     }
 
   override val values: MutableCollection<V>
@@ -447,4 +467,13 @@ internal class AdaptiveMap<K, V> : MutableMap<K, V> {
       else -> error("unreachable")
     }
   }
+}
+
+private val emptyIterator = object : Iterator<Nothing> {
+  override fun next(): Nothing {
+    throw NoSuchElementException()
+  }
+
+  override fun hasNext(): Boolean = false
+
 }
