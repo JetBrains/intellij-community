@@ -4,12 +4,12 @@
 import androidx.compose.runtime.Composable
 
 @Composable fun A() {}
-val aCallable: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'"), HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'Function0<Unit>', actual 'KComposableFunction0<Unit>'.'")!>::A<!>
-val bCallable: @Composable () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>
-val cCallable = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>
+val aCallable: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'Function0<Unit>', actual 'KComposableFunction0<Unit>'.'")!>::A<!>
+val bCallable: @Composable () -> Unit = ::A
+val cCallable = ::A
 fun doSomething(fn: () -> Unit) { print(fn) }
 @Composable fun B(content: @Composable () -> Unit) {
     content()
     doSomething(::<!HIGHLIGHTING("severity='ERROR'; descr='[INAPPLICABLE_CANDIDATE] Inapplicable candidate(s): fun A(): Unit'")!>A<!>)
-    B(<!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>)
+    B(::A)
 }
