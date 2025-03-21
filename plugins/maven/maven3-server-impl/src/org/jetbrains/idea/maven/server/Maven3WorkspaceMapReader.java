@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 
 public class Maven3WorkspaceMapReader implements WorkspaceReader {
@@ -34,8 +35,8 @@ public class Maven3WorkspaceMapReader implements WorkspaceReader {
 
   private final MavenWorkspaceMapWrapper myWorkspaceMap;
 
-  public Maven3WorkspaceMapReader(MavenWorkspaceMap workspaceMap) {
-    myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap);
+  public Maven3WorkspaceMapReader(MavenWorkspaceMap workspaceMap, Properties systemProperties) {
+    myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap, systemProperties);
   }
 
   @Override

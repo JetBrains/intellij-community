@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,7 +27,7 @@ public class Maven40WorkspaceMapReader implements WorkspaceReader, MavenWorkspac
   private final ConcurrentHashMap<MavenId, Model> myMavenModelMap;
 
   public Maven40WorkspaceMapReader(MavenWorkspaceMap workspaceMap) {
-    myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap);
+    myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap, new Properties());
     myMavenModelMap = new ConcurrentHashMap<>();
   }
 
