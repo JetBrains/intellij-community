@@ -86,4 +86,70 @@ object TestSchemas {
            }
          }
        )
+
+  val settingWithEnabledShorthand
+    get() = assertThatSchema("""
+      {
+        "properties": {
+          "setting": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "enum": ["enabled"]
+              }
+            ] 
+          }
+        }
+      }
+    """.trimIndent())
+      .withConfiguration(
+        buildNestedCompletionsTree {
+          open("setting")
+        }
+      )
+
+  val settingWithEnabledShorthandAndCustomization
+    get() = assertThatSchema("""
+      {
+        "properties": {
+          "setting": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "customization": {
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "enum": ["enabled"]
+              }
+            ] 
+          }
+        }
+      }
+    """.trimIndent())
+      .withConfiguration(
+        buildNestedCompletionsTree {
+          open("setting") {
+            open("customization")
+          }
+        }
+      )
 }
