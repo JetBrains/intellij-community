@@ -28,31 +28,46 @@ import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import javax.swing.JComponent
 
 @Internal
-internal abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
+internal abstract class CustomNewEnvironmentCreator(
+  private val name: String,
+  model: PythonMutableTargetAddInterpreterModel,
+) : PythonNewEnvironmentCreator(model) {
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox
+
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox = pythonInterpreterComboBox(model.state.baseInterpreter,
-                                                       model,
-                                                       model::addInterpreter,
-                                                       model.interpreterLoading)
+        basePythonComboBox = pythonInterpreterComboBox(
+          model.state.baseInterpreter,
+          model,
+          model::addInterpreter,
+          model.interpreterLoading
+        )
           .align(Align.FILL)
           .component
       }
 
-      executableSelector(executable,
-                         validationRequestor,
-                         message("sdk.create.custom.venv.executable.path", name),
-                         message("sdk.create.custom.venv.missing.text", name),
-                         createInstallFix(errorSink)).component
+      executableSelector(
+        executable,
+        validationRequestor,
+        message("sdk.create.custom.venv.executable.path", name),
+        message("sdk.create.custom.venv.missing.text", name),
+        createInstallFix(errorSink)
+      )
+
+      row("") {
+        venvExistenceValidationAlert(validationRequestor) {
+          onVenvSelectExisting()
+        }
+      }
     }
   }
 
-  override fun onShown() {
+  override fun onShown(component: JComponent) {
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 
@@ -163,4 +178,6 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
   protected abstract suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError>
 
   internal abstract suspend fun detectExecutable()
+
+  internal open fun onVenvSelectExisting() {}
 }

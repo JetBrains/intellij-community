@@ -56,11 +56,10 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
       model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
       mainPanel = PythonAddCustomInterpreter(model, moduleOrProject = dialogPresenter.moduleOrProject, errorSink = errorSink)
       mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
-
     }.apply {
       model.scope.launch(model.uiContext) {
         model.initialize()
-        mainPanel.onShown()
+        mainPanel.onShown(this@apply)
       }
     }
   }
