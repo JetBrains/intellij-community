@@ -282,7 +282,9 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             ListComboBox(
                                 items = comboBoxItems,
                                 modifier = Modifier.width(200.dp),
-                                onItemSelected = { selectedItemIndex-> selectedComboBox1 = comboBoxItems[selectedItemIndex] },
+                                onItemSelected = { selectedItemIndex ->
+                                    selectedComboBox1 = comboBoxItems[selectedItemIndex]
+                                },
                             )
                         }
 
@@ -294,7 +296,9 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                                 items = comboBoxItems,
                                 modifier = Modifier.width(200.dp),
                                 isEnabled = false,
-                                onItemSelected = { selectedItemIndex -> selectedComboBox2 = comboBoxItems[selectedItemIndex] },
+                                onItemSelected = { selectedItemIndex ->
+                                    selectedComboBox2 = comboBoxItems[selectedItemIndex]
+                                },
                             )
                         }
 
