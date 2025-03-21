@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util
 
+import org.jetbrains.annotations.Nls
 import kotlin.annotation.AnnotationTarget.*
 
 /**
@@ -11,61 +12,74 @@ class NlsContexts {
    * Dialogs
    */
   @NlsContext(prefix = "dialog.title")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, FIELD)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, FIELD)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class DialogTitle
 
   @NlsContext(prefix = "dialog.message")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, LOCAL_VARIABLE)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, LOCAL_VARIABLE)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class DialogMessage
 
   /**
    * Popups
    */
   @NlsContext(prefix = "popup.title")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class PopupTitle
 
   @NlsContext(prefix = "popup.content")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class PopupContent
 
   @NlsContext(prefix = "popup.advertisement")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class PopupAdvertisement
 
   /**
    * Notifications
    */
   @NlsContext(prefix = "notification.title")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class NotificationTitle
 
   @NlsContext(prefix = "notification.subtitle")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class NotificationSubtitle
 
   @NlsContext(prefix = "notification.content")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class NotificationContent
 
   @NlsContext(prefix = "status.text")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class StatusText
 
   @NlsContext(prefix = "hint.text")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class HintText
 
   @NlsContext(prefix = "configurable.name")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class ConfigurableName
 
   @NlsContext(prefix = "parsing.error")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class ParsingError
 
   @NlsContext(prefix = "status.bar.text")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class StatusBarText
 
   /**
@@ -73,7 +87,8 @@ class NlsContexts {
    * See also #SystemNotificationText.
    */
   @NlsContext(prefix = "system.notification.title")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class SystemNotificationTitle
 
   /**
@@ -81,80 +96,98 @@ class NlsContexts {
    * See also #SystemNotificationTitle.
    */
   @NlsContext(prefix = "system.notification.text")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class SystemNotificationText
 
   @NlsContext(prefix = "command.name")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
   annotation class Command
 
   @NlsContext(prefix = "tab.title")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, FIELD)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, FIELD)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class TabTitle
 
   /**
    * Annotate by `#AttributeDescriptor` text attribute keys, see [com.intellij.openapi.options.colors.AttributesDescriptor]
    */
   @NlsContext(prefix = "attribute.descriptor")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class AttributeDescriptor
 
   @NlsContext(prefix = "column.name")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class ColumnName
 
   /**
    * Swing components
    */
   @NlsContext(prefix = "label")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class Label
 
   @NlsContext(prefix = "link.label")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class LinkLabel
 
   @NlsContext(prefix = "checkbox")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class Checkbox
 
   @NlsContext(prefix = "radio")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class RadioButton
 
   @NlsContext(prefix = "border.title")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class BorderTitle
 
   @NlsContext(prefix = "tooltip")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class Tooltip
 
   @NlsContext(prefix = "separator")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class Separator
 
   @NlsContext(prefix = "button")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, FIELD)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, FIELD)
+  @Nls(capitalization = Nls.Capitalization.Title)
   annotation class Button
 
   @NlsContext(prefix = "text")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class DetailedDescription
 
   @NlsContext(prefix = "list.item")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class ListItem
 
   @NlsContext(prefix = "progress.text")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class ProgressText
 
   @NlsContext(prefix = "progress.details")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class ProgressDetails
 
   @NlsContext(prefix = "progress.title")
-  @Target(CLASS, TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class ProgressTitle
 }
