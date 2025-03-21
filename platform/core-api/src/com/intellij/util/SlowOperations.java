@@ -230,7 +230,7 @@ public final class SlowOperations {
   }
 
   @ApiStatus.Internal
-  public static Set<String> reportKnownIssues() {
+  public static @NotNull Set<String> reportKnownIssues() {
     Set<String> result = new HashSet<>(ourKnownIssues);
     ourKnownIssues.clear();
     return result;

@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringListVal
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.util.SlowOperations
 
-internal object SlowOperationsIssuesCollector : ApplicationUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("slow.operations", 1)
+internal class SlowOperationsIssuesCollector : ApplicationUsagesCollector() {
+  private val GROUP: EventLogGroup = EventLogGroup("slow.operations", 3)
 
   private val ISSUE_TRIGGERED = GROUP.registerEvent("issue.triggered", StringListValidatedByInlineRegexp("issue_id", "\\b[A-Z]+-\\d+\\b"))
 
