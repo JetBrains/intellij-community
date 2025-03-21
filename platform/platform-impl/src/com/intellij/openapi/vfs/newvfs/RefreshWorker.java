@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -530,7 +530,7 @@ final class RefreshWorker {
 
     events.add(new VFileCreateEvent(myRequestor, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children));
 
-    VFileEvent event = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
+    VFileEvent event = ((PersistentFSImpl)myPersistence).generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
     if (event != null) {
       events.add(event);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.core.CoreBundle;
@@ -947,7 +947,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(dir);
     assertEquals(CaseSensitivity.UNKNOWN, dir.getChildrenCaseSensitivity());
 
-    VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(dir, file.getName());
+    ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEventForUnknownCase(dir, file.getName());
     CaseSensitivity expected = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
     assertEquals(expected, dir.getChildrenCaseSensitivity());
     assertEquals(expected == CaseSensitivity.SENSITIVE, dir.isCaseSensitive());

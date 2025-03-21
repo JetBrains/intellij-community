@@ -48,10 +48,7 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.HashMap;
@@ -63,6 +60,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
+import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -108,6 +106,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private final AtomicLong fileByIdCacheMisses = new AtomicLong();
 
   private final AtomicLong childByName = new AtomicLong();
+  /** How many times folder case-sensitivity was read from underlying FS */
+  private final AtomicLong caseSensitivityReads = new AtomicLong();
 
 
   public PersistentFSImpl(@NotNull Application app) {
@@ -728,7 +728,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     getFileSystem(parent).createChildDirectory(requestor, parent, dir);
 
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, ChildInfo.EMPTY_ARRAY));
-    VFileEvent caseSensitivityEvent = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, dir);
+    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(parent, dir);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
@@ -748,7 +748,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     getFileSystem(parent).createChildFile(requestor, parent, name);
     processEvent(new VFileCreateEvent(requestor, parent, name, false, null, null, null));
-    VFileEvent caseSensitivityEvent = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, name);
+    VFileEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(parent, name);
     if (caseSensitivityEvent != null) {
       processEvent(caseSensitivityEvent);
     }
@@ -2138,7 +2138,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
           case VirtualFile.PROP_HIDDEN -> executeSetHidden(file, ((Boolean)newValue).booleanValue());
           case VirtualFile.PROP_SYMLINK_TARGET -> executeSetTarget(file, (String)newValue);
-          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY -> executeChangeCaseSensitivity((VirtualDirectoryImpl)file, (FileAttributes.CaseSensitivity)newValue);
+          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY ->
+            executeChangeCaseSensitivity((VirtualDirectoryImpl)file, (FileAttributes.CaseSensitivity)newValue);
         }
       }
     }
@@ -2166,6 +2167,46 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
              || sensitivityChanged;
     });
     directory.setCaseSensitivityFlag(newCaseSensitivity);
+  }
+
+
+  /**
+   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(File)}.
+   * If this flag read successfully, prepare to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
+   * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events:
+   * see {@link VirtualFileSystem#isCaseSensitive()}).
+   * Otherwise, return null.
+   */
+  @ApiStatus.Internal
+  public VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent,
+                                                                                    @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
+      return null;
+    }
+    caseSensitivityReads.incrementAndGet();
+    //MAYBE RC: measure and record execution time also?
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+    return generateCaseSensitivityChangedEvent(parent, sensitivity);
+  }
+
+  @ApiStatus.Internal
+  public VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir,
+                                                                      @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
+    if (actualCaseSensitivity == FileAttributes.CaseSensitivity.UNKNOWN) {
+      return null;
+    }
+
+    // fire only when the new case sensitivity is different from the default FS sensitivity,
+    // because only in that case the file.isCaseSensitive() value could change
+    if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
+      return new VFilePropertyChangeEvent(REFRESH_REQUESTOR, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                          FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity);
+    }
+
+    //TODO RC: why we update the case-sensitivity only if it is == FS.default?
+    //TODO RC: why we update case-sensitivity in method that should be just generating an event?
+    executeChangeCaseSensitivity((VirtualDirectoryImpl)dir, actualCaseSensitivity);
+    return null;
   }
 
   @Override
@@ -2513,16 +2554,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     var fileByIdCacheHitsCounter = meter.counterBuilder("VFS.fileByIdCache.hits").buildObserver();
     var fileByIdCacheMissesCounter = meter.counterBuilder("VFS.fileByIdCache.misses").buildObserver();
     var fileChildByNameCounter = meter.counterBuilder("VFS.fileChildByName").buildObserver();
+    var caseSensitivityReadsCounter = meter.counterBuilder("VFS.folderCaseSensitivityReads").buildObserver();
     var invertedFileNameIndexRequestsCount = meter.counterBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
     meter.batchCallback(() -> {
       fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
       fileByIdCacheMissesCounter.record(fileByIdCacheMisses.get());
       fileChildByNameCounter.record(childByName.get());
+      caseSensitivityReadsCounter.record(caseSensitivityReads.get());
       FSRecordsImpl vfs = vfsPeer;
       if (vfs != null) {
         invertedFileNameIndexRequestsCount.record(vfs.invertedNameIndexRequestsServed());
       }
-    }, fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter, invertedFileNameIndexRequestsCount);
+    }, fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter, caseSensitivityReadsCounter, invertedFileNameIndexRequestsCount);
   }
 
   private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {
