@@ -502,9 +502,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
 
     overrideBuiltInAction(TreeActions.Right.ID) {
       val path = selectionPath
-      if (path != null && (path.lastPathComponent is GitRepository
-                           || path.lastPathComponent is TopLevelRepository
-                           || model.getChildCount(path.lastPathComponent) == 0)) {
+      if (path != null && (path.lastPathComponent is RepositoryNode || model.getChildCount(path.lastPathComponent) == 0)) {
         handleSelect(false, null)
         true
       }

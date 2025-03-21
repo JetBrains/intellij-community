@@ -99,8 +99,7 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
   private fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
     return when (treeNode) {
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
-      is GitRepository -> GitBranchUtil.getDisplayableBranchText(treeNode)
-      is GitBranchesTreeModel.TopLevelRepository -> GitBranchUtil.getDisplayableBranchText(treeNode.repository)
+      is GitBranchesTreeModel.RepositoryNode -> GitBranchUtil.getDisplayableBranchText(treeNode.repository)
       is GitLocalBranch -> {
         treeNode.getCommonTrackedBranch(treePopupStep.affectedRepositories)?.name
       }

@@ -122,7 +122,13 @@ internal abstract class GitBranchesTreeModel(
   }
   data class RefTypeUnderRepository(val repository: GitRepository, val type: GitRefType)
 
-  data class TopLevelRepository(val repository: GitRepository): PresentableNode {
+  data class RepositoryNode(
+    val repository: GitRepository,
+    /**
+     * Set to true if this repository node doesn't contain children (e.g., used to navigate to the next level pop-up).
+     */
+    val isLeaf: Boolean,
+  ) : PresentableNode {
     override fun getPresentableText(): String = DvcsUtil.getShortRepositoryName(repository)
   }
 
@@ -144,8 +150,7 @@ internal abstract class GitBranchesTreeModel(
    */
   fun isSelectable(node: Any?): Boolean {
     val userValue = node ?: return false
-    return (userValue is GitRepository && this !is GitBranchesTreeMultiRepoFilteringModel) ||
-           userValue is TopLevelRepository ||
+    return (userValue is RepositoryNode && (userValue.isLeaf || this !is GitBranchesTreeMultiRepoFilteringModel)) ||
            userValue is GitReference ||
            userValue is RefUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)

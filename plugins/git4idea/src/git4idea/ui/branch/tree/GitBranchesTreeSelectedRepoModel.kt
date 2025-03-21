@@ -32,7 +32,7 @@ internal class GitBranchesTreeSelectedRepoModel(
 
   override fun rebuild(matcher: MinusculeMatcher?) {
     super.rebuild(matcher)
-    repositoriesTree = LazyRepositoryHolder(project, allProjectRepositories, matcher)
+    repositoriesTree = LazyRepositoryHolder(project, allProjectRepositories, matcher, canHaveChildren = false)
   }
 
   override fun getTopLevelNodes(): List<Any> {
