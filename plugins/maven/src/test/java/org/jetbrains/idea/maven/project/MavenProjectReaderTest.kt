@@ -564,15 +564,8 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     importProjectAsync()
     val p = projectsTree.projects.first()
 
-    forMaven3 {
-      assertEquals("\${prop1}", p.name)
-      assertEquals("\${prop2}", p.packaging)
-    }
-
-    forMaven4 {
-      assertEquals("project", p.name)
-      assertEquals("", p.packaging)
-    }
+    assertEquals("\${prop1}", p.name)
+    assertEquals("\${prop2}", p.packaging)
   }
 
   @Test
