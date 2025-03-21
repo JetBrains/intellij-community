@@ -2073,7 +2073,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     }
   }
 
-  public void _testReformatAndShortenClassRefPerformance() throws IOException {
+  public void testReformatAndShortenClassRefPerformance() throws IOException {
     options.setToReformatAccordingToStyle(true);
 
     final String source = loadFile("ReformatAndShortenClassRefPerformance_source.java");
