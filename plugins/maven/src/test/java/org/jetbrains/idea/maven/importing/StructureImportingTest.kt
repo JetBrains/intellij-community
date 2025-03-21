@@ -68,7 +68,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <modules>
                          <module>m1</module>
                          <module>m2</module>
-                         <module>m3</module>
                        </modules>
                        """.trimIndent())
 
