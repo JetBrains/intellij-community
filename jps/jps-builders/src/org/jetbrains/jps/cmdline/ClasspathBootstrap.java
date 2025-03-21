@@ -174,7 +174,7 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, JpsModel.class);  // intellij.platform.jps.model
     addToClassPath(cp, JpsModelImpl.class);  // intellij.platform.jps.model.impl
     addToClassPath(cp, JpsProjectLoader.class);  // intellij.platform.jps.model.serialization
-    addToClassPath(cp, JavaVersion.class); // intellij.platform.util.kmp
+    addToClassPath(cp, JavaVersion.class); // intellij.platform.util.multiplatform
     addToClassPath(cp, Strings.class); // intellij.platform.base.kmp
     addToClassPath(cp, AlienFormFileException.class);  // intellij.java.guiForms.compiler
     addToClassPath(cp, GridConstraints.class);  // intellij.java.guiForms.rt

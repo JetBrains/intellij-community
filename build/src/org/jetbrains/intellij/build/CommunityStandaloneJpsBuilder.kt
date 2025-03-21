@@ -21,10 +21,10 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
 
   layout.withModules(sequenceOf(
     "intellij.platform.util",
-    "intellij.platform.util.kmp",
+    "intellij.platform.util.multiplatform",
     "intellij.platform.util.classLoader",
     "intellij.platform.util.base",
-    "intellij.platform.util.base.kmp",
+    "intellij.platform.util.base.multiplatform",
     "intellij.platform.util.xmlDom",
     "intellij.platform.util.jdom",
     "intellij.platform.tracing.rt",
