@@ -4,7 +4,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResul
 import com.intellij.platform.ml.impl.ngram.model.SimpleNGramModel
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlin.math.pow
 
 class NGramModelProvider {
 
@@ -33,17 +32,17 @@ class NGramModelProvider {
   ): Double {
     if (deferredModels == null || !deferredModels.isCompleted) return epsilon
 
-    val dictionary = loadedDictionary ?: return 0.0
+    val dictionary = loadedDictionary ?: return epsilon
     val totalUnigramFrequency = dictionary.totalFrequency.toDouble().takeIf { it > 0 } ?: return epsilon
 
     return corrections.map { it.correction.lowercase() to it.confidence }
-      .foldIndexed(1.0) { index, sentenceProbability, (currentWord, confidence) ->
+      .foldIndexed(1.0) { index, sentenceProbability, (currentWord, _) ->
         val unigramProb = calculateUnigramProbability(dictionary, currentWord, totalUnigramFrequency, epsilon)
         val bigramProb = calculateNGramProbability(index, 2, corrections, epsilon)
         val trigramProb = calculateNGramProbability(index, 3, corrections, epsilon)
 
         val wordProbability = combineProbabilities(unigramProb, bigramProb, trigramProb, trigramWeight, bigramWeight, unigramWeight, epsilon)
-        sentenceProbability * wordProbability.pow(confidence)
+        sentenceProbability * wordProbability
       }
   }
 
