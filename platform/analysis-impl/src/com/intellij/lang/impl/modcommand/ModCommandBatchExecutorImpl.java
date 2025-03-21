@@ -86,6 +86,10 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       String message = executeDelete(deleteFile);
       return message == null ? Result.SUCCESS : new Error(message);
     }
+    if (command instanceof ModMoveFile moveFile) {
+      String message = executeMove(moveFile);
+      return message == null ? Result.SUCCESS : new Error(message);
+    }
     if (command instanceof ModCompositeCommand cmp) {
       BatchExecutionResult result = Result.NOTHING;
       for (ModCommand subCommand : cmp.commands()) {
@@ -136,7 +140,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     return executeInBatch(context, next);
   }
 
-  protected @Nls String executeDelete(ModDeleteFile file) {
+  protected @Nls String executeDelete(@NotNull ModDeleteFile file) {
     try {
       WriteAction.run(() -> file.file().delete(this));
       return null;
@@ -144,6 +148,33 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     catch (IOException e) {
       return e.getLocalizedMessage();
     }
+  }
+
+  protected @Nls String executeMove(@NotNull ModMoveFile file) {
+    VirtualFile source = actualize(file.file());
+    FutureVirtualFile target = file.targetFile();
+    VirtualFile parent = actualize(target.getParent());
+    return WriteAction.compute(() -> {
+      if (parent != null && !parent.equals(source.getParent())) {
+        try {
+          source.move(this, parent);
+        }
+        catch (IOException e) {
+          return AnalysisBundle.message("modcommand.executor.cannot.move.file",
+                                        source.getPath(), parent.getPath(), e.getLocalizedMessage());
+        }
+      }
+      if (!target.getName().equals(source.getName())) {
+        try {
+          source.rename(this, target.getName());
+        }
+        catch (IOException e) {
+          return AnalysisBundle.message("modcommand.executor.cannot.move.file",
+                                        source.getPath(), target.getName(), e.getLocalizedMessage());
+        }
+      }
+      return null;
+    });
   }
 
   protected @Nls String executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
@@ -293,6 +324,14 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       else if (command instanceof ModOpenUrl openUrl) {
         navigateInfo = new IntentionPreviewInfo.Html(text(
           AnalysisBundle.message("preview.open.url", StringUtil.shortenTextWithEllipsis(openUrl.url(), 50, 10))));
+      }
+      else if (command instanceof ModMoveFile moveFile) {
+        FutureVirtualFile targetFile = moveFile.targetFile();
+        if (targetFile.getName().equals(moveFile.file().getName())) {
+          navigateInfo = IntentionPreviewInfo.moveToDirectory(moveFile.file(), targetFile.getParent());
+        } else {
+          navigateInfo = IntentionPreviewInfo.rename(moveFile.file(), targetFile.getName());
+        }
       }
       else if (command instanceof ModUpdateSystemOptions options) {
         HtmlChunk preview = createOptionsPreview(context, options);

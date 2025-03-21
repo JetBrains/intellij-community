@@ -308,7 +308,16 @@ public interface IntentionPreviewInfo {
    * @return a preview that visualizes the file rename
    */
   static @NotNull IntentionPreviewInfo rename(@NotNull PsiFile file, @NotNull @NlsSafe String newName) {
-    Icon icon = file.getIcon(0);
+    return rename(file.getVirtualFile(), newName);
+  }
+
+  /**
+   * @param file    file to be renamed
+   * @param newName new file name (with extension)
+   * @return a preview that visualizes the file rename
+   */
+  static @NotNull IntentionPreviewInfo rename(@NotNull VirtualFile file, @NotNull @NlsSafe String newName) {
+    Icon icon = IconUtil.getIcon(file, 0, null);
     HtmlChunk iconChunk = getIconChunk(icon, "file");
     HtmlChunk fragment = new HtmlBuilder()
       .append(iconChunk)

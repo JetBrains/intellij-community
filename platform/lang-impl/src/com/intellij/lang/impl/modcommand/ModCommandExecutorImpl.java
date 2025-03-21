@@ -142,6 +142,10 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       String message = executeDelete(deleteFile);
       return handleError(project, editor, message);
     }
+    if (command instanceof ModMoveFile moveFile) {
+      String message = executeMove(moveFile);
+      return handleError(project, editor, message);
+    }
     if (command instanceof ModShowConflicts showConflicts) {
       return executeShowConflicts(context, showConflicts, editor, tail);
     }

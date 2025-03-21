@@ -365,7 +365,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createRenameFileFix(@NotNull String newName) {
-    return new RenameFileFix(newName);
+    return new RenameFileModCommand(newName).asIntention();
   }
 
   @Override

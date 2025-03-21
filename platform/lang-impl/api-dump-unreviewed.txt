@@ -2548,6 +2548,12 @@ c:com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - f:isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
+c:com.intellij.codeInsight.daemon.impl.quickfix.RenameFileModCommand
+- com.intellij.modcommand.ModCommandAction
+- <init>(java.lang.String):V
+- getFamilyName():java.lang.String
+- getPresentation(com.intellij.modcommand.ActionContext):com.intellij.modcommand.Presentation
+- perform(com.intellij.modcommand.ActionContext):com.intellij.modcommand.ModCommand
 com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:SHOW_FIXES_DEFAULT_VALUE:Z

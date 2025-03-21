@@ -666,6 +666,7 @@ com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:moveToDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:navigate(com.intellij.psi.NavigatablePsiElement):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:navigate(com.intellij.psi.PsiFile,I):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Html
+- s:rename(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - s:rename(com.intellij.psi.PsiFile,java.lang.String):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 f:com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$CustomDiff
 - com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -2554,6 +2555,7 @@ com.intellij.modcommand.ModCommand
 - s:info(java.lang.String):com.intellij.modcommand.ModCommand
 - isEmpty():Z
 - modifiedFiles():java.util.Set
+- s:moveFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.modcommand.ModCommand
 - s:moveTo(com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
 - s:nop():com.intellij.modcommand.ModCommand
 - s:openUrl(java.lang.String):com.intellij.modcommand.ModCommand
@@ -2712,6 +2714,15 @@ f:com.intellij.modcommand.ModHighlight$HighlightInfo
 - hideByTextChange():Z
 - range():com.intellij.openapi.util.TextRange
 - withRange(com.intellij.openapi.util.TextRange):com.intellij.modcommand.ModHighlight$HighlightInfo
+f:com.intellij.modcommand.ModMoveFile
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.modcommand.FutureVirtualFile):V
+- f:equals(java.lang.Object):Z
+- file():com.intellij.openapi.vfs.VirtualFile
+- f:hashCode():I
+- modifiedFiles():java.util.Set
+- targetFile():com.intellij.modcommand.FutureVirtualFile
 f:com.intellij.modcommand.ModNavigate
 - java.lang.Record
 - com.intellij.modcommand.ModCommand

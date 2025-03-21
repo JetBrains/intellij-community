@@ -20,6 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * @deprecated use {@link RenameFileModCommand}
+ */
+@Deprecated
 public class RenameFileFix implements IntentionAction, LocalQuickFix {
   private final String myNewFileName;
 

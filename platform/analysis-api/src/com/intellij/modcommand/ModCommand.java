@@ -34,8 +34,8 @@ import java.util.function.Function;
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
-          ModHighlight, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename, ModStartTemplate, ModUpdateFileText,
-          ModUpdateReferences, ModUpdateSystemOptions {
+          ModHighlight, ModMoveFile, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename, ModStartTemplate,
+          ModUpdateFileText, ModUpdateReferences, ModUpdateSystemOptions {
 
   /**
    * @return true if the command does nothing
@@ -348,6 +348,9 @@ public sealed interface ModCommand
         // Navigation is useless: we are removing the target file
         return command;
       }
+      if (sub instanceof ModMoveFile moveFile && moveFile.file().equals(virtualFile)) {
+        virtualFile = moveFile.targetFile();
+      }
       if (!(sub instanceof ModNavigate)) {
         finalCommand = finalCommand.andThen(sub);
       }
@@ -424,4 +427,16 @@ public sealed interface ModCommand
                                           @NotNull ModCommandAction @NotNull ... actions) {
     return new ModChooseAction(title, List.of(actions));
   }
+
+  /**
+   * Creates a command to move a file to a specified directory
+   * 
+   * @param file file to move
+   * @param target target directory
+   * @return a command that moves the file to a specified directory
+   */
+  static @NotNull ModCommand moveFile(@NotNull VirtualFile file, @NotNull VirtualFile target) {
+    return new ModMoveFile(file, new FutureVirtualFile(target, file.getName(), file.getFileType()));
+  }
+
 }
