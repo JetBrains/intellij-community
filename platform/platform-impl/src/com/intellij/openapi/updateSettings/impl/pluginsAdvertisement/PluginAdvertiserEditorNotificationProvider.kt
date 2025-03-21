@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -101,7 +101,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 
     private var installedPlugin: IdeaPluginDescriptor? = null
     private val jbProduced: MutableSet<PluginData> = mutableSetOf()
-    private val hasSuggestedIde: Boolean = isCommunityIde() && isDefaultTextMatePlugin(extensionOrFileName) && suggestedIdes.isNotEmpty()
+    private val hasSuggestedIde: Boolean = isMappedToTextMate(extensionOrFileName)
+                                           && suggestedIdes.isNotEmpty()
 
     @VisibleForTesting
     val thirdParty: MutableSet<PluginData> = mutableSetOf()
@@ -205,14 +206,12 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       return panel
     }
 
-    private fun isDefaultTextMatePlugin(extensionOrFileName: String): Boolean {
-      // there are registered file types for them even in Community Editions
-      return "*.sql" == extensionOrFileName
-             || "*.js" == extensionOrFileName
-             || "*.ts" == extensionOrFileName
-             || "*.css" == extensionOrFileName
-             || "*.php" == extensionOrFileName
-             || "*.ruby" == extensionOrFileName
+    private fun isMappedToTextMate(extensionOrFileName: String): Boolean {
+      if (!extensionOrFileName.startsWith("*.")) return false
+
+      val fileType = FileTypeManager.getInstance().getFileTypeByExtension(extensionOrFileName.removePrefix("*."))
+      return fileType is PlainTextLikeFileType
+             && PluginAdvertiserService.reservedIdeExtensions.contains(extensionOrFileName)
     }
 
     private fun addSuggestedIdes(
