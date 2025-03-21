@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -191,6 +191,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
 internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache: MapIndexStorageCache<Key, Value>) : MapIndexStorageCache<Key, Value> {
   private val cacheAccessLock = ReentrantLock()
 
+  //TODO RC: we would better need withLockCancellable here, but it requires dependency on platform.core
 
   override fun read(key: Key): ChangeTrackingValueContainer<Value> = cacheAccessLock.withLock { underlyingCache.read(key) }
 
@@ -198,7 +199,7 @@ internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache:
 
   override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock { underlyingCache.getCachedValues() }
 
-  override fun invalidateAll() = cacheAccessLock.withLock {
+  override fun invalidateAll() {
     while (!cacheAccessLock.tryLock(10, MILLISECONDS)) {
       IOCancellationCallbackHolder.checkCancelled()
     }
