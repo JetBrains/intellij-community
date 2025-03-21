@@ -4,7 +4,6 @@ package com.intellij.openapi.options.newEditor.settings
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
-import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -28,12 +27,12 @@ import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
-import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
@@ -158,6 +157,10 @@ internal class SettingsVirtualFileHolder private constructor(private val project
       putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
       putUserData(FileDocumentManagerBase.TRACK_NON_PHYSICAL, true)
     }
+
+    override fun getPresentableUrl(): @NlsSafe String = "$SETTINGS_KEY://${CommonBundle.settingsTitle()}"
+
+    override fun getPresentableName() = CommonBundle.settingsTitle()
 
     fun getOrCreateDialog(): SettingsDialog = dialogLazy.value
 
