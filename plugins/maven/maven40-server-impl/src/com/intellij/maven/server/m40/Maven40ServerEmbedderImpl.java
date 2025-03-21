@@ -59,14 +59,11 @@ import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
 import org.apache.maven.model.Activation;
-import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
-import org.apache.maven.model.Reporting;
 import org.apache.maven.model.Repository;
-import org.apache.maven.model.Resource;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.FileModelSource;
 import org.apache.maven.model.building.ModelBuildingRequest;
@@ -76,8 +73,6 @@ import org.apache.maven.model.building.ModelProblemCollectorRequest;
 import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
-import org.apache.maven.model.path.DefaultPathTranslator;
-import org.apache.maven.model.path.PathTranslator;
 import org.apache.maven.model.profile.DefaultProfileActivationContext;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.model.profile.activation.JdkVersionProfileActivator;
@@ -944,73 +939,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  public @NotNull Model interpolateAndAlignModel(Model nativeModel, File pomDir) {
-    File baseDir = new File(myEmbedderSettings.getMultiModuleProjectDirectory());
-    DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
-    StringVisitorModelInterpolator interpolator = getComponent(StringVisitorModelInterpolator.class);
-    Model result = doInterpolate(interpolator, nativeModel, baseDir);
-    MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
-    myPathTranslator.alignToBaseDirectory(result, pomDir);
-    return result;
-  }
-
-  private static class MyDefaultPathTranslator {
-    private final PathTranslator myPathTranslator;
-
-    private MyDefaultPathTranslator(PathTranslator pathTranslator) {
-      myPathTranslator = pathTranslator;
-    }
-
-    private String alignToBaseDirectory(String path, File basedir) {
-      return myPathTranslator.alignToBaseDirectory(path, basedir);
-    }
-
-    /**
-     * adapted from {@link org.apache.maven.project.path.DefaultPathTranslator#alignToBaseDirectory(Model, File)}
-     */
-    private void alignToBaseDirectory(Model model, File basedir) {
-      if (basedir == null) {
-        return;
-      }
-
-      Build build = model.getBuild();
-
-      if (build != null) {
-        build.setDirectory(alignToBaseDirectory(build.getDirectory(), basedir));
-
-        build.setSourceDirectory(alignToBaseDirectory(build.getSourceDirectory(), basedir));
-
-        build.setTestSourceDirectory(alignToBaseDirectory(build.getTestSourceDirectory(), basedir));
-
-        for (Resource resource : build.getResources()) {
-          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
-        }
-
-        for (Resource resource : build.getTestResources()) {
-          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
-        }
-
-        if (build.getFilters() != null) {
-          List<String> filters = new ArrayList<>();
-          for (String filter : build.getFilters()) {
-            filters.add(alignToBaseDirectory(filter, basedir));
-          }
-          build.setFilters(filters);
-        }
-
-        build.setOutputDirectory(alignToBaseDirectory(build.getOutputDirectory(), basedir));
-
-        build.setTestOutputDirectory(alignToBaseDirectory(build.getTestOutputDirectory(), basedir));
-      }
-
-      Reporting reporting = model.getReporting();
-
-      if (reporting != null) {
-        reporting.setOutputDirectory(alignToBaseDirectory(reporting.getOutputDirectory(), basedir));
-      }
     }
   }
 

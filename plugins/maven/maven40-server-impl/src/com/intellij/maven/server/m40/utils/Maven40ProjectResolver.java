@@ -371,7 +371,6 @@ public class Maven40ProjectResolver {
 
     MavenModel model = new MavenModel();
     Model nativeModel = mavenProject.getModel();
-    Model interpolatedNativeModel = myEmbedder.interpolateAndAlignModel(nativeModel, mavenProject.getBasedir());
     try {
       DependencyNode dependencyGraph =
         dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
@@ -379,7 +378,7 @@ public class Maven40ProjectResolver {
       List<DependencyNode> dependencyNodes = dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
         mavenProject,
-        interpolatedNativeModel,
+        nativeModel,
         dependencyNodes,
         myLocalRepositoryFile);
     }
@@ -394,7 +393,7 @@ public class Maven40ProjectResolver {
       activatedProfiles.addAll(profileList);
     }
 
-    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(interpolatedNativeModel);
+    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(nativeModel);
     MavenServerExecutionResult.ProjectData data =
       new MavenServerExecutionResult.ProjectData(model, getManagedDependencies(mavenProject), dependencyHash, dependencyResolutionSkipped,
                                                  mavenModelMap, activatedProfiles);
