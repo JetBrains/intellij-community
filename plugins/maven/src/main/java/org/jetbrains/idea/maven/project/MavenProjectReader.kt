@@ -21,12 +21,15 @@ import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
-import org.jetbrains.idea.maven.utils.*
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenValuesByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.hasChildByPath
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
@@ -48,9 +51,7 @@ class MavenProjectReader(
   suspend fun readProjectAsync(file: VirtualFile): MavenProjectReaderResult {
     val recursionGuard: MutableSet<VirtualFile> = HashSet()
     val readResult = readProjectModel(file, recursionGuard)
-    val baseDir = MavenUtil.getBaseDir(file)
-    val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
-    val model = myReadHelper.interpolate(embedder, file, readResult.first.model)
+    val model = readResult.first.model
 
     val modelMap: MutableMap<String, String> = HashMap()
     val mavenId = model.mavenId

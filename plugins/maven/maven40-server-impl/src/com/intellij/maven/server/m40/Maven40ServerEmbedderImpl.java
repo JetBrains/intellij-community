@@ -947,14 +947,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  @Override
-  public @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull File pomDir, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
-    Model result = interpolateAndAlignModel(nativeModel, pomDir);
-    return Maven40ModelConverter.convertModel(result);
-  }
-
   public @NotNull Model interpolateAndAlignModel(Model nativeModel, File pomDir) {
     File baseDir = new File(myEmbedderSettings.getMultiModuleProjectDirectory());
     DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
