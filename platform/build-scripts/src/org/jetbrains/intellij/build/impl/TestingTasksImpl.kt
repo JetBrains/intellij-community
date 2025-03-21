@@ -421,6 +421,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     Files.writeString(classpathFile, replaceWithArchivedIfNeededLF(testRoots).mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
+    systemProperties.put("io.netty.allocator.type", "pooled")
     systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
     testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
@@ -435,7 +436,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     else if (!testPatterns.isNullOrEmpty()) {
       messages.info("Starting tests from patterns '${testPatterns}' from classpath of module '${mainModule}'")
-    } else {
+    }
+    else {
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
     }
     if (options.bucketsCount > 1) {
