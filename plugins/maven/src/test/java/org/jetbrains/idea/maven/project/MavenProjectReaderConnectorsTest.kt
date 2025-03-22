@@ -16,7 +16,7 @@ class MavenProjectReaderConnectorsTest : MavenProjectReaderTestCase() {
                        """.trimIndent())
     assertThrows(ConnectException::class.java) {
       runBlocking {
-        withStoppedConnector { readProject(projectPom).mavenId }
+        withStoppedConnector { evaluateEffectivePom(projectPom) }
       }
     }
   }

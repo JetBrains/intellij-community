@@ -24,6 +24,14 @@ abstract class MavenProjectReaderTestCase : MavenMultiVersionImportingTestCase()
     return result
   }
 
+  protected suspend fun evaluateEffectivePom(file: VirtualFile): String? {
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val result = mavenEmbedderWrappers.use {
+      mavenEmbedderWrappers.getEmbedder(projectPath).evaluateEffectivePom(file, emptyList(), emptyList())
+    }
+    return result
+  }
+
   protected class NullProjectLocator : MavenProjectReaderProjectLocator {
     override fun findProjectFile(coordinates: MavenId): VirtualFile? {
       return null
