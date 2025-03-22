@@ -74,7 +74,8 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 18;
 
-  private static final Version MIN_SUPPORTED_GLIBC_VERSION = new Version(2, 28, 0);
+  private static final String MIN_SUPPORTED_GLIBC_DEFAULT = "2.28.0";
+
   private static final AtomicInteger CEFAPP_INSTANCE_COUNT = new AtomicInteger(0);
 
   private final @Nullable CefDelegate myDelegate;
@@ -655,7 +656,8 @@ public final class JBCefApp {
       return false;
     }
 
-    if (version.compareTo(MIN_SUPPORTED_GLIBC_VERSION) < 0) {
+    Version minSupportedGlibc = Version.parseVersion(System.getProperty("ide.browser.jcef.required.glibc.version", MIN_SUPPORTED_GLIBC_DEFAULT));
+    if (minSupportedGlibc != null && version.compareTo(minSupportedGlibc) < 0) {
       LOG.warn("Incompatible glibc version: " + libcVersionString + "; JCEF is disabled");
       return false;
     }
