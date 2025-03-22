@@ -29,15 +29,16 @@ internal class CompositePythonRepositoryManager(
   override val repositories: List<PyPackageRepository> =
     managers.flatMap { it.repositories }
 
-  override fun allPackages(): List<String> =
-    managers.flatMap { it.allPackages() }
+  override fun allPackages(): Set<String> {
+    return managers.fold(emptySet()) { acc, manager -> acc + manager.allPackages() }
+  }
 
-  override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
+  override fun packagesFromRepository(repository: PyPackageRepository): Set<String> {
     return findPackagesInRepository(repository)
            ?: error("No packages for requested repository in cache")
   }
 
-  private fun findPackagesInRepository(repository: PyPackageRepository): List<String>? {
+  private fun findPackagesInRepository(repository: PyPackageRepository): Set<String>? {
     for (manager in managers) {
       val packages = manager.packagesFromRepository(repository)
       if (packages.isNotEmpty()) {
