@@ -1166,8 +1166,10 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            """.trimIndent())
 
-    val p = readProject(module, "one")
-    assertEquals("xxx", p.build.finalName)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("one"))
+    importProjectAsync(module)
+    val p = projectsTree.findProject(module)!!
+    assertEquals("xxx", p.finalName)
   }
 
 
