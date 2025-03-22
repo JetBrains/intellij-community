@@ -473,10 +473,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{<caret>foo}</name>
+                       <name>${'$'}{foo}</name>
                        """.trimIndent())
 
     readWithProfiles("two")
+
+    moveCaretTo(projectPom, """
+      </profiles>
+      <name>${'$'}{<caret>foo}</name>""".trimIndent())
 
     assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
   }
@@ -559,10 +563,14 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{<caret>foo}</name>
+                       <name>${'$'}{foo}</name>
                        """.trimIndent())
 
     updateAllProjects()
+
+    moveCaretTo(projectPom, """
+      </profiles>
+      <name>${'$'}{<caret>foo}</name>""".trimIndent())
 
     assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
   }
