@@ -453,6 +453,27 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, wrongText);
   }
 
+  public void testPatternWithAlternation() {
+    @Language("JSON") final String schema = """
+      {
+        "properties": {
+          "withPattern": {
+            "pattern": "^v?\\\\d+(\\\\.\\\\d+){0,3}|^dev-"
+          }
+        }
+      }""";
+    @Language("JSON") final String correctText1 = """
+      {
+        "withPattern": "1.0.0-RC1"
+      }""";
+    @Language("JSON") final String correctText2 = """
+      {
+        "withPattern": "dev-master"
+      }""";
+    doTest(schema, correctText1);
+    doTest(schema, correctText2);
+  }
+
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() {
     doTest(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\"</warning>: true," +
                                         "\"r1\": \"allowed!\"}");
