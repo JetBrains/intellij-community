@@ -8,6 +8,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -146,16 +147,28 @@ private class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickF
 
     fun installPackages(project: Project, descriptor: ProblemDescriptor, requirements: List<Requirement>) {
       val file = descriptor.psiElement.containingFile ?: return
-      val sdk = getPythonSdk(file) ?: return
-      val manager = PythonPackageManager.forSdk(project, sdk)
 
-      val specifications = requirements.mapNotNull { requirement ->
-        val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
-        val name = requirement.displayName
-        manager.repositoryManager.createSpecification(name, versionSpec)
-      }
+      val serviceScope = project.service<PyPackagingToolWindowService>().serviceScope
+      serviceScope.launch(Dispatchers.Default) {
+        val sdk = getPythonSdk(file) ?: return@launch
 
-      project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
+        val nameVersions =  readAction {
+          requirements.map { requirement ->
+            val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
+            val name = requirement.displayName
+            name to versionSpec
+          }
+        }
+
+        val manager = PythonPackageManager.forSdk(project, sdk)
+
+        val specifications = nameVersions.mapNotNull { (name, versionSpec) ->
+          manager.repositoryManager.createSpecification(name, versionSpec)
+        }
+
+        if (specifications.isEmpty())
+          return@launch
+
         manager.installPackagesWithDialogOnError(specifications, emptyList())
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }

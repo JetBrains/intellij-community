@@ -152,6 +152,7 @@ fun PythonRepositoryManager.createSpecification(
   name: String,
   versionSpec: String? = null,
 ): PythonPackageSpecification? {
-  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> normalizePackageName(pkg) == normalizePackageName(name) } }?.first
+  val normalizePackageName = normalizePackageName(name)
+  val repository = packagesByRepository().firstOrNull { it.second.contains(normalizePackageName) }?.first
   return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }
