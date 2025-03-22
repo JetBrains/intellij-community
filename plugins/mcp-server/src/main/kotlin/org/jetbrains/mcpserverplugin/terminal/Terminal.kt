@@ -103,7 +103,7 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
             }
 
             val terminalWidget =
-                ShTerminalRunner.run(project, "clear; " + args.command, project.basePath ?: "", "MCP Command", true)
+                ShTerminalRunner.run(project, args.command, project.basePath ?: "", "MCP Command", true)
             val shellWidget =
                 if (terminalWidget != null) ShellTerminalWidget.asShellJediTermWidget(terminalWidget) else null
 
