@@ -80,4 +80,42 @@ public class MarkdownProcessorDocumentParsingExtraTest {
             Paragraph(Emphasis("*", Emphasis("_", Emphasis("*", Text("foo "), Emphasis("*", Text("bar")), Text(" a")))))
         )
     }
+
+    @Test // Covers JEWEL-495's parsing side
+    public fun `should combine inline styles correctly`() {
+        val parsed =
+            processor.processMarkdownDocument(
+                "___One___, ***two***, _**three**_, **_four_**. [**Bold URL**](https://github.com/JetBrains/jewel). " +
+                    "[_Italic URL_](https://github.com/JetBrains/jewel). [***Bold and italic URL***](https://github.com/JetBrains/jewel)"
+            )
+
+        /*
+         * Expected HTML:
+         * <em><strong>One</strong></em>, <em><strong>two</strong></em>, <em><strong>three</strong></em>,
+         * <strong><em>four</em></strong>. <a href="https://github.com/JetBrains/jewel"><strong>Bold URL</strong></a>.
+         * <a href="https://github.com/JetBrains/jewel"><em>Italic URL</em></a>.
+         * <a href="https://github.com/JetBrains/jewel"><em><strong>Bold and italic URL</strong></em></a>
+         */
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis("_", StrongEmphasis("__", Text("One"))),
+                Text(", "),
+                Emphasis("*", StrongEmphasis("**", Text("two"))),
+                Text(", "),
+                Emphasis("_", StrongEmphasis("**", Text("three"))),
+                Text(", "),
+                StrongEmphasis("**", Emphasis("_", Text("four"))),
+                Text(". "),
+                Link("https://github.com/JetBrains/jewel", title = null, StrongEmphasis("**", Text("Bold URL"))),
+                Text(". "),
+                Link("https://github.com/JetBrains/jewel", title = null, Emphasis("_", Text("Italic URL"))),
+                Text(". "),
+                Link(
+                    "https://github.com/JetBrains/jewel",
+                    title = null,
+                    Emphasis("*", StrongEmphasis("**", Text("Bold and italic URL"))),
+                ),
+            )
+        )
+    }
 }

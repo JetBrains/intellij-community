@@ -780,7 +780,6 @@ public class ScrollingSynchronizerTest {
                 emphasis = mockSpanStyle,
                 strongEmphasis = mockSpanStyle,
                 inlineHtml = mockSpanStyle,
-                renderInlineHtml = false,
             )
         return MarkdownStyling(
             blockVerticalSpacing = 8.dp,
