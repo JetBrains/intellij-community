@@ -25,8 +25,8 @@ import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel.components
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
-public object MainViewModel {
-    public val componentsViewModel: ComponentsViewModel
+object MainViewModel {
+    val componentsViewModel: ComponentsViewModel
 
     init {
         val alwaysVisibleScrollbarVisibility = ScrollbarVisibility.AlwaysVisible.default()
@@ -38,15 +38,15 @@ public object MainViewModel {
             )
     }
 
-    public fun onNavigateTo(destination: String) {
+    fun onNavigateTo(destination: String) {
         currentView = views.first { viewInfo: ViewInfo -> viewInfo.title == destination }
     }
 
-    public var theme: IntUiThemes by mutableStateOf(IntUiThemes.Light)
+    var theme: IntUiThemes by mutableStateOf(IntUiThemes.Light)
 
-    public var swingCompat: Boolean by mutableStateOf(false)
+    var swingCompat: Boolean by mutableStateOf(false)
 
-    public val projectColor: Color
+    val projectColor: Color
         get() =
             if (theme.isLightHeader()) {
                 Color(0xFFF5D4C1)
@@ -54,9 +54,9 @@ public object MainViewModel {
                 Color(0xFF654B40)
             }
 
-    public val views: SnapshotStateList<ViewInfo> = mainMenuItems
+    val views: SnapshotStateList<ViewInfo> = mainMenuItems
 
-    public var currentView: ViewInfo by mutableStateOf(views.first())
+    var currentView: ViewInfo by mutableStateOf(views.first())
 }
 
 @OptIn(ExperimentalLayoutApi::class)
