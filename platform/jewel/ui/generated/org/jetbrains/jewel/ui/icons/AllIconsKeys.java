@@ -1369,6 +1369,7 @@ public final class AllIconsKeys {
     /** 13x13 */ public static final @NotNull IntelliJIconKey Documentation = new IntelliJIconKey("toolwindows/documentation.svg", "expui/toolwindows/documentation.svg", AllIconsKeys.class);
     /** 13x13 */ public static final @NotNull IntelliJIconKey ErrorEvents = new IntelliJIconKey("toolwindows/errorEvents.svg", "toolwindows/errorEvents.svg", AllIconsKeys.class);
     /** 13x13 */ public static final @NotNull IntelliJIconKey InfoEvents = new IntelliJIconKey("toolwindows/infoEvents.svg", "toolwindows/infoEvents.svg", AllIconsKeys.class);
+    /** 13x13 */ public static final @NotNull IntelliJIconKey Learn = new IntelliJIconKey("toolwindows/learn.svg", "expui/toolwindows/learn.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey MeetNewUi = new IntelliJIconKey("expui/toolwindows/meetNewUi.svg", "expui/toolwindows/meetNewUi.svg", AllIconsKeys.class);
     /** 13x13 */ public static final @NotNull IntelliJIconKey NoEvents = new IntelliJIconKey("toolwindows/noEvents.svg", "toolwindows/noEvents.svg", AllIconsKeys.class);
     /** 13x13 */ public static final @NotNull IntelliJIconKey Notifications = new IntelliJIconKey("toolwindows/notifications.svg", "expui/toolwindows/notifications.svg", AllIconsKeys.class);
