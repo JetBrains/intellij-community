@@ -46,13 +46,12 @@ object PyPackageInstallUtils {
   }
 
   private fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
-    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
-    val normalizedName = normalizePackageName(packageName)
-    val isStdLib = PyStdlibUtil.getPackages()?.any { normalizePackageName(it) == normalizedName } == true
+    val isStdLib = (PyStdlibUtil.getPackages() as Set<*>).contains(packageName)
     if (isStdLib) {
       return true
     }
-    return packageManager.installedPackages.any { normalizePackageName(it.name) == normalizedName }
+    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
+    return packageManager.installedPackages.any { normalizePackageName(it.name) == packageName }
   }
 
   private fun checkExistsInRepository(packageName: String): Boolean {
