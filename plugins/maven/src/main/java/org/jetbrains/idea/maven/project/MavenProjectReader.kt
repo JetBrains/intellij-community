@@ -18,7 +18,6 @@ import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticV
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
-import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
@@ -95,13 +94,13 @@ class MavenProjectReader(
     val transformer = RemotePathTransformerFactory.createForProject(myProject)
     val baseDirFile = File(transformer.toRemotePathOrSelf(baseDirString))
     val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
-    val profileApplicationResult = embedder.applyProfiles(modelWithInheritance, baseDirFile, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
+    //val profileApplicationResult = embedder.applyProfiles(modelWithInheritance, baseDirFile, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
 
-    val modelWithProfiles = profileApplicationResult.model
+    val modelWithProfiles = modelWithInheritance
 
     repairModelBody(modelWithProfiles)
 
-    return Pair.create(RawModelReadResult(modelWithProfiles, problems, alwaysOnProfiles), profileApplicationResult.activatedProfiles)
+    return Pair.create(RawModelReadResult(modelWithProfiles, problems, alwaysOnProfiles), MavenExplicitProfiles.NONE)
   }
 
   private suspend fun doReadProjectModel(project: Project, file: VirtualFile, headerOnly: Boolean): RawModelReadResult {
