@@ -525,21 +525,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @NotNull ProfileApplicationResult applyProfiles(@NotNull MavenModel model,
-                                                         @NotNull File basedir,
-                                                         @NotNull MavenExplicitProfiles explicitProfiles,
-                                                         @NotNull HashSet<@NotNull String> alwaysOnProfiles,
-                                                         @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
   public @NotNull MavenModel assembleInheritance(@NotNull MavenModel model, @NotNull MavenModel parentModel, @NotNull MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {

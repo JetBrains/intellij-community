@@ -77,10 +77,6 @@ abstract class DummyEmbedder : MavenServerEmbedder {
 
   override fun ping(token: MavenToken?) = true
 
-  override fun applyProfiles(model: MavenModel, basedir: File, explicitProfiles: MavenExplicitProfiles, alwaysOnProfiles: java.util.HashSet<String>, token: MavenToken): ProfileApplicationResult {
-    return ProfileApplicationResult(model, explicitProfiles)
-  }
-
   override fun assembleInheritance(model: MavenModel, parentModel: MavenModel, token: MavenToken) = model
 }
 
