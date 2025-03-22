@@ -34,8 +34,7 @@ internal class LibraryModifiableModelBridgeImpl(
   diff: MutableEntityStorage,
   private val targetBuilder: MutableEntityStorage?,
   private val virtualFileManager: VirtualFileUrlManager,
-  cacheStorageResult: Boolean = true
-) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
+) : LegacyBridgeModifiableBase(diff), LibraryModifiableModelBridge, RootProvider {
 
   private var entityId = originalLibrarySnapshot.libraryEntity.symbolicId
   private var reloadKind = false

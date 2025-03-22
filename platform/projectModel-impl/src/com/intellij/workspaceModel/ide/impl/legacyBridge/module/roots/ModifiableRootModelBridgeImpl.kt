@@ -50,9 +50,8 @@ import java.util.concurrent.ConcurrentHashMap
 internal class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
   override val moduleBridge: ModuleBridge,
-  override val accessor: RootConfigurationAccessor,
-  cacheStorageResult: Boolean = true
-) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableRootModelBridge, ModuleRootModelBridge {
+  override val accessor: RootConfigurationAccessor
+) : LegacyBridgeModifiableBase(diff), ModifiableRootModelBridge, ModuleRootModelBridge {
 
   /*
     We save the module entity for the following case:
