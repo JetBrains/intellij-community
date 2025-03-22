@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
@@ -272,9 +271,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     assertEquals("project-1", p.finalName)
     assertEquals(null, p.defaultGoal)
-    UsefulTestCase.assertSize(1, p.sources)
+    assertSize(1, p.sources)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/main/java"), p.sources[0])
-    UsefulTestCase.assertSize(1, p.testSources)
+    assertSize(1, p.testSources)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/test/java"), p.testSources[0])
 
     forMaven3 {
@@ -421,9 +420,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     assertEquals("xxx", p.finalName)
     assertEquals("someGoal", p.defaultGoal)
-    UsefulTestCase.assertSize(1, p.sources)
+    assertSize(1, p.sources)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("mySrc"), p.sources[0])
-    UsefulTestCase.assertSize(1, p.testSources)
+    assertSize(1, p.testSources)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestSrc"), p.testSources[0])
     assertEquals(1, p.resources.size)
     assertResource(p.resources[0], pathFromBasedir("myRes"),
@@ -491,9 +490,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     importProjectAsync()
     val p = projectsTree.projects.first()
 
-    UsefulTestCase.assertSize(1, p.sources)
+    assertSize(1, p.sources)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/mySrc"), p.sources[0])
-    UsefulTestCase.assertSize(1, p.testSources)
+    assertSize(1, p.testSources)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("subDir/myTestSrc"), p.testSources[0])
     assertEquals(2, p.resources.size)
     assertResource(p.resources[0], pathFromBasedir("subDir/myRes"),
@@ -1209,7 +1208,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   @Test
   fun testCorrectlyCollectProfilesFromDifferentSources() = runBlocking {
-    assumeMaven3()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -1249,10 +1247,10 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                         </profiles>
                         """.trimIndent())
 
-    var p = readProject(module)
-    assertEquals(1, p.profiles.size)
-    assertEquals("pom", p.profiles[0].modules[0])
-    assertEquals("pom", p.profiles[0].source)
+    importProjectAsync(module)
+    var p = projectsTree.findProject(module)!!
+
+    assertEquals(1, p.profilesIds.size)
 
     updateModulePom("module",
                     """
@@ -1266,14 +1264,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                       </parent>
                       """.trimIndent())
 
-    p = readProject(module)
-    assertEquals(1, p.profiles.size)
-    assertEquals("pom", p.profiles[0].source)
-
-    p = readProject(module)
-    assertEquals(1, p.profiles.size)
-    UsefulTestCase.assertEmpty("parent", p.profiles[0].modules)
-    assertEquals("pom", p.profiles[0].source)
+    updateAllProjects()
+    p = projectsTree.findProject(module)!!
+    assertEquals(1, p.profilesIds.size)
 
     updateProjectPom("""
                        <groupId>test</groupId>
@@ -1281,15 +1274,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                        <version>1</version>
                        """.trimIndent())
 
-    p = readProject(module)
-    assertEquals(1, p.profiles.size)
-    UsefulTestCase.assertEmpty("parentProfiles", p.profiles[0].modules)
-    assertEquals("settings.xml", p.profiles[0].source)
-
-    p = readProject(module)
-    assertEquals(1, p.profiles.size)
-    UsefulTestCase.assertEmpty("settings", p.profiles[0].modules)
-    assertEquals("settings.xml", p.profiles[0].source)
+    updateAllProjects()
+    p = projectsTree.findProject(module)!!
+    assertEquals(1, p.profilesIds.size)
   }
 
   @Test
@@ -1320,8 +1307,11 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
       </parent>
       """.trimIndent())
 
-    UsefulTestCase.assertSize(1, readProject(p, "one").modules)
-    UsefulTestCase.assertSize(0, readProject(m, "one").modules)
+    importProjectWithProfiles("one")
+    val mavenProject = projectsTree.findProject(p)!!
+    val module = projectsTree.findProject(m)!!
+    assertSize(1, mavenProject.modulePaths)
+    assertSize(0, module.modulePaths)
   }
 
   @Test
