@@ -182,6 +182,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
         <module>../m1</module>
       </modules>""".trimIndent())
     createModulePom("m1", """
+      <artifactId>m1</artifactId>
       <parent>
         <groupId>test</groupId>
         <artifactId>project1</artifactId>
