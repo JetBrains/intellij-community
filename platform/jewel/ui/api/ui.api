@@ -4366,6 +4366,16 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Status {
 	public final fun getSuccess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
+public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Survey {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Survey;
+	public final fun getDissatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getNeutral ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getSatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getVeryDissatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getVerySatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+}
+
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Table {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Table;

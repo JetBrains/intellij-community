@@ -36,7 +36,6 @@ dependencies {
     api(projects.ui) { exclude(group = "org.jetbrains.kotlinx") }
     intellijPlatform {
         intellijIdeaCommunity(libs.versions.idea)
-        instrumentationTools()
     }
 
     testImplementation(compose.desktop.uiTestJUnit4)
