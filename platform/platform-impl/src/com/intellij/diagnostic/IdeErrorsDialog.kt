@@ -72,7 +72,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
   private val ijProject: Boolean,
-  defaultMessage: LogMessage?
+  defaultMessage: LogMessage?,
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
@@ -777,7 +777,13 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     "Your effort and dedication don’t go unnoticed. Thank you!",
     "Thank you for making such a big difference with your actions!",
     "I feel so fortunate to have someone like you in my life!",
-    "I’m just grateful to be a part of this journey with you. Stay awesome."
+    "I’m just grateful to be a part of this journey with you. Stay awesome.",
+    "Your presence alone makes a difference—never forget that!",
+    "You’re a gift to those around you. Stay incredible!",
+    "I truly appreciate everything you do—you're amazing!",
+    "You make even the toughest days feel lighter. Thank you!",
+    "The world needs more people like you!",
+    "Thank you for chipping in. Together, we can achieve anything.",
   )
 
   private fun notifySuccessReportAll() {
