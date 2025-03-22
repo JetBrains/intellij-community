@@ -32,8 +32,8 @@ private val LOG = logger<PypiPackageCache>()
 @ApiStatus.Internal
 @Service
 class PypiPackageCache : PythonPackageCache<String> {
-  override val packages: List<String>
-    get() = cache.toList()
+  override val packages: Set<String>
+    get() = cache
 
   override operator fun contains(key: String): Boolean = key in cache
 

@@ -140,7 +140,7 @@ private val proxyString: String?
     return null
   }
 
-fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, List<String>>> {
+fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
   return repositories.asSequence().map { it to packagesFromRepository(it) }
 }
 
