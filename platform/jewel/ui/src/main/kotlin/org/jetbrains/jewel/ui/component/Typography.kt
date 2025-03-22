@@ -66,8 +66,11 @@ public object Typography {
      *     lineHeight = newFontSize * Typography.DefaultLineHeightMultiplier,
      * )
      * ```
+     *
+     * You should use [TextStyle.copyWithSize] to create copies of a [TextStyle] with a changed font size, as that
+     * function will automatically apply the correct line height, too.
      */
-    public const val EditorLineHeightMultiplier: Float = 1.2f
+    public const val EditorLineHeightMultiplier: Float = 1.5f
 
     /** The text style to use for h0 titles. Derived from [JewelTheme.defaultTextStyle]. */
     @Composable

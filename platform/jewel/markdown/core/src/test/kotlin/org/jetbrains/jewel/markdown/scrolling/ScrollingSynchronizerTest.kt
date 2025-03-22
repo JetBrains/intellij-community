@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
@@ -21,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Arrays
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -635,7 +635,7 @@ public class ScrollingSynchronizerTest {
     private fun assertSameDistance(distance: Int, vararg elements: Int) {
         assertTrue(elements.size > 1)
         for (i in 0..<elements.lastIndex) {
-            assertEquals(Arrays.toString(elements), distance, elements[i + 1] - elements[i])
+            assertEquals(elements.contentToString(), distance, elements[i + 1] - elements[i])
         }
     }
 
@@ -685,7 +685,7 @@ public class ScrollingSynchronizerTest {
             ) {
                 JewelTheme(createThemeDefinition()) {
                     val blocks = processor.yieldBlocks()
-                    renderer.render(blocks, true, {}, {})
+                    renderer.render(blocks, true, {}, {}, Modifier)
                 }
             }
         }
