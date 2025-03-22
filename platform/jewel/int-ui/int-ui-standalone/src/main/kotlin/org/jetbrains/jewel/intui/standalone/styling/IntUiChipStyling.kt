@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -14,19 +13,16 @@ import org.jetbrains.jewel.ui.component.styling.ChipColors
 import org.jetbrains.jewel.ui.component.styling.ChipMetrics
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
 
-@Composable
 public fun ChipStyle.Companion.light(
     colors: ChipColors = ChipColors.light(),
     metrics: ChipMetrics = ChipMetrics.defaults(),
 ): ChipStyle = ChipStyle(colors, metrics)
 
-@Composable
 public fun ChipStyle.Companion.dark(
     colors: ChipColors = ChipColors.dark(),
     metrics: ChipMetrics = ChipMetrics.defaults(),
 ): ChipStyle = ChipStyle(colors, metrics)
 
-@Composable
 public fun ChipColors.Companion.light(
     background: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
     backgroundDisabled: Brush = SolidColor(IntUiLightTheme.colors.gray(12)),
@@ -92,7 +88,6 @@ public fun ChipColors.Companion.light(
         borderSelectedHovered = borderSelectedHovered,
     )
 
-@Composable
 public fun ChipColors.Companion.dark(
     background: Brush = SolidColor(IntUiDarkTheme.colors.gray(2)),
     backgroundDisabled: Brush = SolidColor(IntUiDarkTheme.colors.gray(4)),

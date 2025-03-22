@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -13,13 +12,11 @@ import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 
-@Composable
 public fun IconButtonStyle.Companion.light(
     colors: IconButtonColors = IconButtonColors.light(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
 ): IconButtonStyle = IconButtonStyle(colors, metrics)
 
-@Composable
 public fun IconButtonStyle.Companion.dark(
     colors: IconButtonColors = IconButtonColors.dark(),
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),

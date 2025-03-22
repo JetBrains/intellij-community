@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -20,14 +19,12 @@ public val ButtonStyle.Companion.Default: IntUiDefaultButtonStyleFactory
     get() = IntUiDefaultButtonStyleFactory
 
 public object IntUiDefaultButtonStyleFactory {
-    @Composable
     public fun light(
         colors: ButtonColors = ButtonColors.Default.light(),
         metrics: ButtonMetrics = ButtonMetrics.default(),
         focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
-    @Composable
     public fun dark(
         colors: ButtonColors = ButtonColors.Default.dark(),
         metrics: ButtonMetrics = ButtonMetrics.default(),
@@ -39,14 +36,12 @@ public val ButtonStyle.Companion.Outlined: IntUiOutlinedButtonStyleFactory
     get() = IntUiOutlinedButtonStyleFactory
 
 public object IntUiOutlinedButtonStyleFactory {
-    @Composable
     public fun light(
         colors: ButtonColors = ButtonColors.Outlined.light(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
         focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
     ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
-    @Composable
     public fun dark(
         colors: ButtonColors = ButtonColors.Outlined.dark(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
@@ -58,7 +53,6 @@ public val ButtonColors.Companion.Default: IntUiDefaultButtonColorFactory
     get() = IntUiDefaultButtonColorFactory
 
 public object IntUiDefaultButtonColorFactory {
-    @Composable
     public fun light(
         background: Brush = SolidColor(IntUiLightTheme.colors.blue(4)),
         backgroundDisabled: Brush = SolidColor(IntUiLightTheme.colors.gray(12)),
@@ -94,7 +88,6 @@ public object IntUiDefaultButtonColorFactory {
             borderHovered = borderHovered,
         )
 
-    @Composable
     public fun dark(
         background: Brush = SolidColor(IntUiDarkTheme.colors.blue(6)),
         backgroundDisabled: Brush = SolidColor(IntUiDarkTheme.colors.gray(5)),
@@ -135,7 +128,6 @@ public val ButtonColors.Companion.Outlined: IntUiOutlinedButtonColorFactory
     get() = IntUiOutlinedButtonColorFactory
 
 public object IntUiOutlinedButtonColorFactory {
-    @Composable
     public fun light(
         background: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
         backgroundDisabled: Brush = SolidColor(IntUiLightTheme.colors.gray(12)),
@@ -171,7 +163,6 @@ public object IntUiOutlinedButtonColorFactory {
             borderHovered = borderHovered,
         )
 
-    @Composable
     public fun dark(
         background: Brush = SolidColor(Color.Transparent),
         backgroundDisabled: Brush = SolidColor(IntUiDarkTheme.colors.gray(5)),

@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
@@ -8,19 +7,16 @@ import org.jetbrains.jewel.ui.component.styling.TooltipColors
 import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 
-@Composable
 public fun TooltipStyle.Companion.light(
     intUiTooltipColors: TooltipColors = TooltipColors.light(),
     intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(),
 ): TooltipStyle = TooltipStyle(colors = intUiTooltipColors, metrics = intUiTooltipMetrics)
 
-@Composable
 public fun TooltipStyle.Companion.dark(
     intUiTooltipColors: TooltipColors = TooltipColors.dark(),
     intUiTooltipMetrics: TooltipMetrics = TooltipMetrics.defaults(),
 ): TooltipStyle = TooltipStyle(colors = intUiTooltipColors, metrics = intUiTooltipMetrics)
 
-@Composable
 public fun TooltipColors.Companion.light(
     backgroundColor: Color = IntUiLightTheme.colors.gray(2),
     contentColor: Color = IntUiLightTheme.colors.gray(12),
@@ -28,7 +24,6 @@ public fun TooltipColors.Companion.light(
     shadow: Color = Color(0x78919191), // Not a palette color
 ): TooltipColors = TooltipColors(backgroundColor, contentColor, borderColor, shadow)
 
-@Composable
 public fun TooltipColors.Companion.dark(
     backgroundColor: Color = IntUiDarkTheme.colors.gray(2),
     contentColor: Color = IntUiDarkTheme.colors.gray(12),
