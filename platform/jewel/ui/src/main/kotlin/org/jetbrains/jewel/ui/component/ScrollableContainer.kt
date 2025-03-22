@@ -35,8 +35,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
-import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible
@@ -421,113 +419,6 @@ public fun HorizontallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
-            )
-        },
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
-        scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT)) { content() }
-    }
-}
-
-@ScheduledForRemoval(inVersion = "Before Jewel 1.0")
-@Deprecated("Not properly supported due to Compose limitations", level = DeprecationLevel.HIDDEN)
-@ExperimentalJewelApi
-@Composable
-public fun ScrollableContainer(
-    modifier: Modifier = Modifier,
-    verticalScrollState: ScrollState = rememberScrollState(),
-    horizontalScrollState: ScrollState = rememberScrollState(),
-    verticalScrollbarModifier: Modifier = Modifier,
-    horizontalScrollbarModifier: Modifier = Modifier,
-    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    var keepVisible by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    ScrollableContainerImpl(
-        verticalScrollbar = {
-            VerticalScrollbar(verticalScrollState, verticalScrollbarModifier, style = style, keepVisible = keepVisible)
-        },
-        horizontalScrollbar = {
-            HorizontalScrollbar(
-                horizontalScrollState,
-                horizontalScrollbarModifier,
-                style = style,
-                keepVisible = keepVisible,
-            )
-        },
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
-        scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT).verticalScroll(verticalScrollState).horizontalScroll(horizontalScrollState)) {
-            content()
-        }
-    }
-}
-
-@ScheduledForRemoval(inVersion = "Before Jewel 1.0")
-@Deprecated("Not properly supported due to Compose limitations", level = DeprecationLevel.HIDDEN)
-@ExperimentalJewelApi
-@Composable
-public fun ScrollableContainer(
-    verticalScrollState: LazyListState,
-    horizontalScrollState: LazyListState,
-    modifier: Modifier = Modifier,
-    verticalScrollbarModifier: Modifier = Modifier,
-    horizontalScrollbarModifier: Modifier = Modifier,
-    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    var keepVisible by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    ScrollableContainerImpl(
-        verticalScrollbar = {
-            VerticalScrollbar(verticalScrollState, verticalScrollbarModifier, style = style, keepVisible = keepVisible)
-        },
-        horizontalScrollbar = {
-            HorizontalScrollbar(
-                horizontalScrollState,
-                horizontalScrollbarModifier,
-                style = style,
-                keepVisible = keepVisible,
-            )
-        },
-        modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
-        scrollbarStyle = style,
-    ) {
-        Box(Modifier.layoutId(ID_CONTENT)) { content() }
-    }
-}
-
-@ScheduledForRemoval(inVersion = "Before Jewel 1.0")
-@Deprecated("Not properly supported due to Compose limitations", level = DeprecationLevel.HIDDEN)
-@ExperimentalJewelApi
-@Composable
-public fun ScrollableContainer(
-    verticalScrollState: LazyGridState,
-    horizontalScrollState: LazyGridState,
-    modifier: Modifier = Modifier,
-    verticalScrollbarModifier: Modifier = Modifier,
-    horizontalScrollbarModifier: Modifier = Modifier,
-    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    var keepVisible by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    ScrollableContainerImpl(
-        verticalScrollbar = {
-            VerticalScrollbar(verticalScrollState, verticalScrollbarModifier, style = style, keepVisible = keepVisible)
-        },
-        horizontalScrollbar = {
-            HorizontalScrollbar(
-                horizontalScrollState,
-                horizontalScrollbarModifier,
-                style = style,
-                keepVisible = keepVisible,
             )
         },
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },

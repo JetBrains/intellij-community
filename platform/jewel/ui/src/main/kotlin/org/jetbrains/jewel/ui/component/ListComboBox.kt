@@ -25,7 +25,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
-import kotlin.collections.indexOf
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
@@ -308,11 +307,8 @@ public fun EditableListComboBox(
     )
 }
 
-@Deprecated(
-    message = "Use the stateless ListComboBox with selectedIndex and onItemSelected parameters instead",
-    level = DeprecationLevel.WARNING,
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
+@Deprecated(message = "Use the stateless ListComboBox with selectedIndex and onItemSelected parameters instead")
+@ScheduledForRemoval(inVersion = "2025.2")
 @Composable
 public fun ListComboBox(
     items: List<String>,
@@ -465,11 +461,8 @@ public fun ListComboBox(
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
-@Deprecated(
-    "Use the stateless EditableListComboBox with selectedIndex and onItemSelected parameters instead",
-    level = DeprecationLevel.WARNING,
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
+@Deprecated("Use the stateless EditableListComboBox with selectedIndex and onItemSelected parameters instead")
+@ScheduledForRemoval(inVersion = "2025.2")
 @Composable
 public fun EditableListComboBox(
     items: List<String>,
