@@ -525,17 +525,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @NotNull MavenModel assembleInheritance(@NotNull MavenModel model, @NotNull MavenModel parentModel, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven3ModelInheritanceAssembler.assembleInheritance(model, parentModel);
-    }
-    catch (Throwable e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
   public @NotNull MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                                              @NotNull ProjectResolutionRequest request,
                                                                                              MavenToken token) {
