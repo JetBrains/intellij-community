@@ -1010,7 +1010,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                          <groupId>test</groupId>
                          <artifactId>parent</artifactId>
                          <version>1</version>
-                         <relativePath>./parent/pom.xml</version>
+                         <relativePath>./parent/pom.xml</relativePath>
                        </parent>
                        <properties>
                          <pomProp>value</pomProp>
@@ -1029,7 +1029,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{<caret>}</name>
                        """.trimIndent())
 
     createProfilesXml("""
@@ -1081,6 +1080,36 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                         """.trimIndent())
 
     readWithProfiles("one")
+
+    updateProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>parent</artifactId>
+                         <version>1</version>
+                         <relativePath>./parent/pom.xml</version>
+                       </parent>
+                       <properties>
+                         <pomProp>value</pomProp>
+                       </properties>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <pomProfilesProp>value</pomProfilesProp>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <properties>
+                             <pomProfilesPropInactive>value</pomProfilesPropInactive>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       <name>${'$'}{<caret>}</name>
+                       """.trimIndent())
 
     val variants = getCompletionVariants(projectPom)
     assertContain(variants, "pomProp", "pomProfilesProp", "profilesXmlProp")
