@@ -453,13 +453,14 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                        <artifactId>m2</artifactId>
                                        <version>1</version>
                                        """.trimIndent())
-    updateAll(listOf("one"), projectPom)
+    importProjectWithProfiles("one")
     var roots = tree.rootProjects
     assertEquals(1, roots.size)
     assertEquals(projectPom, roots[0].file)
     assertEquals(1, tree.getModules(roots[0]).size)
     assertEquals(m1, tree.getModules(roots[0])[0].file)
-    updateAll(listOf("two"), projectPom)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("two"))
+    updateAllProjects()
     roots = tree.rootProjects
     assertEquals(1, roots.size)
     assertEquals(projectPom, roots[0].file)
@@ -1710,7 +1711,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testCollectingProfilesFromParentsAfterResolve() = runBlocking {
-    createModulePom("parent1",
+    val parent1 = createModulePom("parent1",
                     """
                       <groupId>test</groupId>
                       <artifactId>parent1</artifactId>
@@ -1723,7 +1724,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                       </profiles>
                       """.trimIndent())
 
-    createModulePom("parent2",
+    val parent2 = createModulePom("parent2",
                     """
                       <groupId>test</groupId>
                       <artifactId>parent2</artifactId>
@@ -1766,13 +1767,13 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                           </profile>
                         </profiles>
                         """.trimIndent())
-    updateAll(mutableListOf<String?>(
-                                     "projectProfile",
-                                     "parent1Profile",
-                                     "parent2Profile",
-                                     "settings",
-                                     "xxx"),
-              projectPom)
+
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("projectProfile",
+                                                                    "parent1Profile",
+                                                                    "parent2Profile",
+                                                                    "settings",
+                                                                    "xxx"))
+    importProjectAsync()
     val mavenProject = tree.findProject(projectPom)!!
     assertUnorderedElementsAreEqual(
       mavenProject.activatedProfilesIds.enabledProfiles,
