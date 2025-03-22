@@ -982,10 +982,10 @@ class MavenProject(val file: VirtualFile) {
       return result
     }
 
-    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Collection<String> {
-      if (profiles == null) return emptyList()
+    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Set<String> {
+      if (profiles == null) return emptySet()
 
-      val result: MutableSet<String> = HashSet(profiles.size)
+      val result = HashSet<String>(profiles.size)
       for (each in profiles) {
         result.add(each.id)
       }
