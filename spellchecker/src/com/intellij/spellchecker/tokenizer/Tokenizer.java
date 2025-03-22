@@ -9,7 +9,7 @@ public abstract class Tokenizer<T extends PsiElement> {
 
   public abstract void tokenize(@NotNull T element, @NotNull TokenConsumer consumer);
 
-  public @NotNull TextRange getHighlightingRange(PsiElement element, int offset, TextRange textRange) {
+  public @NotNull TextRange getHighlightingRange(@NotNull PsiElement element, int offset, @NotNull TextRange textRange) {
     return TextRange.from(offset + textRange.getStartOffset(), textRange.getLength());
   }
 }

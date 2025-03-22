@@ -56,7 +56,7 @@ public class PlainTextSplitter extends BaseSplitter {
   private static final Pattern JWT_PATTERN = Pattern.compile("[A-Za-z0-9+=/_\\-.]+");
 
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (StringUtil.isEmpty(text)) {
       return;
     }
