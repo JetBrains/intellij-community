@@ -27,7 +27,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.jetbrains.compose.resources.decodeToImageVector
@@ -38,102 +37,6 @@ import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.newUiChecker
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
-
-@Deprecated(
-    "Use the IconKey-based API instead",
-    ReplaceWith(
-        "key = Icon(PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
-            "colorFilter = colorFilter, modifier = modifier, hints)",
-        "org.jetbrains.jewel.ui.icon.PathIconKey",
-    ),
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
-@Composable
-public fun Icon(
-    resource: String,
-    contentDescription: String?,
-    iconClass: Class<*>,
-    colorFilter: ColorFilter?,
-    modifier: Modifier = Modifier,
-    vararg hints: PainterHint,
-) {
-    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
-    val painter by painterProvider.getPainter(*hints)
-
-    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
-}
-
-@Deprecated(
-    "Use the IconKey-based API instead",
-    ReplaceWith(
-        "key = Icon(PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
-            "colorFilter = colorFilter, modifier = modifier, hint = hint)",
-        "org.jetbrains.jewel.ui.icon.PathIconKey",
-    ),
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
-@Composable
-public fun Icon(
-    resource: String,
-    contentDescription: String?,
-    iconClass: Class<*>,
-    colorFilter: ColorFilter?,
-    modifier: Modifier = Modifier,
-    hint: PainterHint,
-) {
-    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
-    val painter by painterProvider.getPainter(hint)
-
-    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, colorFilter = colorFilter)
-}
-
-@Deprecated(
-    "Use the IconKey-based API instead",
-    ReplaceWith(
-        "Icon(key = PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
-            "tint = tint, modifier = modifier, hints = hints)",
-        "org.jetbrains.jewel.ui.icon.PathIconKey",
-    ),
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
-@Composable
-public fun Icon(
-    resource: String,
-    contentDescription: String?,
-    iconClass: Class<*>,
-    modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified,
-    vararg hints: PainterHint,
-) {
-    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
-    val painter by painterProvider.getPainter(*hints)
-
-    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
-}
-
-@Deprecated(
-    "Use the IconKey-based API instead",
-    ReplaceWith(
-        "Icon(key = PathIconKey(resource, iconClass), contentDescription = contentDescription, " +
-            "tint = tint, modifier = modifier, hint = hint)",
-        "org.jetbrains.jewel.ui.icon.PathIconKey",
-    ),
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
-@Composable
-public fun Icon(
-    resource: String,
-    contentDescription: String?,
-    iconClass: Class<*>,
-    modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified,
-    hint: PainterHint,
-) {
-    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
-    val painter by painterProvider.getPainter(hint)
-
-    Icon(painter = painter, contentDescription = contentDescription, modifier = modifier, tint = tint)
-}
 
 @Composable
 public fun Icon(
