@@ -293,7 +293,7 @@ class MavenProjectReader(
 
       val baseDir = MavenUtil.getBaseDir(file)
       val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
-      val modelWithInheritance = myReadHelper.assembleInheritance(embedder, parentModel, model, file)
+      val modelWithInheritance = model//myReadHelper.assembleInheritance(embedder, parentModel, model, file)
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
       val profiles = modelWithInheritance.profiles
