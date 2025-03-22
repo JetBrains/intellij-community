@@ -60,6 +60,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//platform/core-api:core",
   ],
   runtime_deps = [
     ":kotlin-gradle-scripting-k2_resources",

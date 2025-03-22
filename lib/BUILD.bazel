@@ -634,8 +634,8 @@ kt_jvm_import(
 
 java_import(
   name = "apache-sshd-osgi",
-  jars = ["@sshd-osgi-2_14_0_http//file"],
-  srcjar = "@sshd-osgi-2_14_0-sources_http//file",
+  jars = ["@sshd-osgi-2_15_0_http//file"],
+  srcjar = "@sshd-osgi-2_15_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
