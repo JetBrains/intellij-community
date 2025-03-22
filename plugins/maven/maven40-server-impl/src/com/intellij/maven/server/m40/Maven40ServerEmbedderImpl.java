@@ -9,7 +9,6 @@ import com.intellij.maven.server.m40.utils.Maven40ImporterSpy;
 import com.intellij.maven.server.m40.utils.Maven40Invoker;
 import com.intellij.maven.server.m40.utils.Maven40InvokerRequest;
 import com.intellij.maven.server.m40.utils.Maven40ModelConverter;
-import com.intellij.maven.server.m40.utils.Maven40ModelInheritanceAssembler;
 import com.intellij.maven.server.m40.utils.Maven40ProjectResolver;
 import com.intellij.maven.server.m40.utils.Maven40RepositorySystemSessionFactory;
 import com.intellij.maven.server.m40.utils.Maven40ServerConsoleLogger;
@@ -922,17 +921,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       return Maven40EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
     }
     catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public @NotNull MavenModel assembleInheritance(@NotNull MavenModel model, @NotNull MavenModel parentModel, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven40ModelInheritanceAssembler.assembleInheritance(model, parentModel);
-    }
-    catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
     }
   }
