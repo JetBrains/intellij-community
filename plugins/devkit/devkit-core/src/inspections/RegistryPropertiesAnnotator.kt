@@ -78,7 +78,9 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
         propertyName.startsWith("editor.config.") ||
         propertyName.startsWith("debugger.kotlin.") ||
         propertyName.startsWith("debugger.enable.kotlin.") ||
-        propertyName.startsWith("ide.java.")) {
+        propertyName.startsWith("ide.java.") ||
+        propertyName.startsWith("execution.java.") ||
+        propertyName.startsWith("debugger.log.jdi.")) {
 
       holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
         .withFix(ShowEPDeclarationIntention(propertyName)).create()
