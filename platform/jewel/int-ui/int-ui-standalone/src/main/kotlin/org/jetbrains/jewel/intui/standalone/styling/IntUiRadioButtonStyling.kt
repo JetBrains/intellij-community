@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -14,21 +13,18 @@ import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.PathIconKey
 
-@Composable
 public fun RadioButtonStyle.Companion.light(
     colors: RadioButtonColors = RadioButtonColors.light(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.light(),
 ): RadioButtonStyle = RadioButtonStyle(colors, metrics, icons)
 
-@Composable
 public fun RadioButtonStyle.Companion.dark(
     colors: RadioButtonColors = RadioButtonColors.dark(),
     metrics: RadioButtonMetrics = RadioButtonMetrics.defaults(),
     icons: RadioButtonIcons = RadioButtonIcons.dark(),
 ): RadioButtonStyle = RadioButtonStyle(colors, metrics, icons)
 
-@Composable
 public fun RadioButtonColors.Companion.light(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,
@@ -46,7 +42,6 @@ public fun RadioButtonColors.Companion.light(
         contentSelectedDisabled = contentSelectedDisabled,
     )
 
-@Composable
 public fun RadioButtonColors.Companion.dark(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,

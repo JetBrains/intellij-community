@@ -54,7 +54,6 @@ import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
 import org.jetbrains.jewel.ui.theme.BaseJewelTheme
 
-@Composable
 public fun JewelTheme.Companion.lightThemeDefinition(
     colors: GlobalColors = GlobalColors.light(),
     metrics: GlobalMetrics = GlobalMetrics.defaults(),
@@ -78,7 +77,6 @@ public fun JewelTheme.Companion.lightThemeDefinition(
         iconData,
     )
 
-@Composable
 public fun JewelTheme.Companion.darkThemeDefinition(
     colors: GlobalColors = GlobalColors.dark(),
     metrics: GlobalMetrics = GlobalMetrics.defaults(),
@@ -108,7 +106,6 @@ public fun ComponentStyling.default(): ComponentStyling = with {
     if (isDark) dark() else light()
 }
 
-@Composable
 public fun ComponentStyling.dark(
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
@@ -180,7 +177,6 @@ public fun ComponentStyling.dark(
         )
     )
 
-@Composable
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
