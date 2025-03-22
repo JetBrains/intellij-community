@@ -82,7 +82,6 @@ import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.icon.IconKey
-import org.jetbrains.jewel.ui.icon.PathIconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.menuStyle
 import org.jetbrains.skiko.hostOs
@@ -523,30 +522,6 @@ internal fun MenuItem(
             }
         }
     }
-}
-
-@Deprecated(
-    "Use the IconKey variant",
-    ReplaceWith(
-        "MenuSubmenuItem(modifier, enabled, canShowIcon, iconResource?.let { PathIconKey(it, iconClass) }, " +
-            "interactionSource, style, submenu, content)",
-        "org/jetbrains/jewel/ui/component/Menu.kt:472",
-    ),
-)
-@Composable
-public fun MenuSubmenuItem(
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    canShowIcon: Boolean,
-    iconResource: String?,
-    iconClass: Class<*>,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: MenuStyle = JewelTheme.menuStyle,
-    submenu: MenuScope.() -> Unit,
-    content: @Composable () -> Unit,
-) {
-    val iconKey = remember(iconResource, iconClass) { iconResource?.let { PathIconKey(it, iconClass) } }
-    MenuSubmenuItem(modifier, enabled, canShowIcon, iconKey, interactionSource, style, submenu, content)
 }
 
 @Composable
