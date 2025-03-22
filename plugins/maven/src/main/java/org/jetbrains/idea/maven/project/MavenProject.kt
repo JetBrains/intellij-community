@@ -951,7 +951,9 @@ class MavenProject(val file: VirtualFile) {
     private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: String, fileExtension: String?): Map<String, String> {
       val extension = fileExtension ?: ""
       val result = LinkedHashMap<String, String>()
-      for (module in mavenModel.modules) {
+      val modules = mavenModel.modules
+      if (null == modules) return result
+      for (module in modules) {
         var name = module
         name = name.trim { it <= ' ' }
 
