@@ -387,16 +387,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  internal suspend fun applyProfiles(
-    model: MavenModel,
-    baseDir: File,
-    explicitProfiles: MavenExplicitProfiles,
-    alwaysOnProfiles: HashSet<String>,
-    ourToken: MavenToken,
-  ): ProfileApplicationResult {
-    return getOrCreateWrappee().applyProfiles(model, baseDir, explicitProfiles, alwaysOnProfiles, ourToken)
-  }
-
   internal suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel, ourToken: MavenToken): MavenModel {
     return getOrCreateWrappee().assembleInheritance(model, parentModel, ourToken)
   }
