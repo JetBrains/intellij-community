@@ -13,9 +13,9 @@ import org.jetbrains.annotations.ApiStatus
 abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
   abstract val repositories: List<PyPackageRepository>
 
-  abstract fun allPackages(): List<String>
+  abstract fun allPackages(): Set<String>
 
-  abstract fun packagesFromRepository(repository: PyPackageRepository): List<String>
+  abstract fun packagesFromRepository(repository: PyPackageRepository): Set<String>
   abstract suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
   abstract suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
 
