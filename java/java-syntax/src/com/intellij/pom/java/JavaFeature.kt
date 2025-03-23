@@ -1,18 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.pom.java;
+package com.intellij.pom.java
 
-import com.intellij.core.JavaPsiBundle;
-import org.jetbrains.annotations.*;
-
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
+import com.intellij.java.syntax.JavaSyntaxBundle
+import com.intellij.java.syntax.JavaSyntaxBundle.message
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
 
 /**
- * Represents Java language, JVM, or standard library features and provides information 
+ * Represents Java language, JVM, or standard library features and provides information
  * whether a particular features is available in a given context
  */
-public enum JavaFeature {
+enum class JavaFeature {
   ASSERTIONS(LanguageLevel.JDK_1_4, "feature.assertions"),
   ENUMS(LanguageLevel.JDK_1_5, "feature.enums"),
   GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
@@ -82,20 +82,15 @@ public enum JavaFeature {
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
   SEQUENCED_COLLECTIONS(LanguageLevel.JDK_21, "feature.sequenced.collections"),
   STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates") {
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_23);
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_23)
     }
 
-    @Override
-    public boolean isLimited() {
-      return true;
-    }
+    override val isLimited: Boolean get() = true
   },
   UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_22, "feature.unnamed.vars") {
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_21_PREVIEW == useSiteLevel;
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_21_PREVIEW == useSiteLevel
     }
   },
   //jep 463,477
@@ -108,7 +103,7 @@ public enum JavaFeature {
   STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
   STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super"),
   /**
-   * Was a preview feature in Java 20 Preview. 
+   * Was a preview feature in Java 20 Preview.
    * Keep the implementation, as it could reappear in the future.
    */
   RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
@@ -132,111 +127,95 @@ public enum JavaFeature {
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
 
-  private final @NotNull LanguageLevel myLevel;
-  
-  private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) @NotNull String myKey;
-  private final boolean myCanBeCustomized;
-  private final Set<LanguageLevel> myObsoletePreviewLevels;
-
-  JavaFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
-    this(level, key, false);
-  }
-
-  JavaFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key,
-              @NotNull LanguageLevel @NotNull ... obsoletePreviewLevels) {
-    myLevel = level;
-    myKey = key;
-    myCanBeCustomized = false;
-    myObsoletePreviewLevels = EnumSet.noneOf(LanguageLevel.class);
-    for (LanguageLevel obsoletePreviewLevel : obsoletePreviewLevels) {
-      if (!obsoletePreviewLevel.isUnsupported()) throw new IllegalArgumentException(obsoletePreviewLevel.toString());
-      myObsoletePreviewLevels.add(obsoletePreviewLevel);
-    }
-  }
-
-  JavaFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key,
-              boolean canBeCustomized) {
-    myLevel = level;
-    myKey = key;
-    myCanBeCustomized = canBeCustomized;
-    myObsoletePreviewLevels = Collections.emptySet();
-  }
-
-  /**
-   * @return Human-readable feature name
-   */
-  public @NotNull @Nls String getFeatureName() {
-    return JavaPsiBundle.message(myKey);
-  }
-
   /**
    * @return minimal language level where feature is available.
    * Note that this doesn't mean that the feature is available on every language level which is higher.
-   * In most of the cases, {@code PsiUtil.isAvailable(PsiElement)} or {@link #isSufficient(LanguageLevel)} should be used instead.
+   * In most of the cases, `PsiUtil.isAvailable(PsiElement)` or [.isSufficient] should be used instead.
    */
-  public @NotNull LanguageLevel getMinimumLevel() {
-    return myLevel;
+  val minimumLevel: LanguageLevel
+
+  private val myKey: @PropertyKey(resourceBundle = JavaSyntaxBundle.BUNDLE) String
+  private val myCanBeCustomized: Boolean
+  private val myObsoletePreviewLevels: Set<LanguageLevel>
+
+  constructor(
+    level: LanguageLevel,
+    key: @PropertyKey(resourceBundle = JavaSyntaxBundle.BUNDLE) String,
+    vararg obsoletePreviewLevels: LanguageLevel
+  ) {
+    minimumLevel = level
+    myKey = key
+    myCanBeCustomized = false
+    myObsoletePreviewLevels = mutableSetOf()
+    for (obsoletePreviewLevel in obsoletePreviewLevels) {
+      require(obsoletePreviewLevel.isUnsupported) { obsoletePreviewLevel.toString() }
+      myObsoletePreviewLevels.add(obsoletePreviewLevel)
+    }
+  }
+
+  constructor(
+    level: LanguageLevel,
+    key: @PropertyKey(resourceBundle = JavaSyntaxBundle.BUNDLE) String,
+    canBeCustomized: Boolean = false
+  ) {
+    minimumLevel = level
+    myKey = key
+    myCanBeCustomized = canBeCustomized
+    myObsoletePreviewLevels = emptySet()
   }
 
   /**
-   * @return true if the availability of this feature can be additionally filtered using {@link LanguageFeatureProvider}.
+   * Human-readable feature name
+   */
+  val featureName: @Nls String
+    get() = message(myKey)
+
+  /**
+   * @return true if the availability of this feature can be additionally filtered using [LanguageFeatureProvider].
    */
   @Contract(pure = true)
-  public boolean canBeCustomized() {
-    return myCanBeCustomized;
+  fun canBeCustomized(): Boolean {
+    return myCanBeCustomized
   }
 
   @Contract(pure = true)
-  public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-    return (useSiteLevel.isAtLeast(myLevel) || 
-            useSiteLevel.isUnsupported() && myObsoletePreviewLevels.contains(useSiteLevel)) &&
-           (!myLevel.isPreview() || useSiteLevel.isPreview());
+  open fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+    return (useSiteLevel.isAtLeast(this.minimumLevel) ||
+            useSiteLevel.isUnsupported && myObsoletePreviewLevels.contains(useSiteLevel)) &&
+           (!minimumLevel.isPreview || useSiteLevel.isPreview)
   }
 
-  @Contract(pure = true)
-  public boolean isLimited() {
-    return false;
-  }
+  @get:Contract(pure = true)
+  open val isLimited: Boolean
+    get() = false
 
   /**
    * Override if feature was preview and then accepted as standard
    */
-  @Contract(pure = true)
-  public LanguageLevel getStandardLevel() {
-    return myLevel.isPreview() ? null : myLevel;
-  }
+  @get:Contract(pure = true)
+  val standardLevel: LanguageLevel?
+    get() = if (minimumLevel.isPreview) null else this.minimumLevel
 
-  // Should correspond to jdk.internal.javac.PreviewFeature.Feature enum
-  @Contract(pure = true)
-  public static @Nullable JavaFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
-    switch (feature) {
-      case "PATTERN_MATCHING_IN_INSTANCEOF":
-        return PATTERNS;
-      case "TEXT_BLOCKS":
-        return TEXT_BLOCKS;
-      case "RECORDS":
-        return RECORDS;
-      case "SEALED_CLASSES":
-        return SEALED_CLASSES;
-      case "STRING_TEMPLATES":
-        return STRING_TEMPLATES;
-      case "UNNAMED_CLASSES":
-      case "IMPLICIT_CLASSES":
-        return IMPLICIT_CLASSES;
-      case "SCOPED_VALUES":
-        return SCOPED_VALUES;
-      case "STRUCTURED_CONCURRENCY":
-        return STRUCTURED_CONCURRENCY;
-      case "CLASSFILE_API":
-        return CLASSFILE_API;
-      case "STREAM_GATHERERS":
-        return STREAM_GATHERERS;
-      case "FOREIGN":
-        return FOREIGN_FUNCTIONS;
-      case "VIRTUAL_THREADS":
-        return VIRTUAL_THREADS;
-      default:
-        return null;
+  companion object {
+    // Should correspond to jdk.internal.javac.PreviewFeature.Feature enum
+    @Contract(pure = true)
+    @JvmStatic
+    fun convertFromPreviewFeatureName(feature: @NonNls String): JavaFeature? {
+      return when (feature) {
+        "PATTERN_MATCHING_IN_INSTANCEOF" -> PATTERNS
+        "TEXT_BLOCKS" -> TEXT_BLOCKS
+        "RECORDS" -> RECORDS
+        "SEALED_CLASSES" -> SEALED_CLASSES
+        "STRING_TEMPLATES" -> STRING_TEMPLATES
+        "UNNAMED_CLASSES", "IMPLICIT_CLASSES" -> IMPLICIT_CLASSES
+        "SCOPED_VALUES" -> SCOPED_VALUES
+        "STRUCTURED_CONCURRENCY" -> STRUCTURED_CONCURRENCY
+        "CLASSFILE_API" -> CLASSFILE_API
+        "STREAM_GATHERERS" -> STREAM_GATHERERS
+        "FOREIGN" -> FOREIGN_FUNCTIONS
+        "VIRTUAL_THREADS" -> VIRTUAL_THREADS
+        else -> null
+      }
     }
   }
 }

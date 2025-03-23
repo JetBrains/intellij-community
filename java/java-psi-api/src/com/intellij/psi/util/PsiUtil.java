@@ -1081,7 +1081,7 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevel.FILE_LANGUAGE_LEVEL_KEY;
+  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevelKey.FILE_LANGUAGE_LEVEL_KEY;
 
   public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_5);

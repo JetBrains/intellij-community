@@ -29,7 +29,7 @@ import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.pom.java.LanguageLevel.HIGHEST
+import com.intellij.pom.java.LanguageLevel.Companion.HIGHEST
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
@@ -310,14 +310,14 @@ object MavenImportUtil {
   private fun adjustPreviewLanguageLevel(mavenProject: MavenProject, level: LanguageLevel): LanguageLevel {
     val enablePreviewProperty = mavenProject.properties.getProperty("maven.compiler.enablePreview")
     if (enablePreviewProperty.toBoolean()) {
-      return level.getPreviewLevel() ?: level
+      return level.previewLevel ?: level
     }
 
     val compilerConfiguration = mavenProject.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     if (compilerConfiguration != null) {
       val enablePreviewParameter = compilerConfiguration.getChildTextTrim("enablePreview")
       if (enablePreviewParameter.toBoolean()) {
-        return level.getPreviewLevel() ?: level
+        return level.previewLevel ?: level
       }
 
       val compilerArgs = compilerConfiguration.getChild("compilerArgs")
@@ -326,7 +326,7 @@ object MavenImportUtil {
             compilerArgs.getChildren("arg").any { isPreviewText(it) } ||
             compilerArgs.getChildren("compilerArg").any{ isPreviewText(it) }
         ) {
-          return level.getPreviewLevel() ?: level
+          return level.previewLevel ?: level
         }
       }
     }

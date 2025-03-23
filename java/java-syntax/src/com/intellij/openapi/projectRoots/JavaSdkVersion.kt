@@ -1,19 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.projectRoots;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.projectRoots
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.lang.JavaVersion
+import com.intellij.util.lang.JavaVersion.Companion.tryParse
 
 /**
- * Represents a version of Java SDK. Use {@code JavaSdk#getVersion(Sdk)} method to obtain a version of an {@code Sdk}.
+ * Represents a version of Java SDK. Use `JavaSdk#getVersion(Sdk)` method to obtain a version of an `Sdk`.
  * @see LanguageLevel
  */
-public enum JavaSdkVersion {
+enum class JavaSdkVersion(val maxLanguageLevel: LanguageLevel) {
   JDK_1_0(LanguageLevel.JDK_1_3),
   JDK_1_1(LanguageLevel.JDK_1_3),
   JDK_1_2(LanguageLevel.JDK_1_3),
@@ -41,45 +38,42 @@ public enum JavaSdkVersion {
   JDK_24(LanguageLevel.JDK_24),
   JDK_25(LanguageLevel.JDK_X);
 
-  private final LanguageLevel myMaxLanguageLevel;
-
-  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel) {
-    myMaxLanguageLevel = maxLanguageLevel;
-  }
-
-  public @NotNull LanguageLevel getMaxLanguageLevel() {
-    return myMaxLanguageLevel;
-  }
-
-  public @NotNull @NlsSafe String getDescription() {
-    int feature = ordinal();
-    return feature < 5 ? "1." + feature : String.valueOf(feature);
-  }
-
-  public boolean isAtLeast(@NotNull JavaSdkVersion version) {
-    return compareTo(version) >= 0;
-  }
-
-  public static @NotNull JavaSdkVersion fromLanguageLevel(@NotNull LanguageLevel languageLevel) throws IllegalArgumentException {
-    JavaSdkVersion[] values = values();
-    if (languageLevel == LanguageLevel.JDK_X) {
-      return values[values.length - 1];
+  val description: @NlsSafe String
+    get() {
+      val feature = ordinal
+      return if (feature < 5) "1.$feature" else feature.toString()
     }
-    int feature = languageLevel.feature();
-    if (feature < values.length) {
-      return values[feature];
+
+  fun isAtLeast(version: JavaSdkVersion): Boolean {
+    return compareTo(version) >= 0
+  }
+
+  companion object {
+    @Throws(IllegalArgumentException::class)
+    @JvmStatic
+    fun fromLanguageLevel(languageLevel: LanguageLevel): JavaSdkVersion {
+      val values = JavaSdkVersion.entries.toTypedArray()
+      if (languageLevel == LanguageLevel.JDK_X) {
+        return values[values.size - 1]
+      }
+      val feature = languageLevel.feature()
+      if (feature < values.size) {
+        return values[feature]
+      }
+      throw IllegalArgumentException("Can't map " + languageLevel + " to any of " + values.contentToString())
     }
-    throw new IllegalArgumentException("Can't map " + languageLevel + " to any of " + Arrays.toString(values));
-  }
 
-  /** See {@link JavaVersion#parse(String)} for supported formats. */
-  public static @Nullable JavaSdkVersion fromVersionString(@NotNull String versionString) {
-    JavaVersion version = JavaVersion.tryParse(versionString);
-    return version != null ? fromJavaVersion(version) : null;
-  }
+    /** See [JavaVersion.parse] for supported formats.  */
+    @JvmStatic
+    fun fromVersionString(versionString: String): JavaSdkVersion? {
+      val version = tryParse(versionString)
+      return if (version != null) fromJavaVersion(version) else null
+    }
 
-  public static @Nullable JavaSdkVersion fromJavaVersion(@NotNull JavaVersion version) {
-    JavaSdkVersion[] values = values();
-    return version.feature < values.length ? values[version.feature] : null;
+    @JvmStatic
+    fun fromJavaVersion(version: JavaVersion): JavaSdkVersion? {
+      val values = JavaSdkVersion.entries.toTypedArray()
+      return if (version.feature < values.size) values[version.feature] else null
+    }
   }
 }

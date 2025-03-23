@@ -504,7 +504,7 @@ object MavenUtil {
       if (sdk != null && sdk.getSdkType() is JavaSdk) {
         val javaSdk = sdk.getSdkType() as JavaSdk
         val version: JavaSdkVersion? = javaSdk.getVersion(sdk)
-        val description = if (version == null) null else version.getDescription()
+        val description = if (version == null) null else version.description
         val shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6)
         conditions.setProperty("SHOULD_SET_LANG_LEVEL", shouldSetLangLevel.toString())
         properties.setProperty("COMPILER_LEVEL_SOURCE", description)
