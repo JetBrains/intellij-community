@@ -50,6 +50,7 @@
       "selectAll.svg": "actions/selectall.svg",
       "shortcutFilter.svg": "actions/shortcutFilter.svg",
       "stopRefresh.svg": "actions/stopRefresh.svg",
+      "stopWatch.svg": "actions/stopWatch.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
       "realIntentionBulb.svg": "actions/realIntentionBulb.svg",

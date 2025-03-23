@@ -2362,6 +2362,7 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:StepOutCodeBlock:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:StopAndRestart:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:StopRefresh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:StopWatch:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Stub:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SuggestedRefactoringBulb:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Suspend:org.jetbrains.jewel.ui.icon.IntelliJIconKey

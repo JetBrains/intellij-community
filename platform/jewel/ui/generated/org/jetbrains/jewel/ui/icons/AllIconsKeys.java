@@ -207,6 +207,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey StepOutCodeBlock = new IntelliJIconKey("actions/stepOutCodeBlock.svg", "expui/run/stepOutCodeBlock.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey StopAndRestart = new IntelliJIconKey("actions/stopAndRestart.svg", "actions/stopAndRestart.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey StopRefresh = new IntelliJIconKey("actions/stopRefresh.svg", "expui/actions/stopRefresh.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey StopWatch = new IntelliJIconKey("actions/stopWatch.svg", "expui/actions/stopWatch.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Stub = new IntelliJIconKey("actions/stub.svg", "actions/stub.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey SuggestedRefactoringBulb = new IntelliJIconKey("actions/suggestedRefactoringBulb.svg", "expui/actions/suggestedRefactoringBulb.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Suspend = new IntelliJIconKey("actions/suspend.svg", "expui/run/stop.svg", AllIconsKeys.class);

@@ -199,6 +199,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:StepOutCodeBlock:javax.swing.Icon
 - sf:StopAndRestart:javax.swing.Icon
 - sf:StopRefresh:javax.swing.Icon
+- sf:StopWatch:javax.swing.Icon
 - sf:Stub:javax.swing.Icon
 - sf:SuggestedRefactoringBulb:javax.swing.Icon
 - sf:Suspend:javax.swing.Icon
