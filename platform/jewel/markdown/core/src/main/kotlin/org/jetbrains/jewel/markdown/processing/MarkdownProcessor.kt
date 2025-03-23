@@ -225,15 +225,21 @@ public class MarkdownProcessor(
             }
 
             else -> null
-        }.also { block ->
+        }.let { block ->
             if (scrollingSynchronizer != null && this is Block && block != null) {
                 postProcess(scrollingSynchronizer, this, block)
+            } else {
+                block
             }
         }
 
-    private fun postProcess(scrollingSynchronizer: ScrollingSynchronizer, block: Block, mdBlock: MarkdownBlock) {
-        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return
-        scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
+    private fun postProcess(
+        scrollingSynchronizer: ScrollingSynchronizer,
+        block: Block,
+        mdBlock: MarkdownBlock,
+    ): MarkdownBlock {
+        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return mdBlock
+        return scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
     }
 
     private fun Paragraph.toMarkdownParagraph(): MarkdownBlock.Paragraph =
