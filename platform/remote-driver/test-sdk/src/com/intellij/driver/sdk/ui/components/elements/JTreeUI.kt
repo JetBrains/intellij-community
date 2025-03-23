@@ -86,6 +86,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException("row not found")
   }
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
+    waitForNodesLoaded()
     expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       clickRow(it.row)
@@ -93,6 +94,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun rightClickPath(vararg path: String, fullMatch: Boolean = true) {
+    waitForNodesLoaded()
     expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       rightClickRow(it.row)
@@ -100,6 +102,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun doubleClickPath(vararg path: String, fullMatch: Boolean = true) {
+    waitForNodesLoaded()
     expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       doubleClickRow(it.row)

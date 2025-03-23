@@ -17,7 +17,9 @@ fun Finder.bookmarksToolWindow(action: BookmarksToolWindowUiComponent.() -> Unit
 
 class BookmarksToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
 
-  val bookmarksTree = accessibleTree()
+  val bookmarksTree by lazy {
+    tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
+  }
 
   fun rightClickOnBookmarkWithText(text: String, fullMatch: Boolean = true) = bookmarksTree.apply {
     rightClickRow(findBookmarkWithText(text, fullMatch).row)
@@ -79,11 +81,14 @@ class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getBookmarksList() = bookmarksTree.collectExpandedPaths().mapNotNull { it.path.lastOrNull() }
 
-  fun clickBookmark(textContains: String, doubleClick: Boolean = false) =
-    bookmarksTree.waitAnyTextsContains(text = textContains).first().apply { if (doubleClick) {
-      withRetries(times = 3) {
-        doubleClick()
-        waitNotFound(2.seconds)
-      }
-    } else click() }
+  fun clickBookmark(textContains: String) {
+    bookmarksTree.clickRow(Point(5, 5)) { it.contains(textContains) }
+  }
+
+  fun doubleClickBookmark(textContains: String) {
+    withRetries(times = 3) {
+      bookmarksTree.doubleClickRow(Point(5, 5)) { it.contains(textContains) }
+      waitNotFound(2.seconds)
+    }
+  }
 }
