@@ -83,7 +83,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException(path.toList())
   }
 
-  fun expandAll(timeout: Duration) {
+  fun expandAll(timeout: Duration = 5.seconds) {
     fixture.expandAll(timeout.inWholeMilliseconds.toInt())
   }
 

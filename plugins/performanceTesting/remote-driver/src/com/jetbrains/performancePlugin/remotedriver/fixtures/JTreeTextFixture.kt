@@ -70,9 +70,7 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
   }
 
   fun expandAll(timeoutMs: Int) {
-    computeOnEdt {
-      TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
-    }
+    TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
   }
 
   fun collectIconsAtRow(row: Int): List<Icon> {
