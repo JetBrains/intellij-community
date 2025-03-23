@@ -1477,7 +1477,7 @@ public final class AllIconsKeys {
   }
 
   public static final class Webreferences {
-    /** 16x16 */ public static final @NotNull IntelliJIconKey MessageQueue = new IntelliJIconKey("webreferences/messageQueue.svg", "webreferences/messageQueue.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey MessageQueue = new IntelliJIconKey("webreferences/messageQueue.svg", "expui/webReferences/messageQueue.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Openapi = new IntelliJIconKey("webreferences/openapi.svg", "expui/webReferences/openApi.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Server = new IntelliJIconKey("webreferences/server.svg", "expui/webReferences/server.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey WebSocket = new IntelliJIconKey("webreferences/webSocket.svg", "webreferences/webSocket.svg", AllIconsKeys.class);
