@@ -5,6 +5,7 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -29,7 +30,9 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -46,6 +49,9 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 
 class MavenProjectAsyncBuilder {
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
 
   fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     if (ApplicationManager.getApplication().isDispatchThread) {
@@ -91,15 +97,30 @@ class MavenProjectAsyncBuilder {
       blockingContext { ExternalProjectsManagerImpl.setupCreatedProject(project) }
     }
 
-    val previewModule = if (createDummyModule) {
-      createPreviewModule(project, rootDirectory)
-    } else null
+    if (createDummyModule) {
+      val previewModule = createPreviewModule(project, rootDirectory)
+      // do not update all modules because it can take a lot of time (freeze at project opening)
+      val cs =  project.service<CoroutineService>().coroutineScope
+      cs.launch {
+        project.trackActivity(MavenActivityKey) {
+          doCommit(project,
+                   importProjectFile,
+                   rootDirectoryPath,
+                   modelsProvider,
+                   previewModule,
+                   importingSettings,
+                   generalSettings,
+                   syncProject)
+        }
+      }
+      return@trackActivity if (null == previewModule) emptyList() else listOf(previewModule)
+    }
 
     return@trackActivity doCommit(project,
                                   importProjectFile,
                                   rootDirectoryPath,
                                   modelsProvider,
-                                  previewModule,
+                                  null,
                                   importingSettings,
                                   generalSettings,
                                   syncProject)
