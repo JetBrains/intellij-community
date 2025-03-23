@@ -9,8 +9,7 @@
     opened in the IDE. It can also generate and show an XPath expression that matches the current node.</p>
     <p>Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
     expressions and named templates for XSLT documents.
-  ]]>
-  </description>
+  ]]></description>
 
   <depends>com.intellij.modules.xml</depends>
   <resource-bundle>messages.XPathBundle</resource-bundle>
@@ -221,8 +220,7 @@
 
     <group id="XPathView.XSLT.Associations" popup="true" icon="AllIcons.Nodes.Related"
            class="org.intellij.lang.xpath.xslt.associations.impl.AssociationsGroup">
-      <add-to-group group-id="XPathView.EditorPopup" anchor="last"
-                    relative-to-action="XPathView.Actions.ShowPathDescription" />
+      <add-to-group group-id="XPathView.EditorPopup" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="AddAntBuildFile" />
     </group>
   </actions>
