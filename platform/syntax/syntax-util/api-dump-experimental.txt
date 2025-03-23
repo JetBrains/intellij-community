@@ -1,20 +1,14 @@
 *c:com.intellij.platform.syntax.util.lexer.DelegateLexer
-- com.intellij.platform.syntax.lexer.Lexer
+- com.intellij.platform.syntax.util.lexer.LexerBase
 - <init>(com.intellij.platform.syntax.lexer.Lexer):V
 - advance():V
 - getBufferEnd():I
 - getBufferSequence():java.lang.CharSequence
-- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
 - f:getDelegate():com.intellij.platform.syntax.lexer.Lexer
 - getState():I
 - getTokenEnd():I
-- getTokenSequence():java.lang.CharSequence
 - getTokenStart():I
-- getTokenText():java.lang.String
 - getTokenType():com.intellij.platform.syntax.SyntaxElementType
-- restore(com.intellij.platform.syntax.lexer.LexerPosition):V
-- start(java.lang.CharSequence):V
-- start(java.lang.CharSequence,I,I):V
 - start(java.lang.CharSequence,I,I,I):V
 *c:com.intellij.platform.syntax.util.lexer.FlexAdapter
 - com.intellij.platform.syntax.util.lexer.LexerBase
