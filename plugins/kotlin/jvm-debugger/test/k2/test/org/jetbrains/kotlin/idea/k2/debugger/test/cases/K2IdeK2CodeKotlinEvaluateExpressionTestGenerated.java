@@ -867,6 +867,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/frame/delegatedPropertyInClassWoRenderer.kt");
             }
 
+            @TestMetadata("evaluatableGetters.kt")
+            public void testEvaluatableGetters() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/frame/evaluatableGetters.kt");
+            }
+
             @TestMetadata("frameAnonymousObject.kt")
             public void testFrameAnonymousObject() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/frame/frameAnonymousObject.kt");

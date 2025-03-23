@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.rt.debugger.coroutines;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.rt.debugger;
 
 import java.util.List;
 
 public final class JsonUtils {
   private JsonUtils() { }
 
-  static String dumpCoroutineStackTraceDumpToJson(
+  public static String dumpCoroutineStackTraceDumpToJson(
     List<StackTraceElement> continuationStackElements,
     List<List<String>> variableNames,
     List<List<String>> fieldNames,
@@ -21,6 +21,19 @@ public final class JsonUtils {
     }
     result.append("}");
     return result.toString();
+  }
+
+  public static String escapeJsonString(String s) {
+    StringBuilder builder = new StringBuilder();
+    int length = s.length();
+    for (int i = 0; i < length; i++) {
+      char c = s.charAt(i);
+      if (c == '"' || c == '\\' || c == '/') {
+        builder.append('\\');
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   private static void dumpContinuationStacks(StringBuilder result,
@@ -94,18 +107,5 @@ public final class JsonUtils {
     result.append(element.getLineNumber());
 
     result.append("}");
-  }
-
-  private static String escapeJsonString(String s) {
-    StringBuilder builder = new StringBuilder();
-    int length = s.length();
-    for (int i = 0; i < length; i++) {
-      char c = s.charAt(i);
-      if (c == '"' || c == '\\' || c == '/') {
-        builder.append('\\');
-      }
-      builder.append(c);
-    }
-    return builder.toString();
   }
 }
