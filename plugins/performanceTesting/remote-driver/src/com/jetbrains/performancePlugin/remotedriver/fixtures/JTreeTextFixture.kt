@@ -54,7 +54,7 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
       }, { paths.add(it) })
       return@computeOnEdt paths
     }.forEachIndexed { index, path ->
-      result.add(TreePathToRow(path.filterNotNull().filter { it.isNotEmpty() }, index))
+      result.add(TreePathToRow(path.filter { it.isNotEmpty() }, index))
     }
     return result
   }
