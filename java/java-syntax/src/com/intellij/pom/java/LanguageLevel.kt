@@ -78,12 +78,12 @@ public enum LanguageLevel {
   private final boolean myPreview;
   private final boolean myUnsupported;
   private static final Map<Integer, LanguageLevel> ourStandardVersions =
-    Stream.of(values()).filter(ver -> !ver.isPreview())
-      .collect(Collectors.toMap(ver -> ver.myVersion.feature, Function.identity()));
+  Stream.of(values()).filter(ver -> !ver.isPreview())
+  .collect(Collectors.toMap(ver -> ver.myVersion.feature, Function.identity()));
 
   /**
    * Construct the language level for a supported Java version
-   * 
+   *
    * @param presentableTextSupplier a supplier that returns the language level description
    * @param major the major version number. Whether the version is a preview version is determined by the enum constant name
    */
@@ -96,7 +96,7 @@ public enum LanguageLevel {
 
   /**
    * Construct the language level for an unsupported Java version
-   * 
+   *
    * @param major the major version number. Unsupported Java version is always a preview version
    */
   LanguageLevel(int major) {
@@ -165,7 +165,7 @@ public enum LanguageLevel {
   }
 
   /**
-   * @return the {@link JavaVersion} object that corresponds to this language level 
+   * @return the {@link JavaVersion} object that corresponds to this language level
    */
   public @NotNull JavaVersion toJavaVersion() {
     return myVersion;
