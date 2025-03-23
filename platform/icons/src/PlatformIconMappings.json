@@ -32,6 +32,10 @@
       "moveToLeftTop.svg": "actions/moveToLeftTop.svg",
       "moveToRightBottom.svg": "actions/moveToRightBottom.svg",
       "moveToRightTop.svg": "actions/moveToRightTop.svg",
+      "moveToWindow.svg": [
+        "actions/moveToWindow.svg",
+        "actions/MoveTo2.svg"
+      ],
       "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
