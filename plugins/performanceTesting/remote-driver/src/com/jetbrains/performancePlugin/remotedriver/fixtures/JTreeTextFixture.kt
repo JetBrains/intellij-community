@@ -3,6 +3,7 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
@@ -56,6 +57,17 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
       result.add(TreePathToRow(path.filterNotNull().filter { it.isNotEmpty() }, index))
     }
     return result
+  }
+
+  fun areTreeNodesLoaded(): Boolean {
+    var isLoaded = true
+    computeOnEdt {
+      TreeUtil.visitVisibleRows(component) { path ->
+        isLoaded = !TreeUtil.isLoadingPath(path)
+        if (!isLoaded) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
+      }
+    }
+    return isLoaded
   }
 
   fun collectSelectedPaths(): List<TreePath> {

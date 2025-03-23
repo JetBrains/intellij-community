@@ -47,6 +47,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun clickRow(row: Int) = fixture.clickRow(row)
   fun clickRow(predicate: (String) -> Boolean) {
+    waitForNodesLoaded()
     findRow(predicate)?.let {
       clickRow(it)
     } ?: throw PathNotFoundException("row not found")
@@ -54,12 +55,14 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun rightClickRow(row: Int) = fixture.rightClickRow(row)
   fun rightClickRow(predicate: (String) -> Boolean) {
+    waitForNodesLoaded()
     findRow(predicate)?.let {
       rightClickRow(it)
     } ?: throw PathNotFoundException("row not found")
   }
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
   fun doubleClickRow(predicate: (String) -> Boolean) {
+    waitForNodesLoaded()
     findRow(predicate)?.let {
       doubleClickRow(it)
     } ?: throw PathNotFoundException("row not found")
@@ -173,6 +176,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
 
+  fun waitForNodesLoaded(timeout: Duration = 5.seconds) {
+    waitFor("tree nodes are loaded", timeout) { fixture.areTreeNodesLoaded() }
+  }
+
   private fun findRow(predicate: (String) -> Boolean): Int? {
     return collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.row
   }
@@ -206,6 +213,7 @@ interface JTreeFixtureRef : Component {
   fun replaceCellRendererReader(reader: CellRendererReader)
   fun getComponentAtRow(row: Int): Component
   fun collectIconsAtRow(row: Int): List<Icon>
+  fun areTreeNodesLoaded(): Boolean
 }
 
 @Remote("javax.swing.JTree")
