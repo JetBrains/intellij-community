@@ -46,14 +46,16 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun clickRow(row: Int) = fixture.clickRow(row)
   fun clickRow(predicate: (String) -> Boolean) {
-    collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.let {
-      clickRow(it.row)
+    waitForNodesLoaded()
+    findRow(predicate)?.let {
+      clickRow(it)
     } ?: throw PathNotFoundException("row not found")
   }
 
   fun rightClickRow(row: Int) = fixture.rightClickRow(row)
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
+    waitForNodesLoaded()
     expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       clickRow(it.row)
@@ -61,6 +63,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun rightClickPath(vararg path: String, fullMatch: Boolean = true) {
+    waitForNodesLoaded()
     expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       rightClickRow(it.row)
@@ -68,6 +71,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun doubleClickPath(vararg path: String, fullMatch: Boolean = true) {
+    waitForNodesLoaded()
     expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       doubleClickRow(it.row)
@@ -160,6 +164,14 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
 
+  fun waitForNodesLoaded(timeout: Duration = 5.seconds) {
+    waitFor("tree nodes are loaded", timeout) { fixture.areTreeNodesLoaded() }
+  }
+
+  private fun findRow(predicate: (String) -> Boolean): Int? {
+    return collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.row
+  }
+
   class PathNotFoundException(message: String? = null) : Exception(message) {
     constructor(path: List<String>) : this("$path not found")
   }
@@ -188,6 +200,7 @@ interface JTreeFixtureRef : Component {
   fun getRowPoint(row: Int): Point
   fun replaceCellRendererReader(reader: CellRendererReader)
   fun getComponentAtRow(row: Int): Component
+  fun areTreeNodesLoaded(): Boolean
 }
 
 @Remote("javax.swing.JTree")
