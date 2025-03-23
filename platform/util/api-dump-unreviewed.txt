@@ -577,7 +577,7 @@ f:com.intellij.openapi.util.IntRef
 - set(I):V
 @:com.intellij.openapi.util.IntellijInternalApi
 - java.lang.annotation.Annotation
-Ff:com.intellij.openapi.util.InvalidDataException
+f:com.intellij.openapi.util.InvalidDataException
 - java.lang.RuntimeException
 - <init>():V
 - <init>(java.lang.String):V

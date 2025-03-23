@@ -86,22 +86,18 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
    * Frontend always starts a session. Backend never starts a session. Instead, the backend will send a notification to the frontend.
    */
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun startSessionOrNull(
     request: InlineCompletionRequest,
     provider: InlineCompletionProvider
   ): InlineCompletionSession?
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun doHide(context: InlineCompletionContext, finishType: FinishType)
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun createSessionManager(): InlineCompletionSessionManager
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun afterInsert(providerId: InlineCompletionProviderID)
 
   fun addEventListener(listener: InlineCompletionEventListener) {
