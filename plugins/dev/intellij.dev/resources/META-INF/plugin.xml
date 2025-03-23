@@ -1,7 +1,15 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <id>com.intellij.dev</id>
+  <name>DevKit Runtime</name>
   <vendor>JetBrains</vendor>
-  <description>This plugin provides actions which make sense in debug IDE instance, such as "View PSI Structure".</description>
+  <category>Other Tools</category>
+  <description><![CDATA[
+    <p>Provides tools for IDE and plugin development,
+    actions that make sense in debug IDE instance, such as <b>View PSI Structure</b>.</p>
+
+    <p>Want to build a plugin for your favorite JetBrains IDE ?! <br/>
+    <a href="https://plugins.jetbrains.com/docs/intellij/welcome.html?from=com.intellij.dev&utm_source=product&utm_campaign=devkit">Learn More!</a></p>
+  ]]></description>
 
   <content>
     <module name="intellij.dev.psiViewer"/>
@@ -11,4 +19,8 @@
     <module name="intellij.kotlin.dev"/>
     <module name="intellij.platform.statistics.devkit"/>
   </content>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
 </idea-plugin>
