@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -92,35 +93,39 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
   class AdvertiserSuggestion(
     private val project: Project,
     private val extensionOrFileName: String,
-    dataSet: Set<PluginData>,
-    jbPluginsIds: Set<PluginId>,
+    foundPlugins: Set<PluginData>,
+    allJetBrainsPluginsMarketplaceIds: Set<PluginId>,
     val suggestedIdes: List<SuggestedIde>,
     val overrideSuggestionText: String? = null,
     val unknownFeature: UnknownFeature? = null,
   ) : Function<FileEditor, EditorNotificationPanel?> {
 
     private var installedPlugin: IdeaPluginDescriptor? = null
-    private val jbProduced: MutableSet<PluginData> = mutableSetOf()
-    private val hasSuggestedIde: Boolean = isMappedToTextMate(extensionOrFileName)
-                                           && suggestedIdes.isNotEmpty()
 
     @VisibleForTesting
     val thirdParty: MutableSet<PluginData> = mutableSetOf()
+    private val jbProduced: MutableSet<PluginData> = mutableSetOf()
+
+    private val hasSuggestedIde: Boolean
 
     private var pluginsToInstall: Set<PluginData>? = null
 
     init {
       val descriptorsById = PluginManagerCore.buildPluginIdMap()
-      for (data in dataSet) {
+      for (data in foundPlugins) {
         val pluginId = data.pluginId
 
         if (pluginId in descriptorsById) {
           installedPlugin = descriptorsById[pluginId]
         }
         else if (!data.isBundled) {
-          (if (jbPluginsIds.contains(pluginId)) jbProduced else thirdParty) += data
+          (if (allJetBrainsPluginsMarketplaceIds.contains(pluginId)) jbProduced else thirdParty) += data
         }
       }
+
+      hasSuggestedIde = suggestedIdes.isNotEmpty()
+                        && jbProduced.isEmpty()
+                        && isMappedToTextMate(extensionOrFileName)
     }
 
     fun getSuggested(): Collection<PluginId> {
@@ -131,7 +136,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 
     override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
       lateinit var label: JLabel
-      val status = if (hasSuggestedIde) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
+      val status = if (isCommunityIde()) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
       val panel = object : EditorNotificationPanel(fileEditor, status) {
         init {
           label = myLabel
