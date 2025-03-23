@@ -45,26 +45,44 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     cellRendererReader = reader
   }
 
-  fun clickRow(row: Int) = fixture.clickRow(row)
-  fun clickRow(predicate: (String) -> Boolean) {
+  fun clickRow(row: Int, point: Point? = null) {
+    if (point != null) {
+      click(translateRowPoint(row, point))
+    } else {
+      fixture.clickRow(row)
+    }
+  }
+  fun clickRow(point: Point? = null, predicate: (String) -> Boolean) {
     waitForNodesLoaded()
     findRow(predicate)?.let {
-      clickRow(it)
+      clickRow(it, point)
     } ?: throw PathNotFoundException("row not found")
   }
 
-  fun rightClickRow(row: Int) = fixture.rightClickRow(row)
+  fun rightClickRow(row: Int, point: Point? = null) {
+    if (point != null) {
+      rightClick(translateRowPoint(row, point))
+    } else {
+      fixture.rightClickRow(row)
+    }
+  }
   fun rightClickRow(predicate: (String) -> Boolean) {
     waitForNodesLoaded()
     findRow(predicate)?.let {
       rightClickRow(it)
     } ?: throw PathNotFoundException("row not found")
   }
-  fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
-  fun doubleClickRow(predicate: (String) -> Boolean) {
+  fun doubleClickRow(row: Int, point: Point? = null) {
+    if (point != null) {
+      doubleClick(translateRowPoint(row, point))
+    } else {
+      fixture.doubleClickRow(row)
+    }
+  }
+  fun doubleClickRow(point: Point? = null, predicate: (String) -> Boolean) {
     waitForNodesLoaded()
     findRow(predicate)?.let {
-      doubleClickRow(it)
+      doubleClickRow(it, point)
     } ?: throw PathNotFoundException("row not found")
   }
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
@@ -168,10 +186,6 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     return findExpandedPath(*path, fullMatch = false) != null
   }
 
-  fun clickRowWithShift(row: Int, shift: Point = Point(0, 0)) {
-    click(fixture.getRowPoint(row).apply { translate(shift.x, shift.y) })
-  }
-
   fun collectIconsAtRow(row: Int): List<Icon> = fixture.collectIconsAtRow(row)
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
@@ -183,6 +197,8 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private fun findRow(predicate: (String) -> Boolean): Int? {
     return collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.row
   }
+
+  private fun translateRowPoint(row: Int, point: Point): Point = fixture.getRowPoint(row).apply { translate(point.x, point.y) }
 
   class PathNotFoundException(message: String? = null) : Exception(message) {
     constructor(path: List<String>) : this("$path not found")
