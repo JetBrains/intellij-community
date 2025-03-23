@@ -47,13 +47,23 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun clickRow(row: Int) = fixture.clickRow(row)
   fun clickRow(predicate: (String) -> Boolean) {
-    collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.let {
-      clickRow(it.row)
+    findRow(predicate)?.let {
+      clickRow(it)
     } ?: throw PathNotFoundException("row not found")
   }
 
   fun rightClickRow(row: Int) = fixture.rightClickRow(row)
+  fun rightClickRow(predicate: (String) -> Boolean) {
+    findRow(predicate)?.let {
+      rightClickRow(it)
+    } ?: throw PathNotFoundException("row not found")
+  }
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
+  fun doubleClickRow(predicate: (String) -> Boolean) {
+    findRow(predicate)?.let {
+      doubleClickRow(it)
+    } ?: throw PathNotFoundException("row not found")
+  }
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
     expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
@@ -162,6 +172,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   fun collectIconsAtRow(row: Int): List<Icon> = fixture.collectIconsAtRow(row)
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
+
+  private fun findRow(predicate: (String) -> Boolean): Int? {
+    return collectExpandedPaths().singleOrNull { predicate(it.path.last()) }?.row
+  }
 
   class PathNotFoundException(message: String? = null) : Exception(message) {
     constructor(path: List<String>) : this("$path not found")
