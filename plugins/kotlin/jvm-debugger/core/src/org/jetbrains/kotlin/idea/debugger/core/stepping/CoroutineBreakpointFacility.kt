@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.Location
+import com.sun.jdi.Method
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.event.LocatableEvent
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -122,36 +123,71 @@ object CoroutineBreakpointFacility {
 
         val methods = debugProbesImpl.methods() ?: return null
 
+        val probeResumeMethod = methods.singleOrNull { it.name().contains("probeCoroutineResumed") }  ?: return null
         val probeSuspendedMethod = methods.singleOrNull { it.name().contains("probeCoroutineSuspended") }  ?: return null
 
-        val locationForBP = probeSuspendedMethod.locationOfCodeIndex(0)
+        val project = context.debugProcess.project
+        val coroutineSuspendedBreakpoint = ClearSteppingBreakpoint(project, originalThread)
 
-        val breakpoint = ClearSteppingBreakpoint(context.debugProcess.project, originalThread)
+        installAdditionalBreakpoint(probeSuspendedMethod, coroutineSuspendedBreakpoint, context)
 
-        breakpoint.suspendPolicy = DebuggerSettings.SUSPEND_THREAD
+        val coroutineResumedBreakpoint = object : AdditionalProbeBreakpoint(project) {
+            override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
+                // Why in this test so many times resume is triggered???
+                coroutineSuspendedBreakpoint.counter++
+                thisLogger().debug { "It seems we enter undispatched coroutine in $originalThread" }
+                return false
+            }
+        }
+        installAdditionalBreakpoint(probeResumeMethod, coroutineResumedBreakpoint, context)
+        coroutineSuspendedBreakpoint.probeResumeBreakpoint = coroutineResumedBreakpoint
+
+        return coroutineSuspendedBreakpoint
+    }
+
+    private fun installAdditionalBreakpoint(probeMethod: Method, additionalRequestor: AdditionalProbeBreakpoint, context: SuspendContextImpl) {
+        val originalThread = context.thread?.threadReference ?: return
+        val locationForBP = probeMethod.locationOfCodeIndex(0)
+        additionalRequestor.suspendPolicy = DebuggerSettings.SUSPEND_THREAD
 
         val requestsManager = context.debugProcess.requestsManager
-        val request = requestsManager.createBreakpointRequest(breakpoint, locationForBP)
+        val request = requestsManager.createBreakpointRequest(additionalRequestor, locationForBP)
         request.addThreadFilter(originalThread)
         requestsManager.enableRequest(request)
-        context.debugProcess.setSteppingBreakpoint(breakpoint)
-        return breakpoint
+        context.debugProcess.setSteppingBreakpoint(additionalRequestor)
     }
 }
 
-private class ClearSteppingBreakpoint(project: Project, private val originalThread: ThreadReference) : SyntheticLineBreakpoint(project), SteppingBreakpoint {
-    var steppingRemoved = false
-        private set
-
+private abstract class AdditionalProbeBreakpoint(project: Project) : SyntheticLineBreakpoint(project), SteppingBreakpoint {
     override fun shouldIgnoreThreadFiltering() = true
 
     override fun track() = false
 
+    override fun isRestoreBreakpoints() = false
+
+    override fun setRequestHint(hint: RequestHint) {
+        error("Should not be called")
+    }
+}
+
+private class ClearSteppingBreakpoint(project: Project, private val originalThread: ThreadReference) : AdditionalProbeBreakpoint(project) {
+    var counter = 1
+
+    lateinit var probeResumeBreakpoint: AdditionalProbeBreakpoint
+
+    var steppingRemoved = false
+        private set
+
     override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
+        counter--
         val suspendContext = action.suspendContext
         val currentThread = suspendContext?.thread?.threadReference
         if (originalThread == currentThread) {
-            removeRequestAndStepping(suspendContext)
+            if (counter == 0) {
+                removeRequestAndStepping(suspendContext)
+            } else {
+                thisLogger().debug { "Exit from undispatched coroutine in $currentThread, new counter = $counter" }
+            }
         } else {
             // This should not happen because of the filter on the thread for this request
             thisLogger().error("Skip remove stepping breakpoint for thread ${originalThread.name()}")
@@ -167,12 +203,7 @@ private class ClearSteppingBreakpoint(project: Project, private val originalThre
         thisLogger().debug { "Remove stepping requests $suspendContext" }
         DebugProcessEvents.removeStepRequests(suspendContext, originalThread)
         suspendContext.debugProcess.requestsManager.deleteRequest(this)
-    }
-
-    override fun isRestoreBreakpoints() = false
-
-    override fun setRequestHint(hint: RequestHint) {
-        error("Should not be called")
+        suspendContext.debugProcess.requestsManager.deleteRequest(probeResumeBreakpoint)
     }
 }
 

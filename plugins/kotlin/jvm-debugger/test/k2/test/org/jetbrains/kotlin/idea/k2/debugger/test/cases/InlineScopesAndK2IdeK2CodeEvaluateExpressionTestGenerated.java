@@ -525,6 +525,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                         runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverLaunch.kt");
                     }
 
+                    @TestMetadata("stepOverRunBlockingInsideCoroutine.kt")
+                    public void testStepOverRunBlockingInsideCoroutine() throws Exception {
+                        runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverRunBlockingInsideCoroutine.kt");
+                    }
+
                     @TestMetadata("stepOverSuspendCallAndStopAtFirstLineBug.kt")
                     public void testStepOverSuspendCallAndStopAtFirstLineBug() throws Exception {
                         runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverSuspendCallAndStopAtFirstLineBug.kt");
