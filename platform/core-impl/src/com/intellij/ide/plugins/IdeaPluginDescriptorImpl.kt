@@ -596,6 +596,17 @@ class IdeaPluginDescriptorImpl private constructor(
       return result
     }
 
+    private const val registryEpName = "com.intellij.registryKey"
+
+    private val extensionPointNameComparator = Comparator<String> { o1, o2 ->
+      if (o1 == registryEpName) {
+        if (o2 == registryEpName) 0
+        else -1
+      }
+      else if (o2 == registryEpName) 1
+      else o1.compareTo(o2)
+    }
+
     private fun convertExtensions(rawMap: Map<String, List<MiscExtensionElement>>): Map<String, List<ExtensionDescriptor>> = rawMap.mapValues { (_, exts) ->
       exts.mapNotNull {
         try {
@@ -692,15 +703,4 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
   }
-}
-
-private const val registryEpName = "com.intellij.registryKey"
-
-private val extensionPointNameComparator = Comparator<String> { o1, o2 ->
-  if (o1 == registryEpName) {
-    if (o2 == registryEpName) 0
-    else -1
-  }
-  else if (o2 == registryEpName) 1
-  else o1.compareTo(o2)
 }
