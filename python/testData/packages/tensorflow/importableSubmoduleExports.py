@@ -30,7 +30,9 @@ print(tensorflow.graph_util.__name__)
 import tensorflow.image
 print(tensorflow.image.__name__)
 try:
-    import tensorflow.<warning descr="Module 'initializers' not found">initializers</warning>
+    # false negative to make referring to this name as tf.<name> possible
+    # when tensorflow Typeshed stubs are disabled
+    import tensorflow.initializers
     print(tensorflow.initializers.__name__)
     assert False
 except ModuleNotFoundError:
@@ -46,7 +48,9 @@ print(tensorflow.lite.__name__)
 import tensorflow.lookup
 print(tensorflow.lookup.__name__)
 try:
-    import tensorflow.<warning descr="Module 'losses' not found">losses</warning>
+    # false negative to make referring to this name as tf.<name> possible
+    # when tensorflow Typeshed stubs are disabled    
+    import tensorflow.losses
     print(tensorflow.losses.__name__)
     assert False
 except ModuleNotFoundError:
@@ -54,7 +58,9 @@ except ModuleNotFoundError:
 import tensorflow.math
 print(tensorflow.math.__name__)
 try:
-    import tensorflow.<warning descr="Module 'metrics' not found">metrics</warning>
+    # false negative to make referring to this name as tf.<name> possible
+    # when tensorflow Typeshed stubs are disabled    
+    import tensorflow.metrics
     print(tensorflow.metrics.__name__)
     assert False
 except ModuleNotFoundError:
@@ -66,7 +72,9 @@ print(tensorflow.nest.__name__)
 import tensorflow.nn
 print(tensorflow.nn.__name__)
 try:
-    import tensorflow.<warning descr="Module 'optimizers' not found">optimizers</warning>
+    # false negative to make referring to this name as tf.<name> possible
+    # when tensorflow Typeshed stubs are disabled    
+    import tensorflow.optimizers
     print(tensorflow.optimizers.__name__)
     assert False
 except ModuleNotFoundError:
