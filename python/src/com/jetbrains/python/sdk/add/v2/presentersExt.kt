@@ -15,8 +15,8 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.failure
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.v2.conda.isCondaSdk
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.conda.isConda
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
@@ -79,7 +79,7 @@ suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): Res
     .getOrElse { return Result.failure(it) }
     .envIdentity
   val existingSdk = ProjectJdkTable.getInstance().findJdk(identity.userReadableName)
-  if (existingSdk != null && isCondaSdk(existingSdk)) return Result.success(existingSdk)
+  if (existingSdk != null && existingSdk.isConda()) return Result.success(existingSdk)
 
   val sdk = withModalProgress(ModalTaskOwner.guess(),
                               message("sdk.create.custom.conda.create.progress"),

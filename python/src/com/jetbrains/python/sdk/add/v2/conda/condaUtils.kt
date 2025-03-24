@@ -11,7 +11,6 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.convertToPathOnTarget
@@ -21,7 +20,6 @@ import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
-import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.persist
 import kotlinx.coroutines.Dispatchers
 
@@ -47,9 +45,6 @@ internal suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: N
   sdk.persist()
   return Result.success(sdk)
 }
-
-
-internal fun isCondaSdk(sdk: Sdk): Boolean = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavorAndData?.data is PyCondaFlavorData
 
 internal fun TargetEnvironmentConfiguration?.toExecutor(): TargetCommandExecutor {
   return TargetEnvironmentRequestCommandExecutor(this?.createEnvironmentRequest(project = null) ?: LocalTargetEnvironmentRequest())
