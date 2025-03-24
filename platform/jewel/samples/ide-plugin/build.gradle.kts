@@ -1,3 +1,4 @@
+import io.gitlab.arturbosch.detekt.Detekt
 import java.net.URI
 
 plugins {
@@ -33,15 +34,14 @@ repositories {
 dependencies {
     intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 
+    implementation(projects.samples.showcase) { exclude(group = "org.jetbrains.kotlinx") }
     implementation(projects.ideLafBridge) { exclude(group = "org.jetbrains.kotlinx") }
-
     implementation(projects.markdown.ideLafBridgeStyling) { exclude(group = "org.jetbrains.kotlinx") }
 
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
         exclude(group = "org.jetbrains.kotlinx")
     }
-    implementation(project(":samples:showcase")) { exclude(group = "org.jetbrains.kotlinx") }
 
     // TODO remove once https://youtrack.jetbrains.com/issue/IJPL-166436 is fixed
     implementation("androidx.lifecycle:lifecycle-common-jvm:2.8.5") { exclude(group = "org.jetbrains.kotlinx") }
@@ -55,4 +55,8 @@ intellijPlatform {
     autoReload = false
 }
 
-tasks { runIde { jvmArgs = listOf("-Xmx3g") } }
+tasks {
+    runIde { jvmArgs = listOf("-Xmx3g") }
+
+    withType<Detekt>() { exclude("**/AndroidStudioReleases.kt") }
+}

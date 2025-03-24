@@ -1,14 +1,14 @@
 package org.jetbrains.jewel.buildlogic.demodata
 
 import com.squareup.kotlinpoet.ClassName
-import gradle.kotlin.dsl.accessors._6b77fac1fb1b8c5058558e9072dfa468.kotlin
-import gradle.kotlin.dsl.accessors._6b77fac1fb1b8c5058558e9072dfa468.sourceSets
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.Input
@@ -16,7 +16,6 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.setProperty
 import java.io.File
@@ -27,7 +26,18 @@ open class StudioVersionsGenerationExtension(project: Project) {
         project.objects
             .directoryProperty()
             .convention(
-                project.layout.dir(project.provider { project.sourceSets.named("main").get().kotlin.srcDirs.first() })
+                project.layout.dir(
+                    project.provider {
+                        if (project.plugins.hasPlugin("org.gradle.jvm-ecosystem")) {
+                            val sourceSets = project.extensions.getByName("sourceSets") as SourceSetContainer
+                            val mainSourceSet = sourceSets.named("main").get()
+                            val kotlinSourceSet = mainSourceSet.extensions.getByName("kotlin") as SourceDirectorySet
+                            kotlinSourceSet.srcDirs.first()
+                        } else {
+                            error("Gradle plugin 'org.gradle.jvm-ecosystem' is required")
+                        }
+                    }
+                )
             )
 
     val resourcesDirs: SetProperty<File> =
@@ -35,11 +45,11 @@ open class StudioVersionsGenerationExtension(project: Project) {
             .setProperty<File>()
             .convention(
                 project.provider {
-                    when {
-                        project.plugins.hasPlugin("org.gradle.jvm-ecosystem") ->
-                            project.extensions.getByType<SourceSetContainer>()["main"].resources.srcDirs
-
-                        else -> emptySet()
+                    if (project.plugins.hasPlugin("org.gradle.jvm-ecosystem")) {
+                        val javaExtension = project.extensions.getByType(JavaPluginExtension::class.java)
+                        javaExtension.sourceSets.named("main").get().resources.srcDirs
+                    } else {
+                        emptySet<File>()
                     }
                 }
             )

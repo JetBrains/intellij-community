@@ -1,4 +1,3 @@
-import org.jetbrains.compose.ComposeBuildConfig
 import org.jmailen.gradle.kotlinter.tasks.FormatTask
 import org.jmailen.gradle.kotlinter.tasks.LintTask
 
@@ -11,9 +10,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
 }
-
-private val composeVersion
-    get() = ComposeBuildConfig.composeVersion
 
 dependencies {
     api(projects.foundation)

@@ -290,10 +290,6 @@ public final class org/jetbrains/jewel/ui/component/ComboBoxState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$BannerKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$BannerKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function2;
-	public static field lambda-2 Lkotlin/jvm/functions/Function2;
-	public static field lambda-3 Lkotlin/jvm/functions/Function2;
-	public static field lambda-4 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
 	public final fun getLambda-1$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda-2$ui ()Lkotlin/jvm/functions/Function2;
@@ -303,10 +299,6 @@ public final class org/jetbrains/jewel/ui/component/ComposableSingletons$BannerK
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$InlineBannerKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$InlineBannerKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function2;
-	public static field lambda-2 Lkotlin/jvm/functions/Function2;
-	public static field lambda-3 Lkotlin/jvm/functions/Function2;
-	public static field lambda-4 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
 	public final fun getLambda-1$ui ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda-2$ui ()Lkotlin/jvm/functions/Function2;
@@ -316,7 +308,6 @@ public final class org/jetbrains/jewel/ui/component/ComposableSingletons$InlineB
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$MenuKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$MenuKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
 	public final fun getLambda-1$ui ()Lkotlin/jvm/functions/Function2;
 }
@@ -3041,6 +3032,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public final fun getAnnotate ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getArrowCollapse ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getArrowExpand ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getAttach ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getBack ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getBuildAutoReloadChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getBuildLoadChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3194,8 +3186,8 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public final fun getResume ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRollback ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRunAll ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getRunAnything ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRunToCursor ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getRun_anything ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getScratch ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSearch ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSearchNewLine ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3382,11 +3374,13 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger {
 	public final fun getThawAll ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadAtBreakpoint ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadCurrent ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getThreadDaemon ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadFrozen ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadGroup ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadGroupCurrent ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadRunning ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadSuspended ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getThreadVirtual ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreads ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getValue ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getVariablesTab ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3398,7 +3392,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger$ThreadStates {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger$ThreadStates;
-	public final fun getDaemon_sign ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIdle ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSocket ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
@@ -3450,6 +3443,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$FileTypes {
 	public final fun getAny_type ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getArchive ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAspectj ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getBinaryData ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getConfig ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getContexts ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getContextsModifier ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3558,6 +3552,8 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getInheritedMethod ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineAdd ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineAddHover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getInlineClose ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getInlineCloseHover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineCopy ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineCopyHover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineRefresh ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3569,6 +3565,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getInspectionsError ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsErrorEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsEye ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getInspectionsGrammar ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsMixed ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsOK ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsOKEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3579,13 +3576,14 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getInspectionsWarning ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsWarningEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getKeyboard ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getLanguage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayout ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayoutEditorOnly ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayoutEditorPreview ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayoutPreviewOnly ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLinkDropTriangle ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getLocalizationSettings ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLocate ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getMenu ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getModified ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getModifiedSelected ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMoreTabs ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3682,6 +3680,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Gutter {
 	public final fun getSuggestedRefactoringBulbDisabled ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnfold ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnique ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getWeb ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWriteAccess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
@@ -3741,7 +3740,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide {
 	public final fun getNavBarSeparator ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getOutgoingChangesOn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPipette ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getPipette_rollover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getPipetteRollover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPowerSaveMode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRating ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRating1 ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3800,13 +3799,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$RoundShadow {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$RunAnything {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$RunAnything;
-	public final fun getOpenRecentProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$Settings {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$Settings;
-	public final fun getNewUI ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$Shadow {
@@ -3974,11 +3966,10 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getConfigFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getConsole ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getConstant ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getConstructor ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getController ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getCopyOfFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getCustomRegion ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getCvs_global ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getCvs_roots ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDataColumn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDataSchema ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDataTables ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4007,9 +3998,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getIdeaModule ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIdeaProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInclude ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getInspectionResults ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInterface ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getJ2eeParameter ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJarDirectory ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJavaDocFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJavaModule ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4094,6 +4083,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getUndeploy ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnknown ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnknownJdk ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getUnloadedProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUpFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUpLevel ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getVariable ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4109,7 +4099,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes$Jsf {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes$Jsf;
-	public final fun getRenderer ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$ObjectBrowser {
@@ -4433,14 +4422,17 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getTask ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowAnalyzeDataflow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowAnt ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowAskAI ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowBookmarks ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowBuild ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowCommander ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowCommit ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowComponents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowCoverage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDataView ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDebugger ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowDevMode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDuplicates ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowFavorites ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowFind ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4450,6 +4442,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getToolWindowJsonPath ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowMessages ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowModuleDependencies ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowOverflow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowPalette ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowProblems ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowProblemsEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4458,6 +4451,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getToolWindowProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowRun ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowRunWithCoverage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowServer ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowServices ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowStructure ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowTodo ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4534,6 +4528,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Webreferences {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Webreferences;
 	public final fun getMessageQueue ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getOpenapi ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getServer ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWebSocket ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
@@ -4586,6 +4581,13 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Windows {
 	public final fun getRestore ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRestoreInactive ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRestoreSmall ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+}
+
+public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Windows$Mouse {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Windows$Mouse;
+	public final fun getCursorPointingHand ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getCursorText ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Xml {
