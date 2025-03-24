@@ -258,14 +258,16 @@ public class HighlightInfo implements Segment {
   @NotNull
   @ApiStatus.Internal
   private synchronized Segment getFixTextRange() {
-    if (fixMarker != null) {
-      if (fixMarker == FIX_MARKER_SAME_AS_HIGHLIGHTER) {
-        if (highlighter != null) {
-          return highlighter;
+    RangeMarker myFixMarker = fixMarker;
+    if (myFixMarker != null) {
+      if (myFixMarker == FIX_MARKER_SAME_AS_HIGHLIGHTER) {
+        RangeHighlighterEx myHighlighter = highlighter;
+        if (myHighlighter != null && myHighlighter.isValid()) {
+          return myHighlighter;
         }
       }
-      else {
-        return fixMarker;
+      else if (myFixMarker.isValid()) {
+        return myFixMarker;
       }
     }
     return TextRangeScalarUtil.create(fixRange);
