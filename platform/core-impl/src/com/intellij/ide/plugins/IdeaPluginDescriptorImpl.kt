@@ -6,7 +6,6 @@ import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
@@ -414,11 +413,9 @@ class IdeaPluginDescriptorImpl private constructor(
     if (result != null) {
       return result
     }
-    if (isCommunity()) {
-      CE_PLUGIN_CARDS[id.idString]?.let {
-        loadedDescriptionText = it.description
-        return it.description
-      }
+    PluginCardOverrides.getDescriptionOverride(id)?.let {
+      loadedDescriptionText = it
+      return it
     }
     result = fromPluginBundle("plugin.$id.description", rawDescription)
     loadedDescriptionText = result
@@ -445,12 +442,9 @@ class IdeaPluginDescriptorImpl private constructor(
   override fun getChangeNotes(): String? = changeNotes
 
   override fun getName(): String {
-    if (isCommunity()) {
-      CE_PLUGIN_CARDS[id.idString]?.let {
-        return it.title
-      }
+    PluginCardOverrides.getNameOverride(id)?.let {
+      return it
     }
-
     return name
   }
 
@@ -710,34 +704,3 @@ private val extensionPointNameComparator = Comparator<String> { o1, o2 ->
   else if (o2 == registryEpName) 1
   else o1.compareTo(o2)
 }
-
-private fun isCommunity(): Boolean {
-  try {
-    val ideCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
-    return ideCode == "IC" || ideCode == "PC"
-  } catch (e: RuntimeException) {
-    // do not fail unit tests when there is no app >_<
-    val msg = e.message ?: throw e
-    if (msg.contains("Resource not found") && msg.contains("idea/ApplicationInfo.xml")) {
-      if (!unitTestIsCommunityDespammer) {
-        LOG.warn("failed to read application info, are we in unit tests?", e)
-        unitTestIsCommunityDespammer = true
-      }
-      return false
-    } else {
-      throw e
-    }
-  }
-}
-
-private var unitTestIsCommunityDespammer = false
-
-private data class PluginCardInfo(val title: String, val description: @Nls String)
-
-@Suppress("HardCodedStringLiteral")
-private val CE_PLUGIN_CARDS: Map<String, PluginCardInfo> = mapOf(
-  "org.jetbrains.completion.full.line" to PluginCardInfo(
-    "AI Promo",
-    "Provides an easy way to install AI assistant to your IDE"
-  )
-)
