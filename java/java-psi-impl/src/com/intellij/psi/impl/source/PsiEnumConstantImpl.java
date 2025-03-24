@@ -257,7 +257,9 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     @Override
     public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      PsiClassType type = facade.getElementFactory().createType(getContainingClass());
+      PsiClass containingClass = getContainingClass();
+      if (containingClass == null) return JavaResolveResult.EMPTY_ARRAY;
+      PsiClassType type = facade.getElementFactory().createType(containingClass);
       return facade.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());
     }
 
