@@ -75,14 +75,6 @@ class MPSProperties : JetBrainsProductProperties() {
 
         productLayout.addPlatformSpec { layout, _ ->
 
-            for (moduleName in listOf(
-                "intellij.java.frontback.impl",
-                "intellij.java.frontback.psi",
-                "intellij.java.frontback.psi.impl",
-            )) {
-                layout.withModule(moduleName, "java-frontback.jar")
-            }
-
             for (moduleName in listOf("intellij.platform.testFramework", "intellij.platform.testFramework.common", "intellij.java.testFramework", "intellij.platform.testFramework.core")) {
                 if (!productLayout.productApiModules.contains(moduleName)) {
                     layout.withModule(moduleName, "testFramework.jar")
