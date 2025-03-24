@@ -172,6 +172,15 @@ class IdeaPluginDescriptorImpl private constructor(
       LOG.warn("Sub descriptor version redefinition for plugin $id. Original value: ${subBuilder.version}, inherited value: ${version ?: context.defaultVersion}")
     }
     subBuilder.version = version ?: context.defaultVersion
+    if (module == null) { // resource bundle is inherited for v1 sub-descriptors only
+      if (subBuilder.resourceBundleBaseName == null) {
+        subBuilder.resourceBundleBaseName = resourceBundleBaseName
+      } else {
+        if (subBuilder.resourceBundleBaseName != resourceBundleBaseName && resourceBundleBaseName != null) {
+          LOG.warn("Resource bundle redefinition for plugin $id. Parent value: $resourceBundleBaseName, new value: ${subBuilder.resourceBundleBaseName}")
+        }
+      }
+    }
     val raw = subBuilder.build()
     val result = IdeaPluginDescriptorImpl(
       raw = raw,
@@ -184,12 +193,6 @@ class IdeaPluginDescriptorImpl private constructor(
       isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
       descriptorPath = descriptorPath)
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
-    if (module == null) {
-      result.resourceBundleBaseName = resourceBundleBaseName
-    }
-    if (raw.resourceBundleBaseName != null) {
-      result.readResourceBundleBaseName(raw)
-    }
     return result
   }
 
