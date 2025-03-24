@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -677,10 +676,9 @@ private suspend fun <T> runWithContext(
   context: CoroutineContext,
   parentScope: CoroutineScope,
   block: suspend CoroutineScope.() -> T,
-): T = coroutineScope {
-  // Ensure the job is canceled when the corresponding CoroutineScope is closed
-  // For example, cancellation of the work performed in Dispatchers.Default within debugger context
+): T {
+  // Ensure the job is canceled when the corresponding CoroutineScope is closed.
+  // For example, cancellation of the work performed in Dispatchers.Default within the debugger context
   // is ensured by this scope attachment.
-  attachAsChildTo(parentScope)
-  async(context, block = block).await()
+  return parentScope.async(context, block = block).await()
 }
