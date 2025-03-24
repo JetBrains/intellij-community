@@ -74,7 +74,7 @@ class IdeaPluginDescriptorImpl private constructor(
   override val moduleName: String? = moduleName
   override val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
 
-  private var version: String? = raw.version
+  private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
   private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater( raw.untilBuild, raw.name ?: raw.id)
 
