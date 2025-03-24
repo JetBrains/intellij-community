@@ -1,4 +1,4 @@
-# Generated with inspect_tf_submodules.py for tensorflow 2.12.0.
+# Generated with inspect_tf_submodules.py for tensorflow 2.19.0.
 import tensorflow.audio
 print(tensorflow.audio.__name__)
 import tensorflow.autodiff
@@ -21,8 +21,6 @@ import tensorflow.dtypes
 print(tensorflow.dtypes.__name__)
 import tensorflow.errors
 print(tensorflow.errors.__name__)
-import tensorflow.estimator
-print(tensorflow.estimator.__name__)
 import tensorflow.experimental
 print(tensorflow.experimental.__name__)
 import tensorflow.feature_column
@@ -87,6 +85,8 @@ import tensorflow.raw_ops
 print(tensorflow.raw_ops.__name__)
 import tensorflow.saved_model
 print(tensorflow.saved_model.__name__)
+import tensorflow.security
+print(tensorflow.security.__name__)
 import tensorflow.sets
 print(tensorflow.sets.__name__)
 import tensorflow.signal

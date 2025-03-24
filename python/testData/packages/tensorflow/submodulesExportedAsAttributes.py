@@ -1,6 +1,5 @@
-# Generated with inspect_tf_submodules.py for tensorflow 2.12.0.
+# Generated with inspect_tf_submodules.py for tensorflow 2.19.0.
 import tensorflow as tf
-
 print(tf.audio.__name__)
 print(tf.autodiff.__name__)
 print(tf.autograph.__name__)
@@ -12,7 +11,6 @@ print(tf.debugging.__name__)
 print(tf.distribute.__name__)
 print(tf.dtypes.__name__)
 print(tf.errors.__name__)
-print(tf.estimator.__name__)
 print(tf.experimental.__name__)
 print(tf.feature_column.__name__)
 print(tf.graph_util.__name__)
@@ -37,6 +35,7 @@ print(tf.ragged.__name__)
 print(tf.random.__name__)
 print(tf.raw_ops.__name__)
 print(tf.saved_model.__name__)
+print(tf.security.__name__)
 print(tf.sets.__name__)
 print(tf.signal.__name__)
 print(tf.sparse.__name__)

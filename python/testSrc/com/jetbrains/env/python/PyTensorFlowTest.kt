@@ -35,7 +35,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
 
       myFixture.configureByText("a.py", "import tensorflow.<caret>")
       assertNotNull(myFixture.completeBasic())
-      UsefulTestCase.assertContainsElements(myFixture.lookupElementStrings!!, "estimator", "keras", "summary", "config")
+      UsefulTestCase.assertContainsElements(myFixture.lookupElementStrings!!, "keras", "summary", "config")
       UsefulTestCase.assertDoesntContain(myFixture.lookupElementStrings!!, "optimizers", "metrics")
 
       myFixture.configureByText("a.py",
@@ -44,8 +44,7 @@ class PyTensorFlowTest : PyEnvTestCase() {
                                 tf.<caret>
                                 """.trimIndent())
       myFixture.completeBasic()
-      UsefulTestCase.assertContainsElements(myFixture.lookupElementStrings!!,
-                                            "estimator", "keras", "summary", "config", "optimizers", "metrics")
+      UsefulTestCase.assertContainsElements(myFixture.lookupElementStrings!!, "keras", "summary", "config", "optimizers", "metrics")
     }
   }
 }
