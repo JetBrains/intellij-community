@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_DOWNLOADABLE_FIX
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_LOCAL_FIX
@@ -13,6 +14,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
     assertSdkInfo(sdk, USE_PROJECT_JDK)
   }
 
+  @IJIgnore(issue = "IDEA-369675")
   fun `test nonblocking jdk resolution (java home)`() {
     val sdk = TestSdkGenerator.createNextSdk()
     environment.withVariables(JAVA_HOME to null) { assertSdkInfo(SdkInfo.Undefined, USE_JAVA_HOME) }
