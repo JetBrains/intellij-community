@@ -37,12 +37,12 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   internal fun shouldUseExperimentalModel(tab: SearchEverywhereTabWithMlRanking): Boolean {
     return when (experiment.getExperimentForTab(tab)) {
-      SearchEverywhereMlExperiment.ExperimentType.ENABLE_SEMANTIC_SEARCH -> {
+      SearchEverywhereMlExperiment.ExperimentType.SemanticSearch -> {
         tab == SearchEverywhereTabWithMlRanking.ACTION ||
         tab == SearchEverywhereTabWithMlRanking.FILES ||
         tab == SearchEverywhereTabWithMlRanking.CLASSES && PlatformUtils.isPyCharm() && PlatformUtils.isIntelliJ()
       }
-      SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL -> true
+      SearchEverywhereMlExperiment.ExperimentType.ExperimentalModel -> true
       else -> false
     }
   }
@@ -120,13 +120,23 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
     if (tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID && searchQuery.isEmpty()) return false
 
-    if (settings.isSortingByMlEnabledByDefault(tab)) {
+    val experiment = experiment.getExperimentForTab(tab)
+    if (experiment !is SearchEverywhereMlExperiment.ExperimentType.ActiveExperiment) {
+      // There are no active experiments in the tab, so we just look at the setting
       return settings.isSortingByMlEnabled(tab)
-             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML
+    }
+
+    if (settings.isSortingByMlEnabledByDefault(tab)) {
+      // When ML is enabled by default, we want to sort results based on ML
+      // only if the sorting is still enabled.
+      // This is to prevent situations where despite users turning of ML ranking,
+      // it is still performed because of the experiment
+      return settings.isSortingByMlEnabled(tab) && experiment.shouldSortByMl
     }
     else {
-      return settings.isSortingByMlEnabled(tab)
-             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+      // When ML is not enabled by default, we will enable ML ranking
+      // if either the setting or the experiment enables it
+      return settings.isSortingByMlEnabled(tab) || experiment.shouldSortByMl
     }
   }
 

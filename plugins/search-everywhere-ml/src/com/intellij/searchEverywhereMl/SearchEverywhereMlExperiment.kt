@@ -35,28 +35,28 @@ class SearchEverywhereMlExperiment {
 
   private val tabExperiments = hashMapOf(
     SearchEverywhereTabWithMlRanking.ACTION to Experiment(
-      1 to ExperimentType.EM_MANUAL_FIX,
-      2 to ExperimentType.NO_ML,
-      3 to ExperimentType.ENABLE_TYPOS,
+      1 to ExperimentType.ExactMatchManualFix,
+      2 to ExperimentType.NoMl,
+      3 to ExperimentType.Typos,
     ),
 
     SearchEverywhereTabWithMlRanking.FILES to Experiment(
-      1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
-      3 to ExperimentType.NO_ML
+      1 to ExperimentType.SemanticSearch,
+      3 to ExperimentType.NoMl
     ),
 
     SearchEverywhereTabWithMlRanking.CLASSES to Experiment(
-      1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
-      3 to ExperimentType.NO_ML
+      1 to ExperimentType.SemanticSearch,
+      3 to ExperimentType.NoMl
     ),
 
     SearchEverywhereTabWithMlRanking.SYMBOLS to Experiment(
-      1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
+      1 to ExperimentType.SemanticSearch,
     ),
 
     SearchEverywhereTabWithMlRanking.ALL to Experiment(
-      1 to ExperimentType.ESSENTIAL_CONTRIBUTOR_PREDICTION,
-    2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
+      1 to ExperimentType.EssentialContributorPrediction,
+      2 to ExperimentType.ExperimentalModel,
     )
   )
 
@@ -85,12 +85,12 @@ class SearchEverywhereMlExperiment {
 
   fun getExperimentForTab(tab: SearchEverywhereTabWithMlRanking): ExperimentType {
     if (!isAllowed || isDisableExperiments(tab)) {
-      return ExperimentType.NO_EXPERIMENT
+      return ExperimentType.NoExperiment
     }
 
     val experimentByGroup = tabExperiments[tab]?.getExperimentByGroup(experimentGroup)
-    if (experimentByGroup == null || experimentByGroup == ExperimentType.NO_EXPERIMENT) {
-      return ExperimentType.NO_EXPERIMENT
+    if (experimentByGroup == null || experimentByGroup == ExperimentType.NoExperiment) {
+      return ExperimentType.NoExperiment
     }
 
     return experimentByGroup
@@ -99,15 +99,65 @@ class SearchEverywhereMlExperiment {
   @TestOnly
   internal fun getTabExperiments(): Map<SearchEverywhereTabWithMlRanking, Experiment> = tabExperiments
 
-  enum class ExperimentType {
-    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, ENABLE_TYPOS, ENABLE_SEMANTIC_SEARCH, ESSENTIAL_CONTRIBUTOR_PREDICTION,
-    EM_MANUAL_FIX
+  sealed interface ExperimentType {
+    /**
+     * Indicates that for the current experiment group,
+     * there are no active experiments and the default
+     * behavior should be followed
+     */
+    object NoExperiment : ExperimentType
+
+    sealed class ActiveExperiment(val shouldSortByMl: Boolean) : ExperimentType
+
+    /**
+     * An experiment where no machine learning
+     * should be applied to a tab and old, heuristic-based
+     * ranking should be used.
+     *
+     * This experiment type is used when the machine learning
+     * approach became the default for a specific tab,
+     * and to gather data how it compares to the old baseline,
+     * an experiment with disabled ML can be used.
+     */
+    object NoMl : ActiveExperiment(false)
+
+    /**
+     * An experiment group applicable only for the All tab,
+     * where essential contributor prediction will take place.
+     */
+    object EssentialContributorPrediction : ActiveExperiment(false)
+
+    /**
+     * An experiment group where a new (experimental) model
+     * should be used instead of the default one.
+     *
+     * This experiment type is used when the machine learning
+     * approach became the default for a specific tab,
+     * and a new model should be tested during the A/B testing cycle
+     */
+    object ExperimentalModel : ActiveExperiment(true)
+
+    /**
+     * An experiment group in the Actions tab, that enables typo-tolerant search
+     */
+    object Typos : ActiveExperiment(true)
+
+    /**
+     * An experiment group that enables semantic search
+     */
+    object SemanticSearch: ActiveExperiment(true)
+
+    /**
+     * An experiment group where the exact match issue is manually fixed
+     * (see, for example, IJPL-171760 or IJPL-55751)
+     */
+    object ExactMatchManualFix : ActiveExperiment(true)
   }
 
   @VisibleForTesting
   internal class Experiment(vararg experiments: Pair<Int, ExperimentType>) {
     val tabExperiments: Map<Int, ExperimentType> = hashMapOf(*experiments)
 
-    fun getExperimentByGroup(group: Int) = tabExperiments.getOrDefault(group, ExperimentType.NO_EXPERIMENT)
+    fun getExperimentByGroup(group: Int) = tabExperiments.getOrDefault(group, ExperimentType.NoExperiment)
   }
 }

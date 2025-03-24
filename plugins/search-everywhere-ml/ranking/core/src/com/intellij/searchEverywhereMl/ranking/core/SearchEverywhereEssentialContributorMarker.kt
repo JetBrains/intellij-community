@@ -43,7 +43,7 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
 
     val experiment = SearchEverywhereMlExperiment()
     val experimentForAllTab = experiment.getExperimentForTab(SearchEverywhereTabWithMlRanking.ALL)
-    return experimentForAllTab == SearchEverywhereMlExperiment.ExperimentType.ESSENTIAL_CONTRIBUTOR_PREDICTION
+    return experimentForAllTab == SearchEverywhereMlExperiment.ExperimentType.EssentialContributorPrediction
   }
 
   private fun isSearchStateActive(): Boolean {

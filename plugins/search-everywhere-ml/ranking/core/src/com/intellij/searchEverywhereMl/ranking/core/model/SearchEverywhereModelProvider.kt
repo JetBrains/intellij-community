@@ -35,7 +35,7 @@ class SearchEverywhereModelProvider {
    */
   private fun isExactMatchExperiment(tab: SearchEverywhereTabWithMlRanking): Boolean {
     val experimentForTab = SearchEverywhereMlExperiment().getExperimentForTab(tab)
-    return experimentForTab == SearchEverywhereMlExperiment.ExperimentType.EM_MANUAL_FIX
+    return experimentForTab == SearchEverywhereMlExperiment.ExperimentType.ExactMatchManualFix
   }
 
   private fun getRankingModelForExactMatchIssue(tabId: String): SearchEverywhereRankingModel {
