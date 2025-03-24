@@ -201,6 +201,10 @@ class IdeaPluginDescriptorImpl private constructor(
       pluginAliases = pluginAliases + productModeAliasesForCorePlugin()
     }
 
+    initialize(context, pathResolver, dataLoader)
+  }
+
+  private fun initialize(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
     if (context.isPluginDisabled(id)) {
       markAsIncomplete(disabledDependency = null, shortMessage = null)
     }
