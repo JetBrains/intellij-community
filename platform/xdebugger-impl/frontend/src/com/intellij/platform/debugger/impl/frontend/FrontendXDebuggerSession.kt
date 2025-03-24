@@ -206,7 +206,7 @@ internal class FrontendXDebuggerSession private constructor(
 
       val proxy = this@FrontendXDebuggerSession
       withContext(Dispatchers.EDT) {
-        XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(), tabInfo.contentToReuse,
+        XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(cs), tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
           _sessionTab = this
           proxy.onTabInitialized(this)

@@ -6,6 +6,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -40,6 +41,10 @@ class BackendExecutionEnvironmentProxy(private val environment: ExecutionEnviron
 
   override fun isStarting(): Boolean {
     return ExecutionManager.getInstance(environment.project).isStarting(environment)
+  }
+
+  override fun isStartingFlow(): Flow<Boolean> {
+    return ExecutionManager.getInstance(environment.project).isStartingFlow(environment)
   }
 
   override fun performRestart() {

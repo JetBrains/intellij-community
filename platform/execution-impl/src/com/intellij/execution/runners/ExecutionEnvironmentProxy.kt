@@ -3,6 +3,7 @@ package com.intellij.execution.runners
 
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -25,6 +26,8 @@ interface ExecutionEnvironmentProxy {
   fun getContentToReuse(): RunContentDescriptor?
 
   fun isStarting(): Boolean
+
+  fun isStartingFlow(): Flow<Boolean>
 
   fun performRestart()
 

@@ -7,6 +7,9 @@ import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.util.NlsSafe
+import fleet.rpc.core.RpcFlow
+import fleet.rpc.core.toRpc
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -15,12 +18,16 @@ data class ExecutionEnvironmentProxyDto(
   val runProfileName: @NlsSafe String,
   val icon: IconId,
   val rerunIcon: IconId,
-  val isStarting: Boolean, // TODO: should be reactive
+  val isStartingInitial: Boolean,
+  val isStarting: RpcFlow<Boolean>,
 )
 
 @ApiStatus.Internal
 fun ExecutionEnvironmentProxy.toDto(): ExecutionEnvironmentProxyDto {
-  return ExecutionEnvironmentProxyDto(getRunProfileName(), getIcon().rpcId(), getRerunIcon().rpcId(), isStarting())
+  // TODO: think about the coroutineContext which is passed to `toRpc`
+  //   since ExecutionEnvironment.toDto function should be non suspend,
+  //   we cannot use suspend alternative of `toRpc` which takes current coroutine context
+  return ExecutionEnvironmentProxyDto(getRunProfileName(), getIcon().rpcId(), getRerunIcon().rpcId(), isStarting(), isStartingFlow().toRpc(Dispatchers.IO))
 }
 
 @ApiStatus.Internal

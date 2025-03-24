@@ -8,19 +8,25 @@ import com.intellij.execution.runners.RunnerAndConfigurationSettingsProxy
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
-fun ExecutionEnvironmentProxyDto.executionEnvironment(): ExecutionEnvironmentProxy {
-  return FrontendExecutionEnvironmentProxy(this)
+fun ExecutionEnvironmentProxyDto.executionEnvironment(cs: CoroutineScope): ExecutionEnvironmentProxy {
+  return FrontendExecutionEnvironmentProxy(cs, this)
 }
 
 private class FrontendExecutionEnvironmentProxy(
+  cs: CoroutineScope,
   private val dto: ExecutionEnvironmentProxyDto,
 ) : ExecutionEnvironmentProxy {
   private val icon = dto.icon.icon()
   private val rerunIcon = dto.rerunIcon.icon()
+  private val isStartingStateFlow = dto.isStarting.toFlow().stateIn(cs, Eagerly, dto.isStartingInitial)
 
   override fun isShowInDashboard(): Boolean {
     // TODO: implement
@@ -50,8 +56,11 @@ private class FrontendExecutionEnvironmentProxy(
   }
 
   override fun isStarting(): Boolean {
-    // TODO: should be reactive
-    return dto.isStarting
+    return isStartingStateFlow.value
+  }
+
+  override fun isStartingFlow(): Flow<Boolean> {
+    return isStartingStateFlow
   }
 
   override fun performRestart() {
