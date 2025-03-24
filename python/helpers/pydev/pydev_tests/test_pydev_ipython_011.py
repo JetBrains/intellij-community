@@ -5,6 +5,8 @@ import unittest
 
 import pytest
 
+pytest.importorskip('IPython')
+
 from _pydev_bundle.pydev_stdin import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_comm.pydev_rpc import make_rpc_client
@@ -25,14 +27,6 @@ def eq_(a, b):
         raise AssertionError('%s != %s' % (a, b))
 
 
-try:
-    from IPython import core
-    has_ipython = True
-except:
-    has_ipython = False
-
-
-@pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestBase(unittest.TestCase):
 
     def setUp(self):
@@ -65,7 +59,6 @@ class TestBase(unittest.TestCase):
         io.stdout = sys.stdout = self.original_stdout
 
 
-@pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestPyDevFrontEnd(TestBase):
 
     def testAddExec_1(self):
@@ -128,7 +121,7 @@ class TestPyDevFrontEnd(TestBase):
         eq_(res[0][3], '12')  # '12' == IToken.TYPE_IPYTHON_MAGIC
         assert len(res[0][1]) > 100, 'docstring for %cd should be a reasonably long string'
 
-@pytest.mark.skipif(not has_ipython, reason='IPython not available')
+
 class TestRunningCode(TestBase):
 
     def test_print(self):
