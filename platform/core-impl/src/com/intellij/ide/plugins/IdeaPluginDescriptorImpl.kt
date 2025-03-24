@@ -148,7 +148,55 @@ class IdeaPluginDescriptorImpl private constructor(
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
 
-  override fun getDescriptorPath(): String? = descriptorPath
+  override fun getPluginId(): PluginId = id
+
+  override fun getName(): String {
+    PluginCardOverrides.getNameOverride(id)?.let {
+      return it
+    }
+    return name
+  }
+
+  override fun getVersion(): String? = version
+  override fun getSinceBuild(): String? = sinceBuild
+  override fun getUntilBuild(): String? = untilBuild
+
+  override fun getProductCode(): String? = productCode
+  override fun getReleaseDate(): Date? = releaseDate
+  override fun getReleaseVersion(): Int = releaseVersion
+  override fun isLicenseOptional(): Boolean = isLicenseOptional
+
+  override fun getChangeNotes(): String? = changeNotes
+  override fun getCategory(): String? = category
+
+  override fun getDisplayCategory(): @Nls String? = getCategory()?.let {
+    val key = "plugin.category.${category?.replace(' ', '.')}"
+    CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, getCategory())
+  }
+
+  override fun getDescription(): @Nls String? {
+    var result = loadedDescriptionText
+    if (result != null) {
+      return result
+    }
+    PluginCardOverrides.getDescriptionOverride(id)?.let {
+      loadedDescriptionText = it
+      return it
+    }
+    result = fromPluginBundle("plugin.$id.description", rawDescription)
+    loadedDescriptionText = result
+    return result
+  }
+
+  override fun getVendor(): String? = vendor
+  override fun getVendorEmail(): String? = vendorEmail
+  override fun getVendorUrl(): String? = vendorUrl
+  override fun getUrl(): String? = url
+
+  override fun isBundled(): Boolean = isBundled
+  override fun allowBundledUpdate(): Boolean = isBundledUpdateAllowed
+  override fun isImplementationDetail(): Boolean = isImplementationDetail
+  override fun isRequireRestart(): Boolean = isRestartRequired
 
   /**
    * aka `<depends>` elements from the plugin.xml
@@ -157,7 +205,35 @@ class IdeaPluginDescriptorImpl private constructor(
    */
   override fun getDependencies(): List<PluginDependency> = dependenciesV1
 
+  override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
+
   override fun getPluginPath(): Path = pluginPath
+  override fun getDescriptorPath(): String? = descriptorPath
+
+  override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
+
+  @ApiStatus.Internal
+  fun setPluginClassLoader(classLoader: ClassLoader?) {
+    _pluginClassLoader = classLoader
+  }
+
+  override fun isEnabled(): Boolean = isEnabled
+
+  override fun setEnabled(enabled: Boolean) {
+    isEnabled = enabled
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return this === other || other is IdeaPluginDescriptorImpl && id == other.id && descriptorPath == other.descriptorPath
+  }
+
+  override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
+
+  override fun toString(): String =
+    "PluginDescriptor(name=$name, id=$id, " +
+    (if (moduleName == null) "" else "moduleName=$moduleName, ") +
+    "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
+    "path=${PluginUtils.pluginPathToUserString(pluginPath)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
 
   internal fun createSub(
     subBuilder: PluginDescriptorBuilder,
@@ -408,20 +484,6 @@ class IdeaPluginDescriptorImpl private constructor(
     return registeredCount
   }
 
-  override fun getDescription(): @Nls String? {
-    var result = loadedDescriptionText
-    if (result != null) {
-      return result
-    }
-    PluginCardOverrides.getDescriptionOverride(id)?.let {
-      loadedDescriptionText = it
-      return it
-    }
-    result = fromPluginBundle("plugin.$id.description", rawDescription)
-    loadedDescriptionText = result
-    return result
-  }
-
   private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
     if (!isEnabled) { // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
       return defaultValue
@@ -438,81 +500,6 @@ class IdeaPluginDescriptorImpl private constructor(
       null
     }) ?: defaultValue
   }
-
-  override fun getChangeNotes(): String? = changeNotes
-
-  override fun getName(): String {
-    PluginCardOverrides.getNameOverride(id)?.let {
-      return it
-    }
-    return name
-  }
-
-  override fun getProductCode(): String? = productCode
-
-  override fun getReleaseDate(): Date? = releaseDate
-
-  override fun getReleaseVersion(): Int = releaseVersion
-
-  override fun isLicenseOptional(): Boolean = isLicenseOptional
-
-  override fun getVendor(): String? = vendor
-
-  override fun getVersion(): String? = version
-
-  override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
-
-  override fun getCategory(): String? = category
-
-  override fun getDisplayCategory(): @Nls String? = getCategory()?.let {
-    val key = "plugin.category.${category?.replace(' ', '.')}"
-    CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, getCategory())
-  }
-
-  override fun getVendorEmail(): String? = vendorEmail
-
-  override fun getVendorUrl(): String? = vendorUrl
-
-  override fun getUrl(): String? = url
-
-  override fun getPluginId(): PluginId = id
-
-  override fun getPluginClassLoader(): ClassLoader? = _pluginClassLoader
-
-  @ApiStatus.Internal
-  fun setPluginClassLoader(classLoader: ClassLoader?) {
-    _pluginClassLoader = classLoader
-  }
-
-  override fun isEnabled(): Boolean = isEnabled
-
-  override fun setEnabled(enabled: Boolean) {
-    isEnabled = enabled
-  }
-
-  override fun getSinceBuild(): String? = sinceBuild
-
-  override fun getUntilBuild(): String? = untilBuild
-
-  override fun isBundled(): Boolean = isBundled
-
-  override fun allowBundledUpdate(): Boolean = isBundledUpdateAllowed
-
-  override fun isImplementationDetail(): Boolean = isImplementationDetail
-
-  override fun isRequireRestart(): Boolean = isRestartRequired
-
-  override fun equals(other: Any?): Boolean {
-    return this === other || other is IdeaPluginDescriptorImpl && id == other.id && descriptorPath == other.descriptorPath
-  }
-
-  override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
-
-  override fun toString(): String =
-    "PluginDescriptor(name=$name, id=$id, " +
-    (if (moduleName == null) "" else "moduleName=$moduleName, ") +
-    "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-    "path=${PluginUtils.pluginPathToUserString(pluginPath)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
 
   private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {
     var i = 0
