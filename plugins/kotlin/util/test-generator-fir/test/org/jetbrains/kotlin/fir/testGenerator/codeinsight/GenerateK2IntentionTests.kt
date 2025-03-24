@@ -145,6 +145,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/branched/doubleBangToIfThen", pattern = pattern)
             model("${idea}intentions/introduceVariable", pattern = pattern)
             model("${idea}intentions/convertToMultiDollarString", pattern = pattern)
+            model("${idea}intentions/convertFromMultiDollarToRegularString", pattern = pattern)
             model("${idea}intentions/branched/unfolding/returnToWhen", pattern = pattern)
             model("${idea}/intentions/concatenationToBuildCollection", pattern = pattern)
 

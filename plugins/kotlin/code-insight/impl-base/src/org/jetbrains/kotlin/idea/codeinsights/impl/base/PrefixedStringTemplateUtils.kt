@@ -299,31 +299,58 @@ fun convertToMultiDollarString(element: KtStringTemplateExpression, contextInfo:
 }
 
 /**
+ * Convert a multi-dollar string to a plain string with the same quotes
+ */
+fun convertToStringWithoutPrefix(element: KtStringTemplateExpression): KtStringTemplateExpression {
+    require(element.interpolationPrefix != null) {
+        "A string template with an interpolation prefix is expected, got: ${element.text}"
+    }
+
+    replaceExpressionEntries(element, 1)
+    val psiFactory = KtPsiFactory(element.project)
+    val replaced = psiFactory.createStringTemplate(
+        content = element.toEscapedText(element.isSingleQuoted()),
+        prefixLength = 0,
+        isRaw = !element.isSingleQuoted(),
+    )
+    return element.replace(replaced) as KtStringTemplateExpression
+}
+
+private fun KtStringTemplateExpression.toEscapedText(isSingleQuoted: Boolean): String {
+    val dollarReplacement = if (isSingleQuoted) """\$""" else "\${'$'}"
+    return entries.joinToString(separator = "") { entry ->
+        if (entry is KtLiteralStringTemplateEntry) {
+            entry.text.replace("$", dollarReplacement)
+        } else {
+            entry.text
+        }
+    }
+}
+
+/**
  * Replace dollar escape sequences in a string template if it's safe, i.e., if replacement won't turn a literal part into interpolation.
  * Both `\$` and `${'$'}` sequences are replaced if possible.
  */
 fun simplifyDollarEntries(element: KtStringTemplateExpression): KtStringTemplateExpression {
     val ktPsiFactory = KtPsiFactory(element.project)
-    val prefixLength = element.interpolationPrefix?.textLength?.takeIf { it > 1 } ?: return element
+    val entryPrefixLength = element.entryPrefixLength
 
     for (entry in element.entries) {
         when (entry) {
             is KtEscapeStringTemplateEntry -> {
-                if (entry.isEscapedDollar() && entry.isSafeToReplaceWithDollar(prefixLength))
+                if (entry.isEscapedDollar() && entry.isSafeToReplaceWithDollar(entryPrefixLength))
                     entry.replace(ktPsiFactory.createLiteralStringTemplateEntry("$"))
             }
 
             is KtBlockStringTemplateEntry -> {
-                if (entry.expression?.text in dollarLiteralExpressions && entry.isSafeToReplaceWithDollar(prefixLength))
+                if (entry.expression?.text in dollarLiteralExpressions && entry.isSafeToReplaceWithDollar(entryPrefixLength))
                     entry.replace(ktPsiFactory.createLiteralStringTemplateEntry("$"))
             }
         }
     }
 
-    val replacement = ktPsiFactory.createMultiDollarStringTemplate(
-        content = element.plainContent,
-        prefixLength = prefixLength,
-        forceMultiQuoted = !element.isSingleQuoted(),
+    val replacement = ktPsiFactory.createStringTemplate(
+        element.plainContent, element.templatePrefixLength, isRaw = !element.isSingleQuoted()
     )
 
     return element.replace(replacement) as KtStringTemplateExpression
@@ -445,8 +472,6 @@ private fun KtEscapeStringTemplateEntry.isEscapedDollar(): Boolean = unescapedVa
  * By the time we check the entry, previous siblings will have been replaced with dollar literals if that is possible.
  */
 private fun KtStringTemplateEntry.isSafeToReplaceWithDollar(prefixLength: Int): Boolean {
-    val prevSibling = prevSibling
-    if (prevSibling !is KtLiteralStringTemplateEntry) return true
     val nextSiblingStringLiteral = nextSibling as? KtLiteralStringTemplateEntry ?: return true
     if (!nextSiblingStringLiteral.canBeConsideredIdentifierOrBlock()) return true
     val trailingDollarsLength = countTrailingDollarsInPreviousEntries()
@@ -474,3 +499,20 @@ val KtStringTemplateExpression.templatePrefixLength: Int
 
 val KtStringTemplateExpression.entryPrefixLength: Int
     get() = interpolationPrefix?.textLength ?: 1
+
+/**
+ * A utility dispatcher for creating string templates
+ *
+ * @param content string template content
+ * @param prefixLength interpolation prefix length, `0` for no prefix
+ * @param isRaw `true` for raw triple-quoted string, `false` for normal, single-quoted string
+ */
+fun KtPsiFactory.createStringTemplate(
+    content: String,
+    prefixLength: Int,
+    isRaw: Boolean,
+): KtStringTemplateExpression = when {
+    prefixLength > 0 -> createMultiDollarStringTemplate(content, prefixLength, forceMultiQuoted = isRaw)
+    isRaw -> createRawStringTemplate(content)
+    else -> createStringTemplate(content)
+}

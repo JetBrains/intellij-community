@@ -247,10 +247,7 @@ fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {
     val text = convertContent(this)
     val prefixLength = templatePrefixLength
     val factory = KtPsiFactory(project)
-    val rawReplacement = when {
-        prefixLength > 1 -> factory.createMultiDollarStringTemplate(content = text, prefixLength = prefixLength, forceMultiQuoted = true)
-        else -> factory.createRawStringTemplate(text)
-    }
+    val rawReplacement = factory.createStringTemplate(text, prefixLength, isRaw = true)
     val replacement = if (prefixLength > 1) simplifyDollarEntries(rawReplacement) else rawReplacement
     return replaced(replacement)
 }
