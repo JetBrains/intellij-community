@@ -395,8 +395,14 @@ public class MockApplication extends MockComponentManager implements Application
     super.dispose();
   }
 
+  private static volatile boolean warningLogged = false;
+
   @SuppressWarnings("SameParameterValue")
   private static void logInsufficientIsolation(String methodName, Object... args) {
+    if (warningLogged) {
+      return;
+    }
+    warningLogged = true;
     getLogger().warn("Attempt to execute method \"" + methodName + "\" with arguments `" +
                      Arrays.toString(args) + "` within a MockApplication.\n" +
                      "This is likely caused by an improper test isolation. Please consider writing tests with JUnit 5 fixtures.",
