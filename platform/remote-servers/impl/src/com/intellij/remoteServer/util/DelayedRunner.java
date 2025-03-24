@@ -19,10 +19,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class DelayedRunner implements Disposable {
 
   private static final int CHANGES_CHECK_TIME = 500;
