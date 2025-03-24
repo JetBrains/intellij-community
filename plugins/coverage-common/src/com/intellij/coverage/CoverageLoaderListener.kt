@@ -34,7 +34,7 @@ class DummyCoverageLoadErrorReporter: CoverageLoadErrorReporter {
   override fun reportWarning(e: Exception) {}
 }
 
-class CoverageLoadErrorReporterImplementation(
+internal class CoverageLoadErrorReporterImplementation(
   private val coverageLoaderListener: CoverageLoadListener,
   private val reportFile: File
 ): CoverageLoadErrorReporter {
@@ -47,6 +47,10 @@ class CoverageLoadErrorReporterImplementation(
 sealed class LoadCoverageResult(val projectData: ProjectData?)
 
 class SuccessLoadCoverageResult(projectData: ProjectData) : LoadCoverageResult(projectData)
+
+class NotSupportedCoverageResult(
+  val clazz: String
+) : LoadCoverageResult(null)
 
 class FailedLoadCoverageResult(
   val reason: String,

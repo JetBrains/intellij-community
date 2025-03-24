@@ -36,11 +36,6 @@ public abstract class CoverageRunner {
     try {
       result = loadCoverageDataWithLogging(sessionDataFile, baseCoverageSuite, new CoverageLoadErrorReporterImplementation(listener, sessionDataFile));
     }
-    catch (UnsupportedOperationException e) {
-      LOG.warn(e);
-      String message = "Coverage runner " + this.getClass().getName() + " does not implement coverage loading, please contact a developer of extension";
-      result = new FailedLoadCoverageResult(message, e);
-    }
     catch (Exception e) {
       if (e instanceof ControlFlowException) throw e;
       LOG.warn(e);
@@ -65,7 +60,7 @@ public abstract class CoverageRunner {
     final @Nullable CoverageSuite baseCoverageSuite,
     final @NotNull CoverageLoadErrorReporter reporter
   ) {
-    throw new UnsupportedOperationException("Method loadCoverageDataWithLogging should be implemented");
+    return new NotSupportedCoverageResult(getClass().getName());
   }
 
   /**
