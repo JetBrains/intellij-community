@@ -8,9 +8,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.util.SlowOperations
 
 internal class SlowOperationsIssuesCollector : ApplicationUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("slow.operations", 3)
+  private val GROUP: EventLogGroup = EventLogGroup("slow.operations", 4)
 
-  private val ISSUE_TRIGGERED = GROUP.registerEvent("issue.triggered", StringListValidatedByInlineRegexp("issue_id", "\\b[A-Z]+-\\d+\\b"))
+  private val ISSUE_TRIGGERED = GROUP.registerEvent("issue.triggered", StringListValidatedByInlineRegexp("issue_id", "[A-Z]{2,7}-\\d{1,6}"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
