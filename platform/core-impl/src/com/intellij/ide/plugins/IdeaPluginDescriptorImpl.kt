@@ -96,7 +96,7 @@ class IdeaPluginDescriptorImpl private constructor(
     .let(::fixDepends)
     .let(::convertDepends)
   override val incompatibleWith: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
-  var pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
+  val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
     .let(::addCorePluginAliases)
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
