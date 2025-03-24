@@ -1,0 +1,130 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.hint
+
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.getStyledFragment
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.HighlighterColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ColorHexUtil
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
+import com.intellij.util.applyIf
+import java.awt.Color
+
+@NlsSafe
+internal fun renderSignaturePresentationToHtml(
+  editor: Editor,
+  context: ParameterInfoUIContext,
+  signaturePresentation: ParameterInfoControllerBase.RawSignaturePresentationItem,
+): String {
+
+  val backgroundColor = context.defaultParameterColor ?: JBColor.WHITE
+  val isDarkTheme = ColorUtil.isDark(backgroundColor)
+  val deselectedParamAlpha = if (isDarkTheme) 0.6 else 0.9
+  val defaultParamAlpha = if (isDarkTheme) 0.5 else 0.75
+  val disabledSignatureAlpha = if (isDarkTheme) 0.5 else 0.75
+  val mismatchedParameterAlpha = if (isDarkTheme) 0.05 else 0.075
+  val textAttributes = TextAttributes().apply {
+    foregroundColor = EditorColorsManager.getInstance().getGlobalScheme().let {
+      it.getAttributes(HighlighterColors.TEXT).foregroundColor
+      ?: it.defaultForeground
+    }
+  }
+  val currentParameter = signaturePresentation.currentParameterIndex
+
+  val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+  val mismatchedParameterBgColor = "#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(backgroundColor, JBColor.RED, mismatchedParameterAlpha))}"
+  val parameters = signaturePresentation.parameters
+    .mapIndexed { index, parameter ->
+      val defaultParam = parameter.defaultValueHtml?.let { blendColors(getStyledFragment(it, textAttributes), backgroundColor, defaultParamAlpha) }
+                         ?: ""
+      val result = if (index == currentParameter)
+        "<b>${getStyledFragment(parameter.nameAndTypeHtml, textAttributes) + defaultParam}</b>"
+      else
+        blendColors(getStyledFragment(parameter.nameAndTypeHtml, textAttributes) + defaultParam, backgroundColor, deselectedParamAlpha)
+      result
+        .replace(Regex("</?a([^a-zA-Z>][^>]*>|>)"), "")
+        .applyIf(parameter.isMismatched) {
+          if (isUnitTestMode)
+            "<mismatched>$this</mismatched>"
+          else
+            "<code style='background-color: $mismatchedParameterBgColor;'>$this</code>"
+        }
+    }
+
+  return buildContents(parameters, signaturePresentation, currentParameter, editor,
+                       blendColors(getStyledFragment("${signaturePresentation.separator} ", textAttributes), backgroundColor, deselectedParamAlpha),
+                       backgroundColor, disabledSignatureAlpha,
+                       context.isSingleOverload)
+}
+
+@NlsSafe
+private fun buildContents(
+  parameters: List<String>,
+  signaturePresentation: ParameterInfoControllerBase.RawSignaturePresentationItem,
+  currentParameter: Int,
+  editor: Editor,
+  separator: String,
+  backgroundColor: Color,
+  disabledSignatureAlpha: Double,
+  singleOverload: Boolean,
+): String {
+  val result = StringBuilder()
+  val lineBuffer = StringBuilder()
+  var lineWidth = 0
+
+  val maxLineWidth = ParameterInfoComponent.getWidthLimit(editor)
+  val boldFont = ParameterInfoComponent.getBoldFont(editor)
+
+  var index = 0
+  val fontMetrics = editor.component.getFontMetrics(boldFont)
+
+  val leadingParameterIsMismatched = signaturePresentation.parameters
+    .applyIf(currentParameter >= 0) { take(currentParameter + 1) }
+    .any { it.isMismatched }
+
+  fun StringBuilder.appendCurrentLine(): StringBuilder {
+    append(lineBuffer.toString()
+             .applyIf(signaturePresentation.isDeprecated) { "<strike>$this</strike>" }
+             .applyIf(leadingParameterIsMismatched) { blendColors(this, backgroundColor, disabledSignatureAlpha) })
+    lineBuffer.clear()
+    lineWidth = 0
+    return this
+  }
+
+  // If there are multiple overloads, add indentation for multiline signatures for clarity
+  val lineSeparator = "<br>" + if (!singleOverload) "&nbsp;&nbsp;&nbsp;&nbsp;" else ""
+
+  while (index < parameters.size) {
+    val parameterText = parameters[index].applyIf(index < parameters.size - 1) { this + separator }.replace("<br>", lineSeparator)
+    val textNoHtml = StringUtil.unescapeXmlEntities(StringUtil.removeHtmlTags(parameterText))
+    val firstLine = textNoHtml.takeWhile { it != '\n' }
+    val firstLineTextWidth: Int = fontMetrics.stringWidth(firstLine)
+    if (lineBuffer.isNotEmpty() && lineWidth + firstLineTextWidth > maxLineWidth) {
+      result
+        .appendCurrentLine()
+        .append(lineSeparator)
+    }
+    lineBuffer.append(parameterText)
+    if (firstLine.length == textNoHtml.length)
+      lineWidth += firstLineTextWidth
+    else
+      lineWidth += fontMetrics.stringWidth(textNoHtml.takeLastWhile { it != '\n' })
+    index++
+  }
+
+  result.appendCurrentLine()
+  return result.toString()
+}
+
+private fun blendColors(text: String, background: Color, alpha: Double): String =
+  text.replace(Regex("color: *#([0-9a-f]+);")) {
+    val colorText = it.groupValues.getOrNull(1) ?: return@replace it.value
+    val color = ColorHexUtil.fromHex(colorText)
+    "color:#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(background, color, alpha))};"
+  }

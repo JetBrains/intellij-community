@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -50,6 +51,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.codeInsight.hint.ParameterInfoControlPresentationUtilKt.renderSignaturePresentationToHtml;
 import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
 @VisibleForTesting
@@ -336,6 +338,27 @@ public final class ParameterInfoComponent extends JPanel {
       result.signatures.add(item);
 
       myPanels[i].setup(htmlText, getDefaultParameterColor());
+      if (!mySimpleDesignMode) {
+        myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
+      }
+    }
+
+    @Override
+    public void setupSignaturePresentation(@NotNull List<@NotNull ParameterPresentation> parameters,
+                                           int currentParameterIndex,
+                                           @NotNull String separator,
+                                           boolean isDeprecated) {
+      mySetup = true;
+      ParameterInfoControllerBase.RawSignaturePresentationItem item = new ParameterInfoControllerBase.RawSignaturePresentationItem(
+        ContainerUtil.map(parameters, p -> new ParameterInfoControllerBase.RawSignaturePresentationItem.RawParameterPresentationItem(
+          p.nameAndTypeHtml(), p.defaultValueHtml(), p.isMismatched())),
+        currentParameterIndex, separator, isDeprecated
+      );
+
+      result.current = currentParameterIndex;
+      result.signatures.add(item);
+
+      myPanels[i].setup(renderSignaturePresentationToHtml(myEditor, this, item), getDefaultParameterColor());
       if (!mySimpleDesignMode) {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }
@@ -666,7 +689,7 @@ public final class ParameterInfoComponent extends JPanel {
         myHtmlPanel.setFocusable(true);
       }
 
-      add(myHtmlPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
+      add(myHtmlPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     }
 
     @Override
