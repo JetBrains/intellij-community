@@ -635,6 +635,10 @@
     <extensionPoint name="adEntityProvider"
                     interface="com.intellij.openapi.editor.impl.ad.document.AdEntityProvider"
                     dynamic="true"/>
+                    
+    <extensionPoint name="execution.rerunActionProxy"
+                    interface="com.intellij.execution.runners.RerunActionProxy"
+                    dynamic="true"/>
 
   </extensionPoints>
 </idea-plugin>

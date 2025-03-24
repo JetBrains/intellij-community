@@ -1445,16 +1445,6 @@ c:com.intellij.execution.runners.ConsoleTitleGen
 com.intellij.execution.runners.DebuggableRunProfileState
 - com.intellij.execution.configurations.RunProfileState
 - a:execute(I):org.jetbrains.concurrency.Promise
-c:com.intellij.execution.runners.FakeRerunAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- p:getDescriptor(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.execution.ui.RunContentDescriptor
-- p:getEnvironment(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.execution.runners.ExecutionEnvironment
-- isDumbAware():Z
-- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 e:com.intellij.execution.runners.PreferredPlace
 - java.lang.Enum
 - sf:MORE_GROUP:com.intellij.execution.runners.PreferredPlace

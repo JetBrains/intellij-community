@@ -1,9 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.runners.FakeRerunAction
+import com.intellij.execution.runners.RunContentDescriptorProxy
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -37,11 +40,12 @@ internal class RunToolbarRerunAction : FakeRerunAction(),
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
-  override fun getEnvironment(event: AnActionEvent): ExecutionEnvironment? {
-    return event.environment()
+  override fun getEnvironmentProxy(event: AnActionEvent): ExecutionEnvironmentProxy? {
+    val env = event.environment() ?: return null
+    return BackendExecutionEnvironmentProxy(env)
   }
 
-  override fun getDescriptor(event: AnActionEvent): RunContentDescriptor? {
-    return getEnvironment(event)?.contentToReuse
+  override fun getDescriptorProxy(event: AnActionEvent): RunContentDescriptorProxy? {
+    return getEnvironmentProxy(event)?.getContentToReuseProxy()
   }
 }
