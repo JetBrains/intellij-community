@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
 import com.intellij.rt.debugger.MethodInvoker
@@ -25,6 +26,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object MethodInvokeUtils {
+  @JvmStatic
+  internal val INVOKE_WITH_HELPER_KEY: Key<Boolean> = Key<Boolean>("invoke.with.helper")
+
   fun getHelperExceptionStackTrace(evaluationContext: EvaluationContextImpl, e: Exception): String? {
     if (e !is EvaluateException) return null
     val exceptionFromTargetVM = e.exceptionFromTargetVM ?: return null
@@ -83,8 +87,10 @@ internal fun tryInvokeWithHelper(
   invocationOptions: Int,
   internalEvaluate: Boolean,
 ): InvocationResult {
+  val useHelper = Registry.get("debugger.evaluate.method.helper").selectedOption
   if (internalEvaluate ||
-      !Registry.`is`("debugger.evaluate.method.helper") ||
+      ("auto" == useHelper && evaluationContext.getUserData(MethodInvokeUtils.INVOKE_WITH_HELPER_KEY) != true) ||
+      "off" == useHelper ||
       isSet(invocationOptions, INVOKE_NONVIRTUAL) || //TODO: support
       isPrimitiveType(method.returnTypeName()) ||
       (isVoid(method) && !method.isConstructor) ||

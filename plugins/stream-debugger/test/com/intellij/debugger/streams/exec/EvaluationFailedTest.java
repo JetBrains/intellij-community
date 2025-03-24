@@ -27,13 +27,13 @@ import static org.junit.Assume.assumeTrue;
 public class EvaluationFailedTest extends FailEvaluationTestCase {
   @Test
   public void testEvaluationExceptionDetected() {
-    assumeFalse(Registry.is("debugger.evaluate.method.helper"));
+    assumeTrue("off".equals(Registry.get("debugger.evaluate.method.helper").getSelectedOption()));
     doTest(true, "EvaluationExceptionDetected");
   }
 
   @Test
   public void testEvaluationExceptionDetectedHelper() {
-    assumeTrue(Registry.is("debugger.evaluate.method.helper"));
+    assumeTrue("always".equals(Registry.get("debugger.evaluate.method.helper").getSelectedOption()));
     doTest(true, "EvaluationExceptionDetected");
   }
 

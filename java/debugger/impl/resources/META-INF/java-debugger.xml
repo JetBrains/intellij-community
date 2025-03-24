@@ -178,6 +178,10 @@
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
     <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
+
+    <registryKey defaultValue="[off*|auto|always]"
+                 key="debugger.evaluate.method.helper"
+                 description="Use helper to invoke methods avoiding the immediate return value collection"/>
   </extensions>
 
   <actions>

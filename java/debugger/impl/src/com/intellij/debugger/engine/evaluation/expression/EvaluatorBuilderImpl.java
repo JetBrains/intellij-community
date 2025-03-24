@@ -1450,7 +1450,6 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiElement qualifier = expression.getQualifier();
       PsiType interfaceType = expression.getFunctionalInterfaceType();
       if (!Registry.is("debugger.compiling.evaluator.method.refs") &&
-          !Registry.is("debugger.evaluate.method.helper") &&
           interfaceType != null &&
           qualifier != null) {
         String code = null;
