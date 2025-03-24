@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.core.CoreBundle
-import com.intellij.execution.ExecutionException
 import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.Companion.checkSideEffectAllowed
 import com.intellij.openapi.module.Module
@@ -16,12 +15,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
-import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManagerUI
-import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.adminPermissionsNeeded
 import com.jetbrains.python.ui.PyUiUtil
@@ -44,44 +39,7 @@ internal class PyInstallRequirementsFix(
     if (hasAdminPermissionsAndConfigureInterpreter(project, descriptor, sdk)) return
     checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
     PyUiUtil.clearFileLevelInspectionResults(descriptor.psiElement.containingFile)
-    installPackages(project, descriptor)
-  }
-
-  private fun installPackages(project: Project, descriptor: ProblemDescriptor) {
-    if (hasPackageManagement(PythonPackageManager.forSdk(project, sdk))) {
-      installRequirements(project, unsatisfied, descriptor)
-    } else {
-      installRequirementsAfterManagement(project, unsatisfied, descriptor)
-    }
-  }
-
-  private fun installPackageManagement(project: Project, onSuccess: () -> Unit) {
-    val ui = PyPackageManagerUI(project, sdk, object : PyPackageManagerUI.Listener {
-      val baseListener = RunningPackagingTasksListener(module)
-
-      override fun started() {
-        baseListener.started()
-      }
-
-      override fun finished(exceptions: List<ExecutionException>) {
-        baseListener.finished(exceptions)
-        if (exceptions.isEmpty()) {
-          onSuccess()
-        }
-      }
-    })
-
-    ui.installManagement()
-  }
-
-  private fun installRequirementsAfterManagement(
-    project: Project,
-    chosenRequirements: List<PyRequirement>,
-    descriptor: ProblemDescriptor
-  ) {
-    installPackageManagement(project) {
-      installRequirements(project, chosenRequirements, descriptor)
-    }
+    installRequirements(project, unsatisfied, descriptor)
   }
 
   private fun installRequirements(project: Project, requirements: List<PyRequirement>, descriptor: ProblemDescriptor) {
@@ -147,10 +105,5 @@ internal class PyInstallRequirementsFix(
   companion object {
     private const val DEFAULT_OPTION_INDEX = 0
     private const val SDK_NAME_MAX_LENGTH = 25
-
-    private fun hasPackageManagement(manager: PythonPackageManager) =
-      PyPackageUtil.hasManagement(manager.installedPackages.toPyPackages())
-
-    private fun List<PythonPackage>.toPyPackages(): List<PyPackage> = map { PyPackage(it.name, it.version) }
   }
 }
