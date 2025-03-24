@@ -869,6 +869,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationExtensionComponent1.test");
             }
 
+            @TestMetadata("multiDeclarationExtensionComponent1_flexibleReceiver.test")
+            public void testMultiDeclarationExtensionComponent1_flexibleReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationExtensionComponent1_flexibleReceiver.test");
+            }
+
             @TestMetadata("multiDeclarationExtensionComponent2.test")
             public void testMultiDeclarationExtensionComponent2() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationExtensionComponent2.test");
