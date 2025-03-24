@@ -1400,10 +1400,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (ProgressManager.getInstance().hasModalProgressIndicator()) {
       return false;
     }
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-    VirtualFile file = manager.getFile(myDocument);
-    if (file != null && !file.isValid()) {
-      return false;
+    if (!Registry.is("editor.rd.local.ux")) {
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      VirtualFile file = manager.getFile(myDocument);
+      if (file != null && !file.isValid()) {
+        return false;
+      }
     }
 
     DataContext context = getDataContext();
