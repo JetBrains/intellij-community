@@ -193,13 +193,6 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  @VisibleForTesting
-  fun patchDescriptor(context: DescriptorListLoadingContext) {
-    if (version == null) {
-      version = context.defaultVersion
-    }
-  }
-
   internal fun initialize(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
     if (context.isPluginDisabled(id)) {
       markAsIncomplete(disabledDependency = null, shortMessage = null)
