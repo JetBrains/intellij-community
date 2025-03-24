@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc
 
+import  com.intellij.codeInsight.javadoc.JavaDocInfoGenerator.DocTagLocator
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator.InheritDocContext
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
@@ -19,8 +21,8 @@ object JavaSuperTypeSearchUtil {
     psiClass: PsiClass,
     method: PsiMethod,
     target: PsiDocTagValue?,
-    locator: JavaDocInfoGenerator.DocTagLocator<T>,
-  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    locator: DocTagLocator<T>,
+  ): InheritDocContext<T>? {
     val resultInDelegate = searchInDelegate(method, target, locator)
     if (resultInDelegate != null) return resultInDelegate
 
@@ -37,8 +39,8 @@ object JavaSuperTypeSearchUtil {
   private fun <T> searchInDelegate(
     method: PsiMethod,
     target: PsiDocTagValue?,
-    locator: JavaDocInfoGenerator.DocTagLocator<T>,
-  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    locator: DocTagLocator<T>,
+  ): InheritDocContext<T>? {
     val delegateMethod = DocumentationDelegateProvider.findDocumentationDelegate(method) as? PsiMethod
     if (delegateMethod != null) {
       val delegateClass = delegateMethod.containingClass
@@ -54,9 +56,9 @@ object JavaSuperTypeSearchUtil {
     psiClass: PsiClass,
     method: PsiMethod,
     target: PsiDocTagValue?,
-    locator: JavaDocInfoGenerator.DocTagLocator<T>,
+    locator: DocTagLocator<T>,
     checkClass: Boolean = true,
-  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+  ): InheritDocContext<T>? {
     return recursivePhase(psiClass, method, target?.text, locator, checkClass = checkClass)
            ?: finalPhase(psiClass, method, target?.text, locator)
   }
@@ -71,17 +73,15 @@ object JavaSuperTypeSearchUtil {
     psiClass: PsiClass,
     method: PsiMethod,
     explicitSuper: String?,
-    loc: JavaDocInfoGenerator.DocTagLocator<T>,
+    loc: DocTagLocator<T>,
     visited: MutableSet<PsiClass> = mutableSetOf(),
     checkClass: Boolean = true,
-  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+  ): InheritDocContext<T>? {
     if (psiClass.qualifiedName == "java.lang.Object") return null
-    if (visited.contains(psiClass)) return null
-
-    visited.add(psiClass)
+    if (!visited.add(psiClass)) return null
 
     // Check class
-    var target: Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? = null
+    var target: InheritDocContext<T>? = null
     if (checkClass) target = matchClass(psiClass, method, explicitSuper, loc)
     if (target != null) return target
 
@@ -104,8 +104,8 @@ object JavaSuperTypeSearchUtil {
     psiClass: PsiClass,
     method: PsiMethod,
     explicitSuper: String?,
-    loc: JavaDocInfoGenerator.DocTagLocator<T>,
-  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    loc: DocTagLocator<T>,
+  ): InheritDocContext<T>? {
     if (explicitSuper != null && explicitSuper != psiClass.name && explicitSuper != psiClass.qualifiedName) {
       return null
     }
@@ -114,13 +114,13 @@ object JavaSuperTypeSearchUtil {
     val tag: T = loc.find(matchedMethod, JavaDocInfoGenerator.getDocComment(matchedMethod)) ?: return null
 
     val provider = object : JavaDocInfoGenerator.InheritDocProvider<T> {
-      override fun getInheritDoc(target: PsiDocTagValue?): com.intellij.openapi.util.Pair<T?, JavaDocInfoGenerator.InheritDocProvider<T?>?>? {
+      override fun getInheritDoc(target: PsiDocTagValue?): InheritDocContext<T>? {
         return JavaDocInfoGenerator.findInheritDocTag(matchedMethod, loc, target)
       }
       override fun getElement(): PsiClass? = psiClass
     }
 
-    return tag to provider
+    return InheritDocContext(tag, provider)
   }
 
   /**
@@ -130,8 +130,8 @@ object JavaSuperTypeSearchUtil {
     psiClass: PsiClass,
     method: PsiMethod,
     explicitSuper: String?,
-    loc: JavaDocInfoGenerator.DocTagLocator<T>,
-  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    loc: DocTagLocator<T>,
+  ): InheritDocContext<T>? {
     val javaLangObject = JavaPsiFacade.getInstance(psiClass.project)
                            .findClass("java.lang.Object", psiClass.resolveScope)
                          ?: return null

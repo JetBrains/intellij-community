@@ -421,9 +421,10 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
           final var parent = token.getParent();
           if (!(parent instanceof PsiDocTag docTag)) return List.of();
           final var valueElement = docTag.getValueElement();
-          final var target = JavaSuperTypeSearchUtil.INSTANCE.automaticSupertypeSearch(containingClass, method, valueElement, new JavaDocInfoGenerator.AnyInheritDocTagLocator(docTag, method));
-          if (target != null) {
-            return List.of(new SnippetRegionSymbol(target.getFirst().getContainingFile(), getSnippetRange(target.getFirst())));
+          final var tagLocator = new JavaDocInfoGenerator.AnyInheritDocTagLocator(docTag, method);
+          final var context = JavaSuperTypeSearchUtil.INSTANCE.automaticSupertypeSearch(containingClass, method, valueElement, tagLocator);
+          if (context != null && context.element() != null) {
+            return List.of(new SnippetRegionSymbol(context.element().getContainingFile(), getSnippetRange(context.element())));
           }
         }
 
