@@ -33,9 +33,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -66,7 +64,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -212,7 +209,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
           return;
         }
         DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
-          if (!setupRootAndAnnotateExternally(entry, project, annotation)) {
+          if (!setupRootAndAnnotateExternally(entry, containingFile, project, annotation)) {
             throw new CanceledConfigurationException();
           }
         });
@@ -425,6 +422,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   }
 
   private boolean setupRootAndAnnotateExternally(@NotNull OrderEntry entry,
+                                                 @NotNull PsiFile containingFile, 
                                                  @NotNull Project project,
                                                  @NotNull ExternalAnnotation annotation) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -436,10 +434,11 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       myPsiManager.dropPsiCaches();
       return false;
     }
-    WriteCommandAction.writeCommandAction(project).run(() -> appendChosenAnnotationsRoot(entry, newRoot));
     ActionContext context = ActionContext.from(null, annotation.owner().getContainingFile());
     String name = "Adding annotation";
-    ModCommandExecutor.executeInteractively(context, name, null, () -> getAddAnnotationCommand(newRoot, annotation, context));
+    ModCommandExecutor.executeInteractively(context, name, null, () ->
+      ModCommand.updateOptionList(containingFile, "OrderEntryConfiguration.externalAnnotations", list -> list.add(newRoot.getUrl()))
+        .andThen(getAddAnnotationCommand(newRoot, annotation, context)));
     return true;
   }
   
@@ -673,28 +672,6 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     return AnnotationPlace.IN_CODE;
   }
 
-  private void appendChosenAnnotationsRoot(@NotNull OrderEntry entry, @NotNull VirtualFile vFile) {
-    if (entry instanceof LibraryOrderEntry) {
-      Library library = ((LibraryOrderEntry)entry).getLibrary();
-      LOG.assertTrue(library != null);
-      final Library.ModifiableModel model = library.getModifiableModel();
-      model.addRoot(vFile, AnnotationOrderRootType.getInstance());
-      model.commit();
-    }
-    else if (entry instanceof ModuleSourceOrderEntry) {
-      final ModifiableRootModel model = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
-      final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
-      extension.setExternalAnnotationUrls(ArrayUtil.mergeArrays(extension.getExternalAnnotationsUrls(), vFile.getUrl()));
-      model.commit();
-    }
-    else if (entry instanceof JdkOrderEntry jdkOrderEntry) {
-      final SdkModificator sdkModificator = jdkOrderEntry.getJdk().getSdkModificator();
-      sdkModificator.addRoot(vFile, AnnotationOrderRootType.getInstance());
-      sdkModificator.commitChanges();
-    }
-    dropCache();
-  }
-
   private void commitChanges(XmlFile xmlFile) {
     sortItems(xmlFile);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
@@ -802,7 +779,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
     @Override
     protected @NotNull String getCancelActionName() {
-      return CommonBundle.getCancelButtonText();
+      return  CommonBundle.getCancelButtonText();
     }
 
     @Override

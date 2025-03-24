@@ -403,6 +403,7 @@
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <optionController implementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings$Provider"/>
+    <optionController implementation="com.intellij.codeInsight.OrderEntryConfigurationProvider"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.JavaIdeCodeInsightSettings"/>
     <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
                     serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
