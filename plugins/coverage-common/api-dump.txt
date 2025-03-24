@@ -126,13 +126,6 @@ com.intellij.coverage.CoverageLoadErrorReporter
 - a:reportWarning(java.lang.Exception):V
 - a:reportWarning(java.lang.String,java.lang.Exception):V
 - bs:reportWarning$default(com.intellij.coverage.CoverageLoadErrorReporter,java.lang.String,java.lang.Exception,I,java.lang.Object):V
-f:com.intellij.coverage.CoverageLoadErrorReporterImplementation
-- com.intellij.coverage.CoverageLoadErrorReporter
-- <init>(com.intellij.coverage.CoverageLoadListener,java.io.File):V
-- reportError(java.lang.Exception):V
-- reportError(java.lang.String):V
-- reportWarning(java.lang.Exception):V
-- reportWarning(java.lang.String,java.lang.Exception):V
 com.intellij.coverage.CoverageLoadListener
 - sf:COVERAGE_TOPIC:com.intellij.util.messages.Topic
 - sf:Companion:com.intellij.coverage.CoverageLoadListener$Companion
@@ -228,6 +221,10 @@ f:com.intellij.coverage.FailedLoadCoverageResult
 - f:getReason():java.lang.String
 a:com.intellij.coverage.LoadCoverageResult
 - f:getProjectData():com.intellij.rt.coverage.data.ProjectData
+f:com.intellij.coverage.NotSupportedCoverageResult
+- com.intellij.coverage.LoadCoverageResult
+- <init>(java.lang.String):V
+- f:getClazz():java.lang.String
 c:com.intellij.coverage.RemappingCoverageAnnotator
 - com.intellij.coverage.SimpleCoverageAnnotator
 - <init>(com.intellij.openapi.project.Project):V
