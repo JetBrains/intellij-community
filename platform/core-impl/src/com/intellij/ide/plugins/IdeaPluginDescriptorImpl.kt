@@ -218,13 +218,6 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private fun readResourceBundleBaseName(raw: RawPluginDescriptor) {
-    if (resourceBundleBaseName != null && resourceBundleBaseName != raw.resourceBundleBaseName) {
-      LOG.warn("Resource bundle redefinition for plugin $id. Old value: $resourceBundleBaseName, new value: ${raw.resourceBundleBaseName}")
-    }
-    resourceBundleBaseName = raw.resourceBundleBaseName
-  }
-
   private fun initializeV1Dependencies(context: DescriptorListLoadingContext,
                                        pathResolver: PathResolver,
                                        dataLoader: DataLoader) {
