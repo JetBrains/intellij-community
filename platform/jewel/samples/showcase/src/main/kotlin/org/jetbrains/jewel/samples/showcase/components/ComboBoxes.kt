@@ -27,6 +27,8 @@ import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
 public fun ComboBoxes() {
@@ -56,17 +58,15 @@ private fun ListComboBoxes() {
         )
     }
 
-    // Create a list with duplicates to demonstrate the itemKeys parameter
-    val duplicateItems = remember {
+    val languageOptions = remember {
         listOf(
-            "Red", // index 0
-            "Blue", // index 1
-            "Green", // index 2
-            "Red", // index 3 - duplicate
-            "Yellow", // index 4
-            "Blue", // index 5 - duplicate
-            "Purple", // index 6
-            "Orange", // index 7
+            ProgrammingLanguage("Java", AllIconsKeys.FileTypes.Java),
+            ProgrammingLanguage("Python", AllIconsKeys.Language.Python),
+            ProgrammingLanguage("JavaScript", AllIconsKeys.FileTypes.JavaScript),
+            ProgrammingLanguage("Java", AllIconsKeys.FileTypes.Java),
+            ProgrammingLanguage("Rust", AllIconsKeys.Language.Rust),
+            ProgrammingLanguage("Go", AllIconsKeys.Language.GO),
+            ProgrammingLanguage("Ruby", AllIconsKeys.Language.Ruby),
         )
     }
 
@@ -157,7 +157,7 @@ private fun ListComboBoxes() {
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Using index as key")
             var selectedIndex by remember { mutableIntStateOf(1) }
-            val selectedItemText = if (selectedIndex >= 0) duplicateItems[selectedIndex] else ""
+            val selectedItemText = if (selectedIndex >= 0) languageOptions[selectedIndex].name else ""
             Text(
                 text = "Selected item: $selectedItemText (index: $selectedIndex)",
                 maxLines = 1,
@@ -165,19 +165,20 @@ private fun ListComboBoxes() {
             )
 
             ListComboBox(
-                items = duplicateItems,
+                items = languageOptions,
                 selectedIndex = selectedIndex,
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
                 onItemSelected = { index -> selectedIndex = index },
                 itemKeys = { index, _ -> index },
-                itemToLabel = { item -> item },
+                itemToLabel = { item -> item.name },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
-                        text = item,
+                        text = item.name,
                         isSelected = isSelected,
                         isActive = isActive,
-                        iconContentDescription = item,
+                        iconContentDescription = item.name,
+                        icon = item.icon,
                     )
                 },
             )
@@ -186,28 +187,29 @@ private fun ListComboBoxes() {
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Using fancy key")
             var selectedIndex by remember { mutableIntStateOf(3) }
-            val selectedItemText = if (selectedIndex >= 0) duplicateItems[selectedIndex] else ""
+            val selectedItemText = if (selectedIndex >= 0) languageOptions[selectedIndex].name else ""
             Text(
-                text = "Selected item: $selectedItemText (index: $selectedIndex)",
+                text = "Selected item: $selectedItemText",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
 
             EditableListComboBox(
-                items = duplicateItems,
+                items = languageOptions,
                 selectedIndex = selectedIndex,
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
-                itemToLabel = { item -> item },
+                itemToLabel = { item -> item.name },
                 onItemSelected = { index -> selectedIndex = index },
                 // Create a fancy key with both index and item value
                 itemKeys = { index, item -> "$item-$index" },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
-                        text = "$item (index: ${duplicateItems.indexOf(item)})",
+                        text = item.name,
                         isSelected = isSelected,
                         isActive = isActive,
-                        iconContentDescription = item,
+                        iconContentDescription = item.name,
+                        icon = item.icon,
                     )
                 },
             )
@@ -239,3 +241,5 @@ private fun SimpleComboBoxes() {
         }
     }
 }
+
+private data class ProgrammingLanguage(val name: String, val icon: IconKey)
