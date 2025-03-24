@@ -26,10 +26,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
@@ -141,11 +138,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val mySessionId = XDebugSessionId(UID.random())
   private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this, mySessionId)
   private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
-  private val executionStackFlow = MutableStateFlow<XExecutionStack?>(null)
+  private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
   var currentExecutionStack: XExecutionStack?
-    get() = executionStackFlow.value
+    get() = executionStackFlow.value.get()
     private set(value) {
-      executionStackFlow.value = value
+      executionStackFlow.value = Ref.create(value)
     }
   private val suspendContextFlow = MutableStateFlow<XSuspendContext?>(null)
   private val mySuspendContext: StateFlow<XSuspendContext?>
@@ -281,7 +278,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @ApiStatus.Internal
   fun getCurrentExecutionStackFlow(): Flow<XExecutionStack?> {
-    return executionStackFlow
+    return executionStackFlow.map { it.get() }
   }
 
   override fun isPaused(): Boolean {
