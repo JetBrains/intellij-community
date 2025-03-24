@@ -284,6 +284,94 @@ class PluginDescriptorTest {
       .hasExactlyApplicationServices("foo.module.service")
   }
 
+  @Test
+  fun `id, version, name are inherited in content modules`() {
+    PluginBuilder.empty()
+      .id("bar")
+      .name("Bar")
+      .version("1.0.0")
+      .module(
+        moduleName = "bar.sub",
+        moduleDescriptor = PluginBuilder.empty()
+          .id("bar 2")
+          .name("Bar Sub")
+          .version("2.0.0")
+      )
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.name).isEqualTo("Bar")
+    assertThat(descriptor.version).isEqualTo("1.0.0")
+    assertThat(descriptor.content.modules).hasSize(1)
+    val subDesc = descriptor.content.modules[0].requireDescriptor()
+    assertThat(subDesc.pluginId.idString).isEqualTo("bar")
+    assertThat(subDesc.name).isEqualTo("Bar")
+    assertThat(subDesc.version).isEqualTo("1.0.0")
+  }
+
+  @Test
+  fun `id, version, name can't overridden in submodules`() {
+    PluginBuilder.empty()
+      .id("bar")
+      .name("Bar")
+      .version("1.0.0")
+      .module(
+        moduleName = "bar.sub",
+        moduleDescriptor = PluginBuilder.empty()
+          .id("bar 2")
+          .name("Bar Sub")
+          .version("2.0.0")
+      )
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.name).isEqualTo("Bar")
+    assertThat(descriptor.version).isEqualTo("1.0.0")
+    assertThat(descriptor.content.modules).hasSize(1)
+    val subDesc = descriptor.content.modules[0].requireDescriptor()
+    assertThat(subDesc.pluginId.idString).isEqualTo("bar")
+    assertThat(subDesc.name).isEqualTo("Bar")
+    assertThat(subDesc.version).isEqualTo("1.0.0")
+  }
+
+  @Test
+  fun `resource bundle is not inherited in content modules`() {
+    PluginBuilder.empty().id("bar")
+      .resourceBundle("resourceBundle")
+      .module(moduleName = "bar.opt", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .module(moduleName = "bar.req", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module(moduleName = "bar.emb", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
+    assertThat(descriptor.content.modules).hasSize(3)
+    assertThat(descriptor.content.modules).allMatch { it.requireDescriptor().resourceBundleBaseName == null }
+  }
+
+  @Test
+  fun `resource bundle can be set in content modules`() {
+    PluginBuilder.empty().id("bar")
+      .resourceBundle("resourceBundle")
+      .module(moduleName = "opt", moduleDescriptor = PluginBuilder.empty().resourceBundle("opt"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .module(moduleName = "req", moduleDescriptor = PluginBuilder.empty().resourceBundle("req"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module(moduleName = "emb", moduleDescriptor = PluginBuilder.empty().resourceBundle("emb"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
+    assertThat(descriptor.content.modules).hasSize(3)
+    assertThat(descriptor.content.modules).allMatch { it.requireDescriptor().resourceBundleBaseName == it.name }
+  }
+
   // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun `only one instance of a plugin is loaded if it's duplicated`() {
