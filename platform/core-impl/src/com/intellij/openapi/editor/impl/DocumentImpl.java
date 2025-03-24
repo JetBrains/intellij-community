@@ -353,20 +353,18 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       }
     }
     int finalTargetOffsetPos = targetOffsetPos;
+    boolean executeInBulk = finalTargetOffsetPos > STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT * 2;
     // Document must be unblocked by now. If not, some Save handler attempted to modify PSI
     // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
-    DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(this, project) {
-      @Override
-      public void run() {
-        DocumentUtil.executeInBulk(DocumentImpl.this, finalTargetOffsetPos > STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT * 2, () -> {
-          int pos = finalTargetOffsetPos;
-          while (pos > 0) {
-            int endOffset = targetOffsets[--pos];
-            int startOffset = targetOffsets[--pos];
-            deleteString(startOffset, endOffset);
-          }
-        });
-      }
+    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+      DocumentUtil.executeInBulk(this, executeInBulk, () -> {
+        int pos = finalTargetOffsetPos;
+        while (pos > 0) {
+          int endOffset = targetOffsets[--pos];
+          int startOffset = targetOffsets[--pos];
+          deleteString(startOffset, endOffset);
+        }
+      });
     });
     return markAsNeedsStrippingLater;
   }

@@ -3360,51 +3360,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           stop();
           return;
         }
-        DocumentRunnable command = new DocumentRunnable(myDocument, myProject) {
-          @Override
-          public void run() {
-            int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-            VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition
-                                                                      : getCaretModel().getVisualPosition();
-            int column = caretPosition.column;
-            xPassedCycles++;
-            if (xPassedCycles >= myXCycles) {
-              xPassedCycles = 0;
-              column += myDx;
-            }
+        Runnable command = () -> {
+          int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+          VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition
+                                                                    : getCaretModel().getVisualPosition();
+          int column = caretPosition.column;
+          xPassedCycles++;
+          if (xPassedCycles >= myXCycles) {
+            xPassedCycles = 0;
+            column += myDx;
+          }
 
-            int line = caretPosition.line;
-            yPassedCycles++;
-            if (yPassedCycles >= myYCycles) {
-              yPassedCycles = 0;
-              line += myDy;
-            }
+          int line = caretPosition.line;
+          yPassedCycles++;
+          if (yPassedCycles >= myYCycles) {
+            yPassedCycles = 0;
+            line += myDy;
+          }
 
-            line = Math.max(0, line);
-            column = Math.max(0, column);
-            VisualPosition pos = new VisualPosition(line, column);
-            if (!myMultiSelectionInProgress) {
-              getCaretModel().moveToVisualPosition(pos);
-              getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            }
+          line = Math.max(0, line);
+          column = Math.max(0, column);
+          VisualPosition pos = new VisualPosition(line, column);
+          if (!myMultiSelectionInProgress) {
+            getCaretModel().moveToVisualPosition(pos);
+            getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
 
-            int newCaretOffset = getCaretModel().getOffset();
-            int caretShift = newCaretOffset - mySavedSelectionStart;
+          int newCaretOffset = getCaretModel().getOffset();
+          int caretShift = newCaretOffset - mySavedSelectionStart;
 
-            if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-              setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
-              return;
-            }
+          if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+            setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
+            return;
+          }
 
-            if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
-              myTargetMultiSelectionPosition = pos;
-              LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
-              getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
-              createSelectionTill(newLogicalPosition);
-            }
-            else {
-              mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
-            }
+          if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
+            myTargetMultiSelectionPosition = pos;
+            LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
+            getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
+            createSelectionTill(newLogicalPosition);
+          }
+          else {
+            mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
           }
         };
         WriteIntentReadAction.run((Runnable)() ->

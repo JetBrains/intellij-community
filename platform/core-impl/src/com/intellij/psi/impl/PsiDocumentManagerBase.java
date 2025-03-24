@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -412,11 +411,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, true);
     }
     else {
-      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, myProject) {
-        @Override
-        public void run() {
-          ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, false);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        ok[0] = finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, false);
       });
     }
 

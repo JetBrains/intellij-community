@@ -1976,10 +1976,6 @@ c:com.intellij.psi.DummyHolderViewProvider
 - setDummyHolder(com.intellij.psi.impl.source.DummyHolder):V
 com.intellij.psi.ExternalChangeAction
 - java.lang.Runnable
-a:com.intellij.psi.ExternalChangeAction$ExternalDocumentChange
-- com.intellij.openapi.editor.DocumentRunnable
-- com.intellij.psi.ExternalChangeAction
-- p:<init>(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):V
 f:com.intellij.psi.FileTypeFileViewProviders
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - sf:INSTANCE:com.intellij.psi.FileTypeFileViewProviders

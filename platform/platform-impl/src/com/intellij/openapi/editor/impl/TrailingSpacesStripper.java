@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
@@ -75,7 +75,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       final int end = document.getLineEndOffset(lines - 1);
       if (start != end) {
         final CharSequence content = document.getCharsSequence();
-        performUndoableWrite(new DocumentRunnable(document, null) {
+        performUndoableWrite(new Runnable() {
           @Override
           public void run() {
             if (CharArrayUtil.containsOnlyWhiteSpaces(content.subSequence(start, end)) && options.isStripTrailingSpaces() &&
@@ -116,18 +116,13 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
               deleteToExclusive.set(lastLNewLineOffset);
             }
           }
-          performUndoableWrite(new DocumentRunnable(document, null) {
-            @Override
-            public void run() {
-              document.deleteString(firstNewLineOffset, deleteToExclusive.get());
-            }
-          });
+          performUndoableWrite(() -> document.deleteString(firstNewLineOffset, deleteToExclusive.get()));
         }
       }
     }
   }
 
-  private static void performUndoableWrite(@NotNull DocumentRunnable documentRunnable) {
+  private static void performUndoableWrite(@NotNull Runnable documentRunnable) {
     ApplicationManager.getApplication().runWriteAction(
       () -> CommandProcessor.getInstance().runUndoTransparentAction(documentRunnable)
     );
