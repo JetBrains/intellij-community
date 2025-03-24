@@ -191,6 +191,7 @@ private fun loadDescriptorFromStream(
     moduleName = null,
     useCoreClassLoader = useCoreClassLoader,
   )
+  descriptor.patchDescriptor(raw = raw, context = context)
   context.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
   initMainDescriptorByRaw(
     descriptor = descriptor,
@@ -248,7 +249,6 @@ fun initMainDescriptorByRaw(
     }
   }
 
-  descriptor.patchDescriptor(raw = raw, context = context)
   descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
 }
 

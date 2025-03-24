@@ -21,6 +21,7 @@ import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.time.ZoneOffset
@@ -183,7 +184,8 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  internal fun patchDescriptor(raw: RawPluginDescriptor, context: DescriptorListLoadingContext) {
+  @VisibleForTesting
+  fun patchDescriptor(raw: RawPluginDescriptor, context: DescriptorListLoadingContext) {
     if (raw.resourceBundleBaseName != null) {
       if (id == PluginManagerCore.CORE_ID) {
         LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
