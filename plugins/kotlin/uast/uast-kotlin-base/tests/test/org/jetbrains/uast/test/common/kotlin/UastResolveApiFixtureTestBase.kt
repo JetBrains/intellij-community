@@ -1474,6 +1474,30 @@ interface UastResolveApiFixtureTestBase {
         )
     }
 
+    fun checkResolveDataClassSyntheticMember(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        myFixture.configureByText(
+            "main.kt",
+            """
+                data class JustAnotherData(val p: Int)
+                
+                fun test(d: JustAnotherData): Int {
+                  return d.hash<caret>Code()
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+        val txt = uCallExpression.sourcePsi?.text
+        if (isK2) {
+            TestCase.assertNotNull(txt, resolved)
+            TestCase.assertEquals(txt, "hashCode", resolved!!.name)
+        } else {
+            TestCase.assertNull(txt, resolved)
+        }
+    }
+
     fun checkResolveSyntheticJavaPropertyCompoundAccess(myFixture: JavaCodeInsightTestFixture, isK2 : Boolean = true) {
         myFixture.addClass(
             """public class X {
