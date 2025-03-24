@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
@@ -60,6 +61,7 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
     return requireNotNull(newExpression.getChildOfType<KtDotQualifiedExpression>()).lastChild as KtSimpleNameExpression
   }
 
+  @Suppress("UnstableApiUsage")
   private fun KaSession.fillModifierCompletionVariants(
     parameters: CompletionParameters,
     nameExpression: KtSimpleNameExpression,
@@ -82,27 +84,29 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
       !isMethodCalledOnImportedModifier &&
       originalPosition.parentOfType<KtDotQualifiedExpression>() == null
     // Prioritize functions that return Modifier over the other extension functions.
-    returnsModifier.asSequence()
-      .map {
+    for (symbol in returnsModifier) {
+      resultSet.addElement(
         toLookupElement(
-          symbol = it,
+          symbol = symbol,
           importStrategyDetector = importStrategyDetector,
           weight = 2.0,
           insertModifier = isNewModifier,
         )
-      }.forEach(resultSet::addElement)
+      )
+    }
 
     // If the user didn't type `Modifier` don't suggest extensions that don't return Modifier.
     if (isMethodCalledOnImportedModifier) {
-      others.asSequence()
-        .map {
+      for (symbol in others) {
+        resultSet.addElement(
           toLookupElement(
-            symbol = it,
+            symbol = symbol,
             importStrategyDetector = importStrategyDetector,
             weight = 0.0,
             insertModifier = false,
           )
-        }.forEach(resultSet::addElement)
+        )
+      }
     }
 
     ProgressManager.checkCanceled()
@@ -136,8 +140,6 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
     val file = nameExpression.containingFile as KtFile
     val fileSymbol = file.symbol
 
-    @OptIn(KaExperimentalApi::class)
-    val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression, originalPosition)
     return KtSymbolFromIndexProvider(file)
       .getExtensionCallableSymbolsByNameFilter(
         { name -> prefixMatcher.prefixMatches(name.asString()) },
@@ -145,7 +147,7 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
       )
       .filter {
         @OptIn(KaExperimentalApi::class)
-        visibilityChecker.isVisible(it)
+        isVisible(it as KaDeclarationSymbol, fileSymbol, receiverExpression, originalPosition)
       }
       .toList()
   }
