@@ -12,13 +12,12 @@ import java.nio.file.Path
 
 
 fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
+  val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet())
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
-
     override fun toString() = throw UnsupportedOperationException()
   }
-
   val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : ReadModuleContext {
     override val interner = NoOpXmlInterner
     override val elementOsFilter: (OS) -> Boolean
@@ -27,13 +26,12 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     it.consume(input, path.toString())
     it.getBuilder()
   }
+  context.patchPlugin(rawBuilder)
   if (id != null) {
     rawBuilder.id = id.idString
   }
   val raw = rawBuilder.build()
-  val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet())
   val result = IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = isBundled, id = id, moduleName = null)
-  result.patchDescriptor(context = context)
   initMainDescriptorByRaw(
     descriptor = result,
     pathResolver = pathResolver,
@@ -53,10 +51,10 @@ fun createFromDescriptor(path: Path,
                          dataLoader: DataLoader): IdeaPluginDescriptorImpl {
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(data, path.toString())
+    context.patchPlugin(it.getBuilder())
     it.build()
   }
   val result = IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = isBundled, id = null, moduleName = null)
-  result.patchDescriptor(context = context)
   initMainDescriptorByRaw(descriptor = result, pathResolver = pathResolver, context = context, dataLoader = dataLoader, pluginDir = path, pool = ZipFilePoolImpl())
   return result
 }

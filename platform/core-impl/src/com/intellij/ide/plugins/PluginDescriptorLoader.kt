@@ -184,6 +184,7 @@ private fun loadDescriptorFromStream(
 ): IdeaPluginDescriptorImpl {
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, fileOrDir.toString())
+    context.patchPlugin(it.getBuilder())
     it.build()
   }
   val descriptor = IdeaPluginDescriptorImpl(
@@ -194,7 +195,6 @@ private fun loadDescriptorFromStream(
     moduleName = null,
     useCoreClassLoader = useCoreClassLoader,
   )
-  descriptor.patchDescriptor(context = context)
   context.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
   initMainDescriptorByRaw(
     descriptor = descriptor,
@@ -755,10 +755,10 @@ private fun loadPluginDescriptor(
   val descriptorInput = createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pluginPathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(descriptorInput)
+    context.patchPlugin(it.getBuilder())
     it.build()
   }
   val descriptor = IdeaPluginDescriptorImpl(raw, pluginDir, isBundled = true, id = null, moduleName = null)
-  descriptor.patchDescriptor(context = context)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = PluginManagerCore.PLUGIN_XML_PATH)
   for (module in descriptor.content.modules) {
     var classPath: List<Path>? = null
@@ -981,11 +981,11 @@ private fun loadCoreProductPlugin(
   }
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(reader)
+    context.patchPlugin(it.getBuilder())
     it.build()
   }
   val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
-  descriptor.patchDescriptor(context = context)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
   loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
   descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
@@ -1308,12 +1308,12 @@ private fun loadDescriptorFromResource(
 
     val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
       it.consume(input, file.toString())
+      context.patchPlugin(it.getBuilder())
       it.build()
     }
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = basePath, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
-    descriptor.patchDescriptor(context = context)
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
 
     if (libDir == null) {
