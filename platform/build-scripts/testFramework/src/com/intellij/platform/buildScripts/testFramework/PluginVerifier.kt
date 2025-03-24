@@ -129,10 +129,6 @@ class PluginVerifier(
   }
 
   val exceptions: List<String>  = listOf(
-
-//  Code completion, perf tests plugin
-//  "org.jetbrains.completion.full.line.settings.GeneralState.setEnableInIntegrationTest",
-
     // bugs...
     "com.intellij.psi.PsiClass",
     "com.intellij.lang.javascript.DialectOptionHolder",
@@ -152,16 +148,6 @@ class PluginVerifier(
 
     // Bugs
 
-    // https://youtrack.jetbrains.com/issue/LLM-15214/Compatibility-issue-with-EXTERNALMODELMARKER
-    "com.intellij.ml.inline.completion.impl.MLCompletionProposalsDetails.getEXTERNAL_MODEL_MARKER",
-
-    // in 251 already.
-    "com.intellij.ml.inline.completion.impl.postprocessing.enclosure.MLCompletionEnclosuresDefinition.<init>",
-    "com.intellij.fullLine.api",
-
-    // https://youtrack.jetbrains.com/issue/LLM-15211/Inline-code-competion-fails-with-NoSuchMethodError-in-251
-    "com.intellij.ml.llm.completion.cloud.inline.CloudInlineCompletionProvider.getSuggestionDebounced",
-
     // https://youtrack.jetbrains.com/issue/LLM-15215/Compatibility-issues-with-DefaultLanguageHighlighterColors
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_DEFAULT",
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_FOCUSED",
@@ -171,7 +157,6 @@ class PluginVerifier(
     "com.intellij.ml.llm.sql.chat.context.UtilsKt.createSchemaContextPopupComponent",
 
     "com.intellij.jupyter.core.jupyter.helper.OtherKt.toJupyterCellType",
-    "com.intellij.ml.inline.completion.impl.kit.SkipLocationReason",
     //https://youtrack.jetbrains.com/issue/LLM-15389/Compatibility-issues-with-ServicesKt.serviceAsync
     "com.intellij.openapi.components.ServicesKt.serviceAsync(com.intellij.openapi.components.ComponentManager, java.lang.Class, kotlin.coroutines.Continuation)",
 
