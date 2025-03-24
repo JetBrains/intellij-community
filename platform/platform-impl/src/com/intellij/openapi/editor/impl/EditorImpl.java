@@ -3830,17 +3830,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public boolean processKeyTyped(@NotNull KeyEvent e) {
     myLastTypedActionTimestamp = -1;
-    if (e.getID() != KeyEvent.KEY_TYPED) return false;
-    char c = e.getKeyChar();
-    if (UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
-      myLastTypedActionTimestamp = e.getWhen();
-      myLastTypedAction = Character.toString(c);
-      processKeyTyped(c);
-      return true;
-    }
-    else {
+    if (e.getID() != KeyEvent.KEY_TYPED) {
       return false;
     }
+    if (!UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
+      return false;
+    }
+    char c = e.getKeyChar();
+    myLastTypedActionTimestamp = e.getWhen();
+    myLastTypedAction = Character.toString(c);
+    processKeyTyped(c);
+    return true;
   }
 
   public void recordLatencyAwareAction(@NotNull String actionId, long timestampMs) {
