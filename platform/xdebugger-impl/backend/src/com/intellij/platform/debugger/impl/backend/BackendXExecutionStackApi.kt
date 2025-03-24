@@ -48,9 +48,6 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
         }
       }
 
-      // TODO[IJPL-177087]: executionStackEntity gets removed from DB because new ones come to the flow for some reason,
-      //  so addStackFrames may end abruptly, with not all stack frames shown.
-      //  Investigate whether it's really needed
       withEntities(executionStackEntity) {
         val executionStack = executionStackEntity.obj
         executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {

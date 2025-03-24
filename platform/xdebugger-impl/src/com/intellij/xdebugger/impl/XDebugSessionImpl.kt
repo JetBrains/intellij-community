@@ -142,6 +142,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   var currentExecutionStack: XExecutionStack?
     get() = executionStackFlow.value.get()
     private set(value) {
+      if (executionStackFlow.value.get() === value) return
       executionStackFlow.value = Ref.create(value)
     }
   private val suspendContextFlow = MutableStateFlow<XSuspendContext?>(null)
