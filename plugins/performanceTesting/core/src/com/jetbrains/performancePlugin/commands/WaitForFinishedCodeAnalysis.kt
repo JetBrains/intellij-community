@@ -354,6 +354,9 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor).use { it.daemonCodeAnalyzerStatus }}")
       }
     }
+    catch (ex: CancellationException) {
+      throw ex
+    }
     catch (ex: Throwable) {
       LOG.warn("Print Analyzer status failed", ex)
     }
