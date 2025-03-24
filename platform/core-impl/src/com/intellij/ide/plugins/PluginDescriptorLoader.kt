@@ -757,6 +757,7 @@ private fun loadPluginDescriptor(
     it.build()
   }
   val descriptor = IdeaPluginDescriptorImpl(raw, pluginDir, isBundled = true, id = null, moduleName = null)
+  descriptor.patchDescriptor(raw = raw, context = context)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = PluginManagerCore.PLUGIN_XML_PATH)
   for (module in descriptor.content.modules) {
     var classPath: List<Path>? = null
@@ -794,7 +795,6 @@ private fun loadPluginDescriptor(
     module.descriptor = subDescriptor
   }
 
-  descriptor.patchDescriptor(raw = raw, context = context)
   descriptor.initialize(context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
   descriptor.jarFiles = fileItems.map { it.file }
   return descriptor
@@ -984,9 +984,9 @@ private fun loadCoreProductPlugin(
   }
   val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
+  descriptor.patchDescriptor(raw = raw, context = context)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
   loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
-  descriptor.patchDescriptor(raw = raw, context = context)
   descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
@@ -1312,6 +1312,7 @@ private fun loadDescriptorFromResource(
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = basePath, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
+    descriptor.patchDescriptor(raw = raw, context = context)
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
 
     if (libDir == null) {
@@ -1330,7 +1331,6 @@ private fun loadDescriptorFromResource(
     else {
       loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
     }
-    descriptor.patchDescriptor(raw = raw, context = context)
     descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
     return descriptor
   }
