@@ -62,7 +62,7 @@ public final class IdeaLogger extends JulLogger {
   }
 
   private boolean isTooFrequentException(@Nullable Throwable t) {
-    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred() || isDebugEnabled() || isTraceEnabled()) {
       return false;
     }
 
