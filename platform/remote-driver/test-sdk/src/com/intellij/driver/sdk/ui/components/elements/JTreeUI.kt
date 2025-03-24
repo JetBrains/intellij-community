@@ -118,6 +118,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun expandAll(timeout: Duration = 5.seconds) {
+    waitForNodesLoaded()
     fixture.expandAll(timeout.inWholeMilliseconds.toInt())
   }
 
