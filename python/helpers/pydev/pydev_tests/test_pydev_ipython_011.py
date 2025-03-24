@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import unittest
+import warnings
 
 import pytest
 
@@ -9,6 +10,8 @@ pytest.importorskip('IPython')
 
 from _pydev_bundle.pydev_stdin import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
+from _pydev_bundle.pydev_ipython_console_011 import PyDevTerminalInteractiveShell
+from _pydev_bundle.pydev_ipython_completer import init_shell_completer
 from _pydev_comm.pydev_rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
 from _pydevd_bundle.pydevd_constants import IS_PY2
@@ -25,6 +28,18 @@ except:
 def eq_(a, b):
     if a != b:
         raise AssertionError('%s != %s' % (a, b))
+
+
+@pytest.fixture
+def assert_no_warnings():
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        yield
+
+
+def test_no_deprecations(assert_no_warnings):
+    shell = PyDevTerminalInteractiveShell()
+    init_shell_completer(shell)
 
 
 class TestBase(unittest.TestCase):
