@@ -77,7 +77,6 @@ public fun <T : Any> ListComboBox(
     items: List<T>,
     selectedIndex: Int,
     onItemSelected: (Int) -> Unit,
-    itemToLabel: (T) -> String,
     itemKeys: (Int, T) -> Any,
     modifier: Modifier = Modifier,
     isEnabled: Boolean = true,
@@ -88,18 +87,17 @@ public fun <T : Any> ListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
+    labelContent: @Composable () -> Unit,
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
 
-    var labelText by remember { mutableStateOf(itemToLabel(items[selectedIndex])) }
     var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
     val scope = rememberCoroutineScope()
 
     fun setSelectedItem(index: Int) {
         if (index >= 0 && index <= items.lastIndex) {
             listState.selectedKeys = setOf(itemKeys(index, items[index]))
-            labelText = itemToLabel(items[index])
             onItemSelected(index)
             scope.launch { listState.lazyListState.scrollToIndex(index) }
         } else {
@@ -146,7 +144,6 @@ public fun <T : Any> ListComboBox(
                 }
             },
         isEnabled = isEnabled,
-        labelText = labelText,
         maxPopupHeight = popupMaxHeight,
         onArrowDownPress = {
             var currentSelectedIndex = listState.selectedItemIndex(items, itemKeys)
@@ -177,6 +174,7 @@ public fun <T : Any> ListComboBox(
         interactionSource = interactionSource,
         outline = outline,
         popupManager = popupManager,
+        labelContent = labelContent
     ) {
         PopupContent(
             items = items,
@@ -189,7 +187,7 @@ public fun <T : Any> ListComboBox(
                     previewSelectedIndex = it
                 }
             },
-            onSelectedItemChange = ::setSelectedItem,
+            onSelectedItemChange = { index: Int -> setSelectedItem(index) },
             itemKeys = itemKeys,
             itemContent = itemContent,
         )

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.PopupProperties
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -194,6 +195,163 @@ public fun ComboBox(
                             .padding(style.metrics.contentPadding),
                 )
 
+                Chevron(style, isEnabled)
+            }
+        }
+
+        if (popupVisible) {
+            val maxHeight =
+                if (maxPopupHeight == Dp.Unspecified) {
+                    JewelTheme.comboBoxStyle.metrics.maxPopupHeight
+                } else {
+                    maxPopupHeight
+                }
+
+            PopupContainer(
+                onDismissRequest = {
+                    if (!chevronHovered) {
+                        popupManager.setPopupVisible(false)
+                    }
+                },
+                modifier =
+                    popupModifier
+                        .testTag("Jewel.ComboBox.Popup")
+                        .heightIn(max = maxHeight)
+                        .width(comboBoxWidth)
+                        .onClick { popupManager.setPopupVisible(false) },
+                horizontalAlignment = Alignment.Start,
+                popupProperties = PopupProperties(focusable = false),
+                content = popupContent,
+            )
+        }
+    }
+}
+
+@ExperimentalJewelApi
+@Composable
+public fun ComboBox(
+    modifier: Modifier = Modifier,
+    popupModifier: Modifier = Modifier,
+    isEnabled: Boolean = true,
+    outline: Outline = Outline.None,
+    maxPopupHeight: Dp = Dp.Unspecified,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ComboBoxStyle = JewelTheme.comboBoxStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    onArrowDownPress: () -> Unit = {},
+    onArrowUpPress: () -> Unit = {},
+    popupManager: PopupManager = PopupManager(),
+    labelContent: @Composable (() -> Unit),
+    popupContent: @Composable (() -> Unit),
+) {
+    var chevronHovered by remember { mutableStateOf(false) }
+
+    val popupVisible by popupManager.isPopupVisible
+
+    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = isEnabled)) }
+    val comboBoxFocusRequester = remember { FocusRequester() }
+
+    remember(isEnabled) { comboBoxState = comboBoxState.copy(enabled = isEnabled) }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is PressInteraction.Press -> comboBoxState = comboBoxState.copy(pressed = true)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release -> comboBoxState = comboBoxState.copy(pressed = false)
+                is HoverInteraction.Enter -> comboBoxState = comboBoxState.copy(hovered = true)
+                is HoverInteraction.Exit -> comboBoxState = comboBoxState.copy(hovered = false)
+            }
+        }
+    }
+
+    val shape = RoundedCornerShape(style.metrics.cornerSize)
+    val borderColor by style.colors.borderFor(comboBoxState)
+    var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
+    val density = LocalDensity.current
+
+    Box(
+        modifier =
+            modifier
+                .focusRequester(comboBoxFocusRequester)
+                .onFocusChanged { focusState ->
+                    comboBoxState = comboBoxState.copy(focused = focusState.isFocused)
+                    if (!focusState.isFocused) {
+                        popupManager.setPopupVisible(false)
+                    }
+                }
+                .thenIf(isEnabled) {
+                    focusable(true, interactionSource)
+                        .onHover { chevronHovered = it }
+                        .pointerInput(interactionSource) {
+                            detectPressAndCancel(
+                                onPress = {
+                                    popupManager.setPopupVisible(!popupVisible)
+                                    comboBoxFocusRequester.requestFocus()
+                                },
+                                onCancel = { popupManager.setPopupVisible(false) },
+                            )
+                        }
+                        .semantics(mergeDescendants = true) { role = Role.DropdownList }
+                        .onPreviewKeyEvent {
+                            if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+
+                            when {
+                                it.key == Key.Spacebar -> {
+                                    popupManager.setPopupVisible(!popupVisible)
+                                    true
+                                }
+
+                                it.key == Key.DirectionDown -> {
+                                    if (popupVisible) {
+                                        onArrowDownPress()
+                                    } else {
+                                        popupManager.setPopupVisible(true)
+                                    }
+                                    true
+                                }
+
+                                it.key == Key.DirectionUp && popupVisible -> {
+                                    onArrowUpPress()
+                                    true
+                                }
+
+                                it.key == Key.Escape && popupVisible -> {
+                                    popupManager.setPopupVisible(false)
+                                    true
+                                }
+
+                                else -> false
+                            }
+                        }
+                }
+                .background(style.colors.backgroundFor(comboBoxState, false).value, shape)
+                .thenIf(outline == Outline.None) {
+                    focusOutline(state = comboBoxState, outlineShape = shape, alignment = Stroke.Alignment.Center)
+                        .border(
+                            alignment = Stroke.Alignment.Inside,
+                            width = style.metrics.borderWidth,
+                            color = borderColor,
+                            shape = shape,
+                        )
+                }
+                .outline(
+                    state = comboBoxState,
+                    outline = outline,
+                    outlineShape = shape,
+                    alignment = Stroke.Alignment.Center,
+                )
+                .widthIn(min = style.metrics.minSize.width)
+                .height(style.metrics.minSize.height)
+                .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        CompositionLocalProvider(LocalContentColor provides style.colors.contentFor(comboBoxState).value) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.focusable(false).focusProperties { canFocus = false },
+            ) {
+                labelContent()
                 Chevron(style, isEnabled)
             }
         }

@@ -117,7 +117,16 @@ private fun ListComboBoxes() {
                         iconContentDescription = item,
                     )
                 },
-                itemToLabel = { item -> item },
+                labelContent = {
+                    val programmingLanguage = languageOptions[selectedIndex]
+                    SimpleListItem(
+                        text = programmingLanguage.name,
+                        iconContentDescription = programmingLanguage.name,
+                        icon = programmingLanguage.icon,
+                        isSelected = false,
+                        isActive = true,
+                    )
+                },
                 itemKeys = { _, item -> item },
             )
         }
@@ -135,7 +144,16 @@ private fun ListComboBoxes() {
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
                 onItemSelected = { index -> selectedIndex = index },
-                itemToLabel = { item -> item },
+                labelContent = {
+                    val programmingLanguage = languageOptions[selectedIndex]
+                    SimpleListItem(
+                        text = programmingLanguage.name,
+                        iconContentDescription = programmingLanguage.name,
+                        icon = programmingLanguage.icon,
+                        isSelected = false,
+                        isActive = true,
+                    )
+                },
                 itemKeys = { _, item -> item },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
@@ -171,7 +189,16 @@ private fun ListComboBoxes() {
                 maxPopupHeight = 150.dp,
                 onItemSelected = { index -> selectedIndex = index },
                 itemKeys = { index, _ -> index },
-                itemToLabel = { item -> item.name },
+                labelContent = {
+                    val programmingLanguage = languageOptions[selectedIndex]
+                    SimpleListItem(
+                        text = programmingLanguage.name,
+                        iconContentDescription = programmingLanguage.name,
+                        icon = programmingLanguage.icon,
+                        isSelected = false,
+                        isActive = true,
+                    )
+                },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item.name,
@@ -188,11 +215,7 @@ private fun ListComboBoxes() {
             Text("Using fancy key")
             var selectedIndex by remember { mutableIntStateOf(3) }
             val selectedItemText = if (selectedIndex >= 0) languageOptions[selectedIndex].name else ""
-            Text(
-                text = "Selected item: $selectedItemText",
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Text(text = "Selected item: $selectedItemText", maxLines = 1, overflow = TextOverflow.Ellipsis)
 
             EditableListComboBox(
                 items = languageOptions,
