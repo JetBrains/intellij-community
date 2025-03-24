@@ -8,7 +8,6 @@ import kotlin.io.path.pathString
 internal class ApplicationSpecialPathsProvider : SpecialPathsProvider {
   override fun collectPaths(project: Project?): List<SpecialPathEntry> {
     return listOf(
-      SpecialPathEntry("Installation home directory", PathManager.getHomePath(), SpecialPathEntry.Kind.Folder),
       SpecialPathEntry("System directory", PathManager.getSystemPath(), SpecialPathEntry.Kind.Folder),
       SpecialPathEntry("Config directory", PathManager.getConfigPath(), SpecialPathEntry.Kind.Folder),
       SpecialPathEntry("Bin directory", PathManager.getBinPath(), SpecialPathEntry.Kind.Folder),
@@ -20,6 +19,8 @@ internal class ApplicationSpecialPathsProvider : SpecialPathsProvider {
       SpecialPathEntry("MISC Temp directory", PathManager.getTempPath(), SpecialPathEntry.Kind.Folder),
       SpecialPathEntry("LOGS folder", PathManager.getLogPath(), SpecialPathEntry.Kind.Folder),
       SpecialPathEntry("LOGS frontend log", LoggerFactory.getLogFilePath().pathString, SpecialPathEntry.Kind.File),
+      SpecialPathEntry("IDE Installation home", PathManager.getHomePath(), SpecialPathEntry.Kind.Folder),
+      SpecialPathEntry("IDE Runtime", System.getProperty("java.home"), SpecialPathEntry.Kind.Folder),
     )
   }
 }
