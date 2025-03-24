@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
@@ -114,6 +115,7 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     assertNotNull(action);
 
     myFixture.launchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
     myFixture.checkResultByFile("src/fromSrc/Foo_after.java");
     myFixture.checkResultByFile("content/anno/fromSrc/annotations.xml",

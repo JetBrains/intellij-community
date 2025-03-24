@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -119,6 +120,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture.launchAction(getAnnotateAction("NotNull"));
 
     FileDocumentManager.getInstance().saveAllDocuments();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
     final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
     assertNotNull(psiElement);
