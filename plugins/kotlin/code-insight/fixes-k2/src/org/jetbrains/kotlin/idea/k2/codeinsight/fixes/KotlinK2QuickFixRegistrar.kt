@@ -292,6 +292,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ImportQuickFixFactories.noSetMethodFactory)
 
         registerFactory(ImportQuickFixFactories.componentFunctionMissingFactory)
+        registerFactory(ImportQuickFixFactories.componentFunctionAmbiguityFactory)
 
         registerFactory(ImportQuickFixFactories.iteratorMissingFactory)
         registerFactory(ImportQuickFixFactories.iteratorAmbiguityFactory)

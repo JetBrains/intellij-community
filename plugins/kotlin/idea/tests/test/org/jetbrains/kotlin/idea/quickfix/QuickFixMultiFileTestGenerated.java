@@ -981,6 +981,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponent1.test");
             }
 
+            @TestMetadata("multiDeclarationExtensionComponent1_flexibleReceiver.test")
+            public void testMultiDeclarationExtensionComponent1_flexibleReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponent1_flexibleReceiver.test");
+            }
+
             @TestMetadata("multiDeclarationExtensionComponent2.test")
             public void testMultiDeclarationExtensionComponent2() throws Exception {
                 runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponent2.test");
