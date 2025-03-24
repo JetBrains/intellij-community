@@ -7,10 +7,8 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
-import com.intellij.internal.inspector.PropertyBean;
-import com.intellij.internal.inspector.UiInspectorAction;
-import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
-import com.intellij.internal.inspector.UiInspectorImpl;
+import com.intellij.internal.inspector.*;
+import com.intellij.internal.inspector.themePicker.UiThemeColorPicker;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -136,6 +134,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.add(new RefreshAction());
     actions.addSeparator();
     actions.add(new ToggleAccessibleAction());
+    actions.addSeparator();
+    actions.addAction(new ToggleThemeColorPickerAction());
     actions.addSeparator();
     actions.add(new ShowDataContextAction());
     actions.addSeparator();
@@ -500,7 +500,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class ToggleHighlightAction extends MyTextAction {
+  private final class ToggleHighlightAction extends MyTextAction implements Toggleable {
     private ToggleHighlightAction() {
       super(IdeBundle.messagePointer("action.Anonymous.text.highlight"));
     }
@@ -514,6 +514,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myInfo != null || !myComponents.isEmpty());
+      Toggleable.setSelected(e.getPresentation(), myIsHighlighted);
     }
 
     @Override
@@ -565,7 +566,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
             if (ac != null) {
               componentNode.runAccessibilityTests(ac);
             }
-          } else {
+          }
+          else {
             componentNode.clearAccessibilityTestsResult();
           }
         }
@@ -598,7 +600,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class ToggleAccessibleAction extends MyTextAction {
+  private final class ToggleAccessibleAction extends MyTextAction implements Toggleable {
     private boolean isAccessibleEnable = false;
 
     private ToggleAccessibleAction() {
@@ -612,9 +614,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText(isAccessibleEnable
-                                  ? InternalActionsBundle.message("action.Anonymous.text.Visible")
-                                  : InternalActionsBundle.message("action.Anonymous.text.Accessible"));
+      Toggleable.setSelected(e.getPresentation(), isAccessibleEnable);
     }
 
     @Override
@@ -638,6 +638,27 @@ public final class InspectorWindow extends JDialog implements Disposable {
       if (selected != null) {
         myHierarchyTree.selectPath(selected, isAccessibleEnable);
       }
+    }
+  }
+
+  private final class ToggleThemeColorPickerAction extends MyTextAction implements Toggleable {
+    private ToggleThemeColorPickerAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.colorPicker"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      UiThemeColorPicker.getInstance().setEnabled(!UiThemeColorPicker.getInstance().isEnabled());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Toggleable.setSelected(e.getPresentation(), UiThemeColorPicker.getInstance().isEnabled());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
