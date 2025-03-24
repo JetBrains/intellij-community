@@ -144,6 +144,17 @@ public abstract class RenamePsiElementProcessorBase {
     return null;
   }
 
+  /**
+   * Gets a callback associated with a single renamed element.
+   * All callbacks will be run after renaming of all elements is done.
+   *
+   * @param element         that was renamed.
+   * @param newName         of the {@code element}.
+   * @param usages          of the {@code element}.
+   * @param allRenames      all elements that were renamed.
+   * @param elementListener for sending notifications when some element was refactored.
+   * @return callback.
+   */
   public @Nullable Runnable getPostRenameCallback(@NotNull PsiElement element,
                                                   @NotNull String newName,
                                                   @NotNull Collection<UsageInfo> usages,
