@@ -122,6 +122,18 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
+  public void info(String message, @Nullable Throwable t) {
+    if (isTooFrequentException(t)) return;
+    super.info(message, ensureNotControlFlow(t));
+  }
+
+  @Override
+  public void warn(String message, @Nullable Throwable t) {
+    if (isTooFrequentException(t)) return;
+    super.warn(message, ensureNotControlFlow(t));
+  }
+
+  @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     if (isTooFrequentException(t)) return;
 
@@ -140,28 +152,9 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
-  public void info(String message, @Nullable Throwable t) {
-    if (isTooFrequentException(t)) return;
-    super.info(message, ensureNotControlFlow(t));
-  }
-
-  @Override
-  public void warn(String message, @Nullable Throwable t) {
-    if (isTooFrequentException(t)) return;
-    super.warn(message, ensureNotControlFlow(t));
-  }
-
-  @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (isTooFrequentException(t)) return;
-    doLogError(message, t, details);
-    logErrorHeader(t);
-    if (t != null) {
-      reportToFus(t);
-    }
-  }
 
-  private void doLogError(String message, @Nullable Throwable t, String... details) {
     if (t != null && shouldRethrow(t)) {
       logSevere(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
@@ -178,7 +171,13 @@ public final class IdeaLogger extends JulLogger {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
+
     logSevere(message + detailString, t);
+    logErrorHeader(t);
+
+    if (t != null) {
+      reportToFus(t);
+    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {
