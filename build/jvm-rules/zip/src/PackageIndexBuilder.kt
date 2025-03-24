@@ -1,15 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.dynatrace.hash4j.hashing.Hashing
 
-class PackageIndexBuilder(writeCrc32: Boolean = true) {
+private val emptyStringArray: Array<String> = emptyArray()
+
+class PackageIndexBuilder(
+  private val addDirEntriesMode: AddDirEntriesMode,
+  writeCrc32: Boolean = true,
+) {
+  private val addClassDir: Boolean = addDirEntriesMode == AddDirEntriesMode.ALL
   private val dirsToRegister = HashSet<String>()
 
   @JvmField
   val indexWriter: IkvIndexBuilder = IkvIndexBuilder(writeCrc32)
 
-  fun addFile(name: String, addClassDir: Boolean = false) {
+  fun addFile(name: String) {
     val i = name.lastIndexOf('/')
     val packageNameHash = if (i == -1) 0 else Hashing.xxh3_64().hashCharsToLong(name.substring(0, i))
     if (name.endsWith(".class")) {
@@ -24,17 +30,17 @@ class PackageIndexBuilder(writeCrc32: Boolean = true) {
     }
   }
 
-  fun writePackageIndex(writer: ZipFileWriter, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
-    writePackageIndex(stream = writer.resultStream, addDirEntriesMode = addDirEntriesMode)
-  }
-
-  fun writePackageIndex(stream: ZipArchiveOutputStream, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
+  internal inline fun writePackageIndex(writeDirEntries: (Array<String>) -> Unit) {
     if (!indexWriter.resourcePackages.isEmpty()) {
       // add empty package if top-level directory will be requested
       indexWriter.resourcePackages.add(0)
     }
 
-    val sortedDirsToRegister = dirsToRegister.toTypedArray()
+    if (dirsToRegister.isEmpty()) {
+      return
+    }
+
+    val sortedDirsToRegister = dirsToRegister.toArray(emptyStringArray)
     sortedDirsToRegister.sort()
 
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
@@ -45,12 +51,8 @@ class PackageIndexBuilder(writeCrc32: Boolean = true) {
       }
     }
     else {
-      for (dir in sortedDirsToRegister) {
-        stream.addDirEntry(dir)
-      }
+      writeDirEntries(sortedDirsToRegister)
     }
-
-    stream.finish(indexWriter)
   }
 
   // add to index only directories where some non-class files are located (as it can be requested in runtime, e.g., stubs, fileTemplates)

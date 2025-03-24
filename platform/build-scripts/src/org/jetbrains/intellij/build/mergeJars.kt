@@ -8,7 +8,16 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.INDEX_FILENAME
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
+import org.jetbrains.intellij.build.io.ZipArchiver
+import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.io.ZipIndexWriter
+import org.jetbrains.intellij.build.io.archiveDir
+import org.jetbrains.intellij.build.io.fileDataWriter
+import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -45,43 +54,38 @@ internal suspend fun buildJar(
   nativeFileHandler: NativeFileHandler? = null,
   addDirEntries: Boolean = false,
 ) {
-  val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
-  writeNewFile(targetFile) { outChannel ->
-    ZipFileWriter(
-      channel = outChannel,
-      deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
-      zipIndexWriter = ZipIndexWriter(indexWriter = packageIndexBuilder?.indexWriter)
-    ).use { zipCreator ->
-      val uniqueNames = HashMap<String, Path>()
+  val packageIndexBuilder = if (compress) null else PackageIndexBuilder(if (addDirEntries) AddDirEntriesMode.ALL else AddDirEntriesMode.NONE)
+  Files.createDirectories(targetFile.parent)
+  ZipFileWriter(
+    ZipArchiveOutputStream(fileDataWriter(targetFile), ZipIndexWriter(packageIndexBuilder)),
+    deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
+  ).use { zipCreator ->
+    val uniqueNames = HashMap<String, Path>()
 
-      val filesToMerge = mutableListOf<CharSequence>()
+    val filesToMerge = mutableListOf<CharSequence>()
 
-      for (source in sources) {
-        val positionBefore = zipCreator.channelPosition
-        writeSource(
-          source = source,
-          zipCreator = zipCreator,
-          uniqueNames = uniqueNames,
-          packageIndexBuilder = packageIndexBuilder,
-          targetFile = targetFile,
-          sources = sources,
-          nativeFileHandler = nativeFileHandler,
-          compress = compress,
-          filesToMerge = filesToMerge,
-          addClassDir = addDirEntries,
-        )
+    for (source in sources) {
+      val positionBefore = zipCreator.channelPosition
+      writeSource(
+        source = source,
+        zipCreator = zipCreator,
+        uniqueNames = uniqueNames,
+        packageIndexBuilder = packageIndexBuilder,
+        targetFile = targetFile,
+        sources = sources,
+        nativeFileHandler = nativeFileHandler,
+        compress = compress,
+        filesToMerge = filesToMerge,
+      )
 
-        if (notify) {
-          source.size = (zipCreator.channelPosition - positionBefore).toInt()
-          source.hash = 0
-        }
+      if (notify) {
+        source.size = (zipCreator.channelPosition - positionBefore).toInt()
+        source.hash = 0
       }
+    }
 
-      if (filesToMerge.isNotEmpty()) {
-        zipCreator.uncompressedData(nameString = listOfEntitiesFileName, data = filesToMerge.joinToString("\n") { it.trim() })
-      }
-
-      packageIndexBuilder?.writePackageIndex(zipCreator, if (addDirEntries) AddDirEntriesMode.ALL else AddDirEntriesMode.NONE)
+    if (filesToMerge.isNotEmpty()) {
+      zipCreator.uncompressedData(nameString = listOfEntitiesFileName, data = filesToMerge.joinToString("\n") { it.trim() })
     }
   }
 }
@@ -96,7 +100,6 @@ private suspend fun writeSource(
   nativeFileHandler: NativeFileHandler?,
   compress: Boolean,
   filesToMerge: MutableList<CharSequence>,
-  addClassDir: Boolean = false,
 ) {
   val indexWriter = packageIndexBuilder?.indexWriter
   when (source) {
@@ -108,7 +111,7 @@ private suspend fun writeSource(
           false
         }
         else if (uniqueNames.putIfAbsent(name, source.dir) == null && (includeManifest || name != "META-INF/MANIFEST.MF")) {
-          packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
+          packageIndexBuilder?.addFile(name)
           true
         }
         else {
@@ -130,14 +133,8 @@ private suspend fun writeSource(
         throw IllegalStateException("in-memory source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
       }
 
-      packageIndexBuilder?.addFile(source.relativePath, addClassDir = addClassDir)
-      zipCreator.uncompressedData(
-        nameString = source.relativePath,
-        maxSize = source.data.size,
-        dataWriter = {
-          it.writeBytes(source.data)
-        },
-      )
+      packageIndexBuilder?.addFile(source.relativePath)
+      zipCreator.uncompressedData(source.relativePath, source.data)
     }
 
     is FileSource -> {
@@ -145,7 +142,7 @@ private suspend fun writeSource(
         throw IllegalStateException("fileSource source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
       }
 
-      packageIndexBuilder?.addFile(source.relativePath, addClassDir = addClassDir)
+      packageIndexBuilder?.addFile(source.relativePath)
       zipCreator.file(file = source.file, nameString = source.relativePath)
     }
 
@@ -163,7 +160,6 @@ private suspend fun writeSource(
           compress = compress,
           targetFile = targetFile,
           filesToMerge = filesToMerge,
-          addClassDir = addClassDir,
         )
       }
       finally {
@@ -187,7 +183,6 @@ private suspend fun writeSource(
           nativeFileHandler = nativeFileHandler,
           compress = compress,
           filesToMerge = filesToMerge,
-          addClassDir = addClassDir
         )
       }
     }
@@ -205,7 +200,6 @@ private suspend fun handleZipSource(
   compress: Boolean,
   targetFile: Path,
   filesToMerge: MutableList<CharSequence>,
-  addClassDir: Boolean,
 ) {
   val nativeFiles = if (nativeFileHandler == null) {
     null
@@ -231,7 +225,7 @@ private suspend fun handleZipSource(
         zipCreator.compressedData(name, data)
       }
       else {
-        zipCreator.uncompressedData(nameString = name, data = data)
+        zipCreator.uncompressedData(path = name, data = data)
       }
     }
 
@@ -260,7 +254,7 @@ private suspend fun handleZipSource(
         nativeFiles!!.value.add(name)
       }
       else if (shouldStayInJar) {
-        packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
+        packageIndexBuilder?.addFile(name)
 
         // sign it
         val file = nativeFileHandler.sign(name, dataSupplier)
@@ -275,7 +269,7 @@ private suspend fun handleZipSource(
       }
     }
     else if (shouldStayInJar) {
-      packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
+      packageIndexBuilder?.addFile(name)
       writeZipData(dataSupplier())
     }
   }

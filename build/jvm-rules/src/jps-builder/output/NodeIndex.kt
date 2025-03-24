@@ -1,10 +1,10 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.output
 
 import androidx.collection.MutableLongObjectMap
 import com.dynatrace.hash4j.hashing.Hashing
-import io.netty.buffer.ByteBuf
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -34,22 +34,25 @@ class NodeIndex(
     return Int.SIZE_BYTES + Int.SIZE_BYTES + (map.size * Long.SIZE_BYTES * 3)
   }
 
-  fun write(buffer: ByteBuf) {
-    buffer.writeIntLE(ABI_IC_NODE_FORMAT_VERSION)
+  fun write(buffer: ByteBuffer) {
+    require(buffer.order() == ByteOrder.LITTLE_ENDIAN)
+
+    buffer.putInt(ABI_IC_NODE_FORMAT_VERSION)
 
     val keys = LongArray(map.size)
     var index = 0
     map.forEachKey { keys[index++] = it }
     keys.sort()
 
-    buffer.writeIntLE(keys.size)
-    for (key in keys) {
-      buffer.writeLongLE(key)
+    buffer.putInt(keys.size)
+    buffer.asLongBuffer().also { longBuffer ->
+      longBuffer.put(keys)
+      buffer.position(buffer.position() + (keys.size * Long.SIZE_BYTES))
     }
     for (key in keys) {
       val entry = map.get(key)!!
-      buffer.writeLongLE(entry.digest)
-      buffer.writeLongLE(entry.offsetAndSize)
+      buffer.putLong(entry.digest)
+      buffer.putLong(entry.offsetAndSize)
     }
   }
 }

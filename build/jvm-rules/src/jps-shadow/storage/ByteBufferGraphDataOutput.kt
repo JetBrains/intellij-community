@@ -3,55 +3,54 @@
 
 package org.jetbrains.jps.dependency.storage
 
-import androidx.collection.MutableObjectIntMap
-import io.netty.buffer.ByteBuf
 import org.jetbrains.jps.dependency.GraphDataOutput
+import java.nio.ByteBuffer
 
-class NettyBufferGraphDataOutput(private val buffer: ByteBuf) : GraphDataOutput {
+class ByteBufferGraphDataOutput(private val buffer: ByteBuffer) : GraphDataOutput {
   private val stringMap = createStringMap()
 
   override fun writeRawLong(v: Long) {
-    buffer.writeLongLE(v)
+    buffer.putLong(v)
   }
 
   override fun write(v: ByteArray) {
-    buffer.writeBytes(v)
+    buffer.put(v)
   }
 
   override fun write(v: ByteArray, offset: Int, lenght: Int) {
-    buffer.writeBytes(v, offset, lenght)
+    buffer.put(v, offset, lenght)
   }
 
   override fun writeBoolean(v: Boolean) {
-    buffer.writeBoolean(v)
+    buffer.put(if (v) 1 else 0)
   }
 
   override fun writeByte(v: Int) {
-    buffer.writeByte(v)
+    buffer.put(v.toByte())
   }
 
   override fun writeShort(v: Int) {
-    buffer.writeShortLE(v)
+    buffer.putShort(v.toShort())
   }
 
   override fun writeChar(v: Int) {
-    buffer.writeChar(v)
+    buffer.putChar(v.toChar())
   }
 
   override fun writeInt(v: Int) {
-    buffer.writeIntLE(v)
+    buffer.putInt(v)
   }
 
   override fun writeLong(v: Long) {
-    buffer.writeLongLE(v)
+    buffer.putLong(v)
   }
 
   override fun writeFloat(v: Float) {
-    buffer.writeFloatLE(v)
+    buffer.putFloat(v)
   }
 
   override fun writeDouble(v: Double) {
-    buffer.writeDoubleLE(v)
+    buffer.putDouble(v)
   }
 
   override fun writeUTF(s: String) {
@@ -62,39 +61,35 @@ class NettyBufferGraphDataOutput(private val buffer: ByteBuf) : GraphDataOutput 
     else {
       val bytes = s.toByteArray()
       writeUInt29(buffer, (bytes.size shl 1) or 1)
-      buffer.writeBytes(bytes)
+      buffer.put(bytes)
       stringMap.set(s, stringMap.size)
     }
   }
 }
 
-internal fun createStringMap(): MutableObjectIntMap<String> {
-  val result = MutableObjectIntMap<String>(predefinedStringArray.size * 2)
-  for ((i, s) in predefinedStringArray.withIndex()) {
-    result.set(s, i)
-  }
-  return result
-}
-
-private fun writeUInt29(buffer: ByteBuf, value: Int) {
+private fun writeUInt29(buffer: ByteBuffer, value: Int) {
   when {
     value < 0x80 -> {
-      buffer.writeByte(value)
+      buffer.put(value.toByte())
     }
+
     value < 0x4000 -> {
-      buffer.writeByte((value shr 7) or 0x80)
-      buffer.writeByte(value and 0x7F)
+      buffer.put(((value shr 7) or 0x80).toByte())
+      buffer.put((value and 0x7F).toByte())
     }
+
     value < 0x200000 -> {
-      buffer.writeByte((value shr 14) or 0x80)
-      buffer.writeByte((value shr 7) or 0x80)
-      buffer.writeByte(value and 0x7F)
+      buffer.put(((value shr 14) or 0x80).toByte())
+      buffer.put(((value shr 7) or 0x80).toByte())
+      buffer.put((value and 0x7F).toByte())
     }
+
     else -> {
-      buffer.writeByte((value shr 22) or 0x80)
-      buffer.writeByte((value shr 15) or 0x80)
-      buffer.writeByte((value shr 8) or 0x80)
-      buffer.writeByte(value and 0xFF)
+      buffer.put(((value shr 22) or 0x80).toByte())
+      buffer.put(((value shr 15) or 0x80).toByte())
+      buffer.put(((value shr 8) or 0x80).toByte())
+      buffer.put((value and 0xFF).toByte())
     }
   }
 }
+

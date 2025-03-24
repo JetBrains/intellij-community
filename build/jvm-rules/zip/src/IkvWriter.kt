@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 
 class IkvWriter(private val channel: FileChannel) : AutoCloseable {
@@ -19,13 +21,14 @@ class IkvWriter(private val channel: FileChannel) : AutoCloseable {
   @Suppress("DuplicatedCode")
   override fun close() {
     channel.use {
-      val buf = Unpooled.buffer()
+      val buf = ByteBuffer.allocate(indexBuilder.dataSize()).order(ByteOrder.LITTLE_ENDIAN)
       indexBuilder.write(buf)
-      writeBuffer(buf)
+      buf.flip()
+      writeBuffer(Unpooled.wrappedBuffer(buf))
     }
   }
 
   private fun writeBuffer(value: ByteBuf) {
-    position += writeToFileChannelFully(channel, position, value)
+    position = writeToFileChannelFully(channel, position, value)
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection")
 
 package org.jetbrains.jps.dependency
@@ -7,30 +8,17 @@ import androidx.collection.MutableScatterMap
 import androidx.collection.ObjectList
 import androidx.collection.objectListOf
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
-import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.jps.dependency.storage.ClassRegistry
-import java.io.DataInput
 import java.io.DataOutput
-import java.io.IOException
-
-interface GraphDataInput : DataInput {
-  @Throws(IOException::class)
-  fun <T : ExternalizableGraphElement> readGraphElement(): T
-
-  @Throws(IOException::class)
-  fun <T : ExternalizableGraphElement, C : MutableCollection<in T>> readGraphElementCollection(result: C): C
-
-  fun readRawLong(): Long
-
-  fun readStringList(): List<String> {
-    return readList { readUTF() }
-  }
-
-  override fun readLine(): String = throw UnsupportedOperationException()
-}
 
 interface GraphDataOutput : DataOutput {
-  fun <T : ExternalizableGraphElement> writeGraphElement(element: T)
+  fun <T : ExternalizableGraphElement> writeGraphElement(element: T) {
+    ClassRegistry.writeClassId(element.javaClass, this)
+    if (element is FactoredExternalizableGraphElement<*>) {
+      writeGraphElement(element.getFactorData())
+    }
+    element.write(this)
+  }
 
   fun writeRawLong(v: Long)
 
@@ -66,17 +54,6 @@ interface GraphDataOutput : DataOutput {
       }
     }
   }
-}
-
-inline fun <reified T : Any> GraphDataInput.readList(reader: GraphDataInput.() -> T): List<T> {
-  val size = readInt()
-  if (size == 0) {
-    return emptyList()
-  }
-
-  return Array(size) {
-    reader()
-  }.asList()
 }
 
 internal inline fun <T : Any> GraphDataOutput.writeCollection(collection: Collection<T>, writer: GraphDataOutput.(T) -> Unit) {

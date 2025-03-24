@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.storage
 
 import org.h2.mvstore.DataUtils
@@ -13,10 +14,6 @@ internal class WriteBufGraphDataOutput(
   private val buffer: WriteBuffer,
   private val stringEnumerator: StringEnumerator,
 ) : GraphDataOutput {
-  override fun <T : ExternalizableGraphElement> writeGraphElement(element: T) {
-    doWriteGraphElement(this, element)
-  }
-
   override fun writeRawLong(v: Long) {
     buffer.putLong(v)
   }

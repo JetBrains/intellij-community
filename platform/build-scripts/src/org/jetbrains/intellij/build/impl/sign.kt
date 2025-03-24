@@ -17,9 +17,15 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
@@ -29,10 +35,15 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.extension
@@ -122,8 +133,8 @@ private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, c
     .setAttribute("zip", origin.toString())
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .use {
-      val packageIndexBuilder = PackageIndexBuilder()
-      transformZipUsingTempFile(file = origin, indexWriter = packageIndexBuilder.indexWriter) { zipWriter ->
+      val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
+      transformZipUsingTempFile(file = origin, packageIndexBuilder) { zipWriter ->
         readZipFile(origin) { name, dataSupplier ->
           packageIndexBuilder.addFile(name)
           if (entries.containsKey(name)) {
@@ -133,7 +144,6 @@ private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, c
             zipWriter.uncompressedData(name, dataSupplier())
           }
         }
-        packageIndexBuilder.writePackageIndex(zipWriter)
       }
       Files.setLastModifiedTime(origin, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }

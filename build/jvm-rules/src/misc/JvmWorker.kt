@@ -9,10 +9,9 @@ import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.W_OVERWRITE
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.ZipIndexWriter
-import org.jetbrains.intellij.build.io.file
+import org.jetbrains.intellij.build.io.fileDataWriter
 import java.io.File
 import java.io.Writer
-import java.nio.channels.FileChannel
 import java.nio.file.Path
 
 object JvmWorker : WorkRequestExecutor<WorkRequest> {
@@ -80,7 +79,7 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
       continue
     }
 
-    files.add(p.substring(stripPrefixWithSlash.length))
+    files.add(p.substring(stripPrefixWithSlash.length).replace(File.separatorChar, '/'))
   }
 
   files.sort()
@@ -89,17 +88,15 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
   //Files.writeString(Path.of("/tmp/f2.txt"), stripPrefixWithSlash + "\n" + files.joinToString("\n") { it.toString() })
 
   withContext(Dispatchers.IO) {
-    val packageIndexBuilder = PackageIndexBuilder()
+    val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.RESOURCE_ONLY)
     ZipArchiveOutputStream(
-      channel = FileChannel.open(outJar, W_OVERWRITE),
-      zipIndexWriter = ZipIndexWriter(packageIndexBuilder.indexWriter)
+      dataWriter = fileDataWriter(outJar, W_OVERWRITE),
+      zipIndexWriter = ZipIndexWriter(packageIndexBuilder),
     ).use { stream ->
       for (path in files) {
-        val name = path.replace(File.separatorChar, '/')
-        packageIndexBuilder.addFile(name = name, addClassDir = false)
-        stream.file(nameString = name, file = root.resolve(path))
+        packageIndexBuilder.addFile(name = path)
+        stream.fileWithoutCrc(path = path.toByteArray(), file = root.resolve(path))
       }
-      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
     }
   }
 }
