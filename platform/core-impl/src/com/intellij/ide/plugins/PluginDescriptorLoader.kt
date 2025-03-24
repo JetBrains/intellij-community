@@ -248,7 +248,7 @@ fun initMainDescriptorByRaw(
     }
   }
 
-  descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+  descriptor.patchDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
 }
 
@@ -794,7 +794,7 @@ private fun loadPluginDescriptor(
     module.descriptor = subDescriptor
   }
 
-  descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
+  descriptor.patchDescriptor(raw = raw, context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
   descriptor.initialize(context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
   descriptor.jarFiles = fileItems.map { it.file }
   return descriptor
@@ -986,7 +986,7 @@ private fun loadCoreProductPlugin(
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
   loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
-  descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+  descriptor.patchDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
@@ -1330,7 +1330,7 @@ private fun loadDescriptorFromResource(
     else {
       loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
     }
-    descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+    descriptor.patchDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
     descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
     return descriptor
   }
