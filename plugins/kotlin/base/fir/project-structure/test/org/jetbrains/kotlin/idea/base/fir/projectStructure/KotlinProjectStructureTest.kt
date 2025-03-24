@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.LibraryScope
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -27,7 +28,9 @@ import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.platform.modification.*
+import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -1001,5 +1004,32 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         }
 
         return module
+    }
+}
+
+private sealed interface KotlinModificationEvent
+
+private class KotlinCodeFragmentContextModificationEvent(public val module: KaModule) : KotlinModificationEvent
+private object KotlinGlobalModuleStateModificationEvent : KotlinModificationEvent
+private object KotlinGlobalScriptModuleStateModificationEvent : KotlinModificationEvent
+private object KotlinGlobalSourceModuleStateModificationEvent : KotlinModificationEvent
+private object KotlinGlobalSourceOutOfBlockModificationEvent : KotlinModificationEvent
+private class KotlinModuleOutOfBlockModificationEvent(public val module: KaModule) : KotlinModificationEvent
+private class KotlinModuleStateModificationEvent(
+     val module: KaModule,
+     val modificationKind: KotlinModuleStateModificationKind,
+) : KotlinModificationEvent
+
+private fun Project.publishModificationEvent(event: KotlinModificationEvent) {
+    with(analysisMessageBus) {
+        when (event) {
+            is KotlinCodeFragmentContextModificationEvent -> syncPublisher(KotlinModificationTopics.CODE_FRAGMENT_CONTEXT_MODIFICATION).onModification(event.module)
+            KotlinGlobalModuleStateModificationEvent -> syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+            KotlinGlobalScriptModuleStateModificationEvent -> syncPublisher(KotlinModificationTopics.GLOBAL_SCRIPT_MODULE_STATE_MODIFICATION).onModification()
+            KotlinGlobalSourceModuleStateModificationEvent -> syncPublisher(KotlinModificationTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION).onModification()
+            KotlinGlobalSourceOutOfBlockModificationEvent -> syncPublisher(KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
+            is KotlinModuleOutOfBlockModificationEvent -> syncPublisher(KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(event.module)
+            is KotlinModuleStateModificationEvent -> syncPublisher(KotlinModificationTopics.MODULE_STATE_MODIFICATION).onModification(event.module, event.modificationKind)
+        }
     }
 }

@@ -12,7 +12,10 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.*
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
@@ -59,18 +62,16 @@ internal class K2IDEProjectStructureProviderCache(
 
     init {
         analysisMessageBus.connect(this).apply {
-            subscribe(KotlinModificationEvent.TOPIC, KotlinModificationEventListener { event ->
-                when (event) {
-                    KotlinGlobalModuleStateModificationEvent -> invalidateAllModuleCaches()
-                    is KotlinModuleStateModificationEvent -> invalidateCaches(event.module)
-                    is KotlinGlobalSourceModuleStateModificationEvent -> invalidateSourceModuleCaches()
-                    is KotlinCodeFragmentContextModificationEvent -> {}
-                    KotlinGlobalSourceOutOfBlockModificationEvent -> {}
-                    is KotlinModuleOutOfBlockModificationEvent -> {}
-                    KotlinGlobalScriptModuleStateModificationEvent -> {
-                        /* scripts are not cached */
-                    }
-                }
+            subscribe(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION, KotlinGlobalModuleStateModificationListener {
+                invalidateAllModuleCaches()
+            })
+
+            subscribe(KotlinModificationTopics.MODULE_STATE_MODIFICATION, KotlinModuleStateModificationListener { module, _ ->
+                invalidateCaches(module)
+            })
+
+            subscribe(KotlinModificationTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION, KotlinGlobalSourceModuleStateModificationListener {
+                invalidateSourceModuleCaches()
             })
         }
     }
@@ -153,7 +154,7 @@ internal class K2IDEProjectStructureProviderCache(
      * This function should only be used by `K2IDEProjectStructureProviderCache` and `K2IDEProjectStructureProvider`.
      */
     fun isItSafeToCacheModules(): Boolean {
-        return !analysisMessageBus.hasUndeliveredEvents(KotlinModificationEvent.TOPIC)
+        return ALL_TOPICS.none { analysisMessageBus.hasUndeliveredEvents(it) }
     }
 
     private fun moduleCacheForKind(kind: KaSourceModuleKind): ConcurrentHashMap<ModuleId, KaSourceModule> {
@@ -166,6 +167,16 @@ internal class K2IDEProjectStructureProviderCache(
     override fun dispose() {}
 
     companion object {
+        private val ALL_TOPICS = listOf(
+            KotlinModificationTopics.MODULE_STATE_MODIFICATION,
+            KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_SCRIPT_MODULE_STATE_MODIFICATION,
+            KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
+            KotlinModificationTopics.CODE_FRAGMENT_CONTEXT_MODIFICATION
+        )
+
         fun getInstance(project: Project): K2IDEProjectStructureProviderCache =
             project.service<K2IDEProjectStructureProviderCache>()
     }
