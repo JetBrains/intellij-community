@@ -193,9 +193,8 @@ class AutoImportProjectTracker(
   private fun updateProjectNotification() {
     LOG.debug("Notification status update")
 
-    val isDisabledAutoReload = isDisabledAutoReload()
     for ((projectId, data) in projectDataMap) {
-      when (isDisabledAutoReload || data.isUpToDate()) {
+      when (data.isUpToDate()) {
         true -> notificationAware.notificationExpire(projectId)
         else -> notificationAware.notificationNotify(data.projectAware)
       }
