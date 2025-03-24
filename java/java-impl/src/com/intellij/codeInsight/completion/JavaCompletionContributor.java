@@ -86,7 +86,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_COMPARABLE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
-  private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
+  static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
       // dot at the statement beginning
       psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
       //example: class A{ .something }
