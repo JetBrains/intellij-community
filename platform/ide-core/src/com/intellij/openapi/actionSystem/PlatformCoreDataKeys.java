@@ -27,13 +27,6 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
 
   /**
-   * Returns the text of currently selected file/file revision
-   * @deprecated Use {@link com.intellij.openapi.editor.Document} from {@link #VIRTUAL_FILE} or {@link #EDITOR}.
-   */
-  @Deprecated(forRemoval = true)
-  public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
-
-  /**
    * Returns {@link Boolean#TRUE} if action is executed in modal context and
    * {@link Boolean#FALSE} if action is executed not in modal context. If context
    * is unknown returns {@code null}.

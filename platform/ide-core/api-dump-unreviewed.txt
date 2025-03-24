@@ -1258,7 +1258,6 @@ c:com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - sf:BGT_DATA_PROVIDER:com.intellij.openapi.actionSystem.DataKey
 - sf:CONTEXT_COMPONENT:com.intellij.openapi.actionSystem.DataKey
 - sf:FILE_EDITOR:com.intellij.openapi.actionSystem.DataKey
-- sf:FILE_TEXT:com.intellij.openapi.actionSystem.DataKey
 - sf:HELP_ID:com.intellij.openapi.actionSystem.DataKey
 - sf:IS_MODAL_CONTEXT:com.intellij.openapi.actionSystem.DataKey
 - sf:MODULE:com.intellij.openapi.actionSystem.DataKey
