@@ -97,6 +97,7 @@ class IdeaPluginDescriptorImpl private constructor(
     .let(::convertDepends)
   override val incompatibleWith: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
   var pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
+    .let(::addCorePluginAliases)
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
@@ -196,11 +197,6 @@ class IdeaPluginDescriptorImpl private constructor(
   fun patchDescriptor(context: DescriptorListLoadingContext) {
     if (version == null) {
       version = context.defaultVersion
-    }
-
-    if (id == PluginManagerCore.CORE_ID) {
-      pluginAliases = pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds()
-      pluginAliases = pluginAliases + productModeAliasesForCorePlugin()
     }
   }
 
@@ -545,6 +541,15 @@ class IdeaPluginDescriptorImpl private constructor(
       }
       i++
     }
+  }
+
+  private fun addCorePluginAliases(pluginAliases: List<PluginId>): List<PluginId> {
+    var result = pluginAliases
+    if (id == PluginManagerCore.CORE_ID) {
+      result = result + IdeaPluginOsRequirement.getHostOsModuleIds()
+      result = result + productModeAliasesForCorePlugin()
+    }
+    return result
   }
 
   @ApiStatus.Internal
