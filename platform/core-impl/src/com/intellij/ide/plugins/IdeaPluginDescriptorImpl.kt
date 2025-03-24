@@ -75,7 +75,8 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
-  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater( raw.untilBuild, raw.name ?: raw.id)
+  @Suppress("DEPRECATION")
+  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater(raw.untilBuild, raw.name ?: raw.id)
 
   private val productCode: String? = raw.productCode
   private val releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
@@ -298,7 +299,7 @@ class IdeaPluginDescriptorImpl private constructor(
                                        dataLoader: DataLoader) {
     var visitedFiles: MutableList<String>? = null
     for (dependency in dependenciesV1) {
-      // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
+      // context.isPluginIncomplete must be not checked here as another version of a plugin may be supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
         if (!dependency.isOptional && isIncomplete == null) {
           markAsIncomplete(dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
@@ -443,7 +444,7 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     // app container: in most cases will be only app-level extensions - to reduce map copying, assume that all extensions are app-level and then filter out
-    // project container: rest of extensions wil be mostly project level
+    // project container: rest of extensions will be mostly project level
     // module container: just use rest, area will not register unrelated extension anyway as no registered point
 
     if (containerDescriptor === appContainerDescriptor) {
@@ -529,24 +530,24 @@ class IdeaPluginDescriptorImpl private constructor(
 
     /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
     private fun fixDepends(depends: List<DependsElement>): List<DependsElement> {
-      val UNCHANGED = 0.toByte()
-      val REMOVED = 1.toByte()
-      val NON_OPTIONAL = 2.toByte()
+      val unchanged = 0.toByte()
+      val removed = 1.toByte()
+      val nonOptional = 2.toByte()
       var elemState: ByteArray? = null
-      fun getState(index: Int) = elemState?.get(index) ?: UNCHANGED
+      fun getState(index: Int) = elemState?.get(index) ?: unchanged
       fun setState(index: Int, value: Byte) {
         if (elemState == null) {
-          elemState = ByteArray(depends.size) { UNCHANGED }
+          elemState = ByteArray(depends.size) { unchanged }
         }
         elemState[index] = value
       }
-      fun isOptional(index: Int) = depends[index].isOptional && getState(index) == UNCHANGED
+      fun isOptional(index: Int) = depends[index].isOptional && getState(index) == unchanged
       for ((index, item) in depends.withIndex()) {
         if (isOptional(index)) continue
         for ((candidateIndex, candidate) in depends.withIndex()) {
           if (isOptional(candidateIndex) && candidate.pluginId == item.pluginId) {
-            setState(candidateIndex, NON_OPTIONAL)
-            setState(index, REMOVED)
+            setState(candidateIndex, nonOptional)
+            setState(index, removed)
             break
           }
         }
@@ -556,16 +557,16 @@ class IdeaPluginDescriptorImpl private constructor(
       }
       return depends.mapIndexedNotNull { index, _ ->
         when (getState(index)) {
-          UNCHANGED -> depends[index]
-          REMOVED -> null
-          NON_OPTIONAL -> DependsElement(depends[index].pluginId, false, depends[index].configFile)
+          unchanged -> depends[index]
+          removed -> null
+          nonOptional -> DependsElement(depends[index].pluginId, false, depends[index].configFile)
           else -> throw IllegalStateException("Unknown state ${getState(index)}")
         }
       }
     }
 
     private fun sortExtensions(rawMap: Map<String, List<ExtensionDescriptor>>): Map<String, List<ExtensionDescriptor>> {
-      if (rawMap.size < 2 || !rawMap.containsKey(registryEpName)) {
+      if (rawMap.size < 2 || !rawMap.containsKey(REGISTRY_EP_NAME)) {
         return rawMap
       }
       /*
@@ -583,19 +584,19 @@ class IdeaPluginDescriptorImpl private constructor(
       return result
     }
 
-    private const val registryEpName = "com.intellij.registryKey"
+    private const val REGISTRY_EP_NAME = "com.intellij.registryKey"
 
     private val extensionPointNameComparator = Comparator<String> { o1, o2 ->
-      if (o1 == registryEpName) {
-        if (o2 == registryEpName) 0
+      if (o1 == REGISTRY_EP_NAME) {
+        if (o2 == REGISTRY_EP_NAME) 0
         else -1
       }
-      else if (o2 == registryEpName) 1
+      else if (o2 == REGISTRY_EP_NAME) 1
       else o1.compareTo(o2)
     }
 
-    private fun convertExtensions(rawMap: Map<String, List<MiscExtensionElement>>): Map<String, List<ExtensionDescriptor>> = rawMap.mapValues { (_, exts) ->
-      exts.mapNotNull {
+    private fun convertExtensions(rawMap: Map<String, List<MiscExtensionElement>>): Map<String, List<ExtensionDescriptor>> = rawMap.mapValues { (_, extensions) ->
+      extensions.mapNotNull {
         try {
           val order = LoadingOrder.readOrder(it.order) // throws AssertionError
           ExtensionDescriptor(
@@ -675,12 +676,12 @@ class IdeaPluginDescriptorImpl private constructor(
     fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
       if (!AppMode.isRemoteDevHost()) {
         // This alias is available in monolith and frontend.
-        // Modules, which depend on it, will not be loaded in split backend.
+        // Modules, which depend on it, will not be loaded in a split backend.
         add(PluginId.getId("com.intellij.platform.experimental.frontend"))
       }
       if (!PlatformUtils.isJetBrainsClient()) {
         // This alias is available in monolith and backend.
-        // Modules, which depend on it, will not be loaded in split frontend.
+        // Modules, which depend on it, will not be loaded in a split frontend.
         add(PluginId.getId("com.intellij.platform.experimental.backend"))
       }
       if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient()) {
