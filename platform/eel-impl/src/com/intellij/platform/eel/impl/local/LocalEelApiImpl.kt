@@ -34,7 +34,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
 
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
-  override val exec: EelExecApi = EelLocalExecApi()
+  override val exec: EelLocalExecWindowsApi = EelLocalExecWindowsApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome())
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
@@ -61,7 +61,7 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
   override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
 
-  override val exec: EelExecApi = EelLocalExecApi()
+  override val exec: EelExecPosixApi = EelLocalExecPosixApi()
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
   override val userInfo: EelUserPosixInfo = run {

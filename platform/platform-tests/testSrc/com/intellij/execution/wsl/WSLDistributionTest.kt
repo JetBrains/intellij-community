@@ -539,18 +539,18 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override suspend fun waitUntilExit(): Unit = Unit
 
-  override val exec: EelExecApi get() = MockIjentExecApi(adapter, rootUser)
+  override val exec: EelExecPosixApi get() = MockIjentExecApi(adapter, rootUser)
 
   override val fs: IjentFileSystemPosixApi get() = throw UnsupportedOperationException()
 
   override val tunnels: IjentTunnelsPosixApi get() = throw UnsupportedOperationException()
 }
 
-private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : EelExecApi {
+private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : EelExecPosixApi {
 
   override val descriptor: EelDescriptor get() = throw UnsupportedOperationException()
 
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelPosixProcess, ExecuteProcessError> = executeResultMock.also {
     adapter.exePath = builder.exe
     if (rootUser) {
       adapter.putUserData(TEST_ROOT_USER_SET, true)

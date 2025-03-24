@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
-import com.intellij.platform.eel.impl.local.EelLocalExecApi
+import com.intellij.platform.eel.impl.local.EelLocalExecWindowsApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
@@ -19,7 +19,7 @@ internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fil
     get() = TODO()
   override val tunnels: EelTunnelsWindowsApi
     get() = TODO()
-  override val exec: EelExecApi = EelLocalExecApi()
+  override val exec: EelExecWindowsApi = EelLocalExecWindowsApi()
 
 }
 

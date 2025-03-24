@@ -5,6 +5,8 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.*
+import com.intellij.platform.eel.EelTunnelsApi.HostAddress
 import com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

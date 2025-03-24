@@ -5,6 +5,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.*
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort
 import kotlinx.coroutines.channels.SendChannel

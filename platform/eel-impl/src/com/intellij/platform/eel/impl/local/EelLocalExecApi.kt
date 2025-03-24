@@ -8,11 +8,9 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil.getPath
 import com.intellij.execution.process.LocalProcessService
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelProcess
-import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -24,24 +22,80 @@ import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.*
 
-private val LOG = Logger.getInstance(EelLocalExecApi::class.java)
+@ApiStatus.Internal
+class EelLocalExecPosixApi : EelExecPosixApi {
+  override suspend fun execute(
+    generatedBuilder: EelExecApi.ExecuteProcessOptions,
+  ): EelResult<EelPosixProcess, EelExecApi.ExecuteProcessError> =
+    when (val r = executeImpl(generatedBuilder)) {
+      is EelResult.Ok -> {
+        val process = r.value
+        val eelProcess =
+          if (process is PtyProcess)
+            LocalEelPosixProcess(process, process::setWinSize)
+          else
+            LocalEelPosixProcess(process, null)
+        object : EelResult.Ok<EelPosixProcess> {
+          override val value: EelPosixProcess = eelProcess
+        }
+      }
+      is EelResult.Error -> r
+    }
+
+  override val descriptor: EelDescriptor = LocalEelDescriptor
+
+  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = EnvironmentUtil.getEnvironmentMap()
+
+  override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
+    findExeFilesInPath(binaryName, LOG)
+
+  private companion object {
+    val LOG = logger<EelLocalExecPosixApi>()
+  }
+}
 
 @ApiStatus.Internal
-class EelLocalExecApi : EelExecApi {
+class EelLocalExecWindowsApi : EelExecWindowsApi {
+  override suspend fun execute(
+    generatedBuilder: EelExecApi.ExecuteProcessOptions,
+  ): EelResult<EelWindowsProcess, EelExecApi.ExecuteProcessError> =
+    when (val r = executeImpl(generatedBuilder)) {
+      is EelResult.Ok -> {
+        val process = r.value
+        val eelProcess =
+          if (process is PtyProcess)
+            LocalEelWindowsProcess(process, process::setWinSize)
+          else
+            LocalEelWindowsProcess(process, null)
+        object : EelResult.Ok<EelWindowsProcess> {
+          override val value: EelWindowsProcess = eelProcess
+        }
+      }
+      is EelResult.Error -> r
+    }
+
+  override val descriptor: EelDescriptor = LocalEelDescriptor
+
+  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = EnvironmentUtil.getEnvironmentMap()
+
+  override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
+    findExeFilesInPath(binaryName, LOG)
+
   private companion object {
-    /**
-     * JVM on all OSes report IO error as `error=(code), (text)`. See `ProcessImpl_md.c` for Unix and Windows.
-     */
-    val errorPattern = Regex(".*error=(-?[0-9]{1,9}),.*")
+    val LOG = logger<EelLocalExecWindowsApi>()
   }
+}
 
-  override val descriptor: EelDescriptor
-    get() = LocalEelDescriptor
+/**
+ * JVM on all OSes report IO error as `error=(code), (text)`. See `ProcessImpl_md.c` for Unix and Windows.
+ */
+private val errorPattern = Regex(".*error=(-?[0-9]{1,9}),.*")
 
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
-    val pty = builder.ptyOrStdErrSettings
+private suspend fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): EelResult<Process, EelExecApi.ExecuteProcessError> {
+  val args = builder.args.toTypedArray()
+  val pty = builder.ptyOrStdErrSettings
 
-    val process: LocalEelProcess =
+    val process: Process = // TODO Wrap into Dispatchers.IO?
       try {
         // Inherit env vars because lack of `PATH` might break things
         val environment = System.getenv().toMutableMap()
@@ -52,7 +106,7 @@ class EelLocalExecApi : EelExecApi {
             if ("TERM" !in environment) {
               environment.getOrPut("TERM") { "xterm" }
             }
-            LocalEelProcess(LocalProcessService.getInstance().startPtyProcess(
+            LocalProcessService.getInstance().startPtyProcess(
               escapedCommandLine,
               builder.workingDirectory?.toString(),
               environment,
@@ -62,16 +116,16 @@ class EelLocalExecApi : EelExecApi {
                 it.initialRows(p.rows)
               }.build(),
               false,
-            ) as PtyProcess)
+            ) as PtyProcess
           }
           EelExecApi.RedirectStdErr, null -> {
-            LocalEelProcess(ProcessBuilder(escapedCommandLine).apply {
+            ProcessBuilder(escapedCommandLine).apply {
               environment().putAll(environment)
               redirectErrorStream(p != null)
               builder.workingDirectory?.let {
                 directory(File(it.toString()))
               }
-            }.start())
+            }.start()
           }
         }
       }
@@ -91,46 +145,46 @@ class EelLocalExecApi : EelExecApi {
         } ?: -3003 // Just a random code which isn't used by any OS and not zero
         return EelProcessResultImpl.createErrorResult(errorCode, e.toString())
       }
-    return EelProcessResultImpl.createOkResult(process)
+  return object : EelResult.Ok<Process> {
+    override val value: Process = process
   }
+}
 
-  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = EnvironmentUtil.getEnvironmentMap()
 
-  override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> {
-    val result = if (binaryName.contains('/') || binaryName.contains('\\')) {
-      val absolutePath = Path(binaryName)
-      if (!absolutePath.isAbsolute) {
-        LOG.warn("Should be either absolute path to executable of plain filename to search, got: $binaryName")
-        emptyList()
-      }
-      else {
-        val pathsToProbe = mutableListOf(absolutePath)
-        if (SystemInfo.isWindows) {
-          pathsToProbe.addAll(PathEnvironmentVariableUtil.getWindowsExecutableFileExtensions().map { ext -> Path(binaryName + ext) })
-        }
-        pathsToProbe.filter { exeFile -> exeFile.isRegularFile() && exeFile.isExecutable() }
-      }
+private suspend fun findExeFilesInPath(binaryName: String, logger: Logger): List<EelPath> {
+  val result = if (binaryName.contains('/') || binaryName.contains('\\')) {
+    val absolutePath = Path(binaryName)
+    if (!absolutePath.isAbsolute) {
+      logger.warn("Should be either absolute path to executable of plain filename to search, got: $binaryName")
+      emptyList()
     }
     else {
-      val pathEnvVarValue = PathEnvironmentVariableUtil.getPathVariableValue()
-      val pathDirs = pathEnvVarValue?.let { getPathDirs(pathEnvVarValue) }?.map { Path(it) }.orEmpty()
-      val names = mutableListOf(binaryName)
+      val pathsToProbe = mutableListOf(absolutePath)
       if (SystemInfo.isWindows) {
-        names.addAll(PathEnvironmentVariableUtil.getWindowsExecutableFileExtensions().map { ext -> binaryName + ext })
+        pathsToProbe.addAll(PathEnvironmentVariableUtil.getWindowsExecutableFileExtensions().map { ext -> Path(binaryName + ext) })
       }
-      mutableListOf<Path>().also { collector ->
-        for (dir in pathDirs) {
-          if (dir.isAbsolute && dir.isDirectory()) {
-            for (name in names) {
-              val exeFile = dir.resolve(name)
-              if (exeFile.isRegularFile() && exeFile.isExecutable()) {
-                collector.add(exeFile)
-              }
+      pathsToProbe.filter { exeFile -> exeFile.isRegularFile() && exeFile.isExecutable() }
+    }
+  }
+  else {
+    val pathEnvVarValue = PathEnvironmentVariableUtil.getPathVariableValue() // TODO Wrap into Dispatchers.IO?
+    val pathDirs = pathEnvVarValue?.let { getPathDirs(pathEnvVarValue) }?.map { Path(it) }.orEmpty()
+    val names = mutableListOf(binaryName)
+    if (SystemInfo.isWindows) {
+      names.addAll(PathEnvironmentVariableUtil.getWindowsExecutableFileExtensions().map { ext -> binaryName + ext })
+    }
+    mutableListOf<Path>().also { collector ->
+      for (dir in pathDirs) {
+        if (dir.isAbsolute && dir.isDirectory()) {
+          for (name in names) {
+            val exeFile = dir.resolve(name)
+            if (exeFile.isRegularFile() && exeFile.isExecutable()) {
+              collector.add(exeFile)
             }
           }
         }
       }
     }
-    return result.map { EelPath.parse(it.absolutePathString(), descriptor) }
   }
+  return result.map { EelPath.parse(it.absolutePathString(), LocalEelDescriptor) }
 }

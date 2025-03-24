@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
+import com.intellij.platform.eel.EelExecApi.*
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
  */
-interface EelExecApi {
+sealed interface EelExecApi {
 
   val descriptor: EelDescriptor
 
@@ -109,6 +110,16 @@ interface EelExecApi {
    * Do not use pty, but redirect `stderr` to `stdout` much like `redirectErrorStream` in JVM
    */
   data object RedirectStdErr : PtyOrStdErrSettings
+}
+
+interface EelExecPosixApi : EelExecApi {
+  @CheckReturnValue
+  override suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelPosixProcess, ExecuteProcessError>
+}
+
+interface EelExecWindowsApi : EelExecApi {
+  @CheckReturnValue
+  override suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelWindowsProcess, ExecuteProcessError>
 }
 
 suspend fun EelExecApi.where(exe: String): EelPath? {

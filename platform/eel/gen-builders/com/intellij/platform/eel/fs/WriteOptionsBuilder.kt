@@ -5,6 +5,7 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
 import com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions
 import com.intellij.platform.eel.path.EelPath

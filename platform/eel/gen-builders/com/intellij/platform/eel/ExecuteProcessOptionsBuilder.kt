@@ -5,8 +5,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
-import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
+import com.intellij.platform.eel.EelExecApi.*
 import com.intellij.platform.eel.path.EelPath
 
 

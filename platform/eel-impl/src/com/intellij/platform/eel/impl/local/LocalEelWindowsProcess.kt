@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.KillableProcess
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
@@ -14,21 +15,17 @@ import com.intellij.platform.eel.impl.local.processKiller.WinProcessKiller
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.util.io.awaitExit
-import com.pty4j.PtyProcess
 import com.pty4j.WinSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import java.io.IOException
 
-internal class LocalEelProcess private constructor(
+internal class LocalEelWindowsProcess(
   private val process: Process,
   private val resizeWindow: ((WinSize) -> Unit)?,
   private val killer: KillableProcess = if (SystemInfoRt.isWindows) WinProcessKiller(process) else PosixProcessKiller(process),
-) : EelProcess, KillableProcess by killer {
-
-  constructor(ptyProcess: PtyProcess) : this(ptyProcess, ptyProcess::setWinSize)
-  constructor(process: Process) : this(process, null)
+) : EelWindowsProcess, KillableProcess by killer {
 
   private val scope: CoroutineScope =
     ApplicationManager.getApplication().service<EelLocalApiService>().scope("LocalEelProcess pid=${process.pid()}")
@@ -51,4 +48,3 @@ internal class LocalEelProcess private constructor(
     resizeWindow(WinSize(columns, rows))
   }
 }
-

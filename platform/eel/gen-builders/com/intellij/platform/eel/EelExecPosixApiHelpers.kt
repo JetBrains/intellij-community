@@ -11,14 +11,6 @@ import org.jetbrains.annotations.CheckReturnValue
 
 
 /**
- * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
- *
- * stdin, stdout and stderr of the process are always forwarded, if there are.
- *
- * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
- *
- * See [executeProcessBuilder]
- *
  * @param exe An **absolute** path to the executable.
  *  TODO Or do relative paths also work?
  *
@@ -26,23 +18,23 @@ import org.jetbrains.annotations.CheckReturnValue
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
 @GeneratedBuilder.Result
-fun EelExecApi.execute(
+fun EelExecPosixApi.execute(
   exe: String,
-): EelExecApiHelpers.Execute =
-  EelExecApiHelpers.Execute(
+): EelExecPosixApiHelpers.Execute =
+  EelExecPosixApiHelpers.Execute(
     owner = this,
     exe = exe,
   )
 
-object EelExecApiHelpers {
+object EelExecPosixApiHelpers {
   /**
-   * Create it via [com.intellij.platform.eel.EelExecApi.execute].
+   * Create it via [com.intellij.platform.eel.EelExecPosixApi.execute].
    */
   @GeneratedBuilder.Result
   class Execute(
-    private val owner: EelExecApi,
+    private val owner: EelExecPosixApi,
     private var exe: String,
-  ) : OwnedBuilder<EelResult<EelProcess, ExecuteProcessError>> {
+  ) : OwnedBuilder<EelResult<EelPosixProcess, ExecuteProcessError>> {
     private var args: List<String> = listOf()
 
     private var env: Map<String, String> = mapOf()
@@ -99,11 +91,11 @@ object EelExecApiHelpers {
     }
 
     /**
-     * Complete the builder and call [com.intellij.platform.eel.EelExecApi.execute]
+     * Complete the builder and call [com.intellij.platform.eel.EelExecPosixApi.execute]
      * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
      */
     @org.jetbrains.annotations.CheckReturnValue
-    override suspend fun eelIt(): EelResult<EelProcess, ExecuteProcessError> =
+    override suspend fun eelIt(): EelResult<EelPosixProcess, ExecuteProcessError> =
       owner.execute(
         ExecuteProcessOptionsImpl(
           args = args,
