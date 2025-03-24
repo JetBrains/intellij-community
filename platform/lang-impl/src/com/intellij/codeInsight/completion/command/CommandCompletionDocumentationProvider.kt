@@ -27,6 +27,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
@@ -135,7 +136,17 @@ private class CommandCompletionDocumentationTarget(
       lineNumberIndexes.add(0, 0)
       val additionalHighlighting = additionalHighlighting(diffs[i].fragments, lineNumberIndexes)
       val textHandler = if (diffs[i].startLine != -1) createLineNumberTextHandler(lineNumberIndexes, diffs[i].startLine, maxLine) else null
-      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(builder, psiElement.project, psiElement.language, codeSnippet, false, 1f, additionalHighlighting, HtmlSyntaxInfoUtil.HtmlGeneratorProperties(true, true, true, false, true, textHandler))
+      HtmlSyntaxInfoUtil.HtmlCodeSnippetBuilder(builder, psiElement.project, psiElement.language)
+        .additionalIterator(additionalHighlighting)
+        .codeSnippet(codeSnippet)
+        .properties(HtmlSyntaxInfoUtil.HtmlGeneratorProperties.createDefault()
+                      .generateMainTags(true)
+                      .generateBackground(true)
+                      .defaultFontSize(true)
+                      .generateFontFamily(true)
+                      .generateHtmlTags(false)
+                      .textHandler(textHandler))
+        .build()
       if (diffs.size > 1 && i < diffs.size - 1) {
         builder.append("<hr>")
       }
@@ -143,8 +154,7 @@ private class CommandCompletionDocumentationTarget(
     val scheme: EditorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme()
     val defaultBackground = scheme.defaultBackground
     val lineSpacing = scheme.lineSpacing
-    val backgroundColor = StringBuilder()
-    UIUtil.appendColor(defaultBackground, backgroundColor)
+    val backgroundColor = ColorUtil.toHtmlColor(defaultBackground)
     return "<div style=\"min-width: 150px; max-width: 250px;\"> " + "<div style=\"width: 95%; background-color:#$backgroundColor; line-height: ${lineSpacing * 1.1}\">" + "$builder<br/>" + "</div>" + "</div>"
   }
 
