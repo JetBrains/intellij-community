@@ -1762,6 +1762,8 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
+    <initProjectActivity implementation="com.intellij.openapi.roots.impl.ProjectRootManagerInitProjectActivity"/>
+
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
 
     <registryKey key="search.everywhere.footer.extended.info"
