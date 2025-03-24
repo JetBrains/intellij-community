@@ -168,6 +168,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="DisableSlowOperationsInEAP"
+                  value="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
+        <echo message="Applying ${DisableSlowOperationsInEAP}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${DisableSlowOperationsInEAP}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${DisableSlowOperationsInEAP}"/>
+        </exec>
+
         <property name="LoadModulesFromJars"
                   value="${basedir}/patches/LoadModulesFromJars.patch"/>
         <echo message="Applying ${LoadModulesFromJars}"/>
