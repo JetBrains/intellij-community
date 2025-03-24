@@ -2,8 +2,8 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
@@ -184,7 +184,7 @@ private fun CoroutineScope.launchUiCoroutine(
   val effectiveContext = additionalContext
     .minusKey(CoroutineName)
     .minusKey(Job)
-    .plus(Dispatchers.EDT)
+    .plus(Dispatchers.UI)
     .plus(componentModality.asContextElement())
   return launch(effectiveContext, block = block)
 }
