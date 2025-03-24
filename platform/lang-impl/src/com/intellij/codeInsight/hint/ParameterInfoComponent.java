@@ -26,6 +26,9 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBHtmlPane;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
@@ -446,8 +449,6 @@ public final class ParameterInfoComponent extends JPanel {
       myParameterInfoControllerData.getHandler().updateBottomComponent(myCustomBottomComponent);
     }
 
-    updateLabels();
-
     if (highlightedComponentIdx != -1) {
       myMainPanel.scrollRectToVisible(new Rectangle()); // hack to validate component tree synchronously
       myMainPanel.scrollRectToVisible(myPanels[highlightedComponentIdx].getBounds());
@@ -457,40 +458,6 @@ public final class ParameterInfoComponent extends JPanel {
     myDumbLabel.setVisible(project != null && DumbService.isDumb(project));
 
     return context.result;
-  }
-
-  private void updateLabels() {
-    if (!mySimpleDesignMode) {
-      return;
-    }
-
-    int length = myPanels.length;
-
-    if (length == 1) {
-      OneElementComponent panel = myPanels[0];
-      int count = panel.getComponentCount();
-
-      panel.myShowSelection = false;
-
-      for (int i = 0; i < count; i++) {
-        OneLineComponent line = (OneLineComponent)panel.getComponent(i);
-        line.myLabel.setIcon(null);
-        line.myLabel.setIconTextGap(0);
-      }
-    }
-    else {
-      for (OneElementComponent panel : myPanels) {
-        if (panel.myShowSelection) {
-          int count = panel.getComponentCount();
-          if (count > 1) {
-            for (int i = 1; i < count; i++) {
-              OneLineComponent line = (OneLineComponent)panel.getComponent(i);
-              line.myLabel.setIcon(EmptyIcon.ICON_16);
-            }
-          }
-        }
-      }
-    }
   }
 
   void setEnabled(int index, boolean enabled) {
@@ -574,7 +541,7 @@ public final class ParameterInfoComponent extends JPanel {
         buf.append(component.setup(before + in + after, isDisabled, strikeout, background, escapedHighlightingRange,
                                    isDisabledBeforeHighlight && (highlightStartOffset < 0 || highlightEndOffset > lineOffset)));
 
-         lineOffset += line.length();
+        lineOffset += line.length();
       }
       trimComponents(lines.length);
       return buf.toString();
@@ -673,26 +640,38 @@ public final class ParameterInfoComponent extends JPanel {
   }
 
   private final class OneLineComponent extends JPanel {
-    JLabel myLabel = new JLabel("", SwingConstants.LEFT);
+    JBHtmlPane myHtmlPanel = new JBHtmlPane(
+      JBHtmlPaneStyleConfiguration.builder()
+        .enableCodeBlocksBackground(false)
+        .build(),
+      JBHtmlPaneConfiguration.builder()
+        .customStyleSheetProvider(
+          pane -> StyleSheetUtil.loadStyleSheet(
+            "code {\n" +
+            "   font-family: " + pane.getFont().getFamily() + ";\n" +
+            "   font-size: 100%;\n" +
+            "}"))
+        .build()
+    );
 
     private OneLineComponent() {
       super(new GridBagLayout());
       setOpaque(!mySimpleDesignMode);
-      myLabel.setOpaque(!mySimpleDesignMode);
-      myLabel.setFont(NORMAL_FONT);
+      myHtmlPanel.setOpaque(!mySimpleDesignMode);
+      myHtmlPanel.setFont(NORMAL_FONT);
       if (mySimpleDesignMode) {
-        myLabel.setBorder(JBUI.Borders.empty(2, 6, 2, 8));
+        myHtmlPanel.setBorder(JBUI.Borders.empty(2, 6, 2, 8));
       }
       if (myRequestFocus) {
-        myLabel.setFocusable(true);
+        myHtmlPanel.setFocusable(true);
       }
 
-      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
+      add(myHtmlPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     }
 
     @Override
     public String toString() {
-      return myLabel.getText();
+      return myHtmlPanel.getText();
     }
 
     private String setup(@NlsContexts.Label String text,
@@ -731,40 +710,13 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     private String doSetup(@NotNull @NlsContexts.Label String text, @NotNull Color background) {
-      if (mySimpleDesignMode) {
-        if (background != BACKGROUND) {
-          Icon icon = LafIconLookup.getIcon("checkmark");
-          myLabel.setIcon(new Icon() {
-            @Override
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-              icon.paintIcon(c, g, x, myLabel.getInsets().top + JBUI.scale(1));
-            }
+      myHtmlPanel.setBackground(background);
+      setBackground(background);
 
-            @Override
-            public int getIconWidth() {
-              return icon.getIconWidth();
-            }
+      myHtmlPanel.setForeground(FOREGROUND);
 
-            @Override
-            public int getIconHeight() {
-              return icon.getIconHeight();
-            }
-          });
-        }
-        else {
-          myLabel.setIcon(EmptyIcon.ICON_16);
-        }
-        myLabel.setIconTextGap(JBUI.scale(4));
-      }
-      else {
-        myLabel.setBackground(background);
-        setBackground(background);
-      }
-
-      myLabel.setForeground(FOREGROUND);
-
-      myLabel.setText(XmlStringUtil.wrapInHtml(text));
-      return myLabel.getText();
+      myHtmlPanel.setText(XmlStringUtil.wrapInHtml(text));
+      return myHtmlPanel.getText();
     }
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
