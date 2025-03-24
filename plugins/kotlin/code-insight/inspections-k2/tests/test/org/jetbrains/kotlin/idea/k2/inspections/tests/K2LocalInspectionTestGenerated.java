@@ -5296,6 +5296,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/propertyUsed.kt");
         }
 
+        @TestMetadata("returnParenthesized.kt")
+        public void testReturnParenthesized() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/returnParenthesized.kt");
+        }
+
+        @TestMetadata("returnThis.kt")
+        public void testReturnThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/returnThis.kt");
+        }
+
         @TestMetadata("returned.kt")
         public void testReturned() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/returned.kt");
