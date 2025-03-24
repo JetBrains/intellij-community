@@ -11,6 +11,9 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -19,9 +22,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -75,7 +75,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -250,53 +249,34 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
     if (annotationsByFiles.isEmpty()) return;
 
-    WriteCommandAction.writeCommandAction(project).run(new ThrowableRunnable<>() {
-      @Override
-      public void run() throws RuntimeException {
-        if (project.isDisposed()) return;
-        if (DumbService.isDumb(project)) {
-          DumbService.getInstance(project).runWhenSmart(() -> WriteCommandAction.writeCommandAction(project).run(this));
-          return;
-        }
-        try {
-          for (Map.Entry<Optional<VirtualFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
-            VirtualFile annotationsFile = entry.getKey().orElse(null);
-            if (annotationsFile == null) continue;
-            List<ExternalAnnotation> fileAnnotations = entry.getValue();
-            PsiFile file = PsiManager.getInstance(project).findFile(annotationsFile);
-            if (file instanceof XmlFile) {
-              annotateExternally((XmlFile)file, fileAnnotations);
-            }
-          }
-
-          UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
-            @Override
-            public void undo() {
-              dropAnnotationsCache();
-              myPsiManager.dropPsiCaches();
-            }
-
-            @Override
-            public void redo() {
-              dropAnnotationsCache();
-              myPsiManager.dropPsiCaches();
-            }
-          });
-        }
-        finally {
-          dropAnnotationsCache();
+    XmlFile contextFile = StreamEx.ofKeys(annotationsByFiles).mapPartial(opt -> opt)
+      .map(PsiManager.getInstance(project)::findFile)
+      .select(XmlFile.class)
+      .findFirst().orElse(null);
+    if (contextFile == null) return;
+    Supplier<@NotNull ModCommand> commandSupplier = () -> {
+      ModCommand finalCommand = ModCommand.nop();
+      for (Map.Entry<Optional<VirtualFile>, List<ExternalAnnotation>> entry : annotationsByFiles.entrySet()) {
+        VirtualFile annotationsFile = entry.getKey().orElse(null);
+        if (annotationsFile == null) continue;
+        List<ExternalAnnotation> fileAnnotations = entry.getValue();
+        PsiFile file = PsiManager.getInstance(project).findFile(annotationsFile);
+        if (file instanceof XmlFile xmlFile) {
+          finalCommand = finalCommand.andThen(annotateExternally(xmlFile, fileAnnotations));
         }
       }
-    });
+      return finalCommand;
+    };
+    String name = "Adding annotation";
+    ModCommandExecutor.executeInteractively(ActionContext.from(null, contextFile), name, null, commandSupplier);
   }
 
   private void dropAnnotationsCache() {
     dropCache();
   }
 
-  private void annotateExternally(@Nullable XmlFile annotationsFile, @NotNull List<ExternalAnnotation> annotations) {
-    XmlTag rootTag = extractRootTag(annotationsFile);
-
+  private @NotNull ModCommand annotateExternally(@Nullable XmlFile annotationsFile, @NotNull List<ExternalAnnotation> annotations) {
+    if (annotationsFile == null) return ModCommand.nop();
     Map<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
       .mapToEntry(annotation -> {
         String externalName = getExternalName(annotation.owner());
@@ -304,39 +284,30 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       }, Function.identity())
       .distinct()
       .grouping(() -> new TreeMap<>(Comparator.nullsFirst(Comparator.naturalOrder())));
+    return ModCommand.psiUpdate(annotationsFile, (file, updater) -> {
+      XmlTag rootTag = extractRootTag(file);
 
-    if (rootTag == null) {
-      myPsiManager.dropPsiCaches();
-      return;
-    }
+      if (rootTag == null) return;
 
-    XmlTag startTag = null;
+      XmlTag startTag = null;
 
-    for (Map.Entry<String, List<ExternalAnnotation>> entry : ownerToAnnotations.entrySet()) {
-      @NonNls String ownerName = entry.getKey();
-      List<ExternalAnnotation> annotationList = entry.getValue();
-      for (ExternalAnnotation annotation : annotationList) {
-        if (ownerName == null) {
-          myPsiManager.dropPsiCaches();
-          continue;
-        }
+      for (Map.Entry<String, List<ExternalAnnotation>> entry : ownerToAnnotations.entrySet()) {
+        @NonNls String ownerName = entry.getKey();
+        List<ExternalAnnotation> annotationList = entry.getValue();
+        for (ExternalAnnotation annotation : annotationList) {
+          if (ownerName == null) continue;
 
-        try {
-          startTag = addAnnotation(rootTag, ownerName, annotation, startTag);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          myPsiManager.dropPsiCaches();
-        }
-        finally {
-          dropCache();
-          markForUndo(annotation.owner().getContainingFile());
+          try {
+            startTag = addAnnotation(rootTag, ownerName, annotation, startTag);
+          }
+          catch (IncorrectOperationException e) {
+            updater.cancel(e.getMessage());
+          }
         }
       }
-    }
 
-    commitChanges(annotationsFile);
-    myPsiManager.dropPsiCaches();
+      commitChanges(file);
+    });
   }
 
   @Override
@@ -356,17 +327,6 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     }
 
     return document.getRootTag();
-  }
-
-  private static void markForUndo(@Nullable PsiFile containingFile) {
-    if (containingFile == null) {
-      return;
-    }
-
-    VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile != null && virtualFile.isInLocalFileSystem()) {
-      UndoUtil.markPsiFileForUndo(containingFile);
-    }
   }
 
   /**
@@ -790,10 +750,8 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   private void commitChanges(XmlFile xmlFile) {
     sortItems(xmlFile);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
-    Document doc = documentManager.getDocument(xmlFile);
-    assert doc != null;
+    Document doc = xmlFile.getFileDocument();
     documentManager.doPostponedOperationsAndUnblockDocument(doc);
-    FileDocumentManager.getInstance().saveDocument(doc);
   }
 
   private static @NonNls @NotNull String createItemTag(@NotNull String ownerName, @NotNull ExternalAnnotation annotation) {
