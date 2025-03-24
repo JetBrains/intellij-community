@@ -65,9 +65,7 @@
                      bundle="messages.searchEverywhereMlCoreBundle"/>
     <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlCoreBundle"
-                     service="com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettingsStorage"
-                     property="enableMlRankingInAll"/>
+                     bundle="messages.searchEverywhereMlCoreBundle"/>
 
     <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider
