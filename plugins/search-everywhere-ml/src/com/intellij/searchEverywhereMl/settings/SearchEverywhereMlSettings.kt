@@ -7,7 +7,7 @@ import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 @Service(Service.Level.APP)
 class SearchEverywhereMlSettings {
   fun isSortingByMlEnabledInAnyTab(): Boolean {
-    return SearchEverywhereTabWithMlRanking.values().any {
+    return SearchEverywhereTabWithMlRanking.entries.any {
       isSortingByMlEnabled(it)
     }
   }
