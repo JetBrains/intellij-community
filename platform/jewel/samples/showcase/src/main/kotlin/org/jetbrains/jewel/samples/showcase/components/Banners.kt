@@ -125,7 +125,7 @@ public fun Banners() {
                     icon = null,
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
-                    title = optionalTitle
+                    title = optionalTitle,
                 )
 
                 InformationInlineBanner(
