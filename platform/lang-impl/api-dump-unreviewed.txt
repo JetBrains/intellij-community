@@ -10962,6 +10962,7 @@ a:com.intellij.ide.scratch.ScratchFileCreationHelper
 f:com.intellij.ide.scratch.ScratchFileCreationHelper$Context
 - caretOffset:I
 - createOption:com.intellij.ide.scratch.ScratchFileService$Option
+- defaultRootType:com.intellij.ide.scratch.RootType
 - fileCounter:com.intellij.openapi.util.Factory
 - fileExtension:java.lang.String
 - filePrefix:java.lang.String
