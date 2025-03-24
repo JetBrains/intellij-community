@@ -137,7 +137,18 @@ class KotlinExpressionNameReferencePositionContext(
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : KotlinSimpleNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext() {
+
+    constructor(
+        nameExpression: KtSimpleNameExpression,
+        explicitReceiver: KtExpression? = null,
+    ) : this(
+        position = nameExpression.getReferencedNameElement(),
+        reference = nameExpression.mainReference,
+        nameExpression = nameExpression,
+        explicitReceiver = explicitReceiver,
+    )
+}
 
 class KotlinInfixCallPositionContext(
     override val position: PsiElement,

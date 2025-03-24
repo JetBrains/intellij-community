@@ -116,6 +116,15 @@
                             order="first"
                             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
 
+    <completion.contributor language="kotlin"
+                            order="first, after KotlinDumbCompletionContributor"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
+
+    <registryKey key="kotlin.k2.chain.completion.enabled"
+                 description="Allow chained completion items in Kotlin"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
              id="kotlin.preferKotlinx"
              order="after sameModule, before knownElement"/>
