@@ -106,7 +106,15 @@ class IdeaPluginDescriptorImpl private constructor(
     .let(::convertExtensions)
     .let(::sortExtensions)
 
-  private var resourceBundleBaseName: String? = null
+  private var resourceBundleBaseName: String? = raw.resourceBundleBaseName
+    .also {
+      if (it != null && this.id == PluginManagerCore.CORE_ID) {
+        LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
+                 " included into the platform part of the IDE but the platform part uses predefined bundles " +
+                 "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
+                 "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
+      }
+    }
   override val actions: List<ActionElement> = raw.actions
 
   val content: PluginContentDescriptor =
@@ -186,16 +194,6 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @VisibleForTesting
   fun patchDescriptor(raw: RawPluginDescriptor, context: DescriptorListLoadingContext) {
-    if (raw.resourceBundleBaseName != null) {
-      if (id == PluginManagerCore.CORE_ID) {
-        LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
-                 " included into the platform part of the IDE but the platform part uses predefined bundles " +
-                 "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
-                 "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
-      }
-      readResourceBundleBaseName(raw)
-    }
-
     if (version == null) {
       version = context.defaultVersion
     }
