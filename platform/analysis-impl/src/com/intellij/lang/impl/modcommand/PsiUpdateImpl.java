@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.modcommand.ModCommand.error;
 import static com.intellij.modcommand.ModCommand.nop;
+import static java.util.Objects.requireNonNull;
 
 final class PsiUpdateImpl {
   private static final Key<PsiFile> ORIGINAL_FILE_FOR_INJECTION = Key.create("ORIGINAL_FILE_FOR_INJECTION");
@@ -92,7 +94,7 @@ final class PsiUpdateImpl {
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(myProject);
       boolean injected = injectionManager.isInjectedFragment(origFile);
       if (injected) {
-        PsiLanguageInjectionHost host = Objects.requireNonNull(injectionManager.getInjectionHost(origFile));
+        PsiLanguageInjectionHost host = requireNonNull(injectionManager.getInjectionHost(origFile));
         myInjectionHost = host;
         PsiFile hostFile = host.getContainingFile();
         FileTracker hostTracker = changedFiles.get(hostFile);
@@ -219,7 +221,7 @@ final class PsiUpdateImpl {
       }
     };
     injectionManager.enumerate(hostCopy, visitor);
-    return Objects.requireNonNull(visitor.injectedFileCopy);
+    return requireNonNull(visitor.injectedFileCopy);
   }
 
   private static @NotNull PsiFile copyFile(Project project, PsiFile origFile) {
@@ -260,7 +262,7 @@ final class PsiUpdateImpl {
     private boolean myPositionUpdated = false;
     private @NlsContexts.Tooltip String myErrorMessage;
     private @NlsContexts.Tooltip String myInfoMessage;
-    private @NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> myConflictMap = new LinkedHashMap<>();
+    private final @NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> myConflictMap = new LinkedHashMap<>();
 
     private record ChangedDirectoryInfo(@NotNull ChangedVirtualDirectory directory, @NotNull PsiDirectory psiDirectory) {
       static @NotNull ModPsiUpdaterImpl.ChangedDirectoryInfo create(@NotNull PsiDirectory directory) {
@@ -273,15 +275,24 @@ final class PsiUpdateImpl {
       @NotNull Stream<ModCommand> createFileCommands(@NotNull Project project) {
         PsiManager manager = PsiManager.getInstance(project);
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        return directory().getAddedChildren().values().stream()
+        ChangedVirtualDirectory root = directory();
+        Map<LightVirtualFile, VirtualFile> mapping = new HashMap<>();
+        mapping.put(root, root.getOriginalFile());
+        return StreamEx.<LightVirtualFile, ChangedVirtualDirectory>ofTree(
+            root, ChangedVirtualDirectory.class, vf -> StreamEx.ofValues(vf.getAddedChildren()))
+          .skip(1) // existing root
           .map(vf -> {
+            if (vf.isDirectory()) {
+              FutureVirtualFile file = new FutureVirtualFile(mapping.get(vf.getParent()), vf.getName(), null);
+              mapping.put(vf, file);
+              return new ModCreateFile(file, new ModCreateFile.Directory());
+            }
             PsiFile psiFile = manager.findFile(vf);
             if (psiFile == null) return nop();
             Document document = psiFile.getViewProvider().getDocument();
             documentManager.commitDocument(document);
             documentManager.doPostponedOperationsAndUnblockDocument(document);
-            return new ModCreateFile(new FutureVirtualFile(directory().getOriginalFile(),
-                                                           vf.getName(), vf.getFileType()),
+            return new ModCreateFile(new FutureVirtualFile(mapping.get(vf.getParent()), vf.getName(), vf.getFileType()),
                                      new ModCreateFile.Text(psiFile.getText()));
           });
       }
@@ -571,7 +582,7 @@ final class PsiUpdateImpl {
         }
       };
       instance.enumerate(host, visitor);
-      return Objects.requireNonNull(visitor.myFile);
+      return requireNonNull(visitor.myFile);
     }
 
     @Override

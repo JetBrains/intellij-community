@@ -352,7 +352,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
   }
 
   protected @NotNull String getFileNamePresentation(Project project, VirtualFile file) {
-    return file.getName();
+    StringBuilder presentation = new StringBuilder(file.getName());
+    while (file.getParent() instanceof FutureVirtualFile parent) {
+      presentation.insert(0, parent.getName() + "/");
+      file = parent;
+    }
+    return presentation.toString();
   }
 
   private static @NotNull IntentionPreviewInfo getChoosePreview(@NotNull ActionContext context, @NotNull ModChooseAction target) {

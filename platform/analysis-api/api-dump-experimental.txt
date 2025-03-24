@@ -150,6 +150,7 @@ com.intellij.lang.annotation.AnnotationBuilder
 - com.intellij.testFramework.LightVirtualFile
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.fileTypes.FileType):V
 - getParent():com.intellij.openapi.vfs.VirtualFile
+- isDirectory():Z
 *f:com.intellij.modcommand.ModChooseMember
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
