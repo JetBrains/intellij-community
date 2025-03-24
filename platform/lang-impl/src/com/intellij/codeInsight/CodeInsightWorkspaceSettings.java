@@ -69,11 +69,10 @@ public final class CodeInsightWorkspaceSettings extends SimpleModificationTracke
   }
 
   @Override
-  public @NotNull OptionController getOptionController() {
-    return OptionContainer.super.getOptionController()
-      .withRootPane(() -> OptPane.pane(OptPane.checkbox(
-        "optimizeImportsOnTheFly",
-        ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"))));
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(OptPane.checkbox(
+      "optimizeImportsOnTheFly",
+      ApplicationBundle.message("checkbox.optimize.imports.on.the.fly")));
   }
 
   /**

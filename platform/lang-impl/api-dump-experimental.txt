@@ -413,6 +413,7 @@ f:com.intellij.codeInsight.navigation.UtilKt
 *f:com.intellij.codeInspection.ui.OptPaneUtils
 - <init>():V
 - s:editOptions(com.intellij.openapi.project.Project,com.intellij.codeInspection.options.OptionContainer,com.intellij.codeInspection.options.OptPane,java.lang.String,java.lang.String,java.lang.Runnable):V
+- s:editOptions(com.intellij.openapi.project.Project,com.intellij.codeInspection.options.OptionContainer,java.lang.String,java.lang.String,java.lang.Runnable):V
 *:com.intellij.execution.console.ConsoleLineModifier
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:modify(java.lang.String):java.lang.String

@@ -1281,7 +1281,6 @@ a:com.intellij.codeInspection.InspectionProfileEntry
 - getGroupPath():java.lang.String[]
 - getLanguage():java.lang.String
 - getMainToolId():java.lang.String
-- getOptionController():com.intellij.codeInspection.options.OptionController
 - getOptionsPane():com.intellij.codeInspection.options.OptPane
 - p:getSerializationFilter():com.intellij.util.xmlb.SerializationFilter
 - getShortName():java.lang.String
@@ -2009,6 +2008,7 @@ f:com.intellij.codeInspection.options.OptTableColumn
 - validator():com.intellij.codeInspection.options.StringValidator
 com.intellij.codeInspection.options.OptionContainer
 - getOptionController():com.intellij.codeInspection.options.OptionController
+- getOptionsPane():com.intellij.codeInspection.options.OptPane
 com.intellij.codeInspection.options.OptionController
 - s:empty():com.intellij.codeInspection.options.OptionController
 - s:fieldsOf(java.lang.Object):com.intellij.codeInspection.options.OptionController

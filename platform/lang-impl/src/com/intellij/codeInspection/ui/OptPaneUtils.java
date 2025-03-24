@@ -21,6 +21,27 @@ public final class OptPaneUtils {
    * 
    * @param project current project
    * @param data data container to edit
+   * @param title dialog title
+   * @param helpId dialog help ID
+   * @param onSuccess code to run on success
+   */
+  public static void editOptions(@NotNull Project project,
+                                  @NotNull OptionContainer data,
+                                  @NlsContexts.DialogTitle String title,
+                                  @NonNls String helpId,
+                                  @NotNull Runnable onSuccess) {
+    OptPane rootPane = data.getOptionsPane();
+    if (rootPane.equals(OptPane.EMPTY)) {
+      throw new IllegalArgumentException("OptPane is not defined for " + data.getClass().getName());
+    }
+    editOptions(project, data, rootPane, title, helpId, onSuccess);
+  }
+
+  /**
+   * Shows UI dialog to edit the specified {@link OptionContainer} using customized pane.
+   *
+   * @param project current project
+   * @param data data container to edit
    * @param pane OptPane description
    * @param title dialog title
    * @param helpId dialog help ID

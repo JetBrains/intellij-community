@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
@@ -412,13 +411,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
    * @see OptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
    * @see #getOptionController() if you need custom logic to read/write options
    */
+  @Override
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;
-  }
-
-  @Override
-  public @NotNull OptionController getOptionController() {
-    return OptionController.fieldsOf(this).withRootPane(this::getOptionsPane);
   }
 
   /**

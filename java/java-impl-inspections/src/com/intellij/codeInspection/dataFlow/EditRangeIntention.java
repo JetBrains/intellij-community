@@ -93,8 +93,9 @@ public final class EditRangeIntention extends BaseIntentionAction implements Low
       return new RangeData(fromType, existingRange.min() > fromType.min() ? String.valueOf(existingRange.min()) : "",
                                      existingRange.max() < fromType.max() ? String.valueOf(existingRange.max()) : "");
     }
-    
-    @NotNull OptPane getOptionPane() {
+
+    @Override
+    public @NotNull OptPane getOptionsPane() {
       return OptPane.pane(
         OptPane.string("min", JavaBundle.message("label.from.inclusive"),
                        StringValidator.of("java.range.min", value -> getErrorMessages(value, max, myType).first))
@@ -111,7 +112,7 @@ public final class EditRangeIntention extends BaseIntentionAction implements Low
     final PsiModifierListOwner owner = getTarget(editor, file);
     assert owner != null;
     RangeData data = RangeData.from(owner);
-    OptPaneUtils.editOptions(project, data, data.getOptionPane(),
+    OptPaneUtils.editOptions(project, data,
                              JavaBundle.message("dialog.title.edit.range", getElementName(owner)),
                              "define_range_dialog",
                              () -> updateRange(owner, data.myType, data.min, data.max));
