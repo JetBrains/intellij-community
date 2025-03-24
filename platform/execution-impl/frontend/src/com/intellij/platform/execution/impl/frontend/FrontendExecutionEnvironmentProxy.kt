@@ -7,20 +7,25 @@ import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.runners.RunnerAndConfigurationSettingsProxy
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
-fun ExecutionEnvironmentProxyDto.executionEnvironment(cs: CoroutineScope): ExecutionEnvironmentProxy {
-  return FrontendExecutionEnvironmentProxy(cs, this)
+fun ExecutionEnvironmentProxyDto.executionEnvironment(project: Project, cs: CoroutineScope): ExecutionEnvironmentProxy {
+  return FrontendExecutionEnvironmentProxy(project, cs, this)
 }
 
 private class FrontendExecutionEnvironmentProxy(
+  private val project: Project,
   cs: CoroutineScope,
   private val dto: ExecutionEnvironmentProxyDto,
 ) : ExecutionEnvironmentProxy {
@@ -64,10 +69,16 @@ private class FrontendExecutionEnvironmentProxy(
   }
 
   override fun performRestart() {
-    // TODO: implement
+    project.service<FrontendFrontendExecutionEnvironmentProxyCoroutineScope>().cs.launch {
+      dto.restartRequest.send(Unit)
+    }
   }
 
   override fun getExecutionEnvironment(): ExecutionEnvironment? {
     return null
   }
 }
+
+
+@Service(Service.Level.PROJECT)
+private class FrontendFrontendExecutionEnvironmentProxyCoroutineScope(val cs: CoroutineScope)

@@ -3,13 +3,17 @@ package com.intellij.execution.rpc
 
 import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionEnvironmentProxy
+import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.util.NlsSafe
 import fleet.rpc.core.RpcFlow
+import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,17 +24,22 @@ data class ExecutionEnvironmentProxyDto(
   val rerunIcon: IconId,
   val isStartingInitial: Boolean,
   val isStarting: RpcFlow<Boolean>,
+  @Serializable(with = SendChannelSerializer::class) val restartRequest: SendChannel<Unit>,
 )
 
 @ApiStatus.Internal
-fun ExecutionEnvironmentProxy.toDto(): ExecutionEnvironmentProxyDto {
-  // TODO: think about the coroutineContext which is passed to `toRpc`
-  //   since ExecutionEnvironment.toDto function should be non suspend,
-  //   we cannot use suspend alternative of `toRpc` which takes current coroutine context
-  return ExecutionEnvironmentProxyDto(getRunProfileName(), getIcon().rpcId(), getRerunIcon().rpcId(), isStarting(), isStartingFlow().toRpc(Dispatchers.IO))
-}
-
-@ApiStatus.Internal
-fun ExecutionEnvironment.toDto(): ExecutionEnvironmentProxyDto {
-  return BackendExecutionEnvironmentProxy(this).toDto()
+fun ExecutionEnvironment.toDto(cs: CoroutineScope): ExecutionEnvironmentProxyDto {
+  val environment = this
+  val proxy = BackendExecutionEnvironmentProxy(environment)
+  val restartRequestChannel = Channel<Unit>(capacity = 1)
+  cs.launch {
+    for (request in restartRequestChannel) {
+      ExecutionUtil.restart(environment)
+    }
+  }
+  return ExecutionEnvironmentProxyDto(
+    proxy.getRunProfileName(), proxy.getIcon().rpcId(), proxy.getRerunIcon().rpcId(),
+    proxy.isStarting(), proxy.isStartingFlow().toRpc(cs.coroutineContext),
+    restartRequestChannel
+  )
 }

@@ -424,7 +424,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     if (useFeProxy()) {
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
-                                            contentToReuse, executionEnvironment?.toDto())
+                                            contentToReuse, executionEnvironment?.toDto(coroutineScope))
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         myRunContentDescriptor = contentToReuse // This is a mock descriptor used in backend only
                                  ?: object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
