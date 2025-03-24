@@ -3854,15 +3854,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myLastTypedActionTimestamp == -1) {
       return;
     }
+    long latencyMs = System.currentTimeMillis() - myLastTypedActionTimestamp;
+    myLastTypedActionTimestamp = -1;
 
     LatencyListener latencyPublisher = myLatencyPublisher;
     if (latencyPublisher == null) {
       latencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
       myLatencyPublisher = latencyPublisher;
     }
-
-    latencyPublisher.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
-    myLastTypedActionTimestamp = -1;
+    latencyPublisher.recordTypingLatency(this, myLastTypedAction, latencyMs);
   }
 
   public boolean isProcessingTypedAction() {
