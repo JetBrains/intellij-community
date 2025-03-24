@@ -90,15 +90,9 @@ internal class FrontendXDebuggerSession private constructor(
           send(null)
           return@collectLatest
         }
-        val childScope = cs.childScope(
-          "Suspend Context ${suspendContextDto.id}"
-        )
-        try {
-          send(FrontendXSuspendContext(suspendContextDto, childScope))
+        supervisorScope {
+          send(FrontendXSuspendContext(suspendContextDto, this))
           awaitCancellation()
-        }
-        finally {
-          childScope.cancel()
         }
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
@@ -110,8 +104,10 @@ internal class FrontendXDebuggerSession private constructor(
           send(null)
           return@collectLatest
         }
-        // TODO[IJPL-177087] narrower scope?
-        send(FrontendXExecutionStack(executionStackDto, cs))
+        supervisorScope {
+          send(FrontendXExecutionStack(executionStackDto, this))
+          awaitCancellation()
+        }
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
@@ -122,8 +118,10 @@ internal class FrontendXDebuggerSession private constructor(
           send(null)
           return@collectLatest
         }
-        return@collectLatest
-        send(FrontendXStackFrame(stackFrameDto))
+        supervisorScope {
+          send(FrontendXStackFrame(stackFrameDto))
+          awaitCancellation()
+        }
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
