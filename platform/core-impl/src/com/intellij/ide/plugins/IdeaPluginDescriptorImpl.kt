@@ -107,7 +107,7 @@ class IdeaPluginDescriptorImpl private constructor(
     .let(::convertExtensions)
     .let(::sortExtensions)
 
-  private var resourceBundleBaseName: String? = raw.resourceBundleBaseName
+  private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
     .also {
       if (it != null && this.id == PluginManagerCore.CORE_ID) {
         LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
