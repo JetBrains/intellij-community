@@ -48,7 +48,7 @@ public class ComponentsViewModel(
                 content = { RadioButtons() },
             ),
             ViewInfo(title = "Checkboxes", iconKey = ShowcaseIcons.Components.checkbox, content = { Checkboxes() }),
-            ViewInfo(title = "Dropdowns", iconKey = ShowcaseIcons.Components.comboBox, content = { ComboBoxes() }),
+            ViewInfo(title = "Combo Boxes", iconKey = ShowcaseIcons.Components.comboBox, content = { ComboBoxes() }),
             ViewInfo(title = "Chips and trees", iconKey = ShowcaseIcons.Components.tree, content = { ChipsAndTrees() }),
             ViewInfo(
                 title = "Progressbar",
