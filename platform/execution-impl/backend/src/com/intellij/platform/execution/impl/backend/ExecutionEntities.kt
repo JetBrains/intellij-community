@@ -8,6 +8,7 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.EntityType
 import com.jetbrains.rhizomedb.Indexing
+import org.jetbrains.annotations.ApiStatus
 
 private class ExecutionEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
@@ -22,6 +23,7 @@ internal data class BackendProcessHandlerEntity(override val eid: EID) : Entity 
   val processHandlerId: ProcessHandlerId by ProcessHandlerId
   val processHandler: ProcessHandler by ProcessHandler
 
+  @ApiStatus.Internal
   companion object : EntityType<BackendProcessHandlerEntity>(
     BackendProcessHandlerEntity::class.java.name,
     "com.intellij.xdebugger.impl.rhizome",
