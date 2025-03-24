@@ -140,6 +140,12 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
+  public void info(String message, @Nullable Throwable t) {
+    if (isTooFrequentException(t)) return;
+    super.info(message, t);
+  }
+
+  @Override
   public void warn(String message, @Nullable Throwable t) {
     if (isTooFrequentException(t)) return;
     super.warn(message, ensureNotControlFlow(t));

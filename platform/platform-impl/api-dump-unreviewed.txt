@@ -5544,6 +5544,7 @@ f:com.intellij.idea.IdeaLogger
 - s:dropFrequentExceptionsCaches():V
 - error(java.lang.String,java.lang.Throwable,com.intellij.openapi.diagnostic.Attachment[]):V
 - error(java.lang.String,java.lang.Throwable,java.lang.String[]):V
+- info(java.lang.String,java.lang.Throwable):V
 - warn(java.lang.String,java.lang.Throwable):V
 f:com.intellij.idea.LoggerFactory
 - com.intellij.openapi.diagnostic.Logger$Factory
