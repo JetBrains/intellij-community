@@ -193,7 +193,7 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   @VisibleForTesting
-  fun patchDescriptor(raw: RawPluginDescriptor, context: DescriptorListLoadingContext) {
+  fun patchDescriptor(context: DescriptorListLoadingContext) {
     if (version == null) {
       version = context.defaultVersion
     }

@@ -33,7 +33,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
   val raw = rawBuilder.build()
   val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet())
   val result = IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = isBundled, id = id, moduleName = null)
-  result.patchDescriptor(raw = raw, context = context)
+  result.patchDescriptor(context = context)
   initMainDescriptorByRaw(
     descriptor = result,
     pathResolver = pathResolver,
@@ -56,7 +56,7 @@ fun createFromDescriptor(path: Path,
     it.build()
   }
   val result = IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = isBundled, id = null, moduleName = null)
-  result.patchDescriptor(raw = raw, context = context)
+  result.patchDescriptor(context = context)
   initMainDescriptorByRaw(descriptor = result, pathResolver = pathResolver, context = context, dataLoader = dataLoader, pluginDir = path, pool = ZipFilePoolImpl())
   return result
 }
