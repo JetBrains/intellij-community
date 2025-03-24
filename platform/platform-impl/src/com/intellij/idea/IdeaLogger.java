@@ -137,28 +137,23 @@ public final class IdeaLogger extends JulLogger {
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     if (isTooFrequentException(t)) return;
 
+    Throwable errorWithAttachment;
     if (attachments.length == 0) {
-      logSevere(message, t);
+      errorWithAttachment = t;
     }
     else if (t != null) {
-      logSevere(message, new RuntimeExceptionWithAttachments(t, attachments));
+      errorWithAttachment = new RuntimeExceptionWithAttachments(ensureNotControlFlow(t), attachments);
     }
     else {
-      logSevere(message, new RuntimeExceptionWithAttachments(new Throwable(), attachments));
+      errorWithAttachment = new RuntimeExceptionWithAttachments(new Throwable(), attachments);
     }
-    if (t != null) {
-      reportToFus(t);
-    }
+
+    error(message, errorWithAttachment);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (isTooFrequentException(t)) return;
-
-    if (t != null && shouldRethrow(t)) {
-      logSevere(message, ensureNotControlFlow(t));
-      ExceptionUtil.rethrow(t);
-    }
 
     var detailString = String.join("\n", details);
     if (!detailString.isEmpty()) {
@@ -172,8 +167,12 @@ public final class IdeaLogger extends JulLogger {
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
 
-    logSevere(message + detailString, t);
+    logSevere(message + detailString, ensureNotControlFlow(t));
     logErrorHeader(t);
+
+    if (t != null && shouldRethrow(t)) {
+      ExceptionUtil.rethrow(t);
+    }
 
     if (t != null) {
       reportToFus(t);
