@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.service
 
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -12,10 +13,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface MarkdownLinkOpenerRemoteApi: RemoteApi<Unit> {
-  suspend fun openFile(projectId: ProjectId, uri: String)
-  suspend fun collectHeaders(projectId: ProjectId?, uri: String): List<MarkdownHeaderInfo>
+  suspend fun collectHeaders(projectId: ProjectId?, uri: String): List<MarkdownHeaderInfo>?
   suspend fun guessProjectForUri(uri: String): ProjectId?
-  suspend fun navigateToHeader(projectId: ProjectId, headerInfo: MarkdownHeaderInfo)
+  suspend fun resolveLinkAsFilePath(link: String, virtualFileId: VirtualFileId?): String?
 
   companion object {
     @JvmStatic

@@ -73,7 +73,7 @@ public final class MarkdownFrontendServiceImpl implements MarkdownFrontendServic
     if (uri == null) return;
     VirtualFile file = findVirtualFile(uri);
     Project project = ProjectIdKt.findProject(projectId);
-    FileEditorManager manager = FileEditorManager.getInstance(ProjectIdKt.findProject(projectId));
+    FileEditorManager manager = FileEditorManager.getInstance(project);
     List<MarkdownEditorWithPreview> openedEditors = manager.getEditorList(file).stream()
       .filter(editor -> editor instanceof MarkdownEditorWithPreview)
       .map(editor -> (MarkdownEditorWithPreview)editor)

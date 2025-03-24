@@ -41,7 +41,7 @@ internal class ProcessLinksExtension(private val panel: MarkdownHtmlPanel): Mark
         return false
       }
     }
-    MarkdownLinkOpener.getInstance().openLink(panel.project, link)
+    MarkdownLinkOpener.getInstance().openLink(panel.project, link, panel.virtualFile)
     return false
   }
 

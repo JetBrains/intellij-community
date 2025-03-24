@@ -2,29 +2,26 @@
 // Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.backend.services
 
-import com.intellij.ide.actions.OpenFileAction
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.projectId
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.UriUtil
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Path
@@ -34,10 +31,24 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
     private val logger: Logger = Logger.getInstance(MarkdownLinkOpenerRemoteApiImpl::class.java)
   }
 
-  override suspend fun openFile(projectId: ProjectId, uri: String) {
-    val project = projectId.findProject()
-    val parsedUri = parseUri(uri)?: return
-    OpenFileAction.openFile(parsedUri.path, project)
+  /**
+   * Tries to resolve the link as a path to file. Path to file can be:
+   * - absolute path
+   * - relative path to the file from which the link is resolved
+   * @param link the link to resolve
+   * @param virtualFileId the id of the file from which the link is resolved
+   * @return the path to the file as schema if the link is resolved successfully, null otherwise
+   */
+  override suspend fun resolveLinkAsFilePath(link: String, virtualFileId: VirtualFileId?): String?{
+    val containingFile = virtualFileId?.virtualFile()?.parent ?: return null
+    val targetFile = containingFile.findFile(link.trimAnchor()) ?: return null
+    val anchor = if ('#' in link) link.substring(link.lastIndexOf('#')) else ""
+    return targetFile.url + anchor
+  }
+
+  private fun String.trimAnchor(): String {
+    val anchorIndex = lastIndexOf('#')
+    return if (anchorIndex == -1) this else substring(0, anchorIndex)
   }
 
   private fun parseUri(uri: String): URI? {
@@ -49,7 +60,7 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
     }
   }
 
-  override suspend fun collectHeaders(projectId: ProjectId?, uri: String): List<MarkdownHeaderInfo> {
+  override suspend fun collectHeaders(projectId: ProjectId?, uri: String): List<MarkdownHeaderInfo>? {
     val project = projectId?.findProject() ?: return emptyList()
     val parsedUri = parseUri(uri)?: return emptyList()
     val targetFile = parsedUri.findVirtualFile() ?: return emptyList()
@@ -74,26 +85,6 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
     return project.projectId()
   }
 
-  override suspend fun navigateToHeader(projectId: ProjectId, headerInfo: MarkdownHeaderInfo) {
-    val uri = createFileUri(headerInfo.filePath) ?: return
-    val file = uri.findVirtualFile() ?: return
-    val project = projectId.findProject()
-    val manager = FileEditorManager.getInstance(project)
-    val openedEditors = manager.getEditorList(file).filterIsInstance<MarkdownEditorWithPreview>()
-    val psiFile = PsiUtilCore.getPsiFile(project, file)
-    val element = psiFile.findElementAt(headerInfo.textOffset) ?: return
-    if (openedEditors.isNotEmpty()) {
-      openedEditors.forEach {
-        // Ensures the element is located as in the original implementation
-        PsiUtilCore.getElementAtOffset(psiFile, element.textOffset)
-        PsiNavigateUtil.navigate(element, true)
-      }
-      return
-    }
-    val descriptor = OpenFileDescriptor(project, file, element.textOffset)
-    manager.openEditor(descriptor, true)
-  }
-
   private fun URI.findVirtualFile(): VirtualFile? {
     val actualPath = when {
       SystemInfo.isWindows -> UriUtil.trimLeadingSlashes(path)
@@ -101,14 +92,5 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
     }
     val path = Path.of(actualPath)
     return VfsUtil.findFile(path, true)
-  }
-
-  private fun createFileUri(link: String): URI? {
-    return try {
-      URI("file", null, link, null)
-    } catch (e: URISyntaxException) {
-      logger.warn(e)
-      null
-    }
   }
 }
