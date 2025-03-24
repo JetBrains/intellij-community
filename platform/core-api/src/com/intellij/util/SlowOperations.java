@@ -128,11 +128,18 @@ public final class SlowOperations {
    * @see #assertSlowOperationsAreAllowed()
    */
   public static void assertNonCancelableSlowOperationsAreAllowed() {
-    String error = isAlwaysAllowed() ? null :
-                   EDT.isCurrentThreadEdt() ? (isSlowOperationAllowed() ? null : ERROR_EDT) :
-                   (ApplicationManager.getApplication().isReadAccessAllowed() ? ERROR_RA : null);
-    if (error == null || isAlreadyReported()) return;
-    Holder.LOG.error(error);
+    if (isAlwaysAllowed()) {
+      return;
+    }
+    if (EDT.isCurrentThreadEdt()) {
+      if (isSlowOperationAllowed()) {
+        return;
+      }
+      logError(ERROR_EDT);
+    }
+    else if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      logError(ERROR_RA);
+    }
   }
 
   private static boolean isSlowOperationAllowed() {
@@ -156,6 +163,12 @@ public final class SlowOperations {
       }
     }
     return false;
+  }
+
+  private static void logError(@NotNull String message) {
+    if (!isAlreadyReported()) {
+      Holder.LOG.error(message);
+    }
   }
 
   private static boolean isAlreadyReported() {
