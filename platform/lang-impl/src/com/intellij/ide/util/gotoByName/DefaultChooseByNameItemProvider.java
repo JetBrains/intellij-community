@@ -496,7 +496,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     }
 
     public static List<String> normalizeString(String string) {
-      return Arrays.asList(string.replaceAll("^" + SEPARATOR_CHARACTERS, "").split(SEPARATOR_CHARACTERS));
+      String trimmedString = string.replaceAll("^" + SEPARATOR_CHARACTERS, "");
+      if (trimmedString.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return Arrays.asList(trimmedString.split(SEPARATOR_CHARACTERS));
     }
 
     public static float distanceBetweenStrings(String string, String other) {

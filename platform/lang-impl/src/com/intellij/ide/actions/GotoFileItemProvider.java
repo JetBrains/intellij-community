@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -192,11 +191,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                                           @NotNull FindSymbolParameters parameters,
                                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                                           @NotNull ProgressIndicator indicator) {
-
-    long startEnd = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
 
     List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems =
-      processLimitedTwoComponentPattern(base, parameters.getCompletePattern(), parameters, consumer, indicator);
+      processLimitedTwoComponentPattern(base, parameters, indicator);
 
     Processor<FoundItemDescriptor<?>> trackingProcessor = res -> {
       return consumer.process(res);
@@ -205,7 +203,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return false;
     }
 
-    long timeEnd = System.currentTimeMillis();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
+        "Process items with levenshtein \"" + parameters.getCompletePattern() + "\" took " + (System.currentTimeMillis() - start) + " ms");
+    }
 
     return true;
   }
@@ -217,26 +218,24 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
    * or an empty list if no matches are found or if the pattern contains more than two components.
    */
   private List<FoundItemDescriptor<PsiFileSystemItem>> processLimitedTwoComponentPattern(
-    final @NotNull ChooseByNameViewModel base, @NotNull String pattern,
-                                                                                @NotNull FindSymbolParameters parameters,
-                                                                                @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
-                                                                                @NotNull ProgressIndicator indicator) {
-    List<String> patternComponents = LevenshteinCalculator.normalizeString(pattern);
-
+    final @NotNull ChooseByNameViewModel base,
+    @NotNull FindSymbolParameters parameters,
+    @NotNull ProgressIndicator indicator) {
+    List<String> patternComponents = LevenshteinCalculator.normalizeString(parameters.getCompletePattern());
     if (patternComponents.size() > 2 || patternComponents.isEmpty()) {
       return Collections.emptyList();
     }
 
     // Find files that fit the pattern in the original order
     List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems =
-      new ArrayList<>(findItemsByParentChildPattern(base, patternComponents, parameters, consumer, indicator));
+      new ArrayList<>(findItemsByParentChildPattern(base, patternComponents, parameters, indicator));
 
     // If there are no results, find files that fit the pattern in the inverted order
     if (matchingItems.isEmpty() && patternComponents.size() == 2) {
       List<String> invertedPatternComponents = new ArrayList<>(patternComponents);
       Collections.reverse(invertedPatternComponents);
 
-      matchingItems.addAll(findItemsByParentChildPattern(base, invertedPatternComponents, parameters, consumer, indicator));
+      matchingItems.addAll(findItemsByParentChildPattern(base, invertedPatternComponents, parameters, indicator));
     }
 
     return matchingItems;
@@ -252,10 +251,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
    * is the name of a file or directory and the first component is its parent.
    */
   private List<FoundItemDescriptor<PsiFileSystemItem>> findItemsByParentChildPattern(final @NotNull ChooseByNameViewModel base,
-                                                                                      @NotNull List<String> patternComponents,
-                                                                                      @NotNull FindSymbolParameters parameters,
-                                                                                      @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
-                                                                                      @NotNull ProgressIndicator indicator) {
+                                                                                     @NotNull List<String> patternComponents,
+                                                                                     @NotNull FindSymbolParameters parameters,
+                                                                                     @NotNull ProgressIndicator indicator) {
     // processing only two specific cases: when the patternComponents.size() == 1 and 2
     if (patternComponents.isEmpty() || patternComponents.size() > 2) {
       return Collections.emptyList();
