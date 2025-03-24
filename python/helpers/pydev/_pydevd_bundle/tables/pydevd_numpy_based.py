@@ -42,7 +42,7 @@ def get_shape(table):
         else:
             shape = table.shape
     except ImportError:
-        pass
+        shape = table.shape
 
     if len(shape) == 1:
         return str((int(shape[0]), 1))
