@@ -1431,7 +1431,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     TypedAction.getInstance().beforeActionPerformed(this, c, dataContext, plan);
     if (myImmediatePainter.paint(graphics, plan)) {
       measureTypingLatency();
-      myLastTypedActionTimestamp = -1;
     }
   }
 
