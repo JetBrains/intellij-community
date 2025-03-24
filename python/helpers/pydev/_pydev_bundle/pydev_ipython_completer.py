@@ -122,7 +122,6 @@ def _new_completer_600(shell):
     completer = PyDevIPCompleter6(shell=shell,
                                   namespace=shell.user_ns,
                                   global_namespace=shell.user_global_ns,
-                                  use_readline=False,
                                   parent=shell
                                   )
     return completer
