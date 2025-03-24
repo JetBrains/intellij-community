@@ -156,7 +156,8 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     FutureVirtualFile target = file.targetFile();
     VirtualFile parent = actualize(target.getParent());
     return WriteAction.compute(() -> {
-      if (parent != null && !parent.equals(source.getParent())) {
+      VirtualFile origParent = source.getParent();
+      if (parent != null && !parent.equals(origParent)) {
         try {
           source.move(this, parent);
         }
@@ -170,7 +171,16 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
           source.rename(this, target.getName());
         }
         catch (IOException e) {
-          return AnalysisBundle.message("modcommand.executor.cannot.move.file",
+          if (origParent != null && !origParent.equals(parent)) {
+            try {
+              // Try to rollback 'move' in case if rename failed
+              source.move(this, origParent);
+            }
+            catch (IOException ignored) {
+              // Ignore move exception 
+            }
+          }
+          return AnalysisBundle.message("modcommand.executor.cannot.rename.file",
                                         source.getPath(), target.getName(), e.getLocalizedMessage());
         }
       }
