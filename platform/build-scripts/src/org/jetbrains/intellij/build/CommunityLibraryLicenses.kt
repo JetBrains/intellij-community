@@ -1073,10 +1073,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("qdox-java-parser", libraryName = "qdox-java-parser", url = "https://github.com/paul-hammant/qdox")
       .apache("https://github.com/paul-hammant/qdox/blob/master/LICENSE.txt"),
 
-    LibraryLicense("R8 DEX shrinker", libraryName = "jb-r8", url = "https://r8.googlesource.com/r8")
-      .newBsd("https://r8.googlesource.com/r8/+/refs/heads/main/LICENSE")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-
     LibraryLicense("rd core", libraryName = "rd-core", url = "https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core")
       .apache("https://github.com/JetBrains/rd/blob/master/LICENSE"),
 
