@@ -344,21 +344,22 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     @Override
-    public void setupSignaturePresentation(@NotNull List<@NotNull ParameterPresentation> parameters,
-                                           int currentParameterIndex,
-                                           @NotNull String separator,
-                                           boolean isDeprecated) {
+    public void setupSignatureHtmlPresentation(@NotNull List<@NotNull ParameterHtmlPresentation> parameters,
+                                               int currentParameterIndex,
+                                               @NotNull String separator,
+                                               boolean isDeprecated) {
       mySetup = true;
       ParameterInfoControllerBase.RawSignaturePresentationItem item = new ParameterInfoControllerBase.RawSignaturePresentationItem(
         ContainerUtil.map(parameters, p -> new ParameterInfoControllerBase.RawSignaturePresentationItem.RawParameterPresentationItem(
-          p.nameAndTypeHtml(), p.defaultValueHtml(), p.isMismatched())),
+          p.nameAndType(), p.defaultValue(), p.isMismatched())),
         currentParameterIndex, separator, isDeprecated
       );
 
       result.current = currentParameterIndex;
       result.signatures.add(item);
 
-      myPanels[i].setup(renderSignaturePresentationToHtml(myEditor, this, item), getDefaultParameterColor());
+      myPanels[i].setup(renderSignaturePresentationToHtml(myEditor, this, parameters, currentParameterIndex, separator, isDeprecated),
+                        getDefaultParameterColor());
       if (!mySimpleDesignMode) {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }

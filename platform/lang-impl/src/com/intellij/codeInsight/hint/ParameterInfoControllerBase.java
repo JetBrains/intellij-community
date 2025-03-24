@@ -560,8 +560,8 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
-
-  public static final class RawSignaturePresentationItem implements SignatureItemModel {
+  @ApiStatus.Internal
+  protected static final class RawSignaturePresentationItem implements SignatureItemModel {
     public final @NotNull List<@NotNull RawParameterPresentationItem> parameters;
     public final int currentParameterIndex;
     public final @NotNull String separator;
@@ -577,6 +577,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
       this.isDeprecated = isDeprecated;
     }
 
+    @ApiStatus.Internal
     public static class RawParameterPresentationItem {
       public final @NotNull String nameAndTypeHtml;
       public final @Nullable String defaultValueHtml;

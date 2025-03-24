@@ -2,14 +2,14 @@
 package com.intellij.lang.parameterInfo
 
 import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax.ParameterInfoHandlerWithColoredSyntaxData
-import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax.SignaturePresentation
+import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax.SignatureHtmlPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
-abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement, SigPresentation : SignaturePresentation> : ParameterInfoHandler<ParameterOwner, ParameterInfoHandlerWithColoredSyntaxData> {
+abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement, SigPresentation : SignatureHtmlPresentation> : ParameterInfoHandler<ParameterOwner, ParameterInfoHandlerWithColoredSyntaxData> {
 
   final override fun findElementForParameterInfo(context: CreateParameterInfoContext): ParameterOwner? {
     val parameterOwner = findParameterOwner(context.file ?: return null, context.offset) ?: return null
@@ -41,7 +41,7 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
         if (paramList != null) {
           @Suppress("UNCHECKED_CAST")
           (item as? ParameterInfoHandlerWithColoredSyntaxData)?.let {
-            it.signaturePresentation = paramList
+            it.signatureHtmlPresentation = paramList
             it.modCount = parameterOwner.containingFile.modificationStamp
           }
         }
@@ -51,9 +51,9 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
     context.objectsToView.forEach {
       @Suppress("UNCHECKED_CAST")
       (it as? ParameterInfoHandlerWithColoredSyntaxData)?.let {
-        it.mismatchedParameters = getMismatchedParameters(it.signaturePresentation as SigPresentation, parameterOwner, context)
-        it.selectedParameter = getSignatureCurrentParameter(it.signaturePresentation as SigPresentation, parameterOwner, context)
-        it.isFullyMatched = it.mismatchedParameters.isEmpty() && isSignatureFullyMatched(it.signaturePresentation as SigPresentation, parameterOwner)
+        it.mismatchedParameters = getMismatchedParameters(it.signatureHtmlPresentation as SigPresentation, parameterOwner, context)
+        it.selectedParameter = getSignatureCurrentParameter(it.signatureHtmlPresentation as SigPresentation, parameterOwner, context)
+        it.isFullyMatched = it.mismatchedParameters.isEmpty() && isSignatureFullyMatched(it.signatureHtmlPresentation as SigPresentation, parameterOwner)
       }
     }
 
@@ -76,7 +76,7 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
     signature: SigPresentation,
     parameterOwner: ParameterOwner,
     context: ParameterInfoContext,
-  ): Set<ParameterPresentation> = emptySet()
+  ): Set<ParameterHtmlPresentation> = emptySet()
 
   protected open fun isSignatureFullyMatched(
     signature: SigPresentation,
@@ -91,51 +91,51 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
     val text = context.editor.document.text
     val offset = StringUtil.skipWhitespaceForward(text, context.offset)
     return signature.parameters
-      .indexOfLast { it.range != null && offset in it.range!!.startOffset..StringUtil.skipWhitespaceForward(text, it.range!!.endOffset) }
+      .indexOfLast { it.sourceCodeRange != null && offset in it.sourceCodeRange!!.startOffset..StringUtil.skipWhitespaceForward(text, it.sourceCodeRange!!.endOffset) }
   }
 
   final override fun updateUI(presentation: ParameterInfoHandlerWithColoredSyntaxData, context: ParameterInfoUIContext) {
-    context.setupSignaturePresentation(
-      presentation.signaturePresentation.parameters.map {
-        ParameterInfoUIContext.ParameterPresentation(it.text, it.defaultValue, presentation.mismatchedParameters.contains(it))
+    context.setupSignatureHtmlPresentation(
+      presentation.signatureHtmlPresentation.parameters.map {
+        ParameterInfoUIContext.ParameterHtmlPresentation(it.nameAndType, it.defaultValue, presentation.mismatchedParameters.contains(it))
       },
       presentation.selectedParameter,
       parameterListSeparator,
-      presentation.signaturePresentation.deprecated
+      presentation.signatureHtmlPresentation.deprecated
     )
   }
 
-  protected fun SignaturePresentation(parameters: List<ParameterPresentation>, deprecated: Boolean = false): SignaturePresentation =
-    object : SignaturePresentation {
-      override val parameters: List<ParameterPresentation> = parameters
+  protected fun SignatureHtmlPresentation(parameters: List<ParameterHtmlPresentation>, deprecated: Boolean = false): SignatureHtmlPresentation =
+    object : SignatureHtmlPresentation {
+      override val parameters: List<ParameterHtmlPresentation> = parameters
       override val deprecated: Boolean = deprecated
     }
 
-  interface SignaturePresentation {
-    val parameters: List<ParameterPresentation>
+  interface SignatureHtmlPresentation {
+    val parameters: List<ParameterHtmlPresentation>
     val deprecated: Boolean get() = false
   }
 
-  protected fun ParameterPresentation(text: String, range: TextRange? = null, defaultValue: String? = null): ParameterPresentation =
-    object : ParameterPresentation {
-      override val text: String get() = text
-      override val range: TextRange? get() = range
+  protected fun ParameterHtmlPresentation(nameAndType: String, sourceCodeRange: TextRange? = null, defaultValue: String? = null): ParameterHtmlPresentation =
+    object : ParameterHtmlPresentation {
+      override val nameAndType: String get() = nameAndType
+      override val sourceCodeRange: TextRange? get() = sourceCodeRange
       override val defaultValue: String? get() = defaultValue
     }
 
-  interface ParameterPresentation {
-    val text: String
-    val range: TextRange? get() = null
+  interface ParameterHtmlPresentation {
+    val nameAndType: String
+    val sourceCodeRange: TextRange? get() = null
     val defaultValue: String? get() = null
   }
 
   class ParameterInfoHandlerWithColoredSyntaxData internal constructor(
-    internal var signaturePresentation: SignaturePresentation,
+    internal var signatureHtmlPresentation: SignatureHtmlPresentation,
     internal var modCount: Long,
     internal var editor: Editor,
   ) {
     internal var selectedParameter: Int = -1
-    internal var mismatchedParameters: Set<ParameterPresentation> = emptySet()
+    internal var mismatchedParameters: Set<ParameterHtmlPresentation> = emptySet()
     internal var isFullyMatched: Boolean = false
   }
 }

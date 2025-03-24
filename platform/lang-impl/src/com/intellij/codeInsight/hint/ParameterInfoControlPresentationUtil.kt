@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hint
 
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.getStyledFragment
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext.ParameterHtmlPresentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.HighlighterColors
@@ -20,7 +21,10 @@ import java.awt.Color
 internal fun renderSignaturePresentationToHtml(
   editor: Editor,
   context: ParameterInfoUIContext,
-  signaturePresentation: ParameterInfoControllerBase.RawSignaturePresentationItem,
+  parametersPresentation: List<ParameterHtmlPresentation>,
+  currentParameterIndex: Int,
+  separator: String,
+  isDeprecated: Boolean,
 ): String {
 
   val backgroundColor = context.defaultParameterColor ?: JBColor.WHITE
@@ -35,18 +39,20 @@ internal fun renderSignaturePresentationToHtml(
       ?: it.defaultForeground
     }
   }
-  val currentParameter = signaturePresentation.currentParameterIndex
+  val currentParameter = currentParameterIndex
 
   val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
   val mismatchedParameterBgColor = "#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(backgroundColor, JBColor.RED, mismatchedParameterAlpha))}"
-  val parameters = signaturePresentation.parameters
+  val parameters = parametersPresentation
     .mapIndexed { index, parameter ->
-      val defaultParam = parameter.defaultValueHtml?.let { blendColors(getStyledFragment(it, textAttributes), backgroundColor, defaultParamAlpha) }
+      val defaultParam = parameter.defaultValue?.let {
+        blendColors(getStyledFragment(it, textAttributes), backgroundColor, defaultParamAlpha)
+      }
                          ?: ""
       val result = if (index == currentParameter)
-        "<b>${getStyledFragment(parameter.nameAndTypeHtml, textAttributes) + defaultParam}</b>"
+        "<b>${getStyledFragment(parameter.nameAndType, textAttributes) + defaultParam}</b>"
       else
-        blendColors(getStyledFragment(parameter.nameAndTypeHtml, textAttributes) + defaultParam, backgroundColor, deselectedParamAlpha)
+        blendColors(getStyledFragment(parameter.nameAndType, textAttributes) + defaultParam, backgroundColor, deselectedParamAlpha)
       result
         .replace(Regex("</?a([^a-zA-Z>][^>]*>|>)"), "")
         .applyIf(parameter.isMismatched) {
@@ -57,8 +63,8 @@ internal fun renderSignaturePresentationToHtml(
         }
     }
 
-  return buildContents(parameters, signaturePresentation, currentParameter, editor,
-                       blendColors(getStyledFragment("${signaturePresentation.separator} ", textAttributes), backgroundColor, deselectedParamAlpha),
+  return buildContents(parameters, parametersPresentation, isDeprecated, currentParameter, editor,
+                       blendColors(getStyledFragment("$separator ", textAttributes), backgroundColor, deselectedParamAlpha),
                        backgroundColor, disabledSignatureAlpha,
                        context.isSingleOverload)
 }
@@ -66,7 +72,8 @@ internal fun renderSignaturePresentationToHtml(
 @NlsSafe
 private fun buildContents(
   parameters: List<String>,
-  signaturePresentation: ParameterInfoControllerBase.RawSignaturePresentationItem,
+  parametersPresentation: List<ParameterHtmlPresentation>,
+  isDeprecated: Boolean,
   currentParameter: Int,
   editor: Editor,
   separator: String,
@@ -84,13 +91,13 @@ private fun buildContents(
   var index = 0
   val fontMetrics = editor.component.getFontMetrics(boldFont)
 
-  val leadingParameterIsMismatched = signaturePresentation.parameters
+  val leadingParameterIsMismatched = parametersPresentation
     .applyIf(currentParameter >= 0) { take(currentParameter + 1) }
     .any { it.isMismatched }
 
   fun StringBuilder.appendCurrentLine(): StringBuilder {
     append(lineBuffer.toString()
-             .applyIf(signaturePresentation.isDeprecated) { "<strike>$this</strike>" }
+             .applyIf(isDeprecated) { "<strike>$this</strike>" }
              .applyIf(leadingParameterIsMismatched) { blendColors(this, backgroundColor, disabledSignatureAlpha) })
     lineBuffer.clear()
     lineWidth = 0
