@@ -1,3 +1,5 @@
+// IMPORT__MARKER_START
+// IMPORT__MARKER_END
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
   id("fleet.project-module-conventions")
@@ -6,10 +8,19 @@ plugins {
   id("fleet.open-source-module-conventions")
   id("fleet-build-jps-module-plugin")
   alias(libs.plugins.dokka)
+  // GRADLE_PLUGINS__MARKER_START
+  // GRADLE_PLUGINS__MARKER_END
 }
+
+val jpsModuleName = "fleet.rhizomedb"
 
 jpsModule {
   location {
-    moduleName = "fleet.rhizomedb"
+    moduleName = jpsModuleName
   }
+}
+
+kotlin {
+  // KOTLIN__MARKER_START
+  // KOTLIN__MARKER_END
 }
