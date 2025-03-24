@@ -17,10 +17,10 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.deploy
 import com.intellij.platform.ijent.spi.DeployedIjent
@@ -178,7 +178,7 @@ fun runProcessBlocking(
     .eelIt()
   ) {
     is EelResult.Ok ->
-      (processResult.value as IjentChildProcess).toProcess(
+      processResult.value.toProcess(
         coroutineScope = scope,
         isPty = ptyOrStdErrSettings != null,
       )
@@ -186,7 +186,7 @@ fun runProcessBlocking(
   }
 }
 
-private fun IjentChildProcess.toProcess(
+private fun EelProcess.toProcess(
   coroutineScope: CoroutineScope,
   isPty: Boolean,
 ): Process =
