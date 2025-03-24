@@ -232,7 +232,8 @@ public final class IdeBackgroundUtil {
     }
   }
 
-  static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+  @ApiStatus.Internal
+  public static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val instanceof Boolean;
