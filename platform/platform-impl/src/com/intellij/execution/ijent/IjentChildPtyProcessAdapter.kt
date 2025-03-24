@@ -70,7 +70,7 @@ class IjentChildPtyProcessAdapter(
 
   override fun destroyForcibly(): Process = apply { delegate.destroyForcibly() }
 
-  override fun supportsNormalTermination(): Boolean = true
+  override fun supportsNormalTermination(): Boolean = delegate.supportsNormalTermination()
 
   override fun isAlive(): Boolean = delegate.isAlive()
 

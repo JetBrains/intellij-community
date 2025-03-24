@@ -2,7 +2,9 @@
 package com.intellij.execution.ijent
 
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.provider.utils.asOutputStream
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.ijent.spi.IjentThreadPool
@@ -62,7 +64,10 @@ internal class IjentChildProcessAdapterDelegate(
 
   fun destroy() {
     coroutineScope.launch {
-      ijentChildProcess.terminate()
+      when (ijentChildProcess) {
+        is EelPosixProcess -> ijentChildProcess.terminate()
+        is EelWindowsProcess -> ijentChildProcess.kill()
+      }
     }
   }
 
@@ -80,4 +85,10 @@ internal class IjentChildProcessAdapterDelegate(
     }
     return true
   }
+
+  fun supportsNormalTermination(): Boolean =
+    when (ijentChildProcess) {
+      is EelPosixProcess -> true
+      is EelWindowsProcess -> false
+    }
 }

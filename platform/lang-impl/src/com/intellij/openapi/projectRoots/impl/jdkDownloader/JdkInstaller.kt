@@ -143,7 +143,11 @@ class JdkInstaller : JdkInstallerBase() {
         }
       }
       catch (_: TimeoutCancellationException) {
-        process.terminate()  // TODO Originally there was a much more difficult logic of termination.
+        // TODO Originally there was a much more difficult logic of termination.
+        when (process) {
+          is EelPosixProcess -> process.terminate()
+          is EelWindowsProcess -> process.kill()
+        }
         ProcessOutput("", "", -1, true, false)
       }
     }

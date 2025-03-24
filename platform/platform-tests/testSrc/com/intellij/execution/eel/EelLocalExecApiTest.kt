@@ -19,10 +19,7 @@ import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junitpioneer.jupiter.cartesian.CartesianTest
+import org.junit.jupiter.api.*
 import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.test.assertEquals
@@ -69,12 +66,32 @@ class EelLocalExecApiTest {
   /**
    * Test runs [EelHelper] checking stdin/stdout iteration, exit code, tty and signal/termination handling.
    */
-  @CartesianTest
-  fun testOutput(
-    @CartesianTest.Enum exitType: ExitType,
-    @CartesianTest.Enum ptyManagement: PTYManagement,
-  ): Unit = timeoutRunBlocking(1.minutes) {
+  @TestFactory
+  fun testOutput(): List<DynamicTest> {
+    val testCases = mutableListOf<Pair<ExitType, PTYManagement>>()
+    for (exitType in ExitType.entries) {
+      for (ptyManagement in PTYManagement.entries) {
+        testCases.add(exitType to ptyManagement)
+      }
+    }
 
+    testCases.removeIf { (exitType, _) ->
+      when (exitType) {
+        ExitType.KILL, ExitType.INTERRUPT, ExitType.EXIT_WITH_COMMAND -> false
+        ExitType.TERMINATE -> SystemInfoRt.isWindows
+      }
+    }
+
+    return testCases.map { (exitType, ptyManagement) ->
+      DynamicTest.dynamicTest("$exitType $ptyManagement") {
+        timeoutRunBlocking(1.minutes) {
+          testOutputImpl(ptyManagement, exitType)
+        }
+      }
+    }
+  }
+
+  private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType) {
     val builder = executor.createBuilderToExecuteMain(localEel.exec)
     builder.ptyOrStdErrSettings(when (ptyManagement) {
                                   PTYManagement.NO_PTY -> null
@@ -140,21 +157,33 @@ class EelLocalExecApiTest {
           }
         }
 
-        process.stdout.readAllBytesAsync(this)
-        process.stderr.readAllBytesAsync(this)
-
-        // Test kill api
-        when (exitType) {
-          ExitType.KILL -> process.kill()
-          ExitType.TERMINATE -> process.terminate()
-          ExitType.INTERRUPT -> {
-            // Terminate sleep with interrupt/CTRL+C signal
-            process.sendCommand(Command.SLEEP)
-            process.interrupt()
+        coroutineScope {
+          // TODO Remove this reading after IJPL-186154 is fixed.
+          launch {
+            process.stdout.readAllBytesAsync(this)
           }
-          ExitType.EXIT_WITH_COMMAND -> {
-            // Just command to ask script return gracefully
-            process.sendCommand(Command.EXIT)
+          launch {
+            process.stderr.readAllBytesAsync(this)
+          }
+
+          // Test kill api
+          when (exitType) {
+            ExitType.KILL -> process.kill()
+            ExitType.TERMINATE -> {
+              when (process) {
+                is EelPosixProcess -> process.terminate()
+                is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
+              }
+            }
+            ExitType.INTERRUPT -> {
+              // Terminate sleep with interrupt/CTRL+C signal
+              process.sendCommand(Command.SLEEP)
+              process.interrupt()
+            }
+            ExitType.EXIT_WITH_COMMAND -> {
+              // Just command to ask script return gracefully
+              process.sendCommand(Command.EXIT)
+            }
           }
         }
 
@@ -194,7 +223,7 @@ class EelLocalExecApiTest {
   /**
    * Reads all bytes from the channel asynchronously. Otherwise, a PTY process
    * launched with `unixOpenTtyToPreserveOutputAfterTermination=true` won't exit.
-   * 
+   *
    * @see `com.pty4j.PtyProcessBuilder.setUnixOpenTtyToPreserveOutputAfterTermination`
    */
   private fun EelReceiveChannel<IOException>.readAllBytesAsync(coroutineScope: CoroutineScope) {

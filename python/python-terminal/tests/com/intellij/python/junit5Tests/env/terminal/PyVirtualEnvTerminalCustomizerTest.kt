@@ -181,7 +181,6 @@ class PyVirtualEnvTerminalCustomizerTest {
     }
     finally {
       process.kill()
-      process.terminate()
       process.exitCode.await()
     }
   }

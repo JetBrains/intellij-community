@@ -10,7 +10,7 @@ import java.io.IOException
  * Represents some process that was launched via [EelExecApi.execute].
  *
  */
-sealed interface EelProcess: KillableProcess {
+sealed interface EelProcess {
   val pid: EelApi.Pid
 
   /**
@@ -24,6 +24,21 @@ sealed interface EelProcess: KillableProcess {
   val stderr: EelReceiveChannel<IOException>
   val exitCode: Deferred<Int>
 
+  /**
+   * Sends `SIGKILL` on Unix.
+   *
+   * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
+   * on Windows.
+   */
+  suspend fun kill()
+
+  /**
+   * Sends `SIGINT` on Unix.
+   * Sends `CTRL+C` on Windows by attaching a console.
+   *
+   * Warning: This signal can be ignored.
+   */
+  suspend fun interrupt()
 
   /**
    * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
@@ -43,7 +58,10 @@ sealed interface EelProcess: KillableProcess {
 }
 
 interface EelPosixProcess : EelProcess {
-  // Nothing yet.
+  /**
+   * Sends `SIGTERM` on Unix.
+   */
+  suspend fun terminate()
 }
 
 interface EelWindowsProcess : EelProcess {
