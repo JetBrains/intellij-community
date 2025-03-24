@@ -480,7 +480,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.utp", "utp.jar")
 
       // libs:
-      spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
+      //spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
 
 
