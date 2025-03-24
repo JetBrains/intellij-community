@@ -486,6 +486,19 @@ internal tailrec fun psiForUast(
         }
     }
 
+    // For compiler-generated synthetic members, source PSI may point to the declaration
+    // from which this symbol originates, but that's not its real source, either.
+    // However, some resolutions still rely on that PSI info, e.g.,
+    //   default constructors, local functions/variables, implicit lambda parameter, etc.
+    // Hence, case-by-case bail-out
+    if (symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED) {
+        val containingDeclaration = symbol.containingDeclaration
+        // E.g., KTIJ-33572: data class `hasCode` resolves to `KtClass`, resulting in constructor?!
+        if ((containingDeclaration as? KaNamedClassSymbol)?.isData == true) {
+            return null
+        }
+    }
+
     return symbol.psi
 }
 
