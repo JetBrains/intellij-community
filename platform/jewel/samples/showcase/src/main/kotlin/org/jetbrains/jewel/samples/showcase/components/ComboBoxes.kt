@@ -29,12 +29,7 @@ import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 
 @Composable
-public fun Dropdowns() {
-    ComboBoxes()
-}
-
-@Composable
-private fun ComboBoxes() {
+public fun ComboBoxes() {
     GroupHeader("List combobox")
     ListComboBoxes()
 
