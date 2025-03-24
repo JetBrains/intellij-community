@@ -24,10 +24,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.JBSwingUtilities
-import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -287,8 +284,8 @@ private fun createThemeColorList(): JBList<ThemeColorInfo> {
 }
 
 private fun getColorId(color: Color): String {
-  if (color is JBColor) {
-    val name = color.name
+  if (color is PresentableColor) {
+    val name = color.getPresentableName()
     if (name != null) {
       return name
     }

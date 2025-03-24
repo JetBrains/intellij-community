@@ -19,6 +19,8 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.JBColor;
 
+import java.awt.*;
+
 public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
   public void testBlockSelection() {
     String text =
@@ -353,12 +355,18 @@ public class SyntaxInfoConstructionTest extends BasePlatformTestCase {
 
           @Override
           public void handleForeground(int foregroundId) {
-            builder.append("foreground=").append(colorRegistry.dataById(foregroundId)).append(',');
+            Color color = colorRegistry.dataById(foregroundId);
+            builder.append("foreground=").append(toCanonicalString(color)).append(',');
           }
 
           @Override
           public void handleBackground(int backgroundId) {
-            builder.append("background=").append(colorRegistry.dataById(backgroundId)).append(',');
+            Color color = colorRegistry.dataById(backgroundId);
+            builder.append("background=").append(toCanonicalString(color)).append(',');
+          }
+
+          private static String toCanonicalString(Color color) {
+            return new Color(color.getRGB(), true).toString();
           }
 
           @Override

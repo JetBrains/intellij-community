@@ -17,12 +17,14 @@ import com.intellij.ide.ui.laf.UiThemeProviderListManager.Companion.DEFAULT_LIGH
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconPathPatcher
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.util.InsecureHashBuilder
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
+import com.intellij.util.ui.ComparableColor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -499,6 +501,22 @@ private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
 }
 
 internal class IJColorUIResource(color: Color, private val name: String) : JBColor(Supplier { color }), UIResource {
+  override fun colorEquals(otherColor: ComparableColor): Boolean {
+    if (this.javaClass == otherColor.javaClass) {
+      val other = otherColor as IJColorUIResource
+      return name == other.name && rgb == other.rgb
+    }
+    return false
+  }
+
+  override fun colorHashCode(): Int {
+    return name.hashCode()
+  }
+
+  override fun getPresentableName(): @NlsSafe String? {
+    return "UI Resource: $name"
+  }
+
   override fun getName(): String = name
 
   override fun toString(): String = "IJColorUIResource(color=${super.toString()}, name=$name)"

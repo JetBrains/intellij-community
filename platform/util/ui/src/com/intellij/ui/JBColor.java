@@ -1,11 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.ui.ComparableColor;
 import com.intellij.util.ui.JBUI.CurrentTheme;
+import com.intellij.util.ui.PresentableColor;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +29,7 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
-public class JBColor extends Color {
+public class JBColor extends Color implements PresentableColor, ComparableColor {
   public static final Color PanelBackground = new JBColor("Panel.background", new Color(0xffffff));
 
   // do not use method reference here - StartupUiUtil class should be loaded lazy
@@ -96,6 +100,11 @@ public class JBColor extends Color {
       @Override
       public int hashCode() {
         return System.identityHashCode(this);
+      }
+
+      @Override
+      public String getPresentableName() {
+        return "Marker: " + name;
       }
 
       @Override
@@ -220,6 +229,24 @@ public class JBColor extends Color {
     return name;
   }
 
+  @Override
+  @ApiStatus.Internal
+  public @NlsSafe @Nullable String getPresentableName() {
+    if (name != null) return name;
+    if (func != null) {
+      if (func instanceof PresentableColor presentableFun) {
+        return "Lazy: " + presentableFun.getPresentableName();
+      }
+      Color color = func.get();
+      return "Lazy: " + PresentableColor.toPresentableString(color) + " (" + func + ")";
+    }
+    if (defaultColor != null && darkColor != null) {
+      return "Color pair: (" + PresentableColor.toPresentableString(defaultColor) + ", " +
+             PresentableColor.toPresentableString(darkColor) + ")";
+    }
+    return null;
+  }
+
   @ApiStatus.Internal
   public @Nullable Color getDefaultColor() {
     return defaultColor == NAMED_COLOR_FALLBACK_MARKER ? null : defaultColor;
@@ -289,6 +316,28 @@ public class JBColor extends Color {
   public boolean equals(Object obj) {
     final Color c = getColor();
     return c == this ? super.equals(obj) : c.equals(obj);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean colorEquals(@NotNull ComparableColor otherColor) {
+    if (otherColor.getClass() == this.getClass()) {
+      JBColor other = (JBColor)otherColor;
+      if (func != null) return ComparableColor.equalComparable(func, other.func);
+      if (name != null) return name.equals(other.name);
+      return UIUtil.equalColors(defaultColor, other.defaultColor) &&
+             UIUtil.equalColors(darkColor, other.darkColor);
+    }
+    return false;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public int colorHashCode() {
+    if (func != null) return ComparableColor.comparableHashCode(func);
+    if (name != null) return name.hashCode();
+    return UIUtil.colorHashCode(defaultColor) +
+           31 * UIUtil.colorHashCode(darkColor);
   }
 
   @Override

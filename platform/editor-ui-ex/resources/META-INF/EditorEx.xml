@@ -6,5 +6,8 @@
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
                         serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
+
+    <registryKey key="editor.color.scheme.mark.colors" defaultValue="true" restartRequired="true"
+                 description="Wrap Color instances used in the Editor Color Scheme into a class storing their IDs" />
   </extensions>
 </idea-plugin>

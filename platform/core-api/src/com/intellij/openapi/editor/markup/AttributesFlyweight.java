@@ -6,6 +6,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ui.ComparableColor;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,7 +21,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -62,11 +62,11 @@ public final class AttributesFlyweight {
       FlyweightKey key = (FlyweightKey)o;
 
       if (fontType != key.fontType) return false;
-      if (!Objects.equals(background, key.background)) return false;
-      if (!Objects.equals(effectColor, key.effectColor)) return false;
+      if (!ComparableColor.equalColors(background, key.background)) return false;
+      if (!ComparableColor.equalColors(effectColor, key.effectColor)) return false;
       if (effectType != key.effectType) return false;
-      if (!Objects.equals(errorStripeColor, key.errorStripeColor)) return false;
-      if (!Objects.equals(foreground, key.foreground)) return false;
+      if (!ComparableColor.equalColors(errorStripeColor, key.errorStripeColor)) return false;
+      if (!ComparableColor.equalColors(foreground, key.foreground)) return false;
       if (!myAdditionalEffects.equals(key.myAdditionalEffects)) return false;
 
       return true;
@@ -74,12 +74,12 @@ public final class AttributesFlyweight {
 
     @Override
     public int hashCode() {
-      int result = foreground != null ? foreground.hashCode() : 0;
-      result = 31 * result + (background != null ? background.hashCode() : 0);
+      int result = ComparableColor.colorHashCode(foreground);
+      result = 31 * result + ComparableColor.colorHashCode(background);
       result = 31 * result + fontType;
-      result = 31 * result + (effectColor != null ? effectColor.hashCode() : 0);
+      result = 31 * result + ComparableColor.colorHashCode(effectColor);
       result = 31 * result + (effectType != null ? effectType.hashCode() : 0);
-      result = 31 * result + (errorStripeColor != null ? errorStripeColor.hashCode() : 0);
+      result = 31 * result + ComparableColor.colorHashCode(errorStripeColor);
       result = 31 * result + myAdditionalEffects.hashCode();
       return result;
     }
@@ -143,7 +143,7 @@ public final class AttributesFlyweight {
     myHashCode = key.hashCode();
   }
 
-  static @NotNull AttributesFlyweight create(@NotNull  Element element) throws InvalidDataException {
+  static @NotNull AttributesFlyweight create(@NotNull Element element) throws InvalidDataException {
     Color FOREGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "FOREGROUND"));
     Color BACKGROUND = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "BACKGROUND"));
     Color EFFECT_COLOR = DefaultJDOMExternalizer.toColor(JDOMExternalizerUtil.readField(element, "EFFECT_COLOR"));
@@ -303,13 +303,13 @@ public final class AttributesFlyweight {
   }
 
   public @NotNull AttributesFlyweight withForeground(Color foreground) {
-    return Comparing.equal(foreground, myForeground)
+    return ComparableColor.equalColors(foreground, myForeground)
            ? this
            : create(foreground, myBackground, myFontType, myEffectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
   }
 
   public @NotNull AttributesFlyweight withBackground(Color background) {
-    return Comparing.equal(background, myBackground)
+    return ComparableColor.equalColors(background, myBackground)
            ? this
            : create(myForeground, background, myFontType, myEffectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
   }
@@ -321,7 +321,7 @@ public final class AttributesFlyweight {
   }
 
   public @NotNull AttributesFlyweight withEffectColor(Color effectColor) {
-    return Comparing.equal(effectColor, myEffectColor)
+    return ComparableColor.equalColors(effectColor, myEffectColor)
            ? this
            : create(myForeground, myBackground, myFontType, effectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
   }
@@ -333,7 +333,7 @@ public final class AttributesFlyweight {
   }
 
   public @NotNull AttributesFlyweight withErrorStripeColor(Color stripeColor) {
-    return Comparing.equal(stripeColor, myErrorStripeColor)
+    return ComparableColor.equalColors(stripeColor, myErrorStripeColor)
            ? this
            : create(myForeground, myBackground, myFontType, myEffectColor, myEffectType, myAdditionalEffects, stripeColor);
   }
@@ -356,11 +356,11 @@ public final class AttributesFlyweight {
     AttributesFlyweight that = (AttributesFlyweight)o;
 
     if (myFontType != that.myFontType) return false;
-    if (!Objects.equals(myBackground, that.myBackground)) return false;
-    if (!Objects.equals(myEffectColor, that.myEffectColor)) return false;
+    if (!ComparableColor.equalColors(myBackground, that.myBackground)) return false;
+    if (!ComparableColor.equalColors(myEffectColor, that.myEffectColor)) return false;
     if (myEffectType != that.myEffectType) return false;
-    if (!Objects.equals(myErrorStripeColor, that.myErrorStripeColor)) return false;
-    if (!Objects.equals(myForeground, that.myForeground)) return false;
+    if (!ComparableColor.equalColors(myErrorStripeColor, that.myErrorStripeColor)) return false;
+    if (!ComparableColor.equalColors(myForeground, that.myForeground)) return false;
     if (!myAdditionalEffects.equals(that.myAdditionalEffects)) return false;
 
     return true;

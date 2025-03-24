@@ -741,7 +741,7 @@ public class ExpectedHighlightingData {
   private static boolean matchesPattern(@NotNull HighlightInfo expectedInfo, @NotNull HighlightInfo info, boolean strictMatch) {
     if (expectedInfo == info) return true;
     boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && (expectedInfo.type == WHATEVER || info.type == WHATEVER);
-    boolean textAttributesMatches = Comparing.equal(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
+    boolean textAttributesMatches = sameTextAttributesByValue(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
                                     !strictMatch && (expectedInfo.forcedTextAttributes == null || info.forcedTextAttributes == null);
     boolean attributesKeyMatches = !strictMatch && (expectedInfo.forcedTextAttributesKey == null || info.forcedTextAttributesKey == null) ||
                                    Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey);
@@ -751,6 +751,22 @@ public class ExpectedHighlightingData {
       typeMatches &&
       textAttributesMatches &&
       attributesKeyMatches;
+  }
+
+  /**
+   * Compare using the resulting presentation, ignoring differences in used keys
+   */
+  public static boolean sameTextAttributesByValue(@Nullable TextAttributes expected, @Nullable TextAttributes actual) {
+    if (expected == null || actual == null) return false;
+
+    if (expected.getFontType() != actual.getFontType()) return false;
+    if (!Comparing.equal(expected.getBackgroundColor(), actual.getBackgroundColor())) return false;
+    if (!Comparing.equal(expected.getEffectColor(), actual.getEffectColor())) return false;
+    if (expected.getEffectType() != actual.getEffectType()) return false;
+    if (!Comparing.equal(expected.getErrorStripeColor(), actual.getErrorStripeColor())) return false;
+    if (!Comparing.equal(expected.getForegroundColor(), actual.getForegroundColor())) return false;
+    if (!Comparing.equal(expected.getAdditionalEffects(), actual.getAdditionalEffects())) return false;
+    return true;
   }
 
   private static boolean haveSamePresentation(@NotNull HighlightInfo info1, @NotNull HighlightInfo info2, boolean strictMatch) {

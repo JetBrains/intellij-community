@@ -13,6 +13,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.ColorsIcon;
+import com.intellij.util.ui.PresentableColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,8 +136,8 @@ final class ValueCellRenderer implements TableCellRenderer {
       sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
-      if (value instanceof JBColor) {
-        String name = ((JBColor)value).getName();
+      if (value instanceof PresentableColor) {
+        String name = ((PresentableColor)value).getPresentableName();
         if (!StringUtil.isEmpty(name)) {
           sb.append(" name: ").append(name);
         }

@@ -3362,6 +3362,16 @@ public final class UIUtil {
     return s;
   }
 
+  @ApiStatus.Experimental
+  public static boolean equalColors(@Nullable Color color1, @Nullable Color color2) {
+    return ComparableColor.equalColors(color1, color2);
+  }
+
+  @ApiStatus.Experimental
+  public static int colorHashCode(@Nullable Color color) {
+    return ComparableColor.colorHashCode(color);
+  }
+
   public static boolean isXServerOnWindows() {
     // This is heuristics to detect using Cygwin/X or other build of X.Org server on Windows in a WSL 2 environment
     return SystemInfoRt.isUnix && !SystemInfoRt.isMac && !SystemInfo.isWayland && System.getenv("WSLENV") != null;

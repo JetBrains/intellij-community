@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -161,6 +162,11 @@ public class TextAttributes implements Cloneable {
   @ApiStatus.Experimental
   public void setAdditionalEffects(@NotNull Map<@NotNull EffectType, ? extends @NotNull Color> effectsMap) {
     attrs = attrs.withAdditionalEffects(effectsMap);
+  }
+
+  @ApiStatus.Internal
+  public Map<@NotNull EffectType, ? extends @NotNull Color> getAdditionalEffects() {
+    return Collections.unmodifiableMap(attrs.getAdditionalEffects());
   }
 
   /**

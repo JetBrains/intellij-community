@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
@@ -32,6 +33,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.editor.markup.TextAttributeKeyColor.markTextAttributeColors;
 
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
@@ -83,6 +86,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String META_INFO_IDE_VERSION = "ideVersion";
   public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
+
+  private final boolean myMarkColorIds = Registry.is("editor.color.scheme.mark.colors", true);
   private final ValueElementReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
   private final Properties metaInfo = new Properties();
@@ -444,6 +449,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
                             e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null ? INHERITED_ATTRS_MARKER :
                             null;
       if (attr != null) {
+        if (keyName != null && valueElement != null && myMarkColorIds) {
+          markTextAttributeColors(keyName, attr);
+        }
         attributesMap.put(keyName, attr);
       }
     }
@@ -453,6 +461,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = colorElement.getAttributeValue(NAME_ATTR);
       Color valueColor = myValueReader.read(Color.class, colorElement);
+      if (valueColor != null && keyName != null && myMarkColorIds) {
+        valueColor = new ColorKeyColor(valueColor, keyName);
+      }
       if (valueColor == null && colorElement.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null) {
         valueColor = INHERITED_COLOR_MARKER;
       }
@@ -1058,7 +1069,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     sourceScheme.attributesMap.forEach((key, attributes) -> attributesMap.putIfAbsent(key, attributes));
   }
 
-  private String debugSchemeName(){
+  private String debugSchemeName() {
     try {
       if (schemeName != null) {
         return schemeName;
