@@ -34,19 +34,23 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
   override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
     val executionStackEntity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return emptyFlow()
     return channelFlow {
-      val channel = Channel<Deferred<XStackFramesEvent>?>(capacity = Channel.UNLIMITED)
+      val channel = Channel<Deferred<XStackFramesEvent>>(capacity = Channel.UNLIMITED)
 
       launch {
         for (event in channel) {
-          if (event == null) {
+          val event = event.await()
+          this@channelFlow.send(event)
+          if (event is XStackFramesEvent.ErrorOccurred || event is XStackFramesEvent.XNewStackFrames && event.last) {
             channel.close()
             this@channelFlow.close()
             break
           }
-          this@channelFlow.send(event.await())
         }
       }
 
+      // TODO[IJPL-177087]: executionStackEntity gets removed from DB because new ones come to the flow for some reason,
+      //  so addStackFrames may end abruptly, with not all stack frames shown.
+      //  Investigate whether it's really needed
       withEntities(executionStackEntity) {
         val executionStack = executionStackEntity.obj
         executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
@@ -69,9 +73,6 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
                 XStackFramesEvent.XNewStackFrames(stacks, last)
               }
             })
-            if (last) {
-              channel.trySend(null)
-            }
           }
 
           override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
