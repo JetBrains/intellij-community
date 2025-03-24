@@ -58,6 +58,8 @@ import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorCompositeKt;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -2482,7 +2484,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly,
+                                                                                RequiresPermissions {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
@@ -2490,6 +2493,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       closeAllAnnotations();
+    }
+
+    @Override
+    public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+      return List.of();
     }
   }
 

@@ -285,6 +285,7 @@ a:com.intellij.execution.Location
 - s:safeCast(java.lang.Object,java.lang.Class):java.lang.Object
 - s:safeGetPsiElement(com.intellij.execution.Location):com.intellij.psi.PsiElement
 - toPsiLocation():com.intellij.execution.PsiLocation
+f:com.intellij.execution.PermissionsKt
 c:com.intellij.execution.PsiLocation
 - com.intellij.execution.Location
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module,com.intellij.psi.PsiElement):V

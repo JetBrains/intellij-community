@@ -159,6 +159,8 @@ c:com.intellij.openapi.actionSystem.ex.ComboBoxAction$ComboBoxButton
 - javax.swing.JButton
 - com.intellij.ui.UserActivityProviderComponent
 - *p:doShiftClick():V
+f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
+- *sf:getOwner():com.intellij.platform.ide.core.permissions.Permission
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
@@ -293,6 +295,9 @@ c:com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 - *:<init>(javax.swing.table.TableCellRenderer):V
 - *:bindToEditorSize(java.util.function.Supplier):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 - *:withCellValidator(com.intellij.openapi.ui.cellvalidators.TableCellValidator):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+f:com.intellij.openapi.wm.PermissionsKt
+- *sf:getFullToolWindowAccess():com.intellij.platform.ide.core.permissions.Permission
+- *sf:getToolWindowViewAccess():com.intellij.platform.ide.core.permissions.Permission
 *:com.intellij.openapi.wm.WelcomeScreenCustomization
 - sf:WELCOME_SCREEN_CUSTOMIZATION:com.intellij.openapi.extensions.ExtensionPointName
 - createMainPanelToolbar(com.intellij.openapi.Disposable):javax.swing.JComponent

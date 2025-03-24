@@ -2018,9 +2018,11 @@ f:com.intellij.ide.actions.CopyUrlAction
 c:com.intellij.ide.actions.CutAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.ide.lightEdit.LightEditCompatible
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getRequiredPermissions():java.util.Collection
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.DeleteAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -2120,9 +2122,11 @@ c:com.intellij.ide.actions.PasteAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAware
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getRequiredPermissions():java.util.Collection
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.PinActiveTabAction
 - com.intellij.openapi.project.DumbAwareAction

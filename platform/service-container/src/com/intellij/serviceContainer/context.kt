@@ -26,8 +26,8 @@ suspend fun <T : Any> instance(keyClass: Class<T>): T {
   val manager = ctx.contextComponentManager() as ComponentManagerImpl
   return manager.getServiceAsync(keyClass)
 }
-
-private fun CoroutineContext.contextComponentManager(): ComponentManager {
+@Internal
+fun CoroutineContext.contextComponentManager(): ComponentManager {
   return checkNotNull(contextComponentManagerOrNull()) {
     "Coroutine is not a child of a service scope"
   }

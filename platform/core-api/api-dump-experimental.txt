@@ -289,6 +289,12 @@ a:com.intellij.openapi.project.DumbService
 - com.intellij.openapi.roots.ContentIterator
 - processFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
+*:com.intellij.openapi.vfs.FileVisibilityProvider
+- *sf:Companion:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:isVisible(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Boolean
+*f:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
+- f:isVisible(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):Z
 a:com.intellij.openapi.vfs.VirtualFile
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.util.ModificationTracker

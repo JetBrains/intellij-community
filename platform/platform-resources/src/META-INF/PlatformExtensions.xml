@@ -1908,6 +1908,15 @@
                         serviceImplementation="com.intellij.platform.ide.provisioner.DefaultProvisionedServiceRegistry"/>
     <applicationService serviceInterface="com.intellij.platform.ide.provisioner.ProvisionerCompanyBrandingProvider"
                         serviceImplementation="com.intellij.platform.ide.provisioner.DefaultProvisionerCompanyBrandingProvider"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.vfs.impl.FilePermissionManagerImpl"
+                        serviceInterface="com.intellij.openapi.vfs.impl.FilePermissionManager"
+                        client="all"/>
+
+    <applicationService serviceImplementation="com.intellij.platform.ide.core.impl.permissions.NoopPermissionManager"
+                        serviceInterface="com.intellij.platform.ide.core.permissions.impl.IdePermissionManager"
+                        client="owner"/>
+
   </extensions>
 
   <applicationListeners>

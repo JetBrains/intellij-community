@@ -1899,6 +1899,7 @@ c:com.intellij.openapi.actionSystem.ex.TooltipLinkProvider$TooltipLink
 - f:action:java.lang.Runnable
 - f:tooltip:java.lang.String
 - <init>(java.lang.String,java.lang.Runnable):V
+f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
 a:com.intellij.openapi.application.ApplicationStarterEx
 - com.intellij.openapi.application.ApplicationStarter
 - <init>():V
@@ -5080,6 +5081,7 @@ com.intellij.openapi.wm.InteractiveCourseFactory
 f:com.intellij.openapi.wm.InteractiveCourseFactory$Companion
 - f:getINTERACTIVE_COURSE_FACTORY_EP():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.openapi.wm.LightEditFrame
+f:com.intellij.openapi.wm.PermissionsKt
 f:com.intellij.openapi.wm.RegisterToolWindowTask
 - sf:Companion:com.intellij.openapi.wm.RegisterToolWindowTask$Companion
 - <init>(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,javax.swing.JComponent,Z,Z,Z,Z,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,java.util.function.Supplier):V
