@@ -17,6 +17,4 @@ publishing.publications.named<MavenPublication>("main") {
     artifactId = "jewel-markdown-extension-${project.name}-$ijpTarget"
 }
 
-publicApiValidation {
-    excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.extensions.github.strikethrough.*")
-}
+publicApiValidation { excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.extensions.github.strikethrough.*") }
