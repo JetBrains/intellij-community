@@ -102,18 +102,18 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
         ProgressManager.checkCanceled();
         iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
       }
-    }
 
-    LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-    Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
-    libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
-    for (LibraryTable libraryTable : SequencesKt.asIterable(libs)) {
-      for (Library library : libraryTable.getLibraries()) {
-        ProgressManager.checkCanceled();
-        if (moduleDependencyIndex.hasDependencyOn(library)) {
-          for (IndexableFilesIterator iterator : Companion.createIteratorList(library)) {
-            if (libraryOrigins.add(iterator.getOrigin())) {
-              iterators.add(iterator);
+      LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
+      Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
+      libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
+      for (LibraryTable libraryTable : SequencesKt.asIterable(libs)) {
+        for (Library library : libraryTable.getLibraries()) {
+          ProgressManager.checkCanceled();
+          if (moduleDependencyIndex.hasDependencyOn(library)) {
+            for (IndexableFilesIterator iterator : Companion.createIteratorList(library)) {
+              if (libraryOrigins.add(iterator.getOrigin())) {
+                iterators.add(iterator);
+              }
             }
           }
         }
