@@ -1004,13 +1004,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     public void processMouseEvent(MouseEvent event) {
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
       if (myTreeModel instanceof StructureViewModel.ActionHandler actionHandler) {
-        boolean handled = processCustomEventHandler(actionHandler, event);
-        if (handled) {
-          event.consume();
-          return;
-        }
+        processCustomEventHandler(actionHandler, event, (Boolean handled) -> {
+          if (handled)
+            event.consume();
+          else
+            super.processMouseEvent(event);
+        });
       }
-      super.processMouseEvent(event);
+      else super.processMouseEvent(event);
     }
 
     @Override
@@ -1048,24 +1049,46 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return super.getFileColorForPath(path);
     }
 
-    private boolean processCustomEventHandler(StructureViewModel.ActionHandler actionHandler, MouseEvent event) {
-      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return false;
+    private void processCustomEventHandler(
+      StructureViewModel.ActionHandler actionHandler, MouseEvent event, Consumer<Boolean> handledCallback
+    ) {
+      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) {
+        handledCallback.consume(false);
+        return;
+      }
       TreePath path = getPathForLocation(event.getX(), event.getY());
-      if (path == null) return false;
+      if (path == null) {
+        handledCallback.consume(false);
+        return;
+      }
       Object lastPathComponent = path.getLastPathComponent();
       StructureViewTreeElement treeElement = getStructureTreeElement(lastPathComponent);
-      if (treeElement == null) return false;
+      if (treeElement == null) {
+        handledCallback.consume(false);
+        return;
+      }
 
       Rectangle pathBounds = getPathBounds(path);
-      if (pathBounds == null) return false;
+      if (pathBounds == null) {
+        handledCallback.consume(false);
+        return;
+      }
       int dx = event.getX() - (int) pathBounds.getX();
-      if (dx < 0 || dx > pathBounds.width) return false;
+      if (dx < 0 || dx > pathBounds.width) {
+        handledCallback.consume(false);
+        return;
+      }
 
       Component component = this.cellRenderer.getTreeCellRendererComponent(this, lastPathComponent, false, false, true, getRowForPath(path), false);
-      if (!(component instanceof SimpleColoredComponent simpleColoredComponent)) return false;
+      if (!(component instanceof SimpleColoredComponent simpleColoredComponent)) {
+        handledCallback.consume(false);
+        return;
+      }
       int fragmentIndex = simpleColoredComponent.findFragmentAt(dx);
-      if (fragmentIndex >= 0) return actionHandler.handleClick(treeElement, fragmentIndex);
-      return false;
+      if (fragmentIndex >= 0)
+        actionHandler.handleClick(treeElement, fragmentIndex, handledCallback);
+      else
+        handledCallback.accept(false);
     }
 
     @Override

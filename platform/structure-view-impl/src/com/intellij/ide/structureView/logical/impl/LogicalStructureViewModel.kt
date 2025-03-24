@@ -27,6 +27,7 @@ import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -53,13 +54,21 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
 
   override fun isSmartExpand(): Boolean = false
 
-  override fun handleClick(element: StructureViewTreeElement, fragmentIndex: Int): Boolean {
-    val model = getModel(element) ?: return false
-    val handled = LogicalModelPresentationProvider.getForObject(model)?.handleClick(model, fragmentIndex) ?: false
-    if (handled) {
-      StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+  override fun handleClick(element: StructureViewTreeElement?, fragmentIndex: Int): Boolean = false
+
+  override fun handleClick(element: StructureViewTreeElement, fragmentIndex: Int, handledCallback: Consumer<Boolean>) {
+    val model = getModel(element)
+    val presentation = model?.let { LogicalModelPresentationProvider.getForObject(it) }
+    if (model == null || presentation == null) {
+      handledCallback.accept(false)
+      return
     }
-    return handled
+    presentation.handleClick(model, fragmentIndex) { handled ->
+      if (handled) {
+        StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+      }
+      handledCallback.accept(handled)
+    }
   }
 
   private fun getModel(element: StructureViewTreeElement): Any? {

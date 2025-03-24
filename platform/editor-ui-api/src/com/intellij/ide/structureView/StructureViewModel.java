@@ -9,6 +9,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 /**
  * Defines the model for the data displayed in the standard structure view or file structure
  * popup component. The model of the standard structure view is represented as a tree of elements.
@@ -107,7 +109,16 @@ public interface StructureViewModel extends TreeModel, Disposable {
 
   interface ActionHandler {
 
+    /**
+     * @deprecated use the method with callback
+     */
+    @Deprecated(forRemoval = true, since = "2025.2")
     boolean handleClick(StructureViewTreeElement element, int fragmentIndex);
+
+    @ApiStatus.Experimental
+    default void handleClick(StructureViewTreeElement element, int fragmentIndex, Consumer<Boolean> handledCallback) {
+      handledCallback.accept(handleClick(element, fragmentIndex));
+    }
 
   }
 }

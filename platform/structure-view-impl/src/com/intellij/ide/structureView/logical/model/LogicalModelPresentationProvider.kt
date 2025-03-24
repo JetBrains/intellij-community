@@ -30,6 +30,8 @@ abstract class LogicalModelPresentationProvider<T>: PresentationProvider<T>() {
 
   open fun getColoredText(t: T): List<PresentableNodeDescriptor.ColoredFragment> = emptyList()
 
-  open fun handleClick(t: T, fragmentIndex: Int): Boolean = false
+  open fun handleClick(t: T, fragmentIndex: Int, handledCallback: (Boolean) -> Any) {
+    handledCallback(false)
+  }
 
 }
