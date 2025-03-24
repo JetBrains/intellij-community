@@ -1,67 +1,69 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.debugger.impl.frontend
+package com.intellij.platform.execution.impl.frontend
 
 import com.intellij.execution.KillableProcess
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.rpc.KillableProcessInfo
+import com.intellij.execution.rpc.ProcessHandlerApi
+import com.intellij.execution.rpc.ProcessHandlerDto
+import com.intellij.execution.rpc.ProcessHandlerEvent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.xdebugger.impl.rpc.KillableProcessInfo
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionProcessHandlerApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerProcessHandlerDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerProcessHandlerEvent
+import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
 
-internal fun createProcessHandler(
+@ApiStatus.Internal
+fun createFrontendProcessHandler(
   project: Project,
-  sessionId: XDebugSessionId,
-  processHandlerDto: XDebuggerProcessHandlerDto,
+  processHandlerDto: ProcessHandlerDto,
 ): ProcessHandler {
   val killableProcessInfo = processHandlerDto.killableProcessInfo
   return if (killableProcessInfo != null) {
-    FrontendXDebuggerSessionKillableProcessHandler(project, sessionId, processHandlerDto, killableProcessInfo)
+    FrontendSessionKillableProcessHandler(project, processHandlerDto, killableProcessInfo)
   }
   else {
-    FrontendXDebuggerSessionProcessHandler(project, sessionId, processHandlerDto)
+    FrontendSessionProcessHandler(project, processHandlerDto)
   }
 }
 
+
 // TODO: check for possible races because of cs.launch in all class methods
-private open class FrontendXDebuggerSessionProcessHandler(
-  project: Project,
-  protected val sessionId: XDebugSessionId,
-  protected val processHandlerDto: XDebuggerProcessHandlerDto,
+private open class FrontendSessionProcessHandler(
+  private val project: Project,
+  protected val processHandlerDto: ProcessHandlerDto,
 ) : ProcessHandler() {
   // TODO: use better CoroutineScope
-  protected val cs: CoroutineScope = project.service<FrontendXDebuggerSessionProcessHandlerCoroutineScope>().cs
+  protected val cs: CoroutineScope = project.service<FrontendSessionProcessHandlerCoroutineScope>().cs
+
+  protected val handlerId = processHandlerDto.processHandlerId
 
   init {
     cs.launch {
       processHandlerDto.processHandlerEvents.toFlow().collect { event ->
         when (event) {
-          is XDebuggerProcessHandlerEvent.StartNotified -> {
+          is ProcessHandlerEvent.StartNotified -> {
             if (!isStartNotified) {
               startNotify()
             }
           }
-          is XDebuggerProcessHandlerEvent.ProcessTerminated -> {
+          is ProcessHandlerEvent.ProcessTerminated -> {
             destroyProcess()
           }
-          is XDebuggerProcessHandlerEvent.ProcessWillTerminate -> {
+          is ProcessHandlerEvent.ProcessWillTerminate -> {
             destroyProcess()
           }
-          is XDebuggerProcessHandlerEvent.OnTextAvailable -> {
+          is ProcessHandlerEvent.OnTextAvailable -> {
             // TODO: DONT create Key every time
             notifyTextAvailable(event.eventData.text ?: "", Key.create<Any?>(event.key))
           }
-          XDebuggerProcessHandlerEvent.ProcessNotStarted -> {
+          ProcessHandlerEvent.ProcessNotStarted -> {
             // TODO: handle this case
           }
         }
@@ -71,26 +73,26 @@ private open class FrontendXDebuggerSessionProcessHandler(
 
   override fun waitFor(): Boolean {
     return runBlockingMaybeCancellable {
-      XDebugSessionProcessHandlerApi.getInstance().waitFor(sessionId, null).await()
+      ProcessHandlerApi.getInstance().waitFor(project.projectId(), handlerId, null).await()
     }
   }
 
   override fun waitFor(timeoutInMilliseconds: Long): Boolean {
     return runBlockingMaybeCancellable {
-      XDebugSessionProcessHandlerApi.getInstance().waitFor(sessionId, timeoutInMilliseconds).await()
+      ProcessHandlerApi.getInstance().waitFor(project.projectId(), handlerId, timeoutInMilliseconds).await()
     }
   }
 
   override fun destroyProcessImpl() {
     cs.launch {
-      val exitCode = XDebugSessionProcessHandlerApi.getInstance().destroyProcess(sessionId).await()
+      val exitCode = ProcessHandlerApi.getInstance().destroyProcess(handlerId).await()
       notifyProcessTerminated(exitCode ?: 0)
     }
   }
 
   override fun detachProcessImpl() {
     cs.launch {
-      XDebugSessionProcessHandlerApi.getInstance().detachProcess(sessionId).await()
+      ProcessHandlerApi.getInstance().detachProcess(handlerId).await()
       notifyProcessDetached()
     }
   }
@@ -105,12 +107,11 @@ private open class FrontendXDebuggerSessionProcessHandler(
   }
 }
 
-private class FrontendXDebuggerSessionKillableProcessHandler(
+private class FrontendSessionKillableProcessHandler(
   project: Project,
-  sessionId: XDebugSessionId,
-  processHandlerDto: XDebuggerProcessHandlerDto,
+  processHandlerDto: ProcessHandlerDto,
   private val killableProcessInfo: KillableProcessInfo,
-) : FrontendXDebuggerSessionProcessHandler(project, sessionId, processHandlerDto), KillableProcess {
+) : FrontendSessionProcessHandler(project, processHandlerDto), KillableProcess {
 
   override fun canKillProcess(): Boolean {
     return killableProcessInfo.canKillProcess
@@ -119,7 +120,7 @@ private class FrontendXDebuggerSessionKillableProcessHandler(
   override fun killProcess() {
     if (canKillProcess()) {
       cs.launch {
-        XDebugSessionProcessHandlerApi.getInstance().killProcess(sessionId)
+        ProcessHandlerApi.getInstance().killProcess(handlerId)
       }
     }
   }
@@ -128,4 +129,4 @@ private class FrontendXDebuggerSessionKillableProcessHandler(
 private val LOG = fileLogger()
 
 @Service(Service.Level.PROJECT)
-private class FrontendXDebuggerSessionProcessHandlerCoroutineScope(val cs: CoroutineScope)
+private class FrontendSessionProcessHandlerCoroutineScope(val cs: CoroutineScope)

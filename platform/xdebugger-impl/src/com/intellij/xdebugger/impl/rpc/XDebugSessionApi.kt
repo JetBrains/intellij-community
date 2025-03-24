@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.execution.rpc.ProcessHandlerDto
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.BackendDocumentId
@@ -68,7 +69,7 @@ data class XDebugSessionDto(
   val sessionEvents: RpcFlow<XDebuggerSessionEvent>,
   val sessionDataDto: XDebugSessionDataDto,
   val consoleViewData: XDebuggerConsoleViewData?,
-  val processHandlerDto: XDebuggerProcessHandlerDto,
+  val processHandlerDto: ProcessHandlerDto,
 )
 
 
@@ -77,44 +78,6 @@ data class XDebugSessionDto(
 @Serializable
 data class KillableProcessInfo(
   val canKillProcess: Boolean = true
-)
-
-// TODO: should be moved to platform
-@ApiStatus.Internal
-@Serializable
-data class XDebuggerProcessHandlerDto(
-  val detachIsDefault: Boolean,
-  val processHandlerEvents: RpcFlow<XDebuggerProcessHandlerEvent>,
-  val killableProcessInfo: KillableProcessInfo? = null
-)
-
-/**
- * @see com.intellij.execution.process.ProcessListener
- */
-@ApiStatus.Internal
-@Serializable
-sealed interface XDebuggerProcessHandlerEvent {
-  @Serializable
-  data class StartNotified(val eventData: XDebuggerProcessHandlerEventData) : XDebuggerProcessHandlerEvent
-
-  @Serializable
-  data class ProcessTerminated(val eventData: XDebuggerProcessHandlerEventData) : XDebuggerProcessHandlerEvent
-
-  @Serializable
-  data class ProcessWillTerminate(val eventData: XDebuggerProcessHandlerEventData, val willBeDestroyed: Boolean) : XDebuggerProcessHandlerEvent
-
-  @Serializable
-  data class OnTextAvailable(val eventData: XDebuggerProcessHandlerEventData, val key: String) : XDebuggerProcessHandlerEvent
-
-  @Serializable
-  data object ProcessNotStarted : XDebuggerProcessHandlerEvent
-}
-
-@ApiStatus.Internal
-@Serializable
-data class XDebuggerProcessHandlerEventData(
-  val text: @NlsSafe String?,
-  val exitCode: Int,
 )
 
 @ApiStatus.Internal

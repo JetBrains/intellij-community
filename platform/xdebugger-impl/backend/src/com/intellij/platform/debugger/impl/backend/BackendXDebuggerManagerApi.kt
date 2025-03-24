@@ -1,14 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.execution.KillableProcess
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
-import com.intellij.openapi.util.Key
+import com.intellij.platform.execution.impl.backend.createProcessHandlerDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
@@ -71,69 +67,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       createSessionEvents(currentSession).toRpc(),
       sessionDataDto,
       consoleView,
-      currentSession.debugProcess.processHandler.toDto(),
+      createProcessHandlerDto(currentSession.coroutineScope, currentSession.debugProcess.processHandler),
     )
-  }
-
-  private suspend fun ProcessHandler.toDto(): XDebuggerProcessHandlerDto {
-    val flow = channelFlow {
-      val listener = object : ProcessListener {
-        override fun startNotified(event: ProcessEvent) {
-          trySend(XDebuggerProcessHandlerEvent.StartNotified(event.toRpc()))
-        }
-
-        override fun processTerminated(event: ProcessEvent) {
-          trySend(XDebuggerProcessHandlerEvent.ProcessTerminated(event.toRpc()))
-          removeProcessListener(this)
-        }
-
-        override fun processWillTerminate(event: ProcessEvent, willBeDestroyed: Boolean) {
-          trySend(XDebuggerProcessHandlerEvent.ProcessWillTerminate(event.toRpc(), willBeDestroyed))
-        }
-
-        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          trySend(XDebuggerProcessHandlerEvent.OnTextAvailable(event.toRpc(), outputType.toString()))
-        }
-
-        override fun processNotStarted() {
-          trySend(XDebuggerProcessHandlerEvent.ProcessNotStarted)
-        }
-      }
-      addProcessListener(listener)
-
-      // send initial state
-      when {
-        isStartNotified -> {
-          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData(null, 0)))
-        }
-        isProcessTerminating -> {
-          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData(null, 0)))
-        }
-        isProcessTerminated -> {
-          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData(null, exitCode ?: 0)))
-        }
-      }
-
-      try {
-        awaitClose()
-      }
-      finally {
-        removeProcessListener(listener)
-      }
-    }.buffer(Channel.UNLIMITED)
-
-    val killableProcessInfo = if (this is KillableProcess) {
-      KillableProcessInfo(canKillProcess = canKillProcess())
-    }
-    else {
-      null
-    }
-
-    return XDebuggerProcessHandlerDto(detachIsDefault(), flow.toRpc(), killableProcessInfo)
-  }
-
-  private fun ProcessEvent.toRpc(): XDebuggerProcessHandlerEventData {
-    return XDebuggerProcessHandlerEventData(text, exitCode)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

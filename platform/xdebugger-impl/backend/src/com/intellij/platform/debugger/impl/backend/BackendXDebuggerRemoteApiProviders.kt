@@ -6,7 +6,6 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XDebugSessionProcessHandlerApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerHotSwapApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerNavigationApi
@@ -51,9 +50,6 @@ private class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
     }
     remoteApi(remoteApiDescriptor<XDebuggerLuxApi>()) {
       BackendXDebuggerLuxApi()
-    }
-    remoteApi(remoteApiDescriptor<XDebugSessionProcessHandlerApi>()) {
-      BackendXDebugSessionProcessHandlerApi()
     }
   }
 }
