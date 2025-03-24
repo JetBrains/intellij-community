@@ -19,8 +19,6 @@ interface RerunActionProxy {
 
   fun getExecutionEnvironmentProxy(event: AnActionEvent): ExecutionEnvironmentProxy?
 
-  fun getRunContentDescriptorProxy(event: AnActionEvent): RunContentDescriptorProxy?
-
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<RerunActionProxy> = create<RerunActionProxy>("com.intellij.execution.rerunActionProxy")

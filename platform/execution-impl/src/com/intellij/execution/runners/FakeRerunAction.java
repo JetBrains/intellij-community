@@ -2,6 +2,9 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
@@ -44,8 +47,9 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
     presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
                                                         StringUtil.escapeMnemonics(environment.getRunProfileName())));
     Icon rerunIcon = ExperimentalUI.isNewUI() ? environment.getRerunIcon() : environment.getIcon();
-    RunContentDescriptorProxy descriptor = getDescriptorProxy(event);
-    boolean isRestart = ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || (descriptor != null && descriptor.isProcessRunning());
+    RunContentDescriptor descriptor = getDescriptor(event);
+    boolean isRestart = ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) ||
+                        (descriptor != null && ExecutionManagerImpl.isProcessRunning(getDescriptor(event)));
     presentation.setIcon(isRestart && !ExperimentalUI.isNewUI() ? AllIcons.Actions.Restart : rerunIcon);
     presentation.setEnabled(isEnabled(event));
   }
@@ -59,12 +63,8 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
     }
   }
 
-  protected @Nullable RunContentDescriptorProxy getDescriptorProxy(AnActionEvent event) {
-    RerunActionProxy actionProxy = getActionProxy(event);
-    if (actionProxy == null) {
-      return null;
-    }
-    return actionProxy.getRunContentDescriptorProxy(event);
+  protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
+    return event.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
   }
 
   protected @Nullable ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {
@@ -80,8 +80,8 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
   }
 
   protected boolean isEnabled(@NotNull AnActionEvent event) {
-    RunContentDescriptorProxy descriptor = getDescriptorProxy(event);
-    ProcessHandlerProxy processHandler = descriptor == null ? null : descriptor.getProcessHandlerProxy();
+    RunContentDescriptor descriptor = getDescriptor(event);
+    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
     ExecutionEnvironmentProxy environment = getEnvironmentProxy(event);
     Project project = getEventProject(event);
     if (environment == null || project == null) {

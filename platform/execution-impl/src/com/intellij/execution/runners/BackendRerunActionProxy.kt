@@ -18,11 +18,6 @@ private class BackendRerunActionProxy : RerunActionProxy {
     return BackendExecutionEnvironmentProxy(environment)
   }
 
-  override fun getRunContentDescriptorProxy(event: AnActionEvent): RunContentDescriptorProxy? {
-    val descriptor = event.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR) ?: return null
-    return BackendRunContentDescriptorProxy(descriptor)
-  }
-
   private fun getEnvironment(event: AnActionEvent): ExecutionEnvironment? {
     var environment = event.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT)
     if (environment == null) {

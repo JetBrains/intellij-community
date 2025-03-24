@@ -32,12 +32,8 @@ public class MavenRebuildAction extends FakeRerunAction {
   }
 
   @Override
-  protected @Nullable RunContentDescriptorProxy getDescriptorProxy(AnActionEvent event) {
-    RunContentDescriptor content = myEnvironment.getContentToReuse();
-    if (content == null) {
-      return null;
-    }
-    return new BackendRunContentDescriptorProxy(content);
+  protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
+    return myEnvironment.getContentToReuse();
   }
 
   @Override

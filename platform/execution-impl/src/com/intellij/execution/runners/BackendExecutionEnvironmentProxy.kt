@@ -4,6 +4,7 @@ package com.intellij.execution.runners
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.util.NlsSafe
 import javax.swing.Icon
 
@@ -31,8 +32,8 @@ internal class BackendExecutionEnvironmentProxy(private val environment: Executi
     return BackendRunnerAndConfigurationSettingsProxy(runnerAndConfigurationSettings)
   }
 
-  override fun getContentToReuseProxy(): RunContentDescriptorProxy? {
-    return environment.contentToReuse?.let { BackendRunContentDescriptorProxy(it) }
+  override fun getContentToReuse(): RunContentDescriptor? {
+    return environment.contentToReuse
   }
 
   override fun isStarting(): Boolean {

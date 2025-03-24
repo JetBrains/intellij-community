@@ -306,8 +306,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (environment != null) {
         presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
                                                             StringUtil.escapeMnemonics(environment.getRunProfileName())));
-        RunContentDescriptorProxy descriptor = getDescriptorProxy(event);
-        Icon icon = (descriptor != null && descriptor.isProcessRunning())
+        RunContentDescriptor descriptor = getDescriptor(event);
+        Icon icon = (descriptor != null && ExecutionManagerImpl.isProcessRunning(getDescriptor(event)))
                     ? AllIcons.Actions.Restart
                     : myProgressListener instanceof BuildViewManager
                       ? AllIcons.Actions.Compile
@@ -321,11 +321,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
 
     @Override
-    protected @Nullable RunContentDescriptorProxy getDescriptorProxy(AnActionEvent event) {
-      if (myContentDescriptor != null) {
-        return new BackendRunContentDescriptorProxy(myContentDescriptor);
-      }
-      return super.getDescriptorProxy(event);
+    protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
+      return myContentDescriptor != null ? myContentDescriptor : super.getDescriptor(event);
     }
 
     @Override
