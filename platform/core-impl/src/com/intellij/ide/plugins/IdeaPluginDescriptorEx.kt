@@ -11,7 +11,7 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val moduleLoadingRule: ModuleLoadingRule?
   val useCoreClassLoader: Boolean
   val isIndependentFromCoreClassLoader: Boolean
-  val incompatibleWith: List<PluginId>
+  val incompatiblePlugins: List<PluginId>
 
   val actions: List<ActionElement>
 

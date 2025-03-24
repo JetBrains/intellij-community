@@ -128,7 +128,7 @@ internal data class JbProductInfo(
     }
 
     // check for incompatibilities
-    for (ic in descriptor.incompatibleWith) {
+    for (ic in descriptor.incompatiblePlugins) {
       if (PluginManagerCore.getPluginSet().isPluginEnabled(ic)) {
         logger.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
                                      "because it is incompatible with ${ic}")
