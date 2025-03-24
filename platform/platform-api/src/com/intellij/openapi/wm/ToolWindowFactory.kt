@@ -16,6 +16,11 @@ import javax.swing.Icon
  * See [Tool Windows](https://plugins.jetbrains.com/docs/intellij/tool-windows.html) in SDK Docs.
  */
 interface ToolWindowFactory : PossiblyDumbAware {
+  /**
+   * This will be called once, and cannot be undone.
+   *
+   * @return false to deactivate the factory
+   */
   suspend fun isApplicableAsync(project: Project): Boolean {
     return blockingContext {
       @Suppress("DEPRECATION")
@@ -42,8 +47,12 @@ interface ToolWindowFactory : PossiblyDumbAware {
 
   /**
    * Check if the tool window (and its stripe button) should be visible after startup.
+   * Unavailable tool windows are still visible in the "Main Menu | View | Tool Windows".
+   *
+   * This will be called once. Use [ToolWindow.setAvailable] on state changes.
    *
    * @see ToolWindow.isAvailable
+   * @see ToolWindowManager.unregisterToolWindow
    */
   fun shouldBeAvailable(project: Project): Boolean = true
 
