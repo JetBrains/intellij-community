@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
+import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.new
 import com.intellij.xdebugger.impl.rhizome.XExecutionStackEntity
 import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
 import com.intellij.xdebugger.impl.rpc.*
@@ -36,13 +37,11 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
           override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
             this@channelFlow.launch {
               withEntities(executionStackEntity) {
-                // TODO[IJPL-177087] suspect project leak
-                val frameEntities = /*stackFrames.map { frame ->
+                val frameEntities = stackFrames.map { frame ->
                   change {
                     XStackFrameEntity.new(this, frame)
                   }
-                }*/
-                  emptyList<XStackFrameEntity>()
+                }
                 change {
                   executionStackEntity.update {
                     it[XExecutionStackEntity.StackFrames] = executionStackEntity.frames + frameEntities
