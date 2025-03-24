@@ -1411,10 +1411,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     DataContext context = getDataContext();
 
     Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
-    if (graphics != null) { // editor component is not showing
+    if (graphics != null) {
       PaintUtil.alignTxToInt((Graphics2D)graphics, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
       processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();
+    }
+    else {
+      // the editor component is not showing
     }
 
     ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, context);
