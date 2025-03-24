@@ -13,6 +13,8 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val isIndependentFromCoreClassLoader: Boolean
   val incompatiblePlugins: List<PluginId>
 
+  val pluginAliases: List<PluginId>
+
   val actions: List<ActionElement>
 
   /**
