@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalPathApi::class)
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.stream.JsonReader
 import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpStatusClass
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -11,9 +12,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
 import org.jetbrains.intellij.build.http2Client.ZstdCompressContextPool
 import org.jetbrains.intellij.build.http2Client.upload
@@ -234,16 +233,24 @@ internal suspend fun checkExists(
   urlPath: String,
   logIfExists: Boolean = false,
 ): Boolean {
-  val status = connection.head(urlPath)
-  if (status == HttpResponseStatus.OK) {
-    // already exists
-    if (logIfExists) {
-      Span.current().addEvent("File $urlPath already exists on server, nothing to upload")
+  return retryWithExponentialBackOff {
+    when (val status = connection.head(urlPath)) {
+      HttpResponseStatus.OK -> {
+        // already exists
+        if (logIfExists) {
+          Span.current().addEvent("File $urlPath already exists on server, nothing to upload")
+        }
+        true
+      }
+      HttpResponseStatus.NOT_FOUND -> false
+      else -> {
+        Span.current().addEvent("unexpected response status for HEAD request", Attributes.of(AttributeKey.stringKey("status"), status.toString()))
+        val message = "unexpected response status for HEAD request: $status"
+        if (status.codeClass() == HttpStatusClass.SERVER_ERROR || status.code() == 420 || status.code() == 429)
+          throw IllegalStateException(message)
+        else
+          throw NoMoreRetriesException(message)
+      }
     }
-    return true
   }
-  else if (status != HttpResponseStatus.NOT_FOUND) {
-    Span.current().addEvent("unexpected response status for HEAD request", Attributes.of(AttributeKey.stringKey("status"), status.toString()))
-  }
-  return false
 }
