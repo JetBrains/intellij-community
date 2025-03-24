@@ -1,19 +1,12 @@
-package com.jetbrains.rider.diagnostics
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diagnostic.specialPaths
 
-import com.intellij.ide.actions.RevealFileAction
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 
-class BrowseSpecialPathsAction : AnAction(), DumbAware {
+internal class BrowseSpecialPathsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     BrowseSpecialPathsDialog(e.project).show()
-  }
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = RevealFileAction.isSupported()
   }
 }
