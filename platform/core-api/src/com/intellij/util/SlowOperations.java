@@ -115,10 +115,7 @@ public final class SlowOperations {
     if (isInSection(FORCE_THROW) && !Cancellation.isInNonCancelableSection()) {
       throw new SlowOperationCanceledException();
     }
-    if (isAlreadyReported()) {
-      return;
-    }
-    Holder.LOG.error(ERROR_EDT);
+    logError(ERROR_EDT);
   }
 
   /**
