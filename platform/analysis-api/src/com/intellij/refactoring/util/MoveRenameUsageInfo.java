@@ -97,7 +97,14 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
     return checkReferenceRange(element, start -> element.findReferenceAt(start));
   }
 
-  protected Segment getReferenceRangeToCheck(@NotNull PsiElement element) {
+  /**
+   * Range that is used to check if the reference was not changed.
+   * Can be overridden in case of reference was modified deliberately.
+   *
+   * @param element of the reference.
+   * @return range of the reference in the document.
+   */
+  protected @NotNull Segment getReferenceRangeToCheck(@NotNull PsiElement element) {
     return myReferenceRangeMarker;
   }
 
