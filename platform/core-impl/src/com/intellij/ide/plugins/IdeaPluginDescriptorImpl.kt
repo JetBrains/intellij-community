@@ -158,6 +158,10 @@ class IdeaPluginDescriptorImpl private constructor(
   ): IdeaPluginDescriptorImpl {
     subBuilder.name = name
     subBuilder.vendor = vendor
+    if (subBuilder.version != null && subBuilder.version != version) {
+      LOG.warn("Sub descriptor version redefinition for plugin $id. Original value: ${subBuilder.version}, inherited value: ${version ?: context.defaultVersion}")
+    }
+    subBuilder.version = version ?: context.defaultVersion
     val raw = subBuilder.build()
     val result = IdeaPluginDescriptorImpl(
       raw = raw,
@@ -174,7 +178,6 @@ class IdeaPluginDescriptorImpl private constructor(
     if (raw.resourceBundleBaseName != null) {
       result.readResourceBundleBaseName(raw)
     }
-    result.version = version ?: context.defaultVersion
     return result
   }
 
