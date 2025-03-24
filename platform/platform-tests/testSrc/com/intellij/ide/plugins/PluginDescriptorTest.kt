@@ -2,6 +2,7 @@
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -370,6 +371,26 @@ class PluginDescriptorTest {
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
     assertThat(descriptor.content.modules).hasSize(3)
     assertThat(descriptor.content.modules).allMatch { it.requireDescriptor().resourceBundleBaseName == it.name }
+  }
+
+  @Test
+  fun `core plugin has implicit host and product mode plugin aliases`() {
+    PluginBuilder.empty()
+      .id("com.intellij")
+      .build(pluginDirPath)
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    val hostIds = IdeaPluginOsRequirement.getHostOsModuleIds()
+    if (hostIds.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
+    }
+    val productAliases = IdeaPluginDescriptorImpl.productModeAliasesForCorePlugin()
+    if (productAliases.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
+    }
+    assertThat(descriptor.pluginAliases)
+      .containsAll(hostIds)
+      .containsAll(productAliases)
   }
 
   // todo this is rather about plugin set loading, probably needs to be moved out

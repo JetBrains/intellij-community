@@ -233,34 +233,6 @@ class IdeaPluginDescriptorImpl private constructor(
     resourceBundleBaseName = raw.resourceBundleBaseName
   }
 
-  /**
-   * This method returns plugin aliases, which are added to the core module.
-   * This is done to support running without the module-based loader (from sources and in dev mode),
-   * where all modules are available, but only some of them need to be loaded.
-   *
-   * This method is left for compatibility only. 
-   * Now dependencies on 'intellij.platform.frontend' and 'intellij.platform.backend' should be used instead. 
-   * These modules are automatically disabled if they aren't relevant to the product mode, see [PluginSetBuilder.getModuleIncompatibleWithCurrentProductMode].
-   */
-  @ApiStatus.Obsolete
-  private fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
-    if (!AppMode.isRemoteDevHost()) {
-      // This alias is available in monolith and frontend.
-      // Modules, which depend on it, will not be loaded in split backend.
-      add(PluginId.getId("com.intellij.platform.experimental.frontend"))
-    }
-    if (!PlatformUtils.isJetBrainsClient()) {
-      // This alias is available in monolith and backend.
-      // Modules, which depend on it, will not be loaded in split frontend.
-      add(PluginId.getId("com.intellij.platform.experimental.backend"))
-    }
-    if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient()) {
-      // This alias is available in monolith only.
-      // Modules, which depend on it, will not be loaded in split mode.
-      add(PluginId.getId("com.intellij.platform.experimental.monolith"))
-    }
-  }
-
   private fun initializeV1Dependencies(context: DescriptorListLoadingContext,
                                        pathResolver: PathResolver,
                                        dataLoader: DataLoader) {
@@ -575,7 +547,8 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private companion object {
+  @ApiStatus.Internal
+  companion object {
     private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependencyImpl> =
       depends.mapTo(ArrayList(depends.size)) {
         PluginDependencyImpl(PluginId.getId(it.pluginId), it.configFile, it.isOptional)
@@ -701,6 +674,35 @@ class IdeaPluginDescriptorImpl private constructor(
         second.mapNotNull { (key, secondValue) ->
           first[key]?.let { firstValue -> firstValue to secondValue }
         }
+      }
+    }
+
+    /**
+     * This method returns plugin aliases, which are added to the core module.
+     * This is done to support running without the module-based loader (from sources and in dev mode),
+     * where all modules are available, but only some of them need to be loaded.
+     *
+     * This method is left for compatibility only.
+     * Now dependencies on 'intellij.platform.frontend' and 'intellij.platform.backend' should be used instead.
+     * These modules are automatically disabled if they aren't relevant to the product mode, see [PluginSetBuilder.getModuleIncompatibleWithCurrentProductMode].
+     */
+    @VisibleForTesting
+    @ApiStatus.Obsolete
+    fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
+      if (!AppMode.isRemoteDevHost()) {
+        // This alias is available in monolith and frontend.
+        // Modules, which depend on it, will not be loaded in split backend.
+        add(PluginId.getId("com.intellij.platform.experimental.frontend"))
+      }
+      if (!PlatformUtils.isJetBrainsClient()) {
+        // This alias is available in monolith and backend.
+        // Modules, which depend on it, will not be loaded in split frontend.
+        add(PluginId.getId("com.intellij.platform.experimental.backend"))
+      }
+      if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient()) {
+        // This alias is available in monolith only.
+        // Modules, which depend on it, will not be loaded in split mode.
+        add(PluginId.getId("com.intellij.platform.experimental.monolith"))
       }
     }
   }
