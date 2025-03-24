@@ -544,12 +544,10 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   private fun addCorePluginAliases(pluginAliases: List<PluginId>): List<PluginId> {
-    var result = pluginAliases
-    if (id == PluginManagerCore.CORE_ID) {
-      result = result + IdeaPluginOsRequirement.getHostOsModuleIds()
-      result = result + productModeAliasesForCorePlugin()
+    if (id != PluginManagerCore.CORE_ID) {
+      return pluginAliases
     }
-    return result
+    return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()
   }
 
   @ApiStatus.Internal
