@@ -33,7 +33,9 @@ class GitLabOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotatio
     }?.asSafely<GitRevisionNumber>() ?: return emptyList()
 
     return HostedGitRepositoryReferenceUtil
-      .findReferences(project, project.service<GitLabProjectsManager>(), virtualFile, revision, GitLabURIUtil::getWebURI)
+      .findReferences(project, project.service<GitLabProjectsManager>(), virtualFile, revision) { repository, revisionHash ->
+        GitLabURIUtil.getWebURI(project, repository, revisionHash)
+      }
   }
 
   override fun handleReference(reference: HostedGitRepositoryReference) {
