@@ -1,2 +1,4 @@
 #* @implicitly included *#
 #* @vtlvariable name="context" type="com.intellij.ide.starters.local.GeneratorContext" *#
+#* @vtlvariable name="PACKAGE_NAME" type="java.lang.String" *#
+#* @vtlvariable name="NAME" type="java.lang.String" *#
