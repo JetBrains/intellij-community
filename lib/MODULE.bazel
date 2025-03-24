@@ -2436,45 +2436,31 @@ http_file(
 )
 
 http_file(
-  name = "guava-33_4_0-jre_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre.jar",
-  sha256 = "b918c98a7e44dbe94ebd9fe3e40cddaadb5a93e6a78eb6008b42df237241e538",
-  downloaded_file_path = "guava-33.4.0-jre.jar"
+  name = "guava-33_4_5-jre_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.4.5-jre/guava-33.4.5-jre.jar",
+  sha256 = "874b1f0ee75c77c12d069d14c9b8b268b7b2cbd7ce679655c225f4a9942dc9c8",
+  downloaded_file_path = "guava-33.4.5-jre.jar"
 )
 
 http_file(
-  name = "failureaccess-1_0_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar",
-  sha256 = "8a8f81cf9b359e3f6dfa691a1e776985c061ef2f223c9b2c80753e1b458e8064",
-  downloaded_file_path = "failureaccess-1.0.2.jar"
+  name = "failureaccess-1_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar",
+  sha256 = "cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb",
+  downloaded_file_path = "failureaccess-1.0.3.jar"
 )
 
 http_file(
-  name = "j2objc-annotations-3_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar",
-  sha256 = "88241573467ddca44ffd4d74aa04c2bbfd11bf7c17e0c342c94c9de7a70a7c64",
-  downloaded_file_path = "j2objc-annotations-3.0.0.jar"
+  name = "guava-33_4_5-jre-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.4.5-jre/guava-33.4.5-jre-sources.jar",
+  sha256 = "1abdc24ae4f84d2f4022254b089aa6dec26bd0f7edf3fb2e3d3691fd6910bb21",
+  downloaded_file_path = "guava-33.4.5-jre-sources.jar"
 )
 
 http_file(
-  name = "guava-33_4_0-jre-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre-sources.jar",
-  sha256 = "55ef6603b6ab1f6e3ae810b127561650ed682eb5f3fb50a212a658a74087b457",
-  downloaded_file_path = "guava-33.4.0-jre-sources.jar"
-)
-
-http_file(
-  name = "failureaccess-1_0_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2-sources.jar",
-  sha256 = "dd3bfa5e2ec5bc5397efb2c3cef044c192313ff77089573667ff97a60c6978e0",
-  downloaded_file_path = "failureaccess-1.0.2-sources.jar"
-)
-
-http_file(
-  name = "j2objc-annotations-3_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0-sources.jar",
-  sha256 = "bd60019a0423c3a025ef6ab24fe0761f5f45ffb48a8cca74a01b678de1105d38",
-  downloaded_file_path = "j2objc-annotations-3.0.0-sources.jar"
+  name = "failureaccess-1_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3-sources.jar",
+  sha256 = "6fef4dfd2eb9f961655f2a3c4ea87c023618d9fcbfb6b104c17862e5afe66b97",
+  downloaded_file_path = "failureaccess-1.0.3-sources.jar"
 )
 
 http_file(
@@ -4144,31 +4130,31 @@ http_file(
 )
 
 http_file(
-  name = "jna-platform-5_14_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.14.0/jna-platform-5.14.0.jar",
-  sha256 = "ae4caceb3840730c2537f9b7fb55a01baba580286b4122951488bcee558c2449",
-  downloaded_file_path = "jna-platform-5.14.0.jar"
+  name = "jna-platform-5_17_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.17.0/jna-platform-5.17.0.jar",
+  sha256 = "b7e3d46c87bad2eb409b0e704916bcd81206168e357312dfddd0e253679cd9e0",
+  downloaded_file_path = "jna-platform-5.17.0.jar"
 )
 
 http_file(
-  name = "jna-5_14_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna/5.14.0/jna-5.14.0.jar",
-  sha256 = "34ed1e1f27fa896bca50dbc4e99cf3732967cec387a7a0d5e3486c09673fe8c6",
-  downloaded_file_path = "jna-5.14.0.jar"
+  name = "jna-5_17_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar",
+  sha256 = "b3a9408e7c51e08ef0e3bfcc08f443f6ec0f6191ba8cd7c18d53d2b22e5bdbc0",
+  downloaded_file_path = "jna-5.17.0.jar"
 )
 
 http_file(
-  name = "jna-platform-5_14_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.14.0/jna-platform-5.14.0-sources.jar",
-  sha256 = "879f24cf7021c8ff21c22de5f132c50c6d398bbf684be418d48cb8f859c147e7",
-  downloaded_file_path = "jna-platform-5.14.0-sources.jar"
+  name = "jna-platform-5_17_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna-platform/5.17.0/jna-platform-5.17.0-sources.jar",
+  sha256 = "63f67968e5714f854e8de84330aa371a33221871f8b110917769f15e517a6a24",
+  downloaded_file_path = "jna-platform-5.17.0-sources.jar"
 )
 
 http_file(
-  name = "jna-5_14_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna/5.14.0/jna-5.14.0-sources.jar",
-  sha256 = "ebd774c761215676cda059fd68240628ef99f4aafa6d355ae00d184855aef134",
-  downloaded_file_path = "jna-5.14.0-sources.jar"
+  name = "jna-5_17_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/java/dev/jna/jna/5.17.0/jna-5.17.0-sources.jar",
+  sha256 = "1e8dd4205deab6eb9d6045ad9e69a8754fc21029d56ede1dcd9f22a5e06571a7",
+  downloaded_file_path = "jna-5.17.0-sources.jar"
 )
 
 http_file(

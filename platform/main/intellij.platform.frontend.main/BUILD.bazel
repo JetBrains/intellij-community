@@ -12,6 +12,7 @@ java_library(
     "//platform/vcs-impl/frontend:vcs-impl-frontend",
     "//platform/bookmarks/frontend",
     "//platform/recentFiles/frontend",
+    "//platform/execution-impl/frontend:execution-impl-frontend",
   ]
 )
 ### auto-generated section `build intellij.platform.frontend.main` end

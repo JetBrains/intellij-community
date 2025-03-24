@@ -1869,29 +1869,22 @@ java_library(
 java_library(
   name = "guava",
   exports = [
-    ":guava-33_4_0-jre_http_import",
-    ":failureaccess-1_0_2_http_import",
-    ":j2objc-annotations-3_0_0_http_import",
+    ":guava-33_4_5-jre_http_import",
+    ":failureaccess-1_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "guava-33_4_0-jre_http_import",
-  jars = ["@guava-33_4_0-jre_http//file"],
-  srcjar = "@guava-33_4_0-jre-sources_http//file"
+  name = "guava-33_4_5-jre_http_import",
+  jars = ["@guava-33_4_5-jre_http//file"],
+  srcjar = "@guava-33_4_5-jre-sources_http//file"
 )
 
 java_import(
-  name = "failureaccess-1_0_2_http_import",
-  jars = ["@failureaccess-1_0_2_http//file"],
-  srcjar = "@failureaccess-1_0_2-sources_http//file"
-)
-
-java_import(
-  name = "j2objc-annotations-3_0_0_http_import",
-  jars = ["@j2objc-annotations-3_0_0_http//file"],
-  srcjar = "@j2objc-annotations-3_0_0-sources_http//file"
+  name = "failureaccess-1_0_3_http_import",
+  jars = ["@failureaccess-1_0_3_http//file"],
+  srcjar = "@failureaccess-1_0_3-sources_http//file"
 )
 
 java_library(
@@ -2999,22 +2992,22 @@ java_import(
 java_library(
   name = "jna",
   exports = [
-    ":jna-platform-5_14_0_http_import",
-    ":jna-5_14_0_http_import",
+    ":jna-platform-5_17_0_http_import",
+    ":jna-5_17_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "jna-platform-5_14_0_http_import",
-  jars = ["@jna-platform-5_14_0_http//file"],
-  srcjar = "@jna-platform-5_14_0-sources_http//file"
+  name = "jna-platform-5_17_0_http_import",
+  jars = ["@jna-platform-5_17_0_http//file"],
+  srcjar = "@jna-platform-5_17_0-sources_http//file"
 )
 
 java_import(
-  name = "jna-5_14_0_http_import",
-  jars = ["@jna-5_14_0_http//file"],
-  srcjar = "@jna-5_14_0-sources_http//file"
+  name = "jna-5_17_0_http_import",
+  jars = ["@jna-5_17_0_http//file"],
+  srcjar = "@jna-5_17_0-sources_http//file"
 )
 
 java_library(

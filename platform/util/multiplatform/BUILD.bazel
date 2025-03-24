@@ -7,7 +7,7 @@ jvm_provided_library(
 )
 
 jvm_library(
-  name = "kmp",
+  name = "multiplatform",
   module_name = "intellij.platform.util.multiplatform",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvm/**/*.kt", "srcJvm/**/*.java"], allow_empty = True),
