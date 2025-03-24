@@ -2,8 +2,10 @@
 package com.intellij.diagnostic.specialPaths
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 data class SpecialPathEntry(val name: String, val originalPath: String, val kind: Kind) {
   enum class Kind {
     File,
