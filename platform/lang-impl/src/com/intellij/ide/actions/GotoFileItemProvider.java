@@ -107,7 +107,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return !FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() ||
              hasSuggestions.get() ||
              hasSuggestionsFixedPattern.get() ||
-             processItemsForPatternWithLevenshteinV2(base, parameters, consumer, indicator);
+             processItemsForPatternWithLevenshtein(base, parameters, consumer, indicator);
     }
     finally {
       if (LOG.isDebugEnabled()) {
@@ -144,7 +144,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
             return false;
           }
 
-          float distance = calculator.distanceToVirtualFile(file);
+          float distance = calculator.distanceToVirtualFile(file, true, true);
           if (distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
             PsiFileSystemItem fileItem = PsiUtilCore.findFileSystemItem(myProject, file);
             if (fileItem == null) {
@@ -184,17 +184,33 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   /**
-   * Implementation uses the {@code processLimitedTwoComponentPattern} function,
-   * which processes only patterns consisting of max two components and processes a limited number of cases.
+   * Processes all files and directories with `LevenshteinCalculator`.
+   * Returns false if the process was stopped, true otherwise.
    */
-  private boolean processItemsForPatternWithLevenshteinV2(final @NotNull ChooseByNameViewModel base,
+  private boolean processItemsForPatternWithLevenshtein(final @NotNull ChooseByNameViewModel base,
                                                           @NotNull FindSymbolParameters parameters,
                                                           @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                                           @NotNull ProgressIndicator indicator) {
     long start = System.currentTimeMillis();
 
+    List<String> patternComponents = LevenshteinCalculator.normalizeString(parameters.getCompletePattern());
+    if (patternComponents.isEmpty()) {
+      return true;
+    }
+
+    // Find files that fit the pattern in the original order
     List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems =
-      processLimitedTwoComponentPattern(base, parameters, indicator);
+      new ArrayList<>(processItemsForDirectPatternWithLevenshtein(base, patternComponents, parameters, indicator));
+
+    // If there are no results, find files that fit the pattern in the inverted order
+    if (matchingItems.isEmpty() && patternComponents.size() == 2) {
+      List<String> invertedPatternComponents = new ArrayList<>(patternComponents);
+      Collections.reverse(invertedPatternComponents);
+
+      matchingItems.addAll(processItemsForDirectPatternWithLevenshtein(base, invertedPatternComponents, parameters, indicator));
+    }
+
+    matchingItems.sort((item1, item2) -> Integer.compare(item2.getWeight(), item1.getWeight()));
 
     Processor<FoundItemDescriptor<?>> trackingProcessor = res -> {
       return consumer.process(res);
@@ -211,51 +227,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return true;
   }
 
-  /**
-   * Processes a pattern containing up to two components.
-   *
-   * @return A list of matching {@code FoundItemDescriptor<PsiFileSystemItem>} objects,
-   * or an empty list if no matches are found or if the pattern contains more than two components.
-   */
-  private List<FoundItemDescriptor<PsiFileSystemItem>> processLimitedTwoComponentPattern(
-    final @NotNull ChooseByNameViewModel base,
-    @NotNull FindSymbolParameters parameters,
-    @NotNull ProgressIndicator indicator) {
-    List<String> patternComponents = LevenshteinCalculator.normalizeString(parameters.getCompletePattern());
-    if (patternComponents.size() > 2 || patternComponents.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    // Find files that fit the pattern in the original order
-    List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems =
-      new ArrayList<>(findItemsByParentChildPattern(base, patternComponents, parameters, indicator));
-
-    // If there are no results, find files that fit the pattern in the inverted order
-    if (matchingItems.isEmpty() && patternComponents.size() == 2) {
-      List<String> invertedPatternComponents = new ArrayList<>(patternComponents);
-      Collections.reverse(invertedPatternComponents);
-
-      matchingItems.addAll(findItemsByParentChildPattern(base, invertedPatternComponents, parameters, indicator));
-    }
-
-    return matchingItems;
-  }
-
-  /**
-   * Processes specific pattern cases.
-   * <p>
-   * 1. If the pattern consists of a single component, the method searches for all directories
-   * and files similar to this component.
-   * If exactly one directory is found, it returns all names within that directory.
-   * 2. If the pattern consists of two components, it assumes that the second component
-   * is the name of a file or directory and the first component is its parent.
-   */
-  private List<FoundItemDescriptor<PsiFileSystemItem>> findItemsByParentChildPattern(final @NotNull ChooseByNameViewModel base,
+  private List<FoundItemDescriptor<PsiFileSystemItem>> processItemsForDirectPatternWithLevenshtein(final @NotNull ChooseByNameViewModel base,
                                                                                      @NotNull List<String> patternComponents,
                                                                                      @NotNull FindSymbolParameters parameters,
                                                                                      @NotNull ProgressIndicator indicator) {
-    // processing only two specific cases: when the patternComponents.size() == 1 and 2
-    if (patternComponents.isEmpty() || patternComponents.size() > 2) {
+    if (patternComponents.isEmpty()) {
       return Collections.emptyList();
     }
 
@@ -301,16 +277,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       PsiFileSystemItem psiFileItem = itemDescriptor.getItem();
       int psiFileItemWeight = itemDescriptor.getWeight();
 
-      if (patternComponents.size() == 2) { // Narrowing down filename with directory
-        VirtualFile parentVirtualFile = psiFileItem.getVirtualFile().getParent();
-        if (parentVirtualFile == null) {
-          continue;
-        }
-        String parentName = parentVirtualFile.getName();
-        String parentInPattern = patternComponents.get(0);
-        float distance = LevenshteinCalculator.distanceBetweenStrings(parentName, parentInPattern);
+      if (patternComponents.size() > 1) {
+        int patternSize = patternComponents.size();
+        LevenshteinCalculator calculator = new LevenshteinCalculator(patternComponents.subList(0, patternSize - 1));
+        float distance = calculator.distanceToVirtualFile(psiFileItem.getVirtualFile().getParent(), false, false);
         if (distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
-          int avgWeight = (psiFileItemWeight + LevenshteinCalculator.weightFromDistance(distance)) / 2;
+          int avgWeight = (psiFileItemWeight + LevenshteinCalculator.weightFromDistance(distance) * (patternSize - 1)) / patternSize;
           matchingItems.add(new FoundItemDescriptor<>(psiFileItem, avgWeight));
         }
       }

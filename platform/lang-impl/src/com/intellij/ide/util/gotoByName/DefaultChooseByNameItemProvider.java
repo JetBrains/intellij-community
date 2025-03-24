@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.text.EditDistance;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -321,7 +322,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     MatchResult result = matchName(fullMatcher, fullName);
     if (Registry.is("search.everywhere.fuzzy.class.search.enabled", false) && result == null) {
       LevenshteinCalculator levenshteinMatcher = new LevenshteinCalculator(fullMatcher.getPattern());
-      float distance = levenshteinMatcher.distanceToStringPath(fullName);
+      float distance = levenshteinMatcher.distanceToStringPath(fullName, true, true);
       result = distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE
                ? new MatchResult(fullName, LevenshteinCalculator.weightFromDistance(distance), false) : null;
     }
@@ -448,15 +449,20 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   protected static final class LevenshteinCalculator {
     private final List<String> patternComponents;
     private final @Nullable List<String> invertedPatternComponents;
-    public static final float MIN_ACCEPTABLE_DISTANCE = 0.5f;
+    public static final float MIN_ACCEPTABLE_DISTANCE = 0.7f;
     private static final String SEPARATOR_CHARACTERS = "[ /*\u0000]+";
 
     private static final int MIN_WEIGHT = 1;
     private static final int MAX_WEIGHT = 5000;
 
     public LevenshteinCalculator(@NotNull String pattern) {
-      patternComponents = normalizeString(pattern);
-      invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
+      this.patternComponents = normalizeString(pattern);
+      this.invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
+    }
+
+    public LevenshteinCalculator(@NotNull List<String> patternComponents) {
+      this.patternComponents = patternComponents;
+      this.invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
     }
 
     /**
@@ -470,10 +476,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
      * If the pattern consists of two parts, it also considers that the user may have entered them in reverse order.
      *
      * @param file {@link VirtualFile}, the path to which is compared with the pattern
+     * @param lastMatches a flag indicating whether the last elements in path and pattern should be compared directly
+     * @param inverted a flag indicating whether the pattern can be in reverse order
      * @return the distance as the average distance of all the matches
      */
-    public float distanceToVirtualFile(VirtualFile file) {
-      return distanceToStringPath(file.getPath());
+    public float distanceToVirtualFile(VirtualFile file, boolean lastMatches, boolean inverted) {
+      return distanceToStringPath(file.getPath(), lastMatches, inverted);
     }
 
     /**
@@ -484,15 +492,19 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
      * Returns 0 if there is a component in the pattern that does not have a match.
      * <p>
      * Assumes that all components of the pattern appear in the file path in the same order.
-     * If the pattern consists of two parts, it also considers that the user may have entered them in reverse order.
+     * If the pattern consists of two parts and {@code inverted} is true, it also considers that the user may have entered them in reverse order.
      *
-     * @param path path which is compared with the pattern
+     * @param path        path which is compared with the pattern
+     * @param lastMatches a flag indicating whether the last elements in path and pattern should be compared directly
+     * @param inverted    a flag indicating whether the pattern can be in reverse order
      * @return the distance as the average distance of all the matches
      */
-    public float distanceToStringPath(String path) {
+    public float distanceToStringPath(String path, boolean lastMatches, boolean inverted) {
       List<String> pathComponents = normalizeString(path);
-      return Math.max(distanceBetweenComponents(patternComponents, pathComponents),
-                      invertedPatternComponents == null ? 0 : distanceBetweenComponents(invertedPatternComponents, pathComponents));
+      return Math.max(distanceBetweenComponents(patternComponents, pathComponents, lastMatches),
+                      (!inverted && invertedPatternComponents == null)
+                      ? 0
+                      : distanceBetweenComponents(invertedPatternComponents, pathComponents, lastMatches));
     }
 
     public static List<String> normalizeString(String string) {
@@ -504,11 +516,16 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     }
 
     public static float distanceBetweenStrings(String string, String other) {
-      int limit = Math.min(string.length(), other.length()) / 2;
-      return normalizedDistance(string.toLowerCase(Locale.ROOT), other.toLowerCase(Locale.ROOT), limit);
+      int maxLength = Math.max(string.length(), other.length());
+      int limit = (int)((1 - MIN_ACCEPTABLE_DISTANCE) * maxLength);
+      int distance = EditDistance.optimalAlignment(string.toLowerCase(Locale.ROOT), other.toLowerCase(Locale.ROOT), true, limit, false);
+      if (distance > limit) {
+        return 0;
+      }
+      return 1.0f - ((float)distance / maxLength);
     }
 
-    private static float distanceBetweenComponents(List<String> patternComponents, List<String> pathComponents) {
+    private static float distanceBetweenComponents(List<String> patternComponents, List<String> pathComponents, boolean lastMatches) {
       if (pathComponents.isEmpty() || patternComponents.isEmpty()) {
         return 0;
       }
@@ -518,26 +535,27 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       float distance;
       float avgDistance = 0;
       boolean hasUnmatchedPatternComp = false;
+      MinusculeMatcher matcher;
 
-      // Process only cases where the last element of patternComponents matches the last element of pathCompIndex.
-      // A match is valid if it either satisfies MIN_ACCEPTABLE_DISTANCE or
-      // if it is lowercase camel-hump matching in case patternComponents.size() > 1.
       String lastPatternComp = patternComponents.get(patternCompIndex);
       String lastFileComp = pathComponents.get(pathCompIndex);
-      MinusculeMatcher matcher = buildPatternMatcher(lastPatternComp, true);
-      if (matcher.matches(lastFileComp) && patternComponents.size() > 1) {
-        distance = 1;
-      }
-      else {
-        distance = distanceBetweenStrings(lastPatternComp, lastFileComp);
-      }
-      if (distance < MIN_ACCEPTABLE_DISTANCE) {
-        return 0;
-      }
-      else {
-        avgDistance += distance;
-        patternCompIndex--;
-        pathCompIndex--;
+
+      if (lastMatches) {
+        matcher = buildPatternMatcher(lastPatternComp, true);
+        if (matcher.matches(lastFileComp) && patternComponents.size() > 1) {
+          distance = 1;
+        }
+        else {
+          distance = distanceBetweenStrings(lastPatternComp, lastFileComp);
+        }
+        if (distance < MIN_ACCEPTABLE_DISTANCE) {
+          return 0;
+        }
+        else {
+          avgDistance += distance;
+          patternCompIndex--;
+          pathCompIndex--;
+        }
       }
 
       while (patternCompIndex >= 0 && pathCompIndex >= 0 && !hasUnmatchedPatternComp) {
@@ -572,77 +590,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
 
     public static int weightFromDistance(double distance) {
       return (int)(MIN_WEIGHT + distance * (MAX_WEIGHT - MIN_WEIGHT));
-    }
-
-    /*
-     * Computes the normalized Levenshtein distance between two strings using
-     * (<a href="https://en.wikipedia.org/wiki/Levenshtein_distance#:~:text=contains%20the%20answer.-,Iterative%20with%20two%20matrix%20rows,-%5Bedit%5D">efficient Levenshtein algorithm</a>).
-     * Uses 3(n+1) memory instead of n*m, where n & m are the lengths of the two strings.
-     * The algorithm is case-sensitive.
-     *
-     * The result is a value in the range [0, 1], where:
-     * - 1.0 indicates a complete match
-     * - 0.0 indicates no similarity
-     *
-     * @param str1 first string to compare
-     * @param str2 second string to compare
-     * @param limit when the distance becomes greater than the limit, further processing stops.
-     *              To save cpu cycles on strings that are too different.
-     * @return the number of edits (number of char insertions+deletions+replacements) difference between the two strings.
-     */
-    public static float normalizedDistance(@NotNull String str1, @NotNull String str2, int limit) {
-      if (str1.length() > str2.length()) {
-        String tmp = str1;
-        str1 = str2;
-        str2 = tmp;
-      }
-      final int length1 = str1.length();
-      final int length2 = str2.length();
-      if (length1 == 0) {
-        return 0;
-      }
-
-      int[] v1 = new int[length1 + 1];
-      int[] v2 = new int[length1 + 1];
-      int[] temp;
-
-      char s2_j;
-
-      int i, j;
-
-      for (i = 1; i <= length1; i++) v1[i] = i;
-      int minCost = limit + 1; // flip to negative on MAX_INT doesn't matter
-
-      int cost;
-      for (j = 0; j < length2; j++) {
-        v2[0] = j + 1;
-        s2_j = str2.charAt(j);
-
-        for (i = 0; i < length1; i++) {
-          cost = str1.charAt(i) == s2_j ? 0 : 1;
-
-          v2[i + 1] = Math.min(Math.min(v2[i] + 1, // insertion
-                                        v1[i + 1] + 1), // deletion
-                               v1[i] + cost); // substitution (replacement)
-
-          final int currentCost = v2[i + 1];
-          if (currentCost < minCost) {
-            minCost = currentCost;
-          }
-        }
-        if (minCost > limit) {
-          return 0;
-        }
-        minCost = limit + 1;
-
-        temp = v1;
-        v1 = v2;
-        v2 = temp; // will be overwritten/reused
-      }
-
-      // our last action in the loop above was to switch arrays,
-      // so v1 has the most recent cost counts
-      return 1.0f - ((float)v1[length1] / length2);
     }
   }
 }
