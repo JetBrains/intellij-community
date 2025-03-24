@@ -4,7 +4,9 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentProxy;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -80,13 +82,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XDebugSessionProxy proxy = XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session);
     boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess());
     boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess());
-    return create(proxy, icon, environment, contentToReuse, forceNewDebuggerUi, withFramesCustomization);
+    return create(proxy, icon, environment == null ? null : new BackendExecutionEnvironmentProxy(environment), contentToReuse, forceNewDebuggerUi, withFramesCustomization);
   }
 
   @ApiStatus.Internal
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionProxy proxy,
                                                  @Nullable Icon icon,
-                                                 @Nullable ExecutionEnvironment environment,
+                                                 @Nullable ExecutionEnvironmentProxy environmentProxy,
                                                  @Nullable RunContentDescriptor contentToReuse,
                                                  boolean forceNewDebuggerUi,
                                                  boolean withFramesCustomization) {
@@ -95,7 +97,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       if (component != null) {
         XDebugSessionTab oldTab = TAB_KEY.getData(DataManager.getInstance().getDataContext(component));
         if (oldTab != null) {
-          oldTab.setSession(proxy, environment, icon);
+          oldTab.setSession(proxy, environmentProxy, icon);
           oldTab.attachToSession(proxy);
           return oldTab;
         }
@@ -105,18 +107,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (UIExperiment.isNewDebuggerUIEnabled() || forceNewDebuggerUi) {
       if (withFramesCustomization) {
         if (proxy instanceof XDebugSessionProxy.Monolith monolith) {
-          tab = new XDebugSessionTab3(monolith, icon, environment);
+          tab = new XDebugSessionTab3(monolith, icon, environmentProxy);
         }
         else {
           throw new IllegalStateException("Frames view customization is not supported in split mode");
         }
       }
       else {
-        tab = new XDebugSessionTabNewUI(proxy, icon, environment);
+        tab = new XDebugSessionTabNewUI(proxy, icon, environmentProxy);
       }
     }
     else {
-      tab = new XDebugSessionTab(proxy, icon, environment, true);
+      tab = new XDebugSessionTab(proxy, icon, environmentProxy, true);
     }
 
     tab.init(proxy);
@@ -130,11 +132,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected XDebugSessionTab(@NotNull XDebugSessionProxy session,
                              @Nullable Icon icon,
-                             @Nullable ExecutionEnvironment environment,
+                             @Nullable ExecutionEnvironmentProxy environmentProxy,
                              boolean shouldInitTabDefaults) {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()), shouldInitTabDefaults);
 
-    setSession(session, environment, icon);
+    setSession(session, environmentProxy, icon);
     myUi.getContentManager().addDataProvider((EdtNoGetDataProvider)sink -> {
       sink.set(XWatchesView.DATA_KEY, myWatchesView);
       sink.set(TAB_KEY, this);
@@ -249,8 +251,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  private void setSession(@NotNull XDebugSessionProxy session, @Nullable ExecutionEnvironment environment, @Nullable Icon icon) {
-    myEnvironment = environment;
+  private void setSession(@NotNull XDebugSessionProxy session, @Nullable ExecutionEnvironmentProxy environmentProxy, @Nullable Icon icon) {
+    myEnvironment = environmentProxy == null ? null : environmentProxy.getExecutionEnvironment();
+    myEnvironmentProxy = environmentProxy;
     mySession = session;
     mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();

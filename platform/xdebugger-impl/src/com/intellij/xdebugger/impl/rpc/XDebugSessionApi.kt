@@ -1,13 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
 import com.intellij.execution.rpc.ProcessHandlerDto
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -138,7 +137,7 @@ data class XDebuggerSessionTabInfo(
   val withFramesCustomization: Boolean,
   // TODO pass to frontend
   @Transient val contentToReuse: RunContentDescriptor? = null,
-  @Transient val executionEnvironment: ExecutionEnvironment? = null,
+  val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
 ) : XDebuggerSessionTabAbstractInfo
 
 @ApiStatus.Internal

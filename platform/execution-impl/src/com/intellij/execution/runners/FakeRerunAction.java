@@ -5,7 +5,9 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbService;
@@ -18,6 +20,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import java.awt.*;
+
+import static com.intellij.execution.runners.RunTab.EXECUTION_ENVIRONMENT_PROXY;
+
 @ApiStatus.Internal
 public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
@@ -29,10 +35,8 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-
-    RerunActionProxy actionProxy = getActionProxy(event);
     ExecutionEnvironmentProxy environment = getEnvironmentProxy(event);
-    if (actionProxy == null || environment == null) {
+    if (environment == null) {
       presentation.setEnabledAndVisible(false);
       return;
     }
@@ -56,8 +60,7 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    RerunActionProxy actionProxy = RerunActionProxy.EP_NAME.findFirstSafe(it -> it.isApplicable(event));
-    ExecutionEnvironmentProxy environment = actionProxy != null ? actionProxy.getExecutionEnvironmentProxy(event) : null;
+    ExecutionEnvironmentProxy environment = getEnvironmentProxy(event);
     if (environment != null) {
       environment.performRestart();
     }
@@ -68,15 +71,39 @@ public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpe
   }
 
   protected @Nullable ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {
-    RerunActionProxy actionProxy = getActionProxy(event);
-    if (actionProxy == null) {
+    ExecutionEnvironmentProxy proxyFromContext = event.getData(EXECUTION_ENVIRONMENT_PROXY);
+    if (proxyFromContext != null) {
+      return proxyFromContext;
+    }
+
+    ExecutionEnvironment environmentFromContext = event.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
+    if (environmentFromContext != null) {
+      return new BackendExecutionEnvironmentProxy(environmentFromContext);
+    }
+
+    Project project = event.getProject();
+    RunContentManager runContentManager = (project == null) ? null : RunContentManager.getInstanceIfCreated(project);
+    if (runContentManager == null) {
       return null;
     }
-    return actionProxy.getExecutionEnvironmentProxy(event);
-  }
-
-  private static @Nullable RerunActionProxy getActionProxy(@NotNull AnActionEvent event) {
-    return RerunActionProxy.EP_NAME.findFirstSafe(it -> it.isApplicable(event));
+    RunContentDescriptor contentDescriptor = runContentManager.getSelectedContent();
+    if (contentDescriptor == null) {
+      return null;
+    }
+    Component component = contentDescriptor.getComponent();
+    if (component == null) {
+      return null;
+    }
+    DataContext componentDataContext = DataManager.getInstance().getDataContext(component);
+    ExecutionEnvironmentProxy proxyFromSelectedContent = EXECUTION_ENVIRONMENT_PROXY.getData(componentDataContext);
+    if (proxyFromSelectedContent != null) {
+      return proxyFromContext;
+    }
+    ExecutionEnvironment environmentFromSelectedContent = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(componentDataContext);
+    if (environmentFromSelectedContent != null) {
+      return new BackendExecutionEnvironmentProxy(environmentFromSelectedContent);
+    }
+    return null;
   }
 
   protected boolean isEnabled(@NotNull AnActionEvent event) {

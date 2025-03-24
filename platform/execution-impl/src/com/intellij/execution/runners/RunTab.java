@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
@@ -49,6 +49,9 @@ public abstract class RunTab implements Disposable {
   @ApiStatus.Experimental
   public static final Key<PreferredPlace> PREFERRED_PLACE = Key.create("RunTab.preferredActionPlace");
 
+  @ApiStatus.Internal
+  public static final DataKey<ExecutionEnvironmentProxy> EXECUTION_ENVIRONMENT_PROXY = DataKey.create("RunTab.executionEnvironmentProxy");
+
   @ApiStatus.Experimental
   public static final DataKey<RunTab> KEY = DataKey.create("RunTab");
 
@@ -59,6 +62,9 @@ public abstract class RunTab implements Disposable {
   protected ExecutionEnvironment myEnvironment;
   protected final Project myProject;
   protected final GlobalSearchScope mySearchScope;
+
+  @ApiStatus.Internal
+  protected ExecutionEnvironmentProxy myEnvironmentProxy;
 
   private LogConsoleManagerBase logConsoleManager;
 
@@ -91,6 +97,9 @@ public abstract class RunTab implements Disposable {
       if (myEnvironment != null) {
         sink.set(ExecutionDataKeys.EXECUTION_ENVIRONMENT, myEnvironment);
         sink.set(LangDataKeys.RUN_PROFILE, myEnvironment.getRunProfile());
+      }
+      if (myEnvironmentProxy != null) {
+        sink.set(EXECUTION_ENVIRONMENT_PROXY, myEnvironmentProxy);
       }
     });
   }

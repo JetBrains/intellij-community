@@ -7,6 +7,8 @@ import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.rpc.toDto
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -422,7 +424,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     if (useFeProxy()) {
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
-                                            contentToReuse, executionEnvironment)
+                                            contentToReuse, executionEnvironment?.toDto())
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         myRunContentDescriptor = contentToReuse // This is a mock descriptor used in backend only
                                  ?: object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
@@ -435,7 +437,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     else {
       if (myTabInitDataFlow.value != null) return
       val proxy = XDebugSessionProxyKeeper.getInstance(myProject).getOrCreateProxy(this)
-      val tab = XDebugSessionTab.create(proxy, myIcon, this.executionEnvironment, contentToReuse,
+      val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
                                         forceNewDebuggerUi, withFramesCustomization)
       if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit(tab))) {
         tabInitialized(tab)

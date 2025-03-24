@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.Disposable
@@ -18,6 +19,7 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStac
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
+import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.xdebugger.XDebugSessionListener
@@ -131,6 +133,9 @@ internal class FrontendXDebuggerSession private constructor(
   override val isPaused: Boolean
     get() = sessionState.value.isPaused
 
+  override val environmentProxy: ExecutionEnvironmentProxy?
+    get() = null // TODO: implement!
+
   val isReadOnly: Boolean
     get() = sessionState.value.isReadOnly
 
@@ -201,7 +206,7 @@ internal class FrontendXDebuggerSession private constructor(
 
       val proxy = this@FrontendXDebuggerSession
       withContext(Dispatchers.EDT) {
-        XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironment, tabInfo.contentToReuse,
+        XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(), tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
           _sessionTab = this
           proxy.onTabInitialized(this)

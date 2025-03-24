@@ -6,9 +6,11 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-internal class BackendExecutionEnvironmentProxy(private val environment: ExecutionEnvironment) : ExecutionEnvironmentProxy {
+@ApiStatus.Internal
+class BackendExecutionEnvironmentProxy(private val environment: ExecutionEnvironment) : ExecutionEnvironmentProxy {
   override fun isShowInDashboard(): Boolean {
     val settings: RunnerAndConfigurationSettings? = environment.runnerAndConfigurationSettings
     val configuration = settings?.getConfiguration() ?: return false
@@ -42,5 +44,9 @@ internal class BackendExecutionEnvironmentProxy(private val environment: Executi
 
   override fun performRestart() {
     ExecutionUtil.restart(environment)
+  }
+
+  override fun getExecutionEnvironment(): ExecutionEnvironment {
+    return environment
   }
 }

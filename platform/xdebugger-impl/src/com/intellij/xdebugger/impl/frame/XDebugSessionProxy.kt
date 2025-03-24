@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -46,6 +47,8 @@ interface XDebugSessionProxy {
   val sessionTab: XDebugSessionTab?
   val isStopped: Boolean
   val isPaused: Boolean
+
+  val environmentProxy: ExecutionEnvironmentProxy?
 
   @get:NlsSafe
   val currentStateMessage: String
@@ -104,6 +107,8 @@ interface XDebugSessionProxy {
       get() = (session as? XDebugSessionImpl)?.sessionTab
     override val isPaused: Boolean
       get() = session.isPaused
+    override val environmentProxy: ExecutionEnvironmentProxy?
+      get() = null // Monolith shouldn't provide proxy, since the real one ExecutionEnvironment will be used
     override val isStopped: Boolean
       get() = session.isStopped
 

@@ -27,4 +27,7 @@ interface ExecutionEnvironmentProxy {
   fun isStarting(): Boolean
 
   fun performRestart()
+
+  // only for backward compatibility and should be available only in monolith.
+  fun getExecutionEnvironment(): ExecutionEnvironment?
 }

@@ -1,0 +1,64 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.impl.frontend
+
+import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
+import com.intellij.execution.runners.RunnerAndConfigurationSettingsProxy
+import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
+
+@ApiStatus.Internal
+fun ExecutionEnvironmentProxyDto.executionEnvironment(): ExecutionEnvironmentProxy {
+  return FrontendExecutionEnvironmentProxy(this)
+}
+
+private class FrontendExecutionEnvironmentProxy(
+  private val dto: ExecutionEnvironmentProxyDto,
+) : ExecutionEnvironmentProxy {
+  private val icon = dto.icon.icon()
+  private val rerunIcon = dto.rerunIcon.icon()
+
+  override fun isShowInDashboard(): Boolean {
+    // TODO: implement
+    return false
+  }
+
+  override fun getRunProfileName(): @NlsSafe String {
+    return dto.runProfileName
+  }
+
+  override fun getIcon(): Icon {
+    return icon
+  }
+
+  override fun getRerunIcon(): Icon {
+    return rerunIcon
+  }
+
+  override fun getRunnerAndConfigurationSettingsProxy(): RunnerAndConfigurationSettingsProxy? {
+    // TODO: implement
+    return null
+  }
+
+  override fun getContentToReuse(): RunContentDescriptor? {
+    // TODO: implement
+    return null
+  }
+
+  override fun isStarting(): Boolean {
+    // TODO: should be reactive
+    return dto.isStarting
+  }
+
+  override fun performRestart() {
+    // TODO: implement
+  }
+
+  override fun getExecutionEnvironment(): ExecutionEnvironment? {
+    return null
+  }
+}
