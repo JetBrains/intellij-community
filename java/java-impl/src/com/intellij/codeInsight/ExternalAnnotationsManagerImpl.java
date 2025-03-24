@@ -44,7 +44,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -65,7 +64,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -200,8 +198,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
           JavaBundle.message("external.annotations.roots"), 
           ContainerUtil.map(roots, root -> new AnnotateForRootCommand(this, root, annotation)));
         ActionContext context = ActionContext.from(null, fromFile);
-        String name = "Adding annotation";
-        ModCommandExecutor.executeInteractively(context, name, null, () -> command);
+        ModCommandExecutor.executeInteractively(context, JavaBundle.message("update.external.annotations"), null, () -> command);
       }
       else {
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -435,8 +432,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       return false;
     }
     ActionContext context = ActionContext.from(null, annotation.owner().getContainingFile());
-    String name = "Adding annotation";
-    ModCommandExecutor.executeInteractively(context, name, null, () ->
+    ModCommandExecutor.executeInteractively(context, JavaBundle.message("update.external.annotations"), null, () ->
       ModCommand.updateOptionList(containingFile, "OrderEntryConfiguration.externalAnnotations", list -> list.add(newRoot.getUrl()))
         .andThen(getAddAnnotationCommand(newRoot, annotation, context)));
     return true;
@@ -469,16 +465,13 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   @Override
   public boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     ThreadingAssertions.assertEventDispatchThread();
-    return processExistingExternalAnnotations(listOwner, annotationFQN, annotationTag -> {
-      PsiElement parent = annotationTag.getParent();
-      annotationTag.delete();
-      if (parent instanceof XmlTag) {
-        if (((XmlTag)parent).getSubTags().length == 0) {
-          parent.delete();
-        }
-      }
-      return true;
-    });
+    ModCommand command = deannotateModCommand(List.of(listOwner), List.of(annotationFQN));
+    if (command.isEmpty()) return false;
+    ModCommandExecutor.executeInteractively(ActionContext.from(null, listOwner.getContainingFile()),
+                                            JavaBundle.message("update.external.annotations"),
+                                            null,
+                                            () -> command);
+    return true;
   }
 
   @Override
@@ -533,52 +526,13 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
                                         @NotNull String annotationFQN,
                                         PsiNameValuePair @Nullable [] value) {
     ThreadingAssertions.assertEventDispatchThread();
-    return processExistingExternalAnnotations(listOwner, annotationFQN, annotationTag -> {
-      annotationTag.replace(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
-        createAnnotationTag(annotationFQN, value)));
-      return true;
-    });
-  }
-
-  private boolean processExistingExternalAnnotations(@NotNull PsiModifierListOwner listOwner,
-                                                     @NotNull String annotationFQN,
-                                                     @NotNull Processor<? super XmlTag> annotationTagProcessor) {
-    try {
-      final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
-      if (files == null) {
-        return false;
-      }
-      boolean processedAnything = false;
-      for (final XmlFile file : files) {
-        if (!file.isValid()) continue;
-        final List<XmlTag> tagsToProcess = getTagsToProcess(file, listOwner, annotationFQN);
-        if (tagsToProcess.isEmpty()) continue;
-        processedAnything = true;
-        if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
-          .ensureFilesWritable(Collections.singletonList(file.getVirtualFile())).hasReadonlyFiles()) {
-          continue;
-        }
-
-        WriteCommandAction.runWriteCommandAction(myPsiManager.getProject(),
-                                                 JavaBundle.message("update.external.annotations"), null, () -> {
-            PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
-            try {
-              for (XmlTag annotationTag : tagsToProcess) {
-                annotationTagProcessor.process(annotationTag);
-              }
-              commitChanges(file);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          });
-      }
-      myPsiManager.dropPsiCaches();
-      return processedAnything;
-    }
-    finally {
-      dropCache();
-    }
+    ModCommand command = editExternalAnnotationModCommand(listOwner, annotationFQN, value);
+    if (command.isEmpty()) return false;
+    ModCommandExecutor.executeInteractively(ActionContext.from(null, listOwner.getContainingFile()),
+                                            JavaBundle.message("update.external.annotations"),
+                                            null,
+                                            () -> command);
+    return true;
   }
 
   @Override
