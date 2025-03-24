@@ -73,11 +73,6 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
-    val tab = SearchEverywhereTabWithMlRanking.findById(state.tabId)
-    if (tab != null && experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_ML_FEATURES) {
-      return foundElementInfoWithoutMl
-    }
-
     val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
     val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo)
 
@@ -128,7 +123,6 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     if (settings.isSortingByMlEnabledByDefault(tab)) {
       return settings.isSortingByMlEnabled(tab)
              && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML
-             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML_FEATURES
     }
     else {
       return settings.isSortingByMlEnabled(tab)
