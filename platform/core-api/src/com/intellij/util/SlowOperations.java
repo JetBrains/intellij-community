@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -106,14 +106,19 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
-    String error = !EDT.isCurrentThreadEdt() ||
-                   isAlwaysAllowed() ||
-                   isSlowOperationAllowed() ? null : ERROR_EDT;
-    if (error == null || isAlreadyReported()) return;
+    if (!EDT.isCurrentThreadEdt()) {
+      return;
+    }
+    if (isAlwaysAllowed() || isSlowOperationAllowed()) {
+      return;
+    }
+    if (isAlreadyReported()) {
+      return;
+    }
     if (isInSection(FORCE_THROW) && !Cancellation.isInNonCancelableSection()) {
       throw new SlowOperationCanceledException();
     }
-    Holder.LOG.error(error);
+    Holder.LOG.error(ERROR_EDT);
   }
 
   /**
