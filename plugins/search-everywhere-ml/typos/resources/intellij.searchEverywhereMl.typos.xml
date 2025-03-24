@@ -9,8 +9,9 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+
     <searchEverywhereSpellingCorrector
-      implementation="com.intellij.searchEverywhereMl.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
+      implementation="com.intellij.searchEverywhereMl.typos.GrazieSpellingCorrectorFactoryImpl" />
 
     <advancedSetting default="true" id="searcheverywhere.ml.typos.enable"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
