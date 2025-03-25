@@ -10,16 +10,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -114,73 +111,6 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         LOG.debug("Goto File \"" + parameters.getCompletePattern() + "\" took " + (System.currentTimeMillis() - start) + " ms");
       }
     }
-  }
-
-  /**
-   * Processes all files and directories with `LevenshteinCalculator`.
-   * Returns false if the process was stopped, true otherwise.
-   */
-  private boolean processItemsForPatternWithLevenshtein(@NotNull FindSymbolParameters parameters,
-                                                        @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
-                                                        @NotNull ProgressIndicator indicator) {
-    List<Pair<VirtualFile, String>> roots = DirectoryPathMatcher.getProjectRoots(myModel);
-    String pattern = parameters.getCompletePattern();
-    if (pattern.isEmpty()) {
-      return true;
-    }
-
-    LevenshteinCalculator calculator = new LevenshteinCalculator(pattern);
-    List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems = new ArrayList<>();
-    List<PsiDirectory> matchingDirectories = new ArrayList<>();
-
-    for (Pair<VirtualFile, String> fileWithName : roots) {
-      VirtualFile root = fileWithName.getFirst();
-      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
-        @Override
-        public boolean visitFile(@NotNull VirtualFile file) {
-          indicator.checkCanceled();
-
-          if (!parameters.getSearchScope().accept(file)) {
-            return false;
-          }
-
-          float distance = calculator.distanceToVirtualFile(file, true, true);
-          if (distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
-            PsiFileSystemItem fileItem = PsiUtilCore.findFileSystemItem(myProject, file);
-            if (fileItem == null) {
-              return false;
-            }
-            int weight = LevenshteinCalculator.weightFromDistance(distance);
-            if (fileItem instanceof PsiDirectory directory) {
-              matchingItems.add(new FoundItemDescriptor<>(fileItem, Math.max(1, weight - 10)));
-              matchingDirectories.add(directory);
-            }
-            else {
-              matchingItems.add(new FoundItemDescriptor<>(fileItem, weight));
-            }
-          }
-          return true;
-        }
-      });
-    }
-
-    if (matchingItems.isEmpty()) {
-      return true;
-    }
-
-    if (matchingDirectories.size() == 1) {
-      List<FoundItemDescriptor<PsiFileSystemItem>> childElements = getListWithChildItems(matchingDirectories.get(0), myProject);
-      matchingItems.addAll(childElements);
-    }
-
-    Processor<FoundItemDescriptor<?>> trackingProcessor = res -> {
-      return consumer.process(res);
-    };
-    if (!ContainerUtil.process(matchingItems, trackingProcessor)) {
-      return false;
-    }
-
-    return true;
   }
 
   /**
