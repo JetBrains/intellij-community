@@ -1,239 +1,188 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor.impl.text
 
-package com.intellij.openapi.fileEditor.impl.text;
+import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.multiverse.EditorContextManager.Companion.getEditorContext
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
+import com.intellij.ide.IdeView
+import com.intellij.injected.editor.EditorWindow
+import com.intellij.lang.Language
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker
+import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.injected.InjectedCaret
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.containers.ContainerUtil
 
-import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.EditorContextManager;
-import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.IdeView;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.DataSnapshot;
-import com.intellij.openapi.actionSystem.InjectedDataKeys;
-import com.intellij.openapi.actionSystem.UiDataRule;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorKind;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.NonPhysicalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+internal class TextEditorPsiDataRule : UiDataRule {
+  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    val editor = snapshot[CommonDataKeys.EDITOR]
+    if (editor !is EditorEx || editor.isDisposed()) return
 
-import java.util.LinkedHashSet;
+    val editorKind = editor.editorKind
+    if (editorKind == EditorKind.PREVIEW || editorKind == EditorKind.CONSOLE) return
 
-import static com.intellij.openapi.actionSystem.LangDataKeys.*;
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-
-class TextEditorPsiDataRule implements UiDataRule {
-
-  @Override
-  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
-    Editor editor = snapshot.get(EDITOR);
-    if (!(editor instanceof EditorEx) || editor.isDisposed()) return;
-
-    EditorKind editorKind = editor.getEditorKind();
-    if (editorKind == EditorKind.PREVIEW || editorKind == EditorKind.CONSOLE) return;
-
-    Caret caret = snapshot.get(CARET);
-    if (caret == null) {
-      sink.set(CARET, caret = editor.getCaretModel().getPrimaryCaret());
+    val caret = snapshot[CommonDataKeys.CARET] ?: editor.caretModel.primaryCaret.also {
+      sink[CommonDataKeys.CARET] = it
     }
 
-    VirtualFile file = editor.getVirtualFile();
-    if (file == null) return;
+    val file = editor.virtualFile ?: return
+    val hostEditor = if (editor is EditorWindow) editor.delegate else editor
+    sink[CommonDataKeys.HOST_EDITOR] = hostEditor
+    sink[LangDataKeys.IDE_VIEW] = getIdeView(editor, file)
 
-    Caret finalCaret = caret;
-    sink.set(HOST_EDITOR, editor instanceof EditorWindow o ? o.getDelegate() : editor);
-    sink.set(IDE_VIEW, getIdeView(editor, file));
-    sink.set(BGT_DATA_PROVIDER, slowId -> getSlowData(slowId, editor, finalCaret));
-  }
-
-  private static @Nullable IdeView getIdeView(@NotNull Editor e, @NotNull VirtualFile file) {
-    Project project = e.getProject();
-    if (project == null) return null;
-    VirtualFileSystem fs = file.getFileSystem();
-    boolean nonPhysical = fs instanceof NonPhysicalFileSystem || fs instanceof TempFileSystemMarker;
-    if (nonPhysical && !ApplicationManager.getApplication().isUnitTestMode()) return null;
-    return new IdeView() {
-
-      @Override
-      public void selectElement(@NotNull PsiElement element) {
-        NavigationUtil.activateFileWithPsiElement(element);
+    val project = editor.project ?: return
+    // regular lazy keys
+    sink.lazy(CommonDataKeys.PSI_FILE) {
+      getPsiFile(editor, file)
+    }
+    sink.lazy(CommonDataKeys.PSI_ELEMENT) {
+      getPsiElementIn(editor, caret, file)
+    }
+    sink.lazy(PlatformCoreDataKeys.MODULE) {
+      ModuleUtilCore.findModuleForFile(file, project)
+    }
+    sink.lazy(CommonDataKeys.LANGUAGE) {
+      val psiFile = getPsiFile(editor, file) ?: return@lazy null
+      getLanguageAtCurrentPositionInEditor(caret, psiFile)
+    }
+    sink.lazy(LangDataKeys.CONTEXT_LANGUAGES) {
+      val set = LinkedHashSet<Language?>(4)
+      ContainerUtil.addIfNotNull(set, getInjectedLanguage(project, editor, caret, file))
+      val hostFile = getPsiFile(editor, file)
+      if (hostFile != null) {
+        ContainerUtil.addIfNotNull(set, getLanguageAtCurrentPositionInEditor(caret, hostFile))
+        ContainerUtil.addIfNotNull(set, hostFile.viewProvider.baseLanguage)
       }
-
-      @Override
-      public PsiDirectory @NotNull [] getDirectories() {
-        PsiDirectory psiDirectory = getOrChooseDirectory();
-        return psiDirectory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{psiDirectory};
-      }
-
-      @Override
-      public PsiDirectory getOrChooseDirectory() {
-        VirtualFile parent = !file.isValid() ? null : file.getParent();
-        return parent == null ? null : PsiManager.getInstance(project).findDirectory(parent);
-      }
-    };
-  }
-
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
-    if (e.isDisposed() || !(e instanceof EditorEx)) {
-      return null;
+      set.toArray(Language.EMPTY_ARRAY)
     }
-    VirtualFile file = e.getVirtualFile();
-    if (file == null || !file.isValid()) return null;
-
-    Project project = e.getProject();
-    if (PSI_FILE.is(dataId)) {
-      return getPsiFile(e, file);
+    // injected lazy keys
+    sink.lazy(InjectedDataKeys.EDITOR) {
+      getInjectedEditor(project, editor, caret, file)
     }
-    if (InjectedDataKeys.EDITOR.is(dataId)) {
-      if (project != null &&
-          PsiDocumentManager.getInstance(project).isCommitted(e.getDocument()) &&
-          InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(e.getDocument(), caret.getOffset())) {
-        return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(e, caret, getPsiFile(e, file));
-      }
-      return null;
+    sink.lazy(InjectedDataKeys.CARET) {
+      val editor = getInjectedEditor(project, editor, caret, file) ?: return@lazy null
+      getInjectedCaret(editor, caret)
     }
-    if (InjectedDataKeys.CARET.is(dataId)) {
-      return querySlowInjectedCaret(e, caret);
+    sink.lazy(InjectedDataKeys.VIRTUAL_FILE) {
+      val editor = getInjectedEditor(project, editor, caret, file) ?: return@lazy null
+      PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.virtualFile
     }
-    if (InjectedDataKeys.VIRTUAL_FILE.is(dataId)) {
-      PsiFile psiFile = querySlowInjectedPsiFile(e, caret);
-      if (psiFile == null) return null;
-      return psiFile.getVirtualFile();
+    sink.lazy(InjectedDataKeys.PSI_FILE) {
+      val editor = getInjectedEditor(project, editor, caret, file) ?: return@lazy null
+      PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     }
-    if (InjectedDataKeys.PSI_FILE.is(dataId)) {
-      Editor editor = querySlowInjectedEditor(e, caret);
-      if (editor == null || project == null) return null;
-      return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    sink.lazy(InjectedDataKeys.PSI_ELEMENT) {
+      val editor = getInjectedEditor(project, editor, caret, file) ?: return@lazy null
+      getPsiElementIn(editor, getInjectedCaret(editor, caret), file)
     }
-    if (InjectedDataKeys.PSI_ELEMENT.is(dataId)) {
-      EditorWindow editor = querySlowInjectedEditor(e, caret);
-      if (editor == null) return null;
-      InjectedCaret injectedCaret = getInjectedCaret(editor, caret);
-      return injectedCaret == null ? null : getPsiElementIn(editor, injectedCaret, file);
-    }
-    if (PSI_ELEMENT.is(dataId)) {
-      return getPsiElementIn(e, caret, file);
-    }
-    if (InjectedDataKeys.LANGUAGE.is(dataId)) {
-      PsiFile psiFile = querySlowInjectedPsiFile(e, caret);
-      if (psiFile == null) return null;
-      InjectedCaret injectedCaret = querySlowInjectedCaret(e, caret);
-      return injectedCaret == null ? null : getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile);
-    }
-    if (MODULE.is(dataId)) {
-      return project == null ? null : ModuleUtilCore.findModuleForFile(file, project);
-    }
-    if (LANGUAGE.is(dataId)) {
-      PsiFile psiFile = getPsiFile(e, file);
-      if (psiFile == null) return null;
-      return getLanguageAtCurrentPositionInEditor(caret, psiFile);
-    }
-    if (CONTEXT_LANGUAGES.is(dataId)) {
-      LinkedHashSet<Language> set = new LinkedHashSet<>(4);
-      Language injectedLanguage = (Language)getSlowData(InjectedDataKeys.LANGUAGE.getName(), e, caret);
-      addIfNotNull(set, injectedLanguage);
-      Language language = (Language)getSlowData(LANGUAGE.getName(), e, caret);
-      addIfNotNull(set, language);
-      PsiFile psiFile = (PsiFile)getSlowData(PSI_FILE.getName(), e, caret);
-      if (psiFile != null) {
-        addIfNotNull(set, psiFile.getViewProvider().getBaseLanguage());
-      }
-      return set.toArray(Language.EMPTY_ARRAY);
-    }
-    return null;
-  }
-
-  // here there's a convention that query* methods below can call getSlowData() whereas get* methods can't
-  private static EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
-    Object editor = getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
-    return editor instanceof EditorWindow ? (EditorWindow)editor : null;
-  }
-
-  private static InjectedCaret querySlowInjectedCaret(@NotNull Editor e, @NotNull Caret caret) {
-    EditorWindow editor = querySlowInjectedEditor(e, caret);
-    return editor == null ? null : getInjectedCaret(editor, caret);
-  }
-
-  private static PsiFile querySlowInjectedPsiFile(@NotNull Editor e, @NotNull Caret caret) {
-    return (PsiFile)getSlowData(InjectedDataKeys.PSI_FILE.getName(), e, caret);
-  }
-
-  private static InjectedCaret getInjectedCaret(@NotNull EditorWindow editor, @NotNull Caret hostCaret) {
-    if (hostCaret instanceof InjectedCaret) {
-      return (InjectedCaret)hostCaret;
-    }
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      if (((InjectedCaret)caret).getDelegate() == hostCaret) {
-        return (InjectedCaret)caret;
-      }
-    }
-    throw new IllegalArgumentException("Cannot find injected caret corresponding to " + hostCaret);
-  }
-
-  private static Language getLanguageAtCurrentPositionInEditor(Caret caret, final PsiFile psiFile) {
-    int caretOffset = caret.getOffset();
-    int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionStart() ||
-                                            caretOffset == caret.getSelectionEnd()
-                                            ? caret.getSelectionStart()
-                                            : caretOffset;
-    if (caret.hasSelection()) {
-      return getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset, caret.getSelectionEnd());
-    }
-
-    return PsiUtilCore.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
-  }
-
-  private static Language getLanguageAtOffset(PsiFile psiFile, int mostProbablyCorrectLanguageOffset, int end) {
-    final PsiElement elt = psiFile.findElementAt(mostProbablyCorrectLanguageOffset);
-    if (elt == null) return psiFile.getLanguage();
-    if (elt instanceof PsiWhiteSpace) {
-      final int incremented = elt.getTextRange().getEndOffset() + 1;
-      if (incremented <= end) {
-        return getLanguageAtOffset(psiFile, incremented, end);
-      }
-    }
-    return PsiUtilCore.findLanguageFromElement(elt);
-  }
-
-  private static @Nullable PsiElement getPsiElementIn(@NotNull Editor editor, @NotNull Caret caret, @NotNull VirtualFile file) {
-    final PsiFile psiFile = getPsiFile(editor, file);
-    if (psiFile == null) return null;
-
-    try {
-      TargetElementUtil util = TargetElementUtil.getInstance();
-      return util.findTargetElement(editor, util.getReferenceSearchFlags(), caret.getOffset());
-    }
-    catch (IndexNotReadyException e) {
-      return null;
+    sink.lazy(InjectedDataKeys.LANGUAGE) {
+      getInjectedLanguage(project, editor, caret, file)
     }
   }
+}
 
-  private static @Nullable PsiFile getPsiFile(@NotNull Editor e, @NotNull VirtualFile file) {
-    if (!file.isValid()) {
-      return null; // fix for SCR 40329
+private fun getIdeView(e: Editor, file: VirtualFile): IdeView? {
+  val project = e.project
+  if (project == null) return null
+  val fs = file.fileSystem
+  val nonPhysical = fs is NonPhysicalFileSystem || fs is TempFileSystemMarker
+  if (nonPhysical && !ApplicationManager.getApplication().isUnitTestMode()) return null
+  return object : IdeView {
+    override fun selectElement(element: PsiElement) {
+      activateFileWithPsiElement(element)
     }
-    final Project project = e.getProject();
-    if (project == null) {
-      return null;
+
+    override fun getDirectories(): Array<PsiDirectory> {
+      val psiDirectory = getOrChooseDirectory()
+      return if (psiDirectory == null) PsiDirectory.EMPTY_ARRAY else arrayOf(psiDirectory)
     }
-    CodeInsightContext context = EditorContextManager.getEditorContext(e, project);
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file, context);
-    return psiFile != null && psiFile.isValid() ? psiFile : null;
+
+    override fun getOrChooseDirectory(): PsiDirectory? {
+      val parent = if (!file.isValid()) null else file.parent
+      return if (parent == null) null else PsiManager.getInstance(project).findDirectory(parent)
+    }
   }
+}
+
+private fun getInjectedLanguage(project: Project, e: EditorEx, caret: Caret, file: VirtualFile): Language? {
+  val editor = getInjectedEditor(project, e, caret, file) ?: return null
+  val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return null
+  val injectedCaret = getInjectedCaret(editor, caret)
+  return getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile)
+}
+
+private fun getInjectedEditor(project: Project, editor: EditorEx, caret: Caret, file: VirtualFile): EditorWindow? {
+  if (editor.isDisposed || !file.isValid) return null
+  if (editor is EditorWindow) return editor
+  if (PsiDocumentManager.getInstance(project).isCommitted(editor.document) &&
+      InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(editor.document, caret.offset)) {
+    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, caret, getPsiFile(editor, file)) as? EditorWindow
+  }
+  return null
+}
+
+private fun getInjectedCaret(editor: EditorWindow, hostCaret: Caret): InjectedCaret {
+  if (hostCaret is InjectedCaret) {
+    return hostCaret
+  }
+  for (caret in editor.caretModel.allCarets) {
+    if ((caret as InjectedCaret).delegate === hostCaret) {
+      return caret
+    }
+  }
+  throw IllegalArgumentException("Cannot find injected caret corresponding to $hostCaret")
+}
+
+private fun getLanguageAtCurrentPositionInEditor(caret: Caret, psiFile: PsiFile): Language? {
+  val caretOffset = caret.offset
+  val mostProbablyCorrectLanguageOffset =
+    if (caretOffset == caret.selectionStart || caretOffset == caret.selectionEnd) caret.selectionStart
+    else caretOffset
+  if (caret.hasSelection()) {
+    return getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset, caret.selectionEnd)
+  }
+  return PsiUtilCore.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset)
+}
+
+private tailrec fun getLanguageAtOffset(psiFile: PsiFile, mostProbablyCorrectLanguageOffset: Int, end: Int): Language? {
+  val elt = psiFile.findElementAt(mostProbablyCorrectLanguageOffset) ?: return psiFile.language
+  if (elt is PsiWhiteSpace) {
+    val incremented = elt.textRange.endOffset + 1
+    if (incremented <= end) {
+      return getLanguageAtOffset(psiFile, incremented, end)
+    }
+  }
+  return PsiUtilCore.findLanguageFromElement(elt)
+}
+
+private fun getPsiElementIn(editor: Editor, caret: Caret, file: VirtualFile): PsiElement? {
+  if (getPsiFile(editor, file) == null) return null
+  try {
+    val util = TargetElementUtil.getInstance()
+    return util.findTargetElement(editor, util.getReferenceSearchFlags(), caret.offset)
+  }
+  catch (_: IndexNotReadyException) {
+    return null
+  }
+}
+
+private fun getPsiFile(editor: Editor, file: VirtualFile): PsiFile? {
+  if (editor.isDisposed || !file.isValid) return null
+  val project = editor.project ?: return null
+  val context = getEditorContext(editor, project)
+  val psiFile = PsiManager.getInstance(project).findFile(file, context)
+  return if (psiFile != null && psiFile.isValid()) psiFile else null
 }
