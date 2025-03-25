@@ -308,7 +308,10 @@ internal class AdaptiveMap<K, V> : MutableMap<K, V> {
     get() =
       when (state) {
         SET_STATE -> (f1 as HashMap<K, V>).keys
-        else -> buildSet { forEach { k, v -> add(k) } }
+        else -> {
+          val map = this
+          buildSet { map.forEach { (k, _) -> add(k) } }
+        }
       }.toUnmodifiableSet()
 
   override val size: Int
