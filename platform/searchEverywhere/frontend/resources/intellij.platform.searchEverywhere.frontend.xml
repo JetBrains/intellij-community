@@ -17,6 +17,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.all.SeAllTabProvider"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsTabProvider"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.files.SeFilesTabProvider"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.mocks.SeTabProviderMockAlphaLocal"/>

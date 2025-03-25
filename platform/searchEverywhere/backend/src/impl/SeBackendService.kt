@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.DurableRef
@@ -54,7 +55,11 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
 
       // We may create providers several times, but only one set of providers will be saved as a property to a session entity
       val providers = SeItemsProviderFactory.EP_NAME.extensionList.asFlow().map {
-        it.getItemsProvider(project, dataContext)
+        val provider = it.getItemsProvider(project, dataContext)
+        if (provider.id != it.id) {
+          SeLog.log { "Backend provider ID mismatch: ${provider.id} != ${it.id}" }
+        }
+        provider
       }.toList().associate { provider ->
         val id = SeProviderId(provider.id)
         id to SeItemDataBackendProvider(id, provider, sessionRef)

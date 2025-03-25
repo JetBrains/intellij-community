@@ -30,6 +30,8 @@ interface SeRemoteApi: RemoteApi<Unit> {
                            modifiers: Int,
                            searchText: String): Boolean
 
+  suspend fun getAvailableProviderIds(): List<SeProviderId>
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): SeRemoteApi {

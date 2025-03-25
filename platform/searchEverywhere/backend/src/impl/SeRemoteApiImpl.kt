@@ -4,10 +4,7 @@ package com.intellij.platform.searchEverywhere.backend.impl
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
@@ -29,5 +26,9 @@ class SeRemoteApiImpl: SeRemoteApi {
                                 params: SeParams,
                                 dataContextId: DataContextId?): Flow<SeItemData> {
     return SeBackendService.getInstance(projectId.findProject()).getItems(sessionRef, providerId, params, dataContextId)
+  }
+
+  override suspend fun getAvailableProviderIds(): List<SeProviderId> {
+    return SeItemsProviderFactory.EP_NAME.extensionList.map { SeProviderId(it.id) }
   }
 }

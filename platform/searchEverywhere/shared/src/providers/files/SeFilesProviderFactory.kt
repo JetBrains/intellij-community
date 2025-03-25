@@ -11,13 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.actions.SeActionsAdaptedProvider
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeFilesProviderFactory : SeItemsProviderFactory {
   override val id: String
-    get() = SeActionsAdaptedProvider.ID
+    get() = SeFilesProvider.ID
 
   override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
     val legacyContributor = readAction {

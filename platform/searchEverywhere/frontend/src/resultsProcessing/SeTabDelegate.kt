@@ -12,6 +12,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeItemDataFrontendProvider
 import com.intellij.platform.searchEverywhere.frontend.SeItemDataLocalProvider
+import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import fleet.kernel.DurableRef
@@ -59,11 +60,12 @@ class SeTabDelegate private constructor(val project: Project,
       }
 
       val allProviderIds = providerIds.toSet()
+      val hasWildcard = allProviderIds.any { it.isWildcard }
 
       val localProviders =
         if (forceRemote) emptyMap()
         else SeItemsProviderFactory.EP_NAME.extensionList.asFlow().filter {
-          allProviderIds.contains(SeProviderId(it.id))
+          hasWildcard || allProviderIds.contains(SeProviderId(it.id))
         }.mapNotNull {
           try {
             it.getItemsProvider(project, dataContext)
@@ -76,7 +78,9 @@ class SeTabDelegate private constructor(val project: Project,
           SeProviderId(provider.id) to SeItemDataLocalProvider(provider, sessionRef)
         }
 
-      val remoteProviderIds = allProviderIds - localProviders.keys.toSet()
+      val remoteProviderIds =
+        if (hasWildcard) SeRemoteApi.getInstance().getAvailableProviderIds()
+        else allProviderIds - localProviders.keys.toSet()
 
       val frontendProviders = remoteProviderIds.associateWith { providerId ->
         SeItemDataFrontendProvider(project.projectId(), providerId, sessionRef, dataContextId)
