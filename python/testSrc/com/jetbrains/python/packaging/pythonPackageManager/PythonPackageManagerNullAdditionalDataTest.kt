@@ -79,14 +79,14 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonSimplePa
   }
 
   override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
-    requireNotNull(existingSdk) { "Sdk should be not bull"}
+    requireNotNull(existingSdk) { "Sdk should be not bull" }
 
     val pythonSdkType = PythonSdkType.getInstance()
     val configuredSdk = createSdkWithNullAdditionalData(pythonSdkType, sdkHome, existingSdk)
     val manager = PythonPackageManager.forSdk(myFixture.project, configuredSdk)
 
     runBlocking {
-      manager.installPackage(pkg, emptyList())
+      manager.installPackage(pkg, emptyList(), withBackgroundProgress = false)
       assertTrue("Package should be installed", manager.installedPackages.map { it.name }.contains(pkg.name))
 
       manager.uninstallPackage(PythonPackage(pkg.name, pkg.version.orEmpty(), false))

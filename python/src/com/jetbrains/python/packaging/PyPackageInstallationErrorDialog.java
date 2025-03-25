@@ -98,4 +98,9 @@ public class PyPackageInstallationErrorDialog extends DialogWrapper {
   protected @Nullable JComponent createCenterPanel() {
     return myMainPanel;
   }
+
+  @Override
+  protected Action @NotNull [] createActions() {
+    return new Action[]{getOKAction()};
+  }
 }

@@ -4,11 +4,13 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.NlsContexts
 import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.conda.PyPackageProcessHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -28,11 +30,18 @@ internal object Logger {
 internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<String> {
   Logger.LOG.info("Running command: ${commandLine.commandLineString}")
   try {
+    val capturingProcessHandler = PyPackageProcessHandler(commandLine)
 
-
-    val commandOutput = with(CapturingProcessHandler(commandLine)) {
+    val commandOutput = with(capturingProcessHandler) {
       withContext(Dispatchers.IO) {
-        runProcess()
+        coroutineToIndicator {
+          val progressIndicator = ProgressManager.getInstance().progressIndicator
+          capturingProcessHandler.lastLineNotifier = { line ->
+            @Suppress("HardCodedStringLiteral")
+            progressIndicator.text = line
+          }
+          runProcessWithProgressIndicator(progressIndicator)
+        }
       }
     }
 

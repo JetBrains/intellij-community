@@ -57,7 +57,7 @@ class PythonPackageManagerManagementInstallationTest : PyEnvTestCase() {
 open class PythonPackageManagerManagementInstallationTask(private val pkgToInstall: PythonSimplePackageSpecification) : PyExecutionFixtureTestTask("") {
 
   override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
-    requireNotNull(existingSdk) { "Sdk should be not bull"}
+    requireNotNull(existingSdk) { "Sdk should be not bull" }
 
     val sdk = existingSdk
     val manager = PythonPackageManager.forSdk(myFixture.project, sdk)
@@ -82,7 +82,7 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
   }
 
   private suspend fun installPackage(manager: PythonPackageManager, spec: PythonSimplePackageSpecification) {
-    manager.installPackage(spec, emptyList())
+    manager.installPackage(spec, emptyList(), withBackgroundProgress = false)
   }
 
   companion object {

@@ -9,6 +9,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
@@ -88,8 +90,14 @@ suspend fun validatePoetryExecutable(poetryExecutable: Path?): ValidationInfo? =
 @Internal
 suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): Result<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) } ?: return Result.failure(poetryNotFoundException) // Choose a correct sdk
-  runPoetry(projectPath, "env", "use", sdk.homePath!!)
-  return runPoetry(projectPath, *args)
+  return  reportSequentialProgress(2) { reporter ->
+    reporter.itemStep {
+      runPoetry(projectPath, "env", "use", sdk.homePath!!)
+    }
+    reporter.itemStep {
+      runPoetry(projectPath, *args)
+    }
+  }
 }
 
 

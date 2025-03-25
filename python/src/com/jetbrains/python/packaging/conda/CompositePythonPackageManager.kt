@@ -26,7 +26,7 @@ internal class CompositePythonPackageManager(
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     return processPackageOperation(
       errorMessageKey = "python.packaging.composite.install.package.error",
-      operation = { it.installPackage(specification, options) },
+      operation = { it.installPackageCommand(specification, options) },
       name = specification.name
     )
   }
@@ -70,7 +70,7 @@ internal class CompositePythonPackageManager(
 
   private suspend fun processPackageOperation(
     errorMessageKey: String,
-    operation: suspend (PythonPackageManager) -> Result<List<PythonPackage>>,
+    operation: suspend (PythonPackageManager) -> Result<*>,
     name: String,
   ): Result<Unit> {
     val exceptions = mutableListOf<Throwable>()
