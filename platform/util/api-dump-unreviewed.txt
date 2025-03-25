@@ -3469,18 +3469,6 @@ c:com.intellij.util.containers.JBTreeTraverser
 - f:map(com.intellij.util.Function,com.intellij.util.Function):com.intellij.util.containers.JBTreeTraverser
 - p:newInstance(com.intellij.util.containers.FilteredTraverserBase$Meta):com.intellij.util.containers.JBTreeTraverser
 - s:of(com.intellij.util.Function):com.intellij.util.containers.JBTreeTraverser
-c:com.intellij.util.containers.LimitedPool
-- <init>(I,com.intellij.util.containers.LimitedPool$ObjectFactory):V
-- alloc():java.lang.Object
-- recycle(java.lang.Object):V
-com.intellij.util.containers.LimitedPool$ObjectFactory
-- cleanup(java.lang.Object):V
-- a:create():java.lang.Object
-f:com.intellij.util.containers.LimitedPool$Sync
-- com.intellij.util.containers.LimitedPool
-- <init>(I,com.intellij.util.containers.LimitedPool$ObjectFactory):V
-- alloc():java.lang.Object
-- recycle(java.lang.Object):V
 f:com.intellij.util.containers.LinkedListWithSum
 - java.util.AbstractSequentialList
 - java.util.List

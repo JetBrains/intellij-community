@@ -80,6 +80,18 @@ f:com.intellij.util.BitUtil
 - sf:set(B,B,Z):B
 - sf:set(I,I,Z):I
 - sf:set(J,J,Z):J
+c:com.intellij.util.containers.LimitedPool
+- <init>(I,com.intellij.util.containers.LimitedPool$ObjectFactory):V
+- alloc():java.lang.Object
+- recycle(java.lang.Object):V
+com.intellij.util.containers.LimitedPool$ObjectFactory
+- cleanup(java.lang.Object):V
+- a:create():java.lang.Object
+f:com.intellij.util.containers.LimitedPool$Sync
+- com.intellij.util.containers.LimitedPool
+- <init>(I,com.intellij.util.containers.LimitedPool$ObjectFactory):V
+- alloc():java.lang.Object
+- recycle(java.lang.Object):V
 f:com.intellij.util.lang.JavaVersion
 - java.lang.Comparable
 - sf:Companion:com.intellij.util.lang.JavaVersion$Companion
