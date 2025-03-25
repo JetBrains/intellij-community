@@ -123,7 +123,9 @@ final class FlushQueue {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ExceptionUtil.rethrow(t);
       }
-      LOG.error(t);
+      if (!Logger.shouldRethrow(t)) {
+        LOG.error(t);
+      }
     }
     finally {
       if (watcher != null) {
