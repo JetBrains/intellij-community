@@ -179,9 +179,16 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
     <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
 
-    <registryKey defaultValue="[off*|auto|always]"
-                 key="debugger.evaluate.method.helper"
+    <registryKey key="debugger.evaluate.method.helper" defaultValue="[off*|auto|always]"
                  description="Use helper to invoke methods avoiding the immediate return value collection"/>
+    <registryKey key="debugger.jdwp.include.virtual.threads" defaultValue="false"
+                 description="JDWP setting to include virtual threads in the list of all threads (might lead to problems in case of a huge number of virtual threads)"/>
+    <registryKey key="debugger.thread.dump.extended" defaultValue="true"
+                 description="Try to get extended thread dump (virtual threads, coroutines, ...) during debugger's Get Thread Dump action"/>
+    <registryKey key="debugger.thread.dump.suspension.timeout.ms" defaultValue="500"
+                 description="Timeout (in ms) for Get Thread Dump action to wait until we suspend the VM to perform extended dump collection (virtual threads, coroutines, ...)"/>
+    <registryKey key="debugger.thread.dump.include.virtual.threads" defaultValue="true"
+                 description="Try to get virtual threads during debugger's Get Thread Dump action"/>
   </extensions>
 
   <actions>
