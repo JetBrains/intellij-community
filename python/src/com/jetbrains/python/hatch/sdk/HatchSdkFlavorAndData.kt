@@ -10,14 +10,14 @@ import javax.swing.Icon
 
 typealias HatchSdkFlavorData = PyFlavorData.Empty
 
-object HatchSdkFlavor : CPythonSdkFlavor<HatchSdkFlavorData>() {
+internal object HatchSdkFlavor : CPythonSdkFlavor<HatchSdkFlavorData>() {
   override fun getIcon(): Icon = PythonHatchIcons.Logo
   override fun getFlavorDataClass(): Class<HatchSdkFlavorData> = HatchSdkFlavorData::class.java
   override fun isValidSdkPath(pathStr: String): Boolean = false
   override fun isPlatformIndependent(): Boolean = true
 }
 
-class HatchSdkFlavorProvider : PythonFlavorProvider {
+internal class HatchSdkFlavorProvider : PythonFlavorProvider {
   override fun getFlavor(platformIndependent: Boolean): PythonSdkFlavor<*> = HatchSdkFlavor
 }
 

@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   lateinit var sdkCreator: PySdkCreator
 
-  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, createPythonModuleStructureUsingSdkCreator: Boolean = false): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> = coroutineScope {
+  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
       launch(CoroutineName("Generating git") + Dispatchers.IO) {
@@ -34,7 +34,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
         }
       }
     }
-    if (createPythonModuleStructureUsingSdkCreator) {
+    if (supportsNotEmptyModuleStructure) {
       sdkCreator.createPythonModuleStructure(module).getOr { return@coroutineScope it }
     }
     val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@coroutineScope it }

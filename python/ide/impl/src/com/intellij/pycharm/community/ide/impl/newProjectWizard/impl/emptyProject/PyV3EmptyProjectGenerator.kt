@@ -15,7 +15,7 @@ class PyV3EmptyProjectGenerator : PyV3ProjectBaseGenerator<PyV3EmptyProjectSetti
   typeSpecificSettings = PyV3EmptyProjectSettings(generateWelcomeScript = false),
   typeSpecificUI = PyV3EmptyProjectUI,
   _newProjectName = "PythonProject",
-  createPythonModuleStructureUsingSdkCreator = true
+  supportsNotEmptyModuleStructure = true
 ) {
   override fun getName(): @Nls String = PyBundle.message("pure.python.project")
 
