@@ -74,7 +74,8 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
   }
 
   private val lastIndexToInsertItem: Int get() =
-    if (lastElement() is SeResultListMoreRow) size - 1
+    if (size == 0) 0
+    else if (lastElement() is SeResultListMoreRow) size - 1
     else size
 
   companion object {
