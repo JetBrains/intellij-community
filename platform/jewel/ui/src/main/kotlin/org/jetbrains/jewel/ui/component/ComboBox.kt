@@ -62,8 +62,8 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
 /**
  * A dropdown component that displays a text label and a popup with custom content.
  *
- * This component provides a standard dropdown UI with a text label. When clicked, it displays a popup with
- * customizable content. Supports keyboard navigation, focus management, and various visual states.
+ * This component provides a standard dropdown UI with a text label. When clicked, it displays a popup with customizable
+ * content. Supports keyboard navigation, focus management, and various visual states.
  *
  * @param labelText The text to display in the dropdown field
  * @param modifier Modifier to be applied to the combo box
@@ -244,8 +244,8 @@ public fun ComboBox(
 /**
  * A dropdown component that displays custom content in the label area and a popup with custom content.
  *
- * This component provides a standard dropdown UI with customizable label content. When clicked, it displays a popup with
- * customizable content. Supports keyboard navigation, focus management, and various visual states.
+ * This component provides a standard dropdown UI with customizable label content. When clicked, it displays a popup
+ * with customizable content. Supports keyboard navigation, focus management, and various visual states.
  *
  * This version of ComboBox allows for complete customization of the label area through a composable function.
  *

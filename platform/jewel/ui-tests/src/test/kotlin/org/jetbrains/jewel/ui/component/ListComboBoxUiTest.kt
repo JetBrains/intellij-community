@@ -91,11 +91,9 @@ class ListComboBoxUiTest {
                 Box(modifier = Modifier.size(20.dp).focusRequester(focusRequester).testTag("Pre-Box").focusable(true))
                 EditableListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = 0,
-                    onSelectedItemChange = { _: Int, _: String -> },
+                    onSelectedItemChange = { _: Int -> },
                     modifier = Modifier.width(140.dp).testTag("ComboBox"),
-                    isEnabled = true,
-                    listState = rememberSelectableLazyListState(),
+                    selectedIndex = 0,
                 )
             }
         }
@@ -398,12 +396,11 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = selectedIndex,
-                    onSelectedItemChange = { index: Int, text: String -> selectedIndex = index },
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
-                    isEnabled = true,
+                    enabled = true,
                     itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
-                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -437,10 +434,10 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = selectedIndex,
-                    onSelectedItemChange = { index: Int, text: String -> selectedIndex = index },
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
-                    isEnabled = true,
+                    enabled = true,
                     itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
                     listState = rememberSelectableLazyListState(),
                 )
@@ -510,14 +507,13 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 ListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = selectedIndex,
-                    onItemSelected = { index ->
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index ->
                         selectedIndex = index
                         selectedText = comboBoxItems[index]
                     },
                     modifier = Modifier.testTag("ComboBox").width(200.dp),
                     itemKeys = { index: Int, item: String -> index },
-                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -547,11 +543,10 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 ListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = selectedIndex,
-                    onItemSelected = { index -> selectedIndex = index },
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp),
                     itemKeys = { index: Int, item: String -> index },
-                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -590,8 +585,8 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = selectedIndex,
-                    onSelectedItemChange = { index: Int, _: String -> selectedIndex = index },
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     itemKeys = { index: Int, item: String -> index },
                     listState = rememberSelectableLazyListState(),
@@ -620,11 +615,10 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = selectedIndex,
-                    onSelectedItemChange = { index: Int, _: String -> selectedIndex = index },
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     itemKeys = { index: Int, item: String -> index },
-                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -668,12 +662,11 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = 0,
-                    onSelectedItemChange = { _: Int, _: String -> },
+                    selectedIndex = 0,
+                    onSelectedItemChange = { _: Int -> },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
-                    isEnabled = true,
+                    enabled = true,
                     itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
-                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -711,8 +704,8 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 ListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = 0,
-                    onItemSelected = {},
+                    selectedIndex = 0,
+                    onSelectedItemChange = {},
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     enabled = isEnabled,
                     itemKeys = { index: Int, item: String -> index },
@@ -726,12 +719,11 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    initialSelectedIndex = 0,
-                    onSelectedItemChange = { _: Int, _: String -> },
+                    selectedIndex = 0,
+                    onSelectedItemChange = { _: Int -> },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
-                    isEnabled = isEnabled,
+                    enabled = isEnabled,
                     itemKeys = { index: Int, item: String -> index },
-                    listState = rememberSelectableLazyListState(),
                 )
             }
         }

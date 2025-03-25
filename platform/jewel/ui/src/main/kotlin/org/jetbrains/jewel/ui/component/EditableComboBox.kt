@@ -225,6 +225,8 @@ private fun TextField(
     val textColor = if (enabled) style.colors.content else style.colors.borderDisabled
     val popupVisible by popupManager.isPopupVisible
 
+    if (focused) textFieldFocusRequester.requestFocus()
+
     BasicTextField(
         state = inputTextFieldState,
         modifier =
