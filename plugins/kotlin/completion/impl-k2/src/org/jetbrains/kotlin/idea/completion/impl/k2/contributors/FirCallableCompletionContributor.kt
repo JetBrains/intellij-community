@@ -100,7 +100,7 @@ internal open class FirCallableCompletionContributor(
         private val _signature: KaCallableSignature<*>,
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
-        val itemText: @NlsSafe String? = null, // todo extract; only used for objects/enums
+        val showReceiver: Boolean = false, // todo extract; only used for objects/enums/static members
         private val _explicitReceiverTypeHint: KaType? = null, // todo extract; only used for smart casts
     ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
@@ -109,6 +109,18 @@ internal open class FirCallableCompletionContributor(
         val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
 
         val explicitReceiverTypeHint: KaType? get() = withValidityAssertion { _explicitReceiverTypeHint }
+
+        val itemText: @NlsSafe String?
+            get() {
+                val callableId = signature.takeIf { showReceiver }
+                    ?.callableId
+                    ?: return null
+
+                val className = callableId.className
+                    ?: return null
+
+                return "$className.${callableId.callableName}"
+            }
     }
 
     context(KaSession)
@@ -141,13 +153,9 @@ internal open class FirCallableCompletionContributor(
                     signature = callableWithMetadata.signature,
                     options = callableWithMetadata.options,
                     symbolOrigin = callableWithMetadata.symbolOrigin,
+                    presentableText = callableWithMetadata.itemText,
                     withTrailingLambda = withTrailingLambda,
                 ).map { builder ->
-                    val itemText = callableWithMetadata.itemText
-                        ?: return@map builder
-
-                    builder.withPresentableText(itemText)
-                }.map { builder ->
                     receiver ?: return@map builder
 
                     if (builder.callableWeight?.kind != CallableMetadataProvider.CallableKind.RECEIVER_CAST_REQUIRED)
@@ -218,7 +226,7 @@ internal open class FirCallableCompletionContributor(
         }
         availableStaticAndTopLevelNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
-        val members = sequence<KaCallableSymbol> {
+        val members = sequence {
             val prefix = prefixMatcher.prefix
             val invocationCount = parameters.invocationCount
 
@@ -280,17 +288,11 @@ internal open class FirCallableCompletionContributor(
             .filter { runCatchingNSEE { visibilityChecker.isVisible(it, positionContext) } == true }
             .map { it.asSignature() }
             .map { signature ->
-                val itemText = signature.callableId?.let { id ->
-                    id.className?.let { className ->
-                        className.asString() + "." + id.callableName.asString()
-                    }
-                }
-
                 CallableWithMetadataForCompletion(
                     _signature = signature,
                     options = getOptions(signature),
                     symbolOrigin = CompletionSymbolOrigin.Index,
-                    itemText = itemText, // todo should be only for enums
+                    showReceiver = true,
                 )
             }
         yieldAll(memberDescriptors)

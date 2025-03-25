@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
@@ -69,6 +70,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
+        presentableText: @NlsSafe String? = null, // TODO decompose
         withTrailingLambda: Boolean = false, // TODO find a better solution
     ): Sequence<LookupElementBuilder> {
         val namedSymbol = when (val symbol = signature.symbol) {
@@ -94,6 +96,9 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                     options = options,
                 )?.let { yield(it) }
             }
+        }.map { builder ->
+            if (presentableText == null) builder
+            else builder.withPresentableText(presentableText)
         }.map { lookup ->
             if (!context.isPositionInsideImportOrPackageDirective) {
                 lookup.callableWeight = CallableMetadataProvider.getCallableMetadata(
