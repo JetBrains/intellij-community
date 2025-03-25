@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Version
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
@@ -24,6 +23,7 @@ import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.createSpecification
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -66,10 +66,7 @@ object PyPackageInstallUtils {
     }
     if (!isConfirmed)
       return
-    val result = withBackgroundProgress(project = project, PyBundle.message("python.packaging.installing.package", packageName),
-                                        cancellable = true) {
-      installPackage(project, sdk, packageName)
-    }
+    val result = installPackage(project, sdk, packageName, true)
     result.getOrThrow()
   }
 
@@ -108,13 +105,32 @@ object PyPackageInstallUtils {
     }
   }
 
-  suspend fun installPackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
-    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
-    val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.createPackageSpecification(packageName, version)
-                               ?: return Result.failure(Exception("Could not find any repositories"))
+  suspend fun installPackage(
+    project: Project,
+    sdk: Sdk,
+    packageName: String,
+    withBackgroundProgress: Boolean,
+    versionSpec: String? = null,
+    options: List<String> = emptyList(),
+  ): Result<List<PythonPackage>> {
+    val pythonPackageManager = runCatching {
+      PythonPackageManager.forSdk(project, sdk)
+    }.getOrElse {
+      return Result.failure(it)
+    }
 
-    return pythonPackageManager.installPackage(packageSpecification, emptyList())
+    val spec = withContext(Dispatchers.IO) {
+      pythonPackageManager.repositoryManager.createSpecification(packageName, versionSpec)
+    } ?: return Result.failure(Exception("Package $packageName not found in any repository"))
+
+    return if (withBackgroundProgress) {
+      pythonPackageManager.installPackage(spec, options, withBackgroundProgress = true)
+    }
+    else {
+      pythonPackageManager.installPackage(spec, options, withBackgroundProgress)
+    }
   }
+
 
   /**
    * NOTE calling this functions REQUIRED init package list before the calling!
@@ -144,7 +160,6 @@ object PyPackageInstallUtils {
   }
 
 
-
   fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint) {
     PyPackageCoroutine.launch(project) {
       runPackagingOperationOrShowErrorDialog(pythonSdk, PyBundle.message("python.new.project.install.failed.title", packageName),
@@ -172,7 +187,8 @@ object PyPackageInstallUtils {
     sdk: Sdk,
   ): PythonPackageManager? = try {
     PythonPackageManager.forSdk(project, sdk)
-  } catch (_: Throwable) {
+  }
+  catch (_: Throwable) {
     null
   }
 

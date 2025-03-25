@@ -82,7 +82,7 @@ open class PythonPackageManagerManagementInstallationTask(private val pkgToInsta
   }
 
   private suspend fun installPackage(manager: PythonPackageManager, spec: PythonSimplePackageSpecification) {
-    manager.installPackage(spec, emptyList())
+    manager.installPackage(spec, emptyList(), withBackgroundProgress = false)
   }
 
   companion object {

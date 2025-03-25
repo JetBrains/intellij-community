@@ -102,7 +102,7 @@ class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPacka
         val specification = specForPackage(repoPackage.name, version, repository)
         runningUnderOldUI = true
         listener.operationStarted(specification.name)
-        val result = manager.installPackage(specification, emptyList<String>())
+        val result = manager.installPackage(specification, emptyList(), withBackgroundProgress = true)
         val exception = if (result.isFailure) mutableListOf(result.exceptionOrNull() as ExecutionException) else null
         listener.operationFinished(specification.name,
                                    toErrorDescription(exception, mySdk, specification.name))

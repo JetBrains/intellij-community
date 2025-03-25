@@ -86,7 +86,7 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonSimplePa
     val manager = PythonPackageManager.forSdk(myFixture.project, configuredSdk)
 
     runBlocking {
-      manager.installPackage(pkg, emptyList())
+      manager.installPackage(pkg, emptyList(), withBackgroundProgress = false)
       assertTrue("Package should be installed", manager.installedPackages.map { it.name }.contains(pkg.name))
 
       manager.uninstallPackage(PythonPackage(pkg.name, pkg.version.orEmpty(), false))
