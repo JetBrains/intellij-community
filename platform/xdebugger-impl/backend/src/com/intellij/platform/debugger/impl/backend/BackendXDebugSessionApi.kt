@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.project.asProject
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
@@ -24,6 +25,7 @@ import fleet.kernel.rete.collect
 import fleet.kernel.rete.query
 import fleet.kernel.withEntities
 import fleet.rpc.core.toRpc
+import fleet.util.UID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -184,7 +186,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
             return@collect
           }
           val (frame, id) = frameAndId
-          send(XStackFrameDto(XStackFrameId(id), frame.sourcePosition?.toRpc()))
+          send(createXStackFrameDto(frame, id))
         }
       }
     }
@@ -255,4 +257,13 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
       awaitClose()
     }
   }
+}
+
+internal fun createXStackFrameDto(frame: XStackFrame, id: UID): XStackFrameDto {
+  val equalityObject = frame.equalityObject
+  val serializedEqualityObject = when (equalityObject) {
+    is String -> XStackFrameStringEqualityObject(equalityObject)
+    else -> null // TODO support other types
+  }
+  return XStackFrameDto(XStackFrameId(id), frame.sourcePosition?.toRpc(), serializedEqualityObject)
 }

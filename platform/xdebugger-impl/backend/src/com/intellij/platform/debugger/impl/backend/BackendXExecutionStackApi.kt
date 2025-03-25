@@ -8,7 +8,10 @@ import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEnt
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.new
 import com.intellij.xdebugger.impl.rhizome.XExecutionStackEntity
 import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XStackFrameDto
+import com.intellij.xdebugger.impl.rpc.XStackFramesEvent
 import fleet.kernel.change
 import fleet.kernel.withEntities
 import kotlinx.coroutines.Deferred
@@ -65,7 +68,7 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
                   }
                 }
                 val stacks = frameEntities.map { frame ->
-                  XStackFrameDto(XStackFrameId(frame.id), frame.obj.sourcePosition?.toRpc())
+                  createXStackFrameDto(frame.obj, frame.id)
                 }
                 XStackFramesEvent.XNewStackFrames(stacks, last)
               }

@@ -14,4 +14,6 @@ internal class FrontendXStackFrame(private val frameDto: XStackFrameDto) : XStac
   override fun getSourcePosition(): XSourcePosition? {
     return frameDto.sourcePosition?.sourcePosition()
   }
+
+  override fun getEqualityObject(): Any? = frameDto.equalityObject
 }

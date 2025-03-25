@@ -50,4 +50,13 @@ data class XStackFrameId(val id: UID)
 data class XStackFrameDto(
   val stackFrameId: XStackFrameId,
   val sourcePosition: XSourcePositionDto?,
+  val equalityObject: XStackFrameEqualityObject?,
 )
+
+@ApiStatus.Internal
+@Serializable
+sealed interface XStackFrameEqualityObject
+
+@ApiStatus.Internal
+@Serializable
+data class XStackFrameStringEqualityObject(val string: String) : XStackFrameEqualityObject
