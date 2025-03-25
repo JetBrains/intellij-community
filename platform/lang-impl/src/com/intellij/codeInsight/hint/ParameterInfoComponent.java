@@ -501,7 +501,7 @@ public final class ParameterInfoComponent extends JPanel {
         setVisible(i, context.isUIComponentVisible());
 
         // ensure that highlighted element is visible
-        if (context.isHighlighted()) {
+        if (context.isHighlighted() || myPanels[i].myShowSelection) {
           highlightedComponentIdx = i;
         }
       }
@@ -514,8 +514,14 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     if (highlightedComponentIdx != -1) {
-      myMainPanel.scrollRectToVisible(new Rectangle()); // hack to validate component tree synchronously
-      myMainPanel.scrollRectToVisible(myPanels[highlightedComponentIdx].getBounds());
+      JPanel panelToScroll = myPanels[highlightedComponentIdx];
+      // Panels may be not laid out yet, perform scrolling later
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (panelToScroll.isVisible()) {
+          myMainPanel.scrollRectToVisible(new Rectangle()); // hack to validate component tree synchronously
+          myMainPanel.scrollRectToVisible(panelToScroll.getBounds());
+        }
+      });
     }
 
     var project = myEditor.getProject();
