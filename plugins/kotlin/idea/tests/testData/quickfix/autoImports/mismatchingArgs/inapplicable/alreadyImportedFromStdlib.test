@@ -2,7 +2,6 @@
 // "Import" "false"
 // WITH_STDLIB
 // ERROR: Not enough information to infer type variable T
-// IGNORE_K2
 
 package main
 
