@@ -418,7 +418,7 @@ infix fun PredicateQuery.and(rhs: PredicateQuery): PredicateQuery = let { lhs ->
  * MatchValue is an abstraction over it's value.
  * But when we construct a query using other queries, it might be useful to refer to their matches in order to provide our own.
  *
- * For example, given Query<FooEntity>, we may [getAttribute] on it, yielding Query<Foo>.
+ * For example, given Query<FooEntity>, we may [fleet.kernel.rete.impl.getAttribute] on it, yielding Query<Foo>.
  * The resulting query will forget about FooEntity whatsover.
  * There is a way to remember the original value of FooEntity by binding it:
  * ```

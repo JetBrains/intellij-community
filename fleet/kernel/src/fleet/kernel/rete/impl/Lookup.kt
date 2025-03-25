@@ -1,13 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.kernel.rete
+package fleet.kernel.rete.impl
 
 import com.jetbrains.rhizomedb.*
-import fleet.kernel.rete.impl.adaptiveMapOf
-import fleet.kernel.rete.impl.adaptiveSetOf
-import fleet.kernel.rete.impl.removeIf
 import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import fleet.fastutil.ints.getOrPut
 import fleet.fastutil.ints.removeIf
+import fleet.kernel.rete.*
 
 internal fun <T : Any> SubscriptionScope.getAttribute(query: Producer<EID>, attribute: Attribute<T>): Producer<T> = run {
   // eid -> #{input-matches}
@@ -136,11 +134,11 @@ internal fun SubscriptionScope.column(attribute: Attribute<*>): Producer<EAV> = 
   }
 }
 
-internal fun EAV.eidMatch(base: Match<*>?): Match<EID> = let { datom ->
+private fun EAV.eidMatch(base: Match<*>?): Match<EID> = let { datom ->
   Match.validatable(datom.eid, base, containsDatom(datom.eid, datom.attr, datom.value))
 }
 
-internal fun EAV.valueMatch(base: Match<*>?): Match<Any> = let { datom ->
+private fun EAV.valueMatch(base: Match<*>?): Match<Any> = let { datom ->
   Match.validatable(datom.value, base, containsDatom(datom.eid, datom.attr, datom.value))
 }
 
