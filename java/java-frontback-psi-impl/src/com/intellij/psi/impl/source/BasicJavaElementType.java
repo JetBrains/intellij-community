@@ -8,9 +8,9 @@ import com.intellij.java.syntax.parser.ReferenceParser;
 import com.intellij.lang.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
+import com.intellij.lang.java.parser.PsiSyntaxBuilderWithLanguageLevel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
@@ -298,9 +298,10 @@ public interface BasicJavaElementType {
 
     @Override
     public ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      Pair<PsiSyntaxBuilder, LanguageLevel> builderAndLevel = BasicJavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction, psiAsLexer);
-      PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getFirst();
-      LanguageLevel level = builderAndLevel.getSecond();
+      PsiSyntaxBuilderWithLanguageLevel
+        builderAndLevel = BasicJavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction, psiAsLexer);
+      PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
+      LanguageLevel level = builderAndLevel.getLanguageLevel();
       long startTime = System.nanoTime();
       SyntaxTreeBuilder builder = psiSyntaxBuilder.getSyntaxTreeBuilder();
       new JavaParser(level).getStatementParser().parseCodeBlockDeep(builder, true);
@@ -311,9 +312,9 @@ public interface BasicJavaElementType {
 
     @Override
     public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(final @NotNull LighterLazyParseableNode chameleon) {
-      Pair<PsiSyntaxBuilder, LanguageLevel> builderAndLevel = BasicJavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction);
-      PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getFirst();
-      LanguageLevel level = builderAndLevel.getSecond();
+      PsiSyntaxBuilderWithLanguageLevel builderAndLevel = BasicJavaParserUtil.createSyntaxBuilder(chameleon, languageLevelFunction);
+      PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
+      LanguageLevel level = builderAndLevel.getLanguageLevel();
       long startTime = System.nanoTime();
       SyntaxTreeBuilder builder = psiSyntaxBuilder.getSyntaxTreeBuilder();
       new JavaParser(level).getStatementParser().parseCodeBlockDeep(builder, true);

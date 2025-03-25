@@ -10,7 +10,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.lang.impl.TokenSequence;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -18,7 +17,6 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet;
 import com.intellij.platform.syntax.element.SyntaxTokenTypes;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.platform.syntax.lexer.TokenListKt;
-import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
@@ -120,7 +118,7 @@ public final class JavaParserUtil {
     return BasicJavaParserUtil.isParseStatementCodeBlocksDeep(builder);
   }
 
-  public static @NotNull Pair<PsiSyntaxBuilder, LanguageLevel> createSyntaxBuilder(final ASTNode chameleon) {
+  public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(final ASTNode chameleon) {
     return BasicJavaParserUtil.createSyntaxBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
                                              (psi) -> obtainTokens(psi));

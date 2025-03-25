@@ -6,8 +6,8 @@ import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.PsiSyntaxBuilderWithLanguageLevel;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
 import com.intellij.platform.syntax.psi.ParsingDiagnostics;
@@ -38,11 +38,11 @@ public class JavaFileElementType extends IFileElementType {
 
   @Override
   public ASTNode parseContents(@NotNull ASTNode chameleon) {
-    Pair<PsiSyntaxBuilder, LanguageLevel> builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon);
-    PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getFirst();
+    PsiSyntaxBuilderWithLanguageLevel builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon);
+    PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
     SyntaxTreeBuilder builder = psiSyntaxBuilder.getSyntaxTreeBuilder();
     long startTime = System.nanoTime();
-    doParse(builder, builderAndLevel.getSecond());
+    doParse(builder, builderAndLevel.getLanguageLevel());
     ASTNode result = psiSyntaxBuilder.getTreeBuilt().getFirstChildNode();
     ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
     return result;

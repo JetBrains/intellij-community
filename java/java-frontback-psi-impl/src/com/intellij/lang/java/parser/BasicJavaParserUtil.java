@@ -326,9 +326,9 @@ public final class BasicJavaParserUtil {
   }
 
 
-  public static @NotNull Pair<PsiSyntaxBuilder, LanguageLevel> createSyntaxBuilder(@NotNull ASTNode chameleon,
-                                                                             @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
-                                                                             @NotNull Function<PsiFile, TokenList> psiAsLexer) {
+  public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull ASTNode chameleon,
+                                                                               @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
+                                                                               @NotNull Function<PsiFile, TokenList> psiAsLexer) {
     PsiElement psi = chameleon.getPsi();
     assert psi != null : chameleon;
 
@@ -351,11 +351,11 @@ public final class BasicJavaParserUtil {
     PsiSyntaxBuilderFactory factory = PsiSyntaxBuilderFactory.getInstance();
     PsiSyntaxBuilder builder = factory.createBuilder(chameleon, lexer, language, text);
 
-    return Pair.create(builder, level);
+    return new PsiSyntaxBuilderWithLanguageLevel(builder, level);
   }
 
-  public static @NotNull Pair<PsiSyntaxBuilder, LanguageLevel> createSyntaxBuilder(@NotNull LighterLazyParseableNode chameleon,
-                                                                             @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction) {
+  public static @NotNull PsiSyntaxBuilderWithLanguageLevel createSyntaxBuilder(@NotNull LighterLazyParseableNode chameleon,
+                                                                               @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction) {
     PsiElement psi = chameleon.getContainingFile();
     assert psi != null : chameleon;
 
@@ -364,7 +364,7 @@ public final class BasicJavaParserUtil {
     Lexer lexer = new JavaLexer(level);
     PsiSyntaxBuilder builder = factory.createBuilder(chameleon, lexer, chameleon.getTokenType().getLanguage(), chameleon.getText());
 
-    return Pair.create(builder, level);
+    return new PsiSyntaxBuilderWithLanguageLevel(builder, level);
   }
 
   /**

@@ -100,7 +100,7 @@ public class JavaParsingTestConfigurator implements AbstractBasicJavaParsingTest
   }
 
   private static PsiSyntaxBuilder createBuilder(ASTNode chameleon) {
-    PsiSyntaxBuilder builder = JavaParserUtil.createSyntaxBuilder(chameleon).getFirst();
+    PsiSyntaxBuilder builder = JavaParserUtil.createSyntaxBuilder(chameleon).getBuilder();
     builder.setDebugMode(true);
     return builder;
   }

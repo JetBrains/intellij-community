@@ -3,16 +3,14 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.PsiSyntaxBuilderWithLanguageLevel;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
 import com.intellij.platform.syntax.psi.ParsingDiagnostics;
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.LanguageStubDefinition;
@@ -48,11 +46,11 @@ public class JavaStubDefinition implements LightLanguageStubDefinition, Language
 
   @Override
   public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(@NotNull ASTNode chameleon) {
-    Pair<PsiSyntaxBuilder, LanguageLevel> builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon);
-    PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getFirst();
+    PsiSyntaxBuilderWithLanguageLevel builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon);
+    PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getBuilder();
     SyntaxTreeBuilder builder = psiSyntaxBuilder.getSyntaxTreeBuilder();
     long startTime = System.nanoTime();
-    JavaFileElementType.doParse(builder, builderAndLevel.getSecond());
+    JavaFileElementType.doParse(builder, builderAndLevel.getLanguageLevel());
     FlyweightCapableTreeStructure<LighterASTNode> tree = psiSyntaxBuilder.getLightTree();
     ParsingDiagnostics.registerParse(builder, JavaLanguage.INSTANCE, System.nanoTime() - startTime);
     return tree;
