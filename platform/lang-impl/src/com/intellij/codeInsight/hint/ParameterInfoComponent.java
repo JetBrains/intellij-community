@@ -60,7 +60,7 @@ public final class ParameterInfoComponent extends JPanel {
   private final JPanel myMainPanel;
   private OneElementComponent[] myPanels;
   private JLabel myShortcutLabel;
-  private JPanel myBottomPanel;
+  private final JPanel myBottomPanel;
   private JComponent myCustomBottomComponent;
   private final JLabel myDumbLabel = new JLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"));
   private final boolean myAllowSwitchLabel;
@@ -79,7 +79,7 @@ public final class ParameterInfoComponent extends JPanel {
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
   private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
-  private int myWidthLimit;
+  private final int myWidthLimit;
   private static final int myMaxWrappableLengthLimit = 1000;
   private final int myMaxVisibleRows = Registry.intValue("parameter.info.max.visible.rows");
 
@@ -92,7 +92,8 @@ public final class ParameterInfoComponent extends JPanel {
   private final Editor myEditor;
   private final boolean myRequestFocus;
 
-  private final boolean mySimpleDesignMode = ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+  private final boolean mySimpleDesignMode = ExperimentalUI.isNewUI() && !unitTestMode;
 
   private boolean mySetup;
 
@@ -119,7 +120,7 @@ public final class ParameterInfoComponent extends JPanel {
   @ApiStatus.Internal
   public static int getWidthLimit(Editor editor) {
     // disable splitting by width to avoid depending on the platform's font in tests
-    if (ApplicationManager.getApplication().isUnitTestMode())
+    if (unitTestMode)
       return Integer.MAX_VALUE;
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()
@@ -695,7 +696,12 @@ public final class ParameterInfoComponent extends JPanel {
 
     @Override
     public String toString() {
-      return myHtmlPanel.getText();
+      return myHtmlPanel.getText()
+        // Keep output similar to what JLabel used to have
+        .replaceAll("</?(body|head|wbr)>", "")
+        .replace("<font>", "<font color=a8a8a8>")
+        .replace("<b color=\"1d1d1d\">", "<b color=1d1d1d>")
+        .replaceAll("<b color=['\"][0-9a-f]*['\"]>", "<b>");
     }
 
     private String setup(@NlsContexts.Label String text,
@@ -740,12 +746,12 @@ public final class ParameterInfoComponent extends JPanel {
       myHtmlPanel.setForeground(FOREGROUND);
 
       myHtmlPanel.setText(XmlStringUtil.wrapInHtml(text));
-      return myHtmlPanel.getText();
+      return toString();
     }
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
     @Contract(pure = true)
-    private static String buildLabelText(final @NotNull String text,
+    private String buildLabelText(final @NotNull String text,
                                          final @NotNull TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntMap faultMap = new Int2IntOpenHashMap();
@@ -786,9 +792,13 @@ public final class ParameterInfoComponent extends JPanel {
     return "</" + (0 <= index ? value.substring(0, index) : value) + ">";
   }
 
-  private static String getTagValue(@NotNull ParameterInfoUIContextEx.Flag flag) {
-    if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT) return "b color=" + ColorUtil.toHex(HIGHLIGHTED_COLOR);
-    if (flag == ParameterInfoUIContextEx.Flag.DISABLE) return "font color=" + ColorUtil.toHex(DISABLED_COLOR);
+  private String getTagValue(@NotNull ParameterInfoUIContextEx.Flag flag) {
+    if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT) {
+      return unitTestMode ? "b color=1d1d1d" : "b color=" + ColorUtil.toHex(HIGHLIGHTED_COLOR);
+    }
+    if (flag == ParameterInfoUIContextEx.Flag.DISABLE) {
+      return unitTestMode ? "font" : "font color=" + ColorUtil.toHex(DISABLED_COLOR);
+    }
     if (flag == ParameterInfoUIContextEx.Flag.STRIKEOUT) return "strike";
     throw new IllegalArgumentException("flag=" + flag);
   }

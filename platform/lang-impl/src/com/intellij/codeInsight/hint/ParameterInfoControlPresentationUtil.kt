@@ -17,6 +17,14 @@ import com.intellij.ui.JBColor
 import com.intellij.util.applyIf
 import java.awt.Color
 
+internal fun disabledSignatureAlpha(isDarkTheme: Boolean) =
+  if (isDarkTheme) 0.5 else 0.75
+
+internal fun selectedSignatureAlpha(isDarkTheme: Boolean) =
+  if (isDarkTheme) 0.05 else 0.075
+
+private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+
 @NlsSafe
 internal fun renderSignaturePresentationToHtml(
   editor: Editor,
@@ -31,7 +39,7 @@ internal fun renderSignaturePresentationToHtml(
   val isDarkTheme = ColorUtil.isDark(backgroundColor)
   val deselectedParamAlpha = if (isDarkTheme) 0.6 else 0.9
   val defaultParamAlpha = if (isDarkTheme) 0.5 else 0.75
-  val disabledSignatureAlpha = if (isDarkTheme) 0.5 else 0.75
+  val disabledSignatureAlpha = disabledSignatureAlpha(isDarkTheme)
   val mismatchedParameterAlpha = if (isDarkTheme) 0.05 else 0.075
   val textAttributes = TextAttributes().apply {
     foregroundColor = EditorColorsManager.getInstance().getGlobalScheme().let {
@@ -41,7 +49,6 @@ internal fun renderSignaturePresentationToHtml(
   }
   val currentParameter = currentParameterIndex
 
-  val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
   val mismatchedParameterBgColor = "#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(backgroundColor, JBColor.RED, mismatchedParameterAlpha))}"
   val parameters = parametersPresentation
     .mapIndexed { index, parameter ->
@@ -130,8 +137,11 @@ private fun buildContents(
 }
 
 private fun blendColors(text: String, background: Color, alpha: Double): String =
-  text.replace(Regex("color: *#([0-9a-f]+);")) {
-    val colorText = it.groupValues.getOrNull(1) ?: return@replace it.value
-    val color = ColorHexUtil.fromHex(colorText)
-    "color:#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(background, color, alpha))};"
-  }
+  if (isUnitTestMode)
+    text
+  else
+    text.replace(Regex("color: *#([0-9a-f]+);")) {
+      val colorText = it.groupValues.getOrNull(1) ?: return@replace it.value
+      val color = ColorHexUtil.fromHex(colorText)
+      "color:#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(background, color, alpha))};"
+    }

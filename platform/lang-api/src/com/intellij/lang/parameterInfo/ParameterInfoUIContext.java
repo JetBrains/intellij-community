@@ -27,7 +27,7 @@ public interface ParameterInfoUIContext {
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (isDeprecated) sb.append("<strike>");
     for (int i = 0; i < parameters.size(); i++) {
-      if (i > 0) sb.append(separator);
+      if (i > 0) sb.append(separator).append(" ");
       ParameterHtmlPresentation parameter = parameters.get(i);
       if (isUnitTestMode && parameter.isMismatched()) sb.append("<mismatched>");
       String defaultValue = parameter.defaultValue != null ? parameter.defaultValue : "";

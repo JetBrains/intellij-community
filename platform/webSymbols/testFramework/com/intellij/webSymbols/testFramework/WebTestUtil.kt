@@ -519,7 +519,13 @@ fun CodeInsightTestFixture.getParameterInfoAtCaret(): String? {
       ?.replace(Regex("&#32;|&nbsp;"), " ")
       ?.split('\n')
       ?.filter { it != "-" }
-      ?.sorted()
+      ?.sortedBy {
+        when {
+          it.startsWith("[") -> "!$it"// sort first
+          it.startsWith("<mismatched>") -> "~$it"// sort last
+          else -> it
+        }
+      }
       ?.joinToString("\n-\n")
   } finally {
     Disposer.dispose(disposable)
