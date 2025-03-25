@@ -13,5 +13,4 @@ class SInheritor2 : CommonSealedClass()
 fun hello(c: CommonSealedClass): Int = <selection><caret></selection>when(c) {
     is SInheritor1 -> TODO()
     is SInheritor2 -> TODO()
-    else -> TODO()
 }
