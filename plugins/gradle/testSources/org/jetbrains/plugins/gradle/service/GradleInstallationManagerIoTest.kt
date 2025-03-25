@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
@@ -18,7 +19,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
   }
 
   @Test
-  fun testGetGradleHome() {
+  fun testGetGradleHome(): Unit = runBlocking {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
@@ -29,7 +30,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
   }
 
   @Test
-  fun testGetGradleJvmPath() {
+  fun testGetGradleJvmPath(): Unit = runBlocking {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
@@ -40,7 +41,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
   }
 
   @Test
-  fun testGetGradleVersion() {
+  fun testGetGradleVersion(): Unit = runBlocking {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
@@ -52,7 +53,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
   }
 
   @Test
-  fun testIsGradleSdkHome() {
+  fun testIsGradleSdkHome(): Unit = runBlocking {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
@@ -65,7 +66,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
 
   @Test
   @TargetVersions(VersionMatcherRule.BASE_GRADLE_VERSION)
-  fun testGetClassRoots() {
+  fun testGetClassRoots(): Unit = runBlocking {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
