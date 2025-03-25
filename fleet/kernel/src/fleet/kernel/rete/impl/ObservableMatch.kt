@@ -78,9 +78,7 @@ internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
       // when the terminal is retracted from the network for other reasons, make sure jobs of Matches served by the terminal are cancelled:
       if (observableMatches.isNotEmpty()) {
         val ex = RuntimeException("the match is no longer being tracked")
-        // use java forEach, entryset is not implemented for AdaptiveMap
-        @Suppress("JavaMapForEach")
-        observableMatches.forEach { _, a ->
+        observableMatches.forEach { (_, a) ->
           a.validity.completeExceptionally(ex)
         }
       }

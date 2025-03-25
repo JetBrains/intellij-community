@@ -105,7 +105,7 @@ internal fun <T : Any> SubscriptionScope.lookupAttribute(query: Producer<T>, att
   }
 
   Producer { emit ->
-    memory.forEach { value, matches ->
+    memory.forEach { (value, matches) ->
       val datoms = DbContext.threadBound.queryIndex(IndexQuery.LookupMany(attribute, value))
       matches.matches.forEach { match ->
         datoms.forEach { datom ->

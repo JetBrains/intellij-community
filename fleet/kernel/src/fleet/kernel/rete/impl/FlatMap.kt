@@ -25,7 +25,7 @@ internal fun <T, U> QueryScope.flatMap(producer: Producer<T>, f: (Match<T>) -> S
           "no matches found for ${input}, nothing to unmatch"
         }
         matchInfo.subscription.close()
-        matchInfo.matches.forEach { _, match ->
+        matchInfo.matches.forEach { (_, match) ->
           broadcast(Token(false, match))
         }
       }
@@ -77,8 +77,8 @@ internal fun <T, U> QueryScope.flatMap(producer: Producer<T>, f: (Match<T>) -> S
   }
 
   return Producer { emit ->
-    matchesByInput.forEach { _, matchInfo ->
-      matchInfo.matches.forEach { _, m ->
+    matchesByInput.forEach { (_, matchInfo) ->
+      matchInfo.matches.forEach { (_, m) ->
         emit(Token(true, m))
       }
     }
