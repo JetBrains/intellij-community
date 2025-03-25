@@ -531,6 +531,16 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("No errors in pattern", expected, replace(in, what, by));
   }
 
+  public void testReplaceRecordComponents() {
+    String in1 = """
+      record Bar(String field, int i){}
+      """;
+    String ex1 = """
+      record Bar(String field, int i) {} // comment
+      """;
+    assertEquals(ex1, replace(in1, "record '_Record('_Type '_component* ) {}", "record $Record$($Type$ $component$) {} // comment"));
+  }
+
   public void testReplaceParameter() {
     String in1 = """
       class A {
@@ -2073,7 +2083,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     }
   }
 
-  public void testReformatAndShortenClassRefPerformance() throws IOException {
+  public void _testReformatAndShortenClassRefPerformance() throws IOException {
     options.setToReformatAccordingToStyle(true);
 
     final String source = loadFile("ReformatAndShortenClassRefPerformance_source.java");

@@ -641,7 +641,13 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         setParameterContext(parameter, parameter.getNameIdentifier(), parameter.getTypeElement());
       }
 
-      private void setParameterContext(@NotNull PsiElement element, PsiElement nameIdentifier, @Nullable PsiElement scopeElement) {
+      @Override
+      public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
+        super.visitRecordComponent(recordComponent);
+        setParameterContext(recordComponent, recordComponent.getNameIdentifier(), recordComponent.getTypeElement());
+      }
+
+      private void setParameterContext(@NotNull PsiElement element, PsiIdentifier nameIdentifier, @Nullable PsiElement scopeElement) {
         final ParameterInfo nameInfo = builder.findParameterization(nameIdentifier);
         if (nameInfo == null) return;
         nameInfo.setArgumentContext(false);
@@ -683,7 +689,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
       final PsiElement element = info.getElement();
       final Map<String, ParameterInfo> typeInfos = info.getUserData(PARAMETER_CONTEXT);
       if (typeInfos != null) {
-        if (element instanceof PsiParameter) {
+        if (element instanceof PsiParameter || element instanceof PsiRecordComponent) {
           final int parameterEnd = info.getStartIndex();
           final Integer length = info.getUserData(PARAMETER_LENGTH);
           assert length != null;
