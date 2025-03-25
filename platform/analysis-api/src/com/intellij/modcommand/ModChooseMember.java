@@ -25,6 +25,11 @@ public record ModChooseMember(@NotNull @NlsContexts.PopupTitle String title,
                               @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand)
   implements ModCommand {
 
+  @Override
+  public @NotNull ModCommand andThen(@NotNull ModCommand next) {
+    return next.isEmpty() ? this : new ModChooseMember(title, elements, defaultSelection, mode, nextCommand.andThen(mc -> mc.andThen(next)));
+  }
+
   /**
    * Selection mode
    */

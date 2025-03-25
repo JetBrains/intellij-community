@@ -157,6 +157,7 @@ com.intellij.lang.annotation.AnnotationBuilder
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
 - <init>(java.lang.String,java.util.List,java.util.List,com.intellij.modcommand.ModChooseMember$SelectionMode,java.util.function.Function):V
+- andThen(com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommand
 - defaultSelection():java.util.List
 - elements():java.util.List
 - f:equals(java.lang.Object):Z

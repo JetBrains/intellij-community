@@ -28,5 +28,8 @@ public record ModEditOptions<T extends OptionContainer>(
   boolean canUseDefaults,
   @NotNull Function<? super T, ? extends @NotNull ModCommand> nextCommand
 ) implements ModCommand {
-  
+  @Override
+  public @NotNull ModCommand andThen(@NotNull ModCommand next) {
+    return next.isEmpty() ? this : new ModEditOptions<>(title, containerSupplier, canUseDefaults, nextCommand.andThen(mc -> mc.andThen(next)));
+  }
 }

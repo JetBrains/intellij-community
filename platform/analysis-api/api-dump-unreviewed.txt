@@ -2540,6 +2540,7 @@ f:com.intellij.modcommand.ModChooseAction
 - com.intellij.modcommand.ModCommand
 - <init>(java.lang.String,java.util.List):V
 - actions():java.util.List
+- andThen(com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommand
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - isEmpty():Z
@@ -2706,6 +2707,7 @@ f:com.intellij.modcommand.ModEditOptions
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
 - <init>(java.lang.String,java.util.function.Supplier,Z,java.util.function.Function):V
+- andThen(com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommand
 - canUseDefaults():Z
 - containerSupplier():java.util.function.Supplier
 - f:equals(java.lang.Object):Z
