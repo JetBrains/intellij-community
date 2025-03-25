@@ -1,0 +1,18 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Cannot find a parameter with this name: actualName
+// ERROR: No value passed for parameter 'first'
+// IGNORE_K2
+
+package main
+
+fun foo(first: Int) {}
+
+fun usage() {
+    <caret>foo(actualName = "hello")
+}
+
+// FILE: second.kt
+package other
+
+fun foo(second: String) {}

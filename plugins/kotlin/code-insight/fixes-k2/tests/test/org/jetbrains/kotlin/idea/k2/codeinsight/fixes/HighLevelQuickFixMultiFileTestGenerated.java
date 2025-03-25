@@ -244,105 +244,158 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs")
-        public static class MismatchingArgs extends AbstractHighLevelQuickFixMultiFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
+        public abstract static class MismatchingArgs extends AbstractHighLevelQuickFixMultiFileTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/inapplicable")
+            public static class Inapplicable extends AbstractHighLevelQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
+
+                @TestMetadata("alreadyImportedFromStdlib.test")
+                public void testAlreadyImportedFromStdlib() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/inapplicable/alreadyImportedFromStdlib.test");
+                }
+
+                @TestMetadata("extraArguments.test")
+                public void testExtraArguments() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/inapplicable/extraArguments.test");
+                }
+
+                @TestMetadata("extraTypeArguments.test")
+                public void testExtraTypeArguments() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/inapplicable/extraTypeArguments.test");
+                }
+
+                @TestMetadata("missingArguments.test")
+                public void testMissingArguments() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/inapplicable/missingArguments.test");
+                }
+
+                @TestMetadata("typeMismatch.test")
+                public void testTypeMismatch() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/inapplicable/typeMismatch.test");
+                }
+
+                @TestMetadata("wrongNamedArgument.test")
+                public void testWrongNamedArgument() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/inapplicable/wrongNamedArgument.test");
+                }
             }
 
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs")
+            public static class Uncategorized extends AbstractHighLevelQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
 
-            @TestMetadata("constantExpectedTypeMismatch.test")
-            public void testConstantExpectedTypeMismatch() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/constantExpectedTypeMismatch.test");
-            }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
 
-            @TestMetadata("expectedTypeRequired.test")
-            public void testExpectedTypeRequired() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired.test");
-            }
+                @TestMetadata("constantExpectedTypeMismatch.test")
+                public void testConstantExpectedTypeMismatch() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/constantExpectedTypeMismatch.test");
+                }
 
-            @TestMetadata("expectedTypeRequired2.test")
-            public void testExpectedTypeRequired2() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired2.test");
-            }
+                @TestMetadata("expectedTypeRequired.test")
+                public void testExpectedTypeRequired() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired.test");
+                }
 
-            @TestMetadata("extensionExplicitReceiver.test")
-            public void testExtensionExplicitReceiver() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionExplicitReceiver.test");
-            }
+                @TestMetadata("expectedTypeRequired2.test")
+                public void testExpectedTypeRequired2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired2.test");
+                }
 
-            @TestMetadata("extensionImplicitReceiver.test")
-            public void testExtensionImplicitReceiver() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionImplicitReceiver.test");
-            }
+                @TestMetadata("extensionExplicitReceiver.test")
+                public void testExtensionExplicitReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionExplicitReceiver.test");
+                }
 
-            @TestMetadata("extensionOperator.before.Main.kt")
-            public void testExtensionOperator() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionOperator.before.Main.kt");
-            }
+                @TestMetadata("extensionImplicitReceiver.test")
+                public void testExtensionImplicitReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionImplicitReceiver.test");
+                }
 
-            @TestMetadata("extensionWrongReceiver.test")
-            public void testExtensionWrongReceiver() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongReceiver.test");
-            }
+                @TestMetadata("extensionOperator.before.Main.kt")
+                public void testExtensionOperator() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionOperator.before.Main.kt");
+                }
 
-            @TestMetadata("extensionWrongTypeParam.test")
-            public void testExtensionWrongTypeParam() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam.test");
-            }
+                @TestMetadata("extensionWrongReceiver.test")
+                public void testExtensionWrongReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongReceiver.test");
+                }
 
-            @TestMetadata("extensionWrongTypeParam2.test")
-            public void testExtensionWrongTypeParam2() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2.test");
-            }
+                @TestMetadata("extensionWrongTypeParam.test")
+                public void testExtensionWrongTypeParam() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam.test");
+                }
 
-            @TestMetadata("extensionWrongTypeParam2_class.test")
-            public void testExtensionWrongTypeParam2_class() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_class.test");
-            }
+                @TestMetadata("extensionWrongTypeParam2.test")
+                public void testExtensionWrongTypeParam2() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2.test");
+                }
 
-            @TestMetadata("extensionWrongTypeParam2_rootPackage.test")
-            public void testExtensionWrongTypeParam2_rootPackage() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_rootPackage.test");
-            }
+                @TestMetadata("extensionWrongTypeParam2_class.test")
+                public void testExtensionWrongTypeParam2_class() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_class.test");
+                }
 
-            @TestMetadata("extensionWrongTypeParam3.test")
-            public void testExtensionWrongTypeParam3() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam3.test");
-            }
+                @TestMetadata("extensionWrongTypeParam2_rootPackage.test")
+                public void testExtensionWrongTypeParam2_rootPackage() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam2_rootPackage.test");
+                }
 
-            @TestMetadata("ignoreErrorsOutsideCall.test")
-            public void testIgnoreErrorsOutsideCall() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/ignoreErrorsOutsideCall.test");
-            }
+                @TestMetadata("extensionWrongTypeParam3.test")
+                public void testExtensionWrongTypeParam3() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionWrongTypeParam3.test");
+                }
 
-            @TestMetadata("namedArgument.test")
-            public void testNamedArgument() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/namedArgument.test");
-            }
+                @TestMetadata("ignoreErrorsOutsideCall.test")
+                public void testIgnoreErrorsOutsideCall() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/ignoreErrorsOutsideCall.test");
+                }
 
-            @TestMetadata("smartCast.test")
-            public void testSmartCast() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/smartCast.test");
-            }
+                @TestMetadata("namedArgument.test")
+                public void testNamedArgument() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/namedArgument.test");
+                }
 
-            @TestMetadata("topLevelFun.test")
-            public void testTopLevelFun() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/topLevelFun.test");
-            }
+                @TestMetadata("returnTypeInference.test")
+                public void testReturnTypeInference() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/returnTypeInference.test");
+                }
 
-            @TestMetadata("topLevelFun_notWithReceiver.test")
-            public void testTopLevelFun_notWithReceiver() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/topLevelFun_notWithReceiver.test");
-            }
+                @TestMetadata("smartCast.test")
+                public void testSmartCast() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/smartCast.test");
+                }
 
-            @TestMetadata("typeMismatch.test")
-            public void testTypeMismatch() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/typeMismatch.test");
+                @TestMetadata("topLevelFun.test")
+                public void testTopLevelFun() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/topLevelFun.test");
+                }
+
+                @TestMetadata("topLevelFun_notWithReceiver.test")
+                public void testTopLevelFun_notWithReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/topLevelFun_notWithReceiver.test");
+                }
+
+                @TestMetadata("typeMismatch.test")
+                public void testTypeMismatch() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/typeMismatch.test");
+                }
             }
         }
 
