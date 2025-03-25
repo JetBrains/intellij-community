@@ -58,7 +58,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  *
  * @param items The list of items to display in the dropdown
  * @param selectedIndex The index of the currently selected item
- * @param onItemSelected Called when an item is selected, with the new index and item
+ * @param onItemSelected Called when an item is selected, with the new index
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @param modifier Modifier to be applied to the combo box
  * @param isEnabled Controls whether the combo box can be interacted with
@@ -212,7 +212,7 @@ public fun <T : Any> ListComboBox(
  *
  * @param items The list of items to display in the dropdown
  * @param selectedIndex The index of the currently selected item
- * @param onItemSelected Called when an item is selected, with the new index and item
+ * @param onItemSelected Called when an item is selected, with the new index
  * @param itemToLabel Used to transform the popup item in the text field content
  * @param textFieldState The state of the text field, defaults to the text of the selected item
  * @param modifier Modifier to be applied to the combo box
@@ -373,7 +373,7 @@ public fun <T : Any> EditableListComboBox(
  * @param interactionSource Source of interactions for this combo box
  * @param style The visual styling configuration for the combo box
  * @param textStyle The typography style to be applied to the items
- * @param onItemSelected Called when the selected item changes, with the new index and item
+ * @param onItemSelected Called when the selected item changes, with the new index
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @param listState The State object for the selectable lazy list in the popup
