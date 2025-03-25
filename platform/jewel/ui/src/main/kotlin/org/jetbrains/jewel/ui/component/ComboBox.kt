@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -45,6 +44,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
@@ -84,7 +84,7 @@ public fun ComboBox(
     labelText: String,
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
-    isEnabled: Boolean = true,
+    enabled: Boolean = true,
     outline: Outline = Outline.None,
     maxPopupHeight: Dp = Dp.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -99,10 +99,10 @@ public fun ComboBox(
 
     val popupVisible by popupManager.isPopupVisible
 
-    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = isEnabled)) }
+    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = enabled)) }
     val comboBoxFocusRequester = remember { FocusRequester() }
 
-    remember(isEnabled) { comboBoxState = comboBoxState.copy(enabled = isEnabled) }
+    remember(enabled) { comboBoxState = comboBoxState.copy(enabled = enabled) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -131,7 +131,7 @@ public fun ComboBox(
                         popupManager.setPopupVisible(false)
                     }
                 }
-                .thenIf(isEnabled) {
+                .thenIf(enabled) {
                     focusable(true, interactionSource)
                         .onHover { chevronHovered = it }
                         .pointerInput(interactionSource) {
@@ -202,7 +202,7 @@ public fun ComboBox(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.focusable(false).focusProperties { canFocus = false },
             ) {
-                val textColor = if (isEnabled) Color.Unspecified else style.colors.borderDisabled
+                val textColor = if (enabled) Color.Unspecified else style.colors.borderDisabled
                 Text(
                     text = labelText,
                     style = textStyle.copy(color = textColor),
@@ -210,22 +210,16 @@ public fun ComboBox(
                     overflow = TextOverflow.Ellipsis,
                     modifier =
                         Modifier.testTag("Jewel.ComboBox.NonEditableText")
-                            .fillMaxWidth()
                             .weight(1f)
                             .padding(style.metrics.contentPadding),
                 )
 
-                Chevron(style, isEnabled)
+                Chevron(style, enabled)
             }
         }
 
         if (popupVisible) {
-            val maxHeight =
-                if (maxPopupHeight == Dp.Unspecified) {
-                    JewelTheme.comboBoxStyle.metrics.maxPopupHeight
-                } else {
-                    maxPopupHeight
-                }
+            val maxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
 
             PopupContainer(
                 onDismissRequest = {
@@ -274,12 +268,11 @@ public fun ComboBox(
 public fun ComboBox(
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
-    isEnabled: Boolean = true,
+    enabled: Boolean = true,
     outline: Outline = Outline.None,
     maxPopupHeight: Dp = Dp.Unspecified,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
-    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
     popupManager: PopupManager = PopupManager(),
@@ -290,10 +283,10 @@ public fun ComboBox(
 
     val popupVisible by popupManager.isPopupVisible
 
-    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = isEnabled)) }
+    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = enabled)) }
     val comboBoxFocusRequester = remember { FocusRequester() }
 
-    remember(isEnabled) { comboBoxState = comboBoxState.copy(enabled = isEnabled) }
+    remember(enabled) { comboBoxState = comboBoxState.copy(enabled = enabled) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -322,7 +315,7 @@ public fun ComboBox(
                         popupManager.setPopupVisible(false)
                     }
                 }
-                .thenIf(isEnabled) {
+                .thenIf(enabled) {
                     focusable(true, interactionSource)
                         .onHover { chevronHovered = it }
                         .pointerInput(interactionSource) {
@@ -393,20 +386,13 @@ public fun ComboBox(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.focusable(false).focusProperties { canFocus = false },
             ) {
-                Box(modifier = Modifier.weight(1f).height(style.metrics.minSize.height)) {
-                    labelContent()
-                }
-                Chevron(style, isEnabled)
+                Box(modifier = Modifier.weight(1f).height(style.metrics.minSize.height)) { labelContent() }
+                Chevron(style, enabled)
             }
         }
 
         if (popupVisible) {
-            val maxHeight =
-                if (maxPopupHeight == Dp.Unspecified) {
-                    JewelTheme.comboBoxStyle.metrics.maxPopupHeight
-                } else {
-                    maxPopupHeight
-                }
+            val maxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
 
             PopupContainer(
                 onDismissRequest = {
@@ -435,12 +421,12 @@ public fun ComboBox(
  * @param isEnabled Whether the combo box is enabled, affects the icon color
  */
 @Composable
-private fun Chevron(style: ComboBoxStyle, isEnabled: Boolean) {
+private fun Chevron(style: ComboBoxStyle, enabled: Boolean) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.testTag("Jewel.ComboBox.ChevronContainer").size(style.metrics.arrowAreaSize),
     ) {
-        val iconColor = if (isEnabled) Color.Unspecified else style.colors.borderDisabled
+        val iconColor = if (enabled) Color.Unspecified else style.colors.borderDisabled
         Icon(key = style.icons.chevronDown, tint = iconColor, contentDescription = null)
     }
 }

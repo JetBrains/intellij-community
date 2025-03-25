@@ -714,7 +714,7 @@ class ListComboBoxUiTest {
                     initialSelectedIndex = 0,
                     onItemSelected = {},
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
-                    isEnabled = isEnabled,
+                    enabled = isEnabled,
                     itemKeys = { index: Int, item: String -> index },
                 )
             }
