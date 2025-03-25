@@ -31,6 +31,7 @@ import org.jetbrains.annotations.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.tag;
@@ -346,6 +347,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
         navigateInfo = preview.isEmpty() ? IntentionPreviewInfo.EMPTY : new IntentionPreviewInfo.Html(preview);
       }
     }
+    customDiffList.sort(Comparator.comparing(diff -> diff.fileName() != null));
     return customDiffList.isEmpty() ? navigateInfo :
            customDiffList.size() == 1 ? customDiffList.get(0) :
            new IntentionPreviewInfo.MultiFileDiff(customDiffList);
