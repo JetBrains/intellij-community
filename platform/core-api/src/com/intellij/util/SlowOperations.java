@@ -141,7 +141,10 @@ public final class SlowOperations {
 
   private static boolean isSlowOperationAllowed() {
     boolean forceAssert = isInSection(FORCE_ASSERT);
-    if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
+    if (forceAssert) {
+      return false;
+    }
+    if (!Registry.is("ide.slow.operations.assertion", true)) {
       return true;
     }
     Application application = ApplicationManager.getApplication();
