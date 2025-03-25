@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -266,21 +264,6 @@ public abstract class FileEditorManager {
    * @return the project which the file editor manager is associated with.
    */
   public abstract @NotNull Project getProject();
-
-  /**
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, @Nullable Disposable parentDisposable);
-
-  /**
-   * Returns data associated with given editor/caret context. Data providers are registered via
-   * {@link #registerExtraEditorDataProvider(EditorDataProvider, Disposable)} method.
-   *
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
 
   /**
    * Selects a specified file editor tab for the specified editor.

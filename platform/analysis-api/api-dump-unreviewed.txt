@@ -3003,8 +3003,6 @@ a:com.intellij.openapi.editor.LazyRangeMarkerFactory
 - a:createRangeMarker(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.openapi.editor.RangeMarker
 - a:createRangeMarker(com.intellij.openapi.vfs.VirtualFile,I,I,Z):com.intellij.openapi.editor.RangeMarker
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.editor.LazyRangeMarkerFactory
-com.intellij.openapi.fileEditor.EditorDataProvider
-- a:getData(java.lang.String,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret):java.lang.Object
 com.intellij.openapi.fileEditor.FileEditorComposite
 - sf:Companion:com.intellij.openapi.fileEditor.FileEditorComposite$Companion
 - a:getAllEditors():java.util.List
@@ -3028,7 +3026,6 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - a:getAllEditors():com.intellij.openapi.fileEditor.FileEditor[]
 - a:getAllEditors(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
 - a:getComposite(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorComposite
-- a:getData(java.lang.String,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret):java.lang.Object
 - getEditorList(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - a:getEditors(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
 - getFocusedEditor():com.intellij.openapi.fileEditor.FileEditor
@@ -3049,7 +3046,6 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - openFile(com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.fileEditor.FileEditor[]
 - a:openFileEditor(com.intellij.openapi.fileEditor.FileEditorNavigatable,Z):java.util.List
 - a:openTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):com.intellij.openapi.editor.Editor
-- a:registerExtraEditorDataProvider(com.intellij.openapi.fileEditor.EditorDataProvider,com.intellij.openapi.Disposable):V
 - a:removeBottomComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V
 - removeFileEditorManagerListener(com.intellij.openapi.fileEditor.FileEditorManagerListener):V
 - a:removeTopComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V

@@ -10,13 +10,15 @@ import com.intellij.ide.IdeView;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataSnapshot;
+import com.intellij.openapi.actionSystem.InjectedDataKeys;
+import com.intellij.openapi.actionSystem.UiDataRule;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -36,55 +38,28 @@ import java.util.LinkedHashSet;
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
-/** @deprecated replace with {@link TextEditorPsiDataProvider.DataRule} when EditorDataProvider is dropped */
-@Deprecated(forRemoval = true)
-public class TextEditorPsiDataProvider implements EditorDataProvider {
-
-  static class DataRule implements UiDataRule {
-    @Override
-    public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
-      Editor editor = snapshot.get(EDITOR);
-      if (!(editor instanceof EditorEx) || editor.isDisposed()) return;
-
-      EditorKind editorKind = editor.getEditorKind();
-      if (editorKind == EditorKind.PREVIEW || editorKind == EditorKind.CONSOLE) return;
-
-      Caret caret = snapshot.get(CARET);
-      if (caret == null) {
-        sink.set(CARET, caret = editor.getCaretModel().getPrimaryCaret());
-      }
-
-      VirtualFile file = editor.getVirtualFile();
-      if (file == null) return;
-
-      Caret finalCaret = caret;
-      sink.set(HOST_EDITOR, editor instanceof EditorWindow o ? o.getDelegate() : editor);
-      sink.set(IDE_VIEW, getIdeView(editor, file));
-      sink.set(BGT_DATA_PROVIDER, slowId -> getSlowData(slowId, editor, finalCaret));
-    }
-  }
+class TextEditorPsiDataRule implements UiDataRule {
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
-    if (e.isDisposed() || !(e instanceof EditorEx)) {
-      return null;
-    }
-    VirtualFile file = e.getVirtualFile();
-    if (file == null || !file.isValid()) return null;
+  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
+    Editor editor = snapshot.get(EDITOR);
+    if (!(editor instanceof EditorEx) || editor.isDisposed()) return;
 
-    if (HOST_EDITOR.is(dataId)) {
-      return e instanceof EditorWindow ? ((EditorWindow)e).getDelegate() : e;
+    EditorKind editorKind = editor.getEditorKind();
+    if (editorKind == EditorKind.PREVIEW || editorKind == EditorKind.CONSOLE) return;
+
+    Caret caret = snapshot.get(CARET);
+    if (caret == null) {
+      sink.set(CARET, caret = editor.getCaretModel().getPrimaryCaret());
     }
-    if (CARET.is(dataId)) {
-      return caret;
-    }
-    if (IDE_VIEW.is(dataId)) {
-      return getIdeView(e, file);
-    }
-    if (BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(slowId, e, caret);
-    }
-    return null;
+
+    VirtualFile file = editor.getVirtualFile();
+    if (file == null) return;
+
+    Caret finalCaret = caret;
+    sink.set(HOST_EDITOR, editor instanceof EditorWindow o ? o.getDelegate() : editor);
+    sink.set(IDE_VIEW, getIdeView(editor, file));
+    sink.set(BGT_DATA_PROVIDER, slowId -> getSlowData(slowId, editor, finalCaret));
   }
 
   private static @Nullable IdeView getIdeView(@NotNull Editor e, @NotNull VirtualFile file) {
@@ -129,7 +104,6 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       if (project != null &&
           PsiDocumentManager.getInstance(project).isCommitted(e.getDocument()) &&
           InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(e.getDocument(), caret.getOffset())) {
-        //noinspection deprecation
         return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(e, caret, getPsiFile(e, file));
       }
       return null;

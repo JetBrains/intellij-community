@@ -1543,7 +1543,7 @@
     <!-- must be first because TextEditorProvider.getInstance search by instance of -->
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" id="text-editor"
                         order="first"/>
-    <uiDataRule implementation="com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider$DataRule"/>
+    <uiDataRule implementation="com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataRule"/>
 
     <fileEditorProvider id="LargeFileEditorProvider" implementation="com.intellij.largeFilesEditor.editor.LargeFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileNotificationProvider"/>
