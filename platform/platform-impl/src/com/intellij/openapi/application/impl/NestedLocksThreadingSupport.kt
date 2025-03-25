@@ -833,7 +833,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   private fun startWrite(computationState: ComputationState, clazz: Class<*>): WriteListenerInitResult2 {
     val listener = myWriteActionListener
     // Read permit is incompatible
-    check(computationState.getThisThreadPermit() !is ReadPermit) { "WriteAction can not be called from ReadAction" }
+    check(computationState.getThisThreadPermit() !is ParallelizablePermit.Read) { "WriteAction can not be called from ReadAction" }
 
     // Check that write action is not disabled
     // NB: It is before all cancellations will be run via fireBeforeWriteActionStart
@@ -923,12 +923,14 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   override fun executeSuspendingWriteAction(action: () -> Unit) {
     val state = getComputationState()
     val permit = state.getThisThreadPermit()
-    if (permit is WriteIntentPermit) {
+    if (permit is ParallelizablePermit.WriteIntent) {
       action()
       return
     }
 
-    check(permit is WritePermit) { "Suspending write action must be called under write lock or write-intent lock" }
+    check(permit is ParallelizablePermit.Write) {
+      "Suspending write action must be called under write lock or write-intent lock"
+    }
     val prevBase = myWriteStackBase
     myWriteStackBase = myWriteActionsStack.size
     myWriteAcquired = null
@@ -940,7 +942,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
       it.release()
     }
     val rootWriteIntentPermit = exposedPermitData.originalWriteIntentPermit
-    permit.release()
+    permit.writePermit.release()
     state.hack_setThisLevelPermit(rootWriteIntentPermit)
     try {
       action()
@@ -985,7 +987,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     logger.error("`ThreadingSupport.acquireReadActionLock` is deprecated and going to be removed soon. Use `runReadAction()` instead")
     val computationState = getComputationState()
     val currentPermit = computationState.getThisThreadPermit()
-    if (currentPermit is WritePermit) {
+    if (currentPermit is ParallelizablePermit.Write) {
       throw IllegalStateException("Write Action can not request Read Access Token")
     }
     if (currentPermit is ReadPermit || currentPermit is WriteIntentPermit) {
