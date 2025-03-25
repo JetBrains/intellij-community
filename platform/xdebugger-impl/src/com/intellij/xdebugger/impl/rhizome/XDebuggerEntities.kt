@@ -14,12 +14,10 @@ import com.intellij.xdebugger.impl.rpc.XValueId
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.change
 import fleet.util.UID
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -193,15 +191,23 @@ interface XDebuggerEntity<T : Any> : Entity {
   val obj: T
     get() = this[ObjAttr] as T
 
+  val sessionEntity: XDebugSessionEntity
+    get() = this[SessionEntityAttr]
+
   companion object : Mixin<XDebuggerEntity<*>>(XDebuggerEntity::class.java.name, "com.intellij.xdebugger.impl.rhizome") {
     val IdAttr: Attributes<XDebuggerEntity<*>>.Required<UID> = requiredTransient<UID>("id", Indexing.UNIQUE)
     private val ObjAttr: Attributes<XDebuggerEntity<*>>.Required<Any> = requiredTransient<Any>("obj")
 
+    // TODO[IJPL-177087] remove entities from DB in more appropriate time, don't wait until session ended
+    //  (ideally, make withEntityFlow work)
+    private val SessionEntityAttr: Required<XDebugSessionEntity> = requiredRef<XDebugSessionEntity>("session", RefFlags.CASCADE_DELETE_BY)
+
     @ApiStatus.Internal
-    fun <T : Any, E : XDebuggerEntity<T>, ET : EntityType<E>> ET.new(changeScope: ChangeScope, obj: Any): E = with(changeScope) {
+    fun <T : Any, E : XDebuggerEntity<T>, ET : EntityType<E>> ET.new(changeScope: ChangeScope, obj: Any, sessionEntity: XDebugSessionEntity): E = with(changeScope) {
       new {
         it[IdAttr] = UID.random()
         it[ObjAttr] = obj
+        it[SessionEntityAttr] = sessionEntity
       }
     }
 
@@ -232,11 +238,12 @@ fun <T : Any, E : XDebuggerEntity<T>, ET : EntityType<E>> Flow<T?>.asEntityFlow(
         awaitCancellation()
       }
       finally {
-        withContext(NonCancellable) {
-          change {
-            valueEntity.delete()
-          }
-        }
+        // TODO[IJPL-177087] not needed at the moment?, because of cascade deletion linked to the session entity
+        //withContext(NonCancellable) {
+        //  change {
+        //    valueEntity.delete()
+        //  }
+        //}
       }
     }
   }

@@ -53,10 +53,10 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
         executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
           override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
             channel.trySend(this@channelFlow.async {
-              withEntities(executionStackEntity) {
+              withEntities(executionStackEntity, executionStackEntity.sessionEntity) {
                 val frameEntities = stackFrames.map { frame ->
                   change {
-                    XStackFrameEntity.new(this, frame)
+                    XStackFrameEntity.new(this, frame, executionStackEntity.sessionEntity)
                   }
                 }
                 change {

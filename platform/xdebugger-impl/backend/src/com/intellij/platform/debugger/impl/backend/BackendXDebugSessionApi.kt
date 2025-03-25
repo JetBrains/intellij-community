@@ -140,7 +140,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     return channelFlow {
       withEntities(sessionEntity) {
         session.getCurrentSuspendContextFlow().asEntityFlow { suspendContext ->
-          XSuspendContextEntity.new(this, suspendContext)
+          XSuspendContextEntity.new(this, suspendContext, sessionEntity)
         }.collect { contextAndId ->
           if (contextAndId == null) {
             send(null)
@@ -159,7 +159,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     return channelFlow {
       withEntities(sessionEntity) {
         session.getCurrentExecutionStackFlow().asEntityFlow { executionStack ->
-          XExecutionStackEntity.new(this, executionStack)
+          XExecutionStackEntity.new(this, executionStack, sessionEntity)
         }.collect { stackAndId ->
           val (executionStack, id) = stackAndId ?: run {
             send(null)
@@ -177,7 +177,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     return channelFlow {
       withEntities(sessionEntity) {
         session.getCurrentStackFrameFlow().asEntityFlow { stackFrame ->
-          XStackFrameEntity.new(this, stackFrame)
+          XStackFrameEntity.new(this, stackFrame, sessionEntity)
         }.collect { frameAndId ->
           if (frameAndId == null) {
             send(null)
@@ -221,10 +221,10 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
         suspendContextEntity.obj.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
           override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
             channel.trySend(this@channelFlow.async {
-              withEntities(suspendContextEntity) {
+              withEntities(suspendContextEntity, suspendContextEntity.sessionEntity) {
                 val stackEntities = executionStacks.map { stack ->
                   change {
-                    XExecutionStackEntity.new(this, stack)
+                    XExecutionStackEntity.new(this, stack, suspendContextEntity.sessionEntity)
                   }
                 }
                 change {
