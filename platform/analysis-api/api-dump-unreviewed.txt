@@ -1793,8 +1793,8 @@ com.intellij.codeInspection.options.OptComponent
 com.intellij.codeInspection.options.OptControl
 - com.intellij.codeInspection.options.OptComponent
 - a:bindId():java.lang.String
-- getValue(com.intellij.codeInspection.InspectionProfileEntry):java.lang.Object
-- setValue(com.intellij.codeInspection.InspectionProfileEntry,java.lang.Object):V
+- getValue(com.intellij.codeInspection.options.OptionContainer):java.lang.Object
+- setValue(com.intellij.codeInspection.options.OptionContainer,java.lang.Object):V
 f:com.intellij.codeInspection.options.OptCustom
 - java.lang.Record
 - com.intellij.codeInspection.options.OptRegularComponent
