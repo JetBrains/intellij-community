@@ -8,10 +8,7 @@ import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEnt
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.new
 import com.intellij.xdebugger.impl.rhizome.XExecutionStackEntity
 import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
-import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XStackFrameDto
-import com.intellij.xdebugger.impl.rpc.XStackFramesEvent
+import com.intellij.xdebugger.impl.rpc.*
 import fleet.kernel.change
 import fleet.kernel.withEntities
 import kotlinx.coroutines.Deferred
@@ -84,5 +81,10 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
       }
       awaitClose()
     }
+  }
+
+  override suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent> {
+    val stackFrameEntity = debuggerEntity<XStackFrameEntity>(xStackFrameId.id) ?: return emptyFlow()
+    return computeContainerChildren(stackFrameEntity.obj, stackFrameEntity, stackFrameEntity.sessionEntity)
   }
 }

@@ -16,6 +16,8 @@ interface XExecutionStackApi : RemoteApi<Unit> {
 
   suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent>
 
+  suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent>
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XExecutionStackApi {

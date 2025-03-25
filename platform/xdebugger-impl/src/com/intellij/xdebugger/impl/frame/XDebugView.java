@@ -45,6 +45,7 @@ public abstract class XDebugView implements Disposable {
 
   protected abstract void clear();
 
+  @ApiStatus.OverrideOnly
   @ApiStatus.Internal
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
     if (session instanceof XDebugSessionProxy.Monolith monolith) {
@@ -52,7 +53,10 @@ public abstract class XDebugView implements Disposable {
     }
   }
 
-  @ApiStatus.Obsolete
+  /**
+   * @deprecated Use {@link XDebugView#processSessionEvent(SessionEvent, XDebugSessionProxy)} instead
+   */
+  @Deprecated
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
     processSessionEvent(event, XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
   }

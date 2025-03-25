@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XValueApi : RemoteApi<Unit> {
   suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>?
 
-  suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?
+  suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>
 
   suspend fun disposeXValue(xValueId: XValueId)
 

@@ -119,12 +119,6 @@ data class XValueEntity(override val eid: EID) : Entity {
   val xValue: XValue by XValueAttribute
   val sessionEntity: XDebugSessionEntity by SessionEntity
 
-  /**
-   * Reference to a parent [XValue].
-   * When [parentXValueEntity] is deleted, this [XValueEntity] also will be deleted.
-   */
-  val parentXValueEntity: XValueEntity? by ParentXValue
-
   val marker: XValueMarkerDto? by Marker
 
   val fullValueEvaluator: XFullValueEvaluator? by FullValueEvaluator
@@ -137,7 +131,7 @@ data class XValueEntity(override val eid: EID) : Entity {
     val XValueId: Required<XValueId> = requiredTransient("xValueId", Indexing.UNIQUE)
     val XValueAttribute: Required<XValue> = requiredTransient("xValue")
     val SessionEntity: Required<XDebugSessionEntity> = requiredRef("sessionEntity", RefFlags.CASCADE_DELETE_BY)
-    val ParentXValue: Optional<XValueEntity> = optionalRef<XValueEntity>("parentXValue", RefFlags.CASCADE_DELETE_BY)
+    val ParentEntity: Optional<Entity> = optionalRef<Entity>("parentEntity", RefFlags.CASCADE_DELETE_BY)
     val FullValueEvaluator: Optional<XFullValueEvaluator> = optionalTransient("fullValueEvaluator")
     val Marker: Optional<XValueMarkerDto> = optionalTransient("marker")
   }

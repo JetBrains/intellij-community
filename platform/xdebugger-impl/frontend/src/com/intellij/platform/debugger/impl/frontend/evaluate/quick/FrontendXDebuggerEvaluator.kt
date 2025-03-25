@@ -50,7 +50,7 @@ internal open class FrontendXDebuggerEvaluator(private val project: Project, pri
       try {
         val evaluation = evaluate().await()
         when (evaluation) {
-          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluatorScope, evaluation.valueId, null))
+          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluatorScope, evaluation.valueId, false))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
         }
       }

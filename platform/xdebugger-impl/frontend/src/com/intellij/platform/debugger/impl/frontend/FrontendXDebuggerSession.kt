@@ -93,7 +93,7 @@ internal class FrontendXDebuggerSession private constructor(
           return@collectLatest
         }
         supervisorScope {
-          send(FrontendXSuspendContext(suspendContextDto, this))
+          send(FrontendXSuspendContext(suspendContextDto, project, this))
           awaitCancellation()
         }
       }
@@ -107,7 +107,7 @@ internal class FrontendXDebuggerSession private constructor(
           return@collectLatest
         }
         supervisorScope {
-          send(FrontendXExecutionStack(executionStackDto, this))
+          send(FrontendXExecutionStack(executionStackDto, project, this))
           awaitCancellation()
         }
       }
@@ -121,7 +121,7 @@ internal class FrontendXDebuggerSession private constructor(
           return@collectLatest
         }
         supervisorScope {
-          send(FrontendXStackFrame(stackFrameDto))
+          send(FrontendXStackFrame(stackFrameDto, project, this))
           awaitCancellation()
         }
       }

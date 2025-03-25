@@ -16,10 +16,12 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
 import com.intellij.xdebugger.impl.rhizome.XValueEntity
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
+import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
 import fleet.kernel.rete.collect
@@ -137,14 +139,15 @@ private suspend fun newXValueEntity(
 
 internal suspend fun newChildXValueEntity(
   xValue: XValue,
-  parentXValue: XValueEntity,
+  parentEntity: Entity,
+  sessionEntity: XDebugSessionEntity,
 ): XValueEntity {
   val xValueEntity = change {
     XValueEntity.new {
       it[XValueEntity.XValueId] = XValueId(UID.random())
       it[XValueEntity.XValueAttribute] = xValue
-      it[XValueEntity.SessionEntity] = parentXValue.sessionEntity
-      it[XValueEntity.ParentXValue] = parentXValue
+      it[XValueEntity.SessionEntity] = sessionEntity
+      it[XValueEntity.ParentEntity] = parentEntity
     }
   }
   return xValueEntity.apply {

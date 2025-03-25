@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 
 internal class FrontendXExecutionStack(
   stackDto: XExecutionStackDto,
+  private val project: Project,
   private val cs: CoroutineScope,
 ) : XExecutionStack(stackDto.displayName, stackDto.icon?.icon()) {
   val id: XExecutionStackId = stackDto.executionStackId
@@ -30,7 +32,8 @@ internal class FrontendXExecutionStack(
             container.errorOccurred(event.errorMessage)
           }
           is XStackFramesEvent.XNewStackFrames -> {
-            val feFrames = event.frames.map { FrontendXStackFrame(it) }
+            // TODO Create separate stack frame scope?
+            val feFrames = event.frames.map { FrontendXStackFrame(it, project, cs) }
             container.addStackFrames(feFrames, event.last)
           }
         }

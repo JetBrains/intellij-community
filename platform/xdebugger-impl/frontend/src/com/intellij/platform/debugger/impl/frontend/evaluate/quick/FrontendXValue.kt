@@ -8,13 +8,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
+import com.intellij.xdebugger.impl.rpc.XValueApi
+import com.intellij.xdebugger.impl.rpc.XValueDto
+import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -28,7 +30,7 @@ class FrontendXValue(
   val project: Project,
   evaluatorCoroutineScope: CoroutineScope,
   val xValueDto: XValueDto,
-  val parentXValue: FrontendXValue?,
+  hasParentValue: Boolean,
 ) : XValue() {
   // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
   //   So, XValues will live more than popups where they appeared
@@ -48,6 +50,10 @@ class FrontendXValue(
 
   var descriptor: XValueDescriptor? = null
 
+  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
+    XValueApi.getInstance().computeChildren(xValueDto.id)
+  }
+
   init {
     cs.launch {
       val canBeModified = xValueDto.canBeModified.await()
@@ -63,7 +69,7 @@ class FrontendXValue(
     }
 
     // request to dispose root XValue, children will be disposed automatically
-    if (parentXValue == null) {
+    if (!hasParentValue) {
       cs.launch {
         try {
           awaitCancellation()
@@ -121,44 +127,7 @@ class FrontendXValue(
   }
 
   override fun computeChildren(node: XCompositeNode) {
-    node.childCoroutineScope(parentScope = cs, "FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
-      XValueApi.getInstance().computeChildren(xValueDto.id)?.collect { computeChildrenEvent ->
-        when (computeChildrenEvent) {
-          is XValueComputeChildrenEvent.AddChildren -> {
-            val childrenList = XValueChildrenList()
-            for (i in computeChildrenEvent.children.indices) {
-              childrenList.add(computeChildrenEvent.names[i], FrontendXValue(project, cs, computeChildrenEvent.children[i], parentXValue = this@FrontendXValue))
-            }
-            node.addChildren(childrenList, computeChildrenEvent.isLast)
-          }
-          is XValueComputeChildrenEvent.SetAlreadySorted -> {
-            node.setAlreadySorted(computeChildrenEvent.value)
-          }
-          is XValueComputeChildrenEvent.SetErrorMessage -> {
-            node.setErrorMessage(computeChildrenEvent.message, computeChildrenEvent.link)
-          }
-          is XValueComputeChildrenEvent.SetMessage -> {
-            // TODO[IJPL-160146]: support SimpleTextAttributes serialization -- don't pass SimpleTextAttributes.REGULAR_ATTRIBUTES
-            node.setMessage(
-              computeChildrenEvent.message,
-              computeChildrenEvent.icon?.icon(),
-              computeChildrenEvent.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES,
-              computeChildrenEvent.link
-            )
-          }
-          is XValueComputeChildrenEvent.TooManyChildren -> {
-            val addNextChildren = computeChildrenEvent.addNextChildren
-            if (addNextChildren != null) {
-              node.tooManyChildren(computeChildrenEvent.remaining, Runnable { addNextChildren.trySend(Unit) })
-            }
-            else {
-              @Suppress("DEPRECATION")
-              node.tooManyChildren(computeChildrenEvent.remaining)
-            }
-          }
-        }
-      }
-    }
+    xValueContainer.computeChildren(node)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
