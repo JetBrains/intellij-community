@@ -12,8 +12,10 @@ import org.gradle.api.internal.file.collections.DirectoryFileTreeFactory
 import org.gradle.api.internal.tasks.DefaultTaskDependencyFactory
 import org.gradle.api.internal.tasks.TaskDependencyFactory
 import org.gradle.api.tasks.util.PatternSet
+import org.gradle.api.tasks.util.internal.DefaultPatternSetFactory
 import org.gradle.api.tasks.util.internal.PatternSets
 import org.gradle.api.tasks.util.internal.PatternSpecFactory
+import org.gradle.api.tasks.util.internal.PatternSetFactory
 import org.gradle.initialization.BuildLayoutParameters
 import org.gradle.internal.Factory
 import org.gradle.internal.file.PathToFileResolver
@@ -55,7 +57,7 @@ fun getDaemonParameters(layout: BuildLayoutParameters): DaemonParameters {
  * using IdentityFileResolver()
  */
 private fun daemonParameters8Dot12(layout: BuildLayoutParameters): DaemonParameters {
-  val patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE)
+  val patternSetFactory = DefaultPatternSetFactory(PatternSpecFactory.INSTANCE)
   val identityFileResolver = IdentityFileResolver::class.java.getConstructor().newInstance()
   val collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory)
 
@@ -86,7 +88,7 @@ private fun daemonParameters6Dot6(layout: BuildLayoutParameters): DaemonParamete
   val buildLayoutResult = resultConstructor.newInstance(layout) as BuildLayoutResult
   resultConstructor.isAccessible = false
 
-  val patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE)
+  val patternSetFactory = DefaultPatternSetFactory(PatternSpecFactory.INSTANCE)
   val identityFileResolver = IdentityFileResolver::class.java.getConstructor().newInstance()
   val collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory)
 
@@ -109,7 +111,7 @@ private fun daemonParameters6Dot6(layout: BuildLayoutParameters): DaemonParamete
  * using IdentityFileResolver()
  */
 private fun daemonParameters6Dot4(layout: BuildLayoutParameters): DaemonParameters {
-  val patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE)
+  val patternSetFactory = DefaultPatternSetFactory(PatternSpecFactory.INSTANCE)
   val identityFileResolver = IdentityFileResolver::class.java.getConstructor().newInstance()
   val collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory)
 
@@ -131,7 +133,7 @@ private fun daemonParameters6Dot4(layout: BuildLayoutParameters): DaemonParamete
  *  FileSystem)
  */
 private fun daemonParameters6Dot3(layout: BuildLayoutParameters): DaemonParameters {
-  val patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE)
+  val patternSetFactory = DefaultPatternSetFactory(PatternSpecFactory.INSTANCE)
   val identityFileResolver = IdentityFileResolver::class.java.getConstructor(Factory::class.java).newInstance(patternSetFactory)
   val collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory)
 
@@ -145,7 +147,7 @@ private fun daemonParameters6Dot3(layout: BuildLayoutParameters): DaemonParamete
 @Throws(ReflectiveOperationException::class)
 private fun createCollectionFactory6Dot3(
   fileResolver: IdentityFileResolver,
-  patternFactory: Factory<PatternSet>,
+  patternFactory: PatternSetFactory,
 ): DefaultFileCollectionFactory {
   val classLoader = DaemonAction::class.java.classLoader
   val propertyHostClass = classLoader.loadClass("org.gradle.api.internal.provider.PropertyHost")
@@ -177,7 +179,7 @@ private fun createCollectionFactory6Dot3(
  *  Factory<PatternSet>)
  */
 private fun daemonParameters6Dot0(layout: BuildLayoutParameters): DaemonParameters {
-  val patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE)
+  val patternSetFactory = DefaultPatternSetFactory(PatternSpecFactory.INSTANCE)
   val identityFileResolver = IdentityFileResolver::class.java.getConstructor(Factory::class.java).newInstance(patternSetFactory)
   val collectionFactoryConstructor = DefaultFileCollectionFactory::class.java.getConstructor(
     PathToFileResolver::class.java,
