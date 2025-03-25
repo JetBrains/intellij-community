@@ -183,10 +183,15 @@ internal class FrontendXDebuggerSession private constructor(
           is XDebuggerSessionEvent.SessionStopped -> eventsDispatcher.multicaster.sessionStopped()
           is XDebuggerSessionEvent.SettingsChanged -> eventsDispatcher.multicaster.settingsChanged()
           is XDebuggerSessionEvent.StackFrameChanged -> {
-            withContext(Dispatchers.EDT) {
-              eventsDispatcher.multicaster.stackFrameChanged()
-            }
+            // Do nothing, use stack frame update as the source of truth instead
           }
+        }
+      }
+    }
+    cs.launch {
+      currentStackFrame.collectLatest {
+        withContext(Dispatchers.EDT) {
+          eventsDispatcher.multicaster.stackFrameChanged()
         }
       }
     }
