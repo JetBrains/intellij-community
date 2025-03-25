@@ -88,7 +88,7 @@ public fun <T : Any> ListComboBox(
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
+    LaunchedEffect(Unit) { listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex])) }
 
     var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
     val scope = rememberCoroutineScope()
