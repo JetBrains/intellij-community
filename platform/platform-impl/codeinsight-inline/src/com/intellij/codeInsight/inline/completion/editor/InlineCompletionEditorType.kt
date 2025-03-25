@@ -13,6 +13,7 @@ enum class InlineCompletionEditorType {
   XDEBUGGER,
   COMMIT_MESSAGES,
   AI_ASSISTANT_CHAT_INPUT,
+  TERMINAL,
   UNKNOWN;
 
   companion object {

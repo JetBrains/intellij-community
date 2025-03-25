@@ -101,7 +101,6 @@
              id="terminalCommandSpec"
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
-    <inline.completion.provider implementation="org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletionProvider"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurvey"/>
 
     <lang.fileViewProviderFactory language="Terminal Prompt"

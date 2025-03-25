@@ -3,4 +3,4 @@ package org.jetbrains.plugins.terminal.block.prompt.lang
 
 import com.intellij.lang.Language
 
-internal object TerminalPromptLanguage : Language("Terminal Prompt")
+object TerminalPromptLanguage : Language("Terminal Prompt")
