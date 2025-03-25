@@ -50,6 +50,12 @@ internal class CliBasedHatchService private constructor(
 
   override fun getWorkingDirectoryPath(): Path = workingDirectoryPath
 
+  override suspend fun syncDependencies(envName: String): Result<String, PyError> {
+    return withContext(Dispatchers.IO) {
+      hatchRuntime.hatchCli().run(envName, "python", "--version")
+    }
+  }
+
   override suspend fun isHatchManagedProject(): Result<Boolean, PyError> {
     val isHatchManaged = withContext(Dispatchers.IO) {
       when {
