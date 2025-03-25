@@ -358,6 +358,7 @@
 
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.actions.AnnotateWarningsProvider"/>
 
+    <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
