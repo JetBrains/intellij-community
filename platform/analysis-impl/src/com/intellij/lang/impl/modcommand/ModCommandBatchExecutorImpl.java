@@ -117,6 +117,9 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModShowConflicts) {
       return Result.CONFLICTS;
     }
+    if (command instanceof ModEditOptions<?> editOptions) {
+      return bypassEditOptions(editOptions, context);
+    }
     if (command instanceof ModDisplayMessage message) {
       if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
         return new Error(message.messageText());
@@ -124,6 +127,11 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       return Result.INTERACTIVE;
     }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private <T extends OptionContainer> BatchExecutionResult bypassEditOptions(@NotNull ModEditOptions<T> options, @NotNull ActionContext context) {
+    if (!options.canUseDefaults()) return Result.INTERACTIVE;
+    return doExecuteInBatch(context, options.nextCommand().apply(options.containerSupplier().get()));
   }
 
   private BatchExecutionResult executeChooseInBatch(@NotNull ActionContext context, ModChooseAction chooser) {
@@ -323,6 +331,9 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       else if (command instanceof ModChooseAction target) {
         return getChoosePreview(context, target);
       }
+      else if (command instanceof ModEditOptions<?> target) {
+        return getEditOptionsPreview(context, target);
+      }
       else if (command instanceof ModChooseMember target) {
         return getPreview(target.nextCommand().apply(target.defaultSelection()), context);
       }
@@ -361,6 +372,11 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     return customDiffList.isEmpty() ? navigateInfo :
            customDiffList.size() == 1 ? customDiffList.get(0) :
            new IntentionPreviewInfo.MultiFileDiff(customDiffList);
+  }
+
+  private @NotNull <T extends OptionContainer> IntentionPreviewInfo getEditOptionsPreview(@NotNull ActionContext context,
+                                                                                          @NotNull ModEditOptions<T> target) {
+    return getPreview(target.nextCommand().apply(target.containerSupplier().get()), context);
   }
 
   protected @NotNull String getFileNamePresentation(Project project, VirtualFile file) {

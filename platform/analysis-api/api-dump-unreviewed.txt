@@ -2702,6 +2702,16 @@ e:com.intellij.modcommand.ModDisplayMessage$MessageKind
 - sf:INFORMATION:com.intellij.modcommand.ModDisplayMessage$MessageKind
 - s:valueOf(java.lang.String):com.intellij.modcommand.ModDisplayMessage$MessageKind
 - s:values():com.intellij.modcommand.ModDisplayMessage$MessageKind[]
+f:com.intellij.modcommand.ModEditOptions
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- <init>(java.lang.String,java.util.function.Supplier,Z,java.util.function.Function):V
+- canUseDefaults():Z
+- containerSupplier():java.util.function.Supplier
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- nextCommand():java.util.function.Function
+- title():java.lang.String
 f:com.intellij.modcommand.ModHighlight
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
