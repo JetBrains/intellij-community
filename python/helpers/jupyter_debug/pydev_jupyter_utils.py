@@ -112,3 +112,27 @@ def kill_pydev_threads(py_db):
     from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
     py_db.finish_debugging_session()
     kill_all_pydev_threads()
+
+
+def is_cell_filename(filename):
+    try:
+        import linecache
+        import IPython
+        ipython_major_version = int(IPython.__version__[0])
+        if hasattr(linecache, 'cache'):
+            if ipython_major_version < 8:
+                if hasattr(linecache, '_ipython_cache'):
+                    if filename in linecache._ipython_cache:
+                        cached_value = linecache._ipython_cache[filename]
+                        is_util_code = "pydev_util_command" in cached_value[2][0]
+                        return not is_util_code
+            else:
+                if filename in linecache.cache:
+                    cached_value = linecache.cache[filename]
+                    is_not_library = cached_value[1] is None
+                    is_util_code = "pydev_util_command" in cached_value[2][0]
+                    return is_not_library and not is_util_code
+    except:
+        pass
+
+    return False

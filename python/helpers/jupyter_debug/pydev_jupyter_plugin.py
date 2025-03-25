@@ -225,13 +225,6 @@ def _is_inside_jupyter_cell(frame, pydb):
     return False
 
 
-def is_cell_filename(filename):
-    import linecache
-    if hasattr(linecache, 'cache'):
-        return filename in linecache.cache
-    return False
-
-
 def _get_ipython_safely():
     try:
         return get_ipython()
@@ -266,6 +259,29 @@ def _convert_filename(frame, pydb):
         return pydb.cell_info.cell_filename_to_cell_id_map[filename]
     else:
         return filename
+
+
+def is_cell_filename(filename):
+    try:
+        import linecache
+        import IPython
+        ipython_major_version = int(IPython.__version__[0])
+        if hasattr(linecache, 'cache'):
+            if ipython_major_version < 8:
+                if hasattr(linecache, '_ipython_cache'):
+                    if filename in linecache._ipython_cache:
+                        cached_value = linecache._ipython_cache[filename]
+                        is_util_code = "pydev_util_command" in cached_value[2][0]
+                        return not is_util_code
+            else:
+                if filename in linecache.cache:
+                    cached_value = linecache.cache[filename]
+                    is_not_library = cached_value[1] is None
+                    is_util_code = "pydev_util_command" in cached_value[2][0]
+                    return is_not_library and not is_util_code
+    except:
+        pass
+    return False
 
 
 class JupyterFrame(object):
