@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.imports.ImportMapper
 import org.jetbrains.kotlin.idea.imports.KotlinIdeDefaultImportProvider
+import org.jetbrains.kotlin.idea.imports.KtFileWithReplacedImports
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name

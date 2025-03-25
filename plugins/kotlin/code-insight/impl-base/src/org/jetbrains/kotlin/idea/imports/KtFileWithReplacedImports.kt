@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeinsight.imports
+package org.jetbrains.kotlin.idea.imports
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
@@ -17,7 +18,8 @@ import org.jetbrains.kotlin.resolve.ImportPath
  * Represents a copy of [KtFile] with potentially replaced imports,
  * with facilities to analyze references in this file.
  */
-internal class KtFileWithReplacedImports private constructor(
+@ApiStatus.Internal
+class KtFileWithReplacedImports private constructor(
     val ktFile: KtFile,
     private val isCopyOfDanglingFile: Boolean,
 ) {
