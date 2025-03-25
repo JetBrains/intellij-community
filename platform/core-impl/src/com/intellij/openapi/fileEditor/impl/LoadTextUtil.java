@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -425,7 +426,9 @@ public final class LoadTextUtil {
     }
     restoreDetectedFromContentFlag(virtualFile, buffer);
 
-    try (OutputStream stream = virtualFile.getOutputStream(requestor, newModificationStamp, -1)) {
+    long newTimeStamp = Clock.isMocked() ? Clock.getTime() : -1;
+
+    try (OutputStream stream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       stream.write(buffer);
     }
   }

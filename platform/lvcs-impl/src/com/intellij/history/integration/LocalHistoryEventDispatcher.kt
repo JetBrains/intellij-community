@@ -7,6 +7,7 @@ import com.intellij.history.integration.LocalHistoryImpl.Companion.getInstanceIm
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
@@ -92,7 +93,10 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
     val f = e.file
     if (!gateway.areContentChangesVersioned(f)) return
 
-    val content = gateway.acquireAndUpdateActualContent(f, null) ?: return
+    val cachedDocument = FileDocumentManager.getInstance().getCachedDocument(f)
+      ?.takeIf { it.modificationStamp == e.modificationStamp }
+
+    val content = gateway.acquireActualContentAndForgetSavedContent(f, cachedDocument) ?: return
     facade.contentChanged(gateway.getPathOrUrl(f), content.first, content.second)
   }
 
