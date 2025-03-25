@@ -37,13 +37,6 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
 
     protected fun PsiElement.isImported(): Boolean {
         val fqName = kotlinFqName ?: return false
-
-        if (fqName.parent() == file.packageFqName) {
-            // the declaration is already imported via default package import
-            // TODO Consider getting rid of this check after KTIJ-33214 is fixed
-            return true
-        }
-
         return ImportPath(fqName, isAllUnder = false).isImported(fileImports, excludedFqNames = emptyList())
     }
 
