@@ -73,7 +73,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -89,7 +91,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @ApiStatus.Internal
 class XDebugSessionImpl @JvmOverloads constructor(
   environment: ExecutionEnvironment?,
-  debuggerManager: XDebuggerManagerImpl,
+  private val debuggerManager: XDebuggerManagerImpl,
   sessionName: @Nls String = environment?.runProfile?.getName() ?: "",
   icon: Icon? = environment?.runProfile?.getIcon(),
   showToolWindowOnSuspendOnly: Boolean = false,
@@ -423,15 +425,30 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
 
     if (useFeProxy()) {
+      val tabClosedChannel = Channel<Unit>(capacity = 1)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
-                                            contentToReuse, executionEnvironment?.toDto(coroutineScope))
+                                            contentToReuse, executionEnvironment?.toDto(coroutineScope), tabClosedChannel)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
-        myRunContentDescriptor = contentToReuse // This is a mock descriptor used in backend only
-                                 ?: object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
-                                                                  sessionName, myIcon, null) {
-                                   override fun isHiddenContent(): Boolean = true
-                                 }
+        myRunContentDescriptor = if (contentToReuse == null) {
+          // This is a mock descriptor used in backend only
+          val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
+                                                             sessionName, myIcon, null) {
+            override fun isHiddenContent(): Boolean = true
+          }
+          debuggerManager.coroutineScope.launch {
+            for (tabClosedRequest in tabClosedChannel) {
+              Disposer.dispose(mockDescriptor)
+            }
+          }
+          mockDescriptor
+        }
+        else {
+          contentToReuse
+        }
         myDebugProcess!!.sessionInitialized()
+      }
+      else {
+        tabClosedChannel.close()
       }
     }
     else {

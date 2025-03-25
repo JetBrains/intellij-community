@@ -21,7 +21,9 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContex
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.EventDispatcher
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
@@ -204,6 +206,7 @@ internal class FrontendXDebuggerSession private constructor(
     }
   }
 
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun initTabInfo(tabDto: XDebuggerSessionTabDto) {
     val (tabInfo, pausedFlow) = tabDto
     cs.launch {
@@ -213,6 +216,9 @@ internal class FrontendXDebuggerSession private constructor(
       withContext(Dispatchers.EDT) {
         XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, cs), tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
+          runContentDescriptor?.coroutineScope?.awaitCancellationAndInvoke {
+            tabInfo.tabClosedCallback.send(Unit)
+          }
           _sessionTab = this
           proxy.onTabInitialized(this)
           showTab()

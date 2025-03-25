@@ -14,8 +14,10 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
+import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
 import fleet.util.UID
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -138,6 +140,7 @@ data class XDebuggerSessionTabInfo(
   // TODO pass to frontend
   @Transient val contentToReuse: RunContentDescriptor? = null,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
+  @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>
 ) : XDebuggerSessionTabAbstractInfo
 
 @ApiStatus.Internal
