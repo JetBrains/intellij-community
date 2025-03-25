@@ -92,8 +92,14 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   }
 
   @Override
+  @Internal
+  public int shardlessVersion() {
+    return 4;
+  }
+
+  @Override
   public int getVersion() {
-    return 4 + (SHARDS - 1);
+    return shardlessVersion() + (SHARDS - 1);
   }
 
   @Override
