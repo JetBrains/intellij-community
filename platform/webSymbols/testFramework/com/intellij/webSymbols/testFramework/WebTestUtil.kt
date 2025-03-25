@@ -502,36 +502,6 @@ fun CodeInsightTestFixture.findUsages(target: SearchTarget): MutableCollection<o
   return buildUsageViewQuery(getProject(), target, allOptions).findAll()
 }
 
-fun CodeInsightTestFixture.getParameterInfoAtCaret(): String? {
-  val disposable = Disposer.newDisposable()
-  val hintFixture = EditorHintFixture(disposable)
-  try {
-    performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO)
-
-    // There is an effective chain of 5 nonBlockingRead actions.
-    // Use 10 in case this increases at some point
-    repeat(10) {
-      UIUtil.dispatchAllInvocationEvents()
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    }
-    return hintFixture.currentHintText
-      ?.replace(Regex("</?span[^>]*>|</?html>"), "")
-      ?.replace(Regex("&#32;|&nbsp;"), " ")
-      ?.split('\n')
-      ?.filter { it != "-" }
-      ?.sortedBy {
-        when {
-          it.startsWith("[") -> "!$it"// sort first
-          it.startsWith("<mismatched>") -> "~$it"// sort last
-          else -> it
-        }
-      }
-      ?.joinToString("\n-\n")
-  } finally {
-    Disposer.dispose(disposable)
-  }
-}
-
 @JvmOverloads
 @RequiresEdt
 fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUsageHandler2.GTDUOutcome?, signature: String? = null) {

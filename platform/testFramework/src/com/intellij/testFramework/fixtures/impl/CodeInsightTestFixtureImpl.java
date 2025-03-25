@@ -2200,6 +2200,37 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
+  @Override
+  public @Nullable String getParameterInfoAtCaret() {
+    var disposable = Disposer.newDisposable();
+    var hintFixture = new EditorHintFixture(disposable);
+    try {
+      performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+      for (int i = 0; i < 10; i++) {
+        UIUtil.dispatchAllInvocationEvents();
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      }
+      var hintText = hintFixture.getCurrentHintText();
+      if (hintText == null) return null;
+      hintText = hintText
+        .replaceAll("</?span[^>]*>|</?html>", "")
+        .replaceAll("&#32;|&nbsp;", " ");
+
+      var lines = new ArrayList<>(StringUtil.split(hintText, "\n-\n"));
+      lines.sort(Comparator.comparing(line -> {
+        if (line.startsWith("["))
+          return "!" + line;
+        else if (line.startsWith("<mismatched>"))
+          return "~" + line;
+        else
+          return line;
+      }));
+      return StringUtil.join(lines, "\n-\n");
+    } finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
   private SearchEverywhereContributor<Object> createMockClassSearchEverywhereContributor(boolean everywhere) {
     DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);

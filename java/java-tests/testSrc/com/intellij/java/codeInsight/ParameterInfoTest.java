@@ -26,7 +26,6 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
@@ -80,7 +79,6 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
   @NeedsIndex.ForStandardLibrary
   public void testWhenInferenceIsBoundedByEqualsBound() {
-    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
                               """
                                 import java.util.function.Function;
@@ -93,8 +91,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                                 }
                                 """);
 
-    showParameterInfo();
-    assertEquals("<html><b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right</html>", hintFixture.getCurrentHintText());
+    assertEquals("<b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right", myFixture.getParameterInfoAtCaret());
   }
 
   public void testSelectionWithGenerics() {
@@ -138,7 +135,6 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   }
 
   public void testSuperConstructorCalls() {
-    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
                               """
                                 class A {
@@ -149,13 +145,11 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                                            super(<caret>"a", 1);
                                        }
                                    }""");
-    showParameterInfo();
-    assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
+    assertEquals("<b>String s</b>, int... p", myFixture.getParameterInfoAtCaret());
   }
 
   @NeedsIndex.ForStandardLibrary
   public void testCompletionPolicyWithLowerBounds() {
-    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
                               """
                                 class B {
@@ -166,8 +160,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                                     String[] a = foo(args, args.len<caret>gth);
                                   }
                                 }""");
-    showParameterInfo();
-    assertEquals("<html>String[] args, <b>int l</b></html>", hintFixture.getCurrentHintText());
+    assertEquals("String[] args, <b>int l</b>", myFixture.getParameterInfoAtCaret());
   }
 
   @NeedsIndex.ForStandardLibrary
