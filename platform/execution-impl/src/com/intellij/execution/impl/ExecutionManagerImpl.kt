@@ -862,6 +862,7 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
     }
   }
 
+  @ApiStatus.Internal
   override fun isStartingFlow(configurationId: String, executorId: String, runnerId: String): Flow<Boolean> {
     return channelFlow {
       inProgress.collectLatest {

@@ -114,6 +114,7 @@ abstract class ExecutionManager {
                       environment.executor.id, environment.runner.runnerId)
   }
 
+  @ApiStatus.Internal
   fun isStartingFlow(environment: ExecutionEnvironment): Flow<Boolean> {
     return isStartingFlow(environment.runnerAndConfigurationSettings?.uniqueID ?: "",
                           environment.executor.id, environment.runner.runnerId)
