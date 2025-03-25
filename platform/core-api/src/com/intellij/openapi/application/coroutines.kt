@@ -2,7 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -13,8 +13,13 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
+import java.nio.file.Files
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.writeText
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -302,7 +307,23 @@ suspend fun <T> backgroundWriteAction(action: () -> T): T {
   return withContext(context) {
     val dumpJob = if (isBackgroundActionAllowed) launch {
       delay(10.seconds)
-      logger<ApplicationManager>().warn("Cannot execute write action in 10 seconds: ${dumpCoroutines()}")
+      val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
+      val dumpDir = PathManager.getLogDir().resolve("bg-wa")
+      val file = dumpDir.resolve("thread-dump-${Random.nextInt().absoluteValue}.txt")
+      try {
+        Files.createDirectories(dumpDir)
+        Files.createFile(file)
+        file.writeText(dump.rawDump)
+        logger<ApplicationManager>().warn(
+          """Cannot execute background write action in 10 seconds. Thread dump is stored in ${file.toUri()}""")
+      }
+      catch (_: IOException) {
+        logger<ApplicationManager>().warn(
+          """Cannot execute background write action in 10 seconds.
+Thread dump:
+${dump.rawDump}""")
+      }
+
     } else null
     try {
       @Suppress("ForbiddenInSuspectContextMethod")
