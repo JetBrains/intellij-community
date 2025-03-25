@@ -20,6 +20,7 @@ public final class VirtualThreadDumper {
   static MethodHandle containerThreadsHandle;
 
   static MethodHandle threadIsVirtualHandle;
+  static MethodHandle threadThreadState;
 
   private static boolean init(MethodHandles.Lookup lookup) {
     if (!initialized) {
@@ -35,6 +36,8 @@ public final class VirtualThreadDumper {
 
         //noinspection JavaLangInvokeHandleSignature
         threadIsVirtualHandle = lookup.findVirtual(Thread.class, "isVirtual", MethodType.methodType(boolean.class));
+        //noinspection JavaLangInvokeHandleSignature
+        threadThreadState = lookup.findVirtual(Thread.class, "threadState", MethodType.methodType(Thread.State.class));
 
         successfully = true;
       } catch (NoSuchMethodException | IllegalAccessException | ClassNotFoundException e) {
@@ -46,7 +49,7 @@ public final class VirtualThreadDumper {
   }
 
   /**
-   * Returns all virtual threads with stack traces.
+   * Returns all virtual threads with stack traces (along with a name and thread state) and parallel array of thread IDs.
    * <br/>
    * They are grouped by equal stack traces and packed into the plain `Object` array in the following way:
    * <ul>
@@ -56,7 +59,7 @@ public final class VirtualThreadDumper {
    *   <li>Then we have a new group of stack trace and threads, or the array ends.</li>
    * </ul>
    * <br/>
-   * Returns an empty array if there are no virtual threads or some error occurred.
+   * Returns {@code null} if there are no virtual threads or some error occurred.
    */
   public static Object[] getAllVirtualThreadsWithStackTraces(MethodHandles.Lookup lookup) throws Throwable {
     if (!init(lookup)) {
@@ -71,8 +74,18 @@ public final class VirtualThreadDumper {
     HashMap<String, ArrayList<Thread>> groupedByStackTrace = new HashMap<>();
     for (Thread t : threads) {
       StringBuilder buffer = new StringBuilder();
+
+      // "Stack trace" format, in such a way it should be shared between multiple threads and easily processed on the debugger side:
+      // <name>
+      // <javaThreadState>
+      // <stack trace elements...>
+
+      String name = t.getName();
+      Thread.State javaThreadState = (Thread.State)threadThreadState.invoke(t);
+      buffer.append(name).append('\n').append(javaThreadState);
+
       for (StackTraceElement ste : t.getStackTrace()) {
-        buffer.append("\tat ").append(ste).append('\n');
+        buffer.append("\n\tat ").append(ste);
       }
       String stackTrace = buffer.toString();
 
@@ -84,21 +97,25 @@ public final class VirtualThreadDumper {
       similarThreads.add(t);
     }
 
+    long[] tids = new long[threads.size()];
+    int tidIdx = 0;
+
     Object[] allStackTraceAndThreads = new Object[threads.size() + groupedByStackTrace.size() * 2];
-    int i = 0;
+    int stIdx = 0;
 
     for (Map.Entry<String, ArrayList<Thread>> e : groupedByStackTrace.entrySet()) {
       String st = e.getKey();
       ArrayList<Thread> ts = e.getValue();
-      allStackTraceAndThreads[i++] = st;
+      allStackTraceAndThreads[stIdx++] = st;
       for (Thread t : ts) {
-        allStackTraceAndThreads[i++] = t;
+        allStackTraceAndThreads[stIdx++] = t;
+        tids[tidIdx++] = t.getId();
       }
-      allStackTraceAndThreads[i++] = null;
+      allStackTraceAndThreads[stIdx++] = null;
     }
-    assert i == allStackTraceAndThreads.length;
+    assert stIdx == allStackTraceAndThreads.length;
 
-    return allStackTraceAndThreads;
+    return new Object[] { allStackTraceAndThreads, tids };
   }
 
   private static ArrayList<Thread> getAllVirtualThreads(MethodHandles.Lookup lookup) throws Throwable {

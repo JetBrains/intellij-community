@@ -34,6 +34,7 @@ public final class ThreadDumpParser {
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at java\\.util\\.TimerThread\\.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "java.lang.Object.wait(";
+  private static final String ourLockedOwnableSynchronizersHeader = "Locked ownable synchronizers";
   private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
 
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
@@ -217,6 +218,11 @@ public final class ThreadDumpParser {
   }
 
   private static @Nullable String findLockedOwnableSynchronizers(final String stackTrace) {
+    if (!stackTrace.contains(ourLockedOwnableSynchronizersHeader)) {
+      // It's a fast path, otherwise regex below takes too much time.
+      return null;
+    }
+
     Matcher m = ourLockedOwnableSynchronizersPattern.matcher(stackTrace);
     if (m.find()) {
       return m.group(1);

@@ -174,7 +174,7 @@ class JavaThreadDumpItem(private val threadState: ThreadState) : DumpItem {
 
   private inner class JavaMergeableToken : MergeableToken {
     private val comparableStackTrace: String =
-      stackTrace.substringAfter("\n").replace("<0x.+>\\s".toRegex(), "<merged>")
+      stackTrace.substringAfter("\n").replace("<0x\\d+>\\s".toRegex(), "<merged>")
 
     override val item: JavaThreadDumpItem get() = this@JavaThreadDumpItem
 
