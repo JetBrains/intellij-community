@@ -4453,6 +4453,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("hiddenVirtualMethod.kt")
+        public void testHiddenVirtualMethod() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/hiddenVirtualMethod.kt");
+        }
+
         @TestMetadata("kt25928.kt")
         public void testKt25928() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/kt25928.kt");

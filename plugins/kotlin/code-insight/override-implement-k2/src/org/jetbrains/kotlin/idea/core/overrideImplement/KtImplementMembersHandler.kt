@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiFile
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -16,11 +17,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.fir.extensions.FirAnalysisHandlerExtension.Companion.analyze
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -37,6 +40,18 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
         return analyze(classOrObject) {
             getUnimplementedMembers(classOrObject).map { createKtClassMember(it, BodyType.FromTemplate, false) }
+        }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    fun collectMembersToAddOverride(classOrObject: KtClassOrObject): List<KtCallableDeclaration> {
+        analyze(classOrObject) {
+            val classSymbol = classOrObject.classSymbol
+            return classSymbol?.memberScope?.callables?.toList()?.mapNotNull { symbol ->
+                (symbol.psi as? KtCallableDeclaration)?.takeIf {
+                    symbol.getImplementationStatus(classSymbol) == ImplementationStatus.CANNOT_BE_IMPLEMENTED
+                }
+            } ?: emptyList()
         }
     }
 

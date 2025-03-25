@@ -18707,6 +18707,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("hiddenVirtualMethod.kt")
+            public void testHiddenVirtualMethod() throws Exception {
+                runTest("testData/quickfix/typeMismatch/letImplementInterface/hiddenVirtualMethod.kt");
+            }
+
             @TestMetadata("kt25928.kt")
             public void testKt25928() throws Exception {
                 runTest("testData/quickfix/typeMismatch/letImplementInterface/kt25928.kt");
