@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -547,8 +548,11 @@ private suspend fun doShowModalIndicator(
   stateFlow: Flow<ProgressState>,
   deferredDialog: CompletableDeferred<DialogWrapper>?,
 ) {
-  // Use Dispatchers.EDT to avoid showing the dialog on top of another unrelated modal dialog (e.g. MessageDialogBuilder.YesNoCancel)
-  withContext(Dispatchers.EDT) {
+  // Use Dispatchers.Main to avoid showing the dialog on top of another unrelated modal dialog (e.g. MessageDialogBuilder.YesNoCancel)
+  // we need to avoid running `dialog.show()` in WI because it would prevent background WA
+  // hence, we are using `Dispatchers.Main` to permit locks inside, but not by default
+  require(coroutineContext.contextModality() != null)
+  withContext(Dispatchers.Main) {
     val window = ownerWindow(descriptor.owner)
     if (window == null) {
       logger<PlatformTaskSupport>().error("Cannot show progress dialog because owner window is not found")
