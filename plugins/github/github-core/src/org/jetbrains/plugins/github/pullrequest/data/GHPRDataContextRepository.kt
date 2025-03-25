@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -79,8 +81,16 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     val cs = this
     return async {
       val accountDetails = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account)
-      val ghostUserDetails = requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))
-                             ?: error("Couldn't load ghost user details")
+      val ghostUserDetails = runCatchingUser {
+        requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))!!
+      }.fold(onSuccess = { it }) {
+        if (it is HttpStatusErrorException)
+
+        // github.com is always expected to have a ghost user, but any enterprise server may not
+        if (account.server.isGithubDotCom) error("Couldn't load ghost user details")
+
+        GHUser.FAKE_GHOST
+      }
 
       val repositoryInfo =
         requestExecutor.executeSuspend(
@@ -93,7 +103,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                accountDetails.name)
 
       // Image loaders
-      val iconsScope = cs.childScope(Dispatchers.Main)
+      val iconsScope = cs.childScope(javaClass.name, Dispatchers.Main)
       val imageLoader = AsyncHtmlImageLoader { _, src ->
         withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
           val request = GithubApiRequests.getBytes(src)
