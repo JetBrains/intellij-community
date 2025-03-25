@@ -430,23 +430,19 @@ class XDebugSessionImpl @JvmOverloads constructor(
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
                                             contentToReuse, executionEnvironment?.toDto(environmentCoroutineScope), tabClosedChannel)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
-        myRunContentDescriptor = if (contentToReuse == null) {
-          // This is a mock descriptor used in backend only
-          val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
-                                                             sessionName, myIcon, null) {
-            override fun isHiddenContent(): Boolean = true
-          }
-          debuggerManager.coroutineScope.launch {
-            for (tabClosedRequest in tabClosedChannel) {
-              environmentCoroutineScope.cancel()
-              Disposer.dispose(mockDescriptor)
-            }
-          }
-          mockDescriptor
+        // TODO: take contentToReuse into account
+        // This is a mock descriptor used in backend only
+        val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
+                                                           sessionName, myIcon, null) {
+          override fun isHiddenContent(): Boolean = true
         }
-        else {
-          contentToReuse
+        debuggerManager.coroutineScope.launch {
+          for (tabClosedRequest in tabClosedChannel) {
+            environmentCoroutineScope.cancel()
+            Disposer.dispose(mockDescriptor)
+          }
         }
+        myRunContentDescriptor = mockDescriptor
         myDebugProcess!!.sessionInitialized()
       }
       else {
