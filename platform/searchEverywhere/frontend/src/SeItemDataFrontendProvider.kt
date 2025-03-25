@@ -33,4 +33,6 @@ class SeItemDataFrontendProvider(private val projectId: ProjectId,
                                     searchText: String): Boolean {
     return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText)
   }
+
+  override fun dispose() {}
 }

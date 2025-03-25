@@ -9,6 +9,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
@@ -55,6 +56,10 @@ class SeFilesProvider(val project: Project, private val contributorWrapper: SeAs
     val namePattern = contributorWrapper.contributor.filterControlSymbols(rawPattern)
     val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)
     return ItemMatchers(matcher, null)
+  }
+
+  override fun dispose() {
+    Disposer.dispose(contributorWrapper)
   }
 
   companion object {

@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.providers.mocks
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
@@ -25,6 +26,10 @@ class SeTabMock(override val name: String,
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     println("Item selected: ${item.presentation.text}")
     return true
+  }
+
+  override fun dispose() {
+    Disposer.dispose(delegate)
   }
 
   companion object {

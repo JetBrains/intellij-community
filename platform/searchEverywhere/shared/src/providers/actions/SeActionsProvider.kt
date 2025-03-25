@@ -79,6 +79,8 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
   private fun isRecentsShown(): Boolean {
     return Registry.`is`("search.everywhere.recents")
   }
+
+  override fun dispose() {}
 }
 
 @ApiStatus.Internal

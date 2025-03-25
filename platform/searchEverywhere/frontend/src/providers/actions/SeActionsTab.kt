@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.options.ObservableOptionEditor
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
@@ -31,6 +32,10 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
+  }
+
+  override fun dispose() {
+    Disposer.dispose(delegate)
   }
 }
 

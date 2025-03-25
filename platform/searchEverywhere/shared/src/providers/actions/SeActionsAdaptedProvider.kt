@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.providers.actions
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
@@ -28,6 +29,10 @@ class SeActionsAdaptedProvider(val project: Project, private val legacyContribut
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
     return legacyContributor.processSelectedItem(legacyItem, modifiers, searchText)
+  }
+
+  override fun dispose() {
+    Disposer.dispose(legacyContributor)
   }
 
   companion object {

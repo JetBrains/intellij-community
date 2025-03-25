@@ -9,8 +9,14 @@ object SeLog {
   const val DEFAULT: Int = 0
   const val ITEM_EMIT: Int = 1
   const val USER_ACTION: Int = 2
+  const val LIFE_CYCLE: Int = 3
 
-  private val allowedCategories = setOf(DEFAULT, ITEM_EMIT, USER_ACTION)
+  private val allowedCategories = setOf(
+    DEFAULT,
+    ITEM_EMIT,
+    USER_ACTION,
+    LIFE_CYCLE
+  )
 
   // #com.intellij.platform.searchEverywhere.providers.SeLog
   private val logger = Logger.getInstance(SeLog::class.java)

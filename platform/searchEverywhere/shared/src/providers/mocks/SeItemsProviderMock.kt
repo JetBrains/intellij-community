@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
 import com.intellij.platform.searchEverywhere.providers.SeLog.USER_ACTION
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
@@ -51,6 +52,10 @@ class SeItemsProviderMock(
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     SeLog.logSuspendable(USER_ACTION) { "Provider ${id} item selected: ${item.presentation().text}" }
     return true
+  }
+
+  override fun dispose() {
+    SeLog.log(LIFE_CYCLE, "Provider mock ${id} disposed")
   }
 }
 

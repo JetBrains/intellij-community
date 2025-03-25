@@ -7,6 +7,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
@@ -14,6 +15,9 @@ import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.DurableRef
 import fleet.kernel.change
+import fleet.kernel.onDispose
+import fleet.kernel.rete.Rete
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
@@ -21,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class SeBackendService(val project: Project) {
+class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
 
   suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
                        providerId: SeProviderId,
@@ -57,12 +61,24 @@ class SeBackendService(val project: Project) {
       }
 
       existingHolderEntities = change {
-        if (!session.exists()) return@change emptySet()
+        if (!session.exists()) {
+          providers.values.forEach { Disposer.dispose(it) }
+          return@change emptySet()
+        }
 
-        entities(Session, session).ifEmpty {
+        val existingEntities = entities(Session, session)
+        if (existingEntities.isNotEmpty()) {
+          providers.values.forEach { Disposer.dispose(it) }
+          existingEntities
+        }
+        else {
           val entity = SeBackendItemDataProvidersHolderEntity.new {
             it[Providers] = providers
             it[Session] = session
+          }
+
+          entity.onDispose(coroutineScope.coroutineContext[Rete]!!) {
+            providers.values.forEach { Disposer.dispose(it) }
           }
 
           setOf(entity)

@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
@@ -69,6 +70,8 @@ class SeTabVm(
           _searchResults.value = it
         }
       }
+    }.invokeOnCompletion {
+      Disposer.dispose(tab)
     }
   }
 
