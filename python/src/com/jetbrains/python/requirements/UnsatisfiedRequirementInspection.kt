@@ -132,15 +132,11 @@ private class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickF
     fun installPackage(project: Project, descriptor: ProblemDescriptor, requirement: Requirement) {
       val file = descriptor.psiElement.containingFile ?: return
       val sdk = getPythonSdk(file) ?: return
-      val manager = PythonPackageManager.forSdk(project, sdk)
-      val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
+      val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else null
       val name = requirement.displayName
-      val specification = manager.repositoryManager.createSpecification(name, versionSpec) ?: return
 
       project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
-        runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
-          manager.installPackage(specification, emptyList())
-        }
+        PyPackageInstallUtils.installPackage(project, sdk, name, true, versionSpec)
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }
     }
@@ -152,24 +148,25 @@ private class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickF
       serviceScope.launch(Dispatchers.Default) {
         val sdk = getPythonSdk(file) ?: return@launch
 
-        val nameVersions =  readAction {
+        val infos = readAction {
           requirements.map { requirement ->
-            val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
+            val versionSpec = if (requirement is NameReq)
+              requirement.versionspec?.text
+            else
+              null
             val name = requirement.displayName
             name to versionSpec
           }
         }
-
         val manager = PythonPackageManager.forSdk(project, sdk)
-
-        val specifications = nameVersions.mapNotNull { (name, versionSpec) ->
+        val specs = infos.mapNotNull { (name, versionSpec) ->
           manager.repositoryManager.createSpecification(name, versionSpec)
         }
 
-        if (specifications.isEmpty())
+        if (specs.isEmpty())
           return@launch
 
-        manager.installPackagesWithDialogOnError(specifications, emptyList())
+        manager.installPackages(specs, emptyList(), withBackgroundProgress = true)
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }
     }

@@ -30,7 +30,7 @@ class PythonPackagesInstaller {
           installWithoutRequirements(manager, indicator)
         }
         else {
-          installWithRequirements(manager, requirements, extraArgs, indicator)
+          installWithRequirements(manager, requirements, extraArgs)
         }
       }.exceptionOrNull()?.let {
         return ExecutionException(it)
@@ -47,37 +47,18 @@ class PythonPackagesInstaller {
       indicator.isIndeterminate = true
 
       val emptySpecification = PythonPackageSpecificationBase("", null, null, null)
-      manager.installPackage(emptySpecification, emptyList()).getOrElse {
-        return Result.failure(it)
-      }
-
-      return Result.success(Unit)
+      return manager.installPackage(emptySpecification, emptyList(), withBackgroundProgress = true).map { }
     }
 
     private suspend fun installWithRequirements(
       manager: PythonPackageManager,
       requirements: List<PyRequirement>,
       extraArgs: List<String>,
-      indicator: ProgressIndicator,
     ): Result<Unit> {
-      requirements.forEachIndexed { index, requirement ->
-        indicator.text = PyBundle.message("python.packaging.progress.text.installing.specific.package", requirement.presentableText)
-        updateProgress(indicator, index, requirements.size)
-
-        val specification = PythonSimplePackageSpecification(requirement.name, requirement.versionSpecs.firstOrNull()?.version, null)
-        manager.installPackage(specification, extraArgs).onFailure {
-          return Result.failure(it)
-        }
+      val specs = requirements.map { requirement ->
+         PythonSimplePackageSpecification(requirement.name, requirement.versionSpecs.firstOrNull()?.version, null)
       }
-
-      return Result.success(Unit)
-    }
-
-    private fun updateProgress(indicator: ProgressIndicator, index: Int, total: Int) {
-      indicator.isIndeterminate = index == 0
-      if (total > 0) {
-        indicator.fraction = index.toDouble() / total
-      }
+      return manager.installPackages(specs, extraArgs, withBackgroundProgress = true).map { }
     }
 
     @JvmStatic

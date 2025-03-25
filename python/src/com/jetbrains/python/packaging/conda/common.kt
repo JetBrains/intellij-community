@@ -46,4 +46,10 @@ object CondaPackageRepository : PyPackageRepository("Conda", "", "") {
   override fun createPackageSpecification(packageName: String, version: String?, relation: PyRequirementRelation?): PythonPackageSpecification {
     return CondaPackageSpecification(packageName, version, relation)
   }
+
+  override fun createForcedSpecPackageSpecification(packageName: String, versionSpecs: String?): PythonPackageSpecification {
+    val spec = CondaPackageSpecification(packageName, null, null)
+    spec.versionSpecs = versionSpecs
+    return spec
+  }
 }

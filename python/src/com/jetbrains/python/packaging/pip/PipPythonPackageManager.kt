@@ -29,7 +29,7 @@ open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageMa
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     PipManagementInstaller(sdk, this).installManagementIfNeeded()
     try {
-      runPackagingTool("install", specification.buildInstallationString() + options, PyBundle.message("python.packaging.install.progress", specification.name))
+      runPackagingTool("install", specification.buildInstallationString() + options, PyBundle.message("python.packaging.install.progress", specification.name), withBackgroundProgress = false)
     }
     catch (ex: ExecutionException) {
       return Result.failure(ex)

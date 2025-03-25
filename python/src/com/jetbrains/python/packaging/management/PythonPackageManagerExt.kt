@@ -4,7 +4,6 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.RunCanceledByUserException
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.targetPath
@@ -15,7 +14,6 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PyBundle
@@ -30,8 +28,6 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
@@ -44,7 +40,10 @@ fun PythonPackageManager.launchReload() {
   }
 }
 
-suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: List<String>, @Nls text: String): String {
+suspend fun PythonPackageManager.runPackagingTool(
+  operation: String, arguments: List<String>, @Nls text: String,
+  withBackgroundProgress: Boolean = true,
+): String {
   // todo[akniazev]: check for package management tools
   val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
   val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
@@ -99,18 +98,8 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   val commandLineString = commandLine.joinToString(" ")
 
   thisLogger().debug("Running python packaging tool. Operation: $operation")
-  val handler = blockingContext {
-    CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
-  }
 
-  val result = withBackgroundProgress(project, text, cancellable = true) {
-    withContext(Dispatchers.IO) {
-      blockingContext {
-        handler.runProcess(10 * 60 * 1000)
-      }
-    }
-  }
-
+  val result = PythonPackageManagerRunner.runProcess(this, process, commandLineString, text, withBackgroundProgress)
   if (result.isCancelled) throw RunCanceledByUserException()
   result.checkSuccess(thisLogger())
   val exitCode = result.exitCode
@@ -153,6 +142,10 @@ fun PythonRepositoryManager.createSpecification(
   versionSpec: String? = null,
 ): PythonPackageSpecification? {
   val normalizePackageName = normalizePackageName(name)
-  val repository = packagesByRepository().firstOrNull { it.second.contains(normalizePackageName) }?.first
+  val repository = packagesByRepository().firstOrNull { repo ->
+    val packages = repo.second
+    packages.contains(normalizePackageName) ||
+    repo.second.any { normalizePackageName(it) == normalizePackageName }
+  }?.first
   return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }
