@@ -59,6 +59,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param items The list of items to display in the dropdown
  * @param selectedIndex The index of the currently selected item
  * @param onItemSelected Called when an item is selected, with the new index and item
+ * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @param modifier Modifier to be applied to the combo box
  * @param isEnabled Controls whether the combo box can be interacted with
  * @param outline The outline style to be applied to the combo box
@@ -67,7 +68,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param style The visual styling configuration for the combo box
  * @param textStyle The typography style to be applied to the items
  * @param onPopupVisibleChange Called when the popup visibility changes
- * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
+ * @param listState The State object for the selectable lazy list in the popup
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
@@ -87,7 +88,6 @@ public fun <T : Any> ListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
-    labelContent: @Composable () -> Unit,
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
@@ -174,7 +174,7 @@ public fun <T : Any> ListComboBox(
         interactionSource = interactionSource,
         outline = outline,
         popupManager = popupManager,
-        labelContent = labelContent
+        labelContent = { itemContent(items[selectedIndex], false, false) }
     ) {
         PopupContent(
             items = items,
@@ -213,6 +213,7 @@ public fun <T : Any> ListComboBox(
  * @param items The list of items to display in the dropdown
  * @param selectedIndex The index of the currently selected item
  * @param onItemSelected Called when an item is selected, with the new index and item
+ * @param itemToLabel Used to transform the popup item in the text field content
  * @param textFieldState The state of the text field, defaults to the text of the selected item
  * @param modifier Modifier to be applied to the combo box
  * @param isEnabled Controls whether the combo box can be interacted with
@@ -223,6 +224,7 @@ public fun <T : Any> ListComboBox(
  * @param textStyle The typography style to be applied to the items
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
+ * @param listState The State object for the selectable lazy list in the popup
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
@@ -374,6 +376,7 @@ public fun <T : Any> EditableListComboBox(
  * @param onItemSelected Called when the selected item changes, with the new index and item
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
+ * @param listState The State object for the selectable lazy list in the popup
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable
@@ -530,6 +533,7 @@ public fun ListComboBox(
  * @param onSelectedItemChange Called when the selected item changes, with the new index and item
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
+ * @param listState The State object for the selectable lazy list in the popup
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable

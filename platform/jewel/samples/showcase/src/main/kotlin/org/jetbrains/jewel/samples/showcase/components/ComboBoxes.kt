@@ -122,16 +122,6 @@ private fun ListComboBoxes() {
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
                 onItemSelected = { index -> selectedIndex = index },
-                labelContent = {
-                    val programmingLanguage = languageOptions[selectedIndex]
-                    SimpleListItem(
-                        text = programmingLanguage.name,
-                        iconContentDescription = programmingLanguage.name,
-                        icon = programmingLanguage.icon,
-                        isSelected = false,
-                        isActive = true,
-                    )
-                },
                 itemKeys = { _, item -> item },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
@@ -165,16 +155,6 @@ private fun ListComboBoxes() {
                 maxPopupHeight = 150.dp,
                 onItemSelected = { index -> selectedIndex = index },
                 itemKeys = { index, _ -> index },
-                labelContent = {
-                    val programmingLanguage = languageOptions[selectedIndex]
-                    SimpleListItem(
-                        text = programmingLanguage.name,
-                        iconContentDescription = programmingLanguage.name,
-                        icon = programmingLanguage.icon,
-                        isSelected = false,
-                        isActive = true,
-                    )
-                },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item.name,
