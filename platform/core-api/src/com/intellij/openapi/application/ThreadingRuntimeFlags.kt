@@ -16,7 +16,7 @@ val isLockStoredInContext: Boolean = System.getProperty("ide.store.lock.in.conte
  * - `false` means that the IDE will use backend with two locks
  */
 @get:ApiStatus.Internal
-val useNestedLocking: Boolean = System.getProperty("ide.nested.locking.enabled", "false").toBoolean()
+val useNestedLocking: Boolean = System.getProperty("ide.nested.locking.enabled", "true").toBoolean()
 
 /**
  * - `false` means that [backgroundWriteAction] will perform write actions from a non-modal context on a background thread
