@@ -8,7 +8,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus.Experimental
 
+@Experimental
 abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement, SigPresentation : SignatureHtmlPresentation> : ParameterInfoHandler<ParameterOwner, ParameterInfoHandlerWithColoredSyntaxData> {
 
   final override fun findElementForParameterInfo(context: CreateParameterInfoContext): ParameterOwner? {
