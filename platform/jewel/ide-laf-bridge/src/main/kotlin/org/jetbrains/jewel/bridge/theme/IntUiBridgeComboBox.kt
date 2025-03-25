@@ -45,7 +45,7 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
 
     val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize().toDpSize()
     val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
-    return ComboBoxStyle(
+    val comboBoxStyle = ComboBoxStyle(
         colors = colors,
         metrics =
             ComboBoxMetrics(
@@ -59,4 +59,6 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
             ),
         icons = ComboBoxIcons(chevronDown = AllIconsKeys.General.ChevronDown),
     )
+    println(comboBoxStyle)
+    return comboBoxStyle
 }

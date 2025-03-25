@@ -386,7 +386,12 @@ public fun ComboBox(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.focusable(false).focusProperties { canFocus = false },
             ) {
-                Box(modifier = Modifier.weight(1f).height(style.metrics.minSize.height)) { labelContent() }
+                Box(
+                    modifier = Modifier.weight(1f).height(style.metrics.minSize.height),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    labelContent()
+                }
                 Chevron(style, enabled)
             }
         }
