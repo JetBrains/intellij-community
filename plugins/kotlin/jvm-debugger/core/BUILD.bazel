@@ -55,8 +55,11 @@ jvm_library(
     "//platform/statistics",
     "//platform/util",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "@lib//:gson",
     "//java/debugger/shared:java-debugger-impl-shared",
     "//platform/util/jdom",
+    "//java/java-runtime:rt",
+    "@lib//:kotlin-metadata",
   ],
   runtime_deps = [":kotlin-jvm-debugger-core_resources"]
 )
