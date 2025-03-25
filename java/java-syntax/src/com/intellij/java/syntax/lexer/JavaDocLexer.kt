@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.lexer
 
-import com.intellij.java.syntax.element.JavaDocCommentSyntaxTokenTypes
+import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
 import com.intellij.java.syntax.element.JavaDocSyntaxTokenTypes
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.util.lexer.LexerBase
@@ -9,19 +9,17 @@ import com.intellij.platform.syntax.util.lexer.MergingLexerAdapter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.CharArrayUtilKmp.containLineBreaks
 
-class JavaDocLexer private constructor(tokenTypes: JavaDocCommentSyntaxTokenTypes, isJdk15Enabled: Boolean) : MergingLexerAdapter(
+class JavaDocLexer private constructor(isJdk15Enabled: Boolean) : MergingLexerAdapter(
   original = AsteriskStripperLexer(
-    myFlex = _JavaDocLexer(isJdk15Enabled, tokenTypes),
-    myTokenTypes = tokenTypes
+    myFlex = _JavaDocLexer(isJdk15Enabled),
   ),
-  tokenSet = tokenTypes.spaceCommentsTokenSet
+  tokenSet = JavaDocSyntaxTokenTypes.spaceCommentsTokenSet
 ) {
-  constructor(level: LanguageLevel) : this(JavaDocSyntaxTokenTypes, level.isAtLeast(LanguageLevel.JDK_1_5))
+  constructor(level: LanguageLevel) : this(level.isAtLeast(LanguageLevel.JDK_1_5))
 }
 
 private class AsteriskStripperLexer(
   private val myFlex: _JavaDocLexer,
-  private val myTokenTypes: JavaDocCommentSyntaxTokenTypes,
 ) : LexerBase() {
   private lateinit var myBuffer: CharSequence
   private var myBufferIndex = 0
@@ -81,7 +79,7 @@ private class AsteriskStripperLexer(
     if (myTokenType != null) return
     doLocateToken()
 
-    if (myTokenType === myTokenTypes.space) {
+    if (myTokenType === JavaDocSyntaxTokenType.DOC_SPACE) {
       myAfterLineBreak = containLineBreaks(myBuffer, getTokenStart(), getTokenEnd())
     }
   }
@@ -117,7 +115,7 @@ private class AsteriskStripperLexer(
 
       myInLeadingSpace = true
       if (myBufferIndex < myTokenEndOffset) {
-        myTokenType = myTokenTypes.commentLeadingAsterisks
+        myTokenType = JavaDocSyntaxTokenType.DOC_COMMENT_LEADING_ASTERISKS
         return
       }
     }
@@ -139,9 +137,9 @@ private class AsteriskStripperLexer(
 
       if (myBufferIndex < myTokenEndOffset) {
         myTokenType = if (lf || state == _JavaDocLexer.PARAM_TAG_SPACE || state == _JavaDocLexer.TAG_DOC_SPACE || state == _JavaDocLexer.INLINE_TAG_NAME || state == _JavaDocLexer.DOC_TAG_VALUE_IN_PAREN || state == _JavaDocLexer.SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON)
-          myTokenTypes.space
+          JavaDocSyntaxTokenType.DOC_SPACE
         else
-          myTokenTypes.commentData
+          JavaDocSyntaxTokenType.DOC_COMMENT_DATA
 
         return
       }
