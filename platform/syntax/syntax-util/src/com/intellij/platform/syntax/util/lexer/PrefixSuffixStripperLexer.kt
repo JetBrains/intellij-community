@@ -100,7 +100,7 @@ public final class PrefixSuffixStripperLexer extends LexerBase {
       myTokenType = myMiddleTokenType;
       if ( (myBufferArray != null && CharArrayUtil.regionMatches(myBufferArray, suffixStart, myBufferEnd, mySuffix)) ||
            (myBufferArray == null && CharArrayUtil.regionMatches(myBuffer, suffixStart, myBufferEnd, mySuffix))
-         ) {
+      ) {
         myTokenEnd = suffixStart;
         if (myTokenStart < myTokenEnd) {
           myState = 2;
