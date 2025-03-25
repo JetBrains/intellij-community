@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Defines the model for the data displayed in the standard structure view or file structure
@@ -107,18 +107,21 @@ public interface StructureViewModel extends TreeModel, Disposable {
     }
   }
 
+  /**
+   * @deprecated use ClickHandler
+   */
+  @Deprecated(forRemoval = true, since = "2025.2")
   interface ActionHandler {
 
-    /**
-     * @deprecated use the method with callback
-     */
-    @Deprecated(forRemoval = true, since = "2025.2")
     boolean handleClick(StructureViewTreeElement element, int fragmentIndex);
 
-    @ApiStatus.Experimental
-    default void handleClick(StructureViewTreeElement element, int fragmentIndex, Consumer<Boolean> handledCallback) {
-      handledCallback.accept(handleClick(element, fragmentIndex));
-    }
+  }
+
+  @ApiStatus.Experimental
+  interface ClickHandler {
+
+    CompletableFuture<Boolean> handle(StructureViewTreeElement element, int fragmentIndex);
 
   }
+
 }

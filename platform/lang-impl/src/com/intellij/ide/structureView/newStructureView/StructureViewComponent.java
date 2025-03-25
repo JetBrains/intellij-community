@@ -79,6 +79,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1003,13 +1004,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void processMouseEvent(MouseEvent event) {
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
-      if (myTreeModel instanceof StructureViewModel.ActionHandler actionHandler) {
-        processCustomEventHandler(actionHandler, event, (Boolean handled) -> {
-          if (handled)
-            event.consume();
-          else
-            super.processMouseEvent(event);
-        });
+      if (myTreeModel instanceof StructureViewModel.ActionHandler || myTreeModel instanceof StructureViewModel.ClickHandler) {
+        processCustomEventHandler(myTreeModel, event)
+          .completeOnTimeout(false, 1, TimeUnit.SECONDS)
+          .whenComplete((Boolean handled, Throwable t) -> {
+            if (handled != null && handled)
+              event.consume();
+            else
+              super.processMouseEvent(event);
+          });
       }
       else super.processMouseEvent(event);
     }
@@ -1049,46 +1052,32 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return super.getFileColorForPath(path);
     }
 
-    private void processCustomEventHandler(
-      StructureViewModel.ActionHandler actionHandler, MouseEvent event, Consumer<Boolean> handledCallback
+    private CompletableFuture<Boolean> processCustomEventHandler(
+      StructureViewModel handler, MouseEvent event
     ) {
-      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) {
-        handledCallback.consume(false);
-        return;
-      }
+      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return CompletableFuture.completedFuture(false);
       TreePath path = getPathForLocation(event.getX(), event.getY());
-      if (path == null) {
-        handledCallback.consume(false);
-        return;
-      }
+      if (path == null) return CompletableFuture.completedFuture(false);
       Object lastPathComponent = path.getLastPathComponent();
       StructureViewTreeElement treeElement = getStructureTreeElement(lastPathComponent);
-      if (treeElement == null) {
-        handledCallback.consume(false);
-        return;
-      }
+      if (treeElement == null) return CompletableFuture.completedFuture(false);
 
       Rectangle pathBounds = getPathBounds(path);
-      if (pathBounds == null) {
-        handledCallback.consume(false);
-        return;
-      }
+      if (pathBounds == null) return CompletableFuture.completedFuture(false);
       int dx = event.getX() - (int) pathBounds.getX();
-      if (dx < 0 || dx > pathBounds.width) {
-        handledCallback.consume(false);
-        return;
-      }
+      if (dx < 0 || dx > pathBounds.width) return CompletableFuture.completedFuture(false);
 
       Component component = this.cellRenderer.getTreeCellRendererComponent(this, lastPathComponent, false, false, true, getRowForPath(path), false);
-      if (!(component instanceof SimpleColoredComponent simpleColoredComponent)) {
-        handledCallback.consume(false);
-        return;
-      }
+      if (!(component instanceof SimpleColoredComponent simpleColoredComponent)) return CompletableFuture.completedFuture(false);
       int fragmentIndex = simpleColoredComponent.findFragmentAt(dx);
-      if (fragmentIndex >= 0)
-        actionHandler.handleClick(treeElement, fragmentIndex, handledCallback);
+      if (fragmentIndex < 0)
+        return CompletableFuture.completedFuture(false);
+      else if (handler instanceof StructureViewModel.ActionHandler actionHandler)
+        return CompletableFuture.completedFuture(actionHandler.handleClick(treeElement, fragmentIndex));
+      else if (handler instanceof StructureViewModel.ClickHandler actionHandler)
+        return actionHandler.handle(treeElement, fragmentIndex);
       else
-        handledCallback.accept(false);
+        return CompletableFuture.completedFuture(false);
     }
 
     @Override

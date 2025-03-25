@@ -53,8 +53,8 @@
 - a:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isImplicitSaveAllowed(com.intellij.openapi.editor.Document):Z
 - a:saveAs(com.intellij.ide.lightEdit.LightEditorInfo,com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.lightEdit.LightEditorInfo
-com.intellij.ide.structureView.StructureViewModel$ActionHandler
-- *:handleClick(com.intellij.ide.structureView.StructureViewTreeElement,I,java.util.function.Consumer):V
+*:com.intellij.ide.structureView.StructureViewModel$ClickHandler
+- a:handle(com.intellij.ide.structureView.StructureViewTreeElement,I):java.util.concurrent.CompletableFuture
 com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
 - *:getMinimumAutoExpandDepth():I
 *:com.intellij.ide.ui.ToolbarSettings

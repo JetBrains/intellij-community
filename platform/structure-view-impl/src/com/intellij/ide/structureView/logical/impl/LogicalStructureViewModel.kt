@@ -26,14 +26,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
 import javax.swing.Icon
 
 @ApiStatus.Internal
 class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
   : StructureViewModelBase(psiFile, editor, elementBuilder.createViewTreeElement(assembledModel)),
-    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ActionHandler {
+    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ClickHandler {
 
   constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>):
     this(psiFile, editor, assembledModel, ElementsBuilder())
@@ -54,20 +54,17 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
 
   override fun isSmartExpand(): Boolean = false
 
-  override fun handleClick(element: StructureViewTreeElement?, fragmentIndex: Int): Boolean = false
-
-  override fun handleClick(element: StructureViewTreeElement, fragmentIndex: Int, handledCallback: Consumer<Boolean>) {
+  override fun handle(element: StructureViewTreeElement, fragmentIndex: Int): CompletableFuture<Boolean> {
     val model = getModel(element)
     val presentation = model?.let { LogicalModelPresentationProvider.getForObject(it) }
     if (model == null || presentation == null) {
-      handledCallback.accept(false)
-      return
+      return CompletableFuture.completedFuture(false)
     }
-    presentation.handleClick(model, fragmentIndex) { handled ->
+    return presentation.handleClick(model, fragmentIndex).thenApply { handled ->
       if (handled) {
         StructureViewEventsCollector.logCustomClickHandled(model::class.java)
       }
-      handledCallback.accept(handled)
+      handled
     }
   }
 
