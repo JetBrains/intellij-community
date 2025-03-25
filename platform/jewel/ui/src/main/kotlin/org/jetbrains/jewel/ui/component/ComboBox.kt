@@ -68,7 +68,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param labelText The text to display in the dropdown field
  * @param modifier Modifier to be applied to the combo box
  * @param popupModifier Modifier to be applied to the popup
- * @param isEnabled Controls whether the combo box can be interacted with
+ * @param enabled Controls whether the combo box can be interacted with
  * @param outline The outline style to be applied to the combo box
  * @param maxPopupHeight The maximum height of the popup
  * @param interactionSource Source of interactions for this combo box
@@ -251,12 +251,11 @@ public fun ComboBox(
  *
  * @param modifier Modifier to be applied to the combo box
  * @param popupModifier Modifier to be applied to the popup
- * @param isEnabled Controls whether the combo box can be interacted with
+ * @param enabled Controls whether the combo box can be interacted with
  * @param outline The outline style to be applied to the combo box
  * @param maxPopupHeight The maximum height of the popup
  * @param interactionSource Source of interactions for this combo box
  * @param style The visual styling configuration for the combo box
- * @param textStyle The typography style to be applied to the text
  * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
  * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
  * @param popupManager Manager for controlling the popup visibility state
@@ -423,7 +422,7 @@ public fun ComboBox(
  * Renders the chevron (down arrow) icon for the combo box.
  *
  * @param style The visual styling configuration for the combo box
- * @param isEnabled Whether the combo box is enabled, affects the icon color
+ * @param enabled Whether the combo box is enabled, affects the icon color
  */
 @Composable
 private fun Chevron(style: ComboBoxStyle, enabled: Boolean) {
