@@ -207,13 +207,30 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     final boolean surroundWithTag = PsiUtil.getAnnotationBooleanAttribute(collectionAnnotation, "surroundWithTag");
     if (surroundWithTag) return; // todo Set, List, Array
 
-    final String tagName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "elementTag", null);
-    final String attrName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "elementValueAttribute", null);
     final PsiType elementType = getElementType(field.getType());
-    if (elementType == null || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
+
+    final String tagName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "elementName", null);
+    final String propertyElementName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "propertyElementName", null);
+    final String attrName = PsiUtil.getAnnotationStringAttribute(collectionAnnotation, "valueAttributeName", null);
+
+    if (elementType == null
+        || TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(elementType)
         || CommonClassNames.JAVA_LANG_STRING.equals(elementType.getCanonicalText())
         || TypeConversionUtil.isEnumType(elementType)) {
-      if (tagName != null && attrName == null) {
+      if (tagName != null && propertyElementName != null && attrName == null) {
+        DomExtension extension = registrar
+          .registerCollectionChildrenExtension(new XmlName(propertyElementName), DomElement.class)
+          .setDeclaringElement(field);
+        extension.addExtender(new DomExtender() {
+          @Override
+          public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
+            registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class);
+          }
+        });
+
+        markAsRequired(extension, required);
+      }
+      else if (tagName != null && attrName == null) {
         final DomExtension extension = registrar
           .registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class)
           .setDeclaringElement(field);

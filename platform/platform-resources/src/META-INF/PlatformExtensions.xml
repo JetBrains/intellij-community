@@ -1330,6 +1330,7 @@
     <applicationService serviceInterface="com.intellij.util.net.ssl.CertificateWarningDialogProvider"
                         serviceImplementation="com.intellij.net.ssl.CertificateWarningDialogProviderImpl"/>
 
+    <!--suppress PluginXmlValidity -->
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.MyRawTypedHandler"/>
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
@@ -1789,7 +1790,7 @@
 
     <registryKey key="highlighting.passes.cache.file.size.limit"
                  defaultValue="500"
-                 description="Only the files with line count not bigger that the value are aviable for highlighting passes preloading"/>
+                 description="Only the files with line count not bigger that the value are available for highlighting passes preloading"/>
 
     <registryKey key="highlighting.passes.cache.size"
                  defaultValue="25"
