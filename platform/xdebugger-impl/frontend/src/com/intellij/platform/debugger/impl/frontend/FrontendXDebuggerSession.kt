@@ -216,12 +216,12 @@ internal class FrontendXDebuggerSession private constructor(
       withContext(Dispatchers.EDT) {
         XDebugSessionTab.create(proxy, tabInfo.iconId?.icon(), tabInfo.executionEnvironmentProxyDto?.executionEnvironment(project, cs), tabInfo.contentToReuse,
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
-          runContentDescriptor?.coroutineScope?.awaitCancellationAndInvoke {
-            tabInfo.tabClosedCallback.send(Unit)
-          }
           _sessionTab = this
           proxy.onTabInitialized(this)
           showTab()
+          runContentDescriptor?.coroutineScope?.awaitCancellationAndInvoke {
+            tabInfo.tabClosedCallback.send(Unit)
+          }
           pausedFlow.toFlow().collectLatest { paused ->
             if (paused == null) return@collectLatest
             withContext(Dispatchers.EDT) {
