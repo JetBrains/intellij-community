@@ -214,6 +214,7 @@ public fun <T : Any> ListComboBox(
  * @param selectedIndex The index of the currently selected item
  * @param onItemSelected Called when an item is selected, with the new index
  * @param itemToLabel Used to transform the popup item in the text field content
+ * @param itemKeys Function to generate unique keys for items
  * @param textFieldState The state of the text field, defaults to the text of the selected item
  * @param modifier Modifier to be applied to the combo box
  * @param isEnabled Controls whether the combo box can be interacted with
@@ -223,7 +224,6 @@ public fun <T : Any> ListComboBox(
  * @param style The visual styling configuration for the combo box
  * @param textStyle The typography style to be applied to the items
  * @param onPopupVisibleChange Called when the popup visibility changes
- * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @param listState The State object for the selectable lazy list in the popup
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
@@ -235,6 +235,7 @@ public fun <T : Any> EditableListComboBox(
     selectedIndex: Int,
     onItemSelected: (Int) -> Unit,
     itemToLabel: (T) -> String,
+    itemKeys: (Int, T) -> Any,
     textFieldState: TextFieldState = rememberTextFieldState(itemToLabel(items[selectedIndex])),
     modifier: Modifier = Modifier,
     isEnabled: Boolean = true,
@@ -244,7 +245,6 @@ public fun <T : Any> EditableListComboBox(
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
-    itemKeys: (Int, T) -> Any,
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {

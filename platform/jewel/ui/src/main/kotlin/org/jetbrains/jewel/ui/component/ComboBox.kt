@@ -59,6 +59,26 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
+/**
+ * A dropdown component that displays a text label and a popup with custom content.
+ *
+ * This component provides a standard dropdown UI with a text label. When clicked, it displays a popup with
+ * customizable content. Supports keyboard navigation, focus management, and various visual states.
+ *
+ * @param labelText The text to display in the dropdown field
+ * @param modifier Modifier to be applied to the combo box
+ * @param popupModifier Modifier to be applied to the popup
+ * @param isEnabled Controls whether the combo box can be interacted with
+ * @param outline The outline style to be applied to the combo box
+ * @param maxPopupHeight The maximum height of the popup
+ * @param interactionSource Source of interactions for this combo box
+ * @param style The visual styling configuration for the combo box
+ * @param textStyle The typography style to be applied to the text
+ * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
+ * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
+ * @param popupManager Manager for controlling the popup visibility state
+ * @param popupContent Composable content for the popup
+ */
 @Composable
 public fun ComboBox(
     labelText: String,
@@ -227,6 +247,28 @@ public fun ComboBox(
     }
 }
 
+/**
+ * A dropdown component that displays custom content in the label area and a popup with custom content.
+ *
+ * This component provides a standard dropdown UI with customizable label content. When clicked, it displays a popup with
+ * customizable content. Supports keyboard navigation, focus management, and various visual states.
+ *
+ * This version of ComboBox allows for complete customization of the label area through a composable function.
+ *
+ * @param modifier Modifier to be applied to the combo box
+ * @param popupModifier Modifier to be applied to the popup
+ * @param isEnabled Controls whether the combo box can be interacted with
+ * @param outline The outline style to be applied to the combo box
+ * @param maxPopupHeight The maximum height of the popup
+ * @param interactionSource Source of interactions for this combo box
+ * @param style The visual styling configuration for the combo box
+ * @param textStyle The typography style to be applied to the text
+ * @param onArrowDownPress Called when the down arrow key is pressed while the popup is visible
+ * @param onArrowUpPress Called when the up arrow key is pressed while the popup is visible
+ * @param popupManager Manager for controlling the popup visibility state
+ * @param labelContent Composable content for the label area of the combo box
+ * @param popupContent Composable content for the popup
+ */
 @ExperimentalJewelApi
 @Composable
 public fun ComboBox(
@@ -386,6 +428,12 @@ public fun ComboBox(
     }
 }
 
+/**
+ * Renders the chevron (down arrow) icon for the combo box.
+ *
+ * @param style The visual styling configuration for the combo box
+ * @param isEnabled Whether the combo box is enabled, affects the icon color
+ */
 @Composable
 private fun Chevron(style: ComboBoxStyle, isEnabled: Boolean) {
     Box(
