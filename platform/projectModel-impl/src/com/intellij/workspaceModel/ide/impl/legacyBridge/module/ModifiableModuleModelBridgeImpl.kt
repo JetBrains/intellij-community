@@ -123,8 +123,8 @@ internal class ModifiableModuleModelBridgeImpl(
                                                             diff = diff,
                                                             isNew = isNew,
                                                             precomputedExtensionModel = null,
-                                                            plugins = plugins,
-                                                            corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
+                                                            plugins = plugins
+    )
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
     modulesToAdd[moduleEntity.name] = moduleInstance
     currentModuleSet.add(moduleInstance)

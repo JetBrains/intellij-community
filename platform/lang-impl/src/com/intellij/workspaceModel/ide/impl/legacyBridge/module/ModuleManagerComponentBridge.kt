@@ -8,6 +8,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleComponentManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
@@ -118,7 +119,6 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
         isNew = true,
         precomputedExtensionModel = null,
         plugins = plugins,
-        corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID },
       )
       LOG.debug { "Creating components ${change.newEntity.name}" }
       bridge.callCreateComponents()
@@ -144,7 +144,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
   }
 
   override fun registerNonPersistentModuleStore(module: ModuleBridge) {
-    (module as ModuleBridgeImpl).getModuleBridgeComponentManager().registerService(
+    (module as ModuleBridgeImpl).getModuleComponentManager().registerService(
       serviceInterface = IComponentStore::class.java,
       implementation = NonPersistentModuleStore::class.java,
       pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
@@ -188,7 +188,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     diff: MutableEntityStorage?,
     init: (ModuleBridge) -> Unit
   ): ModuleBridge {
-    val componentManager = ModuleBridgeComponentManager(project.getComponentManagerImpl())
+    val componentManager = ModuleComponentManager(project.getComponentManagerImpl())
     return ModuleBridgeImpl(
       moduleEntityId = symbolicId,
       name = name,

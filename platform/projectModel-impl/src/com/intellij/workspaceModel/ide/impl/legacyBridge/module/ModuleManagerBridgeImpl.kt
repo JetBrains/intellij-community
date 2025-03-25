@@ -193,7 +193,6 @@ abstract class ModuleManagerBridgeImpl(
     initializeFacets: Boolean,
   ): Unit = loadAllModulesTimeMs.addMeasuredTime {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-    val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
 
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
@@ -209,8 +208,7 @@ abstract class ModuleManagerBridgeImpl(
                                                             diff = targetBuilder,
                                                             isNew = false,
                                                             precomputedExtensionModel = precomputedExtensionModel,
-                                                            plugins = plugins,
-                                                            corePlugin = corePlugin)
+                                                            plugins = plugins)
             }
             module.callCreateComponentsNonBlocking()
             moduleEntity to module
@@ -476,7 +474,6 @@ abstract class ModuleManagerBridgeImpl(
     isNew: Boolean,
     precomputedExtensionModel: PrecomputedExtensionModel?,
     plugins: List<IdeaPluginDescriptorImpl>,
-    corePlugin: IdeaPluginDescriptorImpl?,
   ): ModuleBridge {
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
@@ -488,10 +485,9 @@ abstract class ModuleManagerBridgeImpl(
       diff = diff
     ) { module ->
       module.registerComponents(
-        corePlugin = corePlugin,
         modules = plugins,
-        app = ApplicationManager.getApplication(),
         precomputedExtensionModel = precomputedExtensionModel,
+        app = ApplicationManager.getApplication(),
         listenerCallbacks = null
       )
 
@@ -512,15 +508,13 @@ abstract class ModuleManagerBridgeImpl(
     isNew: Boolean,
     precomputedExtensionModel: PrecomputedExtensionModel?,
     plugins: List<IdeaPluginDescriptorImpl>,
-    corePlugin: IdeaPluginDescriptorImpl?,
   ): ModuleBridge = createModuleInstanceTimeMs.addMeasuredTime {
     val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
                                                                versionedStorage = versionedStorage,
                                                                diff = diff,
                                                                isNew = isNew,
                                                                precomputedExtensionModel = precomputedExtensionModel,
-                                                               plugins = plugins,
-                                                               corePlugin = corePlugin)
+                                                               plugins = plugins)
     module.callCreateComponents()
     return@addMeasuredTime module
   }

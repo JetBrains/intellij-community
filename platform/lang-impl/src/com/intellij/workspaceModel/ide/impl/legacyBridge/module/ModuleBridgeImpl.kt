@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
@@ -14,7 +13,6 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.impl.DeprecatedModuleOptionManager
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
@@ -26,7 +24,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -50,9 +47,6 @@ class ModuleBridgeImpl(
   virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge,
   componentManager = componentManager
 ), ModuleBridge {
-
-  internal fun getModuleBridgeComponentManager(): ModuleBridgeComponentManager =
-    componentManager.getComponentManagerImpl() as ModuleBridgeComponentManager
 
   //override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
   //  val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
@@ -92,7 +86,7 @@ class ModuleBridgeImpl(
 
       val classLoader = javaClass.classLoader
       val moduleStoreImpl = classLoader.loadClass("com.intellij.configurationStore.ModuleStoreImpl")
-      getModuleBridgeComponentManager().registerService(
+      getModuleComponentManager().registerService(
         serviceInterface = IComponentStore::class.java,
         implementation = moduleStoreImpl,
         pluginDescriptor = corePluginDescriptor,
@@ -108,11 +102,11 @@ class ModuleBridgeImpl(
 
   override fun callCreateComponents() {
     @Suppress("DEPRECATION")
-    getModuleBridgeComponentManager().createComponents()
+    getModuleComponentManager().createComponents()
   }
 
   override suspend fun callCreateComponentsNonBlocking() {
-    getModuleBridgeComponentManager().createComponentsNonBlocking()
+    getModuleComponentManager().createComponentsNonBlocking()
   }
 
   override fun initFacets() = facetsInitializationTimeMs.addMeasuredTime {
@@ -120,22 +114,17 @@ class ModuleBridgeImpl(
   }
 
   override fun registerComponents(
-    corePlugin: IdeaPluginDescriptor?,
     modules: List<IdeaPluginDescriptorImpl>,
-    precomputedExtensionModel: PrecomputedExtensionModel?,
     app: Application?,
+    precomputedExtensionModel: PrecomputedExtensionModel?,
     listenerCallbacks: MutableList<in Runnable>?,
   ) {
-    getModuleBridgeComponentManager().superRegisterComponents(
+    getModuleComponentManager().registerComponents(
       modules = modules,
       app = app,
       precomputedExtensionModel = precomputedExtensionModel,
       listenerCallbacks = listenerCallbacks,
     )
-    if (corePlugin == null) {
-      return
-    }
-    unregisterComponent(DeprecatedModuleOptionManager::class.java)
   }
 
   override fun getOptionValue(key: String): String? {

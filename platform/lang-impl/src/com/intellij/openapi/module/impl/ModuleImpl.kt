@@ -65,7 +65,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(
     this.name = name
   }
 
-  private fun getModuleComponentManager(): ModuleComponentManager =
+  internal fun getModuleComponentManager(): ModuleComponentManager =
     componentManager.getComponentManagerImpl() as ModuleComponentManager
 
   override fun init() {

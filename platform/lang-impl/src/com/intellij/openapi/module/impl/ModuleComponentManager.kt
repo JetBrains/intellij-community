@@ -1,6 +1,8 @@
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -8,16 +10,17 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
-import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
 @ApiStatus.Internal
-open class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImpl(parent) {
+class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImpl(parent) {
 
   companion object {
     private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.java)
@@ -93,5 +96,17 @@ open class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManag
   
   override public fun createComponents() {
     super.createComponents()
+  }
+
+  override fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    precomputedExtensionModel: PrecomputedExtensionModel?,
+    listenerCallbacks: MutableList<in Runnable>?,
+  ) {
+    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    if (modules.any { it.pluginId == PluginManagerCore.CORE_ID}) {
+      unregisterComponent(DeprecatedModuleOptionManager::class.java)
+    }
   }
 }
