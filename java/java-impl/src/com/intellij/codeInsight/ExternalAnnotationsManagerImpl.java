@@ -4,6 +4,10 @@ package com.intellij.codeInsight;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.options.LocalFolderValidator;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.ui.OptPaneUtils;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -25,13 +29,9 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -44,6 +44,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -205,11 +206,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
           myPsiManager.dropPsiCaches();
           return;
         }
-        DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
-          if (!setupRootAndAnnotateExternally(entry, containingFile, project, annotation)) {
-            throw new CanceledConfigurationException();
-          }
-        });
+        setupRootAndAnnotateExternally(containingFile, project, annotation);
       }
       break;
     }
@@ -417,25 +414,34 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
     return itemTag;
   }
+  
+  static class RootConfig implements OptionContainer {
+    String myExternalAnnotationsRoot;
 
-  private boolean setupRootAndAnnotateExternally(@NotNull OrderEntry entry,
-                                                 @NotNull PsiFile containingFile, 
-                                                 @NotNull Project project,
-                                                 @NotNull ExternalAnnotation annotation) {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle(JavaBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
-    descriptor.setDescription(JavaBundle.message("external.annotations.root.chooser.description"));
-    descriptor.setForcedToUseIdeaFileChooser(true);
-    final VirtualFile newRoot = FileChooser.chooseFile(descriptor, project, null);
-    if (newRoot == null) {
-      myPsiManager.dropPsiCaches();
-      return false;
+    @Override
+    public @NotNull OptPane getOptionsPane() {
+      String title = JavaBundle.message("external.annotations.root.chooser");
+      return OptPane.pane(OptPane.string("myExternalAnnotationsRoot", title, new LocalFolderValidator(title)));
     }
-    ActionContext context = ActionContext.from(null, annotation.owner().getContainingFile());
-    ModCommandExecutor.executeInteractively(context, JavaBundle.message("update.external.annotations"), null, () ->
-      ModCommand.updateOptionList(containingFile, "OrderEntryConfiguration.externalAnnotations", list -> list.add(newRoot.getUrl()))
-        .andThen(getAddAnnotationCommand(newRoot, annotation, context)));
-    return true;
+  }
+
+  private void setupRootAndAnnotateExternally(@NotNull PsiFile containingFile,
+                                              @NotNull Project project,
+                                              @NotNull ExternalAnnotation annotation) {
+    RootConfig config = new RootConfig();
+    OptPaneUtils.editOptions(project, config, JavaBundle.message("external.annotations.root.chooser"), null, () -> {
+      String newRoot = config.myExternalAnnotationsRoot;
+      VirtualFile newRootFile = VfsUtil.findFile(Path.of(newRoot), true);
+      if (newRootFile == null) {
+        // TODO: error report
+        return;
+      }
+      ActionContext context = ActionContext.from(null, annotation.owner().getContainingFile());
+      ModCommandExecutor.executeInteractively(context, JavaBundle.message("update.external.annotations"), null, () ->
+        ModCommand.updateOptionList(containingFile, "OrderEntryConfiguration.externalAnnotations", 
+                                    list -> list.add(newRootFile.getUrl()))
+          .andThen(getAddAnnotationCommand(newRootFile, annotation, context)));
+    });
   }
   
   private record AnnotateForRootCommand(@NotNull ExternalAnnotationsManagerImpl manager, 
