@@ -295,16 +295,20 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       when (description) {
         is EntityGenericContentRootsDescription<*> -> contentIterators.addAll(description.createIterators())
         is LibraryRootsDescription -> {
-          description.createIterators(storage).forEach { iterator ->
-            if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
-              externalIterators.add(iterator)
+          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
+            description.createIterators(storage).forEach { iterator ->
+              if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
+                externalIterators.add(iterator)
+              }
             }
           }
         }
         is LibraryUrlRootsDescription -> {
-          description.createIterators(storage).forEach { iterator ->
-            if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
-              externalIterators.add(iterator)
+          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
+            description.createIterators(storage).forEach { iterator ->
+              if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
+                externalIterators.add(iterator)
+              }
             }
           }
         }
