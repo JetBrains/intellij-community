@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.*
 import com.intellij.openapi.project.Project
+import com.intellij.ui.IconManager
+import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.types.Variance
+import javax.swing.Icon
 
 object AddMemberToSupertypeFixFactory {
 
@@ -150,18 +153,27 @@ internal sealed class AddMemberToSupertypeFix(
 ) : ModCommandAction {
 
   abstract val kind: String
+  abstract val icon: Icon
 
   init {
     assert(candidateMembers.isNotEmpty())
   }
 
-  private class AddSelectedMemberToSupertypeFix(
+  private inner class AddSelectedMemberToSupertypeFix(
     element: KtCallableDeclaration,
     private val memberData: MemberData,
-    @param:IntentionFamilyName private val familyName: String,
+    private val isActionChooser: Boolean,
   ) : PsiUpdateModCommandAction<KtCallableDeclaration>(element) {
 
-    override fun getFamilyName(): @IntentionFamilyName String = familyName
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.member.supertype.family", kind)
+
+    override fun getPresentation(
+      context: ActionContext,
+      element: KtCallableDeclaration,
+    ): Presentation {
+      val (actionName, actionIcon) = if (isActionChooser) actionName(memberData) to icon else familyName to null
+      return Presentation.of(actionName).withIcon(actionIcon)
+    }
 
     override fun invoke(
       context: ActionContext,
@@ -181,12 +193,12 @@ internal sealed class AddMemberToSupertypeFix(
 
   override fun perform(context: ActionContext): ModCommand {
     return if (candidateMembers.size == 1) {
-      AddSelectedMemberToSupertypeFix(element, candidateMembers.first(), familyName).perform(context)
+      AddSelectedMemberToSupertypeFix(element, candidateMembers.first(), isActionChooser = false).perform(context)
     }
     else {
       ModCommand.chooseAction(
         KotlinBundle.message("fix.add.member.supertype.choose.type"),
-        candidateMembers.map { candidateMember -> AddSelectedMemberToSupertypeFix(element, candidateMember, actionName(candidateMember)) },
+        candidateMembers.map { candidateMember -> AddSelectedMemberToSupertypeFix(element, candidateMember, isActionChooser = true) },
       )
     }
   }
@@ -232,6 +244,7 @@ private class AddFunctionToSupertypeFix(
   functions: List<MemberData>,
 ) : AddMemberToSupertypeFix(element, functions) {
   override val kind: String = "function"
+  override val icon: Icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function)
 }
 
 private class AddPropertyToSupertypeFix(
@@ -239,4 +252,5 @@ private class AddPropertyToSupertypeFix(
   properties: List<MemberData>,
 ) : AddMemberToSupertypeFix(element, properties) {
   override val kind: String = "property"
+  override val icon: Icon = PlatformIcons.PROPERTY_ICON
 }
