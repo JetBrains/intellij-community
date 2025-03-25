@@ -12,7 +12,11 @@ object FreezeAnalyzer {
    * If analysis fails, it returns `null`.
    */
   fun analyzeFreeze(threadDump: String, testName: String? = null): FreezeAnalysisResult? {
-    val threadDumpWithoutCoroutine = threadDump.split("---------- Coroutine dump ----------")[0]
+    val threadDumpWithoutCoroutine = threadDump.substringBefore(
+      delimiter = "---------- Coroutine dump ----------"
+    ).substringBefore(
+      delimiter = "---------- Coroutine dump (stripped) ----------"
+    )
     val threadDumpParsed = ThreadDumpParser.parse(threadDumpWithoutCoroutine)
     val edtThread = threadDumpParsed.firstOrNull { it.isEDT }
     return edtThread?.let { analyzeEDThread(it, threadDumpParsed, testName) }
@@ -39,6 +43,7 @@ object FreezeAnalyzer {
     for (it in getPotentialMethodsWithLock(edt.stackTrace)) {
       val clazz = extractClassFromMethod(it)
       possibleThreadWithLock = threadDumpParsed.asSequence()
+        .filter { it.name != "Coroutine dump" }
         .filter { !it.isWaiting }
         .firstOrNull { it.stackTrace.contains(clazz) }
       if (possibleThreadWithLock != null) {
@@ -70,6 +75,7 @@ object FreezeAnalyzer {
 
   private fun findThreadThatTookReadWriteLock(threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? =
     threadDumpParsed.asSequence()
+      .filter { it.name != "Coroutine dump" }
       .filter { !isWaitingOnReadWriteLock(it) && !it.isKnownJDKThread }
       .firstOrNull { isReadWriteLockTaken(it.stackTrace) }
       ?.let { threadState ->
