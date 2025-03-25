@@ -10,9 +10,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderFactoryMockAlphaLocal"/>
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderFactoryMockBetaLocal"/>
-
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.files.SeFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.actions.SeActionsProviderFactory"/>
   </extensions>

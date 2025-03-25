@@ -20,9 +20,5 @@
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.all.SeAllTabProvider"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsTabProvider"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.files.SeFilesTabProvider"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.mocks.SeTabProviderMockAlphaLocal"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.mocks.SeTabProviderMockBetaLocal"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.mocks.SeTabProviderMockCharlieRemote"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.mocks.SeTabProviderMockDeltaMixed"/>
   </extensions>
 </idea-plugin>
