@@ -12481,6 +12481,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/recursiveCall1.kt");
         }
 
+        @TestMetadata("simplifiedQualifier.kt")
+        public void testSimplifiedQualifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/simplifiedQualifier.kt");
+        }
+
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/topLevelFun.kt");
