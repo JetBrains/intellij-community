@@ -2,7 +2,10 @@ package com.intellij.python.hatch.runtime
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.EelProcessInteractiveHandler
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.WhatToExec.Binary
 import com.intellij.python.hatch.*
 import com.intellij.python.hatch.cli.HatchCli
@@ -22,15 +25,23 @@ class HatchRuntime(
 ) {
   fun hatchCli(): HatchCli = HatchCli(this)
 
+  fun withEnv(vararg envVars: Pair<String, String>): HatchRuntime {
+    return HatchRuntime(
+      hatchBinary = this.hatchBinary,
+      execOptions = this.execOptions.copy(env = this.execOptions.env + envVars)
+    )
+  }
+
   fun withWorkingDirectory(workDirectoryPath: Path): Result<HatchRuntime, HatchError> {
     if (!workDirectoryPath.isDirectory()) {
       return Result.failure(WorkingDirectoryNotFoundHatchError(workDirectoryPath))
     }
 
-    val execOptions = with(this.execOptions) {
-      ExecOptions(env, workDirectoryPath, processDescription, timeout)
-    }
-    return Result.success(HatchRuntime(this.hatchBinary, execOptions))
+    val runtime = HatchRuntime(
+      hatchBinary = this.hatchBinary,
+      execOptions = this.execOptions.copy(workingDirectory = workDirectoryPath)
+    )
+    return Result.success(runtime)
   }
 
   fun withBasePythonBinaryPath(basePythonPath: PythonBinary): Result<HatchRuntime, HatchError> {
@@ -38,13 +49,8 @@ class HatchRuntime(
       return Result.failure(BasePythonExecutableNotFoundHatchError(basePythonPath))
     }
 
-    val execOptions = with(this.execOptions) {
-      val modifiedEnv = env + mapOf(
-        HatchConstants.AppEnvVars.PYTHON to basePythonPath.toString()
-      )
-      ExecOptions(modifiedEnv, workingDirectory, processDescription, timeout)
-    }
-    return Result.success(HatchRuntime(this.hatchBinary, execOptions))
+    val runtime = withEnv(HatchConstants.AppEnvVars.PYTHON to basePythonPath.toString())
+    return Result.success(runtime)
   }
 
   /**

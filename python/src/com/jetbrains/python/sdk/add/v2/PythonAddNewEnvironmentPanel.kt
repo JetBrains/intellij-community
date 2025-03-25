@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
@@ -19,11 +20,7 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.showingScope
@@ -209,7 +206,14 @@ internal class PythonAddNewEnvironmentPanel(
     }.getOrThrow().first
   }
 
-  override suspend fun getSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> {
+  override suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> {
+    return when (selectedMode.get()) {
+      CUSTOM -> custom.currentSdkManager.createPythonModuleStructure(module)
+      else -> Result.success(Unit)
+    }
+  }
+
+  override suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> {
     model.navigator.saveLastState()
     val sdk = when (selectedMode.get()) {
       PROJECT_VENV -> {

@@ -143,10 +143,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
                                   HatchUIError.HatchExecutablePathIsNotValid(hatchExecutablePathString)
                                 )
       val hatchWorkingDirectory = if (projectPath.isDirectory()) projectPath else projectPath.parent
-      val hatchService = getHatchService(
-        workingDirectoryPath = hatchWorkingDirectory,
-        hatchExecutablePath = hatchExecutablePath,
-      ).getOr { return@withContext it }
+      val hatchService = hatchWorkingDirectory.getHatchService(hatchExecutablePath).getOr { return@withContext it }
 
       val hatchEnvironments = hatchService.findVirtualEnvironments().getOr { return@withContext it }
       val availableEnvironments = when {
