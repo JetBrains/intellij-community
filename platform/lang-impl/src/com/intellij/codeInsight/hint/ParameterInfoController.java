@@ -32,10 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.CharArrayUtil;
@@ -185,6 +182,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
     hintHint.setShowImmediately(true);
+
     if (!ExperimentalUI.isNewUI()) {
       hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
       hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
@@ -192,6 +190,8 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     }
     else {
       hintHint.setBorderInsets(JBUI.insets(8, 8, 10, 8));
+      hintHint.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
+      hintHint.setBorderColor(ColorUtil.blendColorsInRgb(myEditor.getColorsScheme().getDefaultBackground(), JBColor.GRAY, 0.1f));
     }
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
@@ -584,7 +584,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
     @Override
     public Color getBackground() {
-      return getComponentCount() == 0 || ExperimentalUI.isNewUI() ? super.getBackground() : getComponent(0).getBackground();
+      return getComponentCount() == 0 ? super.getBackground() : getComponent(0).getBackground();
     }
 
     @Override

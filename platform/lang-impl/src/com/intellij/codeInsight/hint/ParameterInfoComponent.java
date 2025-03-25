@@ -51,7 +51,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.codeInsight.hint.ParameterInfoControlPresentationUtilKt.renderSignaturePresentationToHtml;
+import static com.intellij.codeInsight.hint.ParameterInfoControlPresentationUtilKt.*;
 import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
 @VisibleForTesting
@@ -68,13 +68,14 @@ public final class ParameterInfoComponent extends JPanel {
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Color BACKGROUND = JBColor.namedColor("ParameterInfo.background", HintUtil.getInformationColor());
-  private static final Color FOREGROUND = JBColor.namedColor("ParameterInfo.foreground", new JBColor(0x1D1D1D, 0xBBBBBB));
-  private static final Color HIGHLIGHTED_COLOR = JBColor.namedColor("ParameterInfo.currentParameterForeground", new JBColor(0x1D1D1D, 0xE8E8E8));
-  private static final Color DISABLED_COLOR = JBColor.namedColor("ParameterInfo.disabledForeground", new JBColor(0xA8A8A8, 0x777777));
+  private final Color BACKGROUND;
+  private final Color FOREGROUND;
+  private final Color HIGHLIGHTED_COLOR;
+  private final Color DISABLED_COLOR;
+  private final Color HIGHLIGHTED_BACKGROUND;
+
   private static final Color CONTEXT_HELP_FOREGROUND = JBColor.namedColor("ParameterInfo.infoForeground", new JBColor(0x787878, 0x878787));
   static final Color BORDER_COLOR = JBColor.namedColor("ParameterInfo.borderColor", HintUtil.INFORMATION_BORDER_COLOR);
-  private static final Color HIGHLIGHTED_BACKGROUND = JBColor.namedColor("ParameterInfo.currentOverloadBackground", BORDER_COLOR);
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("ParameterInfo.lineSeparatorColor", BORDER_COLOR);
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
   private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
@@ -98,12 +99,19 @@ public final class ParameterInfoComponent extends JPanel {
   private boolean mySetup;
 
   @TestOnly
-  public static ParameterInfoUIContextEx createContext(Object[] objects, @NotNull Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
+  public static ParameterInfoUIContextEx createContext(Object[] objects,
+                                                       @NotNull Editor editor,
+                                                       @NotNull ParameterInfoHandler handler,
+                                                       int currentParameterIndex) {
     return createContext(objects, editor, handler, currentParameterIndex, null);
   }
 
   @TestOnly
-  public static ParameterInfoUIContextEx createContext(Object[] objects, @NotNull Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
+  public static ParameterInfoUIContextEx createContext(Object[] objects,
+                                                       @NotNull Editor editor,
+                                                       @NotNull ParameterInfoHandler handler,
+                                                       int currentParameterIndex,
+                                                       @Nullable PsiElement parameterOwner) {
     @SuppressWarnings("unchecked")
     ParameterInfoControllerData dataObject = new ParameterInfoControllerData(handler);
     dataObject.setDescriptors(objects);
@@ -120,8 +128,9 @@ public final class ParameterInfoComponent extends JPanel {
   @ApiStatus.Internal
   public static int getWidthLimit(Editor editor) {
     // disable splitting by width to avoid depending on the platform's font in tests
-    if (unitTestMode)
+    if (unitTestMode) {
       return Integer.MAX_VALUE;
+    }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()
         && !isForeignClientOnServer()) { //don't access ui for the foreign cwm clientIds
@@ -139,7 +148,7 @@ public final class ParameterInfoComponent extends JPanel {
            : StartupUiUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
-  ParameterInfoComponent(ParameterInfoControllerData parameterInfoControllerData, Editor editor,
+  ParameterInfoComponent(ParameterInfoControllerData parameterInfoControllerData, @NotNull Editor editor,
                          boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myParameterInfoControllerData = parameterInfoControllerData;
@@ -147,17 +156,30 @@ public final class ParameterInfoComponent extends JPanel {
     myRequestFocus = requestFocus;
     myWidthLimit = getWidthLimit(editor);
 
-    NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
+    NORMAL_FONT = Registry.is("parameter.info.editor.font")
                   ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
                   : StartupUiUtil.getLabelFont();
     BOLD_FONT = getBoldFont(editor);
 
-    if (mySimpleDesignMode) {
-      setOpaque(false);
-    }
-    else {
-      setBackground(BACKGROUND);
-    }
+    BACKGROUND = mySimpleDesignMode
+                 ? myEditor.getColorsScheme().getDefaultBackground()
+                 : JBColor.namedColor("ParameterInfo.background", HintUtil.getInformationColor());
+    FOREGROUND = mySimpleDesignMode
+                 ? myEditor.getColorsScheme().getDefaultForeground()
+                 : JBColor.namedColor("ParameterInfo.foreground", new JBColor(0x1D1D1D, 0xBBBBBB));
+    boolean isDarkTheme = ColorUtil.isDark(BACKGROUND);
+    DISABLED_COLOR = mySimpleDesignMode
+                     ? ColorUtil.blendColorsInRgb(BACKGROUND, FOREGROUND, disabledSignatureAlpha(isDarkTheme))
+                     : JBColor.namedColor("ParameterInfo.disabledForeground", new JBColor(0xA8A8A8, 0x777777));
+    HIGHLIGHTED_BACKGROUND = mySimpleDesignMode
+                             ? ColorUtil.blendColorsInRgb(BACKGROUND, JBColor.GREEN, selectedSignatureAlpha(isDarkTheme))
+                             : JBColor.namedColor("ParameterInfo.currentOverloadBackground", BORDER_COLOR);
+    HIGHLIGHTED_COLOR = mySimpleDesignMode
+                        ? FOREGROUND
+                        : JBColor.namedColor("ParameterInfo.currentParameterForeground", new JBColor(0x1D1D1D, 0xE8E8E8));
+
+    setOpaque(!mySimpleDesignMode);
+    setBackground(BACKGROUND);
 
     myMainPanel = new JPanel(new GridBagLayout());
     myMainPanel.setOpaque(!mySimpleDesignMode);
@@ -201,7 +223,9 @@ public final class ParameterInfoComponent extends JPanel {
     for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
       myPanels[i] = new OneElementComponent();
       myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                          i > 0 && mySimpleDesignMode ? new JBInsets(lineGap, 0, 0, 0) : JBInsets.emptyInsets(), 0, 0));
+                                                          i > 0 && mySimpleDesignMode
+                                                          ? new JBInsets(lineGap, 0, 0, 0)
+                                                          : JBInsets.emptyInsets(), 0, 0));
     }
   }
 
@@ -303,9 +327,9 @@ public final class ParameterInfoComponent extends JPanel {
       final List<Integer> startOffsets = new ArrayList<>();
       final List<Integer> endOffsets = new ArrayList<>();
 
-      TextRange highlightRange = highlightStartOffset >=0 && highlightEndOffset >= highlightStartOffset ?
-                               new TextRange(highlightStartOffset, highlightEndOffset) :
-                               null;
+      TextRange highlightRange = highlightStartOffset >= 0 && highlightEndOffset >= highlightStartOffset ?
+                                 new TextRange(highlightStartOffset, highlightEndOffset) :
+                                 null;
       for (int j = 0; j < split.size(); j++) {
         String line = split.get(j);
         int startOffset = plainLine.length();
@@ -317,8 +341,9 @@ public final class ParameterInfoComponent extends JPanel {
           result.current = j;
         }
       }
-      ParameterInfoControllerBase.SignatureItem item = new ParameterInfoControllerBase.SignatureItem(plainLine.toString(), strikeout, isDisabled,
-                                                                                                     startOffsets, endOffsets);
+      ParameterInfoControllerBase.SignatureItem item =
+        new ParameterInfoControllerBase.SignatureItem(plainLine.toString(), strikeout, isDisabled,
+                                                      startOffsets, endOffsets);
       result.signatures.add(item);
 
       final String resultedText =
@@ -579,10 +604,10 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     public @NlsContexts.Label String setup(final ParameterInfoControllerBase.Model result,
-                        final String @NlsContexts.Label [] texts,
-                        Function<? super String, String> escapeFunction,
-                        final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
-                        final Color background) {
+                                           final String @NlsContexts.Label [] texts,
+                                           Function<? super String, String> escapeFunction,
+                                           final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
+                                           final Color background) {
       @NlsContexts.Label StringBuilder buf = new StringBuilder();
       configureColor(background);
       int index = 0;
@@ -635,7 +660,7 @@ public final class ParameterInfoComponent extends JPanel {
 
     private void configureColor(Color background) {
       if (mySimpleDesignMode) {
-        myShowSelection = background != BACKGROUND;
+        myShowSelection = !background.equals(BACKGROUND);
       }
       else {
         myShowSelection = false;
@@ -653,7 +678,7 @@ public final class ParameterInfoComponent extends JPanel {
       Graphics2D g2 = (Graphics2D)g.create();
 
       try {
-        g2.setColor(JBUI.CurrentTheme.Editor.Tooltip.SELECTION_BACKGROUND);
+        g2.setColor(HIGHLIGHTED_BACKGROUND);
         GraphicsUtil.setupAAPainting(g2);
         int arc = JBUI.scale(8);
         g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
@@ -691,7 +716,8 @@ public final class ParameterInfoComponent extends JPanel {
         myHtmlPanel.setFocusable(true);
       }
 
-      add(myHtmlPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+      add(myHtmlPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST,
+                                              GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     }
 
     @Override
@@ -752,7 +778,7 @@ public final class ParameterInfoComponent extends JPanel {
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
     @Contract(pure = true)
     private String buildLabelText(final @NotNull String text,
-                                         final @NotNull TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
+                                  final @NotNull TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntMap faultMap = new Int2IntOpenHashMap();
 

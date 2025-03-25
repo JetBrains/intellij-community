@@ -21,7 +21,7 @@ internal fun disabledSignatureAlpha(isDarkTheme: Boolean) =
   if (isDarkTheme) 0.5 else 0.75
 
 internal fun selectedSignatureAlpha(isDarkTheme: Boolean) =
-  if (isDarkTheme) 0.05 else 0.075
+  if (isDarkTheme) 0.05 else 0.15
 
 private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
 
@@ -34,13 +34,12 @@ internal fun renderSignaturePresentationToHtml(
   separator: String,
   isDeprecated: Boolean,
 ): String {
-
   val backgroundColor = context.defaultParameterColor ?: JBColor.WHITE
   val isDarkTheme = ColorUtil.isDark(backgroundColor)
   val deselectedParamAlpha = if (isDarkTheme) 0.6 else 0.9
   val defaultParamAlpha = if (isDarkTheme) 0.5 else 0.75
   val disabledSignatureAlpha = disabledSignatureAlpha(isDarkTheme)
-  val mismatchedParameterAlpha = if (isDarkTheme) 0.05 else 0.075
+  val mismatchedParameterAlpha = if (isDarkTheme) 0.05 else 0.2
   val textAttributes = TextAttributes().apply {
     foregroundColor = EditorColorsManager.getInstance().getGlobalScheme().let {
       it.getAttributes(HighlighterColors.TEXT).foregroundColor
@@ -99,7 +98,7 @@ private fun buildContents(
   val fontMetrics = editor.component.getFontMetrics(boldFont)
 
   val leadingParameterIsMismatched = parametersPresentation
-    .applyIf(currentParameter >= 0) { take(currentParameter + 1) }
+    .applyIf(currentParameter >= 0) { take(currentParameter) }
     .any { it.isMismatched }
 
   fun StringBuilder.appendCurrentLine(): StringBuilder {
