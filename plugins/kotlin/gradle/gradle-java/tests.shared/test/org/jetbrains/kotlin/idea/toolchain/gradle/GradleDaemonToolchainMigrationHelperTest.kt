@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.toolchain.gradle
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.withRegisteredSdks
@@ -22,6 +23,7 @@ class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase
 
     @Test
     @TargetVersions("8.8+")
+    @IJIgnore(issue = "IDEA-369675")
     fun `test Given project When migrate to Daemon toolchain Then criteria is maintained`() = runBlocking {
         val jdk = resolveRealTestSdk()
         val jdkInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdk.homePath!!)
