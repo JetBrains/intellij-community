@@ -7,11 +7,13 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.CollectionFactory;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -282,5 +284,38 @@ public final class TypeEvalContext {
     else {
       return getContextFile(context);
     }
+  }
+
+  private static class PyNullType implements PyType {
+    private PyNullType() {}
+
+    @Override
+    public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                      @Nullable PyExpression location,
+                                                                      @NotNull AccessDirection direction,
+                                                                      @NotNull PyResolveContext resolveContext) {
+      return List.of();
+    }
+
+    @Override
+    public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    @Override
+    public @Nullable String getName() {
+      return "null";
+    }
+
+    @Override
+    public boolean isBuiltin() {
+      return false;
+    }
+
+    @Override
+    public void assertValid(String message) {
+    }
+
+    private static final PyNullType INSTANCE = new PyNullType();
   }
 }
