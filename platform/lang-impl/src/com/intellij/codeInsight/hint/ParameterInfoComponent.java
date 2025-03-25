@@ -218,14 +218,12 @@ public final class ParameterInfoComponent extends JPanel {
 
   private void setPanels() {
     myMainPanel.removeAll();
-    myPanels = new OneElementComponent[myParameterInfoControllerData.getDescriptors().length];
-    int lineGap = UISettings.getInstance().getCompactMode() ? 4 : 8;
-    for (int i = 0; i < myParameterInfoControllerData.getDescriptors().length; i++) {
-      myPanels[i] = new OneElementComponent();
+    int length = myParameterInfoControllerData.getDescriptors().length;
+    myPanels = new OneElementComponent[length];
+    for (int i = 0; i < length; i++) {
+      myPanels[i] = new OneElementComponent(i == length - 1);
       myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                          i > 0 && mySimpleDesignMode
-                                                          ? new JBInsets(lineGap, 0, 0, 0)
-                                                          : JBInsets.emptyInsets(), 0, 0));
+                                                          JBInsets.emptyInsets(), 0, 0));
     }
   }
 
@@ -523,11 +521,19 @@ public final class ParameterInfoComponent extends JPanel {
   }
 
   private final class OneElementComponent extends JPanel {
+    private final boolean myIsLast;
     private boolean myShowSelection;
 
-    OneElementComponent() {
+    private static final int LEFT_RIGHT_PADDING = 8;
+
+    OneElementComponent(boolean isLast) {
       super(new GridBagLayout());
+      myIsLast = isLast;
       setOpaque(!mySimpleDesignMode);
+      if (mySimpleDesignMode) {
+        int lineGap = UISettings.getInstance().getCompactMode() ? 3 : 6;
+        setBorder(JBUI.Borders.empty(lineGap, LEFT_RIGHT_PADDING));
+      }
     }
 
     @Override
@@ -671,17 +677,23 @@ public final class ParameterInfoComponent extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
-      if (!myShowSelection) {
+      if (!mySimpleDesignMode) {
         return;
       }
-
       Graphics2D g2 = (Graphics2D)g.create();
-
       try {
-        g2.setColor(HIGHLIGHTED_BACKGROUND);
+        int topBottomInsets = JBUI.scale(3);
         GraphicsUtil.setupAAPainting(g2);
-        int arc = JBUI.scale(8);
-        g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
+        if (myShowSelection) {
+          g2.setColor(HIGHLIGHTED_BACKGROUND);
+          int arc = JBUI.scale(8);
+          g2.fillRoundRect(0, topBottomInsets, getWidth(), getHeight() - topBottomInsets * 2, arc, arc);
+        }
+        if (!myIsLast) {
+          g2.setColor(UIUtil.getTooltipSeparatorColor());
+          int margin = JBUI.scale(LEFT_RIGHT_PADDING);
+          g2.drawLine(margin, getHeight() - JBUI.scale(1), getWidth() - margin, getHeight() - JBUI.scale(1));
+        }
       }
       finally {
         g2.dispose();
@@ -700,7 +712,10 @@ public final class ParameterInfoComponent extends JPanel {
             "code {\n" +
             "   font-family: " + pane.getFont().getFamily() + ";\n" +
             "   font-size: 100%;\n" +
-            "}"))
+            "}\n" +
+            "p-implied {\n" +
+            "   line-height: 125%;\n" +
+            "};\n"))
         .build()
     );
 
@@ -710,7 +725,7 @@ public final class ParameterInfoComponent extends JPanel {
       myHtmlPanel.setOpaque(!mySimpleDesignMode);
       myHtmlPanel.setFont(NORMAL_FONT);
       if (mySimpleDesignMode) {
-        myHtmlPanel.setBorder(JBUI.Borders.empty(2, 6, 2, 8));
+        myHtmlPanel.setBorder(JBUI.Borders.empty(2, 0));
       }
       if (myRequestFocus) {
         myHtmlPanel.setFocusable(true);

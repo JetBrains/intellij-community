@@ -189,7 +189,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
       hintHint.setComponentBorder(JBUI.Borders.empty());
     }
     else {
-      hintHint.setBorderInsets(JBUI.insets(8, 8, 10, 8));
+      hintHint.setBorderInsets(JBUI.insets(6, 12, 6, 12));
       hintHint.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
       hintHint.setBorderColor(ColorUtil.blendColorsInRgb(myEditor.getColorsScheme().getDefaultBackground(), JBColor.GRAY, 0.1f));
     }
