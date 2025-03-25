@@ -174,7 +174,14 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
         if (memberClass.isRecord() && ((PsiMethod)member).isConstructor()) {
           final PsiModifierList modifierList = memberClass.getModifierList();
           assert modifierList != null; // anonymous records don't exist
-          return PsiUtil.getAccessLevel(modifierList);
+          int level = PsiUtil.getAccessLevel(modifierList);
+          if (level == PsiUtil.ACCESS_LEVEL_PRIVATE && !myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS) {
+            level = PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
+          }
+          if (level == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL && !myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS) {
+            level = PsiUtil.ACCESS_LEVEL_PUBLIC;
+          }
+          return level;
         }
         // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
         // so we just skip it here (IDEA-182709, IDEA-160602)
