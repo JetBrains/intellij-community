@@ -136,9 +136,25 @@ public final class ParameterInfoComponent extends JPanel {
         && !isForeignClientOnServer()) { //don't access ui for the foreign cwm clientIds
       JComponent editorComponent = editor.getComponent();
       JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-      return (layeredPane.getWidth() * 4) / 5;
+      return Math.max((layeredPane.getWidth() * 4) / 5 - JBUI.scale(40), JBUI.scale(100));
     }
     return 1000;
+  }
+
+  @ApiStatus.Internal
+  public static int getHeightLimit(Editor editor) {
+    // disable splitting by width to avoid depending on the platform's font in tests
+    if (unitTestMode) {
+      return Integer.MAX_VALUE;
+    }
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
+        && !isForeignClientOnServer()) { //don't access ui for the foreign cwm clientIds
+      JComponent editorComponent = editor.getComponent();
+      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+      return Math.max(Math.min((layeredPane.getHeight() * 4) / 5, JBUI.scale(380)), JBUI.scale(100));
+    }
+    return 500;
   }
 
   @ApiStatus.Internal
@@ -206,7 +222,7 @@ public final class ParameterInfoComponent extends JPanel {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     // Set a maximum size to avoid unnecessary vertical scroll bar
     // in case of raw HTML contents exceeding width limit
-    pane.getViewport().setMaximumSize(new Dimension(myWidthLimit, 1000));
+    pane.getViewport().setMaximumSize(new Dimension(myWidthLimit, getHeightLimit(editor)));
     pane.setOpaque(!mySimpleDesignMode);
     pane.getViewport().setOpaque(!mySimpleDesignMode);
     add(pane, BorderLayout.CENTER);
