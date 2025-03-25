@@ -40,6 +40,9 @@
     files:
     - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
     reason: withProjectLibrary
+  - name: kotlin-metadata
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
   - name: kotlinc.analysis-api
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2/analysis-api-for-ide-2.jar

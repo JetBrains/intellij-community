@@ -231,6 +231,7 @@ object KotlinPluginBuilder {
     "kotlinc.kotlin-compiler-fir",
     "kotlinc.low-level-api-fir",
     "kotlinc.symbol-light-classes",
+    "kotlin-metadata",
   ) + KOTLIN_SCRIPTING_LIBRARIES
 
   private val GRADLE_TOOLING_MODULES = java.util.List.of(
