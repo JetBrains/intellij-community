@@ -89,11 +89,10 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
 
   private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto) {
     val newSession = FrontendXDebuggerSession.create(project, cs, sessionDto)
-    val previousSession = sessions.value.firstOrNull { it.id == sessionDto.id }
-    sessions.getAndUpdate {
+    val old = sessions.getAndUpdate {
       it + newSession
     }
-    previousSession?.closeScope()
+    assert(old.none { it.id == sessionDto.id }) { "Session with id ${sessionDto.id} already exists" }
   }
 
   companion object {
