@@ -2,10 +2,12 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptString;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -53,6 +55,17 @@ public final class OptPaneUtils {
                                   @NlsContexts.DialogTitle String title,
                                   @NonNls String helpId,
                                   @NotNull Runnable onSuccess) {
+    if (ContainerUtil.getOnlyItem(pane.components()) instanceof OptString stringCtl &&
+        stringCtl.validator() instanceof StringValidatorWithSwingSelector validator) {
+      // Single control with selector: just call the selector
+      String result = validator.select(project);
+      if (result != null) {
+        stringCtl.setValue(data, result);
+        onSuccess.run();
+      }
+      return;
+    }
+
     // TODO: execute validator on focus
     DialogBuilder builder = new DialogBuilder(project).title(title);
     if (helpId != null) {
