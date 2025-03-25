@@ -7,22 +7,28 @@ import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.DigestUtil.sha256
 import com.intellij.util.io.DigestUtil.sha512
 import com.intellij.util.xml.dom.readXmlAsModel
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * @param workDir is expected to contain:
@@ -33,22 +39,30 @@ import kotlin.io.path.*
  * * md5, sha1, sha256 and sha512 checksum files (optional, will be verified if present)
  *
  * @param type https://central.sonatype.org/publish/publish-portal-api/#uploading-a-deployment-bundle
+ *
+ * See https://youtrack.jetbrains.com/articles/IJPL-A-611 internal article for more details
  */
 @ApiStatus.Internal
 class MavenCentralPublication(
   private val context: BuildContext,
   private val workDir: Path,
-  private val type: Type = Type.USER_MANAGED,
+  private val type: PublicationType = PublicationType.AUTOMATIC,
   private val userName: String? = null,
   private val token: String? = null,
   private val dryRun: Boolean = context.options.isInDevelopmentMode,
   private val sign: Boolean = !dryRun,
 ) {
   private companion object {
-    const val URI_BASE = "https://central.sonatype.com/api/v1/publisher/upload"
+    /**
+     * See https://central.sonatype.com/api-doc
+     */
+    const val URI_BASE = "https://central.sonatype.com/api/v1/publisher"
+    const val UPLOADING_URI_BASE = "$URI_BASE/upload"
+    const val STATUS_URI_BASE = "$URI_BASE/status"
+    val JSON = Json { ignoreUnknownKeys = true }
   }
 
-  enum class Type {
+  enum class PublicationType {
     USER_MANAGED,
     AUTOMATIC,
   }
@@ -86,7 +100,8 @@ class MavenCentralPublication(
     bootstrap()
     sign()
     generateOrVerifyChecksums()
-    publish(bundle())
+    val deploymentId = publish(bundle())
+    if (deploymentId != null) wait(deploymentId)
   }
 
   private val distributionFiles: List<Path> get() = listOf(jar, pom, javadoc, sources)
@@ -128,15 +143,17 @@ class MavenCentralPublication(
         val checksumFile = file.resolveSibling("${file.fileName}.$extension")
         if (checksumFile.exists()) {
           val suppliedValue = checksumFile.readLines().asSequence()
+            // sha256sum command output is a line with checksum,
+            // a character indicating type ('*' for --binary, ' ' for --text),
+            // and the supplied file argument
             .flatMap { it.splitToSequence(" ") }
             .firstOrNull()
           if (suppliedValue != value) {
             throw ChecksumMismatch("The supplied file $checksumFile content mismatch: '$suppliedValue' != '$value'")
           }
         }
-        else {
-          checksumFile.writeText(value)
-        }
+        // a checksum file should contain only a checksum itself
+        checksumFile.writeText(value)
       }
     }
   }
@@ -156,52 +173,117 @@ class MavenCentralPublication(
            checksums("sha512")
   }
 
+  /**
+   * https://central.sonatype.org/publish/publish-portal-upload/
+   */
   private suspend fun bundle(): Path {
     return spanBuilder("creating a bundle").use {
       val bundle = workDir.resolve("bundle.zip")
       Compressor.Zip(bundle).use {
         for (file in distributionFiles.asSequence() + signatures() + checksums()) {
-          it.addFile(file.name, file)
+          it.addFile("${coordinates.directoryPath}/${file.name}", file)
         }
       }
       bundle
     }
   }
 
-  private suspend fun publish(bundle: Path) {
-    spanBuilder("publishing").setAttribute("bundle", "$bundle").use {
+  private suspend fun <T> callSonatype(
+    uri: String,
+    builder: suspend (Request.Builder) -> Request.Builder,
+    action: suspend (Response) -> T,
+  ): T {
+    requireNotNull(userName) {
+      "Please specify intellij.build.mavenCentral.userName system property"
+    }
+    requireNotNull(token) {
+      "Please specify intellij.build.mavenCentral.token system property"
+    }
+    val base64Auth = Base64.getEncoder()
+      .encode("$userName:$token".toByteArray())
+      .toString(Charsets.UTF_8)
+    val span = Span.current()
+    span.addEvent("Sending request to $uri...")
+    val client = OkHttpClient()
+    val request = Request.Builder().url(uri)
+      .header("Authorization", "Bearer $base64Auth")
+      .let { builder(it) }
+      .build()
+    return client.newCall(request)
+      .execute()
+      .use {
+        span.addEvent("Response status code: ${it.code}")
+        action(it)
+      }
+  }
+
+  private suspend fun publish(bundle: Path): String? {
+    return spanBuilder("publishing").setAttribute("bundle", "$bundle").use { span ->
       if (dryRun) {
-        it.addEvent("skipped in the dryRun mode")
-        return@use
-      }
-      requireNotNull(userName) {
-        "Please specify intellij.build.mavenCentral.userName system property"
-      }
-      requireNotNull(token) {
-        "Please specify intellij.build.mavenCentral.token system property"
+        span.addEvent("skipped in the dryRun mode")
+        return@use null
       }
       val deploymentName = "${coordinates.artifactId}-${coordinates.version}"
-      val uri = "$URI_BASE?name=$deploymentName&publicationType=$type"
-      val base64Auth = Base64.getEncoder().encode("$userName:$token".toByteArray()).toString(Charsets.UTF_8)
-      it.addEvent("Sending request to $uri...")
-      val client = OkHttpClient()
-      val request = Request.Builder()
-        .url(uri)
-        .header("Authorization", "Bearer $base64Auth")
-        .post(
+      val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publicationType=$type"
+      callSonatype(uri, builder = {
+        it.post(
           MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("bundle", bundle.name, bundle.toFile().asRequestBody())
             .build()
-        ).build()
-      client.newCall(request).execute().use { response ->
-        val statusCode = response.code
-        it.addEvent("Upload status code: $statusCode")
-        it.addEvent("Upload response: ${response.body.string()}")
-        check(statusCode == 201) {
-          "Unable to upload to Central repository, status code: $statusCode, upload response: ${response.body.string()}"
+        )
+      }, action = {
+        val deploymentId = it.body.string()
+        check(it.code == 201) {
+          "Unable to upload to Central repository, status code: ${it.code}, upload response: $deploymentId"
+        }
+        span.addEvent("Deployment ID: $deploymentId")
+        deploymentId
+      })
+    }
+  }
+
+  /**
+   * @param deploymentId see https://central.sonatype.org/publish/publish-portal-api/#uploading-a-deployment-bundle
+   */
+  private suspend fun wait(deploymentId: String) {
+    spanBuilder("waiting").setAttribute("deploymentId", deploymentId).use { span ->
+      withTimeout(30.minutes) {
+        while (true) {
+          val deploymentState = callSonatype("$STATUS_URI_BASE?id=$deploymentId", builder = {
+            it.post("{}".toRequestBody("application/json".toMediaType()))
+          }, action = {
+            val response = it.body.string()
+            span.addEvent(response)
+            parseDeploymentState(response)
+          })
+          when {
+            deploymentState == DeploymentState.FAILED -> error("$deploymentId status is $deploymentState")
+            deploymentState == DeploymentState.VALIDATED && type == PublicationType.USER_MANAGED ||
+            deploymentState == DeploymentState.PUBLISHED && type == PublicationType.AUTOMATIC -> break
+            else -> delay(TimeUnit.SECONDS.toMillis(15))
+          }
         }
       }
     }
+  }
+
+  @VisibleForTesting
+  @Suppress("unused")
+  enum class DeploymentState {
+    PENDING,
+    VALIDATING,
+    VALIDATED,
+    PUBLISHING,
+    PUBLISHED,
+    FAILED,
+  }
+
+  @Serializable
+  private class StatusResponse(val deploymentState: DeploymentState)
+
+  @VisibleForTesting
+  fun parseDeploymentState(response: String): DeploymentState {
+    return JSON.decodeFromString<StatusResponse>(response).deploymentState
   }
 }
