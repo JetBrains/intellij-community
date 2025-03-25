@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 
+import static com.intellij.openapi.editor.rd.LocalEditorSupportKt.assertLocalTypingAssist;
+
 /**
  * Provides services for registering actions which are activated by typing in the editor.
  */
@@ -189,12 +191,14 @@ public abstract class TypedAction {
   }
 
   public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+    assertLocalTypingAssist(editor);
     if (myRawHandler instanceof TypedActionHandlerEx) {
       ((TypedActionHandlerEx)myRawHandler).beforeExecute(editor, c, context, plan);
     }
   }
 
   public final void actionPerformed(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    assertLocalTypingAssist(editor);
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       myRawHandler.execute(editor, charTyped, dataContext);
     }

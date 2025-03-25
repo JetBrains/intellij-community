@@ -14,7 +14,3 @@ val isLocalEditorUx: Boolean
 fun isMonolith(): Boolean {
   return isLocalEditorUx || AppModeAssertions.isMonolith()
 }
-
-fun assertFrontend() {
-  AppModeAssertions.assertFrontend(isLocalEditorUx)
-}
