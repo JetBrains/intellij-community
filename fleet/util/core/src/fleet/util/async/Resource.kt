@@ -6,6 +6,7 @@ package fleet.util.async
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.tracing.SpanInfoBuilder
 import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.select
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -77,7 +78,7 @@ fun <T> resource(producer: suspend CoroutineScope.(consumer: Consumer<T>) -> Con
  * */
 sealed interface Consumed
 
-internal data object Proof: Consumed
+internal data object Proof : Consumed
 
 typealias Consumer<T> = suspend (T) -> Consumed
 
@@ -207,3 +208,147 @@ fun <T> Resource<T>.useOn(coroutineScope: CoroutineScope): Deferred<T> {
   }
   return deferred
 }
+
+sealed class SharingMode(
+  val runImmediately: Boolean,
+  val stopWithoutSubscribers: Boolean,
+) {
+  /**
+   * The resource starts immediately and remains active until the scope is canceled.
+   */
+  data object Eager : SharingMode(runImmediately = true, stopWithoutSubscribers = false)
+
+  /**
+   * The resource starts when a consumer appears and remains active until the scope is canceled.
+   */
+  data object Lazy : SharingMode(runImmediately = false, stopWithoutSubscribers = false)
+
+  /**
+   * The resource starts when a consumer appears and is gracefully shut down when the last consumer leaves.
+   * This cycle may repeat multiple times.
+   */
+  data object WhileSubscribed : SharingMode(runImmediately = false, stopWithoutSubscribers = true)
+}
+
+/**
+ * Runs [Resource] on the given [coroutineScope].
+ *
+ * The returned [Resource] can be consumed multiple times, the [T] will be shared between them.
+ * If the source throws an exception at any point, it will be propagated to the consumers, even if [coroutineScope] is a supervised one.
+ *
+ * See [SharingMode] for details.
+ */
+fun <T> Resource<T>.shareIn(coroutineScope: CoroutineScope, sharing: SharingMode = SharingMode.Eager): Resource<T> =
+  let { source ->
+    val lock = Any()
+    var state: SharedResourceState<T> = when {
+      sharing.runImmediately -> SharedResourceState.Running(1, runSharedResource(source, coroutineScope))
+      else -> SharedResourceState.NotRunning()
+    }
+    resource { cc ->
+      while (coroutineContext.isActive) {
+        val r: Pair<SharedResourceState.Running<T>?, Job?> = synchronized(lock) {
+          when (val s = state) {
+            is SharedResourceState.NotRunning<T> -> {
+              SharedResourceState.Running(1, runSharedResource(source, coroutineScope)).also { state = it } to null
+            }
+            is SharedResourceState.Running<T> -> {
+              s.copy(refCount = s.refCount + 1).also { state = it } to null
+            }
+            is SharedResourceState.Stopping<T> -> {
+              if (s.job.isCompleted) {
+                SharedResourceState.Running(1, runSharedResource(source, coroutineScope)).also { state = it } to null
+              }
+              else {
+                null to s.job
+              }
+            }
+          }
+        }
+        val (running, obstacle) = r
+        when {
+          obstacle != null -> obstacle.join()
+          running != null -> {
+            return@resource try {
+              running.runnning.use(cc)
+            }
+            finally {
+              synchronized(lock) {
+                when (val s = state) {
+                  is SharedResourceState.Stopping<*>, is SharedResourceState.NotRunning<*> -> error("we are not yet done with the resource, yet it is not running")
+                  is SharedResourceState.Running<T> -> {
+                    state = if (s.refCount == 1 && sharing.stopWithoutSubscribers) {
+                      s.runnning.termination.complete()
+                      SharedResourceState.Stopping(s.runnning.job)
+                    }
+                    else {
+                      s.copy(refCount = s.refCount - 1)
+                    }
+                  }
+                }
+              }
+            }
+          }
+          else -> error("unreachable")
+        }
+      }
+      error("unreachable")
+    }
+  }
+
+private sealed interface SharedResourceState<T> {
+  class NotRunning<T> : SharedResourceState<T>
+  data class Running<T>(val refCount: Int, val runnning: HotResource<T>) : SharedResourceState<T>
+  data class Stopping<T>(val job: Job) : SharedResourceState<T>
+}
+
+private class HotResource<T>(
+  val termination: CompletableJob,
+  val job: Job,
+  val failure: Deferred<Nothing>,
+  val value: Deferred<T>,
+) {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun use(cc: Consumer<T>): Consumed {
+    return coroutineScope {
+      if (failure.isCompleted) {
+        failure.getCompletionExceptionOrNull()?.let { throw it }
+      }
+      val body = async(start = CoroutineStart.UNDISPATCHED) {
+        cc(value.await())
+      }
+      select {
+        failure.onAwait { it }
+        job.onJoin { error("outlived shared resource. using it out of scope?") }
+        body.onAwait { it }
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun <T> runSharedResource(source: Resource<T>, coroutineScope: CoroutineScope): HotResource<T> =
+  run {
+    val value = CompletableDeferred<T>()
+    val termination = Job()
+    val failure = CompletableDeferred<Nothing>()
+    val job = coroutineScope.launch(start = CoroutineStart.ATOMIC) {
+      try {
+        source.use { t ->
+          value.complete(t)
+          termination.join()
+        }
+      }
+      catch (ex: Throwable) {
+        failure.completeExceptionally(ex)
+        value.completeExceptionally(ex)
+        throw ex
+      }
+    }
+    HotResource(
+      termination = termination,
+      job = job,
+      failure = failure,
+      value = value,
+    )
+  }
