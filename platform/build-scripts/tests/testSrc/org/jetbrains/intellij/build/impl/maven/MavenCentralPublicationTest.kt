@@ -7,7 +7,9 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.IdeaCommunityProperties
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.maven.MavenCentralPublication.DeploymentState
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
@@ -32,8 +34,8 @@ class MavenCentralPublicationTest {
   @TempDir
   lateinit var workDir: Path
   val publication: MavenCentralPublication by lazy { MavenCentralPublication(context, workDir, dryRun = true) }
+  val coordinates = MavenCoordinates("foo", "bar", "1.0")
   fun createDistributionFiles(): List<Path> {
-    val coordinates = MavenCoordinates("foo", "bar", "1.0")
     return sequenceOf(
       "pom" to "",
       "jar" to "",
@@ -66,9 +68,9 @@ class MavenCentralPublicationTest {
   }
 
   @Test
-  fun `should generate the bundle zip`() {
+  fun `should generate a bundle zip`() {
     runBlocking {
-      val files = createDistributionFiles()
+      val files = createDistributionFiles().map { "${coordinates.directoryPath}/${it.name}" }
       publication.execute()
       val bundle = workDir.resolve("bundle.zip")
       assert(bundle.exists())
@@ -77,11 +79,11 @@ class MavenCentralPublicationTest {
           add(entry)
         }
       }
-      assert(entries.containsAll(files.map { it.name }))
-      assert(entries.containsAll(files.map { "${it.name}.sha1" }))
-      assert(entries.containsAll(files.map { "${it.name}.sha256" }))
-      assert(entries.containsAll(files.map { "${it.name}.sha512" }))
-      assert(entries.containsAll(files.map { "${it.name}.md5" }))
+      assert(entries.containsAll(files))
+      assert(entries.containsAll(files.map { "$it.sha1" }))
+      assert(entries.containsAll(files.map { "$it.sha256" }))
+      assert(entries.containsAll(files.map { "$it.sha512" }))
+      assert(entries.containsAll(files.map { "$it.md5" }))
     }
   }
 
@@ -97,5 +99,23 @@ class MavenCentralPublicationTest {
         publication.execute()
       }
     }
+  }
+
+  @Test
+  fun `deployment state parsing test`() {
+    Assertions.assertEquals(
+      DeploymentState.PUBLISHED, publication.parseDeploymentState(
+      """
+            {
+              "deploymentId": "28570f16-da32-4c14-bd2e-c1acc0782365",
+              "deploymentName": "central-bundle.zip",
+              "deploymentState": "PUBLISHED",
+              "purls": [
+                "pkg:maven/com.sonatype.central.example/example_java_project@0.0.7"
+              ]
+            }
+          """.trimIndent()
+    )
+    )
   }
 }
