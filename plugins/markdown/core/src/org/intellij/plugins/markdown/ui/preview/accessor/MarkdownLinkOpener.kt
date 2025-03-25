@@ -22,6 +22,8 @@ interface MarkdownLinkOpener {
    *
    * Note: it is possible to add custom url handler with [com.intellij.ide.browsers.UrlOpener] EP.
    */
+  fun openLink(project: Project?, link: String)
+
   fun openLink(project: Project?, link: String, sourceFile: VirtualFile?)
 
   fun isSafeLink(project: Project?, link: String): Boolean

@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.service;
 
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -55,7 +54,7 @@ public final class MarkdownFrontendServiceImpl implements MarkdownFrontendServic
     return ReadAction.compute(() -> {
       if (DumbService.isDumb(project)) return null;
       PsiFile file = PsiManager.getInstance(project).findFile(targetFile);
-      GlobalSearchScope scope = (file == null) ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.fileScope(file);;
+      GlobalSearchScope scope = (file == null) ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.fileScope(file);
       Collection<MarkdownHeader> headers = HeaderAnchorIndex.Companion.collectHeaders(project, scope, anchor);
       return ContainerUtil.map(headers, MarkdownHeaderMapper::map);
     });

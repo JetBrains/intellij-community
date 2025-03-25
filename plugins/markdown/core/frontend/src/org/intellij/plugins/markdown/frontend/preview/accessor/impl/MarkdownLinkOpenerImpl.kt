@@ -18,7 +18,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.findProject
@@ -43,6 +42,16 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : MarkdownLinkOpener {
+  override fun openLink(project: Project?, link: String) {
+    val uri = createUri(link) ?: return
+    if (tryOpenInEditorDeprecated(project, uri)) {
+      return
+    }
+    coroutineScope.launch {
+      openExternalLink(project, uri)
+    }
+  }
+
   override fun openLink(project: Project?, link: String, containingFile: VirtualFile?) {
     val uri = createUri(link, containingFile) ?: return
     if (tryOpenInEditor(project, uri)) {
@@ -52,8 +61,9 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       openExternalLink(project, uri)
     }
   }
+
   override fun isSafeLink(project: Project?, link: String): Boolean {
-    val uri = createUri(link, null) ?: return false
+    val uri = createUri(link) ?: return false
     return isSafeUri(project, uri)
   }
 
@@ -132,7 +142,16 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     }
   }
 
-  private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
+  private fun tryOpenInEditorDeprecated(project: Project?, uri: URI): Boolean {
+    if (uri.scheme != "file") {
+      return false
+    }
+    return runReadAction {
+      actuallyOpenInEditorDeprecated(project, uri)
+    }
+  }
+
+  private fun actuallyOpenInEditorDeprecated(project: Project?, uri: URI): Boolean {
     val service = MarkdownFrontendService.getInstance()
     @Suppress("NAME_SHADOWING")
     val project = project ?: service.guessProjectForUri(uri) ?: return false
@@ -229,7 +248,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     return try {
       if (BrowserUtil.isAbsoluteURL(link)) return URI(link)
       else {
-      if (!Registry.`is`("markdown.open.link.fallback") && PlatformUtils.isJetBrainsClient()){
+        if (PlatformUtils.isJetBrainsClient()){
           val scheme = runBlockingCancellable {
             withContext(Dispatchers.IO) {
               MarkdownLinkOpenerRemoteApi.getInstance().resolveLinkAsFilePath(link, containingFile?.rpcId())
@@ -239,6 +258,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
               return URI(scheme)
           }
         }
+
         return URI("http://$link")
       }
     } catch (exception: URISyntaxException) {
@@ -249,6 +269,18 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
   companion object {
     private val logger = logger<MarkdownLinkOpenerImpl>()
+
+    fun createUri(link: String): URI? {
+      return try {
+        when {
+          BrowserUtil.isAbsoluteURL(link) -> URI(link)
+          else -> URI("http://$link")
+        }
+      } catch (exception: URISyntaxException) {
+        logger.warn(exception)
+        null
+      }
+    }
 
     private fun isLocalHost(hostName: String?): Boolean {
       return hostName == null ||
@@ -288,7 +320,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
       override fun onChosen(selectedValue: MarkdownHeaderInfo, finalChoice: Boolean): PopupStep<*> {
         return doFinalStep {
-          MarkdownFrontendService.getInstance().navigateToHeader(project.projectId(), selectedValue);
+          MarkdownFrontendService.getInstance().navigateToHeader(project.projectId(), selectedValue)
         }
       }
     }
