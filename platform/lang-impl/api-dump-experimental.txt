@@ -606,22 +606,22 @@ f:com.intellij.ide.impl.StructureViewWrapperImpl
 - a:reformatRange(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.actions.lists.JoinOrSplit):V
 *f:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext$Companion
 - f:getEXTENSION():com.intellij.lang.LanguageExtension
-f:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
-- *s:appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(java.lang.StringBuilder,com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.String,Z,F,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties):java.lang.StringBuilder
-- *s:getHtmlContent(com.intellij.psi.PsiFile,java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I,I,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties):java.lang.CharSequence
-- *s:getHtmlContent(java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties):java.lang.CharSequence
-*f:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
-- java.lang.Record
-- <init>(Z,Z,Z,Z,Z,com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler):V
-- defaultFontSize():Z
-- s:defaultProperties():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
-- f:equals(java.lang.Object):Z
-- generateBackground():Z
-- generateFontFamily():Z
-- generateHtmlTags():Z
-- generateMainTags():Z
-- f:hashCode():I
-- textHandler():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler
+*c:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlCodeSnippetBuilder
+- <init>(java.lang.StringBuilder,com.intellij.openapi.project.Project,com.intellij.lang.Language):V
+- additionalIterator(com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlCodeSnippetBuilder
+- build():java.lang.StringBuilder
+- codeSnippet(java.lang.String):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlCodeSnippetBuilder
+- doTrimIndent(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlCodeSnippetBuilder
+- properties(com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlCodeSnippetBuilder
+- saturationFactor(F):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlCodeSnippetBuilder
+*c:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- s:createDefault():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- defaultFontSize(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateBackground(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateFontFamily(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateHtmlTags(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateMainTags(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- textHandler(com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
 *:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler
 - a:handleText(I,I,java.lang.StringBuilder,java.lang.Runnable):V
 *:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
