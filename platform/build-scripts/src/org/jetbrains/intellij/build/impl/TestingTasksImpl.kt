@@ -168,7 +168,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     else {
       val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
       val effectiveAdditionalJvmOptions = additionalJvmOptions.toMutableList()
-      loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
+      if (options.isTestDiscoveryEnabled) {
+        loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
+      }
       if (runConfigurations == null) {
         runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, checkNotNull(mainModule) {
           "Main module is not specified"
@@ -300,10 +302,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private fun loadTestDiscovery(additionalJvmOptions: MutableList<String>, systemProperties: MutableMap<String, String>) {
-    if (!options.isTestDiscoveryEnabled) {
-      return
-    }
-
     val testDiscovery = "intellij-test-discovery"
     val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
                   ?: throw RuntimeException("Can't find the $testDiscovery library, but test discovery capturing enabled.")
