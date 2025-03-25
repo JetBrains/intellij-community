@@ -11,12 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.VfsTestUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class LocalGradleExecutionAwareTest : LightPlatformTestCase() {
 
-  fun `test Given project using valid JAVA_INTERNAL When prepare JVM execution Then SDK info is returned as resolved`() {
+  fun `test Given project using valid JAVA_INTERNAL When prepare JVM execution Then SDK info is returned as resolved`(): Unit = runBlocking {
     GradleSettings.getInstance(project).linkedProjectsSettings = listOf(GradleProjectSettings().apply {
       this.externalProjectPath = project.basePath
       this.gradleJvm = USE_INTERNAL_JAVA
@@ -27,7 +28,7 @@ class LocalGradleExecutionAwareTest : LightPlatformTestCase() {
     }
   }
 
-  fun `test Given project using Daemon Jvm criteria When prepare JVM execution Then any validation is skipped`() {
+  fun `test Given project using Daemon Jvm criteria When prepare JVM execution Then any validation is skipped`(): Unit = runBlocking {
     VfsTestUtil.createFile(project.baseDir, "gradle/gradle-daemon-jvm.properties", "toolchainVersion=17")
     GradleSettings.getInstance(project).linkedProjectsSettings = listOf(GradleProjectSettings().apply {
       this.externalProjectPath = project.basePath
