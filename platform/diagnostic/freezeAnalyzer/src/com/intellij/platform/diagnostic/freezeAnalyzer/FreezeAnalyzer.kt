@@ -39,6 +39,7 @@ object FreezeAnalyzer {
   private fun analyzeLock(edt: ThreadState, threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? {
     val relevantMethodFromEdt = findFirstRelevantMethod(edt.stackTrace)
     if (relevantMethodFromEdt == null) return null
+    if (edt.stackTrace != null && edt.stackTrace.contains("on kotlinx.coroutines.BlockingCoroutine") && getMethodList(edt.stackTrace).any { it.contains("BlockingCoroutine.joinBlocking") }) return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt which called runBlocking", listOf(edt),)
     var possibleThreadWithLock: ThreadState? = null
     for (it in getPotentialMethodsWithLock(edt.stackTrace)) {
       val clazz = extractClassFromMethod(it)

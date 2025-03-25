@@ -141,4 +141,12 @@ class FreezeAnalyzerTest {
     val threadDump = getResourceContent("freezes/noFreeze/lowMemory.txt").replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump, testName = null)?.shouldBe(null)
   }
+
+  @Test
+  fun testCoroutines() {
+    val threadDump = getResourceContent("freezes/awtFreeze/coroutines.txt").replace("2.", ".")
+    val analysis = FreezeAnalyzer.analyzeFreeze(threadDump, testName = null)
+    analysis?.message.shouldBe("EDT is blocked on com.intellij.lang.javascript.service.JSLanguageServiceBase._get_process_\$lambda\$2 which called runBlocking")
+    analysis?.threads?.joinToString { it -> it.stackTrace }.shouldStartWith("\"AWT-EventQueue-0\" prio=0 tid=0x0 nid=0x0 waiting on condition")
+  }
 }
