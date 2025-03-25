@@ -3,17 +3,22 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
+import com.intellij.openapi.roots.ui.configuration.lookupSdkBlocking
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.lang.JavaVersion
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -71,10 +76,24 @@ object GradleDaemonJvmHelper {
   }
 
   @JvmStatic
-  fun getGradleJvmForUpdateDaemonJvmTask(id: ExternalSystemTaskId): String? {
+  fun getGradleJvmForUpdateDaemonJvmTask(id: ExternalSystemTaskId, gradleVersion: GradleVersion): String? {
     val project = id.findProject() ?: return null
-    val projectRootManager = ProjectRootManager.getInstance(project)
-    return projectRootManager.projectSdk?.homePath
+    val sdk = lookupSdkBlocking { configure ->
+      configure
+        .withVersionFilter {
+          val javaVersion = JavaVersion.tryParse(it)
+          javaVersion != null &&
+          GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion) &&
+          GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
+        }
+        .withLookupReason(GradleBundle.message("gradle.jvm.resolution.lookup.reason", gradleVersion.version))
+        .withProject(project)
+        .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
+        .withSdkHomeFilter { ExternalSystemJdkUtil.isValidJdk(it) }
+        .testSuggestedSdkFirst { ProjectRootManager.getInstance(project).projectSdk }
+        .onDownloadableSdkSuggested { SdkLookupDecision.STOP }
+    }
+    return sdk?.homePath
   }
 
   @JvmStatic
