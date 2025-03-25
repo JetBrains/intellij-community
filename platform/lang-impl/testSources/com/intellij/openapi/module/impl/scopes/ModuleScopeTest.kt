@@ -54,7 +54,7 @@ internal class ModuleScopeTest {
 
     assertScopeContains(file1, module1Context, scope1)
     assertScopeContains(fileCommon, module1Context, scope1)
-    //assertScopeDoesNotContain(file2, module1Context, scope1) todo ijpl-339 figure out if we should not allow file2 in module1context to exist in scope1
+    //assertScopeDoesNotContain(file2, module1Context, scope1) todo IJPL-339 figure out if we should not allow file2 in module1context to exist in scope1
   }
 
   @Test
@@ -62,7 +62,7 @@ internal class ModuleScopeTest {
     val scope2 = module2.moduleScope()
     val module2Context = module2.moduleContext()
 
-    //assertScopeDoesNotContain(file1, module2Context, scope2) todo ijpl-339 figure out if we should not allow file1 in module2context to exist in scope2
+    //assertScopeDoesNotContain(file1, module2Context, scope2) todo IJPL-339 figure out if we should not allow file1 in module2context to exist in scope2
     assertScopeContains(fileCommon, module2Context, scope2)
     assertScopeContains(file2, module2Context, scope2)
   }

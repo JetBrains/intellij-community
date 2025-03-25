@@ -42,7 +42,7 @@ final class MultiverseFileStatusMapState implements FileStatusMapState {
 
   @Override
   public boolean isEmpty() {
-    // todo ijpl-339 is it correct???
+    // todo IJPL-339 is it correct???
     return myDocumentToStatusMap.isEmpty();
   }
 

@@ -174,7 +174,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
 
     if (CodeInsightContexts.isSharedSourceSupportEnabled(getProject())) {
-      // todo ijpl-339 this line introduces performance degradation, see IDEA-367535
+      // todo IJPL-339 this line introduces performance degradation, see IDEA-367535
       return findAllClasses(name, scope);
     }
     else {

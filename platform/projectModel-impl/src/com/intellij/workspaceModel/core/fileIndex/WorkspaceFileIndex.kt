@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex
 
 import com.intellij.openapi.components.service
@@ -91,7 +91,7 @@ interface WorkspaceFileIndex {
    * @param includeExternalSourceSets if `true` file sets of [WorkspaceFileKind.EXTERNAL_SOURCE] kind will be processed
    * @param includeCustomKindSets if `true` file sets of [WorkspaceFileKind.CUSTOM] kind will be processed
    *
-   * todo ijpl-339 mark experimental
+   * todo IJPL-339 mark experimental
    */
   @ApiStatus.Internal
   fun findFileSets(file: VirtualFile,

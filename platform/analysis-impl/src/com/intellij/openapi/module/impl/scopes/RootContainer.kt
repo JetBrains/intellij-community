@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes
 
 import com.intellij.openapi.roots.impl.RootDescriptor
@@ -15,7 +15,7 @@ internal sealed interface RootContainer {
   @Deprecated("use getRootDescriptor instead")
   fun containsRoot(root: VirtualFile): Boolean
 
-  // todo ijpl-339 support several roots for a single root in a scope
+  // todo IJPL-339 support several roots for a single root in a scope
   fun getRootDescriptor(root: RootDescriptor): ScopeRootDescriptor?
 
   fun getRootDescriptor(root: VirtualFile): ScopeRootDescriptor?
@@ -54,7 +54,7 @@ internal class ClassicRootContainer(private val roots: Object2IntMap<VirtualFile
   }
 }
 
-// todo ijpl-339 this does not support multiple modules per root file
+// todo IJPL-339 this does not support multiple modules per root file
 internal class MultiverseRootContainer(
   private val roots: Map<VirtualFile, ScopeRootDescriptor>
 ) : RootContainer {

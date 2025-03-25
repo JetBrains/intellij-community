@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeWithMe.ClientId
@@ -176,7 +176,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     if (PowerSaveMode.isEnabled()) return Status(ProblemsViewBundle.message("problems.view.highlighting.power.save.mode"))
     val document = getCurrentDocument() ?: return statusAnalyzing(file)
 
-    // todo ijpl-339 it's not safe to take a random editor anymore
+    // todo IJPL-339 it's not safe to take a random editor anymore
     val editor = EditorFactory.getInstance().editors(document, project).findFirst().orElse(null) ?: return statusAnalyzing(file)
     val model = editor.markupModel as? EditorMarkupModel ?: return statusAnalyzing(file)
     val status = model.errorStripeRenderer?.status ?: return statusComplete(file)

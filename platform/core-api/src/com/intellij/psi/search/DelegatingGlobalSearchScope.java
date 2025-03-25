@@ -42,7 +42,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope implements Co
     myEquality = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   @Override
   public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {

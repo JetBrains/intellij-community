@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -50,7 +50,7 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * @deprecated very-internal api, please don't use
-   * todo ijpl-339 remove this method
+   * todo IJPL-339 remove this method
    */
   @Deprecated
   @ApiStatus.Internal
@@ -62,7 +62,7 @@ public abstract class PsiManager extends UserDataHolderBase {
 
   /**
    * @deprecated very-internal api, please don't use
-   * todo ijpl-339 remove this method
+   * todo IJPL-339 remove this method
    */
   @Deprecated
   @ApiStatus.Internal

@@ -987,7 +987,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    // todo ijpl-339 is this check correct at all? How can we get view providers from an alien project here???
+    // todo IJPL-339 is this check correct at all? How can we get view providers from an alien project here???
     boolean inMyProject = ContainerUtil.exists(viewProviders, viewProvider -> viewProvider.getManager() == myPsiManager);
     if (!isRelevant || !inMyProject) {
       clearUncommittedInfo(document);

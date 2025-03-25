@@ -76,7 +76,7 @@ public final class FileStatusMap implements Disposable {
     return getDirtyTextRange(document, context, psiFile, passId);
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Document document,
                                                                                       @NotNull CodeInsightContext context,
@@ -96,7 +96,7 @@ public final class FileStatusMap implements Disposable {
     setErrorFoundFlag(document, CodeInsightContexts.anyContext(), errorFound);
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public void setErrorFoundFlag(@NotNull Document document, @NotNull CodeInsightContext context, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
@@ -138,7 +138,7 @@ public final class FileStatusMap implements Disposable {
     markFileUpToDate(document, CodeInsightContexts.anyContext(), passId);
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public void markFileUpToDate(@NotNull Document document, @NotNull CodeInsightContext context, int passId) {
     synchronized (myDocumentToStatusMap) {
@@ -191,7 +191,7 @@ public final class FileStatusMap implements Disposable {
   /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document,
                                                @NotNull CodeInsightContext context,
@@ -273,8 +273,8 @@ public final class FileStatusMap implements Disposable {
     return allDirtyScopesAreNull(document, CodeInsightContexts.anyContext());
   }
 
-  // todo ijpl-339 do we need context here?
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 do we need context here?
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public boolean allDirtyScopesAreNull(@NotNull Document document, @NotNull CodeInsightContext context) {
     synchronized (myDocumentToStatusMap) {

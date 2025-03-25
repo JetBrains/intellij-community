@@ -167,7 +167,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   public @NotNull GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
     PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject+"; vFile="+vFile+"; type="+vFile.getFileType();
-    return getResolveScopeFromProviders(vFile, CodeInsightContexts.anyContext()); //todo ijpl-339???
+    return getResolveScopeFromProviders(vFile, CodeInsightContexts.anyContext()); //todo IJPL-339???
   }
 
 

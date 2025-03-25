@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.*;
@@ -348,7 +348,7 @@ public final class CodeInsightTestUtil {
       ReadAction.nonBlocking(() -> {
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
         ProgressManager.getInstance().runProcess(() -> {
-          // todo ijpl-339 figure out what is the correct context here
+          // todo IJPL-339 figure out what is the correct context here
           HighlightingSessionImpl.runInsideHighlightingSession(psiFile, FileViewProviderUtil.getCodeInsightContext(psiFile), editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
             pass.doCollectInformation(session);
           });

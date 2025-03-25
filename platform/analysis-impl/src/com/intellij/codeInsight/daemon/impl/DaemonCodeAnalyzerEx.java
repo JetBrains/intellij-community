@@ -39,7 +39,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @ApiStatus.Internal
   public abstract void restart(@NotNull Object reason);
 
-  // todo ijpl-339 mark deprecated
+  // todo IJPL-339 mark deprecated
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
@@ -49,7 +49,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
@@ -62,7 +62,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(model, project, minSeverity, startOffset, endOffset, context, processor);
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
@@ -84,7 +84,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     });
   }
 
-  // todo ijpl-339 mark deprecated
+  // todo IJPL-339 mark deprecated
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,

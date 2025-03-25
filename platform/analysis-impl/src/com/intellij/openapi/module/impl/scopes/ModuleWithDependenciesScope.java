@@ -65,7 +65,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     if (CodeInsightContexts.isSharedSourceSupportEnabled(Objects.requireNonNull(getProject()))) {
-      // todo ijpl-339
+      // todo IJPL-339
       myRoots = new MultiverseRootContainer(calcRootsMultiverse());
     }
     else {
@@ -180,7 +180,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   public @NotNull CodeInsightContextFileInfo getFileInfo(@NotNull VirtualFile file) {
      //in case of single file source
     if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) {
-      // todo ijpl-339 support bazel in search scopes???
+      // todo IJPL-339 support bazel in search scopes???
       return CodeInsightContextAwareSearchScopes.NoContextFileInfo();
     }
 
@@ -224,7 +224,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
     // in case of single file source
     if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) {
-      // todo ijpl-339 is it correct???
+      // todo IJPL-339 is it correct???
       if (context instanceof ModuleContext && ((ModuleContext)context).getModule() == myModule) {
         return true;
       }

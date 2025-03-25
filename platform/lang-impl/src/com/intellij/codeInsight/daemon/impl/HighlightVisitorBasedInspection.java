@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -110,7 +110,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     if (document == null) return Collections.emptyList();
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     // in case the inspection is running in batch mode
-    // todo ijpl-339 figure out what is the correct context here
+    // todo IJPL-339 figure out what is the correct context here
     CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
     HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, ProperTextRange.create(psiFile.getTextRange()),
                                                            TextRange.EMPTY_RANGE);
