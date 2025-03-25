@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.projectModel.poetry
+package com.jetbrains.python.projectModel.uv
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -11,59 +11,59 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.projectModel.ModuleDescriptor
-import com.jetbrains.python.projectModel.readPoetryProjectRoot
+import com.jetbrains.python.projectModel.readUvProjectRoot
 import java.nio.file.Path
 
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
-object PoetryProjectResolver {
-  suspend fun syncAllPoetryProjects(project: Project) {
-    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.all.poetry.projects")) {
+object UvProjectResolver {
+  suspend fun syncAllUvProjects(project: Project) {
+    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.all.uv.projects")) {
       // TODO progress bar, listener with events
-      project.service<PoetrySettings>().getLinkedProjects().forEach {
-        syncPoetryProjectImpl(project, it)
+      project.service<UvSettings>().getLinkedProjects().forEach {
+        syncUvProjectImpl(project, it)
       }
     }
   }
 
-  suspend fun syncPoetryProject(project: Project, projectRoot: Path) {
-    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.poetry.projects.at", projectRoot)) {
-      syncPoetryProjectImpl(project, projectRoot)
+  suspend fun syncUvProject(project: Project, projectRoot: Path) {
+    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.uv.projects.at", projectRoot)) {
+      syncUvProjectImpl(project, projectRoot)
     }
   }
 
-  suspend fun forgetPoetryProject(project: Project, projectRoot: Path) {
-    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.unlinking.poetry.projects.at", projectRoot)) {
-      project.service<PoetrySettings>().removeLinkedProject(projectRoot)
-      forgetPoetryProjectImpl(project, projectRoot)
+  suspend fun forgetUvProject(project: Project, projectRoot: Path) {
+    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.unlinking.uv.projects.at", projectRoot)) {
+      project.service<UvSettings>().removeLinkedProject(projectRoot)
+      forgetUvProjectImpl(project, projectRoot)
     }
   }
 
-  private suspend fun forgetPoetryProjectImpl(project: Project, projectRoot: Path) {
+  private suspend fun forgetUvProjectImpl(project: Project, projectRoot: Path) {
     val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    val source = PoetryEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
-    project.workspaceModel.update("Forgetting a Poetry project at $projectRoot") { storage ->
+    val source = UvEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
+    project.workspaceModel.update("Forgetting a uv project at $projectRoot") { storage ->
       storage.replaceBySource({ it == source }, MutableEntityStorage.Companion.create())
     }
   }
 
   /**
-   * Synchronizes the poetry project by creating and updating module entities in the workspace model of the given project.
+   * Synchronizes the uv project by creating and updating module entities in the workspace model of the given project.
    *
    * @param project The IntelliJ IDEA project that needs synchronization.
-   * @param projectRoot The root path of the poetry project tree to be synchronized.
+   * @param projectRoot The root path of the uv project tree to be synchronized.
    */
-  private suspend fun syncPoetryProjectImpl(project: Project, projectRoot: Path) {
-    val listener = project.messageBus.syncPublisher(PoetrySyncListener.TOPIC)
+  private suspend fun syncUvProjectImpl(project: Project, projectRoot: Path) {
+    val listener = project.messageBus.syncPublisher(UvSyncListener.Companion.TOPIC)
     listener.onStart(projectRoot)
     try {
       val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-      val source = PoetryEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
-      val graph = readPoetryProjectRoot(projectRoot)
+      val source = UvEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
+      val graph = readUvProjectRoot(projectRoot)
       val storage = createProjectModel(project, graph?.modules.orEmpty(), source)
 
-      project.workspaceModel.update("Poetry sync at ${projectRoot}") { mutableStorage ->
+      project.workspaceModel.update("Uv sync at ${projectRoot}") { mutableStorage ->
         // Fake module entity is added by default if nothing was discovered
         if (projectRoot == project.baseNioPath) {
           removeFakeModuleEntity(project, mutableStorage)
@@ -79,7 +79,7 @@ object PoetryProjectResolver {
   private fun createProjectModel(
     project: Project,
     graph: List<ModuleDescriptor>,
-    source: PoetryEntitySource,
+    source: UvEntitySource,
   ): EntityStorage {
     val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val storage = MutableEntityStorage.create()
@@ -106,13 +106,13 @@ object PoetryProjectResolver {
 
   /**
    * Removes the default IJ module created for the root of the project 
-   * (that's going to be replaced with another module managed by Poetry).
+   * (that's going to be replaced with another module managed by uv).
    */
   fun removeFakeModuleEntity(project: Project, storage: MutableEntityStorage) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
     val basePathUrl = project.baseNioPath?.toVirtualFileUrl(virtualFileUrlManager) ?: return
     val contentRoots = storage
-      .entitiesBySource { it !is PoetryEntitySource }
+      .entitiesBySource { it !is UvEntitySource }
       .filterIsInstance<ContentRootEntity>()
       .filter { it.url == basePathUrl }
       .toList()

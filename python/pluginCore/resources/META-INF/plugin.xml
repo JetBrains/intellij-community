@@ -99,9 +99,16 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPostStartupActivity"/>
+    
+    <!--Poetry project model-->
     <projectOpenProcessor implementation="com.jetbrains.python.projectModel.poetry.PoetryOpenProcessor"/>
     <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.poetry.PoetryUnlinkedProjectAware"/>
     <postStartupActivity implementation="com.jetbrains.python.projectModel.poetry.PoetryProjectAware$PoetrySyncStartupActivity"/>
+
+    <!--uv project model-->
+    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.uv.UvOpenProcessor"/>
+    <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.uv.UvUnlinkedProjectAware"/>
+    <postStartupActivity implementation="com.jetbrains.python.projectModel.uv.UvProjectAware$UvSyncStartupActivity"/>
   </extensions>
 
   <projectListeners>
@@ -117,6 +124,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.jetbrains.python.projectModel.poetry.PoetryProjectAware$PoetryListener"
               topic="com.jetbrains.python.projectModel.poetry.PoetrySettingsListener"/>
+    <listener class="com.jetbrains.python.projectModel.uv.UvProjectAware$UvListener"
+              topic="com.jetbrains.python.projectModel.uv.UvSettingsListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -677,6 +686,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                  description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
     <registryKey key="python.project.model.poetry" defaultValue="false" restartRequired="true"
                  description="Automatically set up multi-module Poetry projects"/>
+    <registryKey key="python.project.model.uv" defaultValue="false" restartRequired="true"
+                 description="Automatically set up multi-module uv projects"/>
 
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonUvSupportSurvey"/>
@@ -1048,6 +1059,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <action id="Python.PoetrySync" class="com.jetbrains.python.projectModel.poetry.PoetrySyncAction"/>
     <action id="Python.PoetryLink" class="com.jetbrains.python.projectModel.poetry.PoetryLinkAction"/>
+
+    <action id="Python.UvSync" class="com.jetbrains.python.projectModel.uv.UvSyncAction"/>
+    <action id="Python.UvLink" class="com.jetbrains.python.projectModel.uv.UvLinkAction"/>
 
     <!--suppress PluginXmlI18n -->
     <group id="Internal.Python" internal="true" popup="true" text="Python">
