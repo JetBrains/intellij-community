@@ -7,7 +7,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.options.LocalFolderValidator;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionContainer;
-import com.intellij.codeInspection.ui.OptPaneUtils;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -78,6 +77,7 @@ import org.xml.sax.SAXParseException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
@@ -174,42 +174,36 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     Application application = ApplicationManager.getApplication();
     ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(!application.isWriteAccessAllowed());
+    ActionContext context = ActionContext.from(null, fromFile);
 
+    Supplier<@NotNull ModCommand> supplier =
+      () -> annotateExternallyModCommand(listOwner, annotationFQName, value);
+    ModCommandExecutor.executeInteractively(context, JavaBundle.message("update.external.annotations"), null, supplier);
+  }
+
+  @Override
+  public @NotNull ModCommand annotateExternallyModCommand(@NotNull PsiModifierListOwner listOwner,
+                                                          @NotNull String annotationFQName,
+                                                          PsiNameValuePair @Nullable [] value) {
+    ActionContext context = ActionContext.from(null, listOwner.getContainingFile());
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getOriginalElement().getContainingFile();
-    if (!(containingFile instanceof PsiJavaFile)) {
-      myPsiManager.dropPsiCaches();
-      return;
-    }
+    if (!(containingFile instanceof PsiJavaFile)) return ModCommand.nop();
     final VirtualFile containingVirtualFile = containingFile.getVirtualFile();
     LOG.assertTrue(containingVirtualFile != null);
     final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(containingVirtualFile);
-    if (entries.isEmpty()) {
-      myPsiManager.dropPsiCaches();
-      return;
-    }
+    if (entries.isEmpty()) return ModCommand.nop();
     ExternalAnnotation annotation = new ExternalAnnotation(listOwner, annotationFQName, value);
-    for (final OrderEntry entry : entries) {
-      if (entry instanceof ModuleOrderEntry) continue;
-      VirtualFile[] roots = AnnotationOrderRootType.getFiles(entry);
-      roots = filterByReadOnliness(roots);
+    OrderEntry entry = ContainerUtil.find(entries, e -> !(e instanceof ModuleOrderEntry));
+    if (entry == null) return ModCommand.nop();
+    VirtualFile[] roots = filterByReadOnliness(AnnotationOrderRootType.getFiles(entry));
 
-      if (roots.length > 0) {
-        ModCommand command = ModCommand.chooseAction(
-          JavaBundle.message("external.annotations.roots"), 
-          ContainerUtil.map(roots, root -> new AnnotateForRootCommand(this, root, annotation)));
-        ActionContext context = ActionContext.from(null, fromFile);
-        ModCommandExecutor.executeInteractively(context, JavaBundle.message("update.external.annotations"), null, () -> command);
-      }
-      else {
-        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-          myPsiManager.dropPsiCaches();
-          return;
-        }
-        setupRootAndAnnotateExternally(containingFile, project, annotation);
-      }
-      break;
+    if (roots.length > 0) {
+      return ModCommand.chooseAction(
+        JavaBundle.message("external.annotations.roots"),
+        ContainerUtil.map(roots, root -> new AnnotateForRootCommand(this, root, annotation)));
     }
+    return setupRootAndAnnotateExternally(containingFile, annotation, context);
   }
 
   private @NotNull ModCommand getAddAnnotationCommand(@NotNull VirtualFile root, @NotNull ExternalAnnotation annotation,
@@ -228,7 +222,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
                            : containingFile instanceof PsiJavaFile javaFile
                              ? javaFile.getPackageName() : null;
       if (packageName == null) {
-        updater.cancel("Unable to find package for annotation owner");
+        updater.cancel(JavaBundle.message("external.annotations.no.package"));
         return;
       }
       XmlFile file = updater.getWritable(createAnnotationsXml(writableRoot, packageName));
@@ -414,36 +408,40 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
     return itemTag;
   }
-  
-  static class RootConfig implements OptionContainer {
-    String myExternalAnnotationsRoot;
 
-    @Override
-    public @NotNull OptPane getOptionsPane() {
-      String title = JavaBundle.message("external.annotations.root.chooser");
-      return OptPane.pane(OptPane.string("myExternalAnnotationsRoot", title, new LocalFolderValidator(title)));
-    }
-  }
+  private @NotNull ModCommand setupRootAndAnnotateExternally(@NotNull PsiFile containingFile,
+                                                             @NotNull ExternalAnnotation annotation,
+                                                             @NotNull ActionContext context) {
+    String path = containingFile.getProject().getBasePath();
+    class RootConfig implements OptionContainer {
+      @SuppressWarnings("FieldMayBeFinal") String myExternalAnnotationsRoot = path;
 
-  private void setupRootAndAnnotateExternally(@NotNull PsiFile containingFile,
-                                              @NotNull Project project,
-                                              @NotNull ExternalAnnotation annotation) {
-    RootConfig config = new RootConfig();
-    OptPaneUtils.editOptions(project, config, JavaBundle.message("external.annotations.root.chooser"), null, () -> {
-      String newRoot = config.myExternalAnnotationsRoot;
-      VirtualFile newRootFile = VfsUtil.findFile(Path.of(newRoot), true);
-      if (newRootFile == null) {
-        // TODO: error report
-        return;
+      @Override
+      public @NotNull OptPane getOptionsPane() {
+        String title = JavaBundle.message("external.annotations.root.chooser");
+        return OptPane.pane(OptPane.string("myExternalAnnotationsRoot", title, new LocalFolderValidator(title)));
       }
-      ActionContext context = ActionContext.from(null, annotation.owner().getContainingFile());
-      ModCommandExecutor.executeInteractively(context, JavaBundle.message("update.external.annotations"), null, () ->
-        ModCommand.updateOptionList(containingFile, "OrderEntryConfiguration.externalAnnotations", 
-                                    list -> list.add(newRootFile.getUrl()))
-          .andThen(getAddAnnotationCommand(newRootFile, annotation, context)));
-    });
+    }
+
+    return new ModEditOptions<>(JavaBundle.message("external.annotations.root.chooser"), RootConfig::new, false,
+                                config -> {
+                                  String newRoot = config.myExternalAnnotationsRoot;
+                                  VirtualFile newRootFile;
+                                  try {
+                                    newRootFile = VfsUtil.findFile(Path.of(newRoot), true);
+                                  }
+                                  catch (InvalidPathException e) {
+                                    return ModCommand.error(e.getMessage());
+                                  }
+                                  if (newRootFile == null) {
+                                    return ModCommand.error(JavaBundle.message("external.annotations.root.chooser.error", newRoot));
+                                  }
+                                  return ModCommand.updateOptionList(containingFile, "OrderEntryConfiguration.externalAnnotations",
+                                                                     list -> list.add(newRootFile.getUrl()))
+                                    .andThen(getAddAnnotationCommand(newRootFile, annotation, context));
+                                });
   }
-  
+
   private record AnnotateForRootCommand(@NotNull ExternalAnnotationsManagerImpl manager, 
                                         @NotNull VirtualFile root, 
                                         @NotNull ExternalAnnotation annotation) implements ModCommandAction {

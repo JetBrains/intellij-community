@@ -64,6 +64,12 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
     });
   }
 
+  public @NotNull ModCommand annotateExternallyModCommand(@NotNull PsiModifierListOwner listOwner,
+                                                          @NotNull String annotationFQName,
+                                                          PsiNameValuePair @Nullable [] value) {
+    throw new UnsupportedOperationException("annotateExternallyModCommand is not implemented in " + getClass().getName());
+  }
+
   protected static @NotNull List<XmlTag> getTagsToProcess(@NotNull XmlFile file, @NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     final XmlDocument document = file.getDocument();
     if (document == null) return List.of();
