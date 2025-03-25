@@ -4,8 +4,8 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ReadWriteActionSupport
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -46,6 +46,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 
 @RunWith(JUnit4::class)
@@ -76,7 +77,7 @@ class UnindexedFilesScannerTest {
   @Before
   fun setup() {
     project = p.project
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    IndexingTestUtil.waitUntilIndexesAreReady(project, TimeUnit.SECONDS.toMillis(30))
     testRootDisposable = Disposer.newCheckedDisposable("ScanningAndIndexingTest")
   }
 
@@ -329,7 +330,7 @@ class UnindexedFilesScannerTest {
     val (scanningStat, dirtyFiles) = scanFiles(oneDirIterator)
     assertThat(dirtyFiles).isEmpty()
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
-    IndexingTestUtil.waitUntilIndexesAreReady(project) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
+    IndexingTestUtil.waitUntilIndexesAreReady(project, TimeUnit.SECONDS.toMillis(30)) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
 
     val dumbModCount2 = dumbService.modificationTracker.modificationCount
     assertEquals(dumbModCount1 + 1, dumbModCount2)
@@ -401,7 +402,7 @@ class UnindexedFilesScannerTest {
       }
       tumbler.turnOn()
     }
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    IndexingTestUtil.waitUntilIndexesAreReady(project, TimeUnit.SECONDS.toMillis(30))
   }
 
   private fun scanAndIndexFiles(filesAndDirs: SingleRootIndexableFilesIterator) {
