@@ -3,8 +3,10 @@ package com.intellij.ide.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.structureView.*
 import com.intellij.ide.structureView.impl.StructureViewComposite
@@ -84,7 +86,7 @@ class StructureViewWrapperImpl(
   private var myFirstRun = true
   private var myActivityCount = 0
   private val pendingRebuild = AtomicBoolean(false)
-  private val myActionGroup: DefaultActionGroup = ActionManager.getInstance().getAction(STRUCTURE_VIEW_ACTION_GROUP_ID) as DefaultActionGroup
+  private val myActionGroup: DefaultActionGroup = getOrCopyViewOptionsGroup()
 
   private val rebuildRequests = MutableSharedFlow<RebuildDelay>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -627,6 +629,20 @@ class StructureViewWrapperImpl(
         if (LOG.isTraceEnabled) LOG.trace("$message: finished in ${(System.nanoTime() - startTimeNs) / 1000000} ms")
       }
     }
+
+    /**
+     * Get a view options action group.
+     * It could be either a registered `Structure.ViewOption` action group or a dynamic unregistered action group.
+     *  * It will be the registered group if and only if the IDE is running in RemoteDev.
+     *    It allows synchronizing action between backend and frontend
+     *  * Otherwise, it will be the unregistered dynamic action group.
+     *    It forces IDE not to force actions (for CWM)
+     */
+    private fun getOrCopyViewOptionsGroup(): DefaultActionGroup =
+      if (AppMode.isRemoteDevHost())
+        ActionManager.getInstance().getAction(STRUCTURE_VIEW_ACTION_GROUP_ID) as DefaultActionGroup
+      else DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy)
+        .apply { isPopup = true }
   }
 
   private fun getFocusOwner(): Component? {
