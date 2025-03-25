@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunctionLikeBodyRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
@@ -47,11 +48,11 @@ import org.jetbrains.kotlin.types.Variance
 import javax.swing.Icon
 
 @ApiStatus.Internal
-data class KtClassMemberInfo internal constructor(
+data class KtClassMemberInfo(
     val symbolPointer: KaSymbolPointer<KaCallableSymbol>,
-    @NlsSafe val memberText: String?,
+    val memberText: @NlsSafe String?,
     val memberIcon: Icon?,
-    @NlsContexts.Label val containingSymbolText: String?,
+    val containingSymbolText: @NlsContexts.Label String?,
     val containingSymbolIcon: Icon?,
     val isProperty: Boolean,
 ) {
@@ -61,7 +62,7 @@ data class KtClassMemberInfo internal constructor(
             symbol: KaCallableSymbol,
             memberText: @NlsSafe String? = null,
             memberIcon: Icon? = null,
-            @NlsContexts.Label containingSymbolText: String? = null,
+            containingSymbolText: @NlsContexts.Label String? = null,
             containingSymbolIcon: Icon? = null,
         ): KtClassMemberInfo = KtClassMemberInfo(
             symbolPointer = symbol.createPointer(),
@@ -229,11 +230,24 @@ context(KaSession)
 private fun createRenderer(
     targetClass: KtClassOrObject?,
     mode: MemberGenerateMode,
-    symbol: KaDeclarationSymbol
+    topDeclarationSymbol: KaDeclarationSymbol
 ): KaDeclarationRenderer {
     val containingKtFile = targetClass?.containingKtFile
 
     val renderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+        functionLikeBodyRenderer = object : KaFunctionLikeBodyRenderer {
+            override fun renderBody(
+                analysisSession: KaSession,
+                symbol: KaFunctionSymbol,
+                printer: PrettyPrinter
+            ) {
+                if (symbol is KaConstructorSymbol &&
+                    !symbol.isPrimary &&
+                    (symbol.containingSymbol as? KaClassSymbol)?.declaredMemberScope?.constructors?.any { it.isPrimary } == true) {
+                    printer.append(" : this()")
+                }
+            }
+        }
         if (mode == MemberGenerateMode.OVERRIDE) {
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter { annotation, _ -> keepAnnotation(annotation, containingKtFile) }
@@ -251,7 +265,7 @@ private fun createRenderer(
             }
 
             if (mode != MemberGenerateMode.ACTUAL) {
-                modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
+                modalityProvider = modalityProvider.onlyIf { s -> s != topDeclarationSymbol }
             }
 
             valueParameterRenderer = object: KaValueParameterSymbolRenderer {
@@ -284,13 +298,13 @@ private fun createRenderer(
                 //copy from KaRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
                 override fun getOtherModifiers(
                     analysisSession: KaSession,
-                    s: KaDeclarationSymbol
+                    symbol: KaDeclarationSymbol
                 ): List<KtModifierKeywordToken> = buildList {
                     if (mode == MemberGenerateMode.OVERRIDE && containingSymbol?.isActual == true) {
                         //include actual modifier explicitly when containing class has modifier
                         fun shouldHaveActualModifier(): Boolean {
-                            if (s.isActual) return true
-                            val containingInterface = s.containingSymbol
+                            if (symbol.isActual) return true
+                            val containingInterface = symbol.containingSymbol
                             return containingInterface is KaClassSymbol &&
                                     containingSymbol.getExpectsForActual().any { (it as? KaClassSymbol)?.isSubClassOf(containingInterface) == true }
                         }
@@ -299,54 +313,54 @@ private fun createRenderer(
                         }
                     }
 
-                    if (s is KaNamedFunctionSymbol) {
-                        if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
-                        if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
-                        if (s.isInline) add(KtTokens.INLINE_KEYWORD)
-                        if (s.isInfix) add(KtTokens.INFIX_KEYWORD)
-                        if (s.isOperator) add(KtTokens.OPERATOR_KEYWORD)
-                        if (s.isSuspend) add(KtTokens.SUSPEND_KEYWORD)
+                    if (symbol is KaNamedFunctionSymbol) {
+                        if (symbol.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
+                        if (symbol.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
+                        if (symbol.isInline) add(KtTokens.INLINE_KEYWORD)
+                        if (symbol.isInfix) add(KtTokens.INFIX_KEYWORD)
+                        if (symbol.isOperator) add(KtTokens.OPERATOR_KEYWORD)
+                        if (symbol.isSuspend) add(KtTokens.SUSPEND_KEYWORD)
                     }
 
-                    if (s is KaPropertySymbol) {
-                        if (s.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
+                    if (symbol is KaPropertySymbol) {
+                        if (symbol.isOverride) add(KtTokens.OVERRIDE_KEYWORD)
                     }
 
-                    if (s is KaValueParameterSymbol) {
-                        if (s.isVararg) add(KtTokens.VARARG_KEYWORD)
-                        if (s.isCrossinline) add(KtTokens.CROSSINLINE_KEYWORD)
-                        if (s.isNoinline) add(KtTokens.NOINLINE_KEYWORD)
+                    if (symbol is KaValueParameterSymbol) {
+                        if (symbol.isVararg) add(KtTokens.VARARG_KEYWORD)
+                        if (symbol.isCrossinline) add(KtTokens.CROSSINLINE_KEYWORD)
+                        if (symbol.isNoinline) add(KtTokens.NOINLINE_KEYWORD)
                     }
 
-                    if (s is KaKotlinPropertySymbol) {
-                        if (s.isConst) add(KtTokens.CONST_KEYWORD)
-                        if (s.isLateInit) add(KtTokens.LATEINIT_KEYWORD)
+                    if (symbol is KaKotlinPropertySymbol) {
+                        if (symbol.isConst) add(KtTokens.CONST_KEYWORD)
+                        if (symbol.isLateInit) add(KtTokens.LATEINIT_KEYWORD)
                     }
 
-                    if (s is KaNamedClassSymbol) {
-                        if (s.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
-                        if (s.isInline) {
-                            if ((s.psi as? KtClassOrObject)?.modifierList?.hasValueModifier() == true) {
+                    if (symbol is KaNamedClassSymbol) {
+                        if (symbol.isExternal) add(KtTokens.EXTERNAL_KEYWORD)
+                        if (symbol.isInline) {
+                            if ((symbol.psi as? KtClassOrObject)?.modifierList?.hasValueModifier() == true) {
                                 add(KtTokens.VALUE_KEYWORD)
                             } else {
                                 add(KtTokens.INLINE_KEYWORD)
                             }
                         }
-                        if (s.isData) add(KtTokens.DATA_KEYWORD)
-                        if (s.isFun) add(KtTokens.FUN_KEYWORD)
-                        if (s.isInner) add(KtTokens.INNER_KEYWORD)
+                        if (symbol.isData) add(KtTokens.DATA_KEYWORD)
+                        if (symbol.isFun) add(KtTokens.FUN_KEYWORD)
+                        if (symbol.isInner) add(KtTokens.INNER_KEYWORD)
                     }
 
-                    if (s is KaTypeParameterSymbol) {
-                        if (s.isReified) add(KtTokens.REIFIED_KEYWORD)
-                        when (s.variance) {
+                    if (symbol is KaTypeParameterSymbol) {
+                        if (symbol.isReified) add(KtTokens.REIFIED_KEYWORD)
+                        when (symbol.variance) {
                             Variance.INVARIANT -> {}
                             Variance.IN_VARIANCE -> add(KtTokens.IN_KEYWORD)
                             Variance.OUT_VARIANCE -> add(KtTokens.OUT_KEYWORD)
                         }
                     }
 
-                    if (s == symbol && mode == MemberGenerateMode.OVERRIDE) {
+                    if (symbol == topDeclarationSymbol && mode == MemberGenerateMode.OVERRIDE) {
                         //include additional override modifier
                         add(KtTokens.OVERRIDE_KEYWORD)
                     }
@@ -360,7 +374,7 @@ private fun createRenderer(
 }
 
 @OptIn(KaExperimentalApi::class)
-inline fun KaDeclarationRenderer.Builder.withoutLabel() {
+fun KaDeclarationRenderer.Builder.withoutLabel() {
     contextReceiversRenderer = contextReceiversRenderer.with {
         contextReceiverLabelRenderer = WITHOUT_LABEL
     }
