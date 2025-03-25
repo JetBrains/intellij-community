@@ -30,6 +30,31 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+private val comboBoxItems =
+    listOf(
+        "Cat",
+        "Elephant",
+        "Sun",
+        "Book",
+        "Laughter",
+        "Whisper",
+        "Ocean",
+        "Serendipity lorem ipsum",
+        "Umbrella",
+        "Joy",
+    )
+
+private val languageOptions =
+    listOf(
+        ProgrammingLanguage("Java", AllIconsKeys.FileTypes.Java),
+        ProgrammingLanguage("Python", AllIconsKeys.Language.Python),
+        ProgrammingLanguage("JavaScript", AllIconsKeys.FileTypes.JavaScript),
+        ProgrammingLanguage("Java", AllIconsKeys.FileTypes.Java),
+        ProgrammingLanguage("Rust", AllIconsKeys.Language.Rust),
+        ProgrammingLanguage("Go", AllIconsKeys.Language.GO),
+        ProgrammingLanguage("Ruby", AllIconsKeys.Language.Ruby),
+    )
+
 @Composable
 public fun ComboBoxes() {
     GroupHeader("List combobox")
@@ -37,39 +62,11 @@ public fun ComboBoxes() {
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    GroupHeader("Simple combobox")
     SimpleComboBoxes()
 }
 
 @Composable
 private fun ListComboBoxes() {
-    val comboBoxItems = remember {
-        listOf(
-            "Cat",
-            "Elephant",
-            "Sun",
-            "Book",
-            "Laughter",
-            "Whisper",
-            "Ocean",
-            "Serendipity lorem ipsum",
-            "Umbrella",
-            "Joy",
-        )
-    }
-
-    val languageOptions = remember {
-        listOf(
-            ProgrammingLanguage("Java", AllIconsKeys.FileTypes.Java),
-            ProgrammingLanguage("Python", AllIconsKeys.Language.Python),
-            ProgrammingLanguage("JavaScript", AllIconsKeys.FileTypes.JavaScript),
-            ProgrammingLanguage("Java", AllIconsKeys.FileTypes.Java),
-            ProgrammingLanguage("Rust", AllIconsKeys.Language.Rust),
-            ProgrammingLanguage("Go", AllIconsKeys.Language.GO),
-            ProgrammingLanguage("Ruby", AllIconsKeys.Language.Ruby),
-        )
-    }
-
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Enabled and Editable")
@@ -105,28 +102,9 @@ private fun ListComboBoxes() {
 
             ListComboBox(
                 items = comboBoxItems,
-                selectedIndex = selectedIndex,
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
                 onItemSelected = { index -> selectedIndex = index },
-                itemContent = { item, isSelected, isActive ->
-                    SimpleListItem(
-                        text = item,
-                        isSelected = isSelected,
-                        isActive = isActive,
-                        iconContentDescription = item,
-                    )
-                },
-                labelContent = {
-                    val programmingLanguage = languageOptions[selectedIndex]
-                    SimpleListItem(
-                        text = programmingLanguage.name,
-                        iconContentDescription = programmingLanguage.name,
-                        icon = programmingLanguage.icon,
-                        isSelected = false,
-                        isActive = true,
-                    )
-                },
                 itemKeys = { _, item -> item },
             )
         }
@@ -168,8 +146,6 @@ private fun ListComboBoxes() {
     }
 
     Spacer(modifier = Modifier.height(16.dp))
-
-    Text("With duplicate values (using itemKeys)")
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
