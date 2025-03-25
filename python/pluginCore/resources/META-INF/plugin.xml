@@ -269,6 +269,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                      key="INSP.pandas.series.values.replace.with.tolist" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyPandasSeriesToListInspection"/>
 
+    <listSplitJoinContext language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.PyListSplitJoinContext"/>
+
     <defaultLiveTemplates file="liveTemplates/Python.xml"/>
     <liveTemplateContext contextId="Python"
                          implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
