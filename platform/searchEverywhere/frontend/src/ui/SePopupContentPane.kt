@@ -12,8 +12,6 @@ import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.providers.files.SeTargetItemPresentationRenderer
-import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeSortedResultAddedEvent
-import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeSortedResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
@@ -31,10 +29,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.Point
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.*
@@ -46,7 +46,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
   private val textField: SeTextField = SeTextField()
 
-  private val resultListModel = JBList.createDefaultListModel<SeResultListRow>()
+  private val resultListModel = SeResultListModel()
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
 
@@ -91,9 +91,16 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     vm.coroutineScope.launch {
       vm.searchResults.collectLatest { listEventFlow ->
         withContext(Dispatchers.EDT) {
-          resultListModel.removeAllElements()
+          resultListModel.reset()
           if (vm.searchPattern.value.isNotEmpty()) {
             resultListModel.addElement(SeResultListMoreRow)
+          }
+        }
+
+        launch {
+          delay(SeResultListModel.DEFAULT_FREEZING_DELAY_MS)
+          withContext(Dispatchers.EDT) {
+            resultListModel.ignoreFreezing = false
           }
         }
 
@@ -101,21 +108,12 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
           withContext(Dispatchers.EDT) {
             when (listEvent) {
               is SeResultListUpdateEvent -> {
-                when (val sortedEvent = listEvent.event) {
-                  is SeSortedResultAddedEvent -> {
-                    resultListModel.add(sortedEvent.index, SeResultListItemRow(sortedEvent.itemData))
-                  }
-                  is SeSortedResultReplacedEvent -> {
-                    resultListModel.removeElement(sortedEvent.indexToRemove)
-                    resultListModel.add(sortedEvent.index, SeResultListItemRow(sortedEvent.itemData))
-                  }
-                }
+                resultListModel.freeze(indexToFreezeFromListOffset())
+                resultListModel.addFromEvent(listEvent.event)
               }
 
               SeResultListStopEvent -> {
-                if (!resultListModel.isEmpty && resultListModel.lastElement() is SeResultListMoreRow) {
-                  resultListModel.removeElementAt(resultListModel.size() - 1)
-                }
+                resultListModel.removeLoadingItem()
               }
             }
           }
@@ -136,12 +134,16 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
 
       if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
+        resultListModel.freezeAll()
         vm.shouldLoadMore = true
       } else if (yetToScrollHeight > resultsScrollPane.height / 2) {
         vm.shouldLoadMore = false
       }
     }
   }
+
+  private fun indexToFreezeFromListOffset(): Int =
+    resultList.locationToIndex(Point(0, resultList.visibleRect.y)) + SeResultListModel.DEFAULT_FROZEN_COUNT
 
   private fun createListPane(resultList: JBList<*>): JScrollPane {
     val resultsScroll: JScrollPane = object : JBScrollPane(resultList) {

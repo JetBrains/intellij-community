@@ -9,7 +9,6 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.frontend.SeTab
-import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeResultsSorter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -42,8 +41,6 @@ class SeTabVm(
     })
   }
 
-  private val resultsSorter = SeResultsSorter(tab)
-
   init {
     coroutineScope.launch {
       isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
@@ -57,7 +54,7 @@ class SeTabVm(
           val params = SeParams(searchPattern, filterData)
 
           flow {
-            resultsSorter.getItems(params).map { item ->
+            tab.getItems(params).map { item ->
               shouldLoadMoreFlow.first { it }
               item
             }.onCompletion {

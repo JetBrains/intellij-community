@@ -10,12 +10,14 @@ object SeLog {
   const val ITEM_EMIT: Int = 1
   const val USER_ACTION: Int = 2
   const val LIFE_CYCLE: Int = 3
+  const val FROZEN_COUNT: Int = 4
 
   private val allowedCategories = setOf(
     DEFAULT,
     ITEM_EMIT,
     USER_ACTION,
-    LIFE_CYCLE
+    LIFE_CYCLE,
+    FROZEN_COUNT
   )
 
   // #com.intellij.platform.searchEverywhere.providers.SeLog
