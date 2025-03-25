@@ -643,6 +643,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveMultipleWithComments/moveMultipleWithComments.test");
         }
 
+        @TestMetadata("kotlin/moveNoSearchReferencesRetainImports/moveNoSearchReferencesRetainImports.test")
+        public void testKotlin_moveNoSearchReferencesRetainImports_MoveNoSearchReferencesRetainImports() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveNoSearchReferencesRetainImports/moveNoSearchReferencesRetainImports.test");
+        }
+
         @TestMetadata("kotlin/moveObjectToFile/moveObjectToFile.test")
         public void testKotlin_moveObjectToFile_MoveObjectToFile() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveObjectToFile/moveObjectToFile.test");

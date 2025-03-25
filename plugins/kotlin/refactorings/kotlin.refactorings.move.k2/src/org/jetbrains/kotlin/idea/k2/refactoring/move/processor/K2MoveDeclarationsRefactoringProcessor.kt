@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration.DeclarationTargetType
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -65,20 +66,35 @@ open class K2MoveDeclarationsRefactoringProcessor(
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = operationDescriptor.usageViewDescriptor()
 
     private fun getUsages(moveDescriptor: K2MoveDescriptor): List<UsageInfo> {
-        return moveDescriptor.source.elements
+        val usages = moveDescriptor.source.elements
             .filterIsInstance<KtNamedDeclaration>()
             .flatMap { elem ->
                 // We filter out constructors because calling bindTo on these references will break for light classes.
                 if (elem is KtPrimaryConstructor || elem is KtSecondaryConstructor) return@flatMap emptyList()
-                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target)
-            } + findInternalOuterInstanceUsages(moveDescriptor.source)
+                if (operationDescriptor.searchReferences) {
+                    elem.findUsages(
+                        searchInCommentsAndStrings = operationDescriptor.searchInComments,
+                        searchForText = operationDescriptor.searchForText,
+                        moveTarget = moveDescriptor.target
+                    )
+                } else {
+                    // If we do not search for references, we still need to mark internal usages so that
+                    // imports are copied over correctly.
+                    // In the branch above, markInternalUsages is called as part of findUsages.
+                    markInternalUsages(elem, elem)
+                    emptyList()
+                }
+            }
+        if (!operationDescriptor.searchReferences) return usages
+        return usages + findInternalOuterInstanceUsages(moveDescriptor.source)
     }
 
     protected override fun findUsages(): Array<UsageInfo> {
-        if (!operationDescriptor.searchReferences) return emptyArray()
         val allUsages = operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
             val usages = operationDescriptor.moveDescriptors.flatMapTo(mutableSetOf(), ::getUsages)
-            collectConflicts(usages)
+            if (operationDescriptor.searchReferences) {
+                collectConflicts(usages)
+            }
             usages
         }.toTypedArray()
 

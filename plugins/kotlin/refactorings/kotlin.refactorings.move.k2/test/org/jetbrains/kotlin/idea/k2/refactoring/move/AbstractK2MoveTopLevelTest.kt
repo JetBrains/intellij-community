@@ -65,15 +65,15 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
             }
             val moveOperationDescriptor = allowAnalysisOnEdt {
                 K2MoveOperationDescriptor.Declarations(
-                    project,
-                    declarationsToMove,
-                    baseDir,
-                    fileName,
-                    pkgName,
-                    config.searchForText(),
-                    config.searchInComments(),
-                    config.searchReferences(),
-                    config.moveExpectedActuals(),
+                    project = project,
+                    declarations = declarationsToMove,
+                    baseDir = baseDir,
+                    fileName = fileName,
+                    pkgName = pkgName,
+                    searchForText = config.searchForText(),
+                    searchReferences = config.searchReferences(),
+                    searchInComments = config.searchInComments(),
+                    mppDeclarations = config.moveExpectedActuals(),
                     dirStructureMatchesPkg = true
                 )
             }
