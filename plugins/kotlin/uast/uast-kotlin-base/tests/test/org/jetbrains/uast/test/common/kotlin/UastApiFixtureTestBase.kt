@@ -3,6 +3,7 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.PsiTypes
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
@@ -1129,6 +1131,42 @@ interface UastApiFixtureTestBase {
         TestCase.assertNotNull(unusedLambda)
         TestCase.assertNotNull(invokedLambda)
         TestCase.assertEquals(unusedLambda!!.asRecursiveLogString(), invokedLambda!!.asRecursiveLogString())
+    }
+
+    fun checkInvokedLambdaViaFunctionCall(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                fun f(): () -> Unit = { }
+                fun test(p: () -> Unit) {
+                  f()()
+                  p()
+                }
+            """.trimIndent()
+        )
+        val f = myFixture.file.findUElementByTextFromPsi<UCallExpression>("f()()")
+            .orFail("cant convert to UCallExpression")
+        var txt = f.sourcePsi?.text
+        var rcv = f.receiver
+        TestCase.assertNotNull(txt, rcv)
+        TestCase.assertTrue(txt, rcv is UCallExpression)
+        TestCase.assertEquals(txt, "f()", rcv?.sourcePsi?.text)
+        TestCase.assertEquals(
+           txt,
+           "kotlin.jvm.functions.Function0<? extends kotlin.Unit>",
+           rcv?.getExpressionType()?.canonicalText
+        )
+        val p = myFixture.file.findUElementByTextFromPsi<UCallExpression>("p()")
+            .orFail("cant convert to UCallExpression")
+        txt = p.sourcePsi?.text
+        rcv = p.receiver
+        TestCase.assertNotNull(txt, rcv)
+        TestCase.assertTrue(txt, rcv is UReferenceExpression)
+        TestCase.assertEquals(txt, "p", rcv?.sourcePsi?.text)
+        TestCase.assertEquals(
+            txt,
+            "kotlin.jvm.functions.Function0<kotlin.Unit>",
+            (rcv?.tryResolve() as? PsiVariable)?.type?.canonicalText
+        )
     }
 
     fun checkImplicitReceiver(myFixture: JavaCodeInsightTestFixture) {

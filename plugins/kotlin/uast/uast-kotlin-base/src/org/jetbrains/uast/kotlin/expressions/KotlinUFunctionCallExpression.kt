@@ -255,7 +255,7 @@ class KotlinUFunctionCallExpression(
 
         val callee = sourcePsi.calleeExpression
 
-        if (callee is KtLambdaExpression && methodName == OperatorNameConventions.INVOKE.identifier) {
+        if (callee !is KtNameReferenceExpression && methodName == OperatorNameConventions.INVOKE.identifier) {
             baseResolveProviderService.baseKotlinConverter.convertOrNull(callee, uastParent)?.let { return it }
         }
 
@@ -278,7 +278,7 @@ class KotlinUFunctionCallExpression(
         }
 
         if (variable != null) {
-            // an implicit receiver for variables calls (KT-25524)
+            // an implicit receiver for variables calls (KTIJ-11329)
             return object : KotlinAbstractUExpression(this), UReferenceExpression {
                 override val sourcePsi: KtNameReferenceExpression get() = ktNameReferenceExpression
 
