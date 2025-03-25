@@ -7,7 +7,7 @@ import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
 import com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
 
-class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language) : SyntaxParserRuntimeFactory {
+internal class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language) : SyntaxParserRuntimeFactory {
 
   override fun buildParserUtils(builder: SyntaxTreeBuilder): SyntaxGeneratedParserRuntime {
     val languageInformer = LanguageSyntaxDefinitions.INSTANCE.forLanguage(language)
@@ -19,3 +19,5 @@ class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language) : Syntax
     )
   }
 }
+
+fun getSyntaxParserRuntimeFactory(language: Language):SyntaxParserRuntimeFactory = PsiSyntaxParserRuntimeFactoryImpl(language)

@@ -48,10 +48,8 @@
 - sf:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 *f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
 - f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
-*f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImpl
-- com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
-- <init>(com.intellij.lang.Language):V
-- buildParserUtils(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
+*f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImplKt
+- sf:getSyntaxParserRuntimeFactory(com.intellij.lang.Language):com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
 *c:com.intellij.platform.syntax.psi.lexer.LexerAdapter
 - com.intellij.lexer.Lexer
 - <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.psi.ElementTypeConverter):V

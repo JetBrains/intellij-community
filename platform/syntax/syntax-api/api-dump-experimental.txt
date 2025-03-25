@@ -58,13 +58,6 @@
 - a:registerRollback(I):V
 *f:com.intellij.platform.syntax.impl.builder.SyntaxBuildingDiagnosticsKt
 - *sf:computeWithDiagnostics(com.intellij.platform.syntax.impl.builder.SyntaxBuildingDiagnostics,kotlin.jvm.functions.Function0):java.lang.Object
-*:com.intellij.platform.syntax.lexer.FlexLexer
-- a:advance():com.intellij.platform.syntax.SyntaxElementType
-- a:getTokenEnd():I
-- a:getTokenStart():I
-- a:reset(java.lang.CharSequence,I,I,I):V
-- a:yybegin(I):V
-- a:yystate():I
 *:com.intellij.platform.syntax.lexer.Lexer
 - a:advance():V
 - a:getBufferEnd():I
@@ -83,25 +76,6 @@
 *:com.intellij.platform.syntax.lexer.LexerPosition
 - a:getOffset():I
 - a:getState():I
-*c:com.intellij.platform.syntax.lexer.SyntaxFlexAdapter
-- com.intellij.platform.syntax.lexer.Lexer
-- *sf:Companion:com.intellij.platform.syntax.lexer.SyntaxFlexAdapter$Companion
-- <init>(com.intellij.platform.syntax.lexer.FlexLexer):V
-- advance():V
-- getBufferEnd():I
-- getBufferSequence():java.lang.CharSequence
-- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
-- f:getFlex():com.intellij.platform.syntax.lexer.FlexLexer
-- getState():I
-- getTokenEnd():I
-- getTokenStart():I
-- getTokenType():com.intellij.platform.syntax.SyntaxElementType
-- pf:locateToken():V
-- restore(com.intellij.platform.syntax.lexer.LexerPosition):V
-- start(java.lang.CharSequence):V
-- start(java.lang.CharSequence,I,I):V
-- start(java.lang.CharSequence,I,I,I):V
-*f:com.intellij.platform.syntax.lexer.SyntaxFlexAdapter$Companion
 *:com.intellij.platform.syntax.lexer.TokenList
 - a:getTokenCount():I
 - a:getTokenEnd(I):I
