@@ -32,14 +32,14 @@ internal class BackendProcessHandlerApi : ProcessHandlerApi {
   }
 
   override suspend fun destroyProcess(handlerId: ProcessHandlerId): Deferred<Int?> {
-    val processHandler = handlerId.findProcessHandler() ?: return CompletableDeferred(null)
+    val processHandler = handlerId.findProcessHandler() ?: return CompletableDeferred(value = null)
     return stopProcess(processHandler) {
       it.destroyProcess()
     }
   }
 
   override suspend fun detachProcess(handlerId: ProcessHandlerId): Deferred<Int?> {
-    val processHandler = handlerId.findProcessHandler() ?: return CompletableDeferred(null)
+    val processHandler = handlerId.findProcessHandler() ?: return CompletableDeferred(value = null)
     return stopProcess(processHandler) {
       it.detachProcess()
     }
