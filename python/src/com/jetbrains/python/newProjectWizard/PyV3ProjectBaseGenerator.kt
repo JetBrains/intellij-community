@@ -44,6 +44,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val _newProjectName: @NlsSafe String? = null,
+  private val createPythonModuleStructureUsingSdkCreator: Boolean = false,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings>, PyProjectTypeGenerator {
   private val baseSettings = PyV3BaseProjectSettings()
   private var uiServices: PyV3UIServices = PyV3UIServicesProd
@@ -64,7 +65,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope
     coroutineScope.launch {
-      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir).getOr {
+      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, createPythonModuleStructureUsingSdkCreator).getOr {
         withContext(Dispatchers.EDT) {
           // TODO: Migrate to python Result using PyError as exception not to make this dynamic check
           uiServices.errorSink.emit(it.error)

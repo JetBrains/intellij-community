@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -50,6 +51,9 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
   abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError>
+
+  open suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> = Result.success(Unit)
+
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 

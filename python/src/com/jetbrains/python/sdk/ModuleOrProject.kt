@@ -34,3 +34,9 @@ sealed class ModuleOrProject(val project: Project) {
   class ProjectOnly(project: Project) : ModuleOrProject(project)
   class ModuleAndProject(val module: Module) : ModuleOrProject(module.project)
 }
+
+val ModuleOrProject.destructured: Pair<Project, Module?>
+  get() = when (this) {
+    is ModuleOrProject.ProjectOnly -> project to null
+    is ModuleOrProject.ModuleAndProject -> project to module
+  }

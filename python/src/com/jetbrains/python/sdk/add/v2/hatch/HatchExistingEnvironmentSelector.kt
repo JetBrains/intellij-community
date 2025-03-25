@@ -7,10 +7,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.python.hatch.resolveHatchWorkingDirectory
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.resolvePythonBinary
@@ -19,7 +21,7 @@ import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
-import com.jetbrains.python.sdk.hatch.createSdk
+import com.jetbrains.python.sdk.destructured
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
@@ -50,19 +52,21 @@ internal class HatchExistingEnvironmentSelector(
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
-    val existingHatchVenv = state.selectedHatchEnv.get()?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
+    val environment = state.selectedHatchEnv.get()
+    val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
                             ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
-    val module = (moduleOrProject as? ModuleOrProject.ModuleAndProject)?.module
-                 ?: return Result.failure(HatchUIError.ModuleIsNotSelected())
 
     val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
       existingHatchVenv.pythonHomePath.resolvePythonBinary().toString()
     }
     val existingSdk = ProjectJdkTable.getInstance().allJdks.find { it.homePath == venvPythonBinaryPathString }
-
     val sdk = when {
       existingSdk != null -> Result.success(existingSdk)
-      else -> existingHatchVenv.createSdk(module)
+      else -> {
+        val (project, module) = moduleOrProject.destructured
+        val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
+        environment.createSdk(workingDirectory, module)
+      }
     }.onSuccess {
       val executablePath = executable.get().toPath().getOr { return@onSuccess }
       HatchConfiguration.persistPathForTarget(hatchExecutablePath = executablePath)
