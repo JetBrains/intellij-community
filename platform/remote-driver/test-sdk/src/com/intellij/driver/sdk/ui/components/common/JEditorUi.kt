@@ -191,9 +191,9 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun containsText(expectedText: String) {
     step("Verify that editor contains text: $expectedText") {
-      waitFor(errorMessage = { "Editor doesn't contain text: $expectedText" }) {
-        text.trimIndent().contains(expectedText)
-      }
+      waitFor(errorMessage = { "Editor doesn't contain text: $expectedText" },
+              getter = { text.trimIndent() },
+              checker = { it.contains(expectedText) })
     }
   }
 }
