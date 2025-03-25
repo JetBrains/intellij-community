@@ -12,12 +12,37 @@ class QueryBuilder {
 
   fun byTitle(title: String) = byAttribute("title", title)
 
+  /**
+   * Builds a query to search for components by their short class name (without package and removed parts after `$`) if the class is not anonymous.
+   * Otherwise, it's a short name of the parent class.
+   * Example: `byClass("JBList")`
+   */
   fun byClass(cls: String) = byAttribute("class", cls)
 
+  /**
+   * Builds a query to search for components by their full class name (including package).
+   * Example: `byJavaClass("com.intellij.ui.components.JBList")`
+   */
   fun byJavaClass(cls: String) = byAttribute("javaclass", cls)
 
+  /**
+   * Builds a query to search for components either by their full class name or by parent type.
+   * This method matches:
+   * - Elements with the exact Java class
+   * - Elements that have the specified type in their class hierarchy
+   *
+   * Example: `byType("com.intellij.ui.components.JBList")`
+   */
   fun byType(type: String) = or(byJavaClass(type), contains(byAttribute("classhierarchy", "$type ")), contains(byAttribute("classhierarchy", " $type ")))
 
+  /**
+   * Builds a query to search for components either by their full class name or by parent type.
+   * This method matches:
+   * - Elements with the exact Java class
+   * - Elements that have the specified type in their class hierarchy
+   *
+   * Example: `byType(JBList::class.java)`
+   */
   fun <T : Component> byType(type: Class<T>) =  byType(type.name)
 
   fun byTooltip(tooltip: String) = byAttribute("tooltiptext", tooltip)
