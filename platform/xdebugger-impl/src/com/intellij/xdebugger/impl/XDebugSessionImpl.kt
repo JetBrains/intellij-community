@@ -425,9 +425,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
 
     if (useFeProxy()) {
+      val environmentCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
       val tabClosedChannel = Channel<Unit>(capacity = 1)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
-                                            contentToReuse, executionEnvironment?.toDto(coroutineScope), tabClosedChannel)
+                                            contentToReuse, executionEnvironment?.toDto(environmentCoroutineScope), tabClosedChannel)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         myRunContentDescriptor = if (contentToReuse == null) {
           // This is a mock descriptor used in backend only
@@ -437,6 +438,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
           }
           debuggerManager.coroutineScope.launch {
             for (tabClosedRequest in tabClosedChannel) {
+              environmentCoroutineScope.cancel()
               Disposer.dispose(mockDescriptor)
             }
           }
@@ -448,6 +450,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         myDebugProcess!!.sessionInitialized()
       }
       else {
+        environmentCoroutineScope.cancel()
         tabClosedChannel.close()
       }
     }
