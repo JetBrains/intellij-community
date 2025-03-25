@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.platform.syntax.SyntaxElementTypeSet;
 import com.intellij.platform.syntax.element.SyntaxTokenTypes;
 import com.intellij.platform.syntax.lexer.TokenList;
-import com.intellij.platform.syntax.lexer.TokenListKt;
+import com.intellij.platform.syntax.lexer.TokenListUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
@@ -38,7 +38,7 @@ public final class JavaParserUtil {
   public static @NotNull TokenList obtainTokens(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
-        TokenListKt.performLexing(file.getViewProvider().getContents(), new JavaLexer(PsiUtil.getLanguageLevel(file)),
+        TokenListUtil.performLexing(file.getViewProvider().getContents(), new JavaLexer(PsiUtil.getLanguageLevel(file)),
                                   ProgressManager::checkCanceled),
         file));
   }

@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.platform.syntax.lexer.TokenListKt.*;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.*;
 
 public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");

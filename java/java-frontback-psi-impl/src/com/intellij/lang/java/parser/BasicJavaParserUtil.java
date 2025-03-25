@@ -33,7 +33,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.intellij.platform.syntax.lexer.TokenListKt.tokenListLexer;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.tokenListLexer;
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
 
 @ApiStatus.Experimental

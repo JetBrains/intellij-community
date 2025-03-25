@@ -76,7 +76,7 @@
 - getTokenText(I):java.lang.CharSequence
 - a:getTokenType(I):com.intellij.platform.syntax.SyntaxElementType
 - a:getTokenizedText():java.lang.CharSequence
-*f:com.intellij.platform.syntax.lexer.TokenListKt
+*f:com.intellij.platform.syntax.lexer.TokenListUtil
 - sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
 - sf:backWhile(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):I
 - sf:backWithBraceMatching(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):I
