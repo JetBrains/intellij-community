@@ -316,14 +316,8 @@ internal open class FirCallableCompletionContributor(
             is KaPackageSymbol -> collectDotCompletionForPackageReceiver(positionContext, symbol)
 
             else -> sequence {
-                if (symbol is KaNamedClassSymbol && symbol.hasImportantStaticMemberScope) {
-                    yieldAll(
-                        collectDotCompletionFromStaticScope(
-                            positionContext = positionContext,
-                            symbol = symbol,
-                            withCompanionScope = false,
-                        )
-                    )
+                if (symbol is KaNamedClassSymbol) {
+                    yieldAll(collectDotCompletionFromStaticScope(positionContext, symbol))
                 }
 
                 if (symbol !is KaNamedClassSymbol || symbol.canBeUsedAsReceiver) {
@@ -465,22 +459,28 @@ internal open class FirCallableCompletionContributor(
     protected fun collectDotCompletionFromStaticScope(
         positionContext: KotlinNameReferencePositionContext,
         symbol: KaNamedClassSymbol,
-        withCompanionScope: Boolean,
     ): Sequence<CallableWithMetadataForCompletion> {
-        val staticScope = symbol.staticScope(withCompanionScope)
+        if (!symbol.hasImportantStaticMemberScope) return emptySequence()
+
         val staticScopeKind = KaScopeKinds.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         val nonExtensions = collectNonExtensionsFromScope(
             parameters = parameters,
             positionContext = positionContext,
-            scope = staticScope,
+            scope = symbol.staticScope(withCompanionScope = false),
             visibilityChecker = visibilityChecker,
             scopeNameFilter = scopeNameFilter,
         ) { filter(it) }
 
-        return nonExtensions.map { member ->
-            val options = CallableInsertionOptions(ImportStrategy.DoNothing, getInsertionStrategy(member))
-            createCallableWithMetadata(member, staticScopeKind, options = options)
+        return nonExtensions.map { signature ->
+            CallableWithMetadataForCompletion(
+                _signature = signature,
+                options = CallableInsertionOptions(
+                    importingStrategy = ImportStrategy.DoNothing,
+                    insertionStrategy = getInsertionStrategy(signature),
+                ),
+                symbolOrigin = CompletionSymbolOrigin.Scope(staticScopeKind),
+            )
         }
     }
 
@@ -768,15 +768,8 @@ internal class FirCallableReferenceCompletionContributor(
         return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
             is KaPackageSymbol -> emptySequence()
             is KaNamedClassSymbol -> sequence {
-                if (symbol.hasImportantStaticMemberScope) {
-                    yieldAll(
-                        collectDotCompletionFromStaticScope(
-                            positionContext = positionContext,
-                            symbol = symbol,
-                            withCompanionScope = false,
-                        )
-                    )
-                }
+                yieldAll(collectDotCompletionFromStaticScope(positionContext, symbol))
+
                 val types = collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
                 yieldAll(
                     collectDotCompletionForCallableReceiver(
