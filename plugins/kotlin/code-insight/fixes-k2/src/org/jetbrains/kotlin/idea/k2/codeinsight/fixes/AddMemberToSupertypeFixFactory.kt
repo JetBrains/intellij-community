@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.types.Variance
 import javax.swing.Icon
 
-object AddMemberToSupertypeFixFactory {
+internal object AddMemberToSupertypeFixFactory {
 
   internal class MemberData(val signaturePreview: String, val sourceCode: String, val targetClass: KtClass)
 
