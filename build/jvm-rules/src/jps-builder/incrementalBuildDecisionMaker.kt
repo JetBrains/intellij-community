@@ -27,9 +27,7 @@ internal fun validateFileExistence(outputs: OutputFiles, cacheDir: Path): String
   return when {
     !Files.isDirectory(cacheDir) -> "cache dir doesn't exist"
     Files.notExists(outputs.cachedJar) -> "cached output jar doesn't exist"
-    outputs.cachedAbiJar != null && Files.notExists(outputs.cachedAbiJar) -> {
-      "cached output JAR exists but not ABI JAR - something wrong, or we enabled ABI JARs"
-    }
+    outputs.abiJar != null && Files.notExists(outputs.cachedAbiJar) -> "cached ABI jar doesn't exist"
     else -> null
   }
 }
