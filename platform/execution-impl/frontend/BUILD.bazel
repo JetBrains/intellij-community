@@ -22,6 +22,9 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/project/shared:project",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/execution",
   ],
   runtime_deps = [":execution-impl-frontend_resources"]
 )

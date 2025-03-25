@@ -58,6 +58,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/kernel/shared:kernel",
     "//platform/project/shared:project",
+    "//platform/platform-impl/rpc:ide-rpc",
   ],
   exports = ["//platform/macro"],
   runtime_deps = [":execution-impl_resources"]

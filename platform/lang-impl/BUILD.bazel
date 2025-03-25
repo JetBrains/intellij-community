@@ -112,6 +112,7 @@ jvm_library(
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-util:util",
     "//platform/syntax/syntax-psi:psi",
+    "//platform/experiment",
   ],
   exports = [
     "//platform/lang-api:lang",

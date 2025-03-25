@@ -23,6 +23,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/kernel/backend",
     "//platform/project/shared:project",
+    "//platform/platform-impl/rpc:ide-rpc",
   ],
   runtime_deps = [":execution-impl-backend_resources"]
 )
