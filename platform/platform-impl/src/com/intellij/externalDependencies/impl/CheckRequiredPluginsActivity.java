@@ -61,7 +61,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
         }
 
         var canBeEnabled =
-          !ContainerUtil.exists(descriptor.pluginDependencies, it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
+          !ContainerUtil.exists(descriptor.getDependencies(), it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
         if (canBeEnabled) {
           result.add(plugin);
         }
