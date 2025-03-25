@@ -982,12 +982,14 @@
 - sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.ReferencingWebSymbol
 - sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,java.util.List):com.intellij.webSymbols.utils.ReferencingWebSymbol
 - createPointer():com.intellij.model.Pointer
+- equals(java.lang.Object):Z
 - getKind():java.lang.String
 - getName():java.lang.String
 - getNamespace():java.lang.String
 - getOrigin():com.intellij.webSymbols.WebSymbolOrigin
 - getPattern():com.intellij.webSymbols.patterns.WebSymbolsPattern
 - getPriority():com.intellij.webSymbols.WebSymbol$Priority
+- hashCode():I
 *f:com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion
 - f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[]):com.intellij.webSymbols.utils.ReferencingWebSymbol
 - f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.ReferencingWebSymbol
