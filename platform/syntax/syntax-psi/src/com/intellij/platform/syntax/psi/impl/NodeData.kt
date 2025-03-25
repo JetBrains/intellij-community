@@ -23,7 +23,7 @@ internal class NodeData(
   val lexemeCount: Int,
   val convertedLexTypes: Array<IElementType>,
   val lexTypes: Array<SyntaxElementType>,
-  var charTable: CharTable?, // todo make it not-null
+  var charTable: CharTable?,
   val astFactory: ASTFactory?, // parserDefinition as? ASTFactory
   val textArray: CharArray?,
   val file: PsiFile?,
