@@ -13,7 +13,7 @@ import com.intellij.openapi.components.SettingsCategory
 
 
 object ImportSettingsEventsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("import.settings", 5)
+  private val GROUP = EventLogGroup("import.settings", 6)
   override fun getGroup(): EventLogGroup = GROUP
   private val UNKNOWN = "UNKNOWN"
   private val FOLDER = "FOLDER"

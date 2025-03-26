@@ -61,6 +61,8 @@ class SettingTransferProductService(
     get() = when (productId) {
       TransferableIdeId.DummyIde -> ""
       TransferableIdeId.VSCode -> ""
+      TransferableIdeId.Cursor -> ""
+      TransferableIdeId.Windsurf -> ""
       TransferableIdeId.VisualStudio -> "Visual Studio"
       TransferableIdeId.VisualStudioForMac -> "Visual Studio for Mac"
     }
