@@ -129,6 +129,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var disableFeedbackNotification: BorderLayoutPanel? = null
   private val sentFeedbackPlugins = HashSet<PluginId>()
   private val licensePanel = LicensePanel(false)
+  private val customLicensePanel = JPanel(BorderLayout()).apply {
+    isOpaque = false
+    isVisible = false
+  }
   private val unavailableWithoutSubscriptionBanner: InlineBannerBase? = UnavailableWithoutSubscriptionComponent.getBanner()
   private val partiallyAvailableBanner: InlineBannerBase? = PartiallyAvailableComponent.getBanner()
   private var homePage: LinkPanel? = null
@@ -343,6 +347,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     topPanel.add(ErrorComponent().also { errorComponent = it }, VerticalLayout.FILL_HORIZONTAL)
     topPanel.add(licensePanel)
     licensePanel.border = JBUI.Borders.emptyBottom(5)
+    topPanel.add(customLicensePanel)
+    customLicensePanel.border = JBUI.Borders.emptyBottom(5)
 
     if (unavailableWithoutSubscriptionBanner != null) {
       topPanel.add(unavailableWithoutSubscriptionBanner, VerticalLayout.FILL_HORIZONTAL)
@@ -1251,6 +1257,20 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun showLicensePanel() {
     val descriptor = descriptorForActions
     val productCode = descriptor!!.productCode
+    val customization = PluginInstallationCustomization.findPluginInstallationCustomization(descriptor.pluginId)
+    val customLicense = customization?.createLicensePanel(updateDescriptor != null)
+
+    if (customLicense != null) {
+      customLicensePanel.add(customLicense, BorderLayout.CENTER)
+      customLicensePanel.isVisible = true
+      licensePanel.isVisible = false
+      return
+    }
+
+    customLicensePanel.removeAll()
+    customLicensePanel.isVisible = false
+    licensePanel.isVisible = true
+
     if (descriptor.isBundled || LicensePanel.isEA2Product(productCode)) {
       licensePanel.hideWithChildren()
       return
