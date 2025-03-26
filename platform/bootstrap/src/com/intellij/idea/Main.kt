@@ -230,7 +230,7 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 private fun isInAquaSession(): Boolean {
   if (!SystemInfoRt.isMac) return false
 
-  if (System.getenv("AWT_FORCE_HEADFUL") != null) {
+  if ("true" == System.getenv("AWT_FORCE_HEADFUL")) {
     return false // the value is forcefully set, assume the worst case
   }
 
