@@ -9,6 +9,7 @@ import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
@@ -21,7 +22,18 @@ class SeItemDataFrontendProvider(private val projectId: ProjectId,
                                  private val dataContextId: DataContextId?): SeItemDataProvider {
   override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
-      SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, dataContextId).collect {
+      val channel = Channel<Int>(capacity = 1, onBufferOverflow = BufferOverflow.SUSPEND)
+
+      channel.send(DEFAULT_CHUNK_SIZE)
+      var pendingCount = DEFAULT_CHUNK_SIZE
+
+      SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, dataContextId, channel).collect {
+        pendingCount--
+        if (pendingCount == 0) {
+          pendingCount += DEFAULT_CHUNK_SIZE
+          channel.send(DEFAULT_CHUNK_SIZE)
+        }
+
         SeLog.log(ITEM_EMIT) { "Frontend provider for ${id.value} receives: ${it.presentation.text}" }
         send(it)
       }
@@ -35,4 +47,8 @@ class SeItemDataFrontendProvider(private val projectId: ProjectId,
   }
 
   override fun dispose() {}
+
+  companion object {
+    private const val DEFAULT_CHUNK_SIZE: Int = 50
+  }
 }

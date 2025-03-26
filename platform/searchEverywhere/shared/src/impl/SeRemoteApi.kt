@@ -12,17 +12,29 @@ import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Rpc
 interface SeRemoteApi: RemoteApi<Unit> {
+  // In the case of sending search results via RPC,
+  // we can't limit the flow buffer on the backend side
+  // and somehow suspend generating new search results while the UI has enough of them to present.
+  // To limit the results generating, we use `requestedCountChannel`.
+  //
+  // The idea behind `requestedCountChannel` is the following:
+  // 1. FE sends to BE ReceiveChannel,
+  // 2. BE subscribes to this channel.
+  // 3. FE sends "give me next 50" requests through this channel
+  // 4. BE sends the next batch of items
   suspend fun getItems(projectId: ProjectId,
                        sessionRef: DurableRef<SeSessionEntity>,
                        providerId: SeProviderId,
                        params: SeParams,
-                       dataContextId: DataContextId?): Flow<SeItemData>
+                       dataContextId: DataContextId?,
+                       requestedCountChannel: ReceiveChannel<Int>): Flow<SeItemData>
 
   suspend fun itemSelected(projectId: ProjectId,
                            sessionRef: DurableRef<SeSessionEntity>,

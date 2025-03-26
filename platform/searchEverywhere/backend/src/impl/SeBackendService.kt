@@ -20,13 +20,45 @@ import fleet.kernel.onDispose
 import fleet.kernel.rete.Rete
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
+
+  suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
+                       providerId: SeProviderId,
+                       params: SeParams,
+                       dataContextId: DataContextId?,
+                       requestedCountChannel: ReceiveChannel<Int>
+  ): Flow<SeItemData> {
+    val provider = getProviders(sessionRef, dataContextId)[providerId] ?: return emptyFlow()
+
+    val requestedCountState = MutableStateFlow(0)
+    val receivingJob = coroutineScope.launch {
+      requestedCountChannel.consumeEach { count ->
+        requestedCountState.update { it + count }
+      }
+    }
+
+    return flow {
+      val itemsFlow = provider.getItems(params)
+
+      itemsFlow.collect { item ->
+        requestedCountState.first { it > 0 }
+        requestedCountState.update { it - 1 }
+
+        emit(item)
+      }
+    }.onCompletion {
+      receivingJob.cancel()
+    }
+  }
 
   suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
                        providerId: SeProviderId,
