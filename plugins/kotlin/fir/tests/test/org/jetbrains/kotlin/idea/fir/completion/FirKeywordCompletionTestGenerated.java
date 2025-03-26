@@ -152,6 +152,16 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../../completion/testData/keywords/CompanionObjectBeforeObject.kt");
         }
 
+        @TestMetadata("ContextParameter.kt")
+        public void testContextParameter() throws Exception {
+            runTest("../../completion/testData/keywords/ContextParameter.kt");
+        }
+
+        @TestMetadata("ContextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("../../completion/testData/keywords/ContextReceiver.kt");
+        }
+
         @TestMetadata("ContinuePrefixMatching.kt")
         public void testContinuePrefixMatching() throws Exception {
             runTest("../../completion/testData/keywords/ContinuePrefixMatching.kt");

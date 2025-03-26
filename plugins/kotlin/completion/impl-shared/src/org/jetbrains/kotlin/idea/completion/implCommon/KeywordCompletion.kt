@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.*
@@ -35,7 +34,9 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.deprecatedParentTargetMap
+import org.jetbrains.kotlin.resolve.possibleParentTargetPredicateMap
+import org.jetbrains.kotlin.resolve.possibleTargetMap
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
@@ -667,7 +668,13 @@ class KeywordCompletion() {
 
                 LanguageFeature.ExplicitBackingFields
             }
-            CONTEXT_KEYWORD -> LanguageFeature.ContextReceivers
+            CONTEXT_KEYWORD -> {
+                // Because there are two feature flags for this keyword, we need to check them separately
+                if (languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
+                    return true
+                }
+                LanguageFeature.ContextReceivers
+            }
             else -> return true
         }
         return languageVersionSettings.supportsFeature(feature)
