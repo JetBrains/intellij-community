@@ -1531,7 +1531,8 @@ class PyTypeHintsInspection : PyInspection() {
       if (resolvedElement == null) return true // We cannot be sure, let it better be false-negative
       return when (resolvedElement) {
         is PyTargetExpression -> {
-          if (PyTypingTypeProvider.OPAQUE_NAMES.contains(resolvedElement.qualifiedName)) return true
+          val qName = resolvedElement.qualifiedName ?: return true
+          if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
           val assignedTypeAliasValue = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)
           if (assignedTypeAliasValue != null) {
             return isValidTypeHint(assignedTypeAliasValue, context)
