@@ -46,6 +46,7 @@ import org.junit.platform.suite.api.Suite
   SuspendingReadAndWriteActionTest::class,
   BackgroundWriteActionTest::class,
   LockDowngradingTest::class,
+  PlatformUtilitiesTest::class,
 
   // propagation
   ThreadContextPropagationTest::class,

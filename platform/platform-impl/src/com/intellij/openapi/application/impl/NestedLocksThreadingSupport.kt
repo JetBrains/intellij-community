@@ -5,6 +5,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ComputationState.Companion.thisLevelPermit
+import com.intellij.openapi.application.impl.NestedLocksThreadingSupport.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.coroutines.runSuspend
@@ -587,7 +588,11 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
       finally {
         fireWriteIntentActionFinished(listener, computation.javaClass)
         if (permitToRelease != null) {
-          computationState.releaseWriteIntentPermit(permitToRelease)
+          /**
+         * The permit to release can be changed because of [releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack] inside
+         */
+        val newPermitToRelease = (computationState.getThisThreadPermit() as ParallelizablePermit.WriteIntent).writeIntentPermit
+        computationState.releaseWriteIntentPermit(newPermitToRelease)
         }
       }
     }
@@ -1272,5 +1277,23 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
   private fun throwCannotWriteException() {
     throw java.lang.IllegalStateException("Write actions are prohibited")
+  }
+
+
+  override fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T {
+    val state = getComputationState()
+    val permit = state.getThisThreadPermit()
+    if (permit !is ParallelizablePermit.WriteIntent) {
+      throw IllegalStateException("This function expects the Write-Intent read action to be acquired")
+    }
+    // for now, we release only the top-level WI lock.
+    // There is no evidence that this method is called in deep parallelization stacks
+    state.releaseWriteIntentPermit(permit.writeIntentPermit)
+    try {
+      return action()
+    }
+    finally {
+      state.acquireWriteIntentPermit()
+    }
   }
 }

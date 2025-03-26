@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbServiceImpl
@@ -91,7 +92,10 @@ private class IndexWaiter(private val project: Project) {
 
     if (ApplicationManager.getApplication().isDispatchThread) {
       do {
-        PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, 600)
+        val threadingSupport = getGlobalThreadingSupport()
+        threadingSupport.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, 600)
+        }
       }
       while (dispatchAllEventsInIdeEventQueue()) // make sure that all the scheduled write actions are executed
     }
