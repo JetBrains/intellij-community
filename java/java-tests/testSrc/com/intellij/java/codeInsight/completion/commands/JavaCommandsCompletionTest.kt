@@ -405,7 +405,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testCreateFromUsages() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-    Registry.get("java.command.completion.create.from.usages").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Test {
       

@@ -33,6 +33,7 @@
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinDeleteCompletionCommand"/>
     <codeInsight.completion.applicable.command language="kotlin"
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinChangeSignatureCompletionCommand"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCreateFromUsagesCommandProvider" order="last"/>
   </extensions>
 
 </idea-plugin>

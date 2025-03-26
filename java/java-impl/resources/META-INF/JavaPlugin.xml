@@ -2799,9 +2799,6 @@
     <registryKey key="java.completion.methods.use.tags"
                  defaultValue="true"
                  description="Use additional tags for methods for completion"/>
-    <registryKey key="java.command.completion.create.from.usages"
-                 defaultValue="true"
-                 description="Offer Create_from_usages lookup element"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

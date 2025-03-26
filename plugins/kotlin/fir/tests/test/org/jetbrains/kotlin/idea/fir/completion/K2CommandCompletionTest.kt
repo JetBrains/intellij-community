@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.fir.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
@@ -216,6 +217,42 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
                 print(a)
             }
             """.trimIndent()
+        )
+    }
+
+    fun testCreateFromUsages() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+                fun main() {
+                
+                    val a = A()
+                    a<caret>
+                }
+                
+                class A{}
+            """.trimIndent()
+        )
+        myFixture.type(".aaaa")
+        val elements = myFixture.completeBasic()
+        TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+        selectItem(elements.first { element -> element.lookupString.contains("Create method", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+        myFixture.checkResult(
+            """
+            fun main() {
+            
+                val a = A()
+                a.aaaa()
+            }
+            
+            class A{
+                fun aaaa() {
+                    TODO("Not yet implemented")
+                }
+            }
+        """.trimIndent()
         )
     }
 
