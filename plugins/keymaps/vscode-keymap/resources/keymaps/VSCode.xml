@@ -279,7 +279,6 @@
   </action>
   <action id="GotoSuperMethod" />
   <action id="GotoSymbol">
-    <keyboard-shortcut first-keystroke="ctrl shift o" />
     <keyboard-shortcut first-keystroke="ctrl t" />
   </action>
   <action id="GotoTest" />
