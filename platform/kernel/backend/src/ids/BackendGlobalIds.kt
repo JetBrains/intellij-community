@@ -98,7 +98,7 @@ fun <TID : Id, Value : Any> findValueById(id: TID, type: BackendValueIdType<TID,
  *   so backend may convert it back later by [findValueById].
  * This API is useful when a frontend needs to refer to some backend object, but this object is not serializable.
  *
- * This is important to call [delete] when reference is no longer needed/valid!
+ * This is important to call [deleteValueById] when reference is no longer needed/valid!
  * Otherwise, it will be stored in a local in memory storage forever.
  *
  * If you need something more powerful than just storing references for the backend objects,
@@ -121,6 +121,6 @@ fun <TID : Id, Value : Any> storeValueGlobally(value: Value, type: BackendValueI
  */
 @Suppress("unused")
 @ApiStatus.Internal
-fun <TID : Id, Value : Any> delete(id: TID, type: BackendValueIdType<TID, Value>) {
+fun <TID : Id, Value : Any> deleteValueById(id: TID, type: BackendValueIdType<TID, Value>) {
   BackendGlobalIdsManager.getInstance().removeId(id)
 }
