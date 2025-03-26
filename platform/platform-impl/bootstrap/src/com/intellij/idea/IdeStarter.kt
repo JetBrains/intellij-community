@@ -86,10 +86,7 @@ open class IdeStarter : ModernApplicationStarter() {
         serviceAsync<RecentProjectsManager>().updateLastProjectPath()
       }
 
-      val starterClass = this@IdeStarter.javaClass
-      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(
-        close = isHeadless || (!shouldRunFusStartUpMeasurer() && starterClass != IdeStarter::class.java && starterClass != StandaloneLightEditStarter::class.java)
-      )
+      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(close = isHeadless || !shouldRunFusStartUpMeasurer())
       if (starter != null) {
         if ((app as ApplicationEx).isLightEditMode) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
@@ -192,7 +189,7 @@ open class IdeStarter : ModernApplicationStarter() {
   }
 
   @ApiStatus.Internal
-  protected open fun shouldRunFusStartUpMeasurer(): Boolean = false
+  protected open fun shouldRunFusStartUpMeasurer(): Boolean = javaClass == IdeStarter::class.java
 
   private suspend fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
@@ -243,6 +240,10 @@ open class IdeStarter : ModernApplicationStarter() {
           LightEditService.getInstance().showEditorWindow()
         }
       }
+    }
+
+    override fun shouldRunFusStartUpMeasurer(): Boolean {
+      return javaClass == StandaloneLightEditStarter::class.java
     }
   }
 }
