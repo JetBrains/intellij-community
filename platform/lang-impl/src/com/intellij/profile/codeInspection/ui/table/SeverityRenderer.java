@@ -56,6 +56,11 @@ public final class SeverityRenderer extends ComboBoxTableRenderer<HighlightSever
     return list.toArray(new HighlightSeverity[0]);
   }
 
+  @Override
+  protected int getPreferredSizeMaxValues() {
+    return 0; // there can be long values inside, and this makes the popup appearing on mouse hover unnecessarily large
+  }
+
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
     Icon icon = level.getIcon();
     return icon instanceof HighlightDisplayLevelColoredIcon
