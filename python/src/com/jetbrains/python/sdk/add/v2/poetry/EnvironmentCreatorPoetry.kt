@@ -31,11 +31,27 @@ import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import java.nio.file.Paths
+import kotlin.io.path.exists
 
 internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
   override val installationVersion: String = "1.8.0"
+
+  private val isInProjectEnvFlow = MutableStateFlow(service<PoetryConfigService>().state.isInProjectEnv)
+  private val isInProjectEnvProp = propertyGraph.property(isInProjectEnvFlow.value)
+
+  init {
+    isInProjectEnvProp.afterChange {
+      isInProjectEnvFlow.value = it
+      service<PoetryConfigService>().state.isInProjectEnv = it
+    }
+  }
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     super.buildOptions(panel, validationRequestor, errorSink)
@@ -59,6 +75,28 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
       }
 
     basePythonComboBox.setItems(validatedInterpreters)
+
+    model.scope.launch {
+      model
+        .myProjectPathFlows
+        .projectPathWithDefault
+        .combine(isInProjectEnvFlow) { p, i -> Pair(p, i) }
+        .collect { (path, isInProjectEnv) ->
+          if (!isInProjectEnv) {
+            venvExistenceValidationState.set(Invisible)
+            return@collect
+          }
+
+          val venvPath = path.resolve(".venv")
+
+          venvExistenceValidationState.set(
+            if (venvPath.exists())
+              Error(Paths.get(".venv"))
+            else
+              Invisible
+          )
+        }
+    }
   }
 
   override fun savePathToExecutableToProperties(path: Path?) {
@@ -77,9 +115,9 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
 
   private fun addInProjectCheckbox(panel: Panel) {
     with(panel) {
-      row {
+      row("") {
         checkBox(PyBundle.message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
-          .bindSelected(service<PoetryConfigService>().state::isInProjectEnv)
+          .bindSelected(isInProjectEnvProp)
       }
     }
   }
