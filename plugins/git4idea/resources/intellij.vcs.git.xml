@@ -754,7 +754,7 @@
     <vcsSharedChecker implementation="git4idea.ignore.GitIgnoreInStoreDirSharedChecker"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig"/>
     <backgroundPostStartupActivity implementation="git4idea.repo.GitShallowRepositoryCheck"/>
-    <backgroundPostStartupActivity implementation="git4idea.commit.GitModalCommitSettingMigrator"/>
+    <backgroundPostStartupActivity implementation="git4idea.commit.GitModalCommitDeprecationNotifier"/>
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
@@ -770,6 +770,10 @@
 
     <registryKey key="git.push.upto.commit.with.head.reference" defaultValue="false"
                  description="Detect HEAD relative reference while pushing up to selected commit to the current branch"
+                 restartRequired="false"/>
+
+    <registryKey key="git.modal.commit.deprecation.removed.in" defaultValue=""
+                 description="Show notification about modal commit deprecation if the version is specified"
                  restartRequired="false"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
