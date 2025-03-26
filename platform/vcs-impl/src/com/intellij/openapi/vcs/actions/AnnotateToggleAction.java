@@ -68,6 +68,10 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     Provider provider = getProvider(e);
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(provider != null);
+    if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(e.getPlace())) {
+      // Actions in the VCS pop-up should always be visible in order not to break numeric key-bindings
+      presentation.setVisible(true);
+    }
     if (provider != null) {
       presentation.setText(provider.getActionName(e));
     }
