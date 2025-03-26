@@ -1083,6 +1083,7 @@ e:com.intellij.ide.ui.TargetUIType
 - java.lang.Enum
 - sf:CLASSIC:com.intellij.ide.ui.TargetUIType
 - sf:NEW:com.intellij.ide.ui.TargetUIType
+- sf:NEXT:com.intellij.ide.ui.TargetUIType
 - sf:UNSPECIFIED:com.intellij.ide.ui.TargetUIType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ide.ui.TargetUIType
