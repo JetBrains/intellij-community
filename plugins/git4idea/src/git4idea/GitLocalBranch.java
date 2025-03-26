@@ -30,7 +30,7 @@ public final class GitLocalBranch extends GitBranch {
   public int compareTo(GitReference o) {
     if (o instanceof GitLocalBranch) {
       // optimization: do not build getFullName
-      return REFS_NAMES_COMPARATOR.compare(myName, o.myName);
+      return REFS_NAMES_COMPARATOR.compare(getName(), o.getName());
     }
     return super.compareTo(o);
   }

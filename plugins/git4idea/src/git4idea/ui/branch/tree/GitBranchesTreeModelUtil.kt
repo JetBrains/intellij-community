@@ -302,7 +302,7 @@ internal class LazyRefsSubtreeHolder<out T: GitReference>(repositories: List<Git
   fun isEmpty() = initiallyEmpty || matchingResult.matchedNodes.isEmpty()
 
   private val matchingResult: MatchResult<T> by lazy {
-    match(matcher, sortedValues, GitReference::getName, exceptRefFilter)
+    match(matcher, sortedValues, GitReference::name, exceptRefFilter)
   }
 
   val tree: Map<String, Any> by lazy {

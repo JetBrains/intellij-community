@@ -1,64 +1,54 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea;
+package git4idea
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.NaturalComparator;
-import com.intellij.util.containers.HashingStrategy;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Comparator;
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.util.containers.HashingStrategy
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The base class for named git references, like branches and tags.
  */
-public abstract class GitReference implements Comparable<GitReference> {
-
-  public static final HashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY =
-    SystemInfoRt.isFileSystemCaseSensitive ? HashingStrategy.canonical() : HashingStrategy.caseInsensitive();
-
-  public static final Comparator<@NotNull String> REFS_NAMES_COMPARATOR = NaturalComparator.INSTANCE;
-
-  protected final @NotNull String myName;
-
-  public GitReference(@NotNull String name) {
-    myName = name;
-  }
-
+@ApiStatus.NonExtendable
+abstract class GitReference(
   /**
-   * @return the name of the reference, e.g. "origin/master" or "feature".
-   * @see #getFullName()
+   * The name of the reference, e.g. "origin/master" or "feature".
+   * @see [fullName]
    */
-  public @NlsSafe @NotNull String getName() {
-    return myName;
-  }
-
+  val name: @NlsSafe String,
+) : Comparable<GitReference?> {
   /**
-   * @return the full name of the reference, e.g. "refs/remotes/origin/master" or "refs/heads/master".
+   * The full name of the reference, e.g. "refs/remotes/origin/master" or "refs/heads/master".
    */
-  public abstract @NlsSafe @NotNull String getFullName();
+  abstract val fullName: @NlsSafe String
 
-  @Override
-  public String toString() {
-    return getFullName();
+  override fun toString(): String {
+    return fullName
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    GitReference reference = (GitReference)o;
-    return BRANCH_NAME_HASHING_STRATEGY.equals(myName, reference.myName);
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+    val reference = o as GitReference
+    return BRANCH_NAME_HASHING_STRATEGY.equals(name, reference.name)
   }
 
-  @Override
-  public int hashCode() {
-    return BRANCH_NAME_HASHING_STRATEGY.hashCode(myName);
+  override fun hashCode(): Int {
+    return BRANCH_NAME_HASHING_STRATEGY.hashCode(name)
   }
 
-  @Override
-  public int compareTo(GitReference o) {
+  override fun compareTo(other: GitReference?): Int {
     // NB: update overridden comparators on modifications
-    return o == null ? 1 : REFS_NAMES_COMPARATOR.compare(getFullName(), o.getFullName());
+    return if (other == null) 1 else REFS_NAMES_COMPARATOR.compare(fullName, other.fullName)
+  }
+
+  companion object {
+    @JvmField
+    val BRANCH_NAME_HASHING_STRATEGY: HashingStrategy<String?> =
+      if (SystemInfoRt.isFileSystemCaseSensitive) HashingStrategy.canonical<String?>() else HashingStrategy.caseInsensitive()
+
+    @JvmField
+    val REFS_NAMES_COMPARATOR: Comparator<String> = NaturalComparator.INSTANCE
   }
 }

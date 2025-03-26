@@ -38,6 +38,6 @@ public abstract class GitBranch extends GitReference {
 
   @Override
   public @NotNull String getFullName() {
-    return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
+    return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + getName();
   }
 }
