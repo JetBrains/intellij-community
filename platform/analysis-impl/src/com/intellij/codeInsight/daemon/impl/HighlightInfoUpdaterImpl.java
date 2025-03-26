@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
@@ -50,6 +51,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FreezableArrayList;
 import com.intellij.util.containers.HashingStrategy;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -92,7 +94,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     //return ApplicationManagerEx.getApplicationEx().isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
     return ASSERT_INVARIANTS;
   }
-  void runAssertingInvariants(Runnable runnable) {
+  void runAssertingInvariants(@NotNull Runnable runnable) {
     boolean old = ASSERT_INVARIANTS;
     try {
       ASSERT_INVARIANTS = true;
@@ -257,8 +259,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     recycler.incinerateAndClear();
   }
 
+  @SuppressWarnings("UsagesOfObsoleteApi")
   static @NotNull String currentProgressInfo() {
-    ProgressIndicator indicator = ProgressManager.getGlobalProgressIndicator();
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator original = ProgressWrapper.unwrap(indicator);
     return "; progress=" + (indicator == original ? "" : "wrapped:")+
            (indicator == null ? "null" + "\n" + ExceptionUtil.getThrowableText(new Throwable()) :System.identityHashCode(original) + (indicator.isCanceled() ? "X" : "V"));
@@ -493,8 +496,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
     long psiTimeStamp = PsiManager.getInstance(project).getModificationTracker().getModificationCount();
     for (HighlightInfo newInfo : newInfos) {
-      assert newInfo.getHighlighter() == null : newInfo;
-      newInfo.updatePsiTimeStamp(psiTimeStamp);
+      newInfo.updateLazyFixesPsiTimeStamp(psiTimeStamp);
     }
     assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
     // execute in non-cancelable block. It should not throw PCE anyway, but just in case
@@ -543,7 +545,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     record HI(TextRange range, String desc, TextAttributes attributes){}
     List<HI> map = ContainerUtil.map(infos, h -> new HI(TextRange.create(h), h.getDescription(), h.getTextAttributes(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme())));
     if (new HashSet<HI>(map).size() != infos.size()) {
-      //int i = 0;
       // duplicates are still possible when e.g. two range highlighters (with same desc) are merged into one after the doc modifications
       // try to remove invalid PSI elements and retry the check
       List<HighlightInfo> filtered = ContainerUtil.filter(infos, info -> {
@@ -579,7 +580,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     boolean isInjected = psiFile.getViewProvider() instanceof InjectedFileViewProvider;
     TextRange hostRange;
     if (isInjected) {
-      //noinspection deprecation
       PsiFile hostPsiFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile);
       hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange());
       hostDocument = hostPsiFile.getFileDocument();
@@ -1177,11 +1177,11 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(session.getProject());
     Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
-    List<HighlightInfo> newInfosToStore = null;
     // infos which highlighters are recycled from `invalidElementRecycler` and which need to be removed from `data` to avoid its highlighter to be registered in two places
     // this list must be sorted by Segment.BY_START_OFFSET_THEN_END_OFFSET
     List<InvalidPsi> recycledInvalidPsiHighlightersToBeRemovedFromData = new ArrayList<>(newInfos.size());
     List<? extends HighlightInfo> sorted = ContainerUtil.sorted(newInfos, Segment.BY_START_OFFSET_THEN_END_OFFSET);
+    FreezableArrayList<HighlightInfo> newInfosToStore = new FreezableArrayList<>(sorted.size());
     for (int i = 0; i < sorted.size(); i++) {
       HighlightInfo newInfo = sorted.get(i);
       //todo fails because of ProblemDescriptorWithReporterName
@@ -1191,14 +1191,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                             ? TextRangeScalarUtil.toScalarRange(0, psiFile.getTextLength())
                             : BackgroundUpdateHighlightersUtil.getRangeToCreateHighlighter(newInfo, hostDocument);
       if (finalInfoRange == -1) {
-        if (newInfosToStore == null) {
-          newInfosToStore = new ArrayList<>(sorted.subList(0, i));
-        }
         continue;
       }
-      if (newInfosToStore != null) {
-        newInfosToStore.add(newInfo);
-      }
+      newInfo = newInfo.copy(); // workaround rogue plugins that cache HighlightInfos and then return identical HI for several calls
+      newInfosToStore.add(newInfo);
       int layer = isFileLevel ? DaemonCodeAnalyzerEx.FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(newInfo, severityRegistrar);
       int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
       int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
@@ -1225,9 +1221,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     removeFromDataAtomically(recycledInvalidPsiHighlightersToBeRemovedFromData, session);
 
     // this list must be sorted by Segment.BY_START_OFFSET_THEN_END_OFFSET
-    List<HighlightInfo> result = List.copyOf(newInfosToStore == null ? sorted : newInfosToStore);
-    for (int i = 0; i < result.size(); i++) {
-      HighlightInfo info = result.get(i);
+    for (int i = 0; i < newInfosToStore.size(); i++) {
+      HighlightInfo info = newInfosToStore.get(i);
       //todo fails because of ProblemDescriptorWithReporterName
       //assert toolId.equals(info.toolId) : info + "; " + toolId + "(" + toolId.getClass() + ")";
       assert info.getHighlighter() != null : info;
@@ -1235,10 +1230,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       HighlightInfo assignedInfo = HighlightInfo.fromRangeHighlighter(info.getHighlighter());
       assert assignedInfo == info : "from RH: " + assignedInfo + "(" + System.identityHashCode(assignedInfo)+ "); but expected: " + info+ "(" + System.identityHashCode(info)+ ")";
       if (i>0) {
-        assert Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(result.get(i-1), result.get(i)) <= 0 : "assignRangeHighlighters returned unsorted list: "+result;
+        assert Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(newInfosToStore.get(i-1), newInfosToStore.get(i)) <= 0 : "assignRangeHighlighters returned unsorted list: "+newInfosToStore;
       }
     }
-    return result;
+    return newInfosToStore.emptyOrFrozen();
   }
 
   private static void changeRangeHighlighterAttributes(@NotNull HighlightingSession session,

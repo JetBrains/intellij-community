@@ -1116,7 +1116,7 @@ public class HighlightInfo implements Segment {
     myIntentionActionDescriptors = List.copyOf(result);
     updateFields(getIntentionActionDescriptors(), document);
   }
-  synchronized void updatePsiTimeStamp(long psiTimeStamp) {
+  synchronized void updateLazyFixesPsiTimeStamp(long psiTimeStamp) {
     List<LazyFixDescription> newFixes = ContainerUtil.map(myLazyQuickFixes,
                                                      d -> d.psiModificationStamp() == 0
                                                           ? new LazyFixDescription(d.fixesComputer(), psiTimeStamp, d.future())
@@ -1450,5 +1450,18 @@ public class HighlightInfo implements Segment {
   synchronized List<? extends @NotNull Consumer<? super QuickFixActionRegistrar>>
   getLazyQuickFixes() {
     return ContainerUtil.map(myLazyQuickFixes, p -> p.fixesComputer());
+  }
+
+  @NotNull
+  HighlightInfo copy() {
+    HighlightInfo info =
+      new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, description, toolTip, severity,
+                        isAfterEndOfLine(), needUpdateOnTyping(), isFileLevelAnnotation(), navigationShift, myProblemGroup, toolId,
+                        gutterIconRenderer, group, hasHint(), List.of());
+    info.myIntentionActionDescriptors = myIntentionActionDescriptors;
+    info.myLazyQuickFixes = myLazyQuickFixes;
+    info.myFlags = myFlags;
+    info.fixMarker = fixMarker;
+    return info;
   }
 }
