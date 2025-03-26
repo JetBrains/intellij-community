@@ -939,7 +939,9 @@ private fun crossPlatformZip(
           !relPath.endsWith(".vmoptions") &&
           !relPath.startsWith("repair") &&
           !relPath.startsWith("restart")
-        }, entryCustomizer)
+        }, entryCustomizer = { entry, path, relative ->
+          entryCustomizer.invoke(entry, path, "bin/$relative")
+        })
       }
 
       val zipFileUniqueGuard = HashMap<String, DistFileContent>()
