@@ -632,7 +632,7 @@ object CommunityRepositoryModules {
         "intellij.vcs.github"
       ))
       spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
+        PluginVersionEvaluatorResult(pluginVersion = "$version-$productCode")
       }
     }
   }
