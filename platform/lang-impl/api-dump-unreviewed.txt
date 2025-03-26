@@ -14986,7 +14986,6 @@ f:com.intellij.profile.codeInspection.ui.table.SeverityRenderer
 - com.intellij.openapi.ui.ComboBoxTableRenderer
 - s:getIcon(com.intellij.codeHighlighting.HighlightDisplayLevel):javax.swing.Icon
 - getTableCellRendererComponent(javax.swing.JTable,java.lang.Object,Z,Z,I,I):java.awt.Component
-- isCellEditable(java.util.EventObject):Z
 - onClosed(com.intellij.openapi.ui.popup.LightweightWindowEvent):V
 c:com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer
 - com.intellij.util.ui.ThreeStateCheckBox
