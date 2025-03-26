@@ -4,6 +4,7 @@
   "author": "JetBrains",
   "nameKey": "dark.theme.name",
   "editorScheme": "Dark",
+  "parentTheme": "Darcula",
   "colors": {
     "Gray1": "#1E1F22",
     "Gray2": "#2B2D30",
