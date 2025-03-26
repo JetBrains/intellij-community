@@ -285,7 +285,6 @@ object CommunityRepositoryModules {
     addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
   ): PluginLayout =
     pluginAutoWithCustomDirName(mainModuleName, "android") { spec ->
-      spec.semanticVersioning = true
       spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
         val pluginXml = pluginXmlSupplier()
         if (pluginXml.indexOf("<version>") != -1) {

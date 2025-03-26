@@ -89,7 +89,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
    * Should be `true` if the semantic versioning is enabled for the plugin in plugins.jetbrains.com.
    * Then the plugin version will be checked against [com.intellij.util.text.SemVer].
    */
-  var semanticVersioning: Boolean = false
+  var semanticVersioning: Boolean = true
     private set
 
   @JvmField
@@ -301,7 +301,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     /**
      * @see [PluginLayout.semanticVersioning]
      */
-    var semanticVersioning: Boolean = true
+    @Suppress("unused")
+    var semanticVersioning: Boolean
+      get() = layout.semanticVersioning
       set(value) {
         layout.semanticVersioning = value
       }
