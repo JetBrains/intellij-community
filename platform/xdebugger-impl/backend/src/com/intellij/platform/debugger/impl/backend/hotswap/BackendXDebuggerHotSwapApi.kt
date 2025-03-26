@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.platform.debugger.impl.backend.hotswap
 
-import com.intellij.platform.kernel.backend.asNullableIDsFlow
-import com.intellij.platform.kernel.backend.findValueEntity
+import com.intellij.platform.kernel.backend.ids.asNullableIDsFlow
+import com.intellij.platform.kernel.backend.ids.BackendRecordType
+import com.intellij.platform.kernel.backend.ids.findValueById
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.impl.hotswap.HotSwapSession
@@ -24,14 +25,14 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
     val flow = HotSwapSessionManager.getInstance(project).currentStatusFlow
     val sessionFlow = flow.mapLatest { it?.session }
     val statusFlow = flow.mapLatest { it?.status }
-    return sessionFlow.asNullableIDsFlow().combine(statusFlow) { uid, status ->
-      if (uid == null || status == null) return@combine null
-      XDebugHotSwapCurrentSessionStatus(XDebugHotSwapSessionId(uid), status)
+    return sessionFlow.asNullableIDsFlow(type = HowSwapSessionRecordType).combine(statusFlow) { id, status ->
+      if (id == null || status == null) return@combine null
+      XDebugHotSwapCurrentSessionStatus(id, status)
     }
   }
 
   override suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapStatistics.HotSwapSource) {
-    val session = sessionId.eid.findValueEntity<HotSwapSession<*>>()?.value ?: return
+    val session = findValueById(sessionId, type = HowSwapSessionRecordType) ?: return
     HotSwapStatistics.logHotSwapCalled(session.project, source)
 
     fun <T> doHotSwap(session: HotSwapSession<T>) = session.provider.performHotSwap(session)
@@ -44,3 +45,5 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
     HotSwapSessionManager.getInstance(project).hide()
   }
 }
+
+private object HowSwapSessionRecordType : BackendRecordType<XDebugHotSwapSessionId, HotSwapSession<*>>(::XDebugHotSwapSessionId)
