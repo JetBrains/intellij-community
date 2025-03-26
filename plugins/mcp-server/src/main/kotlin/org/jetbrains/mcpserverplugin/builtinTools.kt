@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
@@ -604,21 +605,17 @@ class ListAvailableActionsTool : AbstractMcpTool<NoArgs>() {
 
     override fun handle(project: Project, args: NoArgs): Response {
         val actionManager = ActionManager.getInstance() as ActionManagerEx
-        val dataContext = DataManager.getInstance().getDataContext()
+        val dataContext = invokeAndWaitIfNeeded {
+            DataManager.getInstance().getDataContext()
+        }
 
         val availableActions = runReadAction {
-            // Get all action IDs
             actionManager.getActionIdList("").mapNotNull { actionId ->
                 val action = actionManager.getAction(actionId) ?: return@mapNotNull null
-
-                // Create event and presentation to check if action is enabled
                 val event = AnActionEvent.createFromAnAction(action, null, "", dataContext)
                 val presentation = action.templatePresentation.clone()
+                runCatching { action.update(event) }
 
-                // Update presentation to check if action is available
-                action.update(event)
-
-                // Only include actions that have text and are enabled
                 if (event.presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
                     """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
                 } else {
