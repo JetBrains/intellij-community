@@ -35,6 +35,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -386,7 +387,11 @@ internal class CommandCompletionLookupCustomizer : LookupCustomizer {
     val service = project.service<CommandCompletionService>()
     val editor = lookupImpl.editor
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val element: PsiElement? = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, editor.caretModel.offset)
+    val element: PsiElement? =
+      //it is used only in backend in split mode, so it is allowed to be on EDT
+      SlowOperations.knownIssue("IJPL-181979").use {
+        InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, editor.caretModel.offset)
+      }
     val language = element?.language ?: psiFile.language
     val factory = service.getFactory(language)
     if (factory != null) {
