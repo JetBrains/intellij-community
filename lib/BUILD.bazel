@@ -329,12 +329,6 @@ java_import(
 )
 
 java_import(
-  name = "android-core-jb-r8",
-  jars = ["@jb-r8-232_1_23_0_http//file"],
-  visibility = ["//visibility:public"]
-)
-
-java_import(
   name = "android-core-testartifacts-libstudio-android-test-plugin-host-retention-proto",
   jars = ["@libstudio_android-test-plugin-host-retention-proto-232_1_23_0_http//file"],
   visibility = ["//visibility:public"]
@@ -343,12 +337,6 @@ java_import(
 java_import(
   name = "android-core-tests-libandroid-core-proto-test",
   jars = ["@libandroid-core-proto-test-232_1_23_0_http//file"],
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "android-kotlin-idea-common-jb-r8",
-  jars = ["@jb-r8-232_1_23_0_http//file"],
   visibility = ["//visibility:public"]
 )
 

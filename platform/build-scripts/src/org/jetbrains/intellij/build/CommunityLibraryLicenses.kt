@@ -628,10 +628,10 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jetbrains.jewel.ide.laf.bridge.243")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .additionalLibraryNames("jewel-ide-laf-bridge")
+      .additionalLibraryNames("jewel-ide-laf-bridge-243")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-markdown-ide-laf-bridge-styling-242")
+    LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-markdown-ide-laf-bridge-styling-243")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
@@ -1073,10 +1073,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("qdox-java-parser", libraryName = "qdox-java-parser", url = "https://github.com/paul-hammant/qdox")
       .apache("https://github.com/paul-hammant/qdox/blob/master/LICENSE.txt"),
 
-    LibraryLicense("R8 DEX shrinker", libraryName = "jb-r8", url = "https://r8.googlesource.com/r8")
-      .newBsd("https://r8.googlesource.com/r8/+/refs/heads/main/LICENSE")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-
     LibraryLicense("rd core", libraryName = "rd-core", url = "https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core")
       .apache("https://github.com/JetBrains/rd/blob/master/LICENSE"),
 
@@ -1130,7 +1126,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(
       name = "Skiko Runtime",
       libraryName = "jetbrains.skiko.awt.runtime.all",
-      additionalLibraryNames = listOf("jetbrains.skiko.awt.runtime.all.0.8.9"),
+      additionalLibraryNames = listOf("jetbrains.skiko.awt.runtime.all.0.8.18"),
       url = "https://github.com/JetBrains/skiko/"
     ).apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
 
