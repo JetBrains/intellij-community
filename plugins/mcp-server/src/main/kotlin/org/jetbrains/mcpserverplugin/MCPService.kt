@@ -62,6 +62,8 @@ class MCPService : RestService() {
 
     override fun getServiceName(): String = serviceName
 
+    override fun getMaxRequestsPerMinute(): Int = Int.MAX_VALUE
+
     override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
         val path = urlDecoder.path().split(serviceName).last().trimStart('/')
         val project = getLastFocusedOrOpenedProject() ?: return null
