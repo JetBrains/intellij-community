@@ -6,7 +6,6 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
-import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
@@ -24,9 +23,8 @@ import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.nio.file.Paths
-import javax.swing.JComponent
 import kotlin.io.path.exists
 
 
@@ -38,22 +36,20 @@ internal class EnvironmentCreatorUv(
   override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
   override val installationVersion: String? = null
 
-  override fun onShown(component: JComponent) {
+  override fun onShown() {
     // FIXME: validate base interpreters against pyprojecttoml version. See poetry
     basePythonComboBox.setItems(model.baseInterpreters)
 
-    component.launchOnShow("project path watcher") {
+    model.scope.launch(Dispatchers.IO + model.uiContext) {
       model.myProjectPathFlows.projectPathWithDefault.collect {
         val venvPath = it.resolve(".venv")
 
-        withContext(Dispatchers.IO) {
-          venvExistenceValidationState.set(
-            if (venvPath.exists())
-              VenvExistenceValidationState.Error(Paths.get(".venv"))
-            else
-              VenvExistenceValidationState.Invisible
-          )
-        }
+        venvExistenceValidationState.set(
+          if (venvPath.exists())
+            VenvExistenceValidationState.Error(Paths.get(".venv"))
+          else
+            VenvExistenceValidationState.Invisible
+        )
       }
     }
   }
