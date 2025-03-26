@@ -22,9 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
@@ -34,6 +36,7 @@ import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -114,6 +117,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
     // Instead of setting this type as default, we limit types to it
     val onlyAllowedInterpreterTypes = projectGenerator.preferredEnvironmentType?.let { setOf(it) }
     val interpreterPanel = PythonAddNewEnvironmentPanel(ProjectPathFlows.create(projectLocationFlowStr), onlyAllowedInterpreterTypes, errorSink = ShowingMessageErrorSync).also { interpreterPanel = it }
+    lateinit var panelPlaceholder: Placeholder
 
     mainPanel = panel {
       row(message("new.project.name")) {
@@ -141,9 +145,16 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
         }
       }
 
+      row {
+        panelPlaceholder = placeholder().align(Align.FILL)
+      }
+    }
 
-      panel {
-        interpreterPanel.buildPanel(this)
+    mainPanel.launchOnShow("PythonProjectSpecificSettingsStep createBasePanel") {
+      coroutineScope {
+        panelPlaceholder.component = panel {
+          interpreterPanel.buildPanel(this, this@coroutineScope)
+        }
       }
     }
 
@@ -177,7 +188,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   }
 
   override fun onPanelSelected() {
-    interpreterPanel?.onShown(mainPanel)
+    interpreterPanel?.onShown()
   }
 
   override fun getSdk(): Sdk {

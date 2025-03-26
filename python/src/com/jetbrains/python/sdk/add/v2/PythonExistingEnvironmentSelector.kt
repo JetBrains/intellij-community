@@ -13,7 +13,6 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
-import javax.swing.JComponent
 
 class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : PythonExistingEnvironmentConfigurator(model) {
 
@@ -32,7 +31,7 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pyth
     }
   }
 
-  override fun onShown(component: JComponent) {
+  override fun onShown() {
     comboBox.setItems(model.allInterpreters)
   }
 

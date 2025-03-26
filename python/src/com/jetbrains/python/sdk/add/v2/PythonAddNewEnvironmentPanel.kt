@@ -40,13 +40,13 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import javax.swing.JComponent
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
@@ -87,10 +87,15 @@ internal class PythonAddNewEnvironmentPanel(
   private lateinit var custom: PythonAddCustomInterpreter
   private lateinit var model: PythonMutableTargetAddInterpreterModel
 
-  fun buildPanel(outerPanel: Panel) {
+  fun buildPanel(outerPanel: Panel, coroutineScope: CoroutineScope) {
     //presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
-    model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
-                                                                    Dispatchers.EDT + ModalityState.current().asContextElement(), projectPathFlows))
+    model = PythonLocalAddInterpreterModel(
+      PyInterpreterModelParams(
+        coroutineScope,
+        Dispatchers.EDT + ModalityState.current().asContextElement(),
+        projectPathFlows
+      )
+    )
     model.navigator.selectionMode = selectedMode
     //presenter.controller = model
 
@@ -149,14 +154,14 @@ internal class PythonAddNewEnvironmentPanel(
   }
 
 
-  fun onShown(component: JComponent) {
+  fun onShown() {
     val modalityState = ModalityState.current().asContextElement()
     model.scope.launch(Dispatchers.EDT + modalityState) {
       initMutex.withLock {
         if (!initialized) {
           model.initialize()
           pythonBaseVersionComboBox.setItems(model.baseInterpreters)
-          custom.onShown(component)
+          custom.onShown()
           updateVenvLocationHint()
           model.navigator.restoreLastState(allowedInterpreterTypes)
           initialized = true

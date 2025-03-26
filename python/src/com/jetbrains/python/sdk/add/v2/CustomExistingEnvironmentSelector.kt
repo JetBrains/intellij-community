@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.*
-import javax.swing.JComponent
 
 
 @Internal
@@ -64,7 +63,7 @@ internal abstract class CustomExistingEnvironmentSelector(private val name: Stri
     }
   }
 
-  override fun onShown(component: JComponent) {
+  override fun onShown() {
     comboBox.setItems(existingEnvironments)
   }
 
