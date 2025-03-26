@@ -2,6 +2,7 @@
 package fleet.util.async
 
 import fleet.multiplatform.shims.multiplatformIO
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -16,4 +17,4 @@ especially
  not restricted by the `Dispatchers.IO` parallelism.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-val UnlimitedDispatcher = Dispatchers.multiplatformIO.limitedParallelism(8192)
+val UnlimitedDispatcher: CoroutineDispatcher = Dispatchers.multiplatformIO.limitedParallelism(8192)

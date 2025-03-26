@@ -13,6 +13,22 @@ import kotlinx.coroutines.selects.select
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
+fun <T, U> StateFlow<T>.view(f: (T) -> U): StateFlow<U> {
+  val self = this
+  return object : StateFlow<U> {
+    override val replayCache: List<U>
+      get() = self.replayCache.map(f)
+    override val value: U
+      get() = f(self.value)
+
+    override suspend fun collect(collector: FlowCollector<U>): Nothing {
+      self.collect { t ->
+        collector.emit(f(t))
+      }
+    }
+  }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 fun <T> Flow<T>.conflateReduce(f: (T, T) -> T): Flow<T> {
   val originalFlow = this
