@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.low-level-api-fir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:2.2.0-ij251-59">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:low-level-api-fir-for-ide:2.2.0-ij251-66">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.0-ij251-59/low-level-api-fir-for-ide-2.2.0-ij251-59.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.0-ij251-66/low-level-api-fir-for-ide-2.2.0-ij251-66.jar">
           <sha256sum>60f7f182d660015c7080e4ef46cdb6339aee623d6d34652035b3b8b9be8a89b5</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.0-ij251-59/low-level-api-fir-for-ide-2.2.0-ij251-59.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.0-ij251-66/low-level-api-fir-for-ide-2.2.0-ij251-66.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.0-ij251-59/low-level-api-fir-for-ide-2.2.0-ij251-59-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/low-level-api-fir-for-ide/2.2.0-ij251-66/low-level-api-fir-for-ide-2.2.0-ij251-66-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
