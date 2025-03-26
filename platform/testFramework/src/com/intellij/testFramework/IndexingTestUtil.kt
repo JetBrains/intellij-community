@@ -18,29 +18,31 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
+import java.time.Duration
+import kotlin.time.toJavaDuration
+import kotlin.time.toKotlinDuration
 
 class IndexingTestUtil private constructor() {
   companion object { // companion object for keeping API compatibility
-    const val DEFAULT_TIMEOUT_MS: Long = 600_000
+    @JvmField
+    val DEFAULT_TIMEOUT: Duration = Duration.ofMinutes(10)
 
     @JvmStatic
     @JvmOverloads
-    fun waitUntilIndexesAreReadyInAllOpenedProjects(indexWaitingTimeoutMs: Long = DEFAULT_TIMEOUT_MS) {
+    fun waitUntilIndexesAreReadyInAllOpenedProjects(indexWaitingTimeout: Duration = DEFAULT_TIMEOUT) {
       for (project in ProjectManager.getInstance().openProjects) {
-        IndexWaiter(project).waitUntilFinished(indexWaitingTimeoutMs.milliseconds)
+        IndexWaiter(project).waitUntilFinished(indexWaitingTimeout)
       }
     }
 
     @JvmStatic
     @JvmOverloads
-    fun waitUntilIndexesAreReady(project: Project, indexWaitingTimeoutMs: Long = DEFAULT_TIMEOUT_MS) {
-      IndexWaiter(project).waitUntilFinished(indexWaitingTimeoutMs.milliseconds)
+    fun waitUntilIndexesAreReady(project: Project, indexWaitingTimeout: Duration = DEFAULT_TIMEOUT) {
+      IndexWaiter(project).waitUntilFinished(indexWaitingTimeout)
     }
 
-    suspend fun suspendUntilIndexesAreReady(project: Project, indexWaitingTimeout: Duration = DEFAULT_TIMEOUT_MS.milliseconds) {
-      IndexWaiter(project).suspendUntilIndexesAreReady(indexWaitingTimeout)
+    suspend fun suspendUntilIndexesAreReady(project: Project, indexWaitingTimeout: kotlin.time.Duration = DEFAULT_TIMEOUT.toKotlinDuration()) {
+      IndexWaiter(project).suspendUntilIndexesAreReady(indexWaitingTimeout.toJavaDuration())
     }
   }
 }
@@ -154,7 +156,7 @@ private class IndexWaiter(private val project: Project) {
     }
 
     try {
-      withTimeout(timeout) {
+      withTimeout(timeout.toKotlinDuration()) {
         while (shouldWait()) {
           delay(1)
         }
