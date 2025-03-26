@@ -108,14 +108,8 @@ class IdeaPluginDescriptorImpl private constructor(
     .let(::sortExtensions)
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
-    .also {
-      if (it != null && this.id == PluginManagerCore.CORE_ID) {
-        LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
-                 " included into the platform part of the IDE but the platform part uses predefined bundles " +
-                 "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
-                 "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
-      }
-    }
+    .also { warnIfResourceBundleIsDefinedForCorePlugin(it) }
+
   override val actions: List<ActionElement> = raw.actions
 
   val content: PluginContentDescriptor =
@@ -519,6 +513,15 @@ class IdeaPluginDescriptorImpl private constructor(
       return pluginAliases
     }
     return pluginAliases + IdeaPluginOsRequirement.getHostOsModuleIds() + productModeAliasesForCorePlugin()
+  }
+
+  private fun warnIfResourceBundleIsDefinedForCorePlugin(resourceBundle: String?) {
+    if (resourceBundle != null && id == PluginManagerCore.CORE_ID) {
+      LOG.warn("<resource-bundle>$resourceBundle</resource-bundle> tag is found in an xml descriptor" +
+               " included into the platform part of the IDE but the platform part uses predefined bundles " +
+               "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
+               "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
+    }
   }
 
   @ApiStatus.Internal
