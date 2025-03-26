@@ -177,20 +177,14 @@ public final class TypeEvalContext {
       () -> {
         PyType cachedType = myEvaluated.get(element);
         if (cachedType != null) {
-          if (cachedType == PyNullType.INSTANCE) {
-            cachedType = null;
-          }
           assertValid(cachedType, element);
-          return cachedType;
+          return cachedType == PyNullType.INSTANCE ? null : cachedType;
         }
 
         PyType type = element.getType(this, Key.INSTANCE);
         assertValid(type, element);
-        if (type == null) {
-          type = PyNullType.INSTANCE;
-        }
-        myEvaluated.put(element, type);
-        return type == PyNullType.INSTANCE ? null : type;
+        myEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
+        return type;
       }
     );
   }
@@ -202,19 +196,13 @@ public final class TypeEvalContext {
       () -> {
         PyType cachedType = myEvaluatedReturn.get(callable);
         if (cachedType != null) {
-          if (cachedType == PyNullType.INSTANCE) {
-            cachedType = null;
-          }
           assertValid(cachedType, callable);
-          return cachedType;
+          return cachedType == PyNullType.INSTANCE ? null : cachedType;
         }
         PyType type = callable.getReturnType(this, Key.INSTANCE);
-        if (type == null) {
-          type = PyNullType.INSTANCE;
-        }
         assertValid(type, callable);
-        myEvaluatedReturn.put(callable, type);
-        return type == PyNullType.INSTANCE ? null : type;
+        myEvaluatedReturn.put(callable, type == null ? PyNullType.INSTANCE : type);
+        return type;
       }
     );
   }
