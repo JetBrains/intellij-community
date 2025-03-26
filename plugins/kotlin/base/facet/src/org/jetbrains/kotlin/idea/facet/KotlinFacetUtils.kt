@@ -215,6 +215,8 @@ fun applyCompilerArgumentsToFacetSettings(
                 K2NativeCompilerArguments::shortModuleName.name,
                 K2NativeCompilerArguments::noendorsedlibs.name,
 
+                K2JSCompilerArguments::outputFile.name,
+
                 K2JSCompilerArguments::outputDir.name,
                 K2JSCompilerArguments::moduleName.name,
         )
