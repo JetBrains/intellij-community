@@ -3,10 +3,11 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -37,4 +38,4 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
 @ApiStatus.Internal
 @Serializable
-data class RemoteValueHintId(val eid: EID)
+data class RemoteValueHintId(override val uid: UID): Id
