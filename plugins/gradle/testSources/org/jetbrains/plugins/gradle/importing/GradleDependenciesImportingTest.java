@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.util.CompletableTaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.module.Module;
@@ -42,6 +41,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiPredicate;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
@@ -2370,23 +2371,23 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     return moduleLibDeps.iterator().next();
   }
 
-  private void runTask(String task) {
+  private void runTask(String task) throws ExecutionException, InterruptedException {
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     settings.setTaskNames(Collections.singletonList(task));
     settings.setExternalProjectPath(getProjectPath());
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
 
-    var callback = new CompletableTaskCallback();
+    CompletableFuture<Boolean> taskResult = new CompletableFuture<>();
     TaskExecutionSpec spec = TaskExecutionSpec.create(
         myProject,
         GradleConstants.SYSTEM_ID,
         DefaultRunExecutor.EXECUTOR_ID,
         settings)
-      .withCallback(callback)
+      .withCallback(taskResult)
       .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
       .build();
     ExternalSystemUtil.runTask(spec);
-    callback.await();
+    assertTrue(String.format("Gradle task '%s' execution failed", task), taskResult.get());
   }
 
   private static void checkIfSourcesOrJavadocsCanBeAttached(String binaryPath,

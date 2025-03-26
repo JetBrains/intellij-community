@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class TaskExecutionSpecBuilderImpl(
@@ -32,6 +33,13 @@ class TaskExecutionSpecBuilderImpl(
   override fun withCallback(callback: TaskCallback?): TaskExecutionSpecBuilder {
     this.callback = callback
     return this
+  }
+
+  override fun withCallback(future: CompletableFuture<Boolean>): TaskExecutionSpecBuilder = apply {
+    this.callback = object : TaskCallback {
+      override fun onSuccess() { future.complete(true) }
+      override fun onFailure() { future.complete(false) }
+    }
   }
 
   override fun withListener(listener: ExternalSystemTaskNotificationListener?): TaskExecutionSpecBuilder {

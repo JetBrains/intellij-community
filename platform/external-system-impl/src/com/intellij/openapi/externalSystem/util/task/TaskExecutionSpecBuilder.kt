@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.util.concurrent.CompletableFuture
 
 /**
  * Builder for [com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec].
@@ -28,6 +29,9 @@ interface TaskExecutionSpecBuilder {
 
   @CheckReturnValue
   fun withCallback(callback: TaskCallback?): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
+  fun withCallback(future: CompletableFuture<Boolean>): TaskExecutionSpecBuilder
 
   @CheckReturnValue
   fun withListener(listener: ExternalSystemTaskNotificationListener?): TaskExecutionSpecBuilder

@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNo
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory.WARNING
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource.PROJECT_SYNC
-import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
@@ -158,23 +157,18 @@ class GradleVersionQuickFix(
     settings.vmOptions = gradleVmOptions
     settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
 
-    val future = CompletableFuture<Nothing>()
+    val future = CompletableFuture<Boolean>()
     val task = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)
       .withActivateToolWindowBeforeRun(false)
       .withProgressExecutionMode(NO_PROGRESS_ASYNC)
       .withUserData(userData)
-      .withCallback(object : TaskCallback {
-        override fun onSuccess() {
-          future.complete(null)
-        }
-
-        override fun onFailure() {
-          future.completeExceptionally(RuntimeException("Wrapper task failed"))
-        }
-      })
+      .withCallback(future)
       .build()
     runTask(task)
-    future.await()
+
+    if (!future.await()) {
+      throw RuntimeException("Wrapper task failed")
+    }
   }
 
   private fun getWrapperConfiguration(wrapperPropertiesPath: Path?, gradleVersion: GradleVersion): WrapperConfiguration {
