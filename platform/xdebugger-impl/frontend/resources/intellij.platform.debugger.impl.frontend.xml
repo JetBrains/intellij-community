@@ -32,15 +32,11 @@
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
                     relative-to-action="XDebugger.CopyValue.Frontend"/>
     </action>
-    <action id="XDebugger.CopyName.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyNameAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.CompareValueWithClipboard.Frontend"/>
-    </action>
 
     <action id="EvaluateExpression.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendEvaluateAction"
             icon="AllIcons.Debugger.EvaluateExpression">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.CopyName.Frontend"/>
+                    relative-to-action="XDebugger.CopyName"/>
     </action>
 
     <action id="Debugger.AddToWatch.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction"

@@ -1,5 +1,14 @@
 <idea-plugin>
   <actions>
+    <group id="XDebugger.Inspect.Tree.Popup.Frontend">
+      <group id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
+      <separator/>
+      <group id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend"/>
+      <separator/>
+      <group id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend"/>
+      <separator/>
+      <group id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend"/>
+    </group>
     <group id="XDebugger.Actions">
       <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
@@ -9,7 +18,10 @@
       </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
-      <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
+      <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                      relative-to-action="XDebugger.CompareValueWithClipboard.Frontend"/>
+      </action>
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
               use-shortcut-of="EditSource"/>
