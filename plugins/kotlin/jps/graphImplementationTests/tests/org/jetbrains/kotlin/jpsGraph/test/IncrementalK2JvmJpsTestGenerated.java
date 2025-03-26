@@ -620,6 +620,21 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/removeFileWithFunctionOverload/");
         }
 
+        @TestMetadata("removeImportedRootExtensionProperty")
+        public void testRemoveImportedRootExtensionProperty() throws Exception {
+            runTest("pureKotlin/removeImportedRootExtensionProperty/");
+        }
+
+        @TestMetadata("removeImportedRootFunction")
+        public void testRemoveImportedRootFunction() throws Exception {
+            runTest("pureKotlin/removeImportedRootFunction/");
+        }
+
+        @TestMetadata("removeImportedRootProperty")
+        public void testRemoveImportedRootProperty() throws Exception {
+            runTest("pureKotlin/removeImportedRootProperty/");
+        }
+
         @TestMetadata("removeMemberTypeAlias")
         public void testRemoveMemberTypeAlias() throws Exception {
             runTest("pureKotlin/removeMemberTypeAlias/");
@@ -2129,6 +2144,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 runTest("withJava/kotlinUsedInJava/funRenamed/");
             }
 
+            @TestMetadata("importedClassRemoved")
+            public void testImportedClassRemoved() throws Exception {
+                runTest("withJava/kotlinUsedInJava/importedClassRemoved/");
+            }
+
             @TestMetadata("jvmFieldChanged")
             public void testJvmFieldChanged() throws Exception {
                 runTest("withJava/kotlinUsedInJava/jvmFieldChanged/");
@@ -2244,6 +2264,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
 
                 public void testAllFilesPresentInFunRenamed() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/kotlinUsedInJava/funRenamed"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
+            }
+
+            @TestMetadata("withJava/kotlinUsedInJava/importedClassRemoved")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ImportedClassRemoved extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInImportedClassRemoved() {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/kotlinUsedInJava/importedClassRemoved"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
                 }
             }
 

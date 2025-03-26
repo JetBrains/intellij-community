@@ -152,17 +152,13 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
     if (!removedClass.isPrivate()) {
       for (KmFunction kmFunction : filter(KJvmUtils.allKmFunctions(removedClass), f -> !KJvmUtils.isPrivate(f))) {
-        if (Attributes.isInline(kmFunction)) {
-          debug("Function in a removed class was inlineable, affecting method usages ", kmFunction.getName());
-          affectMemberLookupUsages(context, removedClass, kmFunction.getName(), present);
-        }
+        debug("Function in a removed class was inlineable, affecting method usages ", kmFunction.getName());
+        affectMemberLookupUsages(context, removedClass, kmFunction.getName(), present);
       }
 
       for (KmProperty prop : filter(KJvmUtils.allKmProperties(removedClass), p -> !KJvmUtils.isPrivate(p))) {
-        if (KJvmUtils.isInlinable(prop)) {
-          debug("Property in a removed class was a constant or had inlineable accessors, affecting property usages ", prop.getName());
-          affectMemberLookupUsages(context, removedClass, prop.getName(), present);
-        }
+        debug("Property in a removed class was a constant or had inlineable accessors, affecting property usages ", prop.getName());
+        affectMemberLookupUsages(context, removedClass, prop.getName(), present);
       }
     }
     return true;
