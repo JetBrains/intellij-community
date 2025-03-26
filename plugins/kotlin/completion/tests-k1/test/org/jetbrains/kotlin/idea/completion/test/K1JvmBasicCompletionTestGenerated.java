@@ -1689,6 +1689,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected3.kt");
             }
 
+            @TestMetadata("BaseClassConstructor.kt")
+            public void testBaseClassConstructor() throws Exception {
+                runTest("../testData/basic/common/namedArguments/BaseClassConstructor.kt");
+            }
+
             @TestMetadata("BooleanArgumentExpected.kt")
             public void testBooleanArgumentExpected() throws Exception {
                 runTest("../testData/basic/common/namedArguments/BooleanArgumentExpected.kt");

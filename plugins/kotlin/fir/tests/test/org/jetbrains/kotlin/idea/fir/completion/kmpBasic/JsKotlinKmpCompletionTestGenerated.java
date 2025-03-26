@@ -1798,6 +1798,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected3.kt");
         }
 
+        @TestMetadata("BaseClassConstructor.kt")
+        public void testBaseClassConstructor() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/BaseClassConstructor.kt");
+        }
+
         @TestMetadata("BooleanArgumentExpected.kt")
         public void testBooleanArgumentExpected() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/BooleanArgumentExpected.kt");
