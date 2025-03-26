@@ -110,7 +110,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     val prefix = commandCompletionType.pattern
     val sorter = createSorter(parameters)
-    val withPrefixMatcher = resultSet.withPrefixMatcher(CamelHumpMatcher(prefix, false, true))
+    val withPrefixMatcher = resultSet.withPrefixMatcher(LimitedToleranceMatcher(prefix))
       .withRelevanceSorter(sorter)
 
     withPrefixMatcher.restartCompletionOnPrefixChange(
@@ -423,4 +423,37 @@ internal fun findCommandCompletionType(
     return InvocationCommandType.FullLine(text.substring(offset - indexOf, offset), "")
   }
   return null
+}
+
+private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : CamelHumpMatcher(myCurrentPrefix, false, true) {
+  override fun prefixMatches(element: LookupElement): Boolean {
+    if (!super.prefixMatches(element)) return false
+    for (lookupString in element.allLookupStrings) {
+      if (lookupString.contains(prefix, ignoreCase = true)) return true
+      val fragments = matchingFragments(lookupString) ?: continue
+      for (range in fragments) {
+        if (prefix.length != range.length) continue
+        if (range.startOffset >= range.endOffset ||
+            range.startOffset < 0 || range.startOffset >= (lookupString.length - 1) ||
+            range.endOffset < 0 || range.endOffset >= (lookupString.length - 1)) continue
+        val matchedFragment = lookupString.substring(range.startOffset, range.endOffset)
+        var errors = 0
+        for (i in matchedFragment.indices) {
+          if (prefix[i] != matchedFragment[i]) errors++
+          if (errors > 2) return false
+        }
+        if (range.startOffset <= 1) return true
+        if (!lookupString[range.startOffset].isLowerCase()) return true
+        if (!lookupString[range.startOffset - 1].isLetter()) return true
+      }
+    }
+    return false
+  }
+
+  override fun cloneWithPrefix(prefix: String): PrefixMatcher {
+    if (prefix == myCurrentPrefix) {
+      return this
+    }
+    return LimitedToleranceMatcher(prefix)
+  }
 }
