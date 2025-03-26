@@ -382,14 +382,13 @@ private fun findCurrentContext(): Triple<DebuggerManagerThreadImpl, PrioritizedT
 internal fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
   val (managerThread, priority, suspendContext) = findCurrentContext()
   val scope = suspendContext?.coroutineScope ?: managerThread.coroutineScope
-  return scope.future {
-    if (suspendContext != null) {
-      withDebugContext(suspendContext, priority, block)
-    }
-    else {
-      withDebugContext(managerThread, priority, block)
-    }
+  val provider = if (suspendContext != null) {
+    SuspendContextCommandProvider(suspendContext, priority)
   }
+  else {
+    DebuggerCommandProvider(priority)
+  }
+  return scope.future(Dispatchers.Debugger(managerThread) + provider, block = block)
 }
 
 /**
