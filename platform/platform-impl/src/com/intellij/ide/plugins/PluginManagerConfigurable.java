@@ -381,7 +381,7 @@ public final class PluginManagerConfigurable
 
     JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(
       null, null, actions, context, ActionPlaces.POPUP, new PresentationFactory(),
-      ActionPopupOptions.honorMnemonics(), null);
+      ActionPopupOptions.honorMnemonics(), null) {};
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
