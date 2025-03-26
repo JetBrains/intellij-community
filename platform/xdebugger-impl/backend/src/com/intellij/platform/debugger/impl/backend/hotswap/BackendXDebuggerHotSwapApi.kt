@@ -3,9 +3,9 @@
 
 package com.intellij.platform.debugger.impl.backend.hotswap
 
-import com.intellij.platform.kernel.backend.ids.asNullableIDsFlow
 import com.intellij.platform.kernel.backend.ids.BackendRecordType
 import com.intellij.platform.kernel.backend.ids.findValueById
+import com.intellij.platform.kernel.backend.ids.storeValueGlobally
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.impl.hotswap.HotSwapSession
@@ -15,19 +15,29 @@ import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerHotSwapApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
 
 internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
   override suspend fun currentSessionStatus(projectId: ProjectId): Flow<XDebugHotSwapCurrentSessionStatus?> {
     val project = projectId.findProject()
-    val flow = HotSwapSessionManager.getInstance(project).currentStatusFlow
-    val sessionFlow = flow.mapLatest { it?.session }
-    val statusFlow = flow.mapLatest { it?.status }
-    return sessionFlow.asNullableIDsFlow(type = HowSwapSessionRecordType).combine(statusFlow) { id, status ->
-      if (id == null || status == null) return@combine null
-      XDebugHotSwapCurrentSessionStatus(id, status)
+    return channelFlow {
+      HotSwapSessionManager.getInstance(project).currentStatusFlow.collectLatest {
+        if (it == null) {
+          send(null)
+          return@collectLatest
+        }
+        val session = it.session
+        val status = it.status
+        coroutineScope {
+          val id = storeValueGlobally(this, session, type = HowSwapSessionRecordType)
+          send(XDebugHotSwapCurrentSessionStatus(id, status))
+          awaitCancellation()
+        }
+      }
     }
   }
 
