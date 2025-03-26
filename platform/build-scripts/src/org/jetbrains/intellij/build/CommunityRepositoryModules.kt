@@ -634,7 +634,7 @@ object CommunityRepositoryModules {
       spec.directoryName = "vcs-gitlab-$productCode"
       spec.mainJarName = "vcs-gitlab.jar"
       spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
+        PluginVersionEvaluatorResult(pluginVersion = "$version-$productCode")
       }
     }
   }
