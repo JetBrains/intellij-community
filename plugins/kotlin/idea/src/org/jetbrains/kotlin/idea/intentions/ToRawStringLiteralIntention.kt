@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertContent
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertContentForRawString
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
@@ -37,7 +37,7 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
             if (Character.isISOControl(c) && c != '\n' && c != '\r') return false
         }
 
-        val converted = convertContent(element)
+        val converted = convertContentForRawString(element)
         return !converted.contains("\"\"\"")
     }
 
@@ -46,7 +46,7 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
         val endOffset = element.endOffset
         val currentOffset = editor?.caretModel?.currentCaret?.offset ?: startOffset
 
-        val text = convertContent(element)
+        val text = convertContentForRawString(element)
         val replaced = element.replaced(KtPsiFactory(element.project).createExpression("\"\"\"" + text + "\"\"\""))
 
         val offset = when {

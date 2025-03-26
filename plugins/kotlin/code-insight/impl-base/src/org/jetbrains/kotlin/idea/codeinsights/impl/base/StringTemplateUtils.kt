@@ -195,7 +195,13 @@ fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
             && entries.any { it is KtLiteralStringTemplateEntry }
 }
 
-fun convertContent(element: KtStringTemplateExpression): String {
+/**
+ * Converts the content of the [element] string template preparing it to be used in a raw string:
+ * * Replaces escaped characters with their unescaped value
+ * * Normalizes line separators
+ * * Escapes dangerous literal `$` chars with `${"$"}` or equivalent multi-dollar versions for prefixed strings
+ */
+fun convertContentForRawString(element: KtStringTemplateExpression): String {
     val escapedDollarReplacementText by lazy {
         KtPsiFactory(element.project).createMultiDollarBlockStringTemplateEntry(
             KtPsiFactory(element.project).createExpression("\"$\""),
@@ -239,12 +245,12 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
         if (Character.isISOControl(c) && c != '\n' && c != '\r') return false
     }
 
-    val converted = convertContent(this)
+    val converted = convertContentForRawString(this)
     return !converted.contains("\"\"\"")
 }
 
 fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {
-    val text = convertContent(this)
+    val text = convertContentForRawString(this)
     val prefixLength = templatePrefixLength
     val factory = KtPsiFactory(project)
     val rawReplacement = factory.createStringTemplate(text, prefixLength, isRaw = true)
