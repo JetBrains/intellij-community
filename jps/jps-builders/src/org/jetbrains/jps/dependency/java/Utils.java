@@ -74,11 +74,11 @@ public final class Utils {
   }
 
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
-    return getNodes(new JvmNodeReferenceID(name), JvmClass.class);
+    return name.isBlank()? Collections.emptyList() : getNodes(new JvmNodeReferenceID(name), JvmClass.class);
   }
 
   public Iterable<JvmModule> getModulesByName(@NotNull String name) {
-    return getNodes(new JvmNodeReferenceID(name), JvmModule.class);
+    return name.isBlank()? Collections.emptyList() : getNodes(new JvmNodeReferenceID(name), JvmModule.class);
   }
 
   public @Nullable String getNodeName(ReferenceID id) {
@@ -241,33 +241,37 @@ public final class Utils {
   }
 
   public Iterable<Pair<JvmClass, JvmField>> getOverriddenFields(JvmClass fromCls, JvmField field) {
-    Function<JvmClass, Iterable<Pair<JvmClass, JvmField>>> dataGetter = cl -> collect(
-      map(filter(cl.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleInHierarchy(cl, f, fromCls)), ff -> Pair.create(cl, ff)),
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmField>>> dataGetter = cls -> collect(
+      flat(map(withAllImplementedInterfaces(cls), c -> map(filter(c.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleInHierarchy(cls, f, fromCls)), ff -> Pair.create(cls, ff)))),
       new SmartList<>()
     );
     return flat(
-      getNodesData(fromCls, cl -> flat(map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> isEmpty(result), false)
+      getNodesData(fromCls, cl -> getClassesByName(cl.getSuperFqName()), dataGetter, result -> isEmpty(result), false)
     );
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverriddenMethods(JvmClass fromCls, Predicate<JvmMethod> searchCond) {
-    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> collect(
-      map(filter(cl.getMethods(), m -> searchCond.test(m) && isVisibleInHierarchy(cl, m, fromCls)), mm -> Pair.create(cl, mm)),
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cls -> collect(
+      flat(map(withAllImplementedInterfaces(cls), c -> map(filter(c.getMethods(), m -> searchCond.test(m) && isVisibleInHierarchy(cls, m, fromCls)), mm -> Pair.create(cls, mm)))),
       new SmartList<>()
     );
     return flat(
-      getNodesData(fromCls, cl -> flat(map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> isEmpty(result), false)
+      getNodesData(fromCls, cl -> getClassesByName(cl.getSuperFqName()), dataGetter, result -> isEmpty(result), false)
     );
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverridingMethods(JvmClass fromCls, JvmMethod method, Predicate<JvmMethod> searchCond) {
-    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> isVisibleInHierarchy(fromCls, method, cl)? collect(
-      map(filter(cl.getMethods(), searchCond::test), mm -> Pair.create(cl, mm)),
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cls -> isVisibleInHierarchy(fromCls, method, cls)? collect(
+      flat(map(withAllImplementedInterfaces(cls), c -> map(filter(c.getMethods(), searchCond::test), mm -> Pair.create(cls, mm)))),
       new SmartList<>()
     ) : Collections.emptyList();
     return flat(
       getNodesData(fromCls, cl -> flat(map(directSubclasses(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> isEmpty(result), false)
     );
+  }
+
+  private Iterable<JvmClass> withAllImplementedInterfaces(JvmClass cls) {
+    return recurse(cls, c -> flat(map(c.getInterfaces(), st -> getClassesByName(st))), true);
   }
 
   public static final class OverloadDescriptor {
