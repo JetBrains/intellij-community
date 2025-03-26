@@ -29,6 +29,11 @@ public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAtt
   }
 
   @Override
+  protected int getPreferredSizeMaxValues() {
+    return 0; // there can be long values inside, and this makes the popup appearing on mouse hover unnecessarily large
+  }
+
+  @Override
   protected @Nls String getTextFor(@NotNull TextAttributesKey value) {
     if (HighlightingChooser.ATTRIBUTES_CUSTOM_NAMES.containsKey(value)) {
       return HighlightingChooser.ATTRIBUTES_CUSTOM_NAMES.get(value).get();
