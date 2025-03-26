@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,60 +21,16 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
-import org.jetbrains.jewel.ui.disabled
 import org.jetbrains.jewel.ui.icon.IconKey
-import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.theme.simpleListItemStyle
 
 /**
  * A simple list item layout comprising of a content slot and an optional icon to its start side.
  *
  * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [selected] and [active] values.
- */
-@Composable
-public fun SimpleListItem(
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    active: Boolean = true,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    colorFilter: ColorFilter? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-    vararg painterHints: PainterHint,
-    content: @Composable () -> Unit,
-) {
-    val state = remember(selected, active) { ListItemState(selected, active) }
-    SimpleListItem(
-        state = state,
-        modifier = modifier,
-        iconModifier = iconModifier,
-        icon = icon,
-        iconContentDescription = iconContentDescription,
-        colorFilter = colorFilter,
-        style = style,
-        height = height,
-        painterHints = painterHints,
-        content = content,
-    )
-}
-
-/**
- * A simple list item layout comprising of a content slot and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
  * the [isSelected] and [isActive] values.
  */
-@Deprecated(
-    "Use the version with 'selected' and 'active' parameters instead",
-    ReplaceWith(
-        "SimpleListItem(selected = isSelected, modifier = modifier, iconModifier = iconModifier, " +
-            "active = isActive, icon = icon, iconContentDescription = iconContentDescription, " +
-            "style = style, height = height, content = content)"
-    ),
-)
+@Deprecated("Use the overload with selected, active, colorFilter and hints")
 @ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun SimpleListItem(
@@ -89,54 +44,8 @@ public fun SimpleListItem(
     height: Dp = JewelTheme.globalMetrics.rowHeight,
     content: @Composable () -> Unit,
 ) {
-    SimpleListItem(
-        selected = isSelected,
-        modifier = modifier,
-        iconModifier = iconModifier,
-        active = isActive,
-        icon = icon,
-        iconContentDescription = iconContentDescription,
-        style = style,
-        height = height,
-        content = content,
-    )
-}
-
-/**
- * A simple list item layout comprising of a text and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [selected] and [active] values.
- */
-@Composable
-public fun SimpleListItem(
-    text: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    textModifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    active: Boolean = true,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    colorFilter: ColorFilter? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-    vararg painterHints: PainterHint,
-) {
-    val state = remember(selected, active) { ListItemState(selected, active) }
-    SimpleListItem(
-        text = text,
-        state = state,
-        modifier = modifier,
-        textModifier = textModifier,
-        iconModifier = iconModifier,
-        icon = icon,
-        iconContentDescription = iconContentDescription,
-        colorFilter = colorFilter,
-        style = style,
-        height = height,
-        painterHints = painterHints,
-    )
+    val state = remember(isSelected, isActive) { ListItemState(isSelected, isActive) }
+    SimpleListItem(state, modifier, iconModifier, icon, iconContentDescription, style, height, content)
 }
 
 /**
@@ -145,14 +54,7 @@ public fun SimpleListItem(
  * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
  * the [isSelected] and [isActive] values.
  */
-@Deprecated(
-    "Use the version with 'selected' and 'active' parameters instead",
-    ReplaceWith(
-        "SimpleListItem(text = text, selected = isSelected, modifier = modifier, textModifier = textModifier, " +
-            "iconModifier = iconModifier, active = isActive, icon = icon, " +
-            "iconContentDescription = iconContentDescription, style = style, height = height)"
-    ),
-)
+@Deprecated("Use the overload with selected, active, colorFilter and hints")
 @ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun SimpleListItem(
@@ -167,18 +69,8 @@ public fun SimpleListItem(
     style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
     height: Dp = JewelTheme.globalMetrics.rowHeight,
 ) {
-    SimpleListItem(
-        text = text,
-        selected = isSelected,
-        modifier = modifier,
-        textModifier = textModifier,
-        iconModifier = iconModifier,
-        active = isActive,
-        icon = icon,
-        iconContentDescription = iconContentDescription,
-        style = style,
-        height = height,
-    )
+    val state = remember(isSelected, isActive) { ListItemState(isSelected, isActive) }
+    SimpleListItem(text, state, modifier, textModifier, iconModifier, icon, iconContentDescription, style, height)
 }
 
 /**
@@ -187,6 +79,8 @@ public fun SimpleListItem(
  * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
  * the [state].
  */
+@Deprecated("Use the overload with selected, active, colorFilter and hints")
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun SimpleListItem(
     text: String,
@@ -199,59 +93,7 @@ public fun SimpleListItem(
     style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
     height: Dp = JewelTheme.globalMetrics.rowHeight,
 ) {
-    SimpleListItem(
-        state = state,
-        modifier = modifier,
-        iconModifier = iconModifier,
-        icon = icon,
-        iconContentDescription = iconContentDescription,
-        colorFilter = null,
-        style = style,
-        height = height,
-        painterHints = emptyArray(),
-    ) {
-        Text(
-            text = text,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = JewelTheme.defaultTextStyle,
-            color = style.colors.contentFor(state).value,
-            modifier = textModifier,
-        )
-    }
-}
-
-/**
- * A simple list item layout comprising of a text and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [state].
- */
-@Composable
-public fun SimpleListItem(
-    text: String,
-    state: ListItemState,
-    modifier: Modifier = Modifier,
-    textModifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    colorFilter: ColorFilter? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-    vararg painterHints: PainterHint,
-) {
-    SimpleListItem(
-        state = state,
-        modifier = modifier,
-        iconModifier = iconModifier,
-        icon = icon,
-        iconContentDescription = iconContentDescription,
-        colorFilter = colorFilter,
-        style = style,
-        height = height,
-        painterHints = painterHints,
-    ) {
+    SimpleListItem(state, modifier, iconModifier, icon, iconContentDescription, style, height) {
         Text(
             text = text,
             maxLines = 1,
@@ -269,6 +111,8 @@ public fun SimpleListItem(
  * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
  * the [state].
  */
+@Deprecated("Use the overload with selected, active, colorFilter and hints")
+@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun SimpleListItem(
     state: ListItemState,
@@ -278,39 +122,6 @@ public fun SimpleListItem(
     iconContentDescription: String? = null,
     style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
     height: Dp = JewelTheme.globalMetrics.rowHeight,
-    content: @Composable () -> Unit,
-) {
-    SimpleListItem(
-        state = state,
-        modifier = modifier,
-        iconModifier = iconModifier,
-        icon = icon,
-        iconContentDescription = iconContentDescription,
-        colorFilter = null,
-        style = style,
-        height = height,
-        painterHints = emptyArray(),
-        content = content,
-    )
-}
-
-/**
- * A simple list item layout comprising of a content slot and an optional icon to its start side.
- *
- * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [state].
- */
-@Composable
-public fun SimpleListItem(
-    state: ListItemState,
-    modifier: Modifier = Modifier,
-    iconModifier: Modifier = Modifier,
-    icon: IconKey? = null,
-    iconContentDescription: String? = null,
-    colorFilter: ColorFilter? = null,
-    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
-    height: Dp = JewelTheme.globalMetrics.rowHeight,
-    vararg painterHints: PainterHint,
     content: @Composable () -> Unit,
 ) {
     Row(
@@ -329,13 +140,7 @@ public fun SimpleListItem(
         horizontalArrangement = Arrangement.spacedBy(style.metrics.iconTextGap),
     ) {
         if (icon != null) {
-            Icon(
-                modifier = iconModifier.size(16.dp),
-                key = icon,
-                contentDescription = iconContentDescription,
-                colorFilter = if (!state.isActive) ColorFilter.disabled() else colorFilter,
-                hints = painterHints,
-            )
+            Icon(modifier = iconModifier.size(16.dp), key = icon, contentDescription = iconContentDescription)
         }
         content()
     }
