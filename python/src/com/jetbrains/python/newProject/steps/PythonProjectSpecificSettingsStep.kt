@@ -151,10 +151,8 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
     }
 
     mainPanel.launchOnShow("PythonProjectSpecificSettingsStep createBasePanel") {
-      coroutineScope {
-        panelPlaceholder.component = panel {
-          interpreterPanel.buildPanel(this, this@coroutineScope)
-        }
+      panelPlaceholder.component = panel {
+        interpreterPanel.buildPanel(this, this@launchOnShow)
       }
     }
 

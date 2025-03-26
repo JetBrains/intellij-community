@@ -59,25 +59,23 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
     }
 
     rootPanel.launchOnShow("PythonAddLocalInterpreterDialog launchOnShow") {
-      coroutineScope {
-        centerPanelPlaceHolder.component = panel {
-          model = PythonLocalAddInterpreterModel(
-            PyInterpreterModelParams(
-              this@coroutineScope,
-              // At this moment dialog is not displayed, so there is no modality state
-              // The whole idea of context passing is doubtful
-              Dispatchers.EDT + ModalityState.any().asContextElement(),
-              ProjectPathFlows.create(basePath)
-            )
+      centerPanelPlaceHolder.component = panel {
+        model = PythonLocalAddInterpreterModel(
+          PyInterpreterModelParams(
+            this@launchOnShow,
+            // At this moment dialog is not displayed, so there is no modality state
+            // The whole idea of context passing is doubtful
+            Dispatchers.EDT + ModalityState.any().asContextElement(),
+            ProjectPathFlows.create(basePath)
           )
-          model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
-          mainPanel = PythonAddCustomInterpreter(model, moduleOrProject = dialogPresenter.moduleOrProject, errorSink = errorSink)
-          mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
-        }.apply {
-          model.scope.launch(model.uiContext) {
-            model.initialize()
-            mainPanel.onShown()
-          }
+        )
+        model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
+        mainPanel = PythonAddCustomInterpreter(model, moduleOrProject = dialogPresenter.moduleOrProject, errorSink = errorSink)
+        mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
+      }.apply {
+        model.scope.launch(model.uiContext) {
+          model.initialize()
+          mainPanel.onShown()
         }
       }
     }
