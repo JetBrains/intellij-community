@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui
 
+import org.intellij.lang.annotations.Language
 import java.awt.Component
 
 /**
@@ -23,7 +24,7 @@ class QueryBuilder {
    * Builds a query to search for components by their full class name (including package).
    * Example: `byJavaClass("com.intellij.ui.components.JBList")`
    */
-  fun byJavaClass(cls: String) = byAttribute("javaclass", cls)
+  fun byJavaClass(@Language("jvm-class-name") cls: String) = byAttribute("javaclass", cls)
 
   /**
    * Builds a query to search for components either by their full class name or by parent type.
