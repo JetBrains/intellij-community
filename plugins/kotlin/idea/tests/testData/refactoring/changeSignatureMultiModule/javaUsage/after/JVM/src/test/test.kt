@@ -1,7 +1,7 @@
 package test
 
 actual open class C {
-    actual fun m(b: Boolean) { }
+    actual open fun m(b: Boolean) { }
 }
 
 fun test() {

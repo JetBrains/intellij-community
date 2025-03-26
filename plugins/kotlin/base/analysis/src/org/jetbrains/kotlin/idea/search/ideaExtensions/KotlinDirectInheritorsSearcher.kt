@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
 
 class JavaOverridingMethodsSearcherFromKotlinParameters(method: PsiMethod, scope: SearchScope, checkDeep: Boolean) 
     : OverridingMethodsSearch.SearchParameters(method, scope, checkDeep)
@@ -69,6 +71,7 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
                 .filter { candidate ->
                     ProgressManager.checkCanceled()
                     if (originalParameters != null &&
+                        (candidate.unwrapped as? KtClassOrObject)?.superTypeListEntries?.any { it is KtDelegatedSuperTypeEntry } == true &&
                         MethodSignatureUtil.findMethodBySignature(candidate, originalParameters.method, false)?.unwrapped is KtClass) {
                         //don't return classes with implementation by delegation
                         false

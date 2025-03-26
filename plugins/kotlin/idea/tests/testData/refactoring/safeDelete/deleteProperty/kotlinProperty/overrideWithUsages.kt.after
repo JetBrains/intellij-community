@@ -6,7 +6,7 @@ class B: A {
         println(foo)
     }
 
-    override val foo: String
+    val foo: String
         get() {
             return "B"
         }
