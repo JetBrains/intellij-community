@@ -2,7 +2,6 @@
 package org.jetbrains.yaml.smart
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.formatting.FormattingMode
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,7 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.*
 
-class YAMLInjectedElementEnterHandler : EnterHandlerDelegateAdapter() {
+class YAMLInjectedElementEnterHandler : EnterHandlerDelegate {
 
   override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): EnterHandlerDelegate.Result {
     val hostEditor = CommonDataKeys.HOST_EDITOR.getData(dataContext) as? EditorEx ?: return EnterHandlerDelegate.Result.Continue

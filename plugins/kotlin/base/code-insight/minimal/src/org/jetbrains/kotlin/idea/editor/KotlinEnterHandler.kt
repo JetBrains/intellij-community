@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import kotlin.jvm.java
 
 internal fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int): PsiElement? {
     val element = file.findElementAt(offset)
@@ -37,7 +35,7 @@ internal fun getElementAtOffsetIgnoreWhitespaceBefore(file: PsiFile, offset: Int
 }
 
 
-class KotlinEnterHandler : EnterHandlerDelegateAdapter() {
+class KotlinEnterHandler : EnterHandlerDelegate {
     companion object {
         private val LOG = Logger.getInstance(KotlinEnterHandler::class.java)
         private val FORCE_INDENT_IN_LAMBDA_AFTER = TokenSet.create(KtTokens.ARROW, KtTokens.LBRACE)

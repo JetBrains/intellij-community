@@ -3,7 +3,7 @@ package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 
 
-public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
+public final class PythonEnterHandler implements EnterHandlerDelegate {
   private int myPostprocessShift = 0;
 
   @Override
@@ -252,7 +252,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
     addGoogleDocStringSectionIndent(file, editor, editor.getCaretModel().getOffset());
-    return super.postProcessEnter(file, editor, dataContext);
+    return EnterHandlerDelegate.super.postProcessEnter(file, editor, dataContext);
   }
 
   private static void addGoogleDocStringSectionIndent(@NotNull PsiFile file, @NotNull Editor editor, int offset) {

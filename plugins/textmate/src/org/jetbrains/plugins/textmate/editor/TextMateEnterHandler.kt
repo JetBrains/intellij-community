@@ -1,7 +1,7 @@
 //package org.jetbrains.plugins.textmate.editor
 //
 //import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
-//import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
+//import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 //import com.intellij.openapi.actionSystem.DataContext
 //import com.intellij.openapi.editor.Editor
 //import com.intellij.openapi.editor.ex.EditorEx
@@ -13,7 +13,7 @@
 //import org.jetbrains.plugins.textmate.psi.TextMateFile
 //
 //// todo: consider using this for onEnterRules, instead of TextMateLineIndentProvider
-//class TextMateEnterHandler : EnterHandlerDelegateAdapter() {
+//class TextMateEnterHandler : EnterHandlerDelegate {
 //  override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): EnterHandlerDelegate.Result {
 //    if (file !is TextMateFile) return super.postProcessEnter(file, editor, dataContext)
 //

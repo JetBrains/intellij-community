@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -15,7 +14,7 @@ import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
 
 // Those functions look somewhat C-ish...
-internal class EnterInEditorConfigFileHandler : EnterHandlerDelegateAdapter() {
+internal class EnterInEditorConfigFileHandler : EnterHandlerDelegate {
   override fun preprocessEnter(
     file: PsiFile,
     editor: Editor,

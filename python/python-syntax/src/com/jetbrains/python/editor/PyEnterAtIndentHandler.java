@@ -2,7 +2,7 @@
 package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.editorActions.BackspaceHandler;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -15,7 +15,7 @@ import com.jetbrains.python.ast.PyAstFile;
 import org.jetbrains.annotations.NotNull;
 
 
-public final class PyEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
+public final class PyEnterAtIndentHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,

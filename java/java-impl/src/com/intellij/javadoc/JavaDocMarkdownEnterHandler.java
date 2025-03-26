@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
+public class JavaDocMarkdownEnterHandler implements EnterHandlerDelegate {
   private static final String JAVADOC_MARKDOWN_PREFIX = "/// ";
 
   @Override

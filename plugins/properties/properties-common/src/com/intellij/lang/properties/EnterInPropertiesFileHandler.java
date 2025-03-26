@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -16,7 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-final class EnterInPropertiesFileHandler extends EnterHandlerDelegateAdapter {
+final class EnterInPropertiesFileHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(final @NotNull PsiFile file, final @NotNull Editor editor, final @NotNull Ref<Integer> caretOffsetRef, final @NotNull Ref<Integer> caretAdvance,
                                 final @NotNull DataContext dataContext, final EditorActionHandler originalHandler) {

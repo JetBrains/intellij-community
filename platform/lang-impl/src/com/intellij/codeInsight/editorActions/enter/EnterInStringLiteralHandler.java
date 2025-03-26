@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
+public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(final @NotNull PsiFile file, final @NotNull Editor editor, @NotNull Ref<Integer> caretOffsetRef,
                                 final @NotNull Ref<Integer> caretAdvanceRef, final @NotNull DataContext dataContext,

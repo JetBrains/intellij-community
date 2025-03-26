@@ -3101,7 +3101,7 @@ e:com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler$Result
 - s:valueOf(java.lang.String):com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler$Result
 - s:values():com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler$Result[]
 c:com.intellij.codeInsight.editorActions.enter.BaseIndentEnterHandler
-- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
+- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 - <init>(com.intellij.lang.Language,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType,java.lang.String,com.intellij.psi.tree.TokenSet):V
 - <init>(com.intellij.lang.Language,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType,java.lang.String,com.intellij.psi.tree.TokenSet,Z):V
 - p:getNewIndent(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,java.lang.CharSequence):java.lang.String
@@ -3109,7 +3109,7 @@ c:com.intellij.codeInsight.editorActions.enter.BaseIndentEnterHandler
 - preprocessEnter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.util.Ref,com.intellij.openapi.util.Ref,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.actionSystem.EditorActionHandler):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
 - p:shouldSkipWithResult(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
 c:com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler
-- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
+- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 - <init>():V
 - p:calculateOffsetToInsertClosingBrace(com.intellij.psi.PsiFile,java.lang.CharSequence,I):com.intellij.openapi.util.Pair
 - p:calculateOffsetToInsertClosingBraceInsideElement(com.intellij.psi.PsiElement):I
@@ -3135,7 +3135,7 @@ c:com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate
 - p:isBracePair(C,C):Z
 - isInComment(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I):Z
 c:com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesFinalHandler
-- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
+- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 - ps:ourDefaultBetweenDelegate:com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate
 - <init>():V
 - ps:getLanguageImplementation(com.intellij.lang.Language):com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesDelegate
@@ -3158,8 +3158,8 @@ a:com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesNoCommitDelegat
 com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - invokeInsideIndent(I,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):Z
-- a:postProcessEnter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
-- a:preprocessEnter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.util.Ref,com.intellij.openapi.util.Ref,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.actionSystem.EditorActionHandler):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
+- postProcessEnter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
+- preprocessEnter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.util.Ref,com.intellij.openapi.util.Ref,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.actionSystem.EditorActionHandler):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
 e:com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
 - java.lang.Enum
 - sf:Continue:com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
@@ -3180,7 +3180,7 @@ f:com.intellij.codeInsight.editorActions.enter.EnterInCommentUtil
 - s:getTodoTextOffset(java.lang.CharSequence,I,I):I
 - s:isTodoText(java.lang.CharSequence,I,I):Z
 c:com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler
-- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
+- com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 - <init>():V
 - p:getJavaLikeQuoteHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler
 - p:isInStringLiteral(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler,I):Z
