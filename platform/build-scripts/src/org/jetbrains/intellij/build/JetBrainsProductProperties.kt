@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
@@ -66,22 +65,6 @@ abstract class JetBrainsProductProperties : ProductProperties() {
         val version = result.plugin.pluginVersion
         if (version == null) {
           add(InvalidPluginDescriptorError("${result.plugin.pluginId} has no version specified"))
-        }
-        else try {
-          /**
-           * Plugin versions are parsed as [IdeVersion] upon uploading to plugins.jetbrains.com to be able to compare them
-           *
-           * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.withCustomVersion
-           */
-          IdeVersion.createIdeVersion(version)
-        }
-        catch (e: IllegalArgumentException) {
-          /**
-           * [org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder.kotlinPlugin] is the only exception left
-           */
-          if (pluginId != "org.jetbrains.kotlin") {
-            add(InvalidPluginDescriptorError("${result.plugin.pluginId} version '$version' cannot be parsed: ${e.message}"))
-          }
         }
       }
     }
