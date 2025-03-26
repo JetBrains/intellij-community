@@ -112,34 +112,54 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
     private fun mergeStringGroups(unmergedOperandsQueue: ArrayDeque<KtExpression>, psiFactory: KtPsiFactory): List<KtExpression> {
         val mergedOperands = mutableListOf<KtExpression>()
         while (unmergedOperandsQueue.isNotEmpty()) {
-            val first = unmergedOperandsQueue.removeFirst()
+            val nextOperand = unmergedOperandsQueue.removeFirst()
             when {
-                first is KtStringTemplateExpression -> {
-                    val group = mutableListOf(first)
-                    @Suppress("UNCHECKED_CAST")
-                    val nextAcceptableStrings = unmergedOperandsQueue.takeWhile { next ->
-                        next is KtStringTemplateExpression && next.isSingleQuoted() == first.isSingleQuoted()
-                    } as List<KtStringTemplateExpression>
-                    repeat(nextAcceptableStrings.size) { unmergedOperandsQueue.removeFirst() }
-                    group.addAll(nextAcceptableStrings)
-                    val concatenatedText = group.joinToString(separator = "") {
-                        it.getContentRange().substring(it.text)
-                    }
-                    val tempStringForPrefixEstimation = createStringTemplate(
-                        psiFactory, concatenatedText, prefixLength = 1, isMultiQuoted = !first.isSingleQuoted()
-                    )
-                    // all interpolations have been split into individual expressions, strings contain only text by now
-                    val prefixLength = findPrefixLengthForPlainTextConversion(tempStringForPrefixEstimation)
-                    val merged = createStringTemplate(
-                        psiFactory, concatenatedText, prefixLength = prefixLength, isMultiQuoted = !first.isSingleQuoted()
-                    )
-                    mergedOperands.add(merged)
+                nextOperand is KtStringTemplateExpression -> {
+                    val mergedStringGroup = mergeNextSequentialStrings(nextOperand, unmergedOperandsQueue, psiFactory)
+                    mergedOperands.add(mergedStringGroup)
                 }
-                else -> mergedOperands.add(first)
+                else -> mergedOperands.add(nextOperand)
             }
         }
 
         return mergedOperands
+    }
+
+    private fun mergeNextSequentialStrings(
+        firstString: KtStringTemplateExpression,
+        unmergedOperandsQueue: ArrayDeque<KtExpression>,
+        psiFactory: KtPsiFactory,
+    ): KtStringTemplateExpression {
+        val group = findNextStringGroup(firstString, unmergedOperandsQueue)
+        val concatenatedText = group.joinToString(separator = "") {
+            it.getContentRange().substring(it.text)
+        }
+        val tempStringForPrefixEstimation = createStringTemplate(
+            psiFactory, concatenatedText, prefixLength = 1, isMultiQuoted = !firstString.isSingleQuoted()
+        )
+        // all interpolations have been split into individual expressions, strings contain only text by now
+        val prefixLength = findPrefixLengthForPlainTextConversion(tempStringForPrefixEstimation)
+        val merged = createStringTemplate(
+            psiFactory, concatenatedText, prefixLength = prefixLength, isMultiQuoted = !firstString.isSingleQuoted()
+        )
+        return merged
+    }
+
+    private fun findNextStringGroup(
+        firstString: KtStringTemplateExpression,
+        unmergedOperandsQueue: ArrayDeque<KtExpression>,
+    ): MutableList<KtStringTemplateExpression> {
+        val group = mutableListOf(firstString)
+
+        @Suppress("UNCHECKED_CAST")
+        val nextAcceptableStrings = unmergedOperandsQueue.takeWhile { next ->
+            next is KtStringTemplateExpression && next.isSingleQuoted() == firstString.isSingleQuoted()
+        } as List<KtStringTemplateExpression>
+
+        group.addAll(nextAcceptableStrings)
+        repeat(nextAcceptableStrings.size) { unmergedOperandsQueue.removeFirst() }
+
+        return group
     }
 
     private fun convertFirstToString(unmergedOperandsQueue: ArrayDeque<KtExpression>, psiFactory: KtPsiFactory) {
