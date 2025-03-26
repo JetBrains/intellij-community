@@ -43,6 +43,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
+
 public abstract class XVariablesViewBase extends XDebugView {
   private final XDebuggerTreePanel myTreePanel;
   private MySelectionListener mySelectionListener;
@@ -52,9 +54,15 @@ public abstract class XVariablesViewBase extends XDebugView {
   private @NotNull CompletableFuture<XDebuggerTreeNode> myLoaded = new CompletableFuture<>();
   private final Map<Object, XDebuggerTreeState> myTreeStates = new FixedHashMap<>(Registry.get("debugger.tree.states.depth").asInteger());
 
-  protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
-    myTreePanel = new XDebuggerTreePanel(
-      project, editorsProvider, this, null, this instanceof XWatchesView ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
+  protected XVariablesViewBase(@NotNull Project project,
+                               @NotNull XDebuggerEditorsProvider editorsProvider,
+                               @Nullable XValueMarkers<?, ?> markers) {
+    String actionGroupId = areFrontendDebuggerActionsEnabled()
+                           ? XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND
+                           : (this instanceof XWatchesView
+                              ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP
+                              : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    myTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, actionGroupId, markers);
     getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
     getTree().addTreeListener(new XDebuggerTreeListener() {
       @Override
@@ -198,9 +206,9 @@ public abstract class XVariablesViewBase extends XDebugView {
     private final XDebuggerTreePanel myTreePanel;
 
     MySelectionListener(Editor editor,
-                               XStackFrame stackFrame,
-                               Project project,
-                               XDebuggerTreePanel panel) {
+                        XStackFrame stackFrame,
+                        Project project,
+                        XDebuggerTreePanel panel) {
       myEditor = editor;
       myStackFrame = stackFrame;
       myProject = project;
