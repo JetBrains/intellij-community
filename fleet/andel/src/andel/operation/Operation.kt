@@ -2,6 +2,7 @@
 package andel.operation
 
 import andel.editor.CaretPosition
+import andel.rope.Rope
 import andel.text.CharOffset
 import andel.text.IntersectionType
 import andel.text.TextRange
@@ -47,8 +48,30 @@ sealed class Op {
  * TP2 property is replaced with weaker property of preserving points.
  *
  */
-@Serializable
-data class Operation(val ops: List<Op>) {
+@Serializable(with = OperationSerializer::class)
+data class Operation(internal val rope: OpsRope) {
+  constructor(ops: List<Op>): this(OperationMonoid.ropeOf(listOf(ops.toTypedArray())))
+
+  val ops: List<Op> get() {
+    val owner = Any()
+    var cursor: Rope.Cursor<Array<Op>>? = rope.cursor(owner)
+    val result = ArrayList<Op>()
+    while (cursor != null) {
+      result.addAll(cursor.element)
+      cursor = cursor.next(owner)
+    }
+    return result
+  }
+
+  val size: Int
+    get() = rope.size(OperationMonoid.Count)
+  val isEmpty: Boolean
+    get() = size == 0
+  val lenBefore: Int
+    get() = rope.size(OperationMonoid.LenBefore)
+  val lenAfter: Int
+    get() = rope.size(OperationMonoid.LenAfter)
+
   companion object {
     /**
      * Empty operation applicable to any text.
@@ -212,12 +235,6 @@ fun Op.invert(): Op {
 fun Operation.invert(): Operation {
   return Operation(this.ops.map(Op::invert))
 }
-
-private val Operation.lenBefore
-  get() = this.ops.sumOf { it.lenBefore }
-
-private val Operation.lenAfter
-  get() = this.ops.sumOf { it.lenAfter }
 
 fun Operation.compose(subsequent: Operation): Operation {
   fun pushRetain(accum: MutableList<Op>, length: Long) {

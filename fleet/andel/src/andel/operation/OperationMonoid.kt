@@ -3,6 +3,9 @@ package andel.operation
 import andel.rope.Metric
 import andel.rope.Metrics
 import andel.rope.Monoid
+import andel.rope.Rope
+
+typealias OpsRope = Rope<Array<Op>>
 
 internal const val MAX_LEAF_SIZE = 16
 internal const val DESIRED_LEAF_SIZE = MAX_LEAF_SIZE / 2 + MAX_LEAF_SIZE / 4
