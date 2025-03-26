@@ -13,6 +13,17 @@ import java.util.List;
 @ApiStatus.Internal
 public final class MemoryUtil {
 
+  /**
+   * Retrieves the amount of unused memory on macOS systems.
+   * We can't use mxBean for macOS because it considers cache as used memory, which can confuse users since the used memory will always appear to be around 99%.
+   *
+   * <p>This method utilizes native system calls specific to macOS through the JNA library
+   * to extract detailed memory statistics. It calculates the unused memory by summing the "free" and "inactive"
+   * page counts retrieved from the {@link VmStatistics64} structure that is a macOS-specific data structure that provides detailed
+   * information about the system's memory usage, such as the number of free, active, inactive, and wired memory pages,
+   * as well as other memory-related statistics.
+   */
+
   @Nullable
   public static Long getUnusedMemory() {
     if (!SystemInfo.isMac) return null;
