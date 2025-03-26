@@ -5,9 +5,13 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
   public void testBinaryFile() throws IOException {
@@ -36,5 +40,33 @@ public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
     assertEquals(new IntentionPreviewInfo.Html(HtmlChunk.text("Browse \"https://example.com\"")), preview);
     ModCommandExecutor.BatchExecutionResult result = executor.executeInBatch(context, command);
     assertEquals(ModCommandExecutor.Result.INTERACTIVE, result);
+  }
+  
+  public void testCreateDirectories() throws IOException {
+    configureFromFileText("dummy.txt", "");
+    ModCommand command = ModCommand.psiUpdate(getFile(), (f, u) -> {
+      PsiDirectory d = u.getWritable(getFile().getContainingDirectory());
+      PsiDirectory dir1 = d.createSubdirectory("a");
+      PsiDirectory dir2 = dir1.createSubdirectory("b");
+      dir1.createSubdirectory("c");
+      PsiFile file = dir2.createFile("x.txt");
+      file.getFileDocument().insertString(0, "hello");
+    });
+    ModCompositeCommand compositeCommand = assertInstanceOf(command, ModCompositeCommand.class);
+    String actual = compositeCommand.commands().stream().map(cmd -> {
+      ModCreateFile createFile = assertInstanceOf(cmd, ModCreateFile.class);
+      return createFile.file().getPath() + " | " + createFile.content() + "\n";
+    }).collect(Collectors.joining());
+    assertEquals("""
+                   /src/a | Directory[]
+                   /src/a/b | Directory[]
+                   /src/a/b/x.txt | Text[text=hello]
+                   /src/a/c | Directory[]
+                   """, actual);
+    ModCommandExecutor.executeInteractively(ActionContext.from(null, getFile()), "", null, () -> command);
+    VirtualFile target = getVFile().findFileByRelativePath("../a/b/x.txt");
+    assertNotNull(target);
+    PsiFile targetFile = PsiManager.getInstance(getProject()).findFile(target);
+    assertEquals("hello", targetFile.getFileDocument().getCharsSequence().toString());
   }
 }
