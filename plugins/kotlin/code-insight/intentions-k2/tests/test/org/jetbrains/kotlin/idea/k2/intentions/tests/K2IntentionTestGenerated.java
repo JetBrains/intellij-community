@@ -13332,6 +13332,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/firstNestedInterpolationIsNotString.kt");
         }
 
+        @TestMetadata("firstToStringWithParentheses.kt")
+        public void testFirstToStringWithParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/firstToStringWithParentheses.kt");
+        }
+
         @TestMetadata("hiddenNestedDollarSequence.kt")
         public void testHiddenNestedDollarSequence() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToConcatenatedStringMultiDollarPrefix/hiddenNestedDollarSequence.kt");
