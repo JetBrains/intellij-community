@@ -25,6 +25,18 @@ interface TaskExecutionSpecBuilder {
   val settings: ExternalSystemTaskExecutionSettings
 
   @CheckReturnValue
+  fun withProject(project: Project): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
+  fun withSystemId(systemId: ProjectSystemId): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
+  fun withSettings(settings: ExternalSystemTaskExecutionSettings): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
+  fun withExecutorId(executorId: String): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
   fun withProgressExecutionMode(progressExecutionMode: ProgressExecutionMode): TaskExecutionSpecBuilder
 
   @CheckReturnValue
@@ -46,5 +58,4 @@ interface TaskExecutionSpecBuilder {
   fun withActivateToolWindowOnFailure(activateToolWindowOnFailure: Boolean): TaskExecutionSpecBuilder
 
   fun build(): TaskExecutionSpec
-
 }

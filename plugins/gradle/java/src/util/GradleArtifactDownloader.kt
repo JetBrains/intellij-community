@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -102,7 +101,10 @@ object GradleArtifactDownloader {
         resultWrapper.completeExceptionally(IllegalStateException("Unable to download artifact."))
       }
     }
-    val spec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)
+    val spec = TaskExecutionSpec.create()
+      .withProject(project)
+      .withSystemId(GradleConstants.SYSTEM_ID)
+      .withSettings(settings)
       .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
       .withListener(listener)
       .withUserData(userData)

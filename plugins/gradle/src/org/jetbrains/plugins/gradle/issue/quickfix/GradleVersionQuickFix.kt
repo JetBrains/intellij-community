@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.NotificationGroupManager
@@ -158,7 +157,10 @@ class GradleVersionQuickFix(
     settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
 
     val future = CompletableFuture<Boolean>()
-    val task = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)
+    val task = TaskExecutionSpec.create()
+      .withProject(project)
+      .withSystemId(GradleConstants.SYSTEM_ID)
+      .withSettings(settings)
       .withActivateToolWindowBeforeRun(false)
       .withProgressExecutionMode(NO_PROGRESS_ASYNC)
       .withUserData(userData)

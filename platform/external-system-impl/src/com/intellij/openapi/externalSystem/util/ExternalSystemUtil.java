@@ -875,7 +875,11 @@ public final class ExternalSystemUtil {
                              final @NotNull ProgressExecutionMode progressExecutionMode,
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
-    TaskExecutionSpec spec = TaskExecutionSpec.create(project, externalSystemId, executorId, taskSettings)
+    TaskExecutionSpec spec = TaskExecutionSpec.create()
+      .withProject(project)
+      .withSystemId(externalSystemId)
+      .withExecutorId(executorId)
+      .withSettings(taskSettings)
       .withProgressExecutionMode(progressExecutionMode)
       .withCallback(callback)
       .withUserData(userData)

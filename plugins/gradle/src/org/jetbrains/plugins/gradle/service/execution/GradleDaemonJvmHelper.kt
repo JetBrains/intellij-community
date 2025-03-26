@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -109,7 +108,10 @@ object GradleDaemonJvmHelper {
 
     val taskResult = CompletableFuture<Boolean>()
 
-    val executionSpec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, taskSettings)
+    val executionSpec = TaskExecutionSpec.create()
+      .withProject(project)
+      .withSystemId(GradleConstants.SYSTEM_ID)
+      .withSettings(taskSettings)
       .withUserData(taskUserData)
       .withCallback(taskResult)
       .build()

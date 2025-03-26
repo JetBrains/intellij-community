@@ -2378,11 +2378,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
 
     CompletableFuture<Boolean> taskResult = new CompletableFuture<>();
-    TaskExecutionSpec spec = TaskExecutionSpec.create(
-        myProject,
-        GradleConstants.SYSTEM_ID,
-        DefaultRunExecutor.EXECUTOR_ID,
-        settings)
+    TaskExecutionSpec spec = TaskExecutionSpec.create()
+      .withProject(myProject)
+      .withSystemId(GradleConstants.SYSTEM_ID)
+      .withSettings(settings)
       .withCallback(taskResult)
       .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
       .build();
