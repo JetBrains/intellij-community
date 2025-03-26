@@ -187,6 +187,12 @@ open class InlineBanner private constructor(
     return this
   }
 
+  @ApiStatus.Internal
+  fun removeAllActions() {
+    myActionPanel.removeAll()
+    myActionPanel.add(DropDownAction())
+  }
+
   fun showCloseButton(visible: Boolean): InlineBanner {
     myCloseButton.isVisible = visible
     updateButtonsSize()
