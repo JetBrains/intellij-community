@@ -118,9 +118,14 @@ public interface StructureViewModel extends TreeModel, Disposable {
   }
 
   @ApiStatus.Experimental
+  @FunctionalInterface
   interface ClickHandler {
 
-    CompletableFuture<Boolean> handle(StructureViewTreeElement element, int fragmentIndex);
+    /**
+     * @return - true if the event was handled
+     */
+    @NotNull
+    CompletableFuture<Boolean> handleClick(@NotNull StructureViewClickEvent event);
 
   }
 

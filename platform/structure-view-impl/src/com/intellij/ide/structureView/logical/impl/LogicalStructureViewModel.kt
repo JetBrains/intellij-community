@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.structureView.StructureViewClickEvent
 import com.intellij.ide.structureView.StructureViewEventsCollector
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
@@ -14,7 +15,6 @@ import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvide
 import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.ide.structureView.logical.model.LogicalContainerPresentationProvider
 import com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
-import com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
 import com.intellij.ide.structureView.logical.model.LogicalContainer
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.structureView.logical.model.ProvidedLogicalContainer
@@ -54,13 +54,13 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
 
   override fun isSmartExpand(): Boolean = false
 
-  override fun handle(element: StructureViewTreeElement, fragmentIndex: Int): CompletableFuture<Boolean> {
-    val model = getModel(element)
+  override fun handleClick(event: StructureViewClickEvent): CompletableFuture<Boolean> {
+    val model = getModel(event.element)
     val presentation = model?.let { LogicalModelPresentationProvider.getForObject(it) }
     if (model == null || presentation == null) {
       return CompletableFuture.completedFuture(false)
     }
-    return presentation.handleClick(model, fragmentIndex).thenApply { handled ->
+    return presentation.handleClick(model, event.fragmentIndex).thenApply { handled ->
       if (handled) {
         StructureViewEventsCollector.logCustomClickHandled(model::class.java)
       }

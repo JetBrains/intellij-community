@@ -1002,7 +1002,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
       if (myTreeModel instanceof StructureViewModel.ActionHandler || myTreeModel instanceof StructureViewModel.ClickHandler) {
         processCustomEventHandler(myTreeModel, event)
-          .completeOnTimeout(false, 1, TimeUnit.SECONDS)
           .whenComplete((Boolean handled, Throwable t) -> {
             if (handled != null && handled)
               event.consume();
@@ -1071,7 +1070,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       else if (handler instanceof StructureViewModel.ActionHandler actionHandler)
         return CompletableFuture.completedFuture(actionHandler.handleClick(treeElement, fragmentIndex));
       else if (handler instanceof StructureViewModel.ClickHandler actionHandler)
-        return actionHandler.handle(treeElement, fragmentIndex);
+        return actionHandler.handleClick(new StructureViewClickEvent(treeElement, fragmentIndex));
       else
         return CompletableFuture.completedFuture(false);
     }
