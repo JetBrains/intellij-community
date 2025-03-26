@@ -34,7 +34,7 @@ class QueryBuilder {
    *
    * Example: `byType("com.intellij.ui.components.JBList")`
    */
-  fun byType(type: String) = or(byJavaClass(type), contains(byAttribute("classhierarchy", "$type ")), contains(byAttribute("classhierarchy", " $type ")))
+  fun byType(@Language("jvm-class-name") type: String) = or(byJavaClass(type), contains(byAttribute("classhierarchy", "$type ")), contains(byAttribute("classhierarchy", " $type ")))
 
   /**
    * Builds a query to search for components either by their full class name or by parent type.
