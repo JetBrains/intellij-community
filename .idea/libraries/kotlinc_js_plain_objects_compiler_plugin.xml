@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.js-plain-objects-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:js-plain-objects-compiler-plugin-for-ide:2.2.0-dev-12359">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.0-dev-12359/js-plain-objects-compiler-plugin-for-ide-2.2.0-dev-12359.jar">
-          <sha256sum>deb94b8727c0a64b36065fc6e3ef68c532ac8c222025c3f9cd4089da00db20e3</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.js-plain-objects-compiler-plugin">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.0-dev-12359/js-plain-objects-compiler-plugin-for-ide-2.2.0-dev-12359.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.2.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.0-dev-12359/js-plain-objects-compiler-plugin-for-ide-2.2.0-dev-12359-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.2.255-dev-255/js-plain-objects-compiler-plugin-for-ide-2.2.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
