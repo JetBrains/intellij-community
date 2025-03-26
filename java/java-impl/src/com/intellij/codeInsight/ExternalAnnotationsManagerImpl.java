@@ -44,7 +44,6 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -79,9 +78,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -196,12 +194,14 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     ExternalAnnotation annotation = new ExternalAnnotation(listOwner, annotationFQName, value);
     OrderEntry entry = ContainerUtil.find(entries, e -> !(e instanceof ModuleOrderEntry));
     if (entry == null) return ModCommand.nop();
-    VirtualFile[] roots = filterByReadOnliness(AnnotationOrderRootType.getFiles(entry));
+    List<AnnotateForRootCommand> commands = StreamEx.of(AnnotationOrderRootType.getFiles(entry))
+      .filter(VirtualFile::isInLocalFileSystem)
+      .distinct()
+      .map(root -> new AnnotateForRootCommand(this, root, annotation))
+      .toList();
 
-    if (roots.length > 0) {
-      return ModCommand.chooseAction(
-        JavaBundle.message("external.annotations.roots"),
-        ContainerUtil.map(roots, root -> new AnnotateForRootCommand(this, root, annotation)));
+    if (!commands.isEmpty()) {
+      return ModCommand.chooseAction(JavaBundle.message("external.annotations.roots"), commands);
     }
     return setupRootAndAnnotateExternally(containingFile, annotation, context);
   }
@@ -226,7 +226,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
         return;
       }
       XmlFile file = updater.getWritable(createAnnotationsXml(writableRoot, packageName));
-      annotateExternally(file, Collections.singletonList(annotation));
+      annotateExternally(file, annotation);
     });
     return command;
   }
@@ -235,29 +235,14 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     dropCache();
   }
 
-  private void annotateExternally(@NotNull XmlFile annotationsFile, @NotNull List<ExternalAnnotation> annotations) {
-    Map<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
-      .mapToEntry(annotation -> {
-        String externalName = getExternalName(annotation.owner());
-        return externalName == null ? null : StringUtil.escapeXmlEntities(externalName);
-      }, Function.identity())
-      .distinct()
-      .grouping(() -> new TreeMap<>(Comparator.nullsFirst(Comparator.naturalOrder())));
+  private void annotateExternally(@NotNull XmlFile annotationsFile, @NotNull ExternalAnnotation annotation) {
+    String externalName = getExternalName(annotation.owner());
+    if (externalName == null) return;
+    externalName = StringUtil.escapeXmlEntities(externalName);
     XmlTag rootTag = extractRootTag(annotationsFile);
-
     if (rootTag == null) return;
 
-    XmlTag startTag = null;
-
-    for (Map.Entry<String, List<ExternalAnnotation>> entry : ownerToAnnotations.entrySet()) {
-      @NonNls String ownerName = entry.getKey();
-      List<ExternalAnnotation> annotationList = entry.getValue();
-      for (ExternalAnnotation annotation : annotationList) {
-        if (ownerName == null) continue;
-        startTag = addAnnotation(rootTag, ownerName, annotation, startTag);
-      }
-    }
-
+    addAnnotation(rootTag, externalName, annotation);
     commitChanges(annotationsFile);
   }
 
@@ -287,14 +272,9 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
    * @param rootTag    root tag to insert subtag into
    * @param ownerName  annotations owner name
    * @param annotation external annotation
-   * @param startTag   start tag
-   * @return added sub tag
    */
-  private @NotNull XmlTag addAnnotation(@NotNull XmlTag rootTag, @NotNull String ownerName,
-                                        @NotNull ExternalAnnotation annotation, @Nullable XmlTag startTag) {
-    if (startTag == null) {
-      startTag = PsiTreeUtil.findChildOfType(rootTag, XmlTag.class);
-    }
+  private void addAnnotation(@NotNull XmlTag rootTag, @NotNull String ownerName, @NotNull ExternalAnnotation annotation) {
+    XmlTag startTag = PsiTreeUtil.findChildOfType(rootTag, XmlTag.class);
 
     XmlTag prevItem = null;
     XmlTag curItem = startTag;
@@ -302,14 +282,14 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     while (curItem != null) {
       XmlTag addedItem = addAnnotation(rootTag, ownerName, annotation, curItem, prevItem);
       if (addedItem != null) {
-        return addedItem;
+        return;
       }
 
       prevItem = curItem;
       curItem = PsiTreeUtil.getNextSiblingOfType(curItem, XmlTag.class);
     }
 
-    return addItemTag(rootTag, prevItem, ownerName, annotation);
+    addItemTag(rootTag, prevItem, ownerName, annotation);
   }
 
   /**
@@ -459,11 +439,6 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     public @NotNull String getFamilyName() {
       return root.getPresentableUrl();
     }
-  }
-
-  private static VirtualFile @NotNull [] filterByReadOnliness(VirtualFile @NotNull [] files) {
-    List<VirtualFile> result = ContainerUtil.filter(files, VirtualFile::isInLocalFileSystem);
-    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
