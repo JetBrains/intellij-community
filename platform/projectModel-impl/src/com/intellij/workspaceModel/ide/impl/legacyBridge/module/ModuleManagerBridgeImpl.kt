@@ -472,7 +472,7 @@ abstract class ModuleManagerBridgeImpl(
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
     isNew: Boolean,
-    precomputedExtensionModel: PrecomputedExtensionModel?,
+    precomputedExtensionModel: PrecomputedExtensionModel,
     plugins: List<IdeaPluginDescriptorImpl>,
   ): ModuleBridge {
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
@@ -506,7 +506,7 @@ abstract class ModuleManagerBridgeImpl(
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
     isNew: Boolean,
-    precomputedExtensionModel: PrecomputedExtensionModel?,
+    precomputedExtensionModel: PrecomputedExtensionModel,
     plugins: List<IdeaPluginDescriptorImpl>,
   ): ModuleBridge = createModuleInstanceTimeMs.addMeasuredTime {
     val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,

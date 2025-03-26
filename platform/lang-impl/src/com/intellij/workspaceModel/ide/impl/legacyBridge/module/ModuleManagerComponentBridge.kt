@@ -31,6 +31,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
@@ -102,6 +103,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     // Theoretically, the module initialization can be parallelized using fork-join approach, see IJPL-149482
     //   This approach is used in ModuleManagerBridgeImpl.loadModules
     // However, simple use of Dispatchers.Default while being inside write action, may cause threading issues, see IDEA-355596
+    val precomputedModel = precomputeModuleLevelExtensionModel()
     for (change in moduleChanges) {
       if (change !is EntityChange.Added<ModuleEntity>) {
         continue
@@ -117,7 +119,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
         versionedStorage = entityStore,
         diff = builder,
         isNew = true,
-        precomputedExtensionModel = null,
+        precomputedExtensionModel = precomputedModel,
         plugins = plugins,
       )
       LOG.debug { "Creating components ${change.newEntity.name}" }
