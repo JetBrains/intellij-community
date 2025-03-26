@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -47,8 +46,7 @@ public final class EditRangeIntention implements ModCommandAction {
     Project project = context.project();
     PsiAnnotation mockAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
       "@"+JETBRAINS_RANGE+"(from=___, to=___)", null);
-    ModCommandAwareExternalAnnotationsManager manager =
-      (ModCommandAwareExternalAnnotationsManager)ExternalAnnotationsManager.getInstance(project);
+    ModCommandAwareExternalAnnotationsManager manager = ModCommandAwareExternalAnnotationsManager.getInstance(project);
     ModCommand command = manager.annotateExternallyModCommand(target, JETBRAINS_RANGE, mockAnno.getParameterList().getAttributes());
     return IntentionPreviewUtils.getModCommandPreview(command, context);
   }
@@ -130,8 +128,7 @@ public final class EditRangeIntention implements ModCommandAction {
 
   private static @NotNull ModCommand updateRange(PsiModifierListOwner owner, LongRangeSet fromType, String min, String max) {
     Project project = owner.getProject();
-    ModCommandAwareExternalAnnotationsManager manager =
-      (ModCommandAwareExternalAnnotationsManager)ExternalAnnotationsManager.getInstance(project);
+    ModCommandAwareExternalAnnotationsManager manager = ModCommandAwareExternalAnnotationsManager.getInstance(project);
     min = min.trim();
     max = max.trim();
     Long minValue = parseValue(min, fromType, true);
