@@ -94,9 +94,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope, @Nullable Project project);
 
   @ApiStatus.Internal
-  public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
-
-  @ApiStatus.Internal
   public abstract @NotNull <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
 
   public void resetHints() { }

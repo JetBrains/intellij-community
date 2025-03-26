@@ -69,6 +69,9 @@ public abstract class FileBasedIndex {
     throw new UnsupportedOperationException();
   }
 
+  @ApiStatus.Internal
+  public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
+
   @Internal
   public void onProjectClosing(@NotNull Project project) {
     throw new UnsupportedOperationException();
