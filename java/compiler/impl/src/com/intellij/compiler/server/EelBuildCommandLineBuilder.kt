@@ -48,7 +48,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   override fun addClasspathParameter(classpathInHost: List<String>, classpathInTarget: List<String>) {
     val mappedClasspath = classpathInHost.mapNotNull { hostLocation ->
       runCatching {
-        copyProjectAgnosticPathToTargetIfRequired(Path.of(hostLocation)).asEelPath()
+        copyProjectSpecificPathToTargetIfRequired(project, Path.of(hostLocation)).asEelPath()
       }.onFailure { error -> logger.warn("Can't map classpath parameter: $hostLocation", error) }.getOrNull()
     }.joinToString(eel.platform.pathSeparator)
     require(classpathInTarget.isEmpty()) {
