@@ -126,6 +126,10 @@
                     interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint name="vcs.pathsToRefreshProvider"
+                    interface="com.intellij.vcs.commit.VcsPathsToRefreshProvider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
 
     <extensionPoint name="vcsPopupProvider"
                     interface="com.intellij.openapi.vcs.actions.VcsQuickListContentProvider"
