@@ -29,13 +29,13 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCaller
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_OVERLOADS_FQ_NAME
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isUnit
@@ -404,7 +404,9 @@ open class KotlinChangeInfo(
         }
 
         fun matchOriginalAndCurrentMethods(currentPsiMethods: List<PsiMethod>): Map<PsiMethod, PsiMethod> {
-            if (!(isPrimaryMethodUpdated && originalBaseFunctionDescriptor is FunctionDescriptor && originalBaseFunctionDescriptor.findJvmOverloadsAnnotation() != null)) {
+            if (!(isPrimaryMethodUpdated && originalBaseFunctionDescriptor is FunctionDescriptor &&
+                        originalBaseFunctionDescriptor.annotations.hasAnnotation(JVM_OVERLOADS_FQ_NAME))
+            ) {
                 return (originalPsiMethods.zip(currentPsiMethods)).toMap()
             }
 
