@@ -1087,7 +1087,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator(positive);
     condition.accept(evaluator);
     for (PyTypeAssertionEvaluator.Assertion def : evaluator.getDefinitions()) {
-      final PyReferenceExpression e = def.getElement();
+      final PyQualifiedExpression e = def.getElement();
       final QualifiedName qname = e.asQualifiedName();
       final String name = qname != null ? qname.toString() : e.getName();
       myBuilder.addNode(ReadWriteInstruction.assertType(myBuilder, e, name, def.getTypeEvalFunction()));

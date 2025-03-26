@@ -36,6 +36,16 @@ match m:
         """);
   }
 
+  public void testMatchLiteralPatternNarrowsWalrus() {
+    doTestByText("""
+from typing import assert_type, Literal
+
+match m := input():
+    case "one" | "two":
+        assert_type(m, Literal["one", "two"])
+        """);
+  }
+
   public void testMatchValuePatternNarrows() {
     doTestByText("""
 from typing import assert_type

@@ -1959,6 +1959,22 @@ public class PyTypingTest extends PyTestCase {
              if issubclass(a, str | dict | int):
                  expr = a""");
   }
+  
+  // PY-79861
+  public void testWalrusIsSubclass() {
+    doTest("Type[str | dict | int]",
+           """
+             if issubclass(a := list, str | dict | int):
+                 expr = a""");
+  }
+
+  // PY-79861
+  public void testWalrusCallable() {
+    doTest("Type[Callable]",
+           """
+             if callable(a := 42):
+                 expr = a""");
+  }
 
   // PY-44974
   public void testBitwiseOrUnionIsInstanceIntNone() {
@@ -1975,6 +1991,14 @@ public class PyTypingTest extends PyTestCase {
            """
              a = [42]
              if isinstance(a, None | int):
+                 expr = a""");
+  }
+
+  // PY-79861
+  public void testWalrusIsInstance() {
+    doTest("int",
+           """
+             if isinstance((a := [42]), int):
                  expr = a""");
   }
 
