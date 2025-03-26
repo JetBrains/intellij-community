@@ -30,7 +30,7 @@ import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
 import com.intellij.serviceContainer.getComponentManagerImpl
-import com.intellij.util.getErrorsAsString
+import com.intellij.util.lang.CompoundRuntimeException
 import io.github.classgraph.*
 import java.awt.Component
 import java.lang.reflect.Constructor
@@ -40,7 +40,7 @@ private class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = createAllServicesAndExtensions2()
     if (errors.isNotEmpty()) {
-      logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
+      logger<ComponentManagerImpl>().error(CompoundRuntimeException(errors))
     }
     // some errors are not thrown but logged
     val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."

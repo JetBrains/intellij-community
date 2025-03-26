@@ -56,7 +56,7 @@ class PluginModelValidatorTest {
       it.replace("<plugin id=\"dependency\"/>", "<module name=\"intellij.dependent\"/>")
     }
 
-    val errors = PluginModelValidator(modules).errorsAsString
+    val errors = PluginModelValidator(modules).errorsAsString()
     assertWithMatchSnapshot(errors)
   }
 
@@ -66,7 +66,7 @@ class PluginModelValidatorTest {
       it.replace("<plugin id=\"dependency\"/>", "<plugin id=\"incorrectId\"/>")
     }
 
-    val errors = PluginModelValidator(modules).errorsAsString
+    val errors = PluginModelValidator(modules).errorsAsString()
     assertWithMatchSnapshot(errors)
   }
 
@@ -102,7 +102,7 @@ class PluginModelValidatorTest {
     }
 
     val charSequence = PluginModelValidator(modules)
-    assertWithMatchSnapshot(charSequence.errorsAsString)
+    assertWithMatchSnapshot(charSequence.errorsAsString())
   }
 
   private fun producePluginWithContentModuleInTheSameSourceModule(
@@ -230,3 +230,15 @@ private data class PluginModel(
   override val name: String,
   override val sourceRoots: Sequence<Path>,
 ) : PluginModelValidator.Module
+
+private fun PluginModelValidator.errorsAsString(): CharSequence {
+  if (errors.isEmpty()) return ""
+  val sb = StringBuilder()
+  sb.append("${errors.size} errors:\n")
+  errors.zip(errors.indices).joinTo(sb, "\n") { (error, idx) ->
+    "[${idx + 1}]: ${"-".repeat(30)}\n" +
+    error.message!!.trim()
+  }
+  sb.append("\n${"-".repeat(35)}\n")
+  return sb
+}

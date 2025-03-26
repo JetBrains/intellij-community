@@ -8,7 +8,6 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getHomePath
 import com.intellij.testFramework.junit5.NamedFailure
-import com.intellij.util.getErrorsAsString
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.xml.dom.XmlElement
@@ -69,9 +68,6 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
         NamedFailure(name, errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors))
       } 
     }
-
-  val errorsAsString: CharSequence
-    get() = if (_errors.isEmpty()) "" else getErrorsAsString(_errors, includeStackTrace = false)
 
   init {
     // 1. collect plugin and module file info set
