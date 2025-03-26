@@ -41,21 +41,19 @@ internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
     }
 
     rootPanel.launchOnShow("PyV3UI init") {
-      coroutineScope {
-        mainPanelPlaceholder.component = panel {
-          val checkBoxRow = row {
-            checkBox(PyBundle.message("new.project.git")).bindSelected(baseSettings::createGitRepository)
-          }
-          specificUiAndSettings?.first?.configureUpperPanel(specificUiAndSettings.second, checkBoxRow, this)
-          sdkPanel.buildPanel(this, this@coroutineScope)
-          specificUiAndSettings?.first?.advancedSettings?.let {
-            collapsibleGroup(PyBundle.message("black.advanced.settings.panel.title")) {
-              it(this, specificUiAndSettings.second, projectNameProvider)
-            }
-          }
-        }.apply {
-          sdkPanel.onShown()
+      mainPanelPlaceholder.component = panel {
+        val checkBoxRow = row {
+          checkBox(PyBundle.message("new.project.git")).bindSelected(baseSettings::createGitRepository)
         }
+        specificUiAndSettings?.first?.configureUpperPanel(specificUiAndSettings.second, checkBoxRow, this)
+        sdkPanel.buildPanel(this, this@launchOnShow)
+        specificUiAndSettings?.first?.advancedSettings?.let {
+          collapsibleGroup(PyBundle.message("black.advanced.settings.panel.title")) {
+            it(this, specificUiAndSettings.second, projectNameProvider)
+          }
+        }
+      }.apply {
+        sdkPanel.onShown()
       }
     }
 
