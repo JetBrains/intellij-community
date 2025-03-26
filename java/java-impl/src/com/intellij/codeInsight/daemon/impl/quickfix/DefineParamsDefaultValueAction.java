@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.ui.NewUiValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,7 +75,7 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
       return null;
     }
     return Presentation.of(message)
-      .withIcon(AllIcons.Actions.RefactoringBulb)
+      .withIcon(NewUiValue.isEnabled() ? null : AllIcons.Actions.RefactoringBulb)
       .withPriority(PriorityAction.Priority.LOW);
   }
 
