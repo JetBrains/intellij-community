@@ -32,7 +32,6 @@ exceptions_context_managers.py
 generics_base_class.py
 generics_defaults.py
 generics_defaults_referential.py
-generics_defaults_specialization.py
 generics_paramspec_basic.py
 generics_paramspec_components.py
 generics_paramspec_semantics.py

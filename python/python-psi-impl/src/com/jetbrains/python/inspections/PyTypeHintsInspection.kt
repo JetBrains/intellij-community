@@ -1006,7 +1006,16 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkGenericClassParameterization(node: PySubscriptionExpression, declaration: PyClass) {
-      val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(declaration, myTypeEvalContext) ?: return
+      val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(declaration, myTypeEvalContext)
+      if (genericDefinitionType == null) {
+        if (PyTypingTypeProvider.isGeneric(declaration, myTypeEvalContext) &&
+            declaration.findMethodByName(PyNames.CLASS_GETITEM, false, myTypeEvalContext) == null) {
+          registerProblem(node.indexExpression,
+                          PyPsiBundle.message("INSP.type.hints.type.arguments.class.is.already.parameterized",
+                                              declaration.name))
+        }
+        return
+      }
       val typeArguments = checkGenericTypeArguments(node)
 
       if (typeArguments == null || genericDefinitionType.pyClass.qualifiedName == PyNames.TUPLE) return

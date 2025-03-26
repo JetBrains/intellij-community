@@ -2511,6 +2511,30 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testClassIsAlreadyParameterized() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+                   
+                   DefaultStrT = TypeVar("DefaultStrT", default=str)
+                   T = TypeVar("T")
+                   T1 = TypeVar("T1")
+                   
+                   class Base(Generic[T, T1, DefaultStrT]): ...
+                   class Foo(Base[int, float]): ...
+                   foo = Foo[<warning descr="Class 'Foo' is already parameterized">int</warning>]()
+                   
+                   class Bar(Generic[T]): ...
+                   class Baz(Bar[int]): ...
+                   baz = Baz[<warning descr="Class 'Baz' is already parameterized">int</warning>]()
+                   
+                   class NoErr(Bar[int]):
+                        def __class_getitem__(cls, item) -> str:
+                            return "str"
+                   
+                   n = NoErr[int]()
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
