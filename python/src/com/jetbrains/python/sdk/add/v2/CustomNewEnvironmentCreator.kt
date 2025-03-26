@@ -28,7 +28,6 @@ import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
-import javax.swing.JComponent
 
 @Internal
 internal abstract class CustomNewEnvironmentCreator(
@@ -67,7 +66,7 @@ internal abstract class CustomNewEnvironmentCreator(
     }
   }
 
-  override fun onShown(component: JComponent) {
+  override fun onShown() {
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 

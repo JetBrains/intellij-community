@@ -40,7 +40,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import javax.swing.JComponent
 
 internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel, private val errorSink: ErrorSink) : PythonExistingEnvironmentConfigurator(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
@@ -82,7 +81,7 @@ internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel
     }
   }
 
-  override fun onShown(component: JComponent) {
+  override fun onShown() {
     model.scope.launch(start = CoroutineStart.UNDISPATCHED) {
       model.condaEnvironments.collectLatest { environments ->
         envComboBox.removeAllItems()

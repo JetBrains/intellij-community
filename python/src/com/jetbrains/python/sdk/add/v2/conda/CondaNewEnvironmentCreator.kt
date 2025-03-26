@@ -29,7 +29,6 @@ import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
 import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
 import com.jetbrains.python.sdk.add.v2.executableSelector
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
-import javax.swing.JComponent
 
 internal class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
 
@@ -60,7 +59,7 @@ internal class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpret
     }
   }
 
-  override fun onShown(component: JComponent) = Unit
+  override fun onShown() = Unit
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
     return model.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.state.newCondaEnvName.get())).asPythonResult()

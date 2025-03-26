@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.Module
@@ -31,16 +30,11 @@ import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
-import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Row
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
-import javax.swing.JComponent
-
-@Service(Service.Level.APP)
-internal class PythonAddSdkService(val coroutineScope: CoroutineScope)
 
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
@@ -51,7 +45,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
     get() = model.propertyGraph
 
   abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink)
-  open fun onShown(component: JComponent) {}
+  open fun onShown() {}
 
   /**
    * Returns created SDK ready to use
