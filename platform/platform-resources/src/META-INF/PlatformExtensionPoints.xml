@@ -623,6 +623,8 @@
 
     <extensionPoint name="logLevelConfigurationListener" interface="com.intellij.diagnostic.logs.LogLevelConfigurationManager$Listener" dynamic="true"/>
 
+    <extensionPoint name="pluginInstallationCustomization" interface="com.intellij.ide.plugins.newui.PluginInstallationCustomization" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.ui.content.impl.toolWindowContentPostprocessor"
                     interface="com.intellij.ui.content.impl.ToolWindowContentPostProcessor"
                     dynamic="true"/>
