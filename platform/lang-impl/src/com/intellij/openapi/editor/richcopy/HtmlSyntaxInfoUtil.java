@@ -206,7 +206,8 @@ public final class HtmlSyntaxInfoUtil {
 
       List<QuickDocSyntaxHighlightingHandler.QuickDocHighlightInfo> semanticHighlighting =
         handler != null ? handler.performSemanticHighlighting(fakePsiFile) : Collections.emptyList();
-      SyntaxInfoBuilder.RangeIterator rangeIterator = semanticHighlighting.isEmpty() ? null : new HighlightInfoIterator(semanticHighlighting, scheme);
+      SyntaxInfoBuilder.RangeIterator rangeIterator =
+        semanticHighlighting.isEmpty() ? null : new HighlightInfoIterator(semanticHighlighting, scheme);
       if (additionalIterator != null && rangeIterator != null) {
         rangeIterator = new SyntaxInfoBuilder.CompositeRangeIterator(scheme, rangeIterator, additionalIterator);
       }
@@ -437,22 +438,22 @@ public final class HtmlSyntaxInfoUtil {
     }
 
     @Override
-    protected void generateOpenBodyHtmlTags() {
+    protected void appendOpenBodyHtmlTags() {
       if (myProperties.generateHtmlTags) {
-        super.generateOpenBodyHtmlTags();
+        super.appendOpenBodyHtmlTags();
       }
     }
 
     @Override
-    protected void generateFontSize() {
+    protected void appendFontSizeRule() {
       if (!myProperties.defaultFontSize) {
-        super.generateFontSize();
+        super.appendFontSizeRule();
       }
     }
 
     @Override
     protected void appendCloseTags() {
-      if (myProperties.generateMainTags) {
+      if (myProperties.generateWrappedDivTags) {
         super.appendCloseTags();
       }
     }
@@ -460,7 +461,7 @@ public final class HtmlSyntaxInfoUtil {
 
     @Override
     protected void appendStartTags() {
-      if (myProperties.generateMainTags) {
+      if (myProperties.generateWrappedDivTags) {
         super.appendStartTags();
       }
     }
@@ -513,15 +514,18 @@ public final class HtmlSyntaxInfoUtil {
 
     @Override
     public boolean atEnd() {
-      return !myIterator.hasNext(); }
+      return !myIterator.hasNext();
+    }
 
     @Override
     public int getRangeStart() {
-      return myCurrentInfo.getStartOffset(); }
+      return myCurrentInfo.getStartOffset();
+    }
 
     @Override
     public int getRangeEnd() {
-      return myCurrentInfo.getEndOffset(); }
+      return myCurrentInfo.getEndOffset();
+    }
 
     @Override
     public TextAttributes getTextAttributes() {
@@ -539,51 +543,93 @@ public final class HtmlSyntaxInfoUtil {
    * This class provides a factory method {@link #createDefault()} to create default properties.
    */
 
-    @ApiStatus.Experimental
-    public static class HtmlGeneratorProperties {
-      private boolean generateBackground = false;
-      private boolean generateFontFamily = false;
-      private boolean generateMainTags = false;
-      private boolean generateHtmlTags = false;
-      private boolean defaultFontSize = false;
-      @Nullable
-      private TextHandler textHandler = null;
+  @ApiStatus.Experimental
+  public static class HtmlGeneratorProperties {
+    private boolean generateBackground = false;
+    private boolean generateFontFamily = false;
+    private boolean generateWrappedDivTags = false;
+    private boolean generateHtmlTags = false;
+    private boolean defaultFontSize = false;
+    @Nullable
+    private TextHandler textHandler = null;
 
-      private HtmlGeneratorProperties() {}
+    private HtmlGeneratorProperties() { }
 
-      public static HtmlGeneratorProperties createDefault() {
-        return new HtmlGeneratorProperties();
-      }
+    public static HtmlGeneratorProperties createDefault() {
+      return new HtmlGeneratorProperties();
+    }
 
-      public HtmlGeneratorProperties generateBackground(boolean generateBackground) {
-        this.generateBackground = generateBackground;
-        return this;
-      }
+    /**
+     * Enables the generation of background colors for all texts, which are different from default editor background color
+     * during the HTML generation process.
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with the background generation enabled
+     */
+    public HtmlGeneratorProperties generateBackground() {
+      this.generateBackground = true;
+      return this;
+    }
 
-      public HtmlGeneratorProperties generateFontFamily(boolean generateFontFamily) {
-        this.generateFontFamily = generateFontFamily;
-        return this;
-      }
+    /**
+     * Enables the generation of the current IDEA font family definitions during the HTML generation process.
+     * Usually, default browser fonts are used.
+     * If this text is used inside IDEA, it is supposed to use IDEA's font families as well
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with font family generation enabled
+     */
+    public HtmlGeneratorProperties generateFontFamily() {
+      this.generateFontFamily = true;
+      return this;
+    }
 
-      public HtmlGeneratorProperties generateMainTags(boolean generateMainTags) {
-        this.generateMainTags = generateMainTags;
-        return this;
-      }
+    /**
+     * Enables the generation of wrapped HTML tags, including enabling the wrapping of content
+     * into a standard set of tags such as div, pre during the HTML generation process.
+     * Should be used together with {@link HtmlGeneratorProperties#generateHtmlTags()}
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with the wrapped tags generation enabled
+     */
+    public HtmlGeneratorProperties generateWrappedTags() {
+      this.generateWrappedDivTags = true;
+      return this;
+    }
 
-      public HtmlGeneratorProperties generateHtmlTags(boolean generateHtmlTags) {
-        this.generateHtmlTags = generateHtmlTags;
-        return this;
-      }
+    /**
+     * Wrap text into the next tags: `html`, `head`, `body`.
+     * Part of {@link HtmlGeneratorProperties#generateWrappedTags()}
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with HTML tag generation enabled
+     */
+    public HtmlGeneratorProperties generateHtmlTags() {
+      this.generateHtmlTags = true;
+      return this;
+    }
 
-      public HtmlGeneratorProperties defaultFontSize(boolean defaultFontSize) {
-        this.defaultFontSize = defaultFontSize;
-        return this;
-      }
+    /**
+     * Enables the generation of font size definitions during the HTML generation process.
+     * Usually, the default browser font size is used.
+     * If this text is used inside IDEA, it is supposed to use IDEA's font size as well
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with font size generation enabled
+     */
+    public HtmlGeneratorProperties generateFontSize() {
+      this.defaultFontSize = true;
+      return this;
+    }
 
-      public HtmlGeneratorProperties textHandler(@Nullable TextHandler textHandler) {
-        this.textHandler = textHandler;
-        return this;
-      }
+    /**
+     * Sets the custom text handler to be used during HTML generation.
+     *
+     *
+     * @param textHandler the {@code TextHandler} implementation that defines how text will be processed and modified
+     *                    during the HTML generation process; must not be null
+     * @return the updated instance of {@code HtmlGeneratorProperties} with the specified text handler set
+     * @see TextHandler
+     */
+    public HtmlGeneratorProperties textHandler(@NotNull TextHandler textHandler) {
+      this.textHandler = textHandler;
+      return this;
+    }
 
     /**
      * Interface for handling text within a specified range and appending the result to a StringBuilder.
@@ -594,8 +640,8 @@ public final class HtmlSyntaxInfoUtil {
       /**
        * Handles the text within the specified range and appends the result to a StringBuilder.
        *
-       * @param startOffset the starting offset of the text to handle
-       * @param endOffset the ending offset of the text to handle
+       * @param startOffset  the starting offset of the text to handle
+       * @param endOffset    the ending offset of the text to handle
        * @param resultBuffer the StringBuilder to which the handled text will be appended
        * @param superHandler a Runnable representing the super handler to invoke and update resultBuffer from original handler
        */

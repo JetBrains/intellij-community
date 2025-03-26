@@ -616,11 +616,11 @@ f:com.intellij.ide.impl.StructureViewWrapperImpl
 - saturationFactor(F):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlCodeSnippetBuilder
 *c:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
 - s:createDefault():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
-- defaultFontSize(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
-- generateBackground(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
-- generateFontFamily(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
-- generateHtmlTags(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
-- generateMainTags(Z):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateBackground():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateFontFamily():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateFontSize():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateHtmlTags():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
+- generateWrappedTags():com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
 - textHandler(com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler):com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties
 *:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil$HtmlGeneratorProperties$TextHandler
 - a:handleText(I,I,java.lang.StringBuilder,java.lang.Runnable):V

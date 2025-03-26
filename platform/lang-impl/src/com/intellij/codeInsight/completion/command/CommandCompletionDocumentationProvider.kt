@@ -136,16 +136,18 @@ private class CommandCompletionDocumentationTarget(
       lineNumberIndexes.add(0, 0)
       val additionalHighlighting = additionalHighlighting(diffs[i].fragments, lineNumberIndexes)
       val textHandler = if (diffs[i].startLine != -1) createLineNumberTextHandler(lineNumberIndexes, diffs[i].startLine, maxLine) else null
+      var properties = HtmlSyntaxInfoUtil.HtmlGeneratorProperties.createDefault()
+        .generateWrappedTags()
+        .generateBackground()
+        .generateFontSize()
+        .generateFontFamily()
+      if (textHandler != null) {
+        properties = properties.textHandler(textHandler)
+      }
       HtmlSyntaxInfoUtil.HtmlCodeSnippetBuilder(builder, psiElement.project, psiElement.language)
         .additionalIterator(additionalHighlighting)
         .codeSnippet(codeSnippet)
-        .properties(HtmlSyntaxInfoUtil.HtmlGeneratorProperties.createDefault()
-                      .generateMainTags(true)
-                      .generateBackground(true)
-                      .defaultFontSize(true)
-                      .generateFontFamily(true)
-                      .generateHtmlTags(false)
-                      .textHandler(textHandler))
+        .properties(properties)
         .build()
       if (diffs.size > 1 && i < diffs.size - 1) {
         builder.append("<hr>")
