@@ -8,18 +8,12 @@ import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.impl.ClientLookupManager
 import com.intellij.codeInsight.lookup.impl.ClientLookupManagerBase
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorModificationUtil
-import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
@@ -70,25 +64,6 @@ internal class TerminalCommandCompletion(
     terminalInput: TerminalInput,
   ) {
     var time = time
-    StatisticsUpdate.Companion.applyLastCompletionStatisticsUpdate()
-
-    val app = ApplicationManager.getApplication()
-    if (!app.isUnitTestMode() && app.isWriteAccessAllowed()) {
-      throw AssertionError("Completion should not be invoked inside write action")
-    }
-
-    CompletionAssertions.checkEditorValid(editor)
-
-    val offset = editor.getCaretModel().offset
-    if (editor.getDocument().getRangeGuard(offset, offset) != null) {
-      editor.getDocument().fireReadOnlyModificationAttempt()
-      EditorModificationUtil.checkModificationAllowed(editor)
-      return
-    }
-
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-      return
-    }
 
     val phase = CompletionServiceImpl.Companion.completionPhase
     val repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor)
@@ -103,14 +78,8 @@ internal class TerminalCommandCompletion(
     }
     CompletionServiceImpl.Companion.assertPhase(CompletionPhase.NoCompletion.javaClass, CompletionPhase.CommittingDocuments::class.java)
 
-    if (invocationCount > 1) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION)
-    }
-
     val startingTime = System.currentTimeMillis()
     val initCmd = Runnable {
-      WriteAction.run<RuntimeException> { EditorUtil.fillVirtualSpaceUntilCaret(editor) }
-
       val psiFile = PsiFileFactory.getInstance(project).createFileFromText(
         "command_output",
         PlainTextLanguage.INSTANCE,
@@ -157,8 +126,6 @@ internal class TerminalCommandCompletion(
   }
 
   private fun obtainLookup(editor: Editor, project: Project, autopopup: Boolean, terminalInput: TerminalInput): LookupImpl {
-    CompletionAssertions.checkEditorValid(editor)
-
     val session = project.currentSession
     val lookup = TerminalLookup(session, editor, DefaultArranger(), terminalInput) as LookupImpl
 
