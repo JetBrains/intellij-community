@@ -2,9 +2,12 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -32,4 +35,16 @@ public record ModEditOptions<T extends OptionContainer>(
   public @NotNull ModCommand andThen(@NotNull ModCommand next) {
     return next.isEmpty() ? this : new ModEditOptions<>(title, containerSupplier, canUseDefaults, nextCommand.andThen(mc -> mc.andThen(next)));
   }
+
+  /**
+   * @param options map of options to apply (keys = bindID; values = the corresponding value)
+   * @return the command that should be executed in response to the applied options.
+   */
+  @TestOnly
+  public @NotNull ModCommand applyOptions(@NotNull Map<String, Object> options) {
+    T container = containerSupplier.get();
+    OptionController controller = container.getOptionController();
+    options.forEach(controller::setOption);
+    return nextCommand.apply(container);
+  } 
 }
