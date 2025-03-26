@@ -918,8 +918,8 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     fireWriteActionFinished(initResult.listener, clazz)
     myWriteActionsStack.pop()
     if (initResult.shouldRelease) {
-      computationState.releaseWritePermit()
       myWriteAcquired = null
+      computationState.releaseWritePermit()
     }
     myTopmostReadAction.set(initResult.currentReadState)
     if (initResult.shouldRelease) {

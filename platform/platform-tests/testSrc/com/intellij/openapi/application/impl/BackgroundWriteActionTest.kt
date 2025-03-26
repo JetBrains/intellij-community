@@ -16,6 +16,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -452,5 +453,21 @@ class BackgroundWriteActionTest {
       checkpoint(7)
     }
     checkpoint(8)
+  }
+
+  @RepeatedTest(100)
+  fun `write access allowed inside explicit WA`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    repeat(1000) {
+      launch {
+        edtWriteAction {
+          ApplicationManager.getApplication().assertWriteAccessAllowed()
+        }
+      }
+      launch {
+        backgroundWriteAction {
+          ApplicationManager.getApplication().assertWriteAccessAllowed()
+        }
+      }
+    }
   }
 }
