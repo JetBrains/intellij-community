@@ -1407,6 +1407,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
 
+            @TestMetadata("addClashingFunToParent")
+            public void testAddClashingFunToParent() throws Exception {
+                runTest("withJava/javaUsedInKotlin/addClashingFunToParent/");
+            }
+
             @TestMetadata("addNullableAnnotation")
             public void testAddNullableAnnotation() throws Exception {
                 runTest("withJava/javaUsedInKotlin/addNullableAnnotation/");
@@ -1561,6 +1566,19 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             @TestMetadata("removeGetter")
             public void testRemoveGetter() throws Exception {
                 runTest("withJava/javaUsedInKotlin/removeGetter/");
+            }
+
+            @TestMetadata("withJava/javaUsedInKotlin/addClashingFunToParent")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class AddClashingFunToParent extends AbstractIncrementalK2JvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInAddClashingFunToParent() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin/addClashingFunToParent"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
+                }
             }
 
             @TestMetadata("withJava/javaUsedInKotlin/addNullableAnnotation")
