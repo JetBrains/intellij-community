@@ -295,10 +295,15 @@ public final class JavaSdkImpl extends JavaSdk {
       addSources(jdkHome, sdkModificator);
       addDocs(jdkHome, sdkModificator, sdk);
       attachJdkAnnotations(sdkModificator);
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        sdkModificator.commitChanges();
+      }
+      else {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         ApplicationManager.getApplication().runWriteAction(() ->
                                                              sdkModificator.commitChanges());
       });
+      }
     };
     Application application = ApplicationManager.getApplication();
       if (application.isDispatchThread()) {
