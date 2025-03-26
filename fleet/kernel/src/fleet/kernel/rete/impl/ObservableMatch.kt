@@ -2,10 +2,10 @@
 package fleet.kernel.rete.impl
 
 import fleet.kernel.rete.*
+import fleet.multiplatform.shims.AtomicRef
 import fleet.util.causeOfType
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
-import kotlinx.coroutines.selects.select
 import kotlin.coroutines.coroutineContext
 
 internal class ObservableMatch<T>(
@@ -49,15 +49,28 @@ internal suspend fun <U> withObservableMatches(
                 else -> WithMatchResult.Failure(CancellationReason("match terminated by rete", inactiveMatch))
               }
             }
-            select {
-              for (m in matches) {
-                m.validity.onJoin {
-                  val reason = CancellationReason("match terminated by rete", m)
-                  def.cancel(UnsatisfiedMatchException(reason))
-                  WithMatchResult.Failure(reason)
-                }
+            val cancellation = AtomicRef<CancellationReason?>(null)
+            val handles = matches.map { m ->
+              m.validity.invokeOnCompletion {
+                val reason = CancellationReason("match terminated by rete", m)
+                cancellation.set(reason)
+                def.cancel(UnsatisfiedMatchException(reason))
               }
-              def.onAwait { res -> res }
+            }
+            try {
+              def.await()
+            }
+            catch (ex: UnsatisfiedMatchException) {
+              val ourReason = cancellation.get()
+              if (ourReason != null && ex.reason == ourReason) {
+                WithMatchResult.Failure(ourReason)
+              }
+              else {
+                throw ex
+              }
+            }
+            finally {
+              handles.forEach { it.dispose() }
             }
           }
         }
