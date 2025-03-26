@@ -34,7 +34,7 @@ public final class FileTypeIndexImpl
 
   @Override
   public @NotNull KeyDescriptor<FileType> getKeyDescriptor() {
-    return new FileTypeKeyDescriptor();
+    return new FileTypeKeyDescriptorImpl();
   }
 
   @Override
