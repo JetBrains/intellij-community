@@ -76,7 +76,7 @@ public fun <T> MutableTokensView<T>.shrinkAtOffset(offset: Int, length: Int) {
     val tokenEnd = tokenEnd(tokenIndex.tokenIndex)
     val tokenType = tokenType(tokenIndex.tokenIndex)
     val restartable = isRestartable(tokenIndex.tokenIndex)
-    
+
     val cut = min(tokenEnd - cutStart, remainingLength)
     val oldLen = tokenEnd - tokenStart
     replacements.add(
@@ -105,11 +105,11 @@ fun <T> bulkAdjust(
   emptyType: T,
 ) {
   var lexemeStoreIndex = 0
-  var opIndex = 0
+  val opIter = edit.ops.iterator()
+  var op = if (opIter.hasNext()) opIter.next() else null
   var oldCharOffset = 0L
   var relativeCharOffset = -1
-  while (lexemeStoreIndex < lexemeStores.size && opIndex < edit.ops.size) {
-    val op = edit.ops[opIndex]
+  while (lexemeStoreIndex < lexemeStores.size && op != null) {
     val lexemeTextRange = textRanges[lexemeStoreIndex]
     val (start, end) = lexemeTextRange
     val oldCharOffsetEnd = oldCharOffset + op.lenBefore
@@ -125,7 +125,7 @@ fun <T> bulkAdjust(
           if (relativeCharOffset != -1) {
             relativeCharOffset += op.len.toInt()
           }
-          opIndex++
+          op = if (opIter.hasNext()) opIter.next() else null
         }
       }
       is Op.Replace -> {
@@ -140,13 +140,13 @@ fun <T> bulkAdjust(
           IntersectionType.Inside -> {
             lexemeStores[lexemeStoreIndex] = lexemeStores[lexemeStoreIndex].adjust(relativeCharOffset, intersection.length.toInt(), op.insert.length, emptyType)
             relativeCharOffset += op.insert.length
-            opIndex++
             oldCharOffset += op.delete.length
+            op = if (opIter.hasNext()) opIter.next() else null
           }
           IntersectionType.Before -> {
             lexemeStores[lexemeStoreIndex] = lexemeStores[lexemeStoreIndex].adjust(relativeCharOffset, intersection.length.toInt(), 0, emptyType)
-            opIndex++
             oldCharOffset += op.delete.length
+            op = if (opIter.hasNext()) opIter.next() else null
           }
           IntersectionType.After -> {
             lexemeStores[lexemeStoreIndex] = lexemeStores[lexemeStoreIndex].adjust(relativeCharOffset, intersection.length.toInt(), op.insert.length, emptyType)
@@ -166,7 +166,7 @@ fun <T> bulkAdjust(
             else {
               // oldCharOffset + s.length < start
               oldCharOffset += op.delete.length
-              opIndex++
+              op = if (opIter.hasNext()) opIter.next() else null
             }
           }
         }

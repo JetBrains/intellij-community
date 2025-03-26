@@ -15,6 +15,6 @@ internal class OperationSerializer: DataSerializer<Operation, OldOperation>(OldO
   }
 
   override fun toData(value: Operation): OldOperation {
-    return OldOperation(value.ops)
+    return OldOperation(value.ops.toList())
   }
 }

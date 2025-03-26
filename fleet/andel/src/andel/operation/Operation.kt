@@ -52,15 +52,13 @@ sealed class Op {
 data class Operation(internal val rope: OpsRope) {
   constructor(ops: List<Op>): this(OperationMonoid.ropeOf(listOf(ops.toTypedArray())))
 
-  val ops: List<Op> get() {
+  val ops: Sequence<Op> get() = sequence {
     val owner = Any()
     var cursor: Rope.Cursor<Array<Op>>? = rope.cursor(owner)
-    val result = ArrayList<Op>()
     while (cursor != null) {
-      result.addAll(cursor.element)
+      yieldAll(cursor.element.iterator())
       cursor = cursor.next(owner)
     }
-    return result
   }
 
   val size: Int
@@ -233,7 +231,7 @@ fun Op.invert(): Op {
 }
 
 fun Operation.invert(): Operation {
-  return Operation(this.ops.map(Op::invert))
+  return Operation(this.ops.map(Op::invert).toList())
 }
 
 fun Operation.compose(subsequent: Operation): Operation {
@@ -256,7 +254,10 @@ fun Operation.compose(subsequent: Operation): Operation {
   require(this.lenAfter == subsequent.lenBefore) {
     "cannot compose $this with $subsequent: length ${this.lenAfter} does not match ${subsequent.lenBefore}"
   }
-  var consume1: Int = 0
+  val op1Iter = this.ops.iterator()
+  val op2Iter = subsequent.ops.iterator()
+  var op1: Op? = null
+  var op2: Op? = null
   var consume2: Int = 0
   var consume1Offset: Long = 0
   var consume2Offset: Long = 0
@@ -264,11 +265,12 @@ fun Operation.compose(subsequent: Operation): Operation {
   val lastOp1 = StringBuilder()
   val lastOp2 = StringBuilder()
   var lastOpEnd: Long = 0
-  val result = ArrayList<Op>(ops.size + subsequent.ops.size)
-  while (consume1 < this.ops.size || consume2 < subsequent.ops.size) {
-    if (consume1 < this.ops.size && consume1Offset <= consume2Offset) {
-      val op = this.ops[consume1]
-      val counterOp = subsequent.ops.getOrNull(consume2 - 1)
+  val result = ArrayList<Op>(this.size + subsequent.size)
+  while (op1Iter.hasNext() || op2Iter.hasNext()) {
+    if (op1Iter.hasNext() && consume1Offset <= consume2Offset) {
+      op1 = op1Iter.next()
+      val op = op1
+      val counterOp = op2
       when (op) {
         is Op.Replace -> {
           val opMiddleText = op.insert
@@ -307,14 +309,16 @@ fun Operation.compose(subsequent: Operation): Operation {
         }
       }
       consume1Offset += op.lenAfter
-      consume1 += 1
     }
     else {
-      require(subsequent.ops.size > consume2) {
-        "cannot compose $this with $subsequent, subsequent.ops.size=${subsequent.ops.size}, consume2=$consume2"
+      require(op2Iter.hasNext()) {
+        "cannot compose $this with $subsequent, subsequent.ops.size=${subsequent.size}, consume2=$consume2"
       }
-      val op = subsequent.ops[consume2]
-      val counterOp = this.ops.getOrNull(consume1 - 1)
+      op2 = op2Iter.next()
+      consume2 += 1
+
+      val op = op2
+      val counterOp = op1
       when (op) {
         is Op.Replace -> {
           val opMiddleText = op.delete
@@ -353,7 +357,6 @@ fun Operation.compose(subsequent: Operation): Operation {
         }
       }
       consume2Offset += op.lenBefore
-      consume2 += 1
     }
   }
   require(consume1Offset == consume2Offset) {
@@ -634,7 +637,7 @@ fun TextRange.transformOnto(operation: Operation, direction: Sticky, emptyRangeS
 }
 
 fun canTransform(operation1: Operation, operation2: Operation): Boolean {
-  if (operation1.ops.isEmpty() || operation2.ops.isEmpty()) return true
+  if (operation1.isEmpty || operation2.isEmpty) return true
   return operation1.lenBefore == operation2.lenBefore
 }
 
@@ -643,7 +646,7 @@ fun Operation.transform(operation2: Operation, direction: Sticky): Operation {
 }
 
 internal fun transform(operation1: Operation, operation2: Operation, direction: () -> Sticky): Operation {
-  if (operation2.ops.isEmpty() || operation1.ops.isEmpty()) return operation1
+  if (operation2.isEmpty || operation1.isEmpty) return operation1
   require(canTransform(operation1, operation2)) {
     "cannot transform $operation1 onto $operation2: length ${operation1.lenBefore} does not match ${operation2.lenBefore}"
   }
@@ -935,7 +938,7 @@ private fun Point.effectiveOffset(direction: () -> Sticky): Long {
  * Implementation of one side can be derived from the other using inversion.
  */
 fun Sequence<Point>.shiftPoints(operation: Operation, direction: () -> Sticky): Sequence<Long> {
-  if (operation.ops.isEmpty()) return this.map { 0L }
+  if (operation.isEmpty) return this.map { 0L }
   val opIterator: Iterator<Op> = operation.ops.iterator()
   var currentDelta = 0L
   var currentCursor = 0L
@@ -1134,15 +1137,17 @@ fun <K, V> shiftPoints2(points: List<IntervalPoint<K, V>>, operation: Operation,
 
 fun Operation.splitEditsByRanges(ranges: List<TextRange>): List<Operation> {
   var rangeIndex = 0
-  var opIndex = 0
+  val opIter = this.ops.iterator()
+  var op = if (opIter.hasNext()) opIter.next() else null
   var charOffset = 0L
   val result = ArrayList<Operation>(ranges.size)
   val newOps = ArrayList<Op>()
-  while (rangeIndex < ranges.size && opIndex < ops.size) {
+  while (rangeIndex < ranges.size && op != null) {
     val range = ranges[rangeIndex]
-    when (val op = ops[opIndex]) {
+    when (op) {
       is Op.Retain -> {
         val opRange = TextRange(charOffset, charOffset + op.len)
+
         val (intersection, intersectionType) = opRange.intersect(range)
         if (intersectionType != IntersectionType.None) {
           newOps.add(Op.Retain(intersection.length))
@@ -1160,11 +1165,11 @@ fun Operation.splitEditsByRanges(ranges: List<TextRange>): List<Operation> {
               continue
             }
             else {
-              opIndex++
+              charOffset += op.len
+              op = if (opIter.hasNext()) opIter.next() else null
             }
           }
         }
-        charOffset += op.len
       }
       is Op.Replace -> {
         val opRange = TextRange(charOffset, charOffset + op.lenBefore)
@@ -1173,15 +1178,18 @@ fun Operation.splitEditsByRanges(ranges: List<TextRange>): List<Operation> {
           newOps.add(
             Op.Replace(op.delete.substring((intersection.start - charOffset).toInt(), (intersection.end - charOffset).toInt()), op.insert))
         }
+
         when (intersectionType) {
           IntersectionType.After, IntersectionType.Outside -> {
             pushOp(result, newOps)
             rangeIndex++
             continue
           }
-          else -> opIndex++
+          else -> {
+            charOffset += op.lenBefore
+            op = if (opIter.hasNext()) opIter.next() else null
+          }
         }
-        charOffset += op.lenBefore
       }
     }
   }

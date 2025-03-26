@@ -88,9 +88,9 @@ class EditLog(val operations: IBifurcanVector<Operation>,
   fun idAtTimestamp(timestamp: Long): Result<UID> = timestampToOffsetSafe(timestamp).map { ids.nth(it) }
 
   fun append(id: UID, operation: Operation): EditLog {
-    if (!operation.ops.isEmpty() && !operations.isEmpty() && !operations.last().ops.isEmpty()) {
-      val opLenBefore = operation.ops.sumOf { it.lenBefore }
-      val logLenAfter = operations.last().ops.sumOf { it.lenAfter }
+    if (!operation.isEmpty && !operations.isEmpty() && !operations.last().isEmpty) {
+      val opLenBefore = operation.lenBefore
+      val logLenAfter = operations.last().lenAfter
       require(opLenBefore == logLenAfter) {
         "trying to add non-composable operation $operation to the log, last op: ${operations.last()}"
       }

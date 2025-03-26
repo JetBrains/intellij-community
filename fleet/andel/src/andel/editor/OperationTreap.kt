@@ -41,7 +41,7 @@ private val pushF: PushFun<OpTreapData> = { thisData, leftData, rightData ->
  * See [getNewOffset]
  */
 internal fun buildOperationTreap(operations: List<Operation>): Treap<OpTreapData> {
-  val allX = LinkedHashSet<Long>(operations.size * operations.first().ops.size)
+  val allX = LinkedHashSet<Long>(operations.size * operations.first().size)
   allX.add(0)
   for (o in operations) {
     var offset = 0L
