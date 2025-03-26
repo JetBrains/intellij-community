@@ -89,10 +89,20 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
      */    
     context(KaSession)
     private fun resolvesWithoutErrors(originalCallExpression: KtElement, candidate: ImportCandidate): Boolean {
+        val containingFile = originalCallExpression.containingKtFile
+        
+        if (containingFile is KtCodeFragment) {
+            // KtFileWithReplacedImports does not properly work with KtCodeFragments now,
+            // so we do not do actual applicability filtering.
+            // That way, users can at least import something.
+            // Should be implemented in KTIJ-33606
+            return true
+        }
+        
         val candidateFqName = candidate.fqName ?: return false
 
-        val fileWithReplacedImports = getFileWithReplacedImportsFor(originalCallExpression.containingKtFile)
-        val copyCallExpression = fileWithReplacedImports.findInCopy(originalCallExpression)
+        val fileWithReplacedImports = getFileWithReplacedImportsFor(containingFile)
+        val copyCallExpression = fileWithReplacedImports.findMatchingElement(originalCallExpression) ?: return false
 
         return fileWithReplacedImports.withExtraImport(candidateFqName) {
             fileWithReplacedImports.analyze {

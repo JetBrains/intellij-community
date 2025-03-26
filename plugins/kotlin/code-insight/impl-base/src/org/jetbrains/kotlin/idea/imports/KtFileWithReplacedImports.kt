@@ -51,10 +51,16 @@ class KtFileWithReplacedImports private constructor(
     }
 
     /**
-     * Finds an element in the [ktFile] which is in the same position as the [originalElement] in the original file. 
+     * Finds an element in the [ktFile] which is in the same position as the [originalElement] in the original file.
+     * 
+     * Returns `null` if it could not find the matching copy element.
      */
-    fun <T : PsiElement> findInCopy(originalElement: T): T =
-        PsiTreeUtil.findSameElementInCopy(originalElement, ktFile)
+    fun <T : PsiElement> findMatchingElement(originalElement: T): T? =
+        try {
+            PsiTreeUtil.findSameElementInCopy(originalElement, ktFile)
+        } catch (_: IllegalStateException) {
+            null
+        }
 
     /**
      * Allows one to analyze code in [ktFile] with respect to replaced imports.
