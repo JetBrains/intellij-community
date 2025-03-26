@@ -6,7 +6,8 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import java.util.Set;
 
 public class MemberChangeTest extends IncrementalTestCase {
-  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("addLambdaTargetMethod", "addLambdaTargetMethod2", "addLambdaTargetMethodNoRecompile");
+  private static final Set<String> GRAPH_ONLY_TESTS =
+    Set.of("addLambdaTargetMethod", "addLambdaTargetMethod2", "addLambdaTargetMethodNoRecompile", "addPackagePrivateMethodToParentClashingWithMethodFromInterface");
 
   public MemberChangeTest() {
     super("membersChange");
@@ -274,5 +275,9 @@ public class MemberChangeTest extends IncrementalTestCase {
 
   public void testPushFieldDown() {
     doTest();
+  }
+
+  public void testAddPackagePrivateMethodToParentClashingWithMethodFromInterface() {
+    doTest().assertFailed();
   }
 }
