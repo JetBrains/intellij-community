@@ -179,7 +179,7 @@
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
     <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
 
-    <registryKey key="debugger.evaluate.method.helper" defaultValue="[off*|auto|always]"
+    <registryKey key="debugger.evaluate.method.helper" defaultValue="[off|auto*|always]"
                  description="Use helper to invoke methods avoiding the immediate return value collection"/>
     <registryKey key="debugger.jdwp.include.virtual.threads" defaultValue="false"
                  description="JDWP setting to include virtual threads in the list of all threads (might lead to problems in case of a huge number of virtual threads)"/>
