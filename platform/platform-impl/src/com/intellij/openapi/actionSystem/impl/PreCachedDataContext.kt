@@ -523,6 +523,10 @@ private class MySink : DataSink {
     })
   }
 
+  override fun <T : Any> lazyValue(key: DataKey<T>, data: (DataMap) -> T?) {
+    set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, MyLazyValue(key, data))
+  }
+
   override fun uiDataSnapshot(provider: UiDataProvider) {
     val prev = source
     source = provider
@@ -566,12 +570,25 @@ private class MySink : DataSink {
 
 private class MyLazy<T>(val key: DataKey<T>, val supplier: () -> T?) : DataProvider, DataValidators.SourceWrapper {
   override fun getData(dataId: String): Any? {
-    return if (key.`is`(dataId)) supplier.invoke() else null
+    if (!key.`is`(dataId)) return null
+    return supplier.invoke()
+  }
+  override fun unwrapSource(): Any = supplier
+  override fun toString(): String = "Lazy(${key.name})"
+}
+
+private class MyLazyValue<T>(val key: DataKey<T>, val supplier: (DataMap) -> T?) : DataProvider, DataManagerImpl.ParametrizedDataProvider, DataValidators.SourceWrapper {
+  override fun getData(dataId: String, dataProvider: DataProvider): Any? {
+    if (!key.`is`(dataId)) return null
+    return supplier.invoke(object : DataMap {
+      @Suppress("UNCHECKED_CAST")
+      override fun <T : Any> get(key: DataKey<T>): T? = dataProvider.getData(key.name) as T?
+    })
   }
 
-  override fun unwrapSource(): Any {
-    return supplier
-  }
+  override fun getData(dataId: String): Any? = null
+  override fun unwrapSource(): Any = supplier
+  override fun toString(): String = "LazyValue(${key.name})"
 }
 
 private fun hideEditor(component: Component?): Boolean {
