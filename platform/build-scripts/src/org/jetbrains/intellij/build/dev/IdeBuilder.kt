@@ -501,6 +501,7 @@ private suspend fun createBuildContext(
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
 
         buildOptionsTemplate?.let { template ->
+          options.buildNumber = template.buildNumber
           options.isInDevelopmentMode = template.isInDevelopmentMode
           options.isTestBuild = template.isTestBuild
         }

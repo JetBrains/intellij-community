@@ -382,7 +382,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * By default, a version of a plugin is equal to the build number of the IDE it's built with.
+     * By default, a version of a plugin is equal to [org.jetbrains.intellij.build.BuildContext.pluginBuildNumber].
      * This method allows specifying custom version evaluator.
      */
     fun withCustomVersion(versionEvaluator: PluginVersionEvaluator) {

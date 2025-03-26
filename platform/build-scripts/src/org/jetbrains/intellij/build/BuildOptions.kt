@@ -401,11 +401,6 @@ data class BuildOptions(
   }
 
   /**
-   * Use [BuildContext.pluginBuildNumber] to get the actual build number in build scripts.
-   */
-  var pluginBuildNumber: String? = buildNumber
-
-  /**
    * If `true`, the build is running as a unit test.
    */
   var isTestBuild: Boolean = getBooleanProperty("intellij.build.test.mode", false)

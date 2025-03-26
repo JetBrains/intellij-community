@@ -41,19 +41,25 @@ interface BuildContext : CompilationContext {
   fun getExtraExecutablePattern(os: OsFamily): List<String>
 
   /**
-   * IDE build number without product code (e.g. '162.500.10').
+   * IDE build number without product code (e.g. '251.500.10').
    * [org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE] by default.
+   * May not match [com.intellij.util.text.SemVer].
    */
   val buildNumber: String
 
   /**
    * Build number used for all plugins being built.
-   * [buildNumber] by default.
+   *
+   * The value is [buildNumber] having:
+   * * `SNAPSHOT` suffix replaced with `${DATE}` to match [com.intellij.util.text.SemVer];
+   * * `.0` appended if [BuildContext.isNightlyBuild] to match [com.intellij.util.text.SemVer].
+   *
+   * See also [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.withCustomVersion].
    */
-  val pluginBuildNumber: String get() = buildNumber
+  val pluginBuildNumber: String
 
   /**
-   * Build number with product code (e.g. 'IC-162.500.10')
+   * Build number with product code (e.g. 'IC-251.500.10')
    */
   val fullBuildNumber: String
 
