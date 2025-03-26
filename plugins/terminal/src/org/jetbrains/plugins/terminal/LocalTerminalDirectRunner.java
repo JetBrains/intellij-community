@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
 import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
@@ -277,9 +278,5 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
            || SystemInfo.isMac && shellName.equals(SH_NAME)
            || shellName.equals(ZSH_NAME)
            || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
-  }
-
-  private static boolean shouldUseEelApi() {
-    return Registry.is("terminal.use.EelApi", false);
   }
 }

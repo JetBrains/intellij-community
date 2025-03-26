@@ -13,6 +13,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.SystemProperties;
@@ -23,12 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalStartupKt;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
@@ -38,10 +41,13 @@ public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
   public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
-    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
-    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project);
+    final var useEel = TerminalStartupKt.shouldUseEelApi();
+    final var eelDescriptor = useEel ? EelProviderUtil.getEelDescriptor(project) : null;
 
-    List<String> initialCommand = getInitialCommand(baseOptions, project);
+    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
+    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir, project, eelDescriptor);
+
+    List<String> initialCommand = getInitialCommand(baseOptions, project, eelDescriptor);
     TerminalWidget widget = baseOptions.getWidget();
     if (widget != null) {
       widget.setShellCommand(initialCommand);
@@ -76,11 +82,19 @@ public final class LocalOptionsConfigurer {
 
   private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
                                                                      @NotNull String workingDir,
-                                                                     @NotNull Project project) {
-    Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
+                                                                     @NotNull Project project,
+                                                                     @Nullable EelDescriptor eelDescriptor) {
+    final var isWindows = eelDescriptor != null ? eelDescriptor.getOperatingSystem() == EelPath.OS.WINDOWS : SystemInfo.isWindows;
+
+    Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();
     if (envData.isPassParentEnvs()) {
-      envs.putAll(System.getenv());
+      if (eelDescriptor != null) {
+        envs.putAll(fetchLoginShellEnvVariables(eelDescriptor));
+      }
+      else {
+        envs.putAll(System.getenv());
+      }
       EnvironmentRestorer.restoreOverriddenVars(envs);
     }
     else {
@@ -88,7 +102,7 @@ public final class LocalOptionsConfigurer {
     }
 
     envs.putAll(baseEnvs);
-    if (!SystemInfo.isWindows) {
+    if (!isWindows) {
       envs.put("TERM", "xterm-256color");
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
@@ -108,7 +122,11 @@ public final class LocalOptionsConfigurer {
     return envs;
   }
 
-  private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project) {
+  private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project, @Nullable EelDescriptor eelDescriptor) {
+    if (eelDescriptor != null && eelDescriptor != LocalEelDescriptor.INSTANCE) {
+      return LocalTerminalStartCommandBuilder.convertShellPathToCommand(Optional.of(fetchLoginShellEnvVariables(eelDescriptor)).map(e -> e.get("SHELL")).orElse("/bin/sh"));
+    }
+
     List<String> shellCommand = options.getShellCommand();
     return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project));
   }
@@ -126,5 +144,9 @@ public final class LocalOptionsConfigurer {
     }
     String newWslEnv = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + wslEnv : wslEnv;
     resultEnvs.put(WslConstants.WSLENV, newWslEnv);
+  }
+
+  private static Map<String, String> fetchLoginShellEnvVariables(@NotNull EelDescriptor eelDescriptor) {
+    return EelUtilsKt.fetchLoginShellEnvVariablesBlocking(EelProviderUtil.upgradeBlocking(eelDescriptor).getExec());
   }
 }

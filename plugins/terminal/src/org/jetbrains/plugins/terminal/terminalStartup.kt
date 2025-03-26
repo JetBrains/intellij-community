@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
@@ -126,6 +127,10 @@ private suspend fun doStartProcess(
     is EelResult.Ok -> processResult.value.convertToJavaProcess() as PtyProcess
     is EelResult.Error -> throw ErrnoException(processResult.error)
   }
+}
+
+internal fun shouldUseEelApi(): Boolean {
+  return `is`("terminal.use.EelApi", false)
 }
 
 internal class ErrnoException(val error: ExecuteProcessError): Exception(error.message)
