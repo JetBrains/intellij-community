@@ -110,9 +110,10 @@ public final class ScopesAndSeveritiesTable extends JBTable {
     });
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
-    SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
+    SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> {}, this);
     severityColumn.setCellRenderer(renderer);
-    severityColumn.setCellEditor(renderer);
+    SeverityRenderer editor = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
+    severityColumn.setCellEditor(editor);
 
     final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
     final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames(tableSettings.getInspectionProfile())) {
