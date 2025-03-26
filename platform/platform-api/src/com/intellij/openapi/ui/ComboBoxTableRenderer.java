@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableCellState;
@@ -155,6 +156,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     popup.setRequestFocus(false);
 
     myPopupRef = new WeakReference<>(popup);
+    PopupUtil.setPopupToggleComponent(popup, this);
     popup.show(location);
   }
 
