@@ -1,6 +1,6 @@
 package com.intellij.terminal.backend.rpc
 
-import com.intellij.platform.kernel.backend.ids.findValueById
+import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.terminal.backend.TerminalSessionValueIdType
 import com.intellij.terminal.session.TerminalInputEvent
 import com.intellij.terminal.session.TerminalOutputEvent

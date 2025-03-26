@@ -3,12 +3,10 @@ package com.intellij.terminal.backend
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.backend.ids.BackendValueIdType
-import com.intellij.platform.kernel.backend.ids.findValueById
-import com.intellij.platform.kernel.backend.ids.storeValueGlobally
+import com.intellij.platform.kernel.ids.findValueById
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalCloseEvent
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope

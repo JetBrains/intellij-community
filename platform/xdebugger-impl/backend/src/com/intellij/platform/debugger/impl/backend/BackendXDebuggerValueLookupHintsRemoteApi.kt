@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.kernel.backend.ids.BackendValueIdType
-import com.intellij.platform.kernel.backend.ids.deleteValueById
-import com.intellij.platform.kernel.backend.ids.findValueById
-import com.intellij.platform.kernel.backend.ids.storeValueGlobally
+import com.intellij.platform.kernel.ids.BackendValueIdType
+import com.intellij.platform.kernel.ids.deleteValueById
+import com.intellij.platform.kernel.ids.findValueById
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.psi.PsiDocumentManager

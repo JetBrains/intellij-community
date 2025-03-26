@@ -3,9 +3,9 @@
 
 package com.intellij.platform.debugger.impl.backend.hotswap
 
-import com.intellij.platform.kernel.backend.ids.BackendValueIdType
-import com.intellij.platform.kernel.backend.ids.findValueById
-import com.intellij.platform.kernel.backend.ids.storeValueGlobally
+import com.intellij.platform.kernel.ids.BackendValueIdType
+import com.intellij.platform.kernel.ids.findValueById
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.impl.hotswap.HotSwapSession

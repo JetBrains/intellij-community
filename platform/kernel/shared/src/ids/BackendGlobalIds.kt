@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.kernel.backend.ids
+package com.intellij.platform.kernel.ids
 
 import com.intellij.platform.rpc.Id
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +16,8 @@ import org.jetbrains.annotations.ApiStatus
  * [value] and associated [Id] will be deleted from the storage when [CoroutineScope] is cancelled.
  * Note: when [storeValueGlobally] is used, given [coroutineScope] won't be finished normally, but can be only cancelled outside.
  *
+ * This API should be used only on the backend side.
+ * It locates in shared parts, since most parts of the platform is not split yet.
  *
  * Example:
  * ```kotlin
@@ -57,6 +59,9 @@ fun <TID : Id, Value : Any> storeValueGlobally(
 /**
  * Retrieves a value associated with [BackendValueIdType] by the given [Id].
  * Value will be returned if it was previously stored by [storeValueGlobally], and it wasn't deleted.
+ *
+ * This API should be used only on the backend side.
+ * It locates in shared parts, since most parts of the platform is not split yet.
  *
  * Example:
  * ```kotlin
@@ -103,6 +108,9 @@ fun <TID : Id, Value : Any> findValueById(id: TID, type: BackendValueIdType<TID,
  * If you need something more powerful than just storing references for the backend objects,
  * it is better to use pure rhizomeDB API.
  *
+ * This API should be used only on the backend side.
+ * It locates in shared parts, since most parts of the platform is not split yet.
+ *
  * !!! Prefer to use [storeValueGlobally] with [CoroutineScope] as parameter,
  * !!! so it will be deleted properly.
  *
@@ -117,6 +125,8 @@ fun <TID : Id, Value : Any> storeValueGlobally(value: Value, type: BackendValueI
  * Deletes the [Id] from backend's in memory storage.
  *
  * Later [findValueById] calls will return [null].
+ *
+ * This API should be used only on the backend side. It locates in shared parts, since most parts of the platform is not split yet.
  */
 @Suppress("unused")
 @ApiStatus.Internal
