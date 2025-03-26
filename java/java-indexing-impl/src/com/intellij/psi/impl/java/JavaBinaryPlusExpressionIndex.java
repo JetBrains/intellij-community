@@ -45,7 +45,7 @@ public final class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension
 
       IntList result = new IntArrayList();
       for (int i = 0; i < tokens.getTokenCount(); i++) {
-        if (hasType(tokens, i, JavaSyntaxTokenType.INSTANCE.getPLUS()) &&
+        if (hasType(tokens, i, JavaSyntaxTokenType.PLUS) &&
             (hasType(tokens, forwardWhile(tokens, i + 1, JavaParserUtil.WS_COMMENTS), SyntaxElementTypes.INSTANCE.getALL_LITERALS()) !=
              hasType(tokens, backWhile(tokens, i - 1, JavaParserUtil.WS_COMMENTS), SyntaxElementTypes.INSTANCE.getALL_LITERALS()))) {
           result.add(tokens.getTokenStart(i));

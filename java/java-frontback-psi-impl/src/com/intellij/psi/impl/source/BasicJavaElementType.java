@@ -327,7 +327,7 @@ public interface BasicJavaElementType {
     public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
       Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
       boolean hasProperBraceBalance = SyntaxBuilderUtil.hasProperBraceBalance(
-        seq, lexer, JavaSyntaxTokenType.INSTANCE.getLBRACE(), JavaSyntaxTokenType.INSTANCE.getRBRACE(),
+        seq, lexer, JavaSyntaxTokenType.LBRACE, JavaSyntaxTokenType.RBRACE,
         () -> ProgressManager.checkCanceled()
       );
       return hasProperBraceBalance ? NO_ERRORS : FATAL_ERROR;

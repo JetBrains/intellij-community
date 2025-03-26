@@ -57,7 +57,7 @@ public final class RecordUtil {
       lexer.start(text);
       SyntaxElementType token;
       while ((token = lexer.getTokenType()) != null) {
-        if (token == JavaDocSyntaxTokenType.INSTANCE.getDOC_TAG_NAME() && DEPRECATED_TAG.equals(lexer.getTokenText())) {
+        if (token == JavaDocSyntaxTokenType.DOC_TAG_NAME && DEPRECATED_TAG.equals(lexer.getTokenText())) {
           return true;
         }
         lexer.advance();

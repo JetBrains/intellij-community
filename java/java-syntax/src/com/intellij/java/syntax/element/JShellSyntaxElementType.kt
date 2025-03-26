@@ -18,8 +18,8 @@ package com.intellij.java.syntax.element
 import com.intellij.platform.syntax.SyntaxElementType
 
 object JShellSyntaxElementType {
-  val FILE: SyntaxElementType = SyntaxElementType("JSHELL_FILE")
-  val ROOT_CLASS: SyntaxElementType = SyntaxElementType("JSHELL_ROOT_CLASS")
-  val STATEMENTS_HOLDER: SyntaxElementType = SyntaxElementType("JSHELL_STATEMENTS_HOLDER")
-  val IMPORT_HOLDER: SyntaxElementType = SyntaxElementType("JSHELL_IMPORT_HOLDER")
+  @JvmField val FILE: SyntaxElementType = SyntaxElementType("JSHELL_FILE")
+  @JvmField val ROOT_CLASS: SyntaxElementType = SyntaxElementType("JSHELL_ROOT_CLASS")
+  @JvmField val STATEMENTS_HOLDER: SyntaxElementType = SyntaxElementType("JSHELL_STATEMENTS_HOLDER")
+  @JvmField val IMPORT_HOLDER: SyntaxElementType = SyntaxElementType("JSHELL_IMPORT_HOLDER")
 }

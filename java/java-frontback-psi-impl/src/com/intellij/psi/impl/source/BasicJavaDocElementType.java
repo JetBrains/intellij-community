@@ -155,7 +155,7 @@ public interface BasicJavaDocElementType {
       LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
       JavaLexer lexer = new JavaLexer(level);
       lexer.start(buffer);
-      if (lexer.getTokenType() == JavaDocSyntaxElementType.INSTANCE.getDOC_COMMENT()) {
+      if (lexer.getTokenType() == JavaDocSyntaxElementType.DOC_COMMENT) {
         lexer.advance();
         return lexer.getTokenType() == null;
       }

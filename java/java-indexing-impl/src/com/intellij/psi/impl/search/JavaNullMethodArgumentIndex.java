@@ -43,7 +43,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
 
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
       for (int i = 0; i < tokens.getTokenCount(); i++) {
-        if (hasType(tokens, i, JavaSyntaxTokenType.INSTANCE.getNULL_KEYWORD())) {
+        if (hasType(tokens, i, JavaSyntaxTokenType.NULL_KEYWORD)) {
           MethodCallData data = findCallData(tokens, i);
           if (data != null) {
             result.put(data, null);
@@ -55,37 +55,37 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
   }
 
   private static @Nullable MethodCallData findCallData(TokenList tokens, int nullIndex) {
-    if (!hasType(tokens, forwardWhile(tokens, nullIndex + 1, JavaParserUtil.WS_COMMENTS), JavaSyntaxTokenType.INSTANCE.getRPARENTH(), JavaSyntaxTokenType.INSTANCE.getCOMMA())) return null;
+    if (!hasType(tokens, forwardWhile(tokens, nullIndex + 1, JavaParserUtil.WS_COMMENTS), JavaSyntaxTokenType.RPARENTH, JavaSyntaxTokenType.COMMA)) return null;
 
     int i = backWhile(tokens, nullIndex - 1, JavaParserUtil.WS_COMMENTS);
-    if (!hasType(tokens, i, JavaSyntaxTokenType.INSTANCE.getLPARENTH(), JavaSyntaxTokenType.INSTANCE.getCOMMA())) return null;
+    if (!hasType(tokens, i, JavaSyntaxTokenType.LPARENTH, JavaSyntaxTokenType.COMMA)) return null;
 
 
     int commaCount = 0;
     while (true) {
-      if (hasType(tokens, i, null, JavaSyntaxTokenType.INSTANCE.getSEMICOLON(), JavaSyntaxTokenType.INSTANCE.getEQ(), JavaSyntaxTokenType.INSTANCE.getRBRACE())) {
+      if (hasType(tokens, i, null, JavaSyntaxTokenType.SEMICOLON, JavaSyntaxTokenType.EQ, JavaSyntaxTokenType.RBRACE)) {
         return null;
       }
 
       SyntaxElementType type = tokens.getTokenType(i);
-      if (type == JavaSyntaxTokenType.INSTANCE.getCOMMA()) {
+      if (type == JavaSyntaxTokenType.COMMA) {
         commaCount++;
       }
-      else if (type == JavaSyntaxTokenType.INSTANCE.getLPARENTH()) {
+      else if (type == JavaSyntaxTokenType.LPARENTH) {
         String name = findMethodName(tokens, i);
         return name == null ? null : new MethodCallData(name, commaCount);
       }
 
-      i = backWithBraceMatching(tokens, i, JavaSyntaxTokenType.INSTANCE.getLPARENTH(), JavaSyntaxTokenType.INSTANCE.getRPARENTH());
+      i = backWithBraceMatching(tokens, i, JavaSyntaxTokenType.LPARENTH, JavaSyntaxTokenType.RPARENTH);
     }
   }
 
   private static @Nullable String findMethodName(TokenList tokens, int lparenth) {
     int i = backWhile(tokens, lparenth - 1, JavaParserUtil.WS_COMMENTS);
-    if (hasType(tokens, i, JavaSyntaxTokenType.INSTANCE.getGT())) {
-      i = backWhile(tokens, backWithBraceMatching(tokens, i, JavaSyntaxTokenType.INSTANCE.getLT(), JavaSyntaxTokenType.INSTANCE.getGT()), JavaParserUtil.WS_COMMENTS);
+    if (hasType(tokens, i, JavaSyntaxTokenType.GT)) {
+      i = backWhile(tokens, backWithBraceMatching(tokens, i, JavaSyntaxTokenType.LT, JavaSyntaxTokenType.GT), JavaParserUtil.WS_COMMENTS);
     }
-    return tokens.getTokenType(i) == JavaSyntaxTokenType.INSTANCE.getIDENTIFIER() ? tokens.getTokenText(i).toString() : null;
+    return tokens.getTokenType(i) == JavaSyntaxTokenType.IDENTIFIER ? tokens.getTokenText(i).toString() : null;
   }
 
   @Override

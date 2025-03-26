@@ -7,23 +7,23 @@ import com.intellij.platform.syntax.SyntaxElementType
  * @see com.intellij.psi.impl.source.tree.JavaDocElementType
  */
 object JavaDocSyntaxElementType {
-  val DOC_TAG: SyntaxElementType = SyntaxElementType("DOC_TAG")
-  val DOC_INLINE_TAG: SyntaxElementType = SyntaxElementType("DOC_INLINE_TAG")
-  val DOC_METHOD_OR_FIELD_REF: SyntaxElementType = SyntaxElementType("DOC_METHOD_OR_FIELD_REF")
-  val DOC_PARAMETER_REF: SyntaxElementType = SyntaxElementType("DOC_PARAMETER_REF")
-  val DOC_TAG_VALUE_ELEMENT: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_ELEMENT")
-  val DOC_SNIPPET_TAG: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_TAG")
-  val DOC_SNIPPET_TAG_VALUE: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_TAG_VALUE")
-  val DOC_SNIPPET_BODY: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_BODY")
-  val DOC_SNIPPET_ATTRIBUTE: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE")
-  val DOC_SNIPPET_ATTRIBUTE_LIST: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE_LIST")
-  val DOC_SNIPPET_ATTRIBUTE_VALUE: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE_VALUE")
+  @JvmField val DOC_TAG: SyntaxElementType = SyntaxElementType("DOC_TAG")
+  @JvmField val DOC_INLINE_TAG: SyntaxElementType = SyntaxElementType("DOC_INLINE_TAG")
+  @JvmField val DOC_METHOD_OR_FIELD_REF: SyntaxElementType = SyntaxElementType("DOC_METHOD_OR_FIELD_REF")
+  @JvmField val DOC_PARAMETER_REF: SyntaxElementType = SyntaxElementType("DOC_PARAMETER_REF")
+  @JvmField val DOC_TAG_VALUE_ELEMENT: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_ELEMENT")
+  @JvmField val DOC_SNIPPET_TAG: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_TAG")
+  @JvmField val DOC_SNIPPET_TAG_VALUE: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_TAG_VALUE")
+  @JvmField val DOC_SNIPPET_BODY: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_BODY")
+  @JvmField val DOC_SNIPPET_ATTRIBUTE: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE")
+  @JvmField val DOC_SNIPPET_ATTRIBUTE_LIST: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE_LIST")
+  @JvmField val DOC_SNIPPET_ATTRIBUTE_VALUE: SyntaxElementType = SyntaxElementType("DOC_SNIPPET_ATTRIBUTE_VALUE")
 
-  val DOC_REFERENCE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_HOLDER")
+  @JvmField val DOC_REFERENCE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_HOLDER")
 
-  val DOC_TYPE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_TYPE_HOLDER")
+  @JvmField val DOC_TYPE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_TYPE_HOLDER")
 
-  val DOC_COMMENT: SyntaxElementType = SyntaxElementType("DOC_COMMENT")
-  val DOC_MARKDOWN_CODE_BLOCK: SyntaxElementType = SyntaxElementType("DOC_CODE_BLOCK")
-  val DOC_MARKDOWN_REFERENCE_LINK: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_LINK")
+  @JvmField val DOC_COMMENT: SyntaxElementType = SyntaxElementType("DOC_COMMENT")
+  @JvmField val DOC_MARKDOWN_CODE_BLOCK: SyntaxElementType = SyntaxElementType("DOC_CODE_BLOCK")
+  @JvmField val DOC_MARKDOWN_REFERENCE_LINK: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_LINK")
 }

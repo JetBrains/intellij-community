@@ -53,6 +53,6 @@ public class JavaFileElementType extends IFileElementType {
                              @NotNull LanguageLevel languageLevel) {
     SyntaxTreeBuilder.Marker root = builder.mark();
     new JavaParser(languageLevel).getFileParser().parse(builder);
-    root.done(JavaSyntaxElementType.INSTANCE.getJAVA_FILE());
+    root.done(JavaSyntaxElementType.JAVA_FILE);
   }
 }
