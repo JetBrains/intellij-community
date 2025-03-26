@@ -86,36 +86,36 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   }
 
   @Override
-  public boolean sdkSeemsValid(@NotNull Sdk sdk,
-                               PyFlavorData.@NotNull Empty flavorData,
-                               @Nullable TargetEnvironmentConfiguration targetConfig) {
+  public final boolean sdkSeemsValid(@NotNull Sdk sdk,
+                                     PyFlavorData.@NotNull Empty flavorData,
+                                     @Nullable TargetEnvironmentConfiguration targetConfig) {
     if (super.sdkSeemsValid(sdk, flavorData, targetConfig) || targetConfig != null) {
       // non-local, cant check for appx
       return true;
     }
 
-    var path = tryResolvePath(sdk.getHomePath());
-    return path != null && isLocalPathValidPython(path);
+    String path = sdk.getHomePath();
+    return path != null && isValidSdkPath(path);
   }
 
   @Override
-  public boolean isValidSdkPath(final @NotNull String pathStr) {
+  public final boolean isValidSdkPath(final @NotNull String pathStr) {
     if (super.isValidSdkPath(pathStr)) {
-      return true;
+      return true; // File is local and executable
     }
 
     var path = tryResolvePath(pathStr);
-    return path != null && isLocalPathValidPython(path);
+    return path != null && isPythonFromStore(path); // Python from store might be non-executable, but still usable
   }
 
-  private boolean isLocalPathValidPython(@NotNull Path path) {
+  private boolean isPythonFromStore(@NotNull Path path) {
     String pathStr = path.toString();
     if (myAppxCache.getValue().contains(pathStr)) {
       return true;
     }
 
     String product = getAppxProduct(path);
-    return product != null && product.contains(APPX_PRODUCT) && isValidSdkPath(pathStr);
+    return product != null && product.contains(APPX_PRODUCT);
   }
 
   @Override
