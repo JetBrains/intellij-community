@@ -257,6 +257,7 @@ object KotlinPluginBuilder {
     "kotlinc.lombok-compiler-plugin",
     "kotlinc.compose-compiler-plugin",
     "kotlinc.js-plain-objects-compiler-plugin",
+    "kotlinc.kotlin-dataframe-compiler-plugin",
   )
 
   fun kotlinPlugin(ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {

@@ -338,6 +338,12 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2/kotlin-compiler-ir-for-ide-2.jar
     reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-dataframe-compiler-plugin.jar
+  projectLibraries:
+  - name: kotlinc.kotlin-dataframe-compiler-plugin
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2/kotlin-dataframe-compiler-plugin-for-ide-2.jar
+    reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-jps-common.jar
   projectLibraries:
   - name: kotlinc.kotlin-jps-common

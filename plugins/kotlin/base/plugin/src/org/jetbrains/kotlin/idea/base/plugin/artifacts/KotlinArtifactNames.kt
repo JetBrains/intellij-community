@@ -38,6 +38,7 @@ object KotlinArtifactNames {
     const val PARCELIZE_RUNTIME: String = "parcelize-runtime.jar"
     const val ANDROID_EXTENSIONS_RUNTIME: String = "android-extensions-runtime.jar"
     const val POWER_ASSERT_COMPILER_PLUGIN: String = "power-assert-compiler-plugin.jar"
+    const val KOTLIN_DATAFRAME_COMPILER_PLUGIN: String = "kotlin-dataframe-compiler-plugin.jar"
 
     const val KOTLINC: String = "kotlinc"
 }
