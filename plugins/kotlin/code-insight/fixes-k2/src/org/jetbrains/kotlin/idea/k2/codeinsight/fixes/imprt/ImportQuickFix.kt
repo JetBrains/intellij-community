@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -90,28 +91,30 @@ class ImportQuickFix(
 
         StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
 
-        val element = element ?: return
+        SlowOperations.knownIssue("LLM-15226").use {
+            val element = element ?: return
 
-        @OptIn(
-            KaAllowAnalysisOnEdt::class, 
-            KaAllowAnalysisFromWriteAction::class
-        )
-        val useShortening = allowAnalysisOnEdt {
-            allowAnalysisFromWriteAction {
-                analyze(element) {
-                    shouldBeImportedWithShortening(element, importVariant)
+            @OptIn(
+                KaAllowAnalysisOnEdt::class,
+                KaAllowAnalysisFromWriteAction::class
+            )
+            val useShortening = allowAnalysisOnEdt {
+                allowAnalysisFromWriteAction {
+                    analyze(element) {
+                        shouldBeImportedWithShortening(element, importVariant)
+                    }
                 }
             }
-        }
 
-        project.executeWriteCommand(QuickFixBundle.message("add.import")) {
-            if (useShortening) {
-                (element.mainReference as? KtSimpleNameReference)?.bindToFqName(
-                    importVariant.fqName,
-                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
-                )
-            } else {
-                file.addImport(importVariant.fqName)
+            project.executeWriteCommand(QuickFixBundle.message("add.import")) {
+                if (useShortening) {
+                    (element.mainReference as? KtSimpleNameReference)?.bindToFqName(
+                        importVariant.fqName,
+                        KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                    )
+                } else {
+                    file.addImport(importVariant.fqName)
+                }
             }
         }
     }
