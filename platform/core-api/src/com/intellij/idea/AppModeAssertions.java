@@ -15,18 +15,38 @@ public final class AppModeAssertions {
 
   private AppModeAssertions() { }
 
-  public static void softAssertFrontend() {
-    if (!AppMode.isRemoteDevHost()) {
-      return; // don't report in frontend and monolith
-    }
-    Holder.LOG.error(new AppModeAssertionError("frontend"));
+  public static boolean checkFrontend() {
+    return !AppMode.isRemoteDevHost(); // don't report in frontend and monolith
   }
 
-  public static void softAssertBackend() {
-    if (!PlatformUtils.isJetBrainsClient()) {
-      return; // don't report in backend and monolith
+  public static void assertFrontend(boolean hard) {
+    if (checkFrontend()) {
+      return;
     }
-    Holder.LOG.error(new AppModeAssertionError("backend"));
+    Error e = new AppModeAssertionError("frontend");
+    if (hard) {
+      throw e;
+    }
+    else {
+      Holder.LOG.error(e);
+    }
+  }
+
+  public static boolean checkBackend() {
+    return !PlatformUtils.isJetBrainsClient(); // don't report in backend and monolith
+  }
+
+  public static void assertBackend(boolean hard) {
+    if (checkBackend()) {
+      return;
+    }
+    Error e = new AppModeAssertionError("backend");
+    if (hard) {
+      throw e;
+    }
+    else {
+      Holder.LOG.error(e);
+    }
   }
 
   static final class AppModeAssertionError extends AssertionError {
