@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,7 +23,113 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.theme.simpleListItemStyle
+
+/**
+ * A simple list item layout comprising of a content slot and an optional icon to its start side.
+ *
+ * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
+ * the [selected] and [active] values.
+ *
+ * @param selected Indicates whether the list item is selected.
+ * @param colorFilter Optional [ColorFilter] applied to the item, typically used with the icon.
+ * @param modifier Optional [Modifier] to be applied to the list item.
+ * @param iconModifier Optional [Modifier] to be applied specifically to the icon.
+ * @param active Determines if the list item is in an active state (e.g., enabled or interactive).
+ * @param icon Optional [IconKey] representing the icon displayed in the list item.
+ * @param iconContentDescription Content description for accessibility purposes for the icon.
+ * @param style Optional [SimpleListItemStyle] for defining the appearance of the list item.
+ * @param height The height of the list item; default is based on the theme's global metrics.
+ * @param content A composable lambda representing the main content of the list item.
+ * @param painterHints Optional vararg of [PainterHint] to provide hints for painting customizations.
+ */
+@Composable
+public fun SimpleListItem(
+    selected: Boolean,
+    colorFilter: ColorFilter?,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    active: Boolean = true,
+    icon: IconKey? = null,
+    iconContentDescription: String? = null,
+    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
+    height: Dp = JewelTheme.globalMetrics.rowHeight,
+    content: @Composable () -> Unit,
+    vararg painterHints: PainterHint,
+) {
+    val state = remember(selected, active) { ListItemState(selected, active) }
+    SimpleListItem(
+        state = state,
+        modifier = modifier,
+        iconModifier = iconModifier,
+        icon = icon,
+        iconContentDescription = iconContentDescription,
+        style = style,
+        height = height,
+        content = content,
+        colorFilter = colorFilter,
+        painterHints = painterHints,
+    )
+}
+
+/**
+ * A simple list item layout comprising of a content slot and an optional icon to its start side.
+ *
+ * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
+ * the [state]. For more granular control, see the overload with 'selected' and 'active'.
+ *
+ * @param state The state of the list item, containing selection and activity status.
+ * @param colorFilter The color filter to apply to the icon, if present.
+ * @param modifier Modifier to apply to the root container of the list item.
+ * @param iconModifier Modifier to apply to the icon displayed in the list item.
+ * @param icon An optional icon key that defines which icon should be displayed.
+ * @param iconContentDescription The content description for the icon, used for accessibility.
+ * @param style The style of the list item, including colors and metrics, with a default value from the theme.
+ * @param height The height of the list item, with a default value from global metrics in the theme.
+ * @param content The composable content to display inside the list item.
+ * @param painterHints Variadic arguments of painter hints to modify the behavior of the icon's painter.
+ */
+@Composable
+public fun SimpleListItem(
+    state: ListItemState,
+    colorFilter: ColorFilter?,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    icon: IconKey? = null,
+    iconContentDescription: String? = null,
+    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
+    height: Dp = JewelTheme.globalMetrics.rowHeight,
+    content: @Composable () -> Unit,
+    vararg painterHints: PainterHint,
+) {
+    Row(
+        modifier =
+            modifier
+                .semantics { selected = state.isSelected }
+                .fillMaxWidth()
+                .height(height)
+                .padding(style.metrics.outerPadding)
+                .background(
+                    color = style.colors.backgroundFor(state).value,
+                    shape = RoundedCornerShape(style.metrics.selectionBackgroundCornerSize),
+                )
+                .padding(style.metrics.innerPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(style.metrics.iconTextGap),
+    ) {
+        if (icon != null) {
+            Icon(
+                modifier = iconModifier.size(16.dp),
+                key = icon,
+                contentDescription = iconContentDescription,
+                colorFilter = colorFilter,
+                hints = painterHints,
+            )
+        }
+        content()
+    }
+}
 
 /**
  * A simple list item layout comprising of a content slot and an optional icon to its start side.
