@@ -20,7 +20,6 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
-import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShStringUtil;
 import com.intellij.terminal.TerminalExecutionConsole;
@@ -50,8 +49,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
   public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final EelDescriptor eelDescriptor = computeEelDescriptor();
 
-    if (EelPathUtils.isProjectLocal(myProject) && // fixme!!!: remove this check after terminal will be migrated to eel
-        myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
+    if (myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
       ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
       if (shRunner != null && shRunner.isAvailable(myProject)) {
         shRunner.run(myProject, buildCommand(eelDescriptor), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(),
