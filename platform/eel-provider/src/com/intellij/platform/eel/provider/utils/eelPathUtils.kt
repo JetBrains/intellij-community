@@ -277,7 +277,7 @@ object EelPathUtils {
       fs.createTemporaryDirectory().deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
     }
     else {
-      fs.createTemporaryFile().deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
+      fs.createTemporaryFile().suffix(source.name).deleteOnExit(deleteOnExit).getOrThrowFileSystemException().asNioPath()
     }
   }
 
