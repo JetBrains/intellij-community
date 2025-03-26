@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
@@ -51,7 +52,6 @@ import kotlin.sequences.forEach
  */
 class KotlinMultiPlatformProjectDescriptor(
     val platformDescriptors: List<PlatformDescriptor> = PlatformDescriptor.entries,
-    val postponeKotlinSdkCreation: Boolean = false,
 ) : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
         val moduleName: String,
@@ -196,6 +196,19 @@ class KotlinMultiPlatformProjectDescriptor(
 
     override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk9()
 
+    override fun registerSdk(disposable: Disposable?) {
+        super.registerSdk(disposable)
+        // enforce KotlinSDK creation before the project is created/opened next time
+        // Workaround for a workspace model issue in light fixture tests:
+        // SDK entity created after project creation but before project opening is not copied
+        // from the global snapshot to the project snapshot.
+        // leading to exceptions, e.g. from KaLibrarySdkModuleImpl#getSdk
+
+        // registerSdk() is called once per test class (if the same descriptor is used)
+        // thus sdk should not be detached on tearDown, thus no disposable is passed
+        KotlinSdkType.setUpIfNeeded()
+    }
+
     override fun setUpProject(project: Project, handler: SetupHandler) {
         super.setUpProject(project, handler)
 
@@ -278,33 +291,13 @@ class KotlinMultiPlatformProjectDescriptor(
         }
     }
 
-    private val modulesWithKotlinSdkForPostSetup = mutableSetOf<Module>()
-
     private fun setUpKotlinSdk(module: Module) {
-        if (postponeKotlinSdkCreation) {
-            modulesWithKotlinSdkForPostSetup += module
-        } else {
-            KotlinSdkType.setUpIfNeeded(module)
-            ConfigLibraryUtil.configureSdk(
-                module,
-                runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
-                    ?: error("Kotlin SDK wasn't created")
-            )
-        }
-    }
-
-    fun runPostponedSetup() {
-        check(postponeKotlinSdkCreation)
-        runWriteAction {
-            for (module in modulesWithKotlinSdkForPostSetup) {
-                KotlinSdkType.setUpIfNeeded(module)
-                ConfigLibraryUtil.configureSdk(
-                    module,
-                    runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
-                        ?: error("Kotlin SDK wasn't created")
-                )
-            }
-        }
+        KotlinSdkType.setUpIfNeeded(module)
+        ConfigLibraryUtil.configureSdk(
+            module,
+            runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
+                ?: error("Kotlin SDK wasn't created")
+        )
     }
 
     fun cleanupSourceRoots() = runWriteAction {
