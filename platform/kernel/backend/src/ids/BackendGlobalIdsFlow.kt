@@ -6,6 +6,7 @@ import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
@@ -16,6 +17,9 @@ import org.jetbrains.annotations.ApiStatus
  *
  * This API is useful when you need to pass backend based [Flow] to a client through RPC.
  * So, later the client can make requests based on these IDs.
+ *
+ * When [Flow] receives new value, previously associated [Id] will be deleted
+ * and value couldn't be acquired by this [Id].
  *
  * @see storeValueGlobally
  */
@@ -40,6 +44,9 @@ fun <TID : Id, Value : Any> Flow<Value>.asIDsFlow(type: BackendRecordType<TID, V
  * This API is useful when you need to pass backend based [Flow] to a client through RPC.
  * So, later the client can make requests based on these IDs.
  *
+ * When [Flow] receives new value, previously associated [Id] will be deleted
+ * and value couldn't be acquired by this [Id].
+ *
  * @see storeValueGlobally
  */
 @ApiStatus.Internal
@@ -53,9 +60,13 @@ fun <TID : Id, Value : Any> Flow<Value?>.asNullableIDsFlow(type: BackendRecordTy
  * Second argument is the current value of the given [Flow].
  *
  * Backend object may be acquired from [Id] by [findValueById] function later on.
- *
  * This API is useful when you need to pass backend based [Flow] to a client through RPC.
  * So, later the client can make requests based on these IDs.
+ *
+ * When [Flow] receives new value, previously associated [Id] will be deleted
+ * and value couldn't be acquired by this [Id].
+ *
+ * @see storeValueGlobally
  */
 @ApiStatus.Internal
 fun <TID : Id, Value : Any, K> Flow<Value?>.withNullableIDsFlow(
