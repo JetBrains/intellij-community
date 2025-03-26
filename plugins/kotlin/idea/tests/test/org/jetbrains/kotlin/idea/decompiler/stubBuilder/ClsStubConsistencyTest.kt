@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class ClsStubConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun doTest(id: ClassId) {
-        val packageFile = VirtualFileFinder.SERVICE.getInstance(project).findVirtualFileWithHeader(id)
+        val packageFile = VirtualFileFinder.SERVICE.getInstance(project, module = null).findVirtualFileWithHeader(id)
             ?: throw AssertionError("File not found for id: $id")
         val decompiledText = buildDecompiledTextForClassFile(packageFile).text
         val fileWithDecompiledText = KtPsiFactory(project).createFile(decompiledText)
