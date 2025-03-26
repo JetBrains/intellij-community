@@ -332,14 +332,15 @@ public final class JBCefApp {
   }
 
   private static boolean isSupportedImpl() {
-    if (SystemInfo.isLinux && !isLinuxLibcSupported()) {
-      return false;
-    }
-
     CefDelegate delegate = getActiveDelegate();
     if (delegate != null) {
       return delegate.isCefSupported();
     }
+
+    if (SystemInfo.isLinux && !isLinuxLibcSupported()) {
+      return false;
+    }
+
     Function<String, Boolean> unsupported = (msg) -> {
       LOG.warn(msg + (!msg.contains("disabled") ? " (Use JBR bundled with the IDE)" : ""));
       return false;
