@@ -28,11 +28,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
-  suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult>
+  suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
-  suspend fun evaluateXExpression(evaluatorId: XDebuggerEvaluatorId, xExpressionDto: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
+  suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
-  suspend fun evaluateInDocument(evaluatorId: XDebuggerEvaluatorId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
+  suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
 
   companion object {
     @JvmStatic
@@ -69,7 +69,7 @@ sealed interface XValueComputeChildrenEvent {
   @Serializable
   data class TooManyChildren(
     val remaining: Int,
-    @Serializable(with = SendChannelSerializer::class) val addNextChildren: SendChannel<Unit>? = null
+    @Serializable(with = SendChannelSerializer::class) val addNextChildren: SendChannel<Unit>? = null,
   ) : XValueComputeChildrenEvent
 }
 
@@ -105,11 +105,7 @@ data class XValueMarkerId(val id: UID)
 
 @ApiStatus.Internal
 @Serializable
-data class XDebuggerEvaluatorId(val id: UID)
-
-@ApiStatus.Internal
-@Serializable
-data class XDebuggerEvaluatorDto(val id: XDebuggerEvaluatorId, val canEvaluateInDocument: Boolean)
+data class XDebuggerEvaluatorDto(val canEvaluateInDocument: Boolean)
 
 @ApiStatus.Internal
 @Serializable

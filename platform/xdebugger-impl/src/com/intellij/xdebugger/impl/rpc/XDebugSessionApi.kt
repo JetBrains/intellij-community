@@ -26,8 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebugSessionApi : RemoteApi<Unit> {
-  suspend fun currentEvaluator(sessionId: XDebugSessionId): Flow<XDebuggerEvaluatorDto?>
-
   suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?>
 
   suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState>
@@ -88,7 +86,7 @@ data class XDebugSessionDto(
 @ApiStatus.Internal
 @Serializable
 data class KillableProcessInfo(
-  val canKillProcess: Boolean = true
+  val canKillProcess: Boolean = true,
 )
 
 @ApiStatus.Internal

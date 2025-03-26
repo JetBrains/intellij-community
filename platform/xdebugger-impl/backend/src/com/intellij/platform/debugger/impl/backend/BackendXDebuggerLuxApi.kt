@@ -15,10 +15,11 @@ import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
-import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
+import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
+import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
 import com.intellij.xdebugger.impl.rhizome.XValueEntity
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog
 import com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
@@ -27,12 +28,12 @@ import kotlinx.coroutines.*
 import org.jetbrains.concurrency.await
 
 internal class BackendXDebuggerLuxApi : XDebuggerLuxApi {
-  override suspend fun showLuxEvaluateDialog(evaluatorId: XDebuggerEvaluatorId, editorId: EditorId?, fileId: VirtualFileId?, xValueId: XValueId?) {
-    val evaluatorEntity = entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId) ?: return
-    val sessionEntity = evaluatorEntity.sessionEntity
+  override suspend fun showLuxEvaluateDialog(frameId: XStackFrameId, editorId: EditorId?, fileId: VirtualFileId?, xValueId: XValueId?) {
+    val stackFrameEntity = debuggerEntity<XStackFrameEntity>(frameId.id) ?: return
+    val evaluator = stackFrameEntity.obj.evaluator ?: return
+    val sessionEntity = stackFrameEntity.sessionEntity
     val session = sessionEntity.session
     val project = sessionEntity.projectEntity.projectId.findProject()
-    val evaluator = evaluatorEntity.evaluator
     val editor = editorId?.findEditorOrNull()
 
     val editorVirtualFile = editor?.document?.let { FileDocumentManager.getInstance().getFile(it) }

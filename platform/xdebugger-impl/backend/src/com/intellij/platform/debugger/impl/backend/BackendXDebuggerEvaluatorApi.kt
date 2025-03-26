@@ -17,12 +17,12 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
-import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
+import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
+import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
 import com.intellij.xdebugger.impl.rhizome.XValueEntity
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
 import com.jetbrains.rhizomedb.Entity
-import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.query
@@ -37,20 +37,20 @@ import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asDeferred
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
-  override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorId) { project, evaluator, callback ->
+  override suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
+    return evaluate(frameId) { project, evaluator, callback ->
       evaluator.evaluate(expression, callback, position?.sourcePosition())
     }
   }
 
-  override suspend fun evaluateXExpression(evaluatorId: XDebuggerEvaluatorId, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorId) { project, evaluator, callback ->
+  override suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
+    return evaluate(frameId) { project, evaluator, callback ->
       evaluator.evaluate(expression.xExpression(), callback, position?.sourcePosition())
     }
   }
 
-  override suspend fun evaluateInDocument(evaluatorId: XDebuggerEvaluatorId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorId) { project, evaluator, callback ->
+  override suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult> {
+    return evaluate(frameId) { project, evaluator, callback ->
       val document = documentId.document()!!
       if (evaluator is XDebuggerDocumentOffsetEvaluator) {
         evaluator.evaluate(document, offset, type, callback)
@@ -62,12 +62,14 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   private suspend fun evaluate(
-    evaluatorId: XDebuggerEvaluatorId,
+    frameId: XStackFrameId,
     evaluateFun: suspend (Project, XDebuggerEvaluator, XEvaluationCallback) -> Unit,
   ): Deferred<XEvaluationResult> {
-    val evaluatorEntity = entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId)
-                          ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
-    val evaluator = evaluatorEntity.evaluator
+    val stackFrameEntity = debuggerEntity<XStackFrameEntity>(frameId.id)
+                           ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
+    val evaluator = stackFrameEntity.obj.evaluator
+                    ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
+    val sessionEntity = stackFrameEntity.sessionEntity
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
@@ -80,7 +82,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           evaluationResult.completeExceptionally(EvaluationException(errorMessage))
         }
       }
-      evaluateFun(evaluatorEntity.sessionEntity.projectEntity.asProject(), evaluator, callback)
+      evaluateFun(sessionEntity.projectEntity.asProject(), evaluator, callback)
     }
     val evaluationCoroutineScope = EvaluationCoroutineScopeProvider.getInstance().cs
 
@@ -91,7 +93,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       catch (e: EvaluationException) {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
-      val xValueEntity = newXValueEntity(xValue, evaluatorEntity)
+      val xValueEntity = newXValueEntity(xValue, sessionEntity)
       val xValueDto = xValueEntity.toXValueDto()
       XEvaluationResult.Evaluated(xValueDto)
     }
@@ -123,13 +125,13 @@ internal suspend fun XValueEntity.toXValueDto(): XValueDto {
 
 private suspend fun newXValueEntity(
   xValue: XValue,
-  evaluatorEntity: XDebuggerEvaluatorEntity,
+  sessionEntity: XDebugSessionEntity,
 ): XValueEntity {
   val xValueEntity = change {
     XValueEntity.new {
       it[XValueEntity.XValueId] = XValueId(UID.random())
       it[XValueEntity.XValueAttribute] = xValue
-      it[XValueEntity.SessionEntity] = evaluatorEntity.sessionEntity
+      it[XValueEntity.SessionEntity] = sessionEntity
     }
   }
   return xValueEntity.apply {

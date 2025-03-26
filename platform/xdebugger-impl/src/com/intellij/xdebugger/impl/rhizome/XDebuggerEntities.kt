@@ -5,11 +5,9 @@ import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.rhizome.XValueEntity.Companion.XValueId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.change
@@ -27,7 +25,6 @@ private class XDebuggerEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
     return listOf(
       XDebugSessionEntity,
-      XDebuggerEvaluatorEntity,
       XValueEntity,
       XSuspendContextEntity,
       XExecutionStackEntity,
@@ -50,13 +47,6 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
   val session: XDebugSession by Session
   val projectEntity: ProjectEntity by ProjectEntity
 
-  /**
-   * Current evaluator of the [session].
-   *
-   * @see [com.intellij.xdebugger.impl.XDebugSessionCurrentStackFrameManager]
-   */
-  val evaluator: XDebuggerEvaluatorEntity? by Evaluator
-
   val currentSourcePosition: XSourcePosition? by CurrentSourcePosition
 
   companion object : EntityType<XDebugSessionEntity>(
@@ -68,37 +58,7 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
     val Session: Required<XDebugSession> = requiredTransient("session", Indexing.UNIQUE)
     val ProjectEntity: Required<ProjectEntity> = requiredRef("project", RefFlags.CASCADE_DELETE_BY)
 
-    val Evaluator: Optional<XDebuggerEvaluatorEntity> = optionalRef("evaluator")
-
     val CurrentSourcePosition: Optional<XSourcePosition> = optionalTransient("currentPosition")
-  }
-}
-
-/**
- * Represents an entity which holds reference to the [XDebuggerEvaluator].
- * Such an entity allows to send [XDebuggerEvaluatorId] to a client and afterward find [XDebuggerEvaluator] by this id.
- *
- * The entity is attached to a session by reference to [XDebugSessionEntity].
- * So, the entity will be removed when [XDebugSession] is stopped.
- *
- * This entity cannot be shared between frontend and backend.
- * It should be used only on the backend side.
- *
- * @see [com.intellij.xdebugger.impl.XDebugSessionCurrentStackFrameManager]
- */
-data class XDebuggerEvaluatorEntity(override val eid: EID) : Entity {
-  val evaluatorId: XDebuggerEvaluatorId by EvaluatorId
-  val evaluator: XDebuggerEvaluator by Evaluator
-  val sessionEntity: XDebugSessionEntity by Session
-
-  companion object : EntityType<XDebuggerEvaluatorEntity>(
-    XDebuggerEvaluatorEntity::class.java.name,
-    "com.intellij.xdebugger.impl.rhizome",
-    ::XDebuggerEvaluatorEntity
-  ) {
-    val EvaluatorId: Required<XDebuggerEvaluatorId> = requiredTransient("evaluatorId", Indexing.UNIQUE)
-    val Evaluator: Required<XDebuggerEvaluator> = requiredTransient("evaluator")
-    val Session: Required<XDebugSessionEntity> = requiredRef<XDebugSessionEntity>("session", RefFlags.CASCADE_DELETE_BY)
   }
 }
 

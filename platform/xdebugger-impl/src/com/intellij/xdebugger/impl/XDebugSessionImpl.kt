@@ -141,7 +141,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myIcon: Icon? = icon
   private val mySessionId = XDebugSessionId(UID.random())
   private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this, mySessionId)
-  private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
+  private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
   private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
   var currentExecutionStack: XExecutionStack?
     get() = executionStackFlow.value.get()

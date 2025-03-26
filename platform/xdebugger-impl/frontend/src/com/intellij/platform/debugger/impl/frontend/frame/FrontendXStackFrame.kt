@@ -3,7 +3,9 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
@@ -15,9 +17,12 @@ import kotlinx.coroutines.CoroutineScope
 // TODO[IJPL-177087] methods
 internal class FrontendXStackFrame(
   private val frameDto: XStackFrameDto,
-  project: Project,
-  cs: CoroutineScope,
+  private val project: Project,
+  private val cs: CoroutineScope,
 ) : XStackFrame() {
+  private val evaluator by lazy {
+    createFrontendXDebuggerEvaluator(project, cs, frameDto.evaluator, frameDto.stackFrameId)
+  }
 
   private val xValueContainer = FrontendXValueContainer(project, cs, false) {
     XExecutionStackApi.getInstance().computeVariables(frameDto.stackFrameId)
@@ -34,4 +39,6 @@ internal class FrontendXStackFrame(
   override fun computeChildren(node: XCompositeNode) {
     xValueContainer.computeChildren(node)
   }
+
+  override fun getEvaluator(): XDebuggerEvaluator? = evaluator
 }

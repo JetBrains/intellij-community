@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
-import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
@@ -51,20 +50,6 @@ internal class FrontendXDebuggerSession private constructor(
   private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
   private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
   val id = sessionDto.id
-  val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
-    channelFlow {
-      XDebugSessionApi.getInstance().currentEvaluator(id).collectLatest { evaluatorDto ->
-        if (evaluatorDto == null) {
-          send(null)
-          return@collectLatest
-        }
-        supervisorScope {
-          val evaluator = createFrontendXDebuggerEvaluator(project, this, evaluatorDto)
-          send(evaluator)
-          awaitCancellation()
-        }
-      }
-    }.stateIn(cs, SharingStarted.Eagerly, null)
 
   val sourcePosition: StateFlow<XSourcePosition?> =
     channelFlow {
@@ -127,6 +112,12 @@ internal class FrontendXDebuggerSession private constructor(
           awaitCancellation()
         }
       }
+    }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
+    currentStackFrame.map { frame ->
+      val frameEvaluator = frame?.evaluator ?: return@map null
+      frameEvaluator as FrontendXDebuggerEvaluator
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   override val isStopped: Boolean

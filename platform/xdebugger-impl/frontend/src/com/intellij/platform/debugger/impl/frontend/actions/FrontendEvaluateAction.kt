@@ -7,18 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.editorId
-import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * Frontend version of [com.intellij.xdebugger.impl.actions.EvaluateAction]
@@ -55,7 +49,7 @@ private class FrontendEvaluateAction : AnAction(), ActionRemoteBehaviorSpecifica
 
     performDebuggerActionAsync(e) {
       XDebuggerLuxApi.getInstance().showLuxEvaluateDialog(
-        evaluator.evaluatorDto.id, editor?.editorId(), virtualFile?.rpcId(), xValue?.xValueDto?.id
+        evaluator.frameId, editor?.editorId(), virtualFile?.rpcId(), xValue?.xValueDto?.id
       )
     }
   }

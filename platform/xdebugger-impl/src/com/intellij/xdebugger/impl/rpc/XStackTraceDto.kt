@@ -27,7 +27,7 @@ data class XExecutionStackId(val id: UID)
 data class XExecutionStackDto(
   val executionStackId: XExecutionStackId,
   val displayName: @Nls String,
-  val icon: IconId?
+  val icon: IconId?,
 )
 
 @ApiStatus.Internal
@@ -51,6 +51,7 @@ data class XStackFrameDto(
   val stackFrameId: XStackFrameId,
   val sourcePosition: XSourcePositionDto?,
   val equalityObject: XStackFrameEqualityObject?,
+  val evaluator: XDebuggerEvaluatorDto,
 )
 
 @ApiStatus.Internal

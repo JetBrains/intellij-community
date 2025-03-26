@@ -14,7 +14,6 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.rhizome.*
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.new
@@ -32,22 +31,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
-  override suspend fun currentEvaluator(sessionId: XDebugSessionId): Flow<XDebuggerEvaluatorDto?> {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
-    return channelFlow {
-      withEntities(sessionEntity) {
-        query { sessionEntity.evaluator }.collect { entity ->
-          if (entity == null) {
-            send(null)
-            return@collect
-          }
-          val canEvaluateInDocument = entity.evaluator is XDebuggerDocumentOffsetEvaluator
-          send(XDebuggerEvaluatorDto(entity.evaluatorId, canEvaluateInDocument))
-        }
-      }
-    }
-  }
-
   override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
     val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
     return channelFlow {
@@ -265,5 +248,7 @@ internal fun createXStackFrameDto(frame: XStackFrame, id: UID): XStackFrameDto {
     is String -> XStackFrameStringEqualityObject(equalityObject)
     else -> null // TODO support other types
   }
-  return XStackFrameDto(XStackFrameId(id), frame.sourcePosition?.toRpc(), serializedEqualityObject)
+  val canEvaluateInDocument = frame.isDocumentEvaluator
+  val evaluatorDto = XDebuggerEvaluatorDto(canEvaluateInDocument)
+  return XStackFrameDto(XStackFrameId(id), frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto)
 }
