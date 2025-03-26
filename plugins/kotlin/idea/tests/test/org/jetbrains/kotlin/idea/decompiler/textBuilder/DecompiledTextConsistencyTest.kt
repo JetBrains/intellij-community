@@ -42,7 +42,7 @@ class DecompiledTextConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
             FqName("kotlin.collections.TypeAliasesKt") to null
         )) {
             val classId = ClassId.topLevel(packageFacadeFqName)
-            val classFile = VirtualFileFinder.SERVICE.getInstance(project).findVirtualFileWithHeader(classId)!!
+            val classFile = VirtualFileFinder.SERVICE.getInstance(project, null).findVirtualFileWithHeader(classId)!!
 
             val module = TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
                 project, listOf(), BindingTraceContext(project), KotlinTestUtils.newConfiguration(), ::IDEPackagePartProvider

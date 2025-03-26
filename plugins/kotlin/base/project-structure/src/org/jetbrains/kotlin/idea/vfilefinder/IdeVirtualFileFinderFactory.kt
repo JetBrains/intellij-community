@@ -7,7 +7,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
@@ -18,11 +17,9 @@ class IdeVirtualFileFinderFactory(private val project: Project) : VirtualFileFin
     override fun create(scope: GlobalSearchScope): VirtualFileFinder = IdeVirtualFileFinder(scope, project)
 
     @OptIn(KaImplementationDetail::class)
-    override fun create(project: Project, module: ModuleDescriptor): VirtualFileFinder {
-        val ideaModuleInfo = module.getCapability(ModuleInfo.Capability) as? IdeaModuleInfo
-
-        val scope = if (ideaModuleInfo != null) {
-            KaResolutionScopeProvider.getInstance(project).getResolutionScope(ideaModuleInfo.toKaModule())
+    override fun create(project: Project, module: ModuleInfo): VirtualFileFinder {
+        val scope = if (module is IdeaModuleInfo) {
+            KaResolutionScopeProvider.getInstance(project).getResolutionScope(module.toKaModule())
         } else {
             GlobalSearchScope.allScope(project)
         }
