@@ -57,13 +57,16 @@ f:com.intellij.openapi.actionSystem.DataKey
 - f:is(java.lang.String):Z
 f:com.intellij.openapi.actionSystem.DataKey$Companion
 - f:create(java.lang.String):com.intellij.openapi.actionSystem.DataKey
+com.intellij.openapi.actionSystem.DataMap
+- a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 com.intellij.openapi.actionSystem.DataProvider
 - a:getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataSink
 - sf:Companion:com.intellij.openapi.actionSystem.DataSink$Companion
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSnapshotProvider):V
-- a:lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
+- lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
 - a:lazyNull(com.intellij.openapi.actionSystem.DataKey):V
+- a:lazyValue(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function1):V
 - a:set(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
 - a:setNull(com.intellij.openapi.actionSystem.DataKey):V
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataProvider):V
@@ -74,7 +77,7 @@ f:com.intellij.openapi.actionSystem.DataSink$Companion
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataProvider):V
 - f:uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.lang.Object):V
 com.intellij.openapi.actionSystem.DataSnapshot
-- a:get(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- com.intellij.openapi.actionSystem.DataMap
 com.intellij.openapi.actionSystem.DataSnapshotProvider
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.openapi.actionSystem.EdtNoGetDataProvider
