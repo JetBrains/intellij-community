@@ -158,13 +158,13 @@ internal fun tryInvokeWithHelper(
       value = value.getValue(0)
       if (value is ObjectReference) {
         evaluationContext.suspendContext.keepAsync(value)
-      }
-      // clear the reference
-      if (DebuggerUtilsAsync.isAsyncEnabled() && wrapper is ArrayReferenceImpl) {
-        wrapper.setFirstElementToNull()
-      }
-      else {
-        wrapper.setValue(0, null)
+        // clear the reference
+        if (DebuggerUtilsAsync.isAsyncEnabled() && wrapper is ArrayReferenceImpl) {
+          wrapper.setFirstElementToNull()
+        }
+        else {
+          wrapper.setValue(0, null)
+        }
       }
     }
     return InvocationResult(true, value)
