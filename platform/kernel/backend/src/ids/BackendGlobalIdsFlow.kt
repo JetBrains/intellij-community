@@ -2,11 +2,9 @@
 package com.intellij.platform.kernel.backend.ids
 
 import com.intellij.platform.rpc.Id
-import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see storeValueGlobally
  */
 @ApiStatus.Internal
-fun <TID : Id, Value : Any> Flow<Value>.asIDsFlow(type: BackendRecordType<TID, Value>): Flow<TID> {
+fun <TID : Id, Value : Any> Flow<Value>.asIDsFlow(type: BackendValueIdType<TID, Value>): Flow<TID> {
   val flow = this
   return channelFlow {
     flow.collectLatest { value ->
@@ -50,7 +48,7 @@ fun <TID : Id, Value : Any> Flow<Value>.asIDsFlow(type: BackendRecordType<TID, V
  * @see storeValueGlobally
  */
 @ApiStatus.Internal
-fun <TID : Id, Value : Any> Flow<Value?>.asNullableIDsFlow(type: BackendRecordType<TID, Value>): Flow<TID?> {
+fun <TID : Id, Value : Any> Flow<Value?>.asNullableIDsFlow(type: BackendValueIdType<TID, Value>): Flow<TID?> {
   return this.withNullableIDsFlow(type) { id, _ -> id }
 }
 
@@ -70,7 +68,7 @@ fun <TID : Id, Value : Any> Flow<Value?>.asNullableIDsFlow(type: BackendRecordTy
  */
 @ApiStatus.Internal
 fun <TID : Id, Value : Any, K> Flow<Value?>.withNullableIDsFlow(
-  type: BackendRecordType<TID, Value>,
+  type: BackendValueIdType<TID, Value>,
   mapFunction: (TID?, Value?) -> K,
 ): Flow<K> {
   val flow = this

@@ -9,19 +9,19 @@ import org.jetbrains.annotations.ApiStatus
  * Represents an association between [Id] and value which are going to be stored in application storage
  * through [storeValueGlobally].
  *
- * [BackendRecordType] provides a type-safe way of putting and acquiring values by [storeValueGlobally] and [findValueById] methods.
+ * [BackendValueIdType] provides a type-safe way of putting and acquiring values by [storeValueGlobally] and [findValueById] methods.
  *
  * To store values in application storage, you need:
  *   1. Introduce id in the shared code like `data class SomeId(override val uid: UID): Id`
  *   2. Introduce record type which will be used by [storeValueGlobally] and [findValueById] methods
- *      like: `object SomeBackendRecordType: BackendRecordType<SomeId, SomeClass>(::SomeId)`
- * Now you can use this RecordType to store values like:
+ *      like: `object SomeBackendValueIdType: BackendValueIdType<SomeId, SomeClass>(::SomeId)`
+ * Now you can use this ValueIdType to store values like:
  * ```kotlin
- * val id = storeValueGlobally(coroutineScope, someValue, SomeBackendRecordType)
- * val someValue2 = findById(id, SomeBackendRecordType)
+ * val id = storeValueGlobally(coroutineScope, someValue, SomeBackendValueIdType)
+ * val someValue2 = findById(id, SomeBackendValueIdType)
  * ```
  */
 @ApiStatus.Internal
-abstract class BackendRecordType<TID : Id, Value : Any>(
+abstract class BackendValueIdType<TID : Id, Value : Any>(
   internal val idFactory: (UID) -> TID,
 )

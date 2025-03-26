@@ -3,7 +3,7 @@
 
 package com.intellij.platform.debugger.impl.backend.hotswap
 
-import com.intellij.platform.kernel.backend.ids.BackendRecordType
+import com.intellij.platform.kernel.backend.ids.BackendValueIdType
 import com.intellij.platform.kernel.backend.ids.findValueById
 import com.intellij.platform.kernel.backend.ids.storeValueGlobally
 import com.intellij.platform.project.ProjectId
@@ -33,7 +33,7 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
         val session = it.session
         val status = it.status
         coroutineScope {
-          val id = storeValueGlobally(this, session, type = HowSwapSessionRecordType)
+          val id = storeValueGlobally(this, session, type = HowSwapSessionValueIdType)
           send(XDebugHotSwapCurrentSessionStatus(id, status))
           awaitCancellation()
         }
@@ -42,7 +42,7 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
   }
 
   override suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapStatistics.HotSwapSource) {
-    val session = findValueById(sessionId, type = HowSwapSessionRecordType) ?: return
+    val session = findValueById(sessionId, type = HowSwapSessionValueIdType) ?: return
     HotSwapStatistics.logHotSwapCalled(session.project, source)
 
     fun <T> doHotSwap(session: HotSwapSession<T>) = session.provider.performHotSwap(session)
@@ -56,4 +56,4 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
   }
 }
 
-private object HowSwapSessionRecordType : BackendRecordType<XDebugHotSwapSessionId, HotSwapSession<*>>(::XDebugHotSwapSessionId)
+private object HowSwapSessionValueIdType : BackendValueIdType<XDebugHotSwapSessionId, HotSwapSession<*>>(::XDebugHotSwapSessionId)

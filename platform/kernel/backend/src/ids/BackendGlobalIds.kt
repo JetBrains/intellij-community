@@ -25,18 +25,18 @@ import org.jetbrains.annotations.ApiStatus
  * data class ObjectId(override val uid: UID): Id
  *
  * // Mapping between shared id and the object class which will be stored in application storage
- * object BackendObjectRecordType<ObjectId, BackendObjectType>: BackendRecordType(::ObjectId)
+ * object BackendObjectValueIdType<ObjectId, BackendObjectType>: BackendValueIdType(::ObjectId)
  *
  * // Frontend will call this method to acquire reference to a backend object
  * suspend fun rpcCallGetId(): ObjectId {
  *   val backendObject: BackendObjectType = BackendService.getInstance().someObject
- *   val backendObjectId = storeValueGlobally(backendObject.coroutineScope, backendObject, type = BackendObjectRecordType)
+ *   val backendObjectId = storeValueGlobally(backendObject.coroutineScope, backendObject, type = BackendObjectValueIdType)
  *   return backendObjectId
  * }
  *
  * // Frontend will use this method to call some code, based on backend object
  * suspend fun rpcCallGetId(id: ObjectId): Response {
- *   val backendObject: BackendObjectType = findValueById(id, type = BackendObjectRecordType) ?: return Response.Error(...)
+ *   val backendObject: BackendObjectType = findValueById(id, type = BackendObjectValueIdType) ?: return Response.Error(...)
  *   // some code which uses backendObject
  * }
  * ```
@@ -44,19 +44,19 @@ import org.jetbrains.annotations.ApiStatus
  * If you need something more powerful than just storing references for the backend objects,
  * it is better to use pure rhizomeDB API.
  *
- * @see BackendRecordType
+ * @see BackendValueIdType
  */
 @ApiStatus.Internal
 fun <TID : Id, Value : Any> storeValueGlobally(
   coroutineScope: CoroutineScope,
   value: Value,
-  type: BackendRecordType<TID, Value>,
+  type: BackendValueIdType<TID, Value>,
 ): TID {
   return BackendGlobalIdsManager.getInstance().putId(coroutineScope, value, type.idFactory)
 }
 
 /**
- * Retrieves a value associated with [BackendRecordType] by the given [Id].
+ * Retrieves a value associated with [BackendValueIdType] by the given [Id].
  * Value will be returned if it was previously stored by [storeValueGlobally], and it wasn't deleted.
  *
  * Example:
@@ -66,25 +66,25 @@ fun <TID : Id, Value : Any> storeValueGlobally(
  * data class ObjectId(override val uid: UID): Id
  *
  * // Mapping between shared id and the object class which will be stored in application storage
- * object BackendObjectRecordType<ObjectId, BackendObjectType>: BackendRecordType(::ObjectId)
+ * object BackendObjectValueIdType<ObjectId, BackendObjectType>: BackendValueIdType(::ObjectId)
  *
  * // Frontend will call this method to acquire reference to a backend object
  * suspend fun rpcCallGetId(): ObjectId {
  *   val backendObject: BackendObjectType = BackendService.getInstance().someObject
- *   val backendObjectId = storeValueGlobally(backendObject.coroutineScope, backendObject, type = BackendObjectRecordType)
+ *   val backendObjectId = storeValueGlobally(backendObject.coroutineScope, backendObject, type = BackendObjectValueIdType)
  *   return backendObjectId
  * }
  *
  * // Frontend will use this method to call some code, based on backend object
  * suspend fun rpcCallGetId(id: ObjectId): Response {
- *   val backendObject: BackendObjectType = findValueById(id, type = BackendObjectRecordType) ?: return Response.Error(...)
+ *   val backendObject: BackendObjectType = findValueById(id, type = BackendObjectValueIdType) ?: return Response.Error(...)
  *   // some code which uses backendObject
  * }
  * ```
  */
 @Suppress("unused")
 @ApiStatus.Internal
-fun <TID : Id, Value : Any> findValueById(id: TID, type: BackendRecordType<TID, Value>): Value? {
+fun <TID : Id, Value : Any> findValueById(id: TID, type: BackendValueIdType<TID, Value>): Value? {
   return BackendGlobalIdsManager.getInstance().findById(id)
 }
 
@@ -107,10 +107,10 @@ fun <TID : Id, Value : Any> findValueById(id: TID, type: BackendRecordType<TID, 
  * !!! Prefer to use [storeValueGlobally] with [CoroutineScope] as parameter,
  * !!! so it will be deleted properly.
  *
- * @see BackendRecordType
+ * @see BackendValueIdType
  */
 @ApiStatus.Internal
-fun <TID : Id, Value : Any> storeValueGlobally(value: Value, type: BackendRecordType<TID, Value>): TID {
+fun <TID : Id, Value : Any> storeValueGlobally(value: Value, type: BackendValueIdType<TID, Value>): TID {
   return BackendGlobalIdsManager.getInstance().putId(null, value, type.idFactory)
 }
 
@@ -121,6 +121,6 @@ fun <TID : Id, Value : Any> storeValueGlobally(value: Value, type: BackendRecord
  */
 @Suppress("unused")
 @ApiStatus.Internal
-fun <TID : Id, Value : Any> delete(id: TID, type: BackendRecordType<TID, Value>) {
+fun <TID : Id, Value : Any> delete(id: TID, type: BackendValueIdType<TID, Value>) {
   BackendGlobalIdsManager.getInstance().removeId(id)
 }
