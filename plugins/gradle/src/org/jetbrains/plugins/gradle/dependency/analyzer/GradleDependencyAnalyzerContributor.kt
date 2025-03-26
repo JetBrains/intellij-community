@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
-import com.google.gson.GsonBuilder
-import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyNodeDeserializer
-import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyReportTask
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -12,25 +11,22 @@ import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
+@ApiStatus.Internal
 class GradleDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
   private val projects = ConcurrentHashMap<DependencyAnalyzerProject, GradleModuleData>()
   private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
@@ -82,7 +78,9 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   private fun getOrRefreshData(gradleModuleData: GradleModuleData): List<DependencyScopeNode> {
     return configurationNodesMap.computeIfAbsent(gradleModuleData.gradleProjectDir) {
-      gradleModuleData.loadDependencies(project)
+      LOG.runAndLogException {
+        GradleDependencyNodeIndex.getOrCollectDependencies(project, gradleModuleData, emptyList()).get()
+      } ?: emptyList()
     }
   }
 
@@ -170,41 +168,12 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   }
 
   companion object {
+
+    private val LOG = logger<GradleDependencyAnalyzerContributor>()
+
     internal val defaultConfiguration = scope("default")
 
     internal val MODULE_DATA = Key.create<ModuleData>("GradleDependencyAnalyzerContributor.ModuleData")
-
-    private fun GradleModuleData.loadDependencies(project: Project): List<DependencyScopeNode> {
-      var dependencyScopeNodes: List<DependencyScopeNode> = emptyList()
-      val outputFile = FileUtil.createTempFile("dependencies", ".json", true)
-      val taskConfiguration =
-        """
-        outputFile = project.file("${FileUtil.toCanonicalPath(outputFile.absolutePath)}")
-        configurations = []
-        """.trimIndent()
-      GradleTaskManager.runCustomTask(
-        project, GradleBundle.message("gradle.dependency.analyzer.loading"),
-        GradleDependencyReportTask::class.java,
-        directoryToRunTask,
-        fullGradlePath,
-        taskConfiguration,
-        ProgressExecutionMode.NO_PROGRESS_SYNC,
-        object : TaskCallback {
-          override fun onSuccess() {
-            val json = FileUtil.loadFile(outputFile)
-            val gsonBuilder = GsonBuilder()
-            gsonBuilder.registerTypeAdapter(DependencyNode::class.java, GradleDependencyNodeDeserializer())
-            val scopeNodes = gsonBuilder.create().fromJson(json, Array<DependencyScopeNode>::class.java)
-            dependencyScopeNodes = scopeNodes?.asList() ?: emptyList()
-          }
-
-          override fun onFailure() {
-          }
-        }
-      )
-      FileUtil.asyncDelete(outputFile)
-      return dependencyScopeNodes
-    }
 
     private fun DependencyScopeNode.toScope() = scope(scope)
 

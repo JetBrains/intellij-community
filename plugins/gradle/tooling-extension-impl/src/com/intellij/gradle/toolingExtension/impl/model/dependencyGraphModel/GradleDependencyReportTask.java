@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 
-import com.google.gson.GsonBuilder;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
 import org.gradle.api.DefaultTask;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -62,7 +60,7 @@ public class GradleDependencyReportTask extends DefaultTask {
 
     Path outputFilePath = outputFile.toPath();
     Files.createDirectories(outputFilePath.getParent());
-    Files.write(outputFilePath, new GsonBuilder().create().toJson(graph).getBytes(StandardCharsets.UTF_8));
+    Files.write(outputFilePath, GradleDependencyNodeDeserializer.toJson(graph));
   }
 
   private @NotNull Collection<Configuration> getSelectedConfigurations() {
