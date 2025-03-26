@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -76,15 +76,13 @@ private class AmbiguousCallInfo(
 
 private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump: KtExpressionWithLabel): AmbiguousCallInfo? = jump.parents
     .takeWhile { it !is KtLoopExpression }
-    .mapNotNull { functionLiteral ->
-        functionLiteral.findMatchingCallExpr()?.checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral)
-    }
+    .mapNotNull { checkAmbiguityForUnlabeledNonLocalBreakOrContinue(it) }
     .firstOrNull()
 
-private fun KtCallExpression.checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: PsiElement): AmbiguousCallInfo? {
-    val callExpression = this
+private fun checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: PsiElement): AmbiguousCallInfo? {
+    val callExpression = functionLiteral.findMatchingCallExpr() ?: return null
     analyze(callExpression) {
-        val successfulCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val successfulCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val calleeExpression = callExpression.calleeExpression as? KtReferenceExpression ?: return null
         val lambdaParamName = successfulCall.argumentMapping[functionLiteral]?.takeIf(::isInlinedParameter)?.name ?: return null
         val calleeExpressionSymbol = calleeExpression.mainReference.resolveToSymbol()
