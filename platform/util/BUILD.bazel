@@ -36,7 +36,6 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:caffeine",
     "//platform/util/coroutines",
     "//platform/util/multiplatform",
     ":troveCompileOnly_provided",
