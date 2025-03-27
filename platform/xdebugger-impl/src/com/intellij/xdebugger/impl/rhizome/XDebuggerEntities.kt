@@ -4,12 +4,8 @@ package com.intellij.xdebugger.impl.rhizome
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.jetbrains.rhizomedb.*
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import java.awt.Color
 
 private class XDebuggerEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
@@ -43,7 +39,3 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
     val ProjectEntity: Required<ProjectEntity> = requiredRef("project", RefFlags.CASCADE_DELETE_BY)
   }
 }
-
-// TODO[IJPL-160146]: Implement implement Color serialization
-@Serializable
-data class XValueMarkerDto(val text: String, @Transient val color: Color? = null, val tooltipText: String?)
