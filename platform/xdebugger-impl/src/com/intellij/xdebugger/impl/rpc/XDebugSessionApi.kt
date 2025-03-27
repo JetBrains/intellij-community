@@ -157,7 +157,7 @@ data class XDebugSessionPausedInfo(
 )
 
 /**
- * @see XSuspendContextModel
+ * @see com.intellij.xdebugger.impl.rpc.models.XSuspendContextModel
  */
 @ApiStatus.Internal
 @Serializable

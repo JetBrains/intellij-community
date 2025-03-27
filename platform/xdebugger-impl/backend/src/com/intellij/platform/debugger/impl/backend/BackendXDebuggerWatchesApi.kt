@@ -2,7 +2,7 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
-import com.intellij.xdebugger.impl.frame.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.XDebuggerWatchesApi
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil

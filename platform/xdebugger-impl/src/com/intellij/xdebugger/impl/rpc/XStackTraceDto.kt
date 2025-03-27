@@ -19,7 +19,7 @@ sealed interface XExecutionStacksEvent {
 }
 
 /**
- * @see XExecutionStackModel
+ * @see com.intellij.xdebugger.impl.rpc.models.XExecutionStackModel
  */
 @ApiStatus.Internal
 @Serializable
@@ -45,8 +45,8 @@ sealed interface XStackFramesEvent {
 }
 
 /**
- * @see XStackFrameValueIdType
- * @see XStackFrameModel
+ * @see com.intellij.xdebugger.impl.rpc.models.XStackFrameValueIdType
+ * @see com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
  */
 @ApiStatus.Internal
 @Serializable

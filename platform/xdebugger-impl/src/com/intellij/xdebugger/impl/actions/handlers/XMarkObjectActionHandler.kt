@@ -8,7 +8,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
-import com.intellij.xdebugger.impl.frame.BackendXValueModelsManager
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog

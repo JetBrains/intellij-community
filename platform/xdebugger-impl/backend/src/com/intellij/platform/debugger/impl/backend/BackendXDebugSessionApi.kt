@@ -17,6 +17,14 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.rhizome.*
 import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.models.XExecutionStackModel
+import com.intellij.xdebugger.impl.rpc.models.XExecutionStackValueIdType
+import com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
+import com.intellij.xdebugger.impl.rpc.models.XStackFrameValueIdType
+import com.intellij.xdebugger.impl.rpc.models.XSuspendContextModel
+import com.intellij.xdebugger.impl.rpc.models.XSuspendContextValueIdType
+import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.storeValueGlobally
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.query

@@ -3,7 +3,7 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.frame.XValueModifier
-import com.intellij.xdebugger.impl.frame.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred

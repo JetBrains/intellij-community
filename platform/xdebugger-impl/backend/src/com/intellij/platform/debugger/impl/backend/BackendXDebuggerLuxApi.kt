@@ -10,15 +10,14 @@ import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.findProject
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
-import com.intellij.xdebugger.impl.frame.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.XValueId
-import com.intellij.xdebugger.impl.rpc.findValue
+import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog
 import com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
 import kotlinx.coroutines.*

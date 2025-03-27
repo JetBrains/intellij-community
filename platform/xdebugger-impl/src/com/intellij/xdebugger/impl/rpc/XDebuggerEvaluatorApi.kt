@@ -85,7 +85,7 @@ sealed interface XEvaluationResult {
 }
 
 /**
- * @see com.intellij.xdebugger.impl.frame.BackendXValueModel
+ * @see com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
  */
 @ApiStatus.Internal
 @Serializable
