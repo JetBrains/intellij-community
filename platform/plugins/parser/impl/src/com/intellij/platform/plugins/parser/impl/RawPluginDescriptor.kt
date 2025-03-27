@@ -52,9 +52,11 @@ class RawPluginDescriptor(
   val appElementsContainer: ScopedElementsContainer,
   val projectElementsContainer: ScopedElementsContainer,
   val moduleElementsContainer: ScopedElementsContainer,
-
-  /** key is extension point's FQN */
-  val miscExtensions: Map<String, List<MiscExtensionElement>>,
+  /**
+   * This map contains extensions with scope that cannot be determined immediately.
+   * Key is extension point's FQN.
+   * */
+  val extensions: Map<String, List<ExtensionElement>>,
 
   val contentModules: List<ContentElement>,
   val dependencies: List<DependenciesElement>,

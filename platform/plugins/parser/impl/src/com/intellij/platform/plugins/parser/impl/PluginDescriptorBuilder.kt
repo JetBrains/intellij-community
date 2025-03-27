@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.plugins.parser.impl
 
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement
-import com.intellij.platform.plugins.parser.impl.elements.ContentElement
-import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.DependsElement
-import com.intellij.platform.plugins.parser.impl.elements.MiscExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.*
 import java.time.LocalDate
 
 interface PluginDescriptorBuilder {
@@ -59,8 +55,8 @@ interface PluginDescriptorBuilder {
   val projectContainerBuilder: ScopedElementsContainerBuilder
   val moduleContainerBuilder: ScopedElementsContainerBuilder
 
-  fun addExtension(qualifiedExtensionPointName: String, extension: MiscExtensionElement)
-  val miscExtensions: Map<String, List<MiscExtensionElement>>
+  fun addExtension(qualifiedExtensionPointName: String, extension: ExtensionElement)
+  val extensions: Map<String, List<ExtensionElement>>
 
   fun addContentModule(contentModule: ContentElement)
   val contentModules: List<ContentElement>

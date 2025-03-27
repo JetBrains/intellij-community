@@ -108,7 +108,7 @@ class IdeaPluginDescriptorImpl private constructor(
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
-  override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
+  override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.extensions
     .let(::convertExtensions)
     .let(::sortExtensions)
 
@@ -547,7 +547,7 @@ class IdeaPluginDescriptorImpl private constructor(
       else o1.compareTo(o2)
     }
 
-    private fun convertExtensions(rawMap: Map<String, List<MiscExtensionElement>>): Map<String, List<ExtensionDescriptor>> = rawMap.mapValues { (_, extensions) ->
+    private fun convertExtensions(rawMap: Map<String, List<ExtensionElement>>): Map<String, List<ExtensionDescriptor>> = rawMap.mapValues { (_, extensions) ->
       extensions.mapNotNull {
         try {
           val order = LoadingOrder.readOrder(it.order) // throws AssertionError

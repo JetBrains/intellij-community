@@ -3,7 +3,7 @@ package com.intellij.platform.plugins.parser.impl.elements
 
 import com.intellij.util.xml.dom.XmlElement
 
-class MiscExtensionElement(
+class ExtensionElement(
    @JvmField val implementation: String?,
    @JvmField val os: OS?,
    @JvmField val orderId: String?,

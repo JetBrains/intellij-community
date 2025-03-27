@@ -86,15 +86,15 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override val projectContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val moduleContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
 
-  private var _miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null
-  override fun addExtension(qualifiedExtensionPointName: String, extension: MiscExtensionElement) {
-    if (_miscExtensions == null) {
-      _miscExtensions = HashMap()
+  private var _extensions: MutableMap<String, MutableList<ExtensionElement>>? = null
+  override fun addExtension(qualifiedExtensionPointName: String, extension: ExtensionElement) {
+    if (_extensions == null) {
+      _extensions = HashMap()
     }
-    _miscExtensions!!.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extension)
+    _extensions!!.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extension)
   }
-  override val miscExtensions: Map<String, List<MiscExtensionElement>>
-    get() = _miscExtensions ?: Java11Shim.INSTANCE.mapOf()
+  override val extensions: Map<String, List<ExtensionElement>>
+    get() = _extensions ?: Java11Shim.INSTANCE.mapOf()
 
   private var _contentModules: MutableList<ContentElement>? = null
   override fun addContentModule(contentModule: ContentElement) {
@@ -148,7 +148,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     appElementsContainer = appContainerBuilder.build(),
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),
-    miscExtensions = miscExtensions,
+    extensions = extensions,
     contentModules = contentModules,
     dependencies = dependencies,
   )

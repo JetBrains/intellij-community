@@ -15,7 +15,7 @@ import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.plugins.parser.impl.elements.DependsElement
 import com.intellij.platform.plugins.parser.impl.elements.ExtensionPointElement
 import com.intellij.platform.plugins.parser.impl.elements.ListenerElement
-import com.intellij.platform.plugins.parser.impl.elements.MiscExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.ExtensionElement
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.platform.plugins.parser.impl.elements.PreloadMode
 import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
@@ -370,7 +370,7 @@ private fun readExtensions(reader: XMLStreamReader2, builder: PluginDescriptorBu
           }
         }
 
-        val extensionElement = MiscExtensionElement(
+        val extensionElement = ExtensionElement(
           implementation = implementation,
           os = os,
           orderId = orderId,
