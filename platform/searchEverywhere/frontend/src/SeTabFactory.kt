@@ -10,11 +10,11 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface SeTabProvider {
+interface SeTabFactory {
   suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab
 
   companion object {
     @ApiStatus.Internal
-    val EP_NAME: ExtensionPointName<SeTabProvider> = ExtensionPointName("com.intellij.searchEverywhere.tabProvider")
+    val EP_NAME: ExtensionPointName<SeTabFactory> = ExtensionPointName("com.intellij.searchEverywhere.tabFactory")
   }
 }

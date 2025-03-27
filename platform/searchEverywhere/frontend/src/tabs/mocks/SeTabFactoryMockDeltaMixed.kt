@@ -6,14 +6,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
-import com.intellij.platform.searchEverywhere.frontend.SeTabProvider
+import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderFactoryMockAlphaLocal
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderFactoryMockBetaLocal
 import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeTabProviderMockDeltaMixed : SeTabProvider {
+class SeTabFactoryMockDeltaMixed : SeTabFactory {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab =
     SeTabMock.create(project,
                      sessionRef,

@@ -11,15 +11,15 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="searchEverywhere.tabProvider"
-                    interface="com.intellij.platform.searchEverywhere.frontend.SeTabProvider"
+    <extensionPoint name="searchEverywhere.tabFactory"
+                    interface="com.intellij.platform.searchEverywhere.frontend.SeTabFactory"
                     dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabProvider"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTabProvider"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTabProvider"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.tabs.files.SeFilesTabProvider"/>
+    <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabFactory"/>
+    <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTabFactory"/>
+    <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTabFactory"/>
+    <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.files.SeFilesTabFactory"/>
   </extensions>
 </idea-plugin>
