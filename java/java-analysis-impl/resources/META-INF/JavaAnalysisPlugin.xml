@@ -353,5 +353,17 @@
     <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
 
     <lang.jvm.annotations.marker.suppressor implementation="com.intellij.java.JavaNonCodeAnnotationsMarkerSuppressor"/>
+
+    <!--Microservices Url-->
+    <microservices.urlInlayLanguagesProvider implementation="com.intellij.microservices.jvm.url.UastUrlPathInlayLanguagesProvider"/>
+
+    <completion.contributor language="UAST"
+                            implementationClass="com.intellij.microservices.jvm.url.RenameableSemElementCompletionContributor"/>
+
+    <nameSuggestionProvider implementation="com.intellij.microservices.jvm.url.RenameableSemElementNameSuggestionProvider"/>
+
+    <referenceInjector implementation="com.intellij.microservices.jvm.url.HttpUrlReferenceInjector"/>
+    <referenceInjector implementation="com.intellij.microservices.jvm.url.WSUrlReferenceInjector"/>
+    <referenceInjector implementation="com.intellij.microservices.jvm.url.HttpMethodReferenceInjector"/>
   </extensions>
 </idea-plugin>
