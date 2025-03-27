@@ -98,6 +98,12 @@ class IdeaPluginDescriptorImpl private constructor(
   override val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
     .let(::addCorePluginAliases)
 
+  val content: PluginContentDescriptor =
+    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
+    ?: PluginContentDescriptor.EMPTY
+  override val dependenciesV2: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
+  val packagePrefix: String? = raw.`package`
+
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
@@ -108,14 +114,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
     .also { warnIfResourceBundleIsDefinedForCorePlugin(it) }
-
   override val actions: List<ActionElement> = raw.actions
-
-  val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
-    ?: PluginContentDescriptor.EMPTY
-  override val dependenciesV2: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
-  val packagePrefix: String? = raw.`package`
 
   private val isRestartRequired: Boolean = raw.isRestartRequired
   private val isImplementationDetail: Boolean = raw.isImplementationDetail
