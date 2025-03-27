@@ -45,8 +45,10 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.UList
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
+import com.intellij.util.messages.impl.PluginListenerDescriptor
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.messages.impl.MessageDeliveryListener
+import com.intellij.util.messages.impl.listenerClassName
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
@@ -323,7 +325,7 @@ abstract class ComponentManagerImpl(
                               listenerCallbacks: MutableList<in Runnable>? = null) {
     val activityNamePrefix = activityNamePrefix()
 
-    var listenersByTopicName: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
+    var listenersByTopicName: ConcurrentMap<String, MutableList<PluginListenerDescriptor>>? = null
     val isHeadless = app == null || app.isHeadlessEnvironment
     val isUnitTestMode = app?.isUnitTestMode ?: false
 
@@ -348,8 +350,8 @@ abstract class ComponentManagerImpl(
           if (listener.os != null && !listener.os.isSuitableForOs()) {
             continue
           }
-          listener.pluginDescriptor = module
-          listenersByTopicName.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
+          listenersByTopicName.computeIfAbsent(listener.topicClassName) { ArrayList() }
+            .add(PluginListenerDescriptor(listener, module))
         }
 
         if (extensionPoints != null && containerDescriptor.extensionPoints.isNotEmpty()) {
@@ -954,7 +956,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  final override fun createListener(descriptor: ListenerDescriptor): Any {
+  final override fun createListener(descriptor: PluginListenerDescriptor): Any {
     val pluginDescriptor = descriptor.pluginDescriptor
     val aClass = try {
       doLoadClass(descriptor.listenerClassName, pluginDescriptor)

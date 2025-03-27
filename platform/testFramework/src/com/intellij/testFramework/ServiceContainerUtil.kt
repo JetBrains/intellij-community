@@ -13,8 +13,8 @@ import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
+import com.intellij.util.messages.impl.PluginListenerDescriptor
 import org.jetbrains.annotations.TestOnly
 
 private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
@@ -109,7 +109,7 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
 
 fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
   return object : MessageBusOwner {
-    override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
+    override fun createListener(descriptor: PluginListenerDescriptor) = throw UnsupportedOperationException()
 
     override fun isDisposed() = false
 
