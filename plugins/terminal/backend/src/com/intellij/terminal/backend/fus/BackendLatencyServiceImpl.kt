@@ -196,7 +196,7 @@ private class BackendOutputActivityImpl : BackendOutputActivity {
   /**
    *  The part of the state that is affected by collecting the text buffer and further event processing.
    *
-   *  Accessed from different threads, though never from the terminal emulator thread.
+   *  Accessed from different threads, so must be thread-safe.
    */
   private class EventFlowState {
     private val collectedRanges = ConcurrentHashMap<IdentityWrapper<TerminalContentUpdatedEvent>, LongRange>()
