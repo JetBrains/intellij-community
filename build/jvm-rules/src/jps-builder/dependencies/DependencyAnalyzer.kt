@@ -9,7 +9,6 @@ import com.github.benmanes.caffeine.cache.AsyncCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
-import io.netty.buffer.Unpooled
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
@@ -22,7 +21,8 @@ import org.jetbrains.bazel.jvm.jps.output.readNodeIndex
 import org.jetbrains.bazel.jvm.jps.state.DependencyDescriptor
 import org.jetbrains.bazel.jvm.orEmpty
 import org.jetbrains.jps.dependency.java.JvmClass
-import org.jetbrains.jps.dependency.storage.NettyBufferGraphDataInput
+import org.jetbrains.jps.dependency.storage.ByteBufferGraphDataInput
+import java.nio.ByteOrder
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
@@ -138,12 +138,13 @@ private fun doComputeDiffForChangedAbiJar(
 }
 
 private fun readIcNode(zipFile: ZipFile, nodeInfo: NodeIndexEntry, file: Path): JvmClass {
-  val byteBuf = Unpooled.wrappedBuffer((zipFile as ImmutableZipFile).__getRawSlice().slice(nodeInfo.offset, nodeInfo.size))
-  val formatVersion = byteBuf.readIntLE()
+  val buffer = (zipFile as ImmutableZipFile).__getRawSlice().slice(nodeInfo.offset, nodeInfo.size)
+  buffer.order(ByteOrder.LITTLE_ENDIAN)
+  val formatVersion = buffer.getInt()
   if (formatVersion != ABI_IC_NODE_FORMAT_VERSION) {
     throw RuntimeException("Unsupported ABI IC node format version: $formatVersion (file=$file")
   }
-  val input = NettyBufferGraphDataInput(byteBuf)
+  val input = ByteBufferGraphDataInput(buffer, null)
   val node = JvmClass(input)
   return node
 }

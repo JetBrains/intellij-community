@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.storage
 
 import kotlinx.collections.immutable.mutate
@@ -13,7 +14,6 @@ import java.nio.ByteBuffer
 private val emptyNodes = arrayOfNulls<Set<Node<*, *>>>(0)
 
 class AnyGraphElementDataType(
-  private val stringEnumerator: StringEnumerator,
   private val elementInterner: ((ExternalizableGraphElement) -> ExternalizableGraphElement)?,
 ) : DataType<Set<Node<*, *>>> {
   override fun getMemory(obj: Set<Node<*, *>>) = 0
@@ -22,7 +22,7 @@ class AnyGraphElementDataType(
 
   override fun write(buff: WriteBuffer, data: Set<Node<*, *>>) {
     buff.putVarInt(data.size)
-    val output = WriteBufGraphDataOutput(buff, stringEnumerator)
+    val output = WriteBufGraphDataOutput(buff)
     for (node in data) {
       output.writeGraphElement(node)
     }
@@ -31,7 +31,7 @@ class AnyGraphElementDataType(
   override fun write(buff: WriteBuffer, storage: Any, len: Int) {
     @Suppress("UNCHECKED_CAST")
     storage as Array<Set<Node<*, *>>>
-    val output = WriteBufGraphDataOutput(buff, stringEnumerator)
+    val output = WriteBufGraphDataOutput(buff)
     for (i in 0..<len) {
       val data = storage[i]
       buff.putVarInt(data.size)
@@ -47,7 +47,7 @@ class AnyGraphElementDataType(
       return persistentHashSetOf()
     }
     return persistentHashSetOf<Node<*, *>>().mutate { builder ->
-      val input = WriteBufGraphDataInput(buff, stringEnumerator, elementInterner)
+      val input = ByteBufferGraphDataInput(buff, elementInterner)
       repeat(size) {
         builder.add(doReadGraphElement(input) { it })
       }
@@ -61,7 +61,7 @@ class AnyGraphElementDataType(
 
     @Suppress("UNCHECKED_CAST")
     storage as Array<Set<Node<*, *>>>
-    val input = WriteBufGraphDataInput(buff, stringEnumerator, elementInterner)
+    val input = ByteBufferGraphDataInput(buff, elementInterner)
     for (i in 0..<len) {
       val size = DataUtils.readVarInt(buff)
       if (size == 0) {

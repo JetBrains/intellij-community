@@ -54,7 +54,7 @@ import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val jpsElementFactory = JpsElementFactory.getInstance()
@@ -63,7 +63,7 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
-private const val TOOL_VERSION: Long = 41
+private const val TOOL_VERSION: Long = 43
 
 internal fun loadJpsModel(
   sources: List<Path>,

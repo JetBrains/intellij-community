@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl
 
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
@@ -39,7 +40,7 @@ abstract class GraphImpl(
     @Suppress("UNCHECKED_CAST")
     nodeToSourcesMap = createNodeIdToSourcesMap(containerFactory, containerFactory.getStringEnumerator())
     @Suppress("UNCHECKED_CAST")
-    sourceToNodesMap = createSourceToNodesMap(containerFactory, containerFactory.getStringEnumerator())
+    sourceToNodesMap = createSourceToNodesMap(containerFactory)
   }
 
   @Synchronized
@@ -76,11 +77,10 @@ abstract class GraphImpl(
 
 private fun createSourceToNodesMap(
   containerFactory: MvStoreContainerFactory,
-  stringEnumerator: StringEnumerator,
 ): MultiMapletEx<IntLong, Node<*, *>> {
   val builder = MVMap.Builder<IntLong, PersistentSet<Node<*, *>>>()
   builder.keyType(IntLongPairKeyDataType)
-  builder.valueType(AnyGraphElementDataType(stringEnumerator, containerFactory.getElementInterner()))
+  builder.valueType(AnyGraphElementDataType(containerFactory.getElementInterner()))
   @Suppress("UNCHECKED_CAST")
   return containerFactory.openMap("source-to-nodes", builder)
 }

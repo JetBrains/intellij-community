@@ -116,7 +116,6 @@ internal class IncrementalAbiHelper(
             skipPrivateMethodsAndFields = false,
           )
 
-
           stream.writeUndeclaredData(maxSize = data.size * 2) { buffer, offsetInFile ->
           assert(buffer.order() == ByteOrder.LITTLE_ENDIAN)
             val initialPosition = buffer.position()

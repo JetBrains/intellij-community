@@ -53,6 +53,7 @@ class ByteBufferGraphDataOutput(private val buffer: ByteBuffer) : GraphDataOutpu
     buffer.putDouble(v)
   }
 
+  @Suppress("DuplicatedCode")
   override fun writeUTF(s: String) {
     val index = stringMap.getOrDefault(s, -1)
     if (index >= 0) {
@@ -67,6 +68,7 @@ class ByteBufferGraphDataOutput(private val buffer: ByteBuffer) : GraphDataOutpu
   }
 }
 
+@Suppress("DuplicatedCode")
 private fun writeUInt29(buffer: ByteBuffer, value: Int) {
   when {
     value < 0x80 -> {
@@ -92,4 +94,3 @@ private fun writeUInt29(buffer: ByteBuffer, value: Int) {
     }
   }
 }
-
