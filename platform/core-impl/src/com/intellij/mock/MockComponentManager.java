@@ -5,7 +5,6 @@ import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.client.ClientKind;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -191,6 +190,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return Conditions.alwaysFalse();
   }
 
+  @Internal
   @Override
   public @NotNull Object createListener(@NotNull PluginListenerDescriptor descriptor) {
     throw new UnsupportedOperationException();

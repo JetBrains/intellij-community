@@ -969,7 +969,6 @@ c:com.intellij.mock.MockComponentManager
 - createError(java.lang.String,com.intellij.openapi.extensions.PluginId):java.lang.RuntimeException
 - createError(java.lang.String,java.lang.Throwable,com.intellij.openapi.extensions.PluginId,java.util.Map):java.lang.RuntimeException
 - createError(java.lang.Throwable,com.intellij.openapi.extensions.PluginId):java.lang.RuntimeException
-- createListener(com.intellij.util.messages.ListenerDescriptor):java.lang.Object
 - dispose():V
 - getActivityCategory(Z):com.intellij.diagnostic.ActivityCategory
 - getComponent(java.lang.Class):java.lang.Object
