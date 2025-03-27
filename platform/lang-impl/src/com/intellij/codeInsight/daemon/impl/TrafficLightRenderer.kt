@@ -61,7 +61,7 @@ open class TrafficLightRenderer private constructor(
   info: TrafficLightRendererInfo,
 ) : ErrorStripeRenderer, Disposable {
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
-  private val severityRegistrar: SeverityRegistrar
+  protected val severityRegistrar: SeverityRegistrar
   private val errorCount = Object2IntOpenHashMap<HighlightKey>() // guarded by errorCount
   @JvmField
   @ApiStatus.Internal
