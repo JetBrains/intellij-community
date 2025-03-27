@@ -44,7 +44,7 @@ class StructureToolWindowUi(data: ComponentData) : UiComponent(data) {
     }
 
   fun expandViewOptions() {
-    viewOptionsButton.waitFound(5.seconds).click()
+    viewOptionsButton.click()
   }
 
   fun withViewOptions(action: () -> Unit) {
@@ -63,11 +63,11 @@ class StructureToolWindowUi(data: ComponentData) : UiComponent(data) {
 
   val viewOptionsButton: ActionButtonUi
     get() {
-      actionMenuAppearance()
-      return x(
-        "//div[@class='ActionButton' and @myicon='show.svg']",
-        ActionButtonUi::class.java
-      )
+      val actionButtenXpath = "//div[@class='ActionButton' and @myicon='show.svg']"
+      if (xx(actionButtenXpath).list().isEmpty()) {
+        actionMenuAppearance()
+      }
+      return x(actionButtenXpath, ActionButtonUi::class.java)
     }
 
   private fun actionMenuAppearance() {
