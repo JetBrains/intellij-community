@@ -15,7 +15,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.*
-import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -429,20 +428,7 @@ class IdeaPluginDescriptorImpl private constructor(
     if (map.isEmpty()) {
       return
     }
-
-    // app container: in most cases will be only app-level extensions - to reduce map copying, assume that all extensions are app-level and then filter out
-    // project container: rest of extensions will be mostly project level
-    // module container: just use rest, area will not register unrelated extension anyway as no registered point
-
-    if (containerDescriptor === appContainerDescriptor) {
-      doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-    }
-    else if (containerDescriptor === projectContainerDescriptor) {
-      doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-    }
-    else {
-      doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-    }
+    doRegisterExtensions(map, nameToPoint, listenerCallbacks)
   }
 
   private fun doRegisterExtensions(map: Map<String, List<ExtensionDescriptor>>, nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?): Int {
