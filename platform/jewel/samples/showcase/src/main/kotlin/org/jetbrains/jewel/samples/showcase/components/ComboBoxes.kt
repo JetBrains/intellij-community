@@ -149,7 +149,7 @@ private fun ListComboBoxes() {
                         active = isActive,
                         iconContentDescription = item.name,
                         icon = item.icon,
-                        colorFilter = ColorFilter.disabled()
+                        colorFilter = ColorFilter.disabled(),
                     )
                 },
             )
