@@ -16,7 +16,6 @@ class ContainerDescriptor(
   val listeners: List<ListenerDescriptor>,
   val extensionPoints: List<ExtensionPointDescriptor>,
 ) {
-  @Transient internal var distinctExtensionPointCount: Int = -1
   @Transient @JvmField var extensions: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
 
   override fun toString(): String {
