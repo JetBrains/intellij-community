@@ -1,11 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.backend
 
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -17,6 +15,8 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.platform.recentFiles.shared.RecentFileKind
+import com.intellij.platform.recentFiles.shared.SWITCHER_ELEMENTS_LIMIT
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.search.FilenameIndex
@@ -30,18 +30,18 @@ import kotlin.io.path.pathString
 import kotlin.math.max
 
 @RequiresReadLock
-internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boolean, filesFromFrontendEditorSelectionHistory: List<VirtualFileId>): List<SwitcherRpcDto.File> {
-  val filesData = ArrayList<SwitcherRpcDto.File>()
-  val editors = ArrayList<SwitcherRpcDto.File>()
+internal fun getFilesToShow(project: Project, recentFileKind: RecentFileKind, filesFromFrontendEditorSelectionHistory: List<VirtualFile>): List<VirtualFile> {
+  val filesData = ArrayList<VirtualFile>()
+  val editors = ArrayList<VirtualFile>()
   val addedFiles = LinkedHashSet<VirtualFile>()
-  if (!pinned) {
+  val unpinned = recentFileKind == RecentFileKind.RECENTLY_OPENED_UNPINNED
+  if (unpinned) {
     for (hint in filesFromFrontendEditorSelectionHistory) {
-      val virtualFile = hint.virtualFile() ?: continue
-      editors.add(createRecentFileViewModel(virtualFile, project))
+      editors.add(hint)
     }
 
     for (editor in editors) {
-      addIfNotNull(addedFiles, editor.virtualFileId.virtualFile())
+      addIfNotNull(addedFiles, editor)
       filesData.add(editor)
       if (filesData.size >= SWITCHER_ELEMENTS_LIMIT) {
         break
@@ -53,16 +53,19 @@ internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boole
     return filesData
   }
 
-  val filesForInit = if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
+  val filesForInit = when (recentFileKind) {
+    RecentFileKind.RECENTLY_EDITED -> IdeDocumentHistory.getInstance(project).changedFiles
+    RecentFileKind.RECENTLY_OPENED, RecentFileKind.RECENTLY_OPENED_UNPINNED -> getRecentFiles(project)
+  }
   if (!filesForInit.isEmpty()) {
     val editorFileCount = editors.asSequence().distinct().count()
     val maxFiles = max(editorFileCount, filesForInit.size)
     val activeToolWindowsLimit =
       ToolWindowManagerEx.getInstanceEx(project).toolWindows
         .filter { it.isAvailable && it.isShowStripeButton }.size
-    val minIndex = if (pinned) 0 else filesForInit.size - activeToolWindowsLimit.coerceAtMost(maxFiles)
+    val minIndex = if (unpinned) filesForInit.size - activeToolWindowsLimit.coerceAtMost(maxFiles) else 0
     for (i in filesForInit.size - 1 downTo minIndex) {
-      val info = createRecentFileViewModel(filesForInit[i], project)
+      val info = filesForInit[i]
       var add = true
       for (fileInfo in filesData) {
         if (fileInfo == info) {
@@ -71,7 +74,7 @@ internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boole
         }
       }
       if (add) {
-        if (addIfNotNull(addedFiles, info.virtualFileId.virtualFile())) {
+        if (addIfNotNull(addedFiles, info)) {
           filesData.add(info)
         }
       }
@@ -79,14 +82,14 @@ internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boole
   }
 
   if (editors.size == 1 && (filesData.isEmpty() || editors[0] != filesData[0])) {
-    if (addIfNotNull(addedFiles, editors[0].virtualFileId.virtualFile())) {
+    if (addIfNotNull(addedFiles, editors[0])) {
       filesData.add(0, editors[0])
     }
   }
   return filesData
 }
 
-private fun <T: Any> addIfNotNull(targetCollection: MutableCollection<T>, item: T?): Boolean {
+private fun <T : Any> addIfNotNull(targetCollection: MutableCollection<T>, item: T?): Boolean {
   if (item == null) return false
   return targetCollection.add(item)
 }
@@ -110,7 +113,7 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
   return result
 }
 
-private fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): SwitcherRpcDto.File {
+internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): SwitcherRpcDto.File {
   val parentPath = virtualFile.parent?.path?.toNioPathOrNull()
   val sameNameFiles = FilenameIndex.getVirtualFilesByName(virtualFile.name, GlobalSearchScope.projectScope(project))
   val result = if (parentPath == null ||
@@ -145,5 +148,3 @@ private fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project
     foregroundTextColorId = FileStatusManager.getInstance(project).getStatus(virtualFile).color?.rpcId()
   )
 }
-
-private const val SWITCHER_ELEMENTS_LIMIT: Int = 30

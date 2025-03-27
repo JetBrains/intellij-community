@@ -1,16 +1,13 @@
-<idea-plugin package="com.intellij.platform.recentFiles.frontend">
+<idea-plugin>
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.recentFiles"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="switcher.preload.timeout.ms" defaultValue="300"
-                 description="Maximum amount of time allowed to wait for the files list loading before displaying the UI"/>
-    <registryKey key="switcher.preserve.selection.on.model.update" defaultValue="true"
-                 description="Attempt to select first file that is not opened in the focused editor while the files list is updating"/>
     <registryKey key="switcher.use.fallback.in.monolith" defaultValue="false"
-                 description="Use old Switcher/Recent Files implementation in the monolith mode that is not remove dev-native" />
+                 description="Use old Switcher/Recent Files implementation in the monolith mode that is not remove dev-native"/>
+    <postStartupActivity implementation="com.intellij.platform.recentFiles.frontend.model.RecentFileModelSynchronizer"/>
   </extensions>
   <actions>
     <group id="SwitcherAndRecentFiles">
@@ -38,4 +35,9 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
   </actions>
+
+  <applicationListeners>
+    <listener class="com.intellij.platform.recentFiles.frontend.RecentlySelectedEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
+  </applicationListeners>
 </idea-plugin>
