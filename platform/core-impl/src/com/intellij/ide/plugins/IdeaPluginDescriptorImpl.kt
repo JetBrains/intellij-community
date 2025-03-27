@@ -174,7 +174,9 @@ class IdeaPluginDescriptorImpl private constructor(
       isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
       descriptorPath = descriptorPath)
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
-    result.resourceBundleBaseName = resourceBundleBaseName
+    if (module == null) {
+      result.resourceBundleBaseName = resourceBundleBaseName
+    }
     if (raw.resourceBundleBaseName != null) {
       result.readResourceBundleBaseName(raw)
     }
