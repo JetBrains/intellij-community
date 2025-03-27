@@ -339,7 +339,7 @@ class IdeaPluginDescriptorImpl private constructor(
         visitedFiles = context.visitedFiles
       }
 
-      checkCycle(this, configFile, visitedFiles)
+      checkCycle(configFile, visitedFiles)
 
       visitedFiles.add(configFile)
       val subDescriptor = createSub(raw, configFile, context, module = null)
@@ -445,13 +445,13 @@ class IdeaPluginDescriptorImpl private constructor(
     }) ?: defaultValue
   }
 
-  private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {
+  private fun checkCycle(configFile: String, visitedFiles: List<String>) {
     var i = 0
     val n = visitedFiles.size
     while (i < n) {
       if (configFile == visitedFiles[i]) {
         val cycle = visitedFiles.subList(i, visitedFiles.size)
-        throw RuntimeException("Plugin $descriptor optional descriptors form a cycle: ${java.lang.String.join(", ", cycle)}")
+        throw RuntimeException("Plugin $this optional descriptors form a cycle: ${java.lang.String.join(", ", cycle)}")
       }
       i++
     }
