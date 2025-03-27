@@ -33,7 +33,6 @@ class IdeaPluginDescriptorImpl private constructor(
   raw: RawPluginDescriptor,
   pluginPath: Path,
   isBundled: Boolean,
-  id: PluginId?,
   moduleName: String?,
   moduleLoadingRule: ModuleLoadingRule? = null,
   useCoreClassLoader: Boolean = false,
@@ -52,7 +51,6 @@ class IdeaPluginDescriptorImpl private constructor(
     raw = raw,
     pluginPath = pluginPath,
     isBundled = isBundled,
-    id = null,
     moduleName = moduleName,
     moduleLoadingRule = moduleLoadingRule,
     useCoreClassLoader = useCoreClassLoader,
@@ -65,8 +63,8 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
-  private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
+  private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
+  private val name: String = raw.name ?: raw.id!! // if it throws, it throws on `id` above
 
   override val moduleName: String? = moduleName
   override val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
@@ -254,7 +252,6 @@ class IdeaPluginDescriptorImpl private constructor(
       raw = raw,
       pluginPath = pluginPath,
       isBundled = isBundled,
-      id = null,
       moduleName = module?.name,
       moduleLoadingRule = module?.loadingRule,
       useCoreClassLoader = useCoreClassLoader,
