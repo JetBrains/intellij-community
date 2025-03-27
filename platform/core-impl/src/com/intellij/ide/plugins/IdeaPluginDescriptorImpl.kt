@@ -15,7 +15,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.*
-import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -444,11 +443,6 @@ class IdeaPluginDescriptorImpl private constructor(
     if (containerDescriptor === appContainerDescriptor) {
       val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
       appContainerDescriptor.distinctExtensionPointCount = registeredCount
-
-      if (registeredCount == map.size) {
-        projectContainerDescriptor.extensions = Java11Shim.INSTANCE.mapOf()
-        moduleContainerDescriptor.extensions = Java11Shim.INSTANCE.mapOf()
-      }
     }
     else if (containerDescriptor === projectContainerDescriptor) {
       val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
@@ -456,17 +450,10 @@ class IdeaPluginDescriptorImpl private constructor(
 
       if (registeredCount == map.size) {
         projectContainerDescriptor.extensions = map
-        moduleContainerDescriptor.extensions = Java11Shim.INSTANCE.mapOf()
-      }
-      else if (registeredCount == (map.size - appContainerDescriptor.distinctExtensionPointCount)) {
-        moduleContainerDescriptor.extensions = Java11Shim.INSTANCE.mapOf()
       }
     }
     else {
-      val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-      if (registeredCount == 0) {
-        moduleContainerDescriptor.extensions = Java11Shim.INSTANCE.mapOf()
-      }
+      doRegisterExtensions(map, nameToPoint, listenerCallbacks)
     }
   }
 
