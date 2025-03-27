@@ -45,21 +45,18 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
 
     val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize().toDpSize()
     val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
-    val comboBoxStyle =
-        ComboBoxStyle(
-            colors = colors,
-            metrics =
-                ComboBoxMetrics(
-                    arrowAreaSize = DpSize(arrowWidth, minimumSize.height),
-                    minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
-                    cornerSize = componentArc,
-                    contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
-                    popupContentPadding = PaddingValues(vertical = 6.dp),
-                    borderWidth = DarculaUIUtil.LW.dp,
-                    maxPopupHeight = Dp.Unspecified,
-                ),
-            icons = ComboBoxIcons(chevronDown = AllIconsKeys.General.ChevronDown),
-        )
-    println(comboBoxStyle)
-    return comboBoxStyle
+    return ComboBoxStyle(
+        colors = colors,
+        metrics =
+            ComboBoxMetrics(
+                arrowAreaSize = DpSize(arrowWidth, minimumSize.height),
+                minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
+                cornerSize = componentArc,
+                contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
+                popupContentPadding = PaddingValues(vertical = 6.dp),
+                borderWidth = DarculaUIUtil.LW.dp,
+                maxPopupHeight = Dp.Unspecified,
+            ),
+        icons = ComboBoxIcons(chevronDown = AllIconsKeys.General.ChevronDown),
+    )
 }
