@@ -7,10 +7,13 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
+@ConsistentCopyVisibility
 @ApiStatus.Internal
-data class XExecutionStackModel(
+data class XExecutionStackModel internal constructor(
+  val coroutineScope: CoroutineScope,
   val executionStack: XExecutionStack,
   val session: XDebugSessionImpl,
 )
@@ -21,9 +24,8 @@ fun XExecutionStackId.findValue(): XExecutionStackModel? {
 }
 
 @ApiStatus.Internal
-fun XExecutionStack.storeValueGlobally(session: XDebugSessionImpl): XExecutionStackId {
-  return storeValueGlobally(session.coroutineScope, XExecutionStackModel(this, session), type = XExecutionStackValueIdType)
+fun XExecutionStack.storeGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackId {
+  return storeValueGlobally(coroutineScope, XExecutionStackModel(coroutineScope, this, session), type = XExecutionStackValueIdType)
 }
 
-@ApiStatus.Internal
-object XExecutionStackValueIdType : BackendValueIdType<XExecutionStackId, XExecutionStackModel>(::XExecutionStackId)
+private object XExecutionStackValueIdType : BackendValueIdType<XExecutionStackId, XExecutionStackModel>(::XExecutionStackId)

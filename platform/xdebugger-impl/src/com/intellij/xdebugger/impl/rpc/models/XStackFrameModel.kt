@@ -7,10 +7,13 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
+@ConsistentCopyVisibility
 @ApiStatus.Internal
-data class XStackFrameModel(
+data class XStackFrameModel internal constructor(
+  val coroutineScope: CoroutineScope,
   val stackFrame: XStackFrame,
   val session: XDebugSessionImpl,
 )
@@ -21,9 +24,8 @@ fun XStackFrameId.findValue(): XStackFrameModel? {
 }
 
 @ApiStatus.Internal
-fun XStackFrame.storeGlobally(session: XDebugSessionImpl): XStackFrameId {
-  return storeValueGlobally(session.coroutineScope, XStackFrameModel(this, session), type = XStackFrameValueIdType)
+fun XStackFrame.storeGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameId {
+  return storeValueGlobally(coroutineScope, XStackFrameModel(coroutineScope, this, session), type = XStackFrameValueIdType)
 }
 
-@ApiStatus.Internal
-object XStackFrameValueIdType : BackendValueIdType<XStackFrameId, XStackFrameModel>(::XStackFrameId)
+private object XStackFrameValueIdType : BackendValueIdType<XStackFrameId, XStackFrameModel>(::XStackFrameId)

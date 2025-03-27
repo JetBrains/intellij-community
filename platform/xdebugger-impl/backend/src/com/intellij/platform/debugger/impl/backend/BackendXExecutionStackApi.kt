@@ -47,7 +47,7 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
           channel.trySend(this@channelFlow.async {
             val session = executionStackModel.session
             val stackDtos = stackFrames.map { frame ->
-              val stackFrameId = frame.storeGlobally(session)
+              val stackFrameId = frame.storeGlobally(executionStackModel.coroutineScope, session)
               createXStackFrameDto(frame, stackFrameId)
             }
             XStackFramesEvent.XNewStackFrames(stackDtos, last)

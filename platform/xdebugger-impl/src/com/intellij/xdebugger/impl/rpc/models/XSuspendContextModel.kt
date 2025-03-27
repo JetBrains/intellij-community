@@ -3,13 +3,17 @@ package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XSuspendContextId
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
+@ConsistentCopyVisibility
 @ApiStatus.Internal
-data class XSuspendContextModel(
+data class XSuspendContextModel internal constructor(
+  val coroutineScope: CoroutineScope,
   val suspendContext: XSuspendContext,
   val session: XDebugSessionImpl,
 )
@@ -20,4 +24,8 @@ fun XSuspendContextId.findValue(): XSuspendContextModel? {
 }
 
 @ApiStatus.Internal
-object XSuspendContextValueIdType : BackendValueIdType<XSuspendContextId, XSuspendContextModel>(::XSuspendContextId)
+fun XSuspendContext.storeGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XSuspendContextId {
+  return storeValueGlobally(coroutineScope, XSuspendContextModel(coroutineScope, this@storeGlobally, session), type = XSuspendContextValueIdType)
+}
+
+private object XSuspendContextValueIdType : BackendValueIdType<XSuspendContextId, XSuspendContextModel>(::XSuspendContextId)

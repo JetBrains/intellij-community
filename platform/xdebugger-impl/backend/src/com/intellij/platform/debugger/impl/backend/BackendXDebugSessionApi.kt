@@ -19,6 +19,7 @@ import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 
@@ -103,43 +104,52 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
 
   override suspend fun currentSuspendContext(sessionId: XDebugSessionId): Flow<XSuspendContextDto?> {
     val session = sessionId.findValue() ?: return emptyFlow()
-    return session.getCurrentSuspendContextFlow().map { suspendContext ->
-      suspendContext?.let { XSuspendContextModel(suspendContext, session) }
-    }.withNullableIDsFlow(type = XSuspendContextValueIdType) { id, suspendContextModel ->
-      if (id == null || suspendContextModel == null) {
-        return@withNullableIDsFlow null
+    return channelFlow {
+      session.getCurrentSuspendContextFlow().collectLatest { suspendContext ->
+        if (suspendContext == null) {
+          send(null)
+          return@collectLatest
+        }
+
+        coroutineScope {
+          val id = suspendContext.storeGlobally(this, session)
+          send(XSuspendContextDto(id, suspendContext is XSteppingSuspendContext))
+        }
       }
-      XSuspendContextDto(id, suspendContextModel.suspendContext is XSteppingSuspendContext)
     }
   }
 
   override suspend fun currentExecutionStack(sessionId: XDebugSessionId): Flow<XExecutionStackDto?> {
     val session = sessionId.findValue() ?: return emptyFlow()
-    return session.getCurrentExecutionStackFlow()
-      .map { executionStack ->
-        executionStack?.let { XExecutionStackModel(it, session) }
-      }
-      .withNullableIDsFlow(type = XExecutionStackValueIdType) { id, executionStackModel ->
-        if (id == null || executionStackModel == null) {
-          return@withNullableIDsFlow null
+    return channelFlow {
+      session.getCurrentExecutionStackFlow().collectLatest { executionStack ->
+        if (executionStack == null) {
+          send(null)
+          return@collectLatest
         }
-        val executionStack = executionStackModel.executionStack
-        XExecutionStackDto(id, executionStack.displayName, executionStack.icon?.rpcId())
+        coroutineScope {
+          val id = executionStack.storeGlobally(this, session)
+          send(XExecutionStackDto(id, executionStack.displayName, executionStack.icon?.rpcId()))
+        }
       }
+    }
   }
 
   override suspend fun currentStackFrame(sessionId: XDebugSessionId): Flow<XStackFrameDto?> {
     val session = sessionId.findValue() ?: return emptyFlow()
-    return session.getCurrentStackFrameFlow()
-      .map { frame ->
-        frame?.let { XStackFrameModel(it, session) }
-      }
-      .withNullableIDsFlow(type = XStackFrameValueIdType) { id, frameModel ->
-        if (id == null || frameModel == null) {
-          return@withNullableIDsFlow null
+    return channelFlow {
+      session.getCurrentStackFrameFlow().collectLatest { frame ->
+        if (frame == null) {
+          send(null)
+          return@collectLatest
         }
-        createXStackFrameDto(frameModel.stackFrame, id)
+
+        coroutineScope {
+          val id = frame.storeGlobally(this, session)
+          send(createXStackFrameDto(frame, id))
+        }
       }
+    }
   }
 
   override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean) {
@@ -158,7 +168,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
           val session = suspendContextModel.session
           val stacks = executionStacks.map { stack ->
-            val id = stack.storeValueGlobally(session)
+            val id = stack.storeGlobally(suspendContextModel.coroutineScope, session)
             XExecutionStackDto(id, stack.displayName, stack.icon?.rpcId())
           }
           trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
