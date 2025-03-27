@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import org.jetbrains.annotations.Nls
@@ -18,6 +19,7 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
+import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
 internal class CommitOptionsPanel(
@@ -25,6 +27,7 @@ internal class CommitOptionsPanel(
   private val actionNameSupplier: () -> @Nls String,
   private val nonFocusable: Boolean,
   private val nonModalCommit: Boolean,
+  private val contentBorder: Border = JBUI.Borders.empty()
 ) : CommitOptionsUi {
   @JvmField
   val component: JComponent
@@ -42,6 +45,8 @@ internal class CommitOptionsPanel(
         placeholder = placeholder()
           .align(Align.FILL)
       }.resizableRow()
+    }.apply {
+      border = contentBorder
     }
     component = ScrollPaneFactory.createScrollPane(panel,
                                                    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,

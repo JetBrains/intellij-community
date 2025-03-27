@@ -23,7 +23,6 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -39,7 +38,7 @@ import javax.swing.border.EmptyBorder
 abstract class NonModalCommitPanel(
   val project: Project,
   val commitActionsPanel: CommitActionsPanel = CommitActionsPanel(),
-  val commitAuthorComponent: CommitAuthorComponent = CommitAuthorComponent(project)
+  val commitAuthorComponent: CommitAuthorComponent = CommitAuthorComponent(project),
 ) : BorderLayoutPanel(),
     NonModalCommitWorkflowUi,
     CommitActionsUi by commitActionsPanel,
@@ -140,15 +139,15 @@ abstract class NonModalCommitPanel(
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false, nonModalCommit = true)
+    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false, nonModalCommit = true,
+                                                contentBorder = JBUI.Borders.empty(10, 14))
     commitOptionsPanel.setOptions(options)
 
     val commitOptionsComponent = commitOptionsPanel.component.apply {
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
       isFocusCycleRoot = true
-
-      border = empty(0, 10, 10, 10)
     }
+
     // to reflect LaF changes as commit options components are created once per commit
     if (needUpdateCommitOptionsUi) {
       needUpdateCommitOptionsUi = false
