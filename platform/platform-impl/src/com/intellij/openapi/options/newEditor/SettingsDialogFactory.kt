@@ -41,7 +41,7 @@ open class SettingsDialogFactory {
   }
 
   @ApiStatus.Internal
-  protected fun create(project: Project, groups: List<ConfigurableGroup>, configurable: Configurable?, filter: String?, isModal: Boolean): DialogWrapper {
+  open fun create(project: Project, groups: List<ConfigurableGroup>, configurable: Configurable?, filter: String?, isModal: Boolean): DialogWrapper {
     return SettingsDialog(project, null, groups, configurable, filter, isModal)
   }
 }
