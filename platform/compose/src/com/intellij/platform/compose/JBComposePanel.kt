@@ -17,7 +17,5 @@ fun JBComposePanel(
   if (ApplicationManager.getApplication().isInternal) {
     System.setProperty("compose.swing.render.on.graphics", Registry.stringValue("compose.swing.render.on.graphics"))
   }
-  return JewelComposePanel { content() }.apply {
-    ComposeUiInspector(this)
-  }
+  return JewelComposePanel { content() }
 }
