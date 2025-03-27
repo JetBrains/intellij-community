@@ -5,6 +5,8 @@ import com.intellij.platform.rpc.UID
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalWriteBytesEvent
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.TerminalDataStream
+import com.jediterm.terminal.TtyBasedArrayDataStream
 import com.jediterm.terminal.TtyConnector
 import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.plugins.terminal.fus.BackendLatencyService
@@ -37,6 +39,9 @@ internal class BackendLatencyServiceImpl : BackendLatencyService {
 
 internal fun enableFus(ttyConnector: TtyConnector, fusActivity: BackendOutputActivity): TtyConnector =
   FusAwareTtyConnector(ttyConnector, fusActivity)
+
+internal fun enableFus(stream: TerminalDataStream, fusActivity: BackendOutputActivity): TerminalDataStream =
+  FusAwareTtyBasedDataStream(stream, fusActivity)
 
 private val backendTypingActivityByByteArray = ConcurrentHashMap<ByteArray, BackendTypingActivityImpl>()
 
@@ -332,6 +337,36 @@ private class FusAwareTtyConnector(private val original: TtyConnector, private v
 private class IdentityWrapper<T : Any>(private val instance: T) {
   override fun equals(other: Any?): Boolean = instance === (other as? IdentityWrapper<T>)?.instance
   override fun hashCode(): Int = System.identityHashCode(instance)
+}
+
+private class FusAwareTtyBasedDataStream(
+  private val original: TerminalDataStream,
+  private val fusActivity: BackendOutputActivity,
+) : TerminalDataStream {
+  override fun getChar(): Char {
+    @Suppress("UsePropertyAccessSyntax")
+    val result = original.getChar()
+    fusActivity.charsProcessed(1)
+    return result
+  }
+
+  override fun pushChar(c: Char) {
+    fusActivity.charsProcessed(-1)
+    original.pushChar(c)
+  }
+
+  override fun readNonControlCharacters(maxChars: Int): String? {
+    val result = original.readNonControlCharacters(maxChars)
+    fusActivity.charsProcessed(result.length)
+    return result
+  }
+
+  override fun pushBackBuffer(bytes: CharArray, length: Int) {
+    fusActivity.charsProcessed(-length)
+    original.pushBackBuffer(bytes, length)
+  }
+
+  override fun isEmpty(): Boolean = original.isEmpty
 }
 
 private fun <T : Any> T.toIdentity(): IdentityWrapper<T> = IdentityWrapper(this)

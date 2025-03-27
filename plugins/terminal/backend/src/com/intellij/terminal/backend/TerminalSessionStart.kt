@@ -15,6 +15,7 @@ import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalExecutorServiceManager
 import com.jediterm.terminal.TerminalStarter
+import com.jediterm.terminal.TtyBasedArrayDataStream
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
@@ -23,7 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.FusAwareTtyBasedDataStream
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
@@ -115,7 +115,7 @@ private fun createJediTermServices(
   val terminalStarter = StopAwareTerminalStarter(
     controller,
     connector,
-    FusAwareTtyBasedDataStream(connector, fusActivity),
+    enableFus(TtyBasedArrayDataStream(connector), fusActivity),
     typeAheadManager,
     executorService,
     fusActivity
