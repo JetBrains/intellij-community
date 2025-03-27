@@ -772,20 +772,8 @@ object DynamicPlugins {
     unregisterUnknownLevelExtensions(module.miscExtensions, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
     // note: here was a dead code for unregistering appContainer.extensions, but the map was always empty
-    for (epName in module.projectExtensionsCache.keys) {
-      // projectExtensionsCache is either empty or exactly miscExtensions, in which case the call above already handled the unregistering
-      for (project in openedProjects) {
-        val areaImpl = project.extensionArea as ExtensionsAreaImpl
-        val ep = areaImpl.getExtensionPointIfRegistered<Nothing>(epName)
-        val sizeBefore = ep?.size()
-        areaImpl.unregisterExtensions(extensionPointName = epName,
-                                      pluginDescriptor = module,
-                                      priorityListenerCallbacks = priorityUnloadListeners,
-                                      listenerCallbacks = unloadListeners)
-        assert(sizeBefore == ep?.size())
-      }
-    }
-    // note: here was a dead code for unregistering unknown level extensions with moduleContainer.extensions but the latter was always empty
+    // note: here was a dead code for unregistering project level extensions, but it is already handled by a call above
+    // note: here was a dead code for unregistering unknown level extensions with `moduleContainer.extensions` but the latter was always empty
 
     for (priorityUnloadListener in priorityUnloadListeners) {
       priorityUnloadListener.run()
