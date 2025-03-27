@@ -5,13 +5,15 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import java.time.LocalDate
 
+
+internal fun safeDiv(x: Long, y: Long): Double? = if (y == 0L) null else x.toDouble() / y
 /**
  * Base class for user factor components that store daily data.
  * Provides common functionality for managing date-based data storage.
  *
  * @param T The state type that extends BaseState
  */
-abstract class UserFactorComponent<T : BaseState>(initialState: T) : SimplePersistentStateComponent<T>(initialState) {
+internal abstract class UserFactorComponent<T : BaseState>(initialState: T) : SimplePersistentStateComponent<T>(initialState) {
   
   /**
    * Gets the daily data map from the state.

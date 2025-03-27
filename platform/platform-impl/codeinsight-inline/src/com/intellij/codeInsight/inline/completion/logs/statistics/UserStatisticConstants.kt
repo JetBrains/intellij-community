@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Constants used across user statistic components.
  */
-object UserStatisticConstants {
+internal object UserStatisticConstants {
   /**
    * The name of the storage file used for persisting statistical data related to user-dependent features
    * in inline code completions.

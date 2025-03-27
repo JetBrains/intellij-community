@@ -8,7 +8,9 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
+import com.intellij.util.xmlb.annotations.XMap
 import java.time.Instant
+import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -18,27 +20,27 @@ import kotlin.time.DurationUnit
 /**
  * Component for storing acceptance rate factors.
  */
-val DECAY_DURATIONS: List<Duration> = listOf(1.hours, 1.days, 7.days)
-
 @Service
 @State(
   name = "AcceptanceRateFactors",
   storages = [(Storage(value = UserStatisticConstants.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED))],
   reportStatistic = false
 )
-class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<AcceptanceRateFactorsComponent.State>(State()) {
+internal class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<AcceptanceRateFactorsComponent.State>(State()) {
 
   class State : BaseState() {
     var lastSelectionTime: Long by property(0L)
     var lastShowUpTime: Long by property(0L)
     var prevSelected: Boolean by property(false)
-    var selectionCounts: MutableMap<String, Double> by map()
-    var showUpCounts: MutableMap<String, Double> by map()
+    @get:XMap
+    val selectionCounts: MutableMap<Long, Double> by map()
+    @get:XMap
+    val showUpCounts: MutableMap<Long, Double> by map()
 
     init {
       DECAY_DURATIONS.forEach { duration ->
-        selectionCounts[duration.toString()] = 0.0
-        showUpCounts[duration.toString()] = 0.0
+        selectionCounts.put(duration.inWholeHours, 0.0)
+        showUpCounts.put(duration.inWholeHours, 0.0)
       }
     }
   }
@@ -51,9 +53,16 @@ class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<Acceptance
     val timestamp = currentTimestamp()
     with(state) {
       for (duration in DECAY_DURATIONS) {
-        selectionCounts[duration.toString()] = decay(selectionCounts[duration.toString()]
-                                                     ?: 0.0, timestamp - lastSelectionTime, duration) + 1.0
-        showUpCounts[duration.toString()] = decay(showUpCounts[duration.toString()] ?: 0.0, timestamp - lastShowUpTime, duration) + 1.0
+        selectionCounts[duration.inWholeHours] = decay(
+          selectionCounts[duration.inWholeHours] ?: 0.0,
+          timestamp - lastSelectionTime,
+          duration
+        ) + 1.0
+        showUpCounts[duration.inWholeHours] = decay(
+          showUpCounts[duration.inWholeHours] ?: 0.0,
+          timestamp - lastShowUpTime,
+          duration
+        ) + 1.0
       }
 
       lastSelectionTime = timestamp
@@ -70,7 +79,7 @@ class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<Acceptance
     val timestamp = currentTimestamp()
     with(state) {
       for (duration in DECAY_DURATIONS) {
-        showUpCounts[duration.toString()] = decay(showUpCounts[duration.toString()] ?: 0.0, timestamp - lastShowUpTime, duration) + 1.0
+        showUpCounts[duration.inWholeHours] = decay(showUpCounts[duration.inWholeHours] ?: 0.0, timestamp - lastShowUpTime, duration) + 1.0
       }
 
       lastShowUpTime = timestamp
@@ -82,19 +91,22 @@ class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<Acceptance
    * Returns the timestamp of the last selection event.
    * @return Timestamp in milliseconds since epoch
    */
-  fun lastSelectionTimeToday(): Long = state.lastSelectionTime
+  val lastSelectionTimeToday: Long
+    get() = state.lastSelectionTime
 
   /**
    * Returns the timestamp of the last show-up event.
    * @return Timestamp in milliseconds since epoch
    */
-  fun lastShowUpTimeToday(): Long = state.lastShowUpTime
+  val lastShowUpTimeToday: Long
+    get() = state.lastShowUpTime
 
   /**
    * Returns whether the last shown completion was selected.
    * @return True if the last completion was selected, false otherwise
    */
-  fun prevSelected(): Boolean = state.prevSelected
+  val prevSelected: Boolean
+    get() = state.prevSelected
 
   /**
    * Calculates the decayed selection count for a specific decay duration.
@@ -105,7 +117,7 @@ class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<Acceptance
   fun selectionCountDecayedBy(decayDuration: Duration, timestamp: Long = currentTimestamp()): Double {
     return with(state) {
       if (decayDuration in DECAY_DURATIONS) {
-        decay(selectionCounts[decayDuration.toString()] ?: 0.0, timestamp - lastSelectionTime, decayDuration)
+        decay(selectionCounts[decayDuration.inWholeHours] ?: 0.0, timestamp - lastSelectionTime, decayDuration)
       }
       else {
         0.0
@@ -122,7 +134,7 @@ class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<Acceptance
   fun showUpCountDecayedBy(decayDuration: Duration, timestamp: Long = currentTimestamp()): Double {
     return with(state) {
       if (decayDuration in DECAY_DURATIONS) {
-        decay(showUpCounts[decayDuration.toString()] ?: 0.0, timestamp - lastShowUpTime, decayDuration)
+        decay(showUpCounts[decayDuration.inWholeHours] ?: 0.0, timestamp - lastShowUpTime, decayDuration)
       }
       else {
         0.0
@@ -145,19 +157,40 @@ class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<Acceptance
   }
 
   companion object {
-    @JvmStatic
+    val DECAY_DURATIONS: List<Duration> = listOf(1.hours, 1.days, 7.days)
+
     fun getInstance(): AcceptanceRateFactorsComponent = service()
 
     private fun currentTimestamp() = Instant.now().toEpochMilli()
 
+    /**
+     * Computes a decayed value based on the elapsed duration and a given decay period.
+     * The smaller the decayDuration, the faster past events are neglected.
+     * Heuristically, it calculates the "average" for the last `decayDuration` time period.
+     *
+     *
+     * @param value The current value before decay.
+     * @param duration The elapsed time since the last event.
+     * @param decayDuration The duration used to calculate the decay factor.
+     * @return The updated (decayed) value.
+     */
     private fun decay(value: Double, duration: Long, decayDuration: Duration): Double =
-      if (duration * value == 0.0) value
+      //`==` for Double may work incorrectly, so `<` should be used here
+      if (duration == 0L || abs(value) < 1e-9) value
       else 0.5.pow(duration.toDouble() / decayDuration.toDouble(DurationUnit.MILLISECONDS)) * value
 
-    private fun globallySmoothedRatio(quotient: Double?, divisor: Double?): Double =
-      if (divisor == null) UserStatisticConstants.GLOBAL_ACCEPTANCE_RATE
-      else ((quotient
-             ?: 0.0) + UserStatisticConstants.GLOBAL_ACCEPTANCE_RATE * UserStatisticConstants.GLOBAL_ALPHA) / (divisor + UserStatisticConstants.GLOBAL_ALPHA)
+    /**
+     * Computes a globally smoothed ratio from quotient and divisor values.
+     * Actually, it adds a `GLOBAL_ALPHA` number of events with a value of `GLOBAL_ACCEPTANCE_RATE`.
+     * For example, if ALPHA = 10 and AR = 0.3, a person with 2 show-ups and 1 selection would have
+     * smoothedAR = (1 + 10*0.3) / (2 + 10) = 0.33 instead of 0.5.
+     * This smoothing is applied to produce more realistic statistics for new users.
+    */
+    private fun globallySmoothedRatio(quotient: Double?, divisor: Double?): Double {
+      val smoothedQuotient = (quotient ?: 0.0) + UserStatisticConstants.GLOBAL_ACCEPTANCE_RATE * UserStatisticConstants.GLOBAL_ALPHA
+      val smoothedDivisor = (divisor ?: 0.0) + UserStatisticConstants.GLOBAL_ALPHA
+      return smoothedQuotient / smoothedDivisor
+    }
   }
 }
 
@@ -165,16 +198,17 @@ class AcceptanceRateFactorsComponent : SimplePersistentStateComponent<Acceptance
  * Calculator class for acceptance rate metrics.
  * Provides calculated metrics based on the underlying component data.
  */
-class AcceptanceRateFeatures() {
-  private val component = AcceptanceRateFactorsComponent.getInstance()
+internal class AcceptanceRateFeatures() {
+  private val component
+    get() = AcceptanceRateFactorsComponent.getInstance()
 
   fun getTimeSinceLastSelection(): Long =
-    Instant.now().toEpochMilli() - component.lastSelectionTimeToday()
+    Instant.now().toEpochMilli() - component.lastSelectionTimeToday
 
   fun getTimeSinceLastShowup(): Long =
-    Instant.now().toEpochMilli() - component.lastShowUpTimeToday()
+    Instant.now().toEpochMilli() - component.lastShowUpTimeToday
 
-  fun prevSelected(): Boolean = component.prevSelected()
+  fun prevSelected(): Boolean = component.prevSelected
 
   fun smoothedAcceptanceRate(decayDuration: Duration): Double =
     component.smoothedAcceptanceRate(decayDuration)

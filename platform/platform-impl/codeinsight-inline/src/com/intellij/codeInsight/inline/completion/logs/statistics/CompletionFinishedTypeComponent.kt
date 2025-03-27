@@ -9,6 +9,16 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
 
 /**
+ * Enum representing the different types of completion finishes.
+ */
+internal enum class CompletionFinishType {
+  EXPLICIT_CANCEL,
+  SELECTED,
+  INVALIDATED,
+  OTHER
+}
+
+/**
  * Component for storing completion finished type factors with date structure using a map.
  */
 @Service
@@ -17,7 +27,7 @@ import com.intellij.openapi.components.service
   storages = [(Storage(value = UserStatisticConstants.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED))],
   reportStatistic = false
 )
-class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTypeComponent.State>(State()) {
+internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTypeComponent.State>(State()) {
 
   class State : BaseState() {
     class DailyData : BaseState() {
@@ -25,9 +35,23 @@ class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTy
       var selected: Int by property(0)
       var invalidated: Int by property(0)
       var other: Int by property(0)
+
+      fun increment(type: CompletionFinishType) {
+        when (type) {
+          CompletionFinishType.EXPLICIT_CANCEL -> explicitCancel += 1
+          CompletionFinishType.SELECTED -> selected += 1
+          CompletionFinishType.INVALIDATED -> invalidated += 1
+          CompletionFinishType.OTHER -> other += 1
+        }
+      }
     }
 
     var dailyData: MutableMap<String, DailyData> by map<String, DailyData>()
+
+    fun incrementOnDay(day: String, type: CompletionFinishType) {
+      dailyData.getOrPut(day) { DailyData() }.increment(type)
+      incrementModificationCount()
+    }
   }
 
   override fun getDailyDataMap(): MutableMap<String, *> = state.dailyData
@@ -37,9 +61,7 @@ class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTy
    * Increments the explicit cancel counter for today.
    */
   fun fireExplicitCancel() {
-    val today = getCurrentDate()
-    val dailyData = state.dailyData.getOrPut(today) { State.DailyData() }
-    dailyData.explicitCancel += 1
+    state.incrementOnDay(getCurrentDate(), CompletionFinishType.EXPLICIT_CANCEL)
     cleanupOldData()
   }
 
@@ -48,9 +70,7 @@ class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTy
    * Increments the selected counter for today.
    */
   fun fireSelected() {
-    val today = getCurrentDate()
-    val dailyData = state.dailyData.getOrPut(today) { State.DailyData() }
-    dailyData.selected += 1
+    state.incrementOnDay(getCurrentDate(), CompletionFinishType.SELECTED)
     cleanupOldData()
   }
 
@@ -59,9 +79,7 @@ class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTy
    * Increments the invalidated counter for today.
    */
   fun fireInvalidated() {
-    val today = getCurrentDate()
-    val dailyData = state.dailyData.getOrPut(today) { State.DailyData() }
-    dailyData.invalidated += 1
+    state.incrementOnDay(getCurrentDate(), CompletionFinishType.INVALIDATED)
     cleanupOldData()
   }
 
@@ -70,26 +88,23 @@ class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTy
    * Increments the other counter for today.
    */
   fun fireOther() {
-    val today = getCurrentDate()
-    val dailyData = state.dailyData.getOrPut(today) { State.DailyData() }
-    dailyData.other += 1
+    state.incrementOnDay(getCurrentDate(), CompletionFinishType.OTHER)
     cleanupOldData()
   }
 
 
   /**
    * Gets the count of completions for a specific finish type.
-   * @param key The finish type key ("explicitCancel", "selected", "invalidated", or "other")
+   * @param type The completion finish type
    * @return The count of completions for the specified finish type
    */
-  fun getCountByKey(key: String): Int {
+  fun getCountByType(type: CompletionFinishType): Int {
     return state.dailyData.values.sumOf { dailyData ->
-      when (key) {
-        "explicitCancel" -> dailyData.explicitCancel
-        "selected" -> dailyData.selected
-        "invalidated" -> dailyData.invalidated
-        "other" -> dailyData.other
-        else -> 0
+      when (type) {
+        CompletionFinishType.EXPLICIT_CANCEL -> dailyData.explicitCancel
+        CompletionFinishType.SELECTED -> dailyData.selected
+        CompletionFinishType.INVALIDATED -> dailyData.invalidated
+        CompletionFinishType.OTHER -> dailyData.other
       }
     }
   }
@@ -105,7 +120,6 @@ class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTy
   }
 
   companion object {
-    @JvmStatic
     fun getInstance(): CompletionFinishedTypeComponent = service()
   }
 }
@@ -114,22 +128,26 @@ class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTy
  * Calculator class for completion finish ratios.
  * Provides calculated metrics based on the underlying component data.
  */
-class CompletionFinishTypeFeatures() {
-  private val component = CompletionFinishedTypeComponent.getInstance()
+internal class CompletionFinishTypeFeatures() {
+  private val component
+    get() = CompletionFinishedTypeComponent.getInstance()
 
   fun getSelectedRatio(): Double {
     val total = component.getTotalCount()
-    return if (total > 0) component.getCountByKey("selected").toDouble() / total else 0.0
+    val selected = component.getCountByType(CompletionFinishType.SELECTED)
+    return safeDiv(selected.toLong(), total.toLong()) ?: 0.0
   }
 
   fun getInvalidatedRatio(): Double {
     val total = component.getTotalCount()
-    return if (total > 0) component.getCountByKey("invalidated").toDouble() / total else 0.0
+    val invalidated = component.getCountByType(CompletionFinishType.INVALIDATED)
+    return safeDiv(invalidated.toLong(), total.toLong()) ?: 0.0
   }
 
   fun getExplicitCancelRatio(): Double {
     val total = component.getTotalCount()
-    return if (total > 0) component.getCountByKey("explicitCancel").toDouble() / total else 0.0
+    val explicitCancel = component.getCountByType(CompletionFinishType.EXPLICIT_CANCEL)
+    return safeDiv(explicitCancel.toLong(), total.toLong()) ?: 0.0
   }
 
   fun hasCompletionStatistics(): Boolean = component.getTotalCount() > 0
