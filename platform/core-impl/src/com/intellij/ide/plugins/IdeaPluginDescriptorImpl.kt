@@ -119,10 +119,10 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private val isRestartRequired: Boolean = raw.isRestartRequired
   private val isImplementationDetail: Boolean = raw.isImplementationDetail
-  private val isBundled: Boolean = isBundled
   private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
-
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+
+  private val isBundled: Boolean = isBundled
   override val isIndependentFromCoreClassLoader: Boolean = isIndependentFromCoreClassLoader
   override val useCoreClassLoader: Boolean = useCoreClassLoader
 
