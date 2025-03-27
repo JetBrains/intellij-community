@@ -145,9 +145,10 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     additionalConfiguration: Consumer<in T>?,
   ) {
     assert(Configurable::class.java.isAssignableFrom(configurableClass)) { "Not a configurable: " + configurableClass.name }
-    showSettingsDialog(project, { it: Configurable? -> ConfigurableWrapper.cast(configurableClass, it) != null }) { it: Configurable ->
+    showSettingsDialog(project, { it: Configurable? -> ConfigurableWrapper.tryToCast(configurableClass, it) }) { it: Configurable ->
       if (additionalConfiguration != null) {
-        val toConfigure = ConfigurableWrapper.cast(configurableClass, it) ?: error("Wrong configurable found: " + it.javaClass)
+        val toConfigure = ConfigurableWrapper.cast(configurableClass, it)
+                          ?: error("Wrong configurable found: " + it.javaClass + " but expected: " + configurableClass)
         additionalConfiguration.accept(toConfigure)
       }
     }

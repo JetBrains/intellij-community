@@ -256,6 +256,11 @@ public interface Configurable extends UnnamedConfigurable {
 
   }
 
+  @ApiStatus.Internal
+  interface ClassCastChecker {
+    <T> boolean tryToCast(@NotNull Class<T> type);
+  }
+
   interface TopComponentController {
     TopComponentController EMPTY = new TopComponentController() {
       @Override

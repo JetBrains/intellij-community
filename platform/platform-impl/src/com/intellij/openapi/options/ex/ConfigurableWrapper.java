@@ -91,6 +91,17 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
   }
 
+  @ApiStatus.Internal
+  public static <T> boolean tryToCast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+    if (cast(type, configurable) != null) {
+      return true;
+    }
+    if (configurable instanceof ClassCastChecker checker) {
+      return checker.tryToCast(type);
+    }
+    return false;
+  }
+
   public static @Nullable <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
     if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
