@@ -424,20 +424,9 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, containerDescriptor: ContainerDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
-    val map = miscExtensions
-    if (map.isEmpty()) {
-      return
-    }
-    doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-  }
-
-  private fun doRegisterExtensions(map: Map<String, List<ExtensionDescriptor>>, nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?): Int {
-    var registeredCount = 0
-    for ((descriptors, point) in intersectMaps(map, nameToPoint)) {
+    for ((descriptors, point) in intersectMaps(miscExtensions, nameToPoint)) {
       point.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
-      registeredCount++
     }
-    return registeredCount
   }
 
   private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
