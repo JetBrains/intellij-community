@@ -3339,6 +3339,7 @@ com.intellij.ide.navigationToolbar.NavBarModelExtension
 - getData(java.lang.String,com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 - getIcon(java.lang.Object):javax.swing.Icon
 - getLeafElement(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement
+- getLeafElement(com.intellij.openapi.actionSystem.DataMap):com.intellij.psi.PsiElement
 - a:getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - getPopupMenuGroup(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - getPopupMenuGroup(com.intellij.openapi.actionSystem.DataProvider):java.lang.String

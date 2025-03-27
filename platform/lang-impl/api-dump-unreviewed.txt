@@ -9936,7 +9936,7 @@ a:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
 - p:findParentInModel(com.intellij.ide.structureView.StructureViewTreeElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - p:getApplicableNodeProviders():java.util.List
 - pa:getLanguage():com.intellij.lang.Language
-- getLeafElement(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement
+- getLeafElement(com.intellij.openapi.actionSystem.DataMap):com.intellij.psi.PsiElement
 - getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - p:isAcceptableLanguage(com.intellij.psi.PsiElement):Z
 - normalizeChildren():Z
