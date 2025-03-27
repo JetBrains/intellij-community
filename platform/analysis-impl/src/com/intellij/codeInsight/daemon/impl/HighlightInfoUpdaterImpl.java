@@ -496,6 +496,11 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
     long psiTimeStamp = PsiManager.getInstance(project).getModificationTracker().getModificationCount();
     for (HighlightInfo newInfo : newInfos) {
+      if (newInfo.getHighlighter() != null) {
+        String message = "Highlighter must not be set, but got: " + newInfo;
+        UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(newInfo, session);
+        LOG.error(message);
+      }
       newInfo.updateLazyFixesPsiTimeStamp(psiTimeStamp);
     }
     assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
