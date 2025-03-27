@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
+import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -319,6 +320,7 @@ internal class ReworkedTerminalView(
     parentDisposable: Disposable,
   ): EditorImpl {
     val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
+    result.putUserData(BackgroundHighlightingUtil.IGNORE_EDITOR, true)
 
     result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
     result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
