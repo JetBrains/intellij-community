@@ -143,12 +143,9 @@ public fun SimpleListItem(
  * @param icon Optional [IconKey] representing the icon displayed in the list item.
  * @param iconContentDescription Optional content description [String] for accessibility purposes for the icon.
  * @param style Optional [SimpleListItemStyle] for defining the appearance of the list item; default is based on the
- *   Jewel theme. <<<<<<< HEAD ======= <<<<<<< HEAD >>>>>>> 0fbf50ec59f6 (make linter happy)
- * @param height The height of the list item; default is based on the Jewel theme's global metrics.
- * @param content A composable lambda representing the main content of the list item. =======
+ *   Jewel theme.
  * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
- * @param painterHints Optional [PainterHint]s to apply to the icon, if any. >>>>>>> 3316fa64efbd (iterate on KDOC in
- *   SimpleListItem)
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
 public fun SimpleListItem(
@@ -190,12 +187,9 @@ public fun SimpleListItem(
  * @param icon Optional [IconKey] that defines which icon should be displayed.
  * @param iconContentDescription Optional content description [String] for the icon, used for accessibility.
  * @param style The style of the list item, including colors and metrics, with a default value from the theme; default
- *   is based on the Jewel theme. <<<<<<< HEAD ======= <<<<<<< HEAD >>>>>>> 0fbf50ec59f6 (make linter happy)
- * @param height The height of the list item; default is based on the Jewel theme's global metrics.
- * @param content A composable lambda representing the main content of the list item. =======
+ *   is based on the Jewel theme.
  * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
- * @param painterHints Optional [PainterHint]s to apply to the icon, if any. >>>>>>> 3316fa64efbd (iterate on KDOC in
- *   SimpleListItem)
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
 public fun SimpleListItem(
