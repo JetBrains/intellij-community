@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
+import com.intellij.terminal.backend.fus.enableFus
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import com.intellij.util.AwaitCancellationAndInvoke
@@ -24,7 +25,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.FusAwareTtyBasedDataStream
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
-import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
@@ -55,9 +55,9 @@ internal fun createTerminalSession(
   coroutineScope: CoroutineScope,
   fusActivity: BackendOutputActivity,
 ): TerminalSession {
-  ttyConnector.startStatisticsReporting(fusActivity)
+  val connector = enableFus(ttyConnector, fusActivity)
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
-  val services: JediTermServices = createJediTermServices(ttyConnector, fusActivity, initialSize, maxHistoryLinesCount, settings)
+  val services: JediTermServices = createJediTermServices(connector, fusActivity, initialSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
@@ -100,7 +100,7 @@ internal fun createTerminalSession(
 }
 
 private fun createJediTermServices(
-  connector: LocalTerminalTtyConnector,
+  connector: TtyConnector,
   fusActivity: BackendOutputActivity,
   termSize: TermSize,
   maxHistoryLinesCount: Int,
