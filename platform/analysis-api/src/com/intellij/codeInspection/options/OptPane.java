@@ -17,8 +17,9 @@ import java.util.function.Predicate;
  * as a top-level component only.
  *
  * @param components list of components on the pane
+ * @param helpId identifier of online help page for this component; null if no online help page is associated with this component
  */
-public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
+public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @Nullable String helpId) {
   public OptPane {
     Set<String> ids = new HashSet<>();
     traverse(components, comp -> {
@@ -29,11 +30,23 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
     });
   }
 
+  public OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
+    this(components, null);
+  }
+
   /**
    * An empty pane that contains no options at all
    */
   public static final OptPane EMPTY = new OptPane(List.of());
 
+  /**
+   * @param helpId identifier of online help page for this component; null if no online help page is associated with this component
+   * @return OptPane with a specified helpId.
+   */
+  public @NotNull OptPane withHelpId(@Nullable String helpId) {
+    return new OptPane(components(), helpId);
+  }
+  
   /**
    * @param bindId ID to find
    * @return control with given ID; null if none

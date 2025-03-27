@@ -1879,6 +1879,7 @@ f:com.intellij.codeInspection.options.OptPane
 - java.lang.Record
 - sf:EMPTY:com.intellij.codeInspection.options.OptPane
 - <init>(java.util.List):V
+- <init>(java.util.List,java.lang.String):V
 - allControls():java.util.List
 - append(com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptPane
 - asCheckbox(java.lang.String,java.lang.String):com.intellij.codeInspection.options.OptCheckbox
@@ -1896,6 +1897,7 @@ f:com.intellij.codeInspection.options.OptPane
 - findControl(java.lang.String):com.intellij.codeInspection.options.OptControl
 - s:group(java.lang.String,com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptGroup
 - f:hashCode():I
+- helpId():java.lang.String
 - s:horizontalStack(com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptHorizontalStack
 - s:number(java.lang.String,java.lang.String,I,I):com.intellij.codeInspection.options.OptNumber
 - s:option(java.lang.Enum,java.lang.String):com.intellij.codeInspection.options.OptDropdown$Option
@@ -1916,6 +1918,7 @@ f:com.intellij.codeInspection.options.OptPane
 - s:tab(java.lang.String,com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptTab
 - s:table(java.lang.String,com.intellij.codeInspection.options.OptTableColumn[]):com.intellij.codeInspection.options.OptTable
 - s:tabs(com.intellij.codeInspection.options.OptTab[]):com.intellij.codeInspection.options.OptTabSet
+- withHelpId(java.lang.String):com.intellij.codeInspection.options.OptPane
 com.intellij.codeInspection.options.OptRegularComponent
 - com.intellij.codeInspection.options.OptComponent
 - prefix(java.lang.String):com.intellij.codeInspection.options.OptRegularComponent

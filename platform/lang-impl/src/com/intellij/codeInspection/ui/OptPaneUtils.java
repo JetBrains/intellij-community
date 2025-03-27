@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,19 +23,17 @@ public final class OptPaneUtils {
    * @param project current project
    * @param data data container to edit
    * @param title dialog title
-   * @param helpId dialog help ID
    * @param onSuccess code to run on success
    */
   public static void editOptions(@NotNull Project project,
-                                  @NotNull OptionContainer data,
-                                  @NlsContexts.DialogTitle String title,
-                                  @NonNls String helpId,
-                                  @NotNull Runnable onSuccess) {
+                                 @NotNull OptionContainer data,
+                                 @NlsContexts.DialogTitle String title,
+                                 @NotNull Runnable onSuccess) {
     OptPane rootPane = data.getOptionsPane();
     if (rootPane.equals(OptPane.EMPTY)) {
       throw new IllegalArgumentException("OptPane is not defined for " + data.getClass().getName());
     }
-    editOptions(project, data, rootPane, title, helpId, onSuccess);
+    editOptions(project, data, rootPane, title, onSuccess);
   }
 
   /**
@@ -46,15 +43,13 @@ public final class OptPaneUtils {
    * @param data data container to edit
    * @param pane OptPane description
    * @param title dialog title
-   * @param helpId dialog help ID
    * @param onSuccess code to run on success
    */
   public static void editOptions(@NotNull Project project,
-                                  @NotNull OptionContainer data,
-                                  @NotNull OptPane pane,
-                                  @NlsContexts.DialogTitle String title,
-                                  @NonNls String helpId,
-                                  @NotNull Runnable onSuccess) {
+                                 @NotNull OptionContainer data,
+                                 @NotNull OptPane pane,
+                                 @NlsContexts.DialogTitle String title,
+                                 @NotNull Runnable onSuccess) {
     if (ContainerUtil.getOnlyItem(pane.components()) instanceof OptString stringCtl &&
         stringCtl.validator() instanceof StringValidatorWithSwingSelector validator) {
       // Single control with selector: just call the selector
@@ -68,6 +63,7 @@ public final class OptPaneUtils {
 
     // TODO: execute validator on focus
     DialogBuilder builder = new DialogBuilder(project).title(title);
+    String helpId = pane.helpId();
     if (helpId != null) {
       builder.setHelpId(helpId);
     }

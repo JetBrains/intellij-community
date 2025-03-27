@@ -248,7 +248,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
                                                                         @NotNull ModEditOptions<T> options,
                                                                         @Nullable Editor editor) {
     T container = options.containerSupplier().get();
-    OptPaneUtils.editOptions(context.project(), container, options.title(), null, () -> {
+    OptPaneUtils.editOptions(context.project(), container, options.title(), () -> {
       ModCommandExecutor.executeInteractively(context, options.title(), editor, () -> options.nextCommand().apply(container));
     });
     return true;

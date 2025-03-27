@@ -114,7 +114,7 @@ public final class EditRangeIntention implements ModCommandAction {
         OptPane.string("max", JavaBundle.message("label.to.inclusive"),
                        StringValidator.of("java.range.max", value -> getErrorMessages(min, value, myType).second))
           .description(JavaBundle.message("edit.range.dialog.message"))
-      );
+      ).withHelpId("define_range_dialog");
     }
   }
 

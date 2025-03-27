@@ -100,7 +100,7 @@ public final class EditContractIntention implements ModCommandAction {
                  string("mutates", JavaBundle.message("label.mutates"),
                         StringValidator.of("java.method.mutates", string -> getMutatesErrorMessage(string, method)))
                    .description(HtmlChunk.raw(JavaBundle.message("edit.contract.dialog.mutates.hint")))
-        ));
+        )).withHelpId("define_contract_dialog");
     }
   }
 
