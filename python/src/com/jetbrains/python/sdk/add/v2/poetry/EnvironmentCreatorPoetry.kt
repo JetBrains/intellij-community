@@ -28,9 +28,14 @@ import kotlin.io.path.pathString
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -111,6 +116,17 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
 
   override suspend fun detectExecutable() {
     model.detectPoetryExecutable()
+  }
+
+  override fun onVenvSelectExisting() {
+    PythonNewProjectWizardCollector.logExistingVenvFixUsed()
+
+    if (moduleOrProject != null) {
+      model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = POETRY)
+    }
+    else {
+      model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PYTHON)
+    }
   }
 
   private fun addInProjectCheckbox(panel: Panel) {
