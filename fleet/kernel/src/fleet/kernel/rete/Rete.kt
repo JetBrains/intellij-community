@@ -185,7 +185,7 @@ suspend fun waitForReteToCatchUp(targetDb: Q, cancellable: Boolean = true) {
 
   // now that rete has caught up with targetDb, we can go and check if our context matches are still valid
   val invalidation = coroutineContext[ContextMatches]?.matches
-    ?.firstOrNull { it.validity.isCompleted }
+    ?.firstOrNull { it.wasInvalidated }
     ?.let { invalidatedMatch ->
       UnsatisfiedMatchException(CancellationReason("match invalidated by rete", invalidatedMatch.match))
     }
@@ -241,7 +241,7 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
           r.and {
             val reteTimestamp = rete.reteState.value.dbOrThrow().timestamp
             when {
-              match.validity.isCompleted -> ValidationResult.Invalid(match)
+              match.wasInvalidated -> ValidationResult.Invalid(match)
               dbBefore.timestamp == reteTimestamp -> ValidationResult.Valid
               else -> when (match.validate()) {
                 ValidationResultEnum.Inconclusive -> ValidationResult.Inconclusive
@@ -302,10 +302,10 @@ fun <T> Query<T>.observe(
 /**
  * Runs [body] with [Rete] [DbSource]
  * */
-internal suspend fun <T> withReteDbSource(body: suspend () -> T): T =
+internal suspend fun <T> withReteDbSource(body: suspend CoroutineScope.() -> T): T =
   requireNotNull(coroutineContext[Rete]) { "no rete on context" }.let { rete ->
     if (coroutineContext[DbSource.ContextElement]?.dbSource == rete.dbSource) {
-      body()
+      coroutineScope(body)
     }
     else {
       waitForReteToCatchUp(coroutineContext.transactor.dbState.value)
