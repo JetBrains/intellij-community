@@ -1203,6 +1203,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         public void testSimple() throws Exception {
             performTest();
         }
+
+        @TestMetadata("withinAssignment.kt")
+        public void testWithinAssignment() throws Exception {
+            performTest();
+        }
     }
 
     @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
