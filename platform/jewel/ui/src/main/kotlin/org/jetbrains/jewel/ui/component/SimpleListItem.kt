@@ -33,16 +33,16 @@ import org.jetbrains.jewel.ui.theme.simpleListItemStyle
  *
  * @param text The text displayed in the list item
  * @param state The state of the list item, containing selection and activity status.
- * @param modifier Optional [Modifier] to be applied to the list item.
- * @param textModifier Optional [Modifier] to be applied to the list item text.
- * @param iconModifier Optional [Modifier] to be applied specifically to the icon.
+ * @param modifier Optional [Modifier] to apply to to the list item.
+ * @param textModifier Optional [Modifier] to apply to to the list item text.
+ * @param iconModifier Optional [Modifier] to apply to specifically to the icon.
  * @param icon Optional [IconKey] representing the icon displayed in the list item.
  * @param iconContentDescription Optional content description [String] for accessibility purposes for the icon.
  * @param style Optional [SimpleListItemStyle] for defining the appearance of the list item; default is based on the
  *   Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
- * @param colorFilter Optional [ColorFilter] applied to the item, typically used with the icon.
- * @param painterHints Optional vararg of [PainterHint] to provide hints for painting customizations.
+ * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
 public fun SimpleListItem(
@@ -89,15 +89,15 @@ public fun SimpleListItem(
  * @param text The text displayed in the list item.
  * @param selected Indicates whether the list item is selected.
  * @param active Indicates whether the list item is active or disabled; default is active.
- * @param modifier Optional [Modifier] to be applied to the entire list item.
- * @param textModifier Optional [Modifier] to be applied specifically to the text.
- * @param iconModifier Optional [Modifier] to be applied specifically to the icon.
+ * @param modifier Optional [Modifier] to apply to to the entire list item.
+ * @param textModifier Optional [Modifier] to apply to specifically to the text.
+ * @param iconModifier Optional [Modifier] to apply to specifically to the icon.
  * @param icon Optional [IconKey] representing the icon displayed on the start side of the list item.
  * @param iconContentDescription Optional content description [String] for the icon for accessibility purposes.
  * @param style The [SimpleListItemStyle] defining the appearance of the list item; default is based on the Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
- * @param colorFilter Optional [ColorFilter] applied to the item, typically used with the icon.
- * @param painterHints Optional vararg of [PainterHint] to provide hints for customizing the icon appearance.
+ * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
  */
 @Composable
 public fun SimpleListItem(
@@ -138,14 +138,22 @@ public fun SimpleListItem(
  * @param active Determines if the list item is in an active state (e.g., enabled or interactive).
  * @param colorFilter Optional [ColorFilter] applied to the item, typically used with the icon.
  * @param painterHints Optional list of [PainterHint] to provide hints for painting customizations; default is empty.
- * @param modifier Optional [Modifier] to be applied to the list item.
- * @param iconModifier Optional [Modifier] to be applied specifically to the icon.
+ * @param modifier Optional [Modifier] to apply to to the list item.
+ * @param iconModifier Optional [Modifier] to apply to specifically to the icon.
  * @param icon Optional [IconKey] representing the icon displayed in the list item.
  * @param iconContentDescription Optional content description [String] for accessibility purposes for the icon.
  * @param style Optional [SimpleListItemStyle] for defining the appearance of the list item; default is based on the
  *   Jewel theme.
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 0fbf50ec59f6 (make linter happy)
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param content A composable lambda representing the main content of the list item.
+=======
+ * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
+>>>>>>> 3316fa64efbd (iterate on KDOC in SimpleListItem)
  */
 @Composable
 public fun SimpleListItem(
@@ -188,8 +196,16 @@ public fun SimpleListItem(
  * @param iconContentDescription Optional content description [String] for the icon, used for accessibility.
  * @param style The style of the list item, including colors and metrics, with a default value from the theme; default
  *   is based on the Jewel theme.
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 0fbf50ec59f6 (make linter happy)
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param content A composable lambda representing the main content of the list item.
+=======
+ * @param colorFilter Optional [ColorFilter] to apply to the icon, if any.
+ * @param painterHints Optional [PainterHint]s to apply to the icon, if any.
+>>>>>>> 3316fa64efbd (iterate on KDOC in SimpleListItem)
  */
 @Composable
 public fun SimpleListItem(
