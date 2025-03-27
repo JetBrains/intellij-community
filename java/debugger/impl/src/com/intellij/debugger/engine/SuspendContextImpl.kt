@@ -107,13 +107,9 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   }
 
   init {
-    val disposable = myDebugProcess.disposable
-    if (disposable.isDisposed()) {
+    if (!Disposer.tryRegister(managerThread, this)) {
       // could be due to VM death
       Disposer.dispose(this)
-    }
-    else {
-      Disposer.register(disposable, this)
     }
   }
 
