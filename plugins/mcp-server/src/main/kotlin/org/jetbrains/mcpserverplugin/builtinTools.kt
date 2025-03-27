@@ -610,18 +610,21 @@ class ListAvailableActionsTool : AbstractMcpTool<NoArgs>() {
             DataManager.getInstance().getDataContext()
         }
 
-        val availableActions = runReadAction {
-            actionManager.getActionIdList("").mapNotNull { actionId ->
-                val action = actionManager.getAction(actionId) ?: return@mapNotNull null
-                val event = AnActionEvent.createFromAnAction(action, null, "", dataContext)
-                val presentation = action.templatePresentation.clone()
-                invokeAndWaitIfNeeded { runCatching { action.update(event) } }
+        val actionIds = actionManager.getActionIdList("")
+        val availableActions = actionIds.mapNotNull { actionId ->
+            val action = actionManager.getAction(actionId) ?: return@mapNotNull null
+            val presentation = action.templatePresentation.clone()
 
-                if (event.presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
-                    """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
-                } else {
-                    null
-                }
+            val event = AnActionEvent.createFromAnAction(action, null, "", dataContext)
+
+            invokeAndWaitIfNeeded {
+                runCatching { action.update(event) }
+            }
+
+            if (event.presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
+                """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
+            } else {
+                null
             }
         }
 
