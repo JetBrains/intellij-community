@@ -14,12 +14,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.run.findActivateScript
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
@@ -34,15 +33,17 @@ import kotlin.io.path.name
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
   private fun generatePowerShellActivateScript(sdk: Sdk, sdkHomePath: VirtualFile): String? {
     // TODO: This should be migrated to Targets API: each target provides terminal
-    if ((sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is CondaEnvSdkFlavor) {
+    val condaData = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavorAndData?.data as? PyCondaFlavorData
+    if (condaData != null) {
       // Activate conda
-      val condaPath = PyCondaPackageService.getCondaExecutable(sdk.homePath)?.let { Path(it) }
-      return if (condaPath != null && condaPath.exists() && condaPath.isExecutable()) {
+      val condaPath = Path(condaData.env.fullCondaPathOnTarget)
+      return if (condaPath.exists() && condaPath.isExecutable()) {
         getCondaActivationCommand(condaPath, sdkHomePath)
       }
       else {
         logger<PyVirtualEnvTerminalCustomizer>().warn("Can't find $condaPath, will not activate conda")
-        PyTerminalBundle.message("powershell.conda.not.activated", "conda")
+        val message = PyTerminalBundle.message("powershell.conda.not.activated", "conda")
+        "echo '$message'"
       }
     }
 
@@ -72,10 +73,12 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         """.trimIndent()
   }
 
-  override fun customizeCommandAndEnvironment(project: Project,
-                                              workingDirectory: String?,
-                                              command: Array<out String>,
-                                              envs: MutableMap<String, String>): Array<out String> {
+  override fun customizeCommandAndEnvironment(
+    project: Project,
+    workingDirectory: String?,
+    command: Array<out String>,
+    envs: MutableMap<String, String>,
+  ): Array<out String> {
     var sdkByDirectory: Sdk? = null
     if (workingDirectory != null) {
       runReadAction {
