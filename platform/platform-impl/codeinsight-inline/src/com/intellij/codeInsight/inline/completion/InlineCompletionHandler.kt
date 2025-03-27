@@ -81,8 +81,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     val logsListener = InlineCompletionLogsListener(editor)
     addEventListener(logsListener)
     invalidationListeners.addListener(logsListener)
-    val userFactorsListener = UserFactorsListener()
-    addEventListener(userFactorsListener)
+    addEventListener(UserFactorsListener())
   }
 
   /**

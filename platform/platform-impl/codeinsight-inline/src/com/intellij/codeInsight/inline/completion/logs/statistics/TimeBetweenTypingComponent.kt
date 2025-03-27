@@ -17,15 +17,25 @@ import com.intellij.openapi.components.service
   storages = [(Storage(value = UserStatisticConstants.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED))],
   reportStatistic = false
 )
-class TimeBetweenTypingComponent : UserFactorComponent<TimeBetweenTypingComponent.State>(State()) {
+internal class TimeBetweenTypingComponent : UserFactorComponent<TimeBetweenTypingComponent.State>(State()) {
 
   class State : BaseState() {
     class DailyData : BaseState() {
       var count: Int by property(0)
       var totalTime: Long by property(0L)
+
+      fun increment(time: Long) {
+        totalTime += time
+        count += 1
+      }
     }
 
     var dailyData: MutableMap<String, DailyData> by map<String, DailyData>()
+
+    fun incrementOnDay(day: String, time: Long) {
+      dailyData.getOrPut(day) { DailyData() }.increment(time)
+      incrementModificationCount()
+    }
   }
 
   override fun getDailyDataMap(): MutableMap<String, *> = state.dailyData
@@ -35,12 +45,7 @@ class TimeBetweenTypingComponent : UserFactorComponent<TimeBetweenTypingComponen
    * @param delayMs The delay in milliseconds since the last typing event
    */
   fun fireTypingPerformed(delayMs: Long) {
-    val today = getCurrentDate()
-    val dailyData = state.dailyData.getOrPut(today) { State.DailyData() }
-
-    dailyData.count += 1
-    dailyData.totalTime += delayMs
-
+    state.incrementOnDay(getCurrentDate(), delayMs)
     cleanupOldData()
   }
 
@@ -51,14 +56,11 @@ class TimeBetweenTypingComponent : UserFactorComponent<TimeBetweenTypingComponen
    */
   fun getAverageTimeBetweenTyping(): Double? {
     val totalCount = state.dailyData.values.sumOf { it.count }
-    if (totalCount == 0) return null
-
     val totalTime = state.dailyData.values.sumOf { it.totalTime }
-    return totalTime.toDouble() / totalCount
+    return safeDiv(totalTime, totalCount.toLong())
   }
 
   companion object {
-    @JvmStatic
     fun getInstance(): TimeBetweenTypingComponent = service()
   }
 }
@@ -67,8 +69,9 @@ class TimeBetweenTypingComponent : UserFactorComponent<TimeBetweenTypingComponen
  * Analyzer class for typing speed metrics.
  * Provides calculated metrics based on the underlying component data.
  */
-class TimeBetweenTypingFeatures() {
-  private val component = TimeBetweenTypingComponent.getInstance()
+internal class TimeBetweenTypingFeatures() {
+  private val component
+    get() = TimeBetweenTypingComponent.getInstance()
 
   fun getAverageTypingSpeed(): Double = component.getAverageTimeBetweenTyping() ?: 0.0
 }

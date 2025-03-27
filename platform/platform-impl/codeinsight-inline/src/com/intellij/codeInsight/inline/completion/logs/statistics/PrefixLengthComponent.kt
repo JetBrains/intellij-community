@@ -17,14 +17,24 @@ import com.intellij.openapi.components.service
   storages = [(Storage(value = UserStatisticConstants.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED))],
   reportStatistic = false
 )
-class PrefixLengthComponent : UserFactorComponent<PrefixLengthComponent.State>(State()) {
+internal class PrefixLengthComponent : UserFactorComponent<PrefixLengthComponent.State>(State()) {
 
   class State : BaseState() {
     class DailyData : BaseState() {
       var prefixLengths: MutableMap<Int, Int> by map()
+
+      fun increment(length: Int) {
+        prefixLengths[length] = (prefixLengths[length] ?: 0) + 1
+        incrementModificationCount()
+      }
     }
 
     var dailyData: MutableMap<String, DailyData> by map<String, DailyData>()
+
+    fun incrementOnDay(day: String, length: Int) {
+      dailyData.getOrPut(day) { DailyData() }.increment(length)
+      incrementModificationCount()
+    }
   }
 
   override fun getDailyDataMap(): MutableMap<String, *> = state.dailyData
@@ -34,10 +44,9 @@ class PrefixLengthComponent : UserFactorComponent<PrefixLengthComponent.State>(S
    * @param prefixLength The length of the prefix that triggered the completion
    */
   fun fireCompletionPerformed(prefixLength: Int) {
-    val today = getCurrentDate()
-    val dailyData = state.dailyData.getOrPut(today) { State.DailyData() }
-    dailyData.prefixLengths[prefixLength] = (dailyData.prefixLengths[prefixLength] ?: 0) + 1
-
+    val oldModificationCount = state.modificationCount
+    state.incrementOnDay(getCurrentDate(), prefixLength)
+    assert(state.modificationCount > oldModificationCount) {"prefix assert ${state.modificationCount} ${oldModificationCount}"}
     cleanupOldData()
   }
 
@@ -62,17 +71,12 @@ class PrefixLengthComponent : UserFactorComponent<PrefixLengthComponent.State>(S
    */
   fun getAveragePrefixLength(): Double? {
     val lengthToCount = getCountsByPrefixLength()
-    if (lengthToCount.isEmpty()) return null
-
     val totalChars = lengthToCount.asSequence().sumOf { it.key * it.value }
     val completionCount = lengthToCount.asSequence().sumOf { it.value }
-
-    if (completionCount == 0) return null
-    return totalChars.toDouble() / completionCount
+    return safeDiv(totalChars.toLong(), completionCount.toLong())
   }
 
   companion object {
-    @JvmStatic
     fun getInstance(): PrefixLengthComponent = service()
   }
 }
@@ -81,8 +85,9 @@ class PrefixLengthComponent : UserFactorComponent<PrefixLengthComponent.State>(S
  * Analyzer class for prefix length metrics.
  * Provides calculated metrics based on the underlying component data.
  */
-class PrefixLengthFeatures() {
-  private val component = PrefixLengthComponent.getInstance()
+internal class PrefixLengthFeatures() {
+  private val component
+    get() = PrefixLengthComponent.getInstance()
 
   fun getMostFrequentPrefixLength(): Int {
     return component.getCountsByPrefixLength()
