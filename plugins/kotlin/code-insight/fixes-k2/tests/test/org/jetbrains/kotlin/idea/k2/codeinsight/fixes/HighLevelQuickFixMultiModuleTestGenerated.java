@@ -957,6 +957,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/innerEnum/");
         }
 
+        @TestMetadata("internalFunction")
+        public void testInternalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/internalFunction/");
+        }
+
         @TestMetadata("memberFunctionAndNestedClass")
         public void testMemberFunctionAndNestedClass() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/memberFunctionAndNestedClass/");
