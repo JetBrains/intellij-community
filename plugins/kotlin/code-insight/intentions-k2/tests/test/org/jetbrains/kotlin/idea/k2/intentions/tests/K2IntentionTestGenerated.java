@@ -7516,8 +7516,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
-
-
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression")
     public static class EvaluateCompileTimeExpression extends AbstractK2IntentionTest {

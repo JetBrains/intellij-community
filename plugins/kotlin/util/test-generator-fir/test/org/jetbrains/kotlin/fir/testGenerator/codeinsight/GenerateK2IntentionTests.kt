@@ -68,7 +68,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/changeVisibility", pattern = pattern)
 
             //
-            model("${idea}intentions/addJvmOverloads", pattern = pattern, isIgnored = true)
             model("${idea}intentions/changeVisibility", pattern = pattern, isIgnored = true)
             model("${idea}intentions/evaluateCompileTimeExpression", pattern = pattern)
             model("${idea}intentions/simplifyBooleanWithConstants", pattern = pattern, isIgnored = true)
