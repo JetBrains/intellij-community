@@ -1,60 +1,41 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea;
+package git4idea
 
-import git4idea.branch.GitBranchUtil;
-import git4idea.repo.GitRemote;
-import org.jetbrains.annotations.NotNull;
+import git4idea.branch.GitBranchUtil
+import git4idea.repo.GitRemote
 
-public final class GitStandardRemoteBranch extends GitRemoteBranch {
-  private final @NotNull String myNameAtRemote;
+class GitStandardRemoteBranch(remote: GitRemote, nameAtRemote: String) :
+  GitRemoteBranch("${remote.name}/${GitBranchUtil.stripRefsPrefix(nameAtRemote)}", remote) {
+  override val nameForRemoteOperations: String = GitBranchUtil.stripRefsPrefix(nameAtRemote)
 
-  public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
-    super(formStandardName(remote, GitBranchUtil.stripRefsPrefix(nameAtRemote)), remote);
-    myNameAtRemote = GitBranchUtil.stripRefsPrefix(nameAtRemote);
+  override val nameForLocalOperations: String
+    get() = name
+
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+    if (!super.equals(o)) return false
+
+    val branch = o as GitStandardRemoteBranch
+
+    if (this.nameForRemoteOperations != branch.nameForRemoteOperations) return false
+    if (remote != branch.remote) return false
+
+    return true
   }
 
-  private static @NotNull String formStandardName(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
-    return remote.getName() + "/" + nameAtRemote;
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + remote.hashCode()
+    result = 31 * result + nameForRemoteOperations.hashCode()
+    return result
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    GitStandardRemoteBranch branch = (GitStandardRemoteBranch)o;
-
-    if (!myNameAtRemote.equals(branch.myNameAtRemote)) return false;
-    if (!getRemote().equals(branch.getRemote())) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + getRemote().hashCode();
-    result = 31 * result + myNameAtRemote.hashCode();
-    return result;
-  }
-
-  @Override
-  public @NotNull String getNameForRemoteOperations() {
-    return myNameAtRemote;
-  }
-
-  @Override
-  public @NotNull String getNameForLocalOperations() {
-    return getName();
-  }
-
-  @Override
-  public int compareTo(GitReference o) {
-    if (o instanceof GitStandardRemoteBranch) {
+  override fun compareTo(o: GitReference?): Int {
+    if (o is GitStandardRemoteBranch) {
       // optimization: do not build getFullName
-      return REFS_NAMES_COMPARATOR.compare(getName(), o.getName());
+      return REFS_NAMES_COMPARATOR.compare(name, o.name)
     }
-    return super.compareTo(o);
+    return super.compareTo(o)
   }
 }
