@@ -1,37 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea
 
-import git4idea.branch.GitBranchUtil;
-import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import git4idea.branch.GitBranchUtil
+import git4idea.repo.GitRepository
 
-/**
- * @author Kirill Likhodedov
- */
-public final class GitLocalBranch extends GitBranch {
+class GitLocalBranch(name: String) : GitBranch(name) {
+  override val isRemote: Boolean
+    get() = false
 
-  public GitLocalBranch(@NotNull String name) {
-    super(name);
+  fun findTrackedBranch(repository: GitRepository): GitRemoteBranch? {
+    val info = GitBranchUtil.getTrackInfoForBranch(repository, this)
+    return info?.remoteBranch
   }
 
-  @Override
-  public boolean isRemote() {
-    return false;
-  }
-
-  public @Nullable GitRemoteBranch findTrackedBranch(@NotNull GitRepository repository) {
-    GitBranchTrackInfo info = GitBranchUtil.getTrackInfoForBranch(repository, this);
-    return info != null ? info.getRemoteBranch() : null;
-  }
-
-  @Override
-  public int compareTo(GitReference o) {
-    if (o instanceof GitLocalBranch) {
+  override fun compareTo(o: GitReference?): Int {
+    if (o is GitLocalBranch) {
       // optimization: do not build getFullName
-      return REFS_NAMES_COMPARATOR.compare(getName(), o.getName());
+      return REFS_NAMES_COMPARATOR.compare(name, o.name)
     }
-    return super.compareTo(o);
+    return super.compareTo(o)
   }
 }
