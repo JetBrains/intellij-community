@@ -33,8 +33,6 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
   val session: XDebugSession by Session
   val projectEntity: ProjectEntity by ProjectEntity
 
-  val currentSourcePosition: XSourcePosition? by CurrentSourcePosition
-
   companion object : EntityType<XDebugSessionEntity>(
     XDebugSessionEntity::class.java.name,
     "com.intellij.xdebugger.impl.rhizome",
@@ -43,8 +41,6 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
     val SessionId: Required<XDebugSessionId> = requiredTransient("sessionId", Indexing.UNIQUE)
     val Session: Required<XDebugSession> = requiredTransient("session", Indexing.UNIQUE)
     val ProjectEntity: Required<ProjectEntity> = requiredRef("project", RefFlags.CASCADE_DELETE_BY)
-
-    val CurrentSourcePosition: Optional<XSourcePosition> = optionalTransient("currentPosition")
   }
 }
 

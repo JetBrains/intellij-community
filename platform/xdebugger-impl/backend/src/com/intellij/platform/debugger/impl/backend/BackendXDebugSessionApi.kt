@@ -15,39 +15,24 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.rhizome.*
+import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rpc.*
-import com.intellij.xdebugger.impl.rpc.models.XExecutionStackModel
-import com.intellij.xdebugger.impl.rpc.models.XExecutionStackValueIdType
-import com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
-import com.intellij.xdebugger.impl.rpc.models.XStackFrameValueIdType
-import com.intellij.xdebugger.impl.rpc.models.XSuspendContextModel
-import com.intellij.xdebugger.impl.rpc.models.XSuspendContextValueIdType
-import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.rpc.models.storeValueGlobally
+import com.intellij.xdebugger.impl.rpc.models.*
 import com.jetbrains.rhizomedb.entity
-import fleet.kernel.rete.collect
-import fleet.kernel.rete.query
 import fleet.kernel.withEntities
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
     val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
-    return channelFlow {
-      withEntities(sessionEntity) {
-        query { sessionEntity.currentSourcePosition }.collect { sourcePosition ->
-          if (sourcePosition == null) {
-            send(null)
-            return@collect
-          }
-          send(sourcePosition.toRpc())
-        }
-      }
+    val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
+    return session.getCurrentPositionFlow().map { sourcePosition ->
+      sourcePosition?.toRpc()
     }
   }
 
