@@ -22,10 +22,13 @@
         <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
                       relative-to-action="XDebugger.SetValue"/>
       </action>
-      <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
+      <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                      relative-to-action="XDebugger.CopyValue"/>
+      </action>
       <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction">
         <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                      relative-to-action="XDebugger.CompareValueWithClipboard.Frontend"/>
+                      relative-to-action="XDebugger.CompareValueWithClipboard"/>
       </action>
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"

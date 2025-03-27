@@ -18,11 +18,6 @@
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
                     relative-to-action="XDebugger.Inspect.Frontend"/>
     </action>
-    <action id="XDebugger.CompareValueWithClipboard.Frontend"
-            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCompareWithClipboardAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.CopyValue"/>
-    </action>
 
     <action id="EvaluateExpression.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendEvaluateAction"
             icon="AllIcons.Debugger.EvaluateExpression">
