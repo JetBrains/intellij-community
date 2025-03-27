@@ -441,12 +441,10 @@ class IdeaPluginDescriptorImpl private constructor(
     // module container: just use rest, area will not register unrelated extension anyway as no registered point
 
     if (containerDescriptor === appContainerDescriptor) {
-      val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-      appContainerDescriptor.distinctExtensionPointCount = registeredCount
+      doRegisterExtensions(map, nameToPoint, listenerCallbacks)
     }
     else if (containerDescriptor === projectContainerDescriptor) {
       val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-      projectContainerDescriptor.distinctExtensionPointCount = registeredCount
 
       if (registeredCount == map.size) {
         projectContainerDescriptor.extensions = map
