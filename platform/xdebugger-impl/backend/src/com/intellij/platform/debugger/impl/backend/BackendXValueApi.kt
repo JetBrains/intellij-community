@@ -104,7 +104,7 @@ internal class BackendXValueApi : XValueApi {
 
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
-    return computeContainerChildren(xValueModel.xValue, xValueModel.session)
+    return computeContainerChildren(xValueModel.cs, xValueModel.xValue, xValueModel.session)
   }
 
   override suspend fun disposeXValue(xValueId: XValueId) {
@@ -232,6 +232,7 @@ private class AddNextChildrenCallbackHandler(cs: CoroutineScope) {
 }
 
 internal fun computeContainerChildren(
+  parentCs: CoroutineScope,
   xValueContainer: XValueContainer,
   session: XDebugSessionImpl,
 ): Flow<XValueComputeChildrenEvent> {
@@ -288,20 +289,20 @@ internal fun computeContainerChildren(
     }
 
     for (event in rawEvents) {
-      send(event.convertToRpcEvent(session))
+      send(event.convertToRpcEvent(parentCs, session))
     }
   }
 }
 
 private sealed interface RawComputeChildrenEvent {
-  suspend fun convertToRpcEvent(session: XDebugSessionImpl): XValueComputeChildrenEvent
+  suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent
 
   data class AddChildren(val children: XValueChildrenList, val last: Boolean) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
       val names = (0 until children.size()).map { children.getName(it) }
       val childrenXValues = (0 until children.size()).map { children.getValue(it) }
       val childrenXValueEntities = childrenXValues.map { childXValue ->
-        newXValueModel(childXValue, session)
+        newChildXValueModel(childXValue, parentCoroutineScope, session)
       }
       val childrenXValueDtos = childrenXValueEntities.map { childXValueEntity ->
         childXValueEntity.toXValueDto()
@@ -311,20 +312,20 @@ private sealed interface RawComputeChildrenEvent {
   }
 
   data class SetAlreadySorted(val value: Boolean) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
       return XValueComputeChildrenEvent.SetAlreadySorted(value)
     }
   }
 
   data class SetErrorMessage(val message: String, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
       // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
       return XValueComputeChildrenEvent.SetErrorMessage(message, link)
     }
   }
 
   data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes?, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
       // TODO[IJPL-160146]: support SimpleTextAttributes serialization
       // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
       return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes, link)
@@ -332,7 +333,7 @@ private sealed interface RawComputeChildrenEvent {
   }
 
   data class TooManyChildren(val remaining: Int, val addNextChildren: Runnable?, val addNextChildrenCallbackHandler: AddNextChildrenCallbackHandler) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
       return XValueComputeChildrenEvent.TooManyChildren(remaining, addNextChildrenCallbackHandler.setAddNextChildrenCallback(addNextChildren))
     }
   }

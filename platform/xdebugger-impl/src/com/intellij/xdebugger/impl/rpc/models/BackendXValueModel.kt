@@ -38,7 +38,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class BackendXValueModel internal constructor(
-  cs: CoroutineScope,
+  val cs: CoroutineScope,
   val session: XDebugSessionImpl,
   val xValue: XValue,
 ) {

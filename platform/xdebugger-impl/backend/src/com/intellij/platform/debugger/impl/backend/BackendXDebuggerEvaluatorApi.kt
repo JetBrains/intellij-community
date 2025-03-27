@@ -19,6 +19,7 @@ import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
 import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
@@ -84,7 +85,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       catch (e: EvaluationException) {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
-      val xValueModel = newXValueModel(xValue, session)
+      val xValueModel = newXValueModel(stackFrameModel, xValue, session)
       val xValueDto = xValueModel.toXValueDto()
       XEvaluationResult.Evaluated(xValueDto)
     }
@@ -109,20 +110,29 @@ internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
 }
 
 internal fun newXValueModel(
+  stackFrameModel: XStackFrameModel,
   xValue: XValue,
   session: XDebugSessionImpl,
 ): BackendXValueModel {
-  // TODO[IJPL-160146]: XValues should be stuck on suspension context coroutine scope, not on session one.
-  val xValueCs = session.coroutineScope
-  val xValueModel = BackendXValueModelsManager.getInstance(session.project).createXValueModel(xValueCs, session, xValue)
+  val xValueModel = BackendXValueModelsManager.getInstance(session.project).createXValueModel(stackFrameModel.coroutineScope, session, xValue)
+  return xValueModel.apply {
+    setInitialMarker()
+  }
+}
+
+internal fun newChildXValueModel(
+  xValue: XValue,
+  parentCoroutineScope: CoroutineScope,
+  session: XDebugSessionImpl,
+): BackendXValueModel {
+  val xValueModel = BackendXValueModelsManager.getInstance(session.project).createXValueModel(parentCoroutineScope, session, xValue)
   return xValueModel.apply {
     setInitialMarker()
   }
 }
 
 private fun BackendXValueModel.setInitialMarker() {
-  // TODO[IJPL-160146]: XValues should be stuck on suspension context coroutine scope, not on session one.
-  session.coroutineScope.launch {
+  cs.launch {
     xValue.isReady.await()
     val markers = session.valueMarkers
     val marker = markers?.getMarkup(xValue) ?: return@launch
