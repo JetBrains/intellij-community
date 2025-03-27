@@ -14,8 +14,9 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
-  override val autoHideable = false
+class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
+
+  override val autoHideable: Boolean = false
 
   override fun isApplicable(dataContext: DataContext): Boolean {
     return isInsideMainEditor(dataContext)
