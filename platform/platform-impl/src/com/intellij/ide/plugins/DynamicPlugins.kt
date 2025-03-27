@@ -780,10 +780,7 @@ object DynamicPlugins {
                                                                            listenerCallbacks = unloadListeners)
       }
     }
-
-    // not an error - unsorted goes to module level, see registerExtensions
-    unregisterUnknownLevelExtensions(module.moduleContainerDescriptor.extensions, module, appExtensionArea, openedProjects,
-                                     priorityUnloadListeners, unloadListeners)
+    // note: here was a dead code for unregistering unknown level extensions with moduleContainer.extensions but the latter was always empty
 
     for (priorityUnloadListener in priorityUnloadListeners) {
       priorityUnloadListener.run()
