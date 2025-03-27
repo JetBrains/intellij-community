@@ -5,13 +5,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.python.community.services.shared.PythonWithLanguageLevel
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -80,9 +79,8 @@ internal abstract class CustomExistingEnvironmentSelector(private val name: Stri
                                      InterpreterCreationMode.CUSTOM)
   }
 
-  private fun addEnvByPath(path: String) {
-    val languageLevel = PySdkUtil.getLanguageLevelForSdk(PythonSdkUtil.findSdkByKey(path))
-    val interpreter = ManuallyAddedSelectableInterpreter(path, languageLevel)
+  private fun addEnvByPath(python: PythonWithLanguageLevel) {
+    val interpreter = ManuallyAddedSelectableInterpreter(python)
     existingEnvironments.value += interpreter
   }
 

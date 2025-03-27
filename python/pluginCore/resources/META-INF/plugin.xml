@@ -61,7 +61,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
     <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.uv.UvPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="UvPackageVersions" shortName="UvPackageVersionsInspection"/>
-
+    <registryKey defaultValue="10" description="How ofter system pythons must be refreshed (minutes)" key="python.system.refresh.minutes"/>
+    <postStartupActivity implementation="com.intellij.python.community.services.systemPython.impl.SystemPythonInitialLoader"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"

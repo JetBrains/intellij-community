@@ -18,9 +18,10 @@ import javax.swing.Icon
 @ApiStatus.NonExtendable
 sealed interface SystemPythonService {
   /**
+   * The result of this function might be cached. Use [forceRefresh] to reload it forcibly.
    * @return system pythons installed on OS sorted by type, then by lang.level: in order from highest (hence, the first one is usually the best one)
    */
-  suspend fun findSystemPythons(eelApi: EelApi = localEel): List<SystemPython>
+  suspend fun findSystemPythons(eelApi: EelApi = localEel, forceRefresh: Boolean = false): List<SystemPython>
 
   /**
    * When user provides a path to the python binary, use this method to the [SystemPython].
