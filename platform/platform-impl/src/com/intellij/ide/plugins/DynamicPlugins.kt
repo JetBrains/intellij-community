@@ -827,13 +827,13 @@ object DynamicPlugins {
     createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ApplicationManager.getApplication(), it) }
   }
 
-  private fun unregisterUnknownLevelExtensions(extensionMap: Map<String, List<ExtensionDescriptor>>?,
+  private fun unregisterUnknownLevelExtensions(extensionMap: Map<String, List<ExtensionDescriptor>>,
                                                pluginDescriptor: IdeaPluginDescriptorImpl,
                                                appExtensionArea: ExtensionsAreaImpl,
                                                openedProjects: List<Project>,
                                                priorityUnloadListeners: MutableList<Runnable>,
                                                unloadListeners: MutableList<Runnable>) {
-    for (epName in (extensionMap?.keys ?: return)) {
+    for (epName in extensionMap.keys) {
       val isAppLevelEp = appExtensionArea.unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners,
                                                                unloadListeners)
       if (isAppLevelEp) {
