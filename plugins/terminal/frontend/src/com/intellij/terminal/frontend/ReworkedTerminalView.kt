@@ -43,7 +43,7 @@ import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlin
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
@@ -132,7 +132,7 @@ internal class ReworkedTerminalView(
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
 
-    val fusActivity = ReworkedTerminalUsageCollector.startFrontendOutputActivity(
+    val fusActivity = FrontendLatencyService.getInstance().startFrontendOutputActivity(
       sessionFuture,
       outputEditor = outputEditor as EditorImpl,
       alternateBufferEditor = alternateBufferEditor as EditorImpl,

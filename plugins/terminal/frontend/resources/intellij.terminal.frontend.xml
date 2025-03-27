@@ -19,6 +19,10 @@
                          id="terminalFindPrevious" order="first"/>
     <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
+
+    <applicationService
+      serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
+      serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
