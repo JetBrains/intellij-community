@@ -156,8 +156,6 @@
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
 
-    <platform.entityTypes implementation="com.intellij.xdebugger.impl.rhizome.XDebuggerEntityTypesProvider"/>
-
     <registryKey defaultValue="false"
                  description="Enables frontend based actions in evaluation trees. Please, enable it only on the frontend side."
                  key="debugger.frontend.tree.actions"/>

@@ -33,6 +33,8 @@ import javax.swing.event.HyperlinkListener
 interface XDebugSessionProxy {
   val project: Project
 
+  val id: XDebugSessionId
+
   @get:NlsSafe
   val sessionName: String
   val sessionData: XDebugSessionData
@@ -69,7 +71,6 @@ interface XDebugSessionProxy {
   fun putKey(sink: DataSink)
   fun updateExecutionPosition()
   fun onTabInitialized(tab: XDebugSessionTab)
-  suspend fun sessionId(): XDebugSessionId
 
   companion object {
     @JvmField
@@ -83,6 +84,8 @@ interface XDebugSessionProxy {
   class Monolith(val session: XDebugSession) : XDebugSessionProxy {
     override val project: Project
       get() = session.project
+    override val id: XDebugSessionId
+      get() = (session as XDebugSessionImpl).id
     override val sessionName: String
       get() = session.sessionName
     override val sessionData: XDebugSessionData
@@ -117,10 +120,6 @@ interface XDebugSessionProxy {
 
     override val currentStateMessage: String
       get() = session.debugProcess.currentStateMessage
-
-    override suspend fun sessionId(): XDebugSessionId {
-      return (session as XDebugSessionImpl).id()
-    }
 
     override fun getCurrentPosition(): XSourcePosition? {
       return session.currentPosition

@@ -49,7 +49,7 @@ internal class FrontendXDebuggerSession private constructor(
   private val cs = scope.childScope("Session ${sessionDto.id}")
   private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
   private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
-  val id = sessionDto.id
+  override val id: XDebugSessionId = sessionDto.id
 
   val sourcePosition: StateFlow<XSourcePosition?> =
     channelFlow {
@@ -291,8 +291,6 @@ internal class FrontendXDebuggerSession private constructor(
       XDebugSessionApi.getInstance().onTabInitialized(id, XDebuggerSessionTabInfoCallback(tab))
     }
   }
-
-  override suspend fun sessionId(): XDebugSessionId = id
 
   fun closeScope() {
     cs.cancel()

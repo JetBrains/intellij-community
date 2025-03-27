@@ -33,7 +33,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val project = projectId.findProject()
 
     return (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).currentSessionFlow.mapLatest { currentSession ->
-      currentSession?.id()
+      currentSession?.id
     }
   }
 
@@ -60,7 +60,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       null
     }
     return XDebugSessionDto(
-      currentSession.id(),
+      currentSession.id,
       XDebuggerEditorsProviderDto(fileTypeId, editorsProvider),
       initialSessionState,
       currentSession.sessionName,
@@ -120,12 +120,12 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
         override fun processStopped(debugProcess: XDebugProcess) {
           val session = debugProcess.session as? XDebugSessionImpl ?: return
-          trySend(XDebuggerManagerSessionEvent.ProcessStopped(session.idUnsafe))
+          trySend(XDebuggerManagerSessionEvent.ProcessStopped(session.id))
         }
 
         override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-          val previousSessionId = (previousSession as? XDebugSessionImpl)?.idUnsafe
-          val currentSessionId = (currentSession as? XDebugSessionImpl)?.idUnsafe
+          val previousSessionId = (previousSession as? XDebugSessionImpl)?.id
+          val currentSessionId = (currentSession as? XDebugSessionImpl)?.id
           trySend(XDebuggerManagerSessionEvent.CurrentSessionChanged(previousSessionId, currentSessionId))
         }
       })

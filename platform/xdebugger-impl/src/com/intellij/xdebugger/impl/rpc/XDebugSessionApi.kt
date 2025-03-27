@@ -9,6 +9,7 @@ import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -17,7 +18,6 @@ import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
-import fleet.util.UID
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
@@ -65,9 +65,13 @@ interface XDebugSessionApi : RemoteApi<Unit> {
   }
 }
 
+/**
+ * @see XDebugSessionId.findValue
+ * @see com.intellij.xdebugger.impl.XDebugSessionImpl.id
+ */
 @ApiStatus.Internal
 @Serializable
-data class XDebugSessionId(val id: UID)
+data class XDebugSessionId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
@@ -139,7 +143,7 @@ data class XDebuggerSessionTabInfo(
   // TODO pass to frontend
   @Transient val contentToReuse: RunContentDescriptor? = null,
   val executionEnvironmentProxyDto: ExecutionEnvironmentProxyDto?,
-  @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>
+  @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
 ) : XDebuggerSessionTabAbstractInfo
 
 @ApiStatus.Internal
@@ -161,7 +165,7 @@ data class XDebugSessionPausedInfo(
  */
 @ApiStatus.Internal
 @Serializable
-data class XSuspendContextId(override val uid: com.intellij.platform.rpc.UID) : Id
+data class XSuspendContextId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
