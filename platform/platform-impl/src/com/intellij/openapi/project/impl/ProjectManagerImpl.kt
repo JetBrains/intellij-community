@@ -11,6 +11,7 @@ import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
 import com.intellij.ide.lightEdit.LightEdit
@@ -741,6 +742,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     blockingContext {
       LifecycleUsageTriggerCollector.onProjectOpened(project)
     }
+    WslUsagesCollector.logProjectOpened(project)
 
     options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules.firstOrNull())
 
