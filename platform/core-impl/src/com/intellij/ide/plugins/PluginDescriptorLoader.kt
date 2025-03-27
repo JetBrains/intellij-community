@@ -194,7 +194,6 @@ private fun loadDescriptorFromStream(
     raw = raw,
     pluginPath = pluginDir ?: fileOrDir,
     isBundled = isBundled,
-    id = null,
     moduleName = null,
     useCoreClassLoader = useCoreClassLoader,
   )
@@ -761,7 +760,7 @@ private fun loadPluginDescriptor(
     context.patchPlugin(it.getBuilder())
     it.build()
   }
-  val descriptor = IdeaPluginDescriptorImpl(raw, pluginDir, isBundled = true, id = null, moduleName = null)
+  val descriptor = IdeaPluginDescriptorImpl(raw, pluginDir, isBundled = true, moduleName = null)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = PluginManagerCore.PLUGIN_XML_PATH)
   for (module in descriptor.content.modules) {
     var classPath: List<Path>? = null
@@ -988,7 +987,7 @@ private fun loadCoreProductPlugin(
     it.build()
   }
   val libDir = Paths.get(PathManager.getLibPath())
-  val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
+  val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, moduleName = null, useCoreClassLoader = useCoreClassLoader)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
   loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
   descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
@@ -1316,7 +1315,7 @@ private fun loadDescriptorFromResource(
     }
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
-    val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = basePath, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
+    val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = basePath, isBundled = true, moduleName = null, useCoreClassLoader = useCoreClassLoader)
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
 
     if (libDir == null) {
@@ -1388,7 +1387,7 @@ private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPlu
       try {
         val raw = readBasicDescriptorData(stream)
         if (raw != null) {
-          return IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = false, id = null, moduleName = null)
+          return IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = false, moduleName = null)
         }
       }
       catch (e: XMLStreamException) {

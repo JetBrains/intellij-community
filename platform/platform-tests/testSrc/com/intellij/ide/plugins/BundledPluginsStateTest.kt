@@ -41,7 +41,6 @@ class BundledPluginsStateTest {
         }.build(),
         pluginPath = Path.of(""),
         isBundled = true,
-        id = null,
         moduleName = null)
       return descriptor
     }
