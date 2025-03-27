@@ -142,7 +142,8 @@ public fun SimpleListItem(
  * @param iconModifier Optional [Modifier] to be applied specifically to the icon.
  * @param icon Optional [IconKey] representing the icon displayed in the list item.
  * @param iconContentDescription Optional content description [String] for accessibility purposes for the icon.
- * @param style Optional [SimpleListItemStyle] for defining the appearance of the list item; default is based on the Jewel theme.
+ * @param style Optional [SimpleListItemStyle] for defining the appearance of the list item; default is based on the
+ *   Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param content A composable lambda representing the main content of the list item.
  */
@@ -185,7 +186,8 @@ public fun SimpleListItem(
  * @param iconModifier Optional [Modifier] to apply to the icon displayed in the list item.
  * @param icon Optional [IconKey] that defines which icon should be displayed.
  * @param iconContentDescription Optional content description [String] for the icon, used for accessibility.
- * @param style The style of the list item, including colors and metrics, with a default value from the theme; default is based on the Jewel theme.
+ * @param style The style of the list item, including colors and metrics, with a default value from the theme; default
+ *   is based on the Jewel theme.
  * @param height The height of the list item; default is based on the Jewel theme's global metrics.
  * @param content A composable lambda representing the main content of the list item.
  */
