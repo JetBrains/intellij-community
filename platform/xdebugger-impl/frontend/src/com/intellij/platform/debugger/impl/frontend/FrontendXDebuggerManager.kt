@@ -6,6 +6,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
+import com.intellij.xdebugger.impl.frame.CurrentXDebugSessionProxyProvider
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
@@ -97,5 +99,11 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
   companion object {
     @JvmStatic
     fun getInstance(project: Project): FrontendXDebuggerManager = project.service()
+  }
+}
+
+private class FrontendCurrentSessionProxyProvider : CurrentXDebugSessionProxyProvider {
+  override fun provideCurrentSessionProxy(project: Project): XDebugSessionProxy? {
+    return FrontendXDebuggerManager.getInstance(project).currentSession.value
   }
 }

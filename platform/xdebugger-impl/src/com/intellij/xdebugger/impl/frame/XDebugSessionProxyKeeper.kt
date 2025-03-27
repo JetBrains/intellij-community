@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.annotations.ApiStatus
@@ -23,5 +24,17 @@ class XDebugSessionProxyKeeper {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): XDebugSessionProxyKeeper = project.service()
+  }
+}
+
+@ApiStatus.Internal
+interface CurrentXDebugSessionProxyProvider {
+  fun provideCurrentSessionProxy(project: Project): XDebugSessionProxy?
+
+  companion object {
+    private val EP_NAME = ExtensionPointName.create<CurrentXDebugSessionProxyProvider>("com.intellij.xdebugger.currentSessionProxyProvider")
+
+    @JvmStatic
+    fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? = EP_NAME.extensionList.firstOrNull()?.provideCurrentSessionProxy(project)
   }
 }

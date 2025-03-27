@@ -12,6 +12,7 @@ import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerSession
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ internal fun performDebuggerActionAsync(
 }
 
 internal fun updateSuspendedAction(e: AnActionEvent) {
-  val session = e.frontendDebuggerSession
+  val session = DebuggerUIUtil.getSessionProxy(e)
   if (session == null) {
     e.presentation.isEnabled = false
     return

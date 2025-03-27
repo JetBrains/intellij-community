@@ -39,6 +39,8 @@
                     interface="com.intellij.xdebugger.frame.XValueCustomDescriptorSerializerProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.consoleViewDataConverter" interface="com.intellij.xdebugger.impl.rpc.XDebuggerConsoleViewConverter"
                     dynamic="true"/>
+    <extensionPoint name="xdebugger.currentSessionProxyProvider" interface="com.intellij.xdebugger.impl.frame.CurrentXDebugSessionProxyProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -152,6 +154,8 @@
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JsonTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JwtTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
+    <xdebugger.currentSessionProxyProvider implementation="com.intellij.xdebugger.impl.frame.MonolithCurrentSessionProxyProvider"
+                                           order="first"/>
 
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>

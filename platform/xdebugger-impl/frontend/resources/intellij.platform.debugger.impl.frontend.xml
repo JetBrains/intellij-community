@@ -57,6 +57,8 @@
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
+    <xdebugger.currentSessionProxyProvider implementation="com.intellij.platform.debugger.impl.frontend.FrontendCurrentSessionProxyProvider"
+                                           order="last"/>
 
     <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
                  description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
