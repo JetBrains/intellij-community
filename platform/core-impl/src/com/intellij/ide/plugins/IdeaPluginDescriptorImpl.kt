@@ -64,7 +64,7 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
-  private val name: String = raw.name ?: raw.id!! // if it throws, it throws on `id` above
+  private val name: String = raw.name ?: id.idString
 
   override val moduleName: String? = moduleName
   override val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
