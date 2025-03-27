@@ -40,11 +40,12 @@ open class LimitedPool<T>(private val myMaxCapacity: Int, private val myFactory:
 
   private fun ensureCapacity() {
     if (myStorage.size <= myIndex) {
-      val newCapacity = myStorage.size * 3
+      val newCapacity = myStorage.size * 3 / 2
       when
       {
         newCapacity < 10 -> myStorage = myStorage.copyOf(10)
         newCapacity <= myMaxCapacity -> myStorage = myStorage.copyOf(newCapacity)
+        else -> myStorage = myStorage.copyOf(myMaxCapacity)
       }
     }
   }
