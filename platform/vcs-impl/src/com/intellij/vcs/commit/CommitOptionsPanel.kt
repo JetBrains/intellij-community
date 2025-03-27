@@ -17,6 +17,7 @@ import java.awt.BorderLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants
 import javax.swing.border.EmptyBorder
 
 internal class CommitOptionsPanel(
@@ -42,7 +43,10 @@ internal class CommitOptionsPanel(
           .align(Align.FILL)
       }.resizableRow()
     }
-    component = ScrollPaneFactory.createScrollPane(panel, true)
+    component = ScrollPaneFactory.createScrollPane(panel,
+                                                   ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER,
+                                                   true)
   }
 
   override fun setOptions(options: CommitOptions) {
