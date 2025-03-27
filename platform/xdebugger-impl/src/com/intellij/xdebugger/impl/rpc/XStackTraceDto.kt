@@ -3,7 +3,7 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
-import fleet.util.UID
+import com.intellij.platform.rpc.Id
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -18,9 +18,12 @@ sealed interface XExecutionStacksEvent {
   data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XExecutionStacksEvent
 }
 
+/**
+ * @see XExecutionStackModel
+ */
 @ApiStatus.Internal
 @Serializable
-data class XExecutionStackId(val id: UID)
+data class XExecutionStackId(override val uid: com.intellij.platform.rpc.UID): Id
 
 @ApiStatus.Internal
 @Serializable
@@ -41,9 +44,13 @@ sealed interface XStackFramesEvent {
   data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XStackFramesEvent
 }
 
+/**
+ * @see XStackFrameValueIdType
+ * @see XStackFrameModel
+ */
 @ApiStatus.Internal
 @Serializable
-data class XStackFrameId(val id: UID)
+data class XStackFrameId(override val uid: com.intellij.platform.rpc.UID) : Id
 
 @ApiStatus.Internal
 @Serializable

@@ -4,14 +4,7 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
-import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.new
-import com.intellij.xdebugger.impl.rhizome.XExecutionStackEntity
-import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
 import com.intellij.xdebugger.impl.rpc.*
-import fleet.kernel.change
-import fleet.kernel.withEntities
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -23,17 +16,15 @@ import kotlinx.coroutines.launch
 
 internal class BackendXExecutionStackApi : XExecutionStackApi {
   override suspend fun getTopFrame(executionStackId: XExecutionStackId): Flow<XStackFrameDto> {
-    val entity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return emptyFlow()
+    val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
     return channelFlow {
-      withEntities(entity) {
-        val executionStack = entity.obj
-        executionStack.topFrame
-      }
+      // TODO: send dto!!
+      executionStackModel.executionStack.topFrame
     }
   }
 
   override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
-    val executionStackEntity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return emptyFlow()
+    val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
     return channelFlow {
       val channel = Channel<Deferred<XStackFramesEvent>>(capacity = Channel.UNLIMITED)
 
@@ -48,44 +39,31 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
           }
         }
       }
+      val executionStack = executionStackModel.executionStack
+      executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
+        override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
+          channel.trySend(this@channelFlow.async {
+            val session = executionStackModel.session
+            val stackDtos = stackFrames.map { frame ->
+              val stackFrameId = frame.storeGlobally(session)
+              createXStackFrameDto(frame, stackFrameId)
+            }
+            XStackFramesEvent.XNewStackFrames(stackDtos, last)
+          })
+        }
 
-      withEntities(executionStackEntity) {
-        val executionStack = executionStackEntity.obj
-        executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
-          override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
-            channel.trySend(this@channelFlow.async {
-              withEntities(executionStackEntity, executionStackEntity.sessionEntity) {
-                val frameEntities = stackFrames.map { frame ->
-                  change {
-                    XStackFrameEntity.new(this, frame, executionStackEntity.sessionEntity)
-                  }
-                }
-                change {
-                  executionStackEntity.update {
-                    it[XExecutionStackEntity.StackFrames] = executionStackEntity.frames + frameEntities
-                  }
-                }
-                val stacks = frameEntities.map { frame ->
-                  createXStackFrameDto(frame.obj, frame.id)
-                }
-                XStackFramesEvent.XNewStackFrames(stacks, last)
-              }
-            })
-          }
-
-          override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-            channel.trySend(this@channelFlow.async {
-              XStackFramesEvent.ErrorOccurred(errorMessage)
-            })
-          }
-        })
-      }
+        override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+          channel.trySend(this@channelFlow.async {
+            XStackFramesEvent.ErrorOccurred(errorMessage)
+          })
+        }
+      })
       awaitClose()
     }
   }
 
   override suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent> {
-    val stackFrameEntity = debuggerEntity<XStackFrameEntity>(xStackFrameId.id) ?: return emptyFlow()
-    return computeContainerChildren(stackFrameEntity.obj, stackFrameEntity.sessionEntity.session as XDebugSessionImpl)
+    val stackFrameModel = xStackFrameId.findValue() ?: return emptyFlow()
+    return computeContainerChildren(stackFrameModel.stackFrame, stackFrameModel.session)
   }
 }

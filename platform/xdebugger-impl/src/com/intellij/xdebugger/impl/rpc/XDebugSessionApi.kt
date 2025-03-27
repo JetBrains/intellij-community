@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -155,9 +156,12 @@ data class XDebugSessionPausedInfo(
   val topFrameIsAbsent: Boolean,
 )
 
+/**
+ * @see XSuspendContextModel
+ */
 @ApiStatus.Internal
 @Serializable
-data class XSuspendContextId(val id: UID)
+data class XSuspendContextId(override val uid: com.intellij.platform.rpc.UID) : Id
 
 @ApiStatus.Internal
 @Serializable

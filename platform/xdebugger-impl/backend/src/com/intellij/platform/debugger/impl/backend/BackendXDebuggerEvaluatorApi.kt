@@ -17,8 +17,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluat
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.frame.BackendXValueModel
 import com.intellij.xdebugger.impl.frame.BackendXValueModelsManager
-import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
-import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.core.RpcFlow
@@ -57,11 +55,11 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     frameId: XStackFrameId,
     evaluateFun: suspend (Project, XDebuggerEvaluator, XEvaluationCallback) -> Unit,
   ): Deferred<XEvaluationResult> {
-    val stackFrameEntity = debuggerEntity<XStackFrameEntity>(frameId.id)
-                           ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
-    val evaluator = stackFrameEntity.obj.evaluator
+    val stackFrameModel = frameId.findValue()
+                          ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
+    val evaluator = stackFrameModel.stackFrame.evaluator
                     ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
-    val session = stackFrameEntity.sessionEntity.session as XDebugSessionImpl
+    val session = stackFrameModel.session
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
