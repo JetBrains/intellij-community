@@ -23,6 +23,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -439,7 +440,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
                                                            sessionName, myIcon, null) {
           override fun isHiddenContent(): Boolean = true
         }
-        debuggerManager.coroutineScope.launch {
+        debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
           for (tabClosedRequest in tabClosedChannel) {
             environmentCoroutineScope.cancel()
             Disposer.dispose(mockDescriptor)
