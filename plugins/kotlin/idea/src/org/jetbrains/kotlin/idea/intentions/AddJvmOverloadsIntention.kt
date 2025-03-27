@@ -4,19 +4,17 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-private val annotationFqName get() = JVM_OVERLOADS_FQ_NAME
 
 class AddJvmOverloadsIntention : SelfTargetingIntention<KtModifierListOwner>(
     KtModifierListOwner::class.java,
@@ -61,7 +59,7 @@ class AddJvmOverloadsIntention : SelfTargetingIntention<KtModifierListOwner>(
 
         return element.containingKtFile.platform.isJvm()
                 && parameters.any { it.hasDefaultValue() }
-                && element.findAnnotation(annotationFqName) == null
+                && element.findAnnotation(JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID) == null
     }
 
     override fun applyTo(element: KtModifierListOwner, editor: Editor?) {
@@ -69,9 +67,9 @@ class AddJvmOverloadsIntention : SelfTargetingIntention<KtModifierListOwner>(
             if (element.getConstructorKeyword() == null) {
                 element.addBefore(KtPsiFactory(element.project).createConstructorKeyword(), element.valueParameterList)
             }
-            element.addAnnotation(annotationFqName, whiteSpaceText = " ")
+            element.addAnnotation(JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID, whiteSpaceText = " ")
         } else {
-            element.addAnnotation(annotationFqName)
+            element.addAnnotation(JvmStandardClassIds.JVM_OVERLOADS_CLASS_ID)
         }
     }
 }
