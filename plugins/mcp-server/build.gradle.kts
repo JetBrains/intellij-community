@@ -54,3 +54,7 @@ kotlin {
 tasks.buildSearchableOptions {
     enabled = false
 }
+
+tasks.prepareJarSearchableOptions {
+    enabled = false
+}
