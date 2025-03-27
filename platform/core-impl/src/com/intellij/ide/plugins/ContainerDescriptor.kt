@@ -16,8 +16,6 @@ class ContainerDescriptor(
   val listeners: List<ListenerDescriptor>,
   val extensionPoints: List<ExtensionPointDescriptor>,
 ) {
-  @Transient @JvmField var extensions: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
-
   override fun toString(): String {
     if (services.isEmpty() && components.isEmpty() && extensionPoints.isEmpty() && listeners.isEmpty()) {
       return "ContainerDescriptor(empty)"
