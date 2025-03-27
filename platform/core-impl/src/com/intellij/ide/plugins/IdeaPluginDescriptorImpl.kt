@@ -601,15 +601,15 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
 
-    private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): List<Pair<V1, V2>> {
+    private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): Sequence<Pair<V1, V2>> {
       // Make sure we iterate the smaller map
       return if (first.size < second.size) {
-        first.mapNotNull { (key, firstValue) ->
+        first.asSequence().mapNotNull { (key, firstValue) ->
           second[key]?.let { secondValue -> firstValue to secondValue }
         }
       }
       else {
-        second.mapNotNull { (key, secondValue) ->
+        second.asSequence().mapNotNull { (key, secondValue) ->
           first[key]?.let { firstValue -> firstValue to secondValue }
         }
       }
