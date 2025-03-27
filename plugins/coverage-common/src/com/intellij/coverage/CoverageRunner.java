@@ -24,22 +24,30 @@ public abstract class CoverageRunner {
    * 
    * @param baseCoverageSuite suite where coverage would be loaded. 
    *                          Can be used to retrieve additional information about configuration which was run with coverage.
+   * @deprecated Override {@link CoverageRunner#loadCoverageData(File, CoverageSuite, CoverageLoadErrorReporter)}
    */
-  @ApiStatus.NonExtendable
+  @Deprecated
   public @Nullable ProjectData loadCoverageData(final @NotNull File sessionDataFile, final @Nullable CoverageSuite baseCoverageSuite) {
+    throw new IllegalStateException("Should not be called, please override loadCoverageDataWithLogging");
+  }
+
+  public final @Nullable ProjectData loadCoverageDataWithReporting(
+    final @NotNull File sessionDataFile,
+    final @Nullable CoverageSuite baseCoverageSuite
+  ) {
     if (baseCoverageSuite == null) {
-      return loadCoverageDataWithLogging(sessionDataFile, null, new DummyCoverageLoadErrorReporter()).getProjectData();
+      return loadCoverageData(sessionDataFile, null, new DummyCoverageLoadErrorReporter()).getProjectData();
     }
-    CoverageLoadListener listener = baseCoverageSuite.getProject().getMessageBus().syncPublisher(CoverageLoadListener.COVERAGE_TOPIC);
-    LoadCoverageResult result;
+    CoverageLoadingListener listener = baseCoverageSuite.getProject().getMessageBus().syncPublisher(CoverageLoadingListener.COVERAGE_TOPIC);
+    CoverageLoadingResult result;
     listener.coverageLoadingStarted(sessionDataFile);
     try {
-      result = loadCoverageDataWithLogging(sessionDataFile, baseCoverageSuite, new CoverageLoadErrorReporterImplementation(listener, sessionDataFile));
+      result = loadCoverageData(sessionDataFile, baseCoverageSuite, new CoverageLoadErrorReporterImplementation(listener, sessionDataFile));
     }
     catch (Exception e) {
       if (e instanceof ControlFlowException) throw e;
       LOG.warn(e);
-      result = new FailedLoadCoverageResult(e, true);
+      result = new FailedCoverageLoadingResult(e, true);
     }
     listener.reportCoverageLoaded(result, sessionDataFile);
 
@@ -48,19 +56,24 @@ public abstract class CoverageRunner {
 
   /**
    * Loads coverage data from {@code sessionDataFile} into IntelliJ presentation {@link ProjectData},
-   * with a result of execution {@link LoadCoverageResult}.
+   * with a result of execution {@link CoverageLoadingResult}.
    *
    * @param baseCoverageSuite suite where coverage would be loaded.
    *                          Can be used to retrieve additional information about configuration which was run with coverage.
-   * @param reporter wrapper around {@link CoverageLoadListener} is used for notifying about errors during coverage loading
+   * @param reporter wrapper around {@link CoverageLoadingListener} is used for notifying about errors during coverage loading
    */
   @ApiStatus.OverrideOnly
-  public @NotNull LoadCoverageResult loadCoverageDataWithLogging(
+  protected @NotNull CoverageLoadingResult loadCoverageData(
     final @NotNull File sessionDataFile,
     final @Nullable CoverageSuite baseCoverageSuite,
     final @NotNull CoverageLoadErrorReporter reporter
   ) {
-    return new NotSupportedCoverageResult(getClass().getName());
+    ProjectData data = loadCoverageData(sessionDataFile, baseCoverageSuite);
+    if (data == null) {
+      return new FailedCoverageLoadingResult("Couldn't load coverage data");
+    } else {
+      return new SuccessCoverageLoadingResult(data);
+    }
   }
 
   /**

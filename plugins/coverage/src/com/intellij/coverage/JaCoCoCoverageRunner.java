@@ -50,7 +50,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
 
   @Override
-  public @NotNull LoadCoverageResult loadCoverageDataWithLogging(
+  public @NotNull CoverageLoadingResult loadCoverageData(
     @NotNull File sessionDataFile,
     @Nullable CoverageSuite baseCoverageSuite,
     @NotNull CoverageLoadErrorReporter reporter
@@ -70,14 +70,14 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     }
     catch (IOException e) {
       processError(sessionDataFile, e, reporter);
-      return new FailedLoadCoverageResult(e, true, data);
+      return new FailedCoverageLoadingResult(e, true, data);
     }
     catch (Exception e) {
       if (e instanceof ControlFlowException) throw e;
       LOG.error(e);
-      return new FailedLoadCoverageResult(e, false, data);
+      return new FailedCoverageLoadingResult(e, false, data);
     }
-    return new SuccessLoadCoverageResult(data);
+    return new SuccessCoverageLoadingResult(data);
   }
 
   private static void processError(@NotNull File sessionDataFile, IOException e,  @NotNull CoverageLoadErrorReporter reporter) {
