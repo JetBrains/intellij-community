@@ -9922,10 +9922,6 @@ f:com.intellij.ide.impl.convert.JDomConvertingUtil
 - s:load(java.nio.file.Path):org.jdom.Element
 - s:removeChildren(org.jdom.Element,java.util.function.Predicate):java.util.List
 - s:removeDuplicatedOptions(org.jdom.Element):V
-f:com.intellij.ide.impl.dataRules.VirtualFileRule
-- com.intellij.ide.impl.dataRules.GetDataRule
-- <init>():V
-- getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
 a:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
 - com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
 - sf:Companion:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension$Companion

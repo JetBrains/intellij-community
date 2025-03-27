@@ -2,16 +2,14 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class NavigatableArrayRule implements GetDataRule {
-  @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
-    Navigatable element = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
+final class NavigatableArrayRule {
+  static Navigatable @Nullable [] getData(@NotNull DataMap dataProvider) {
+    Navigatable element = dataProvider.get(CommonDataKeys.NAVIGATABLE);
     return element == null ? null : new Navigatable[]{element};
   }
 }
