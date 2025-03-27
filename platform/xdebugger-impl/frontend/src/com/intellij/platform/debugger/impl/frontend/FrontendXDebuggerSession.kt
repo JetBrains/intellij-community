@@ -172,11 +172,13 @@ internal class FrontendXDebuggerSession private constructor(
       }
       is XDebuggerSessionEvent.SessionResumed,
       is XDebuggerSessionEvent.BeforeSessionResume,
-      is XDebuggerSessionEvent.SessionStopped,
         -> {
         suspendContext.value = null
         currentExecutionStack.value = null
         currentStackFrame.value = null
+      }
+      is XDebuggerSessionEvent.SessionStopped -> {
+        cs.cancel()
       }
       else -> {}
     }
@@ -289,10 +291,6 @@ internal class FrontendXDebuggerSession private constructor(
     cs.launch {
       XDebugSessionApi.getInstance().onTabInitialized(id, XDebuggerSessionTabInfoCallback(tab))
     }
-  }
-
-  fun closeScope() {
-    cs.cancel()
   }
 
   companion object {
