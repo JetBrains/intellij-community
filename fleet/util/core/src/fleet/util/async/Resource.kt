@@ -3,6 +3,7 @@
 
 package fleet.util.async
 
+import fleet.multiplatform.shims.synchronized
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.tracing.SpanInfoBuilder
 import kotlinx.coroutines.*
