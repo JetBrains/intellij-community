@@ -82,6 +82,9 @@ public final class ScopeUtilCore {
           return nextOwner;
         }
       }
+      else if (firstOwner instanceof PyAstLambdaExpression && isAncestor(defaultValue, element, false)) {
+        return nextOwner;
+      }
     }
     // Superclasses are resolved outside of the class if the class doesn't have type parameters list
     final PyAstClass containingClass = getParentOfType(element, PyAstClass.class);
