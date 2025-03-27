@@ -323,7 +323,7 @@ abstract class ComponentManagerImpl(
                               listenerCallbacks: MutableList<in Runnable>? = null) {
     val activityNamePrefix = activityNamePrefix()
 
-    var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
+    var listenersByTopicName: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
     val isHeadless = app == null || app.isHeadlessEnvironment
     val isUnitTestMode = app?.isUnitTestMode ?: false
 
@@ -339,10 +339,10 @@ abstract class ComponentManagerImpl(
         registerComponents(pluginDescriptor = module, containerDescriptor = containerDescriptor, headless = isHeadless)
 
         containerDescriptor.listeners.let { listeners ->
-          var m = map
+          var m = listenersByTopicName
           if (m == null) {
             m = ConcurrentHashMap()
-            map = m
+            listenersByTopicName = m
           }
           for (listener in listeners) {
             if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadless && !listener.activeInHeadlessMode)) {
@@ -395,7 +395,7 @@ abstract class ComponentManagerImpl(
     // ensuring that `messageBus` is created, regardless of the lazy listener map state
     if (isMessageBusSupported) {
       val messageBus = getOrCreateMessageBusUnderLock()
-      map?.let {
+      listenersByTopicName?.let {
         (messageBus as MessageBusEx).setLazyListeners(it)
       }
     }
