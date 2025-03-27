@@ -2,12 +2,13 @@
 package org.jetbrains.plugins.terminal
 
 import com.jediterm.terminal.TtyBasedArrayDataStream
+import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 
 @ApiStatus.Internal
 class FusAwareTtyBasedDataStream(
-  connector: LocalTerminalTtyConnector,
+  connector: TtyConnector,
   private val fusActivity: BackendOutputActivity,
 ) : TtyBasedArrayDataStream(connector) {
 
