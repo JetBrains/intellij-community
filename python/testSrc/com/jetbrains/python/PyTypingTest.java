@@ -591,6 +591,15 @@ public class PyTypingTest extends PyTestCase {
              x = f()
              expr = x.foo
              """);
+    doTest("tuple[Any, Any]", """
+      from typing import Any
+      
+      class A[T]:
+          v: T
+
+      def f(a1: A[Any], a2: A):
+          expr = a1.v, a2.v
+      """);
   }
 
   // PY-18427 PY-76243

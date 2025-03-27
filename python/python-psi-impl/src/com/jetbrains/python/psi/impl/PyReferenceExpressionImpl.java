@@ -371,10 +371,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           }
           final var substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
           if (substitutions != null) {
-            final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
-            if (substituted != null) {
-              return substituted;
-            }
+            return PyTypeChecker.substitute(type, substitutions, context);
           }
         }
       }
