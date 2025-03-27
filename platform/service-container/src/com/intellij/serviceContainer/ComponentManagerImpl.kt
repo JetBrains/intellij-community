@@ -338,10 +338,8 @@ abstract class ComponentManagerImpl(
         registerServices(containerDescriptor.services, module)
         registerComponents(pluginDescriptor = module, containerDescriptor = containerDescriptor, headless = isHeadless)
 
-        var m = listenersByTopicName
-        if (m == null) {
-          m = ConcurrentHashMap()
-          listenersByTopicName = m
+        if (listenersByTopicName == null) {
+          listenersByTopicName = ConcurrentHashMap()
         }
         for (listener in containerDescriptor.listeners) {
           if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadless && !listener.activeInHeadlessMode)) {
@@ -351,7 +349,7 @@ abstract class ComponentManagerImpl(
             continue
           }
           listener.pluginDescriptor = module
-          m.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
+          listenersByTopicName.computeIfAbsent(listener.topicClassName) { ArrayList() }.add(listener)
         }
 
         if (extensionPoints != null && containerDescriptor.extensionPoints.isNotEmpty()) {
