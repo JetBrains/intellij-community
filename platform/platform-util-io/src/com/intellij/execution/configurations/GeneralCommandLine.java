@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.platform.eel.EelApi;
@@ -445,7 +446,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     // now we need to initialize Eel here
-    EelApi eelApi = null;
+    EelApi eelApi;
     final var exe = myExePath;
     final var workingDirectory = myWorkingDirectory;
 
@@ -460,10 +461,24 @@ public class GeneralCommandLine implements UserDataHolder {
       return null;
     }
 
-    var eelDescriptor = getEelDescriptor(exePath);
-    if (eelDescriptor != LocalEelDescriptor.INSTANCE &&
-        (workingDirectory == null || getEelDescriptor(workingDirectory).equals(eelDescriptor))) {
-      eelApi = upgradeBlocking(eelDescriptor);
+    // IJPL-177172: do not use eel for absolute Windows paths (e.g., C:\...).
+    // Fallback to the legacy WSL behavior where a local exe is executed in a remote working directory.
+    if (SystemInfo.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(exe)) {
+      eelApi = null;
+    }
+    else if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
+      eelApi = upgradeBlocking(getEelDescriptor(exePath));
+    }
+    else if (workingDirectory != null) {
+      if (getEelDescriptor(workingDirectory) != LocalEelDescriptor.INSTANCE) { // also try to compute non-local EelApi from working dir
+        eelApi = upgradeBlocking(getEelDescriptor(workingDirectory));
+      }
+      else {
+        eelApi = null;
+      }
+    }
+    else {
+      eelApi = null;
     }
     myEelApi = Ref.create(eelApi);
 
