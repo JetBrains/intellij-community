@@ -1,28 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea
 
-import git4idea.branch.GitBranchUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import git4idea.branch.GitBranchUtil
+import org.jetbrains.annotations.NonNls
 
-public final class GitTag extends GitReference {
-  public static final @NonNls String REFS_TAGS_PREFIX = "refs/tags/";
+class GitTag(name: String) : GitReference(GitBranchUtil.stripRefsPrefix(name)) {
+  override val fullName: String
+    get() = REFS_TAGS_PREFIX + name
 
-  public GitTag(@NotNull String name) {
-    super(GitBranchUtil.stripRefsPrefix(name));
-  }
-
-  @Override
-  public @NotNull String getFullName() {
-    return REFS_TAGS_PREFIX + getName();
-  }
-
-  @Override
-  public int compareTo(GitReference o) {
-    if (o instanceof GitTag) {
+  override fun compareTo(o: GitReference?): Int {
+    if (o is GitTag) {
       // optimization: do not build getFullName
-      return REFS_NAMES_COMPARATOR.compare(getName(), o.getName());
+      return REFS_NAMES_COMPARATOR.compare(name, o.name)
     }
-    return super.compareTo(o);
+    return super.compareTo(o)
+  }
+
+  companion object {
+    const val REFS_TAGS_PREFIX: @NonNls String = "refs/tags/"
   }
 }
