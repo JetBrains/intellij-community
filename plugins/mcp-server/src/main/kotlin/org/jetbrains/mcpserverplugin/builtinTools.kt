@@ -9,12 +9,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -39,11 +34,9 @@ import com.intellij.util.Processor
 import com.intellij.util.application
 import com.intellij.util.io.createParentDirectories
 import kotlinx.serialization.Serializable
-import org.apache.commons.compress.utils.TimeUtils
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import java.nio.file.Path
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
@@ -106,7 +99,11 @@ class GetAllOpenFileTextsTool : AbstractMcpTool<NoArgs>() {
 
         val fileEditorManager = FileEditorManager.getInstance(project)
         val openFiles = fileEditorManager.openFiles
-        val filePaths = openFiles.mapNotNull { """{"path": "${it.toNioPath().relativizeByProjectDir(projectDir)}", "text": "${it.readText()}", """ }
+        val filePaths = openFiles.mapNotNull {
+            """{"path": "${
+                it.toNioPath().relativizeByProjectDir(projectDir)
+            }", "text": "${it.readText()}", """
+        }
         return Response(filePaths.joinToString(",\n", prefix = "[", postfix = "]"))
     }
 }
@@ -165,6 +162,7 @@ class OpenFileInEditorTool : AbstractMcpTool<OpenFileInEditorArgs>() {
         }
     }
 }
+
 class GetSelectedTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_selected_in_editor_text"
     override val description: String = """
@@ -215,7 +213,8 @@ class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
         }
 
         return response ?: Response(error = "unknown error")
-    }}
+    }
+}
 
 @Serializable
 data class ReplaceCurrentFileTextArgs(val text: String)
@@ -568,7 +567,8 @@ class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>() {
 
 class GetProjectModulesTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_project_modules"
-    override val description: String = "Get list of all modules in the project with their dependencies. Returns JSON list of module names."
+    override val description: String =
+        "Get list of all modules in the project with their dependencies. Returns JSON list of module names."
 
     override fun handle(project: Project, args: NoArgs): Response {
         val moduleManager = com.intellij.openapi.module.ModuleManager.getInstance(project)
@@ -579,7 +579,8 @@ class GetProjectModulesTool : AbstractMcpTool<NoArgs>() {
 
 class GetProjectDependenciesTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_project_dependencies"
-    override val description: String = "Get list of all dependencies defined in the project. Returns JSON list of dependency names."
+    override val description: String =
+        "Get list of all dependencies defined in the project. Returns JSON list of dependency names."
 
     override fun handle(project: Project, args: NoArgs): Response {
         val moduleManager = com.intellij.openapi.module.ModuleManager.getInstance(project)
@@ -614,7 +615,7 @@ class ListAvailableActionsTool : AbstractMcpTool<NoArgs>() {
                 val action = actionManager.getAction(actionId) ?: return@mapNotNull null
                 val event = AnActionEvent.createFromAnAction(action, null, "", dataContext)
                 val presentation = action.templatePresentation.clone()
-                runCatching { action.update(event) }
+                invokeAndWaitIfNeeded { runCatching { action.update(event) } }
 
                 if (event.presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
                     """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
