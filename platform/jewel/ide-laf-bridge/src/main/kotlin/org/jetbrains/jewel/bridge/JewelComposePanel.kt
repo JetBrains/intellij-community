@@ -86,6 +86,7 @@ private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanel) -> 
     val composePanel = ComposePanel()
     jewelPanel.add(composePanel, BorderLayout.CENTER)
     composePanel.config(jewelPanel)
+    ComposeUiInspector(jewelPanel)
     return jewelPanel
 }
 
