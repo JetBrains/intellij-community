@@ -34,6 +34,8 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
 
   val resultsCustomizer: WebSymbolsQueryResultsCustomizer
 
+  var keepUnresolvedTopLevelReferences: Boolean
+
   fun createPointer(): Pointer<WebSymbolsQueryExecutor>
 
   fun runNameMatchQuery(namespace: SymbolNamespace,

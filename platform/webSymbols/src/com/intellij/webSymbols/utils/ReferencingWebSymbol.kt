@@ -52,7 +52,7 @@ class ReferencingWebSymbol private constructor(
           }.toTypedArray()
         )), false,
       WebSymbolsPatternFactory.createPatternSequence(
-        WebSymbolsPatternFactory.createSymbolReferencePlaceholder(),
+        WebSymbolsPatternFactory.createSymbolReferencePlaceholder(name),
       )
     )
 

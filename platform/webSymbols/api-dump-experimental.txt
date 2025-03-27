@@ -817,6 +817,7 @@
 - a:createPointer():com.intellij.model.Pointer
 - a:getContext():com.intellij.webSymbols.context.WebSymbolsContext
 - getFramework():java.lang.String
+- a:getKeepUnresolvedTopLevelReferences():Z
 - a:getLocation():com.intellij.psi.PsiElement
 - a:getNamesProvider():com.intellij.webSymbols.query.WebSymbolNamesProvider
 - a:getResultsCustomizer():com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
@@ -838,6 +839,7 @@
 - bs:runNameMatchQuery$default(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,com.intellij.webSymbols.WebSymbolQualifiedName,Z,Z,Z,java.util.List,I,java.lang.Object):java.util.List
 - bs:runNameMatchQuery$default(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,java.lang.String,java.lang.String,java.lang.String,Z,Z,Z,java.util.List,I,java.lang.Object):java.util.List
 - bs:runNameMatchQuery$default(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,java.util.List,Z,Z,Z,java.util.List,I,java.lang.Object):java.util.List
+- a:setKeepUnresolvedTopLevelReferences(Z):V
 - a:withNameConversionRules(java.util.List):com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 *:com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 - com.intellij.openapi.Disposable
