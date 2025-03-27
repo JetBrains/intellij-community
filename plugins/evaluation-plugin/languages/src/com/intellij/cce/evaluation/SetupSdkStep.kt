@@ -2,7 +2,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
-import com.intellij.cce.execution.ExecutionMode
+import com.intellij.cce.evaluation.data.ExecutionMode
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project

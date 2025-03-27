@@ -37,6 +37,7 @@
   - name: intellij.evaluationPlugin.languages.go
   - name: intellij.evaluationPlugin.languages.js
   - name: intellij.evaluationPlugin.languages.php
+  - name: intellij.evaluationPlugin.languages.pythonDocker
   - name: intellij.evaluationPlugin.languages.ruby
   - name: intellij.evaluationPlugin.languages.sql
   - name: intellij.evaluationPlugin.languages.terraform

@@ -5,7 +5,7 @@ import com.intellij.cce.evaluable.AIA_EXECUTION_SUCCESS_RATIO
 import com.intellij.cce.evaluable.AIA_TEST_BRANCH_COVERAGE
 import com.intellij.cce.evaluable.AIA_TEST_FILE_PROVIDED
 import com.intellij.cce.evaluable.AIA_TEST_LINE_COVERAGE
-import com.intellij.cce.execution.ExecutionMode
+import com.intellij.cce.evaluation.data.ExecutionMode
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project

@@ -1,4 +1,4 @@
-package com.intellij.cce.execution
+package com.intellij.cce.evaluation.data
 
 enum class ExecutionMode(val displayName: String) {
   LOCAL("local"),
