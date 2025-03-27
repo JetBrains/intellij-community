@@ -138,10 +138,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
   private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
 
-  private val currentPosition = myCurrentStackFrameManager.getCurrentStackFrameFlow().map {
-    getFrameSourcePosition(it.get())
-  }.stateIn(coroutineScope, SharingStarted.Lazily, getFrameSourcePosition(myCurrentStackFrameManager.getCurrentStackFrame()))
-
   var currentExecutionStack: XExecutionStack?
     get() = executionStackFlow.value.get()
     private set(value) {
@@ -313,12 +309,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun getCurrentPosition(): XSourcePosition? {
-    return currentPosition.value
+    return getFrameSourcePosition(currentStackFrame)
   }
 
   @ApiStatus.Internal
-  fun getCurrentPositionFlow(): StateFlow<XSourcePosition?> {
-    return currentPosition
+  fun getCurrentPositionFlow(): Flow<XSourcePosition?> {
+    return getCurrentStackFrameFlow().map {
+      getFrameSourcePosition(it)
+    }
   }
 
   override fun getTopFramePosition(): XSourcePosition? {
