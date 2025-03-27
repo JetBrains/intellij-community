@@ -89,6 +89,13 @@ private class ComputationState(
   }
 
   /**
+   * Fast check for read access; skips unnecessary boxing that is caused by inline classes
+   */
+  fun isReadAcquired(): Boolean {
+    return isParallelizedRead || thisLevelPermit.get() != null
+  }
+
+  /**
    * Obtains a write permit if nothing is being held by this thread
    */
   fun acquireWritePermit() {
@@ -601,9 +608,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun isReadAccessAllowed(): Boolean {
-    val currentState = getComputationState()
-    val currentPermit = currentState.getThisThreadPermit()
-    return currentPermit != null
+    return getComputationState().isReadAcquired()
   }
 
   override fun <T> runUnlockingIntendedWrite(action: () -> T): T {
