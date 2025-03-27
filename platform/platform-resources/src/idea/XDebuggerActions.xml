@@ -15,6 +15,8 @@
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                      relative-to-action="MarkObjectAction.Frontend"/>
       </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
