@@ -148,6 +148,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
 
   override fun dispose() {
     myCoroutineScope.cancel()
+    cancelAllPostponed()
   }
 
   val cachedThreadFrameCount: Int
