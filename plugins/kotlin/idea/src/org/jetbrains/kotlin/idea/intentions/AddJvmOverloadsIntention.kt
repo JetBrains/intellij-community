@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class AddJvmOverloadsIntention : SelfTargetingIntention<KtModifierListOwner>(
+internal class AddJvmOverloadsIntention : SelfTargetingIntention<KtModifierListOwner>(
     KtModifierListOwner::class.java,
     KotlinBundle.lazyMessage("add.jvmoverloads.annotation"),
 ), LowPriorityAction {
