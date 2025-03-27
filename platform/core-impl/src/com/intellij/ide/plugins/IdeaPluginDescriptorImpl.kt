@@ -101,7 +101,6 @@ class IdeaPluginDescriptorImpl private constructor(
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
-  var projectExtensionsCache: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
   override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
@@ -439,11 +438,7 @@ class IdeaPluginDescriptorImpl private constructor(
       doRegisterExtensions(map, nameToPoint, listenerCallbacks)
     }
     else if (containerDescriptor === projectContainerDescriptor) {
-      val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-
-      if (registeredCount == map.size) {
-        projectExtensionsCache = map
-      }
+      doRegisterExtensions(map, nameToPoint, listenerCallbacks)
     }
     else {
       doRegisterExtensions(map, nameToPoint, listenerCallbacks)
