@@ -115,7 +115,7 @@ public fun Banners() {
                     checked = showTitle,
                     onCheckedChange = {
                         showTitle = it
-                        optionalTitle = if (showTitle) "I'm an optional title" + LONG_IPSUM else null
+                        optionalTitle = if (showTitle) "I'm an optional title " + LONG_IPSUM else null
                     },
                 ) {
                     Text("Show optional title")
