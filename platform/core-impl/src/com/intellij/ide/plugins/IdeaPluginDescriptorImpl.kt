@@ -233,6 +233,7 @@ class IdeaPluginDescriptorImpl private constructor(
     context: DescriptorListLoadingContext,
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
+    subBuilder.id = id.idString
     subBuilder.name = name
     subBuilder.vendor = vendor
     if (subBuilder.version != null && subBuilder.version != version) {
@@ -253,7 +254,7 @@ class IdeaPluginDescriptorImpl private constructor(
       raw = raw,
       pluginPath = pluginPath,
       isBundled = isBundled,
-      id = id,
+      id = null,
       moduleName = module?.name,
       moduleLoadingRule = module?.loadingRule,
       useCoreClassLoader = useCoreClassLoader,
