@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.openapi.util.NlsSafe
@@ -22,12 +22,9 @@ import org.jetbrains.annotations.NonNls
  */
 abstract class GitBranch protected constructor(name: String) : GitReference(GitBranchUtil.stripRefsPrefix(name)) {
   /**
-   * @return true if the branch is remote
+   * Set to true if the branch is remote
    */
   abstract val isRemote: Boolean
-
-  override val fullName: @NlsSafe String
-    get() = (if (this.isRemote) REFS_REMOTES_PREFIX else REFS_HEADS_PREFIX) + name
 
   companion object {
     const val REFS_HEADS_PREFIX: @NonNls String = "refs/heads/" // Prefix for local branches ({@value})
