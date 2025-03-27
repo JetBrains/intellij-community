@@ -19,7 +19,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTabFactory"/>
-    <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.files.SeFilesTabFactory"/>
+    <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.symbols.SeSymbolsTabFactory"/>
+    <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTabFactory"/>
   </extensions>
 </idea-plugin>
