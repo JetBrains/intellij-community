@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -39,6 +40,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.disabled
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
 /**
@@ -328,7 +330,13 @@ public fun ListComboBox(
             onSelectedItemChange = ::setSelectedItem,
             itemKeys = itemKeys,
             itemContent = { item, isSelected, isActive ->
-                SimpleListItem(text = item, isSelected = isSelected, isActive = isActive, iconContentDescription = item)
+                SimpleListItem(
+                    text = item,
+                    selected = isSelected,
+                    active = isActive,
+                    iconContentDescription = item,
+                    colorFilter = if (enabled) null else ColorFilter.disabled(),
+                )
             },
         )
     }
