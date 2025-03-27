@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.view
 
 import com.jetbrains.JBR
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Font
 import java.awt.FontMetrics
@@ -36,10 +37,15 @@ abstract class FontLayoutService {
     @JvmStatic
     fun getInstance(): FontLayoutService = INSTANCE
 
+    @ApiStatus.Internal
+    fun setInstanceInternal(fontLayoutService: FontLayoutService?) {
+      INSTANCE = fontLayoutService ?: DEFAULT_INSTANCE
+    }
+
     @TestOnly
     @JvmStatic
     fun setInstance(fontLayoutService: FontLayoutService?) {
-      INSTANCE = fontLayoutService ?: DEFAULT_INSTANCE
+      setInstanceInternal(fontLayoutService)
     }
   }
 }
