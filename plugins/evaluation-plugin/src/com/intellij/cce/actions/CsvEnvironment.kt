@@ -46,7 +46,7 @@ class CsvEnvironment(
       val (target, features) = props.value
       val call = callFeature(target, props.offset, features)
       ChunkHelper.Result(
-        featureInvoker.callFeature(call.expectedText, call.offset, call.nodeProperties),
+        featureInvoker.callFeature(call.expectedText, call.offset, call.nodeProperties, call.sessionId.id),
         "$target <- ${features.toList().joinToString(", ") { "${it.first} = ${it.second}" }}",
         call
       )

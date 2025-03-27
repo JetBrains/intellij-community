@@ -52,11 +52,11 @@ private class CustomizableFeatureWrapper(
   private val layoutManager: LayoutManager
 ) : FeatureInvoker {
 
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session {
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session {
     val data = invoker.invoke(properties)
     try {
       layoutManager.processData(data)
-      return data.session(expectedText, offset, properties)
+      return data.session(expectedText, offset, properties, sessionId)
     }
     catch (e: Throwable) {
       throw StopEvaluationException("Layout processing problem", e)

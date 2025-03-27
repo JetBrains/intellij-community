@@ -1,6 +1,5 @@
 package com.intellij.cce.interpreter
 
-import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluation.data.Binding
 import com.intellij.cce.evaluation.data.EvalDataDescription
@@ -12,9 +11,6 @@ import com.intellij.cce.report.CardLayout
  */
 interface PresentableFeatureInvoker : BindingFeatureInvoker {
   override fun invoke(properties: TokenProperties): PresentableEvalData
-
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session =
-    invoke(properties).session(expectedText, offset, properties)
 }
 
 class PresentableEvalData(

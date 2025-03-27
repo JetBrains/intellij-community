@@ -13,6 +13,7 @@ import com.intellij.cce.interpreter.InterpretationHandler
 import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.interpreter.PresentableEvalData
 import com.intellij.cce.interpreter.naiveReorder
+import java.util.UUID
 import kotlin.collections.plusAssign
 
 class ChunkHelper(
@@ -24,7 +25,7 @@ class ChunkHelper(
 
   fun <T> chunks(
     entities: Sequence<T>,
-    evaluate: ChunkHelper.(Props<T>) -> Result
+    evaluate: ChunkHelper.(Props<T>) -> Result,
   ): Iterator<EvaluationChunk> {
     return entities.chunked(chunkSize).mapIndexed { index, values ->
       object : EvaluationChunk {
@@ -35,7 +36,7 @@ class ChunkHelper(
           handler: InterpretationHandler,
           filter: InterpretFilter,
           order: InterpretationOrder,
-          sessionHandler: (Session) -> Unit
+          sessionHandler: (Session) -> Unit,
         ): EvaluationChunk.Result {
           val sessions = mutableListOf<Session>()
 
@@ -71,7 +72,7 @@ class ChunkHelper(
   fun <T> presentableChunks(
     layoutManager: LayoutManager,
     entities: Sequence<T>,
-    evaluate: ChunkHelper.(Props<T>) -> PresentableResult
+    evaluate: ChunkHelper.(Props<T>) -> PresentableResult,
   ): Iterator<EvaluationChunk> {
     return chunks(entities) { props ->
       val result = evaluate(props)
@@ -81,7 +82,8 @@ class ChunkHelper(
       val session = result.data.session(
         result.call?.expectedText ?: "",
         result.call?.offset ?: props.offset,
-        result.call?.nodeProperties ?: TokenProperties.Companion.UNKNOWN
+        result.call?.nodeProperties ?: TokenProperties.Companion.UNKNOWN,
+        result.call?.sessionId?.id ?: UUID.randomUUID().toString()
       )
 
       return@chunks Result(
