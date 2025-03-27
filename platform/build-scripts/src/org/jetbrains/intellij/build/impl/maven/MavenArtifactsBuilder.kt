@@ -85,8 +85,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
             continue
           JpsJavaDependencyScope.TEST ->
             continue
-          else ->
-            continue
         }
       }
       return result
@@ -246,14 +244,14 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
             mavenizable = false
             continue
           }
-          dependencies.add(MavenArtifactDependency(depArtifact.coordinates, true, ArrayList<String>(), scope as DependencyScope?))
+          dependencies.add(MavenArtifactDependency(depArtifact.coordinates, true, ArrayList<String>(), scope))
         }
       }
       else if (dependency is JpsLibraryDependency) {
         val library = dependency.library!!
         val typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
         if (typed != null) {
-          dependencies.add(createArtifactDependencyByLibrary(typed.properties.data, scope as DependencyScope?))
+          dependencies.add(createArtifactDependencyByLibrary(typed.properties.data, scope))
         }
         else if (!isOptionalDependency(library)) {
           Span.current().addEvent("module depends on non-maven library", Attributes.of(
@@ -298,7 +296,7 @@ data class MavenCoordinates(
   val artifactId: String,
   val version: String,
 ) {
-  override fun toString() = "$groupId:$artifactId:$version"
+  override fun toString(): String = "$groupId:$artifactId:$version"
 
   val directoryPath: String
     get() = "${groupId.replace('.', '/')}/$artifactId/$version"
