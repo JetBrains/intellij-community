@@ -36,14 +36,23 @@ private val EXCLUDED_JAR_SUFFIXES = setOf(
   "lib/lib-client.jar"
 )
 
-const val MAIN_INIT_SCRIPT_NAME = "ijInit"
-const val MAPPER_INIT_SCRIPT_NAME = "ijMapper"
-const val WRAPPER_INIT_SCRIPT_NAME = "ijWrapper"
-const val TEST_INIT_SCRIPT_NAME = "ijTestInit"
-const val IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME = "ijIdeaPluginConfigurator"
+@ApiStatus.Internal
+const val MAIN_INIT_SCRIPT_NAME: String = "ijInit"
+
+@ApiStatus.Internal
+const val MAPPER_INIT_SCRIPT_NAME: String = "ijMapper"
+
+@ApiStatus.Internal
+const val WRAPPER_INIT_SCRIPT_NAME: String = "ijWrapper"
+
+@ApiStatus.Internal
+const val TEST_INIT_SCRIPT_NAME: String = "ijTestInit"
+
+@ApiStatus.Internal
+const val IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME: String = "ijIdeaPluginConfigurator"
 
 @JvmField
-val GRADLE_TOOLING_EXTENSION_CLASSES = setOf(
+val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   SystemInfoRt::class.java, // intellij.platform.util.rt
   ExternalSystemRtClass::class.java, // intellij.platform.externalSystem.rt
   GradleToolingExtensionClass::class.java, // intellij.gradle.toolingExtension
@@ -51,7 +60,8 @@ val GRADLE_TOOLING_EXTENSION_CLASSES = setOf(
 )
 
 @JvmField
-val GRADLE_TOOLING_EXTENSION_PROXY_CLASSES = GRADLE_TOOLING_EXTENSION_CLASSES + setOf(
+@ApiStatus.Internal
+val GRADLE_TOOLING_EXTENSION_PROXY_CLASSES: Set<Class<*>> = GRADLE_TOOLING_EXTENSION_CLASSES + setOf(
   KotlinVersion::class.java, // kotlin-stdlib-jdk8
   Gradle::class.java, // gradle-api jar
   LoggerFactory::class.java, JDK14LoggerFactory::class.java, // logging jars
@@ -59,6 +69,7 @@ val GRADLE_TOOLING_EXTENSION_PROXY_CLASSES = GRADLE_TOOLING_EXTENSION_CLASSES + 
   MissingMethodException::class.java // groovy runtime for serialization
 )
 
+@ApiStatus.Internal
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): Path {
   val initScript = joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES + toolingExtensionClasses),
@@ -71,6 +82,7 @@ fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Se
   return createInitScript(MAIN_INIT_SCRIPT_NAME, initScript)
 }
 
+@ApiStatus.Internal
 fun createIdeaPluginConfiguratorInitScript(): Path {
   val initScript = joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
@@ -79,6 +91,7 @@ fun createIdeaPluginConfiguratorInitScript(): Path {
   return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
 }
 
+@ApiStatus.Internal
 fun loadDownloadArtifactInitScript(
   dependencyNotation: String,
   taskName: String,
@@ -93,6 +106,7 @@ fun loadDownloadArtifactInitScript(
   ))
 }
 
+@ApiStatus.Internal
 fun loadLegacyDownloadArtifactInitScript(
   dependencyNotation: String,
   taskName: String,
@@ -107,6 +121,7 @@ fun loadLegacyDownloadArtifactInitScript(
   ))
 }
 
+@ApiStatus.Internal
 fun loadTaskInitScript(
   projectPath: String,
   taskName: String,
@@ -125,11 +140,13 @@ fun loadTaskInitScript(
   )
 }
 
+@ApiStatus.Internal
 fun createTargetPathMapperInitScript(): Path {
   val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/MapperInit.gradle")
   return createInitScript(MAPPER_INIT_SCRIPT_NAME, initScript)
 }
 
+@ApiStatus.Internal
 fun createWrapperInitScript(
   gradleVersion: GradleVersion?,
   jarFile: File,
@@ -145,6 +162,7 @@ fun createWrapperInitScript(
   return createInitScript(WRAPPER_INIT_SCRIPT_NAME, initScript)
 }
 
+@ApiStatus.Internal
 fun createTestInitScript(): Path {
   val initScript = joinInitScripts(
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle")
@@ -152,6 +170,7 @@ fun createTestInitScript(): Path {
   return createInitScript(TEST_INIT_SCRIPT_NAME, initScript)
 }
 
+@ApiStatus.Internal
 fun loadJvmDebugInitScript(): String {
   return joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
@@ -159,6 +178,7 @@ fun loadJvmDebugInitScript(): String {
   )
 }
 
+@ApiStatus.Internal
 fun loadJvmOptionsInitScript(
   tasks: List<String>,
   jvmArgs: List<String>,
@@ -175,6 +195,7 @@ private val ASSERTION_FAILED_ERROR = listOf("org.opentest4j.AssertionFailedError
 private val FILE_COMPARISON_FAILURE = listOf("com.intellij.rt.execution.junit.FileComparisonFailure",
                                              "junit.framework.ComparisonFailure")
 
+@ApiStatus.Internal
 fun loadIjTestLoggerInitScript(): String {
   return joinInitScripts(
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestEventLogger.gradle"),
@@ -189,6 +210,7 @@ fun loadIjTestLoggerInitScript(): String {
   )
 }
 
+@ApiStatus.Internal
 fun loadFileComparisonTestLoggerInitScript(): String {
   return joinInitScripts(
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestEventLogger.gradle"),
@@ -198,6 +220,7 @@ fun loadFileComparisonTestLoggerInitScript(): String {
   )
 }
 
+@ApiStatus.Internal
 fun loadApplicationInitScript(
   gradlePath: String,
   runAppTaskName: String,
@@ -242,12 +265,10 @@ private fun loadEnhanceGradleDaemonClasspathInit(classesNames: List<List<String>
   ))
 }
 
-@ApiStatus.Experimental
 fun joinInitScripts(vararg initScripts: String): String {
   return joinInitScripts(initScripts.asList())
 }
 
-@ApiStatus.Experimental
 fun joinInitScripts(initScripts: List<String>): String {
   return initScripts.joinToString(System.lineSeparator())
 }
@@ -256,7 +277,6 @@ private fun loadInitScript(resourcePath: String, parameters: Map<String, String>
   return loadInitScript(Init::class.java, resourcePath, parameters)
 }
 
-@ApiStatus.Experimental
 fun loadInitScript(aClass: Class<*>, resourcePath: String, parameters: Map<String, String> = emptyMap()): String {
   val resource = aClass.getResource(resourcePath)
   if (resource == null) {
