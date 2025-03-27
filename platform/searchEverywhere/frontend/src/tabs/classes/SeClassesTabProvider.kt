@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend.providers.files
+package com.intellij.platform.searchEverywhere.frontend.tabs.classes
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
@@ -8,18 +8,19 @@ import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabProvider
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+import com.intellij.platform.searchEverywhere.providers.classes.SeClassesProvider
 import fleet.kernel.DurableRef
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
-class SeFilesTabProvider : SeTabProvider {
+@ApiStatus.Internal
+class SeClassesTabProvider : SeTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
     val delegate = SeTabDelegate.create(project,
                                         sessionRef,
-                                        "Files",
-                                        listOf(SeProviderId("com.intellij.FileSearchEverywhereItemProvider")),
+                                        "Classes",
+                                        listOf(SeProviderId(SeClassesProvider.ID)),
                                         dataContext,
                                         true)
-    return SeFilesTab(delegate)
+    return SeClassesTab(delegate)
   }
 }

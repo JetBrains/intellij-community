@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend.providers.all
+package com.intellij.platform.searchEverywhere.frontend.tabs.actions
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
@@ -9,17 +9,17 @@ import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabProvider
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import fleet.kernel.DurableRef
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
-@ApiStatus.Internal
-class SeAllTabProvider : SeTabProvider {
+@Internal
+class SeActionsTabProvider : SeTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
     val delegate = SeTabDelegate.create(project,
                                         sessionRef,
-                                        "All",
-                                        listOf(SeProviderId(SeProviderId.WILDCARD_ID)),
+                                        "Actions",
+                                        listOf(SeProviderId("com.intellij.ActionsItemsProvider")),
                                         dataContext,
                                         true)
-    return SeAllTab(delegate)
+    return SeActionsTab(delegate)
   }
 }

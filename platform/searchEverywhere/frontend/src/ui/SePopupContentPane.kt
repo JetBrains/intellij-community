@@ -10,8 +10,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextItemPresentation
-import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionItemPresentationRenderer
-import com.intellij.platform.searchEverywhere.frontend.providers.files.SeTargetItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
