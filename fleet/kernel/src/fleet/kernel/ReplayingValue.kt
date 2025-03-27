@@ -11,9 +11,8 @@ import kotlinx.coroutines.yield
  */
 class ReplayingValue<T>(private var valueInternal: T? = null) {
   var value: T
-    get() = requireNotNull(valueInternal) {
-      "accessing value before initialization"
-    }
+    @Suppress("UNCHECKED_CAST")
+    get() = valueInternal as T
     set(value) {
       valueInternal = value
     }
@@ -24,7 +23,7 @@ class ReplayingValue<T>(private var valueInternal: T? = null) {
   }
 }
 
-fun <T : Any> ChangeScope.sharedRead(f: SharedChangeScope.() -> T): ReplayingValue<T> {
+fun <T> ChangeScope.sharedRead(f: SharedChangeScope.() -> T): ReplayingValue<T> {
   val box = ReplayingValue<T>()
   shared {
     box.value = f()
