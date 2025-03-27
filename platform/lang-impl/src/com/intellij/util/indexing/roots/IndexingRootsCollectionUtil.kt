@@ -47,15 +47,24 @@ import java.util.function.Function
 
 internal sealed interface IndexingRootsDescription {
   fun createBuilders(): Collection<IndexableIteratorBuilder>
+  fun createIterator(storage: EntityStorage): IndexableFilesIterator?
+}
+
+internal interface DescriptionWithDependency: IndexingRootsDescription {
+  fun hasDependency(moduleDependencyIndex: ModuleDependencyIndex): Boolean
 }
 
 internal data class SdkRootsDescription(val sdk: SdkEntity,
-                                         val roots: IndexingUrlRootHolder) : IndexingRootsDescription {
+                                         val roots: IndexingUrlRootHolder) : DescriptionWithDependency {
   override fun createBuilders(): Collection<IndexableIteratorBuilder> {
     return forSdkEntity(sdk.symbolicId, roots)
   }
 
-  fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
+  override fun hasDependency(moduleDependencyIndex: ModuleDependencyIndex): Boolean {
+    return moduleDependencyIndex.hasDependencyOn(sdk.symbolicId)
+  }
+
+  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
     val sdk = storage.sdkMap.getDataByEntity(sdk) ?: return null
     val rootHolder = roots.toRootHolder()
     return SdkIndexableFilesIteratorImpl.createIterator(sdk, rootHolder.roots)
@@ -63,28 +72,36 @@ internal data class SdkRootsDescription(val sdk: SdkEntity,
 }
 
 internal data class LibraryRootsDescription(val library: LibraryEntity,
-                                            val roots: IndexingSourceRootHolder) : IndexingRootsDescription {
+                                            val roots: IndexingSourceRootHolder) : DescriptionWithDependency {
   override fun createBuilders(): Collection<IndexableIteratorBuilder> {
-    return forLibraryEntity(library.symbolicId, false, roots.roots, roots.sourceRoots)
+    return forLibraryEntity(library.symbolicId, true, roots.roots, roots.sourceRoots)
   }
 
-  fun createIterators(storage: EntityStorage): Collection<IndexableFilesIterator> {
-    val library = library.findLibraryBridge(storage) ?: return emptyList()
-    return listOfNotNull(createIterator(library, roots.roots, roots.sourceRoots))
+  override fun hasDependency(moduleDependencyIndex: ModuleDependencyIndex): Boolean {
+    return moduleDependencyIndex.hasDependencyOn(library.symbolicId)
+  }
+
+  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
+    val library = library.findLibraryBridge(storage) ?: return null
+    return createIterator(library, roots.roots, roots.sourceRoots)
   }
 }
 
 internal data class LibraryUrlRootsDescription(val library: LibraryEntity,
-                                               val roots: IndexingUrlSourceRootHolder) : IndexingRootsDescription {
+                                               val roots: IndexingUrlSourceRootHolder) : DescriptionWithDependency {
   override fun createBuilders(): Collection<IndexableIteratorBuilder> {
     return forLibraryEntity(library.symbolicId, false, roots)
   }
 
-  fun createIterators(storage: EntityStorage): Collection<IndexableFilesIterator> {
-    val library = library.findLibraryBridge(storage) ?: return emptyList()
+  override fun hasDependency(moduleDependencyIndex: ModuleDependencyIndex): Boolean {
+    return moduleDependencyIndex.hasDependencyOn(library.symbolicId)
+  }
+
+  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
+    val library = library.findLibraryBridge(storage) ?: return null
     val fileRoots = roots.toSourceRootHolder()
-    if (fileRoots.isEmpty()) return emptyList()
-    return listOfNotNull(createIterator(library, fileRoots.roots, fileRoots.sourceRoots))
+    if (fileRoots.isEmpty()) return null
+    return createIterator(library, fileRoots.roots, fileRoots.sourceRoots)
   }
 }
 
@@ -94,8 +111,8 @@ internal data class EntityGenericContentRootsDescription<E : WorkspaceEntity>(va
     return forGenericContentEntity(entityPointer, roots)
   }
 
-  fun createIterators(): Collection<IndexableFilesIterator> {
-    return createGenericContentEntityIterators(entityPointer, roots)
+  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
+    return createGenericContentEntityIterators(entityPointer, roots).firstOrNull()
   }
 }
 
@@ -105,8 +122,8 @@ internal data class EntityExternalRootsDescription<E : WorkspaceEntity>(val enti
     return forExternalEntity(entityPointer, urlRoots)
   }
 
-  fun createIterators(): Collection<IndexableFilesIterator> {
-    return IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, urlRoots)
+  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
+    return IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, urlRoots).firstOrNull()
   }
 }
 
@@ -116,8 +133,8 @@ internal data class EntityCustomKindRootsDescription<E : WorkspaceEntity>(val en
     return forCustomKindEntity(entityPointer, roots)
   }
 
-  fun createIterators(): Collection<IndexableFilesIterator> {
-    return createCustomKindEntityIterators(entityPointer, roots)
+  override fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
+    return createCustomKindEntityIterators(entityPointer, roots).firstOrNull()
   }
 }
 
@@ -269,7 +286,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       builders.addAll(forModuleRootsFileBased((entry.key as ModuleBridge).moduleEntityId, entry.value))
     }
 
-    for (description in descriptions) {
+    processDescriptions(project) { description ->
       builders.addAll(description.createBuilders())
     }
 
@@ -277,53 +294,40 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     return builders
   }
 
-  data class Iterators(val contentIterators: List<IndexableFilesIterator>,
-                       val externalIterators: List<IndexableFilesIterator>,
-                       val customIterators: List<IndexableFilesIterator>)
-
-  fun getIteratorsFromRoots(libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
-                            storage: EntityStorage,
-                            project: Project): Iterators {
-    val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
-    val contentIterators = mutableListOf<IndexableFilesIterator>()
+  fun getIteratorsFromRoots(storage: EntityStorage,
+                            project: Project,
+                            libraryOrigins: MutableSet<IndexableSetOrigin>): List<IndexableFilesIterator> {
+    val result = mutableListOf<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entries) {
-      contentIterators.addAll(IndexableEntityProviderMethods.createIterators(module, roots))
+      result.addAll(IndexableEntityProviderMethods.createIterators(module, roots))
     }
-    val externalIterators = mutableListOf<IndexableFilesIterator>()
-    val customIterators = mutableListOf<IndexableFilesIterator>()
-    for (description in descriptions) {
-      when (description) {
-        is EntityGenericContentRootsDescription<*> -> contentIterators.addAll(description.createIterators())
-        is LibraryRootsDescription -> {
-          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
-            description.createIterators(storage).forEach { iterator ->
-              if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
-                externalIterators.add(iterator)
-              }
-            }
-          }
+    processDescriptions(project) { description ->
+      val iterator = description.createIterator(storage)
+      if (iterator == null) return@processDescriptions
+      if (iterator is LibraryIndexableFilesIterator) {
+        if (libraryOrigins.add(iterator.origin)) {
+          result.add(iterator)
         }
-        is LibraryUrlRootsDescription -> {
-          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
-            description.createIterators(storage).forEach { iterator ->
-              if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
-                externalIterators.add(iterator)
-              }
-            }
-          }
-        }
-        is SdkRootsDescription -> {
-          if (moduleDependencyIndex.hasDependencyOn(description.sdk.symbolicId)) {
-            description.createIterator(storage)?.let { iterator ->
-              externalIterators.add(iterator)
-            }
-          }
-        }
-        is EntityExternalRootsDescription<*> -> externalIterators.addAll(description.createIterators())
-        is EntityCustomKindRootsDescription<*> -> customIterators.addAll(description.createIterators())
+      } else {
+        result.add(iterator)
       }
     }
-    return Iterators(contentIterators, externalIterators, customIterators)
+    return result
+  }
+
+  private fun processDescriptions(project: Project,
+                                  processor: (IndexingRootsDescription) -> Unit) {
+    val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
+    for (description in descriptions) {
+      when (description) {
+        is DescriptionWithDependency -> {
+          if (description.hasDependency(moduleDependencyIndex)) {
+            processor(description)
+          }
+        }
+        else -> processor(description)
+      }
+    }
   }
 
   fun <E : WorkspaceEntity> registerEntitiesFromContributor(contributor: WorkspaceFileIndexContributor<E>,

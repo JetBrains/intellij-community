@@ -79,10 +79,8 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
       WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
-    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots =
-      builder.getIteratorsFromRoots(libraryOrigins, entityStorage, project);
-    iterators.addAll(iteratorsFromRoots.getContentIterators());
-    iterators.addAll(iteratorsFromRoots.getExternalIterators());
+    List<IndexableFilesIterator> iteratorsFromRoots = builder.getIteratorsFromRoots(entityStorage, project, libraryOrigins);
+    iterators.addAll(iteratorsFromRoots);
 
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
     if (!Registry.is("ide.workspace.model.sdk.remove.custom.processing")) {
@@ -127,7 +125,6 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
         addedFromDependenciesIndexedStatusService = true;
         ProgressManager.checkCanceled();
         iterators.addAll(cacheService.saveLibsAndInstantiateLibraryIterators());
-        iterators.addAll(iteratorsFromRoots.getCustomIterators());
         ProgressManager.checkCanceled();
         iterators.addAll(cacheService.saveIndexableSetsAndInstantiateIterators());
         cacheService.saveExcludePolicies();
@@ -140,8 +137,6 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
           iterators.add(new SyntheticLibraryIndexableFilesIteratorImpl(library));
         }
       }
-
-      iterators.addAll(iteratorsFromRoots.getCustomIterators());
 
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         iterators.add(new IndexableSetContributorFilesIterator(contributor, project));
