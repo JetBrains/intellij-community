@@ -2535,6 +2535,34 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  //PY-76894
+  public void testRawConcatenateUsage() {
+    doTestByText("""
+                   from typing import ParamSpec, Concatenate, Any, TypeVar, Callable, TypeAlias
+
+                   P = ParamSpec('P')
+                   T = TypeVar('T')
+
+                   # Raw Concatenate in function parameters is not allowed
+                   def func1(x: <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, P]</warning>) -> int:
+                       ...
+                   
+                   var: <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, <warning descr="Unbound type variable">P</warning>]</warning>
+                   
+                   def return_concat() -> <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, P]</warning>:
+                      ...
+
+                   # Concatenate in type alias is allowed
+                   ConcatenateAlias = Concatenate[int, P]
+                   ConcatenateAlias2: TypeAlias = Concatenate[int, P]
+                   type ConcatenateAlias3[**P] = Concatenate[int, P]
+
+                   # Concatenate in Callable is allowed
+                   def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[Any, P], T]:
+                       ...
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
