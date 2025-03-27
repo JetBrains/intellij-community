@@ -49,7 +49,7 @@ sealed class Op {
  *
  */
 @Serializable(with = OperationSerializer::class)
-data class Operation(internal val rope: OpsRope) {
+class Operation(internal val rope: OpsRope) {
   constructor(ops: List<Op>): this(OperationMonoid.ropeOf(listOf(ops.toTypedArray())))
 
   val ops: Sequence<Op> get() = sequence {
@@ -69,6 +69,16 @@ data class Operation(internal val rope: OpsRope) {
     get() = rope.size(OperationMonoid.LenBefore)
   val lenAfter: Int
     get() = rope.size(OperationMonoid.LenAfter)
+
+  override fun equals(other: Any?): Boolean {
+    return other is Operation && ops.toList().equals(other.ops.toList())
+  }
+
+  override fun hashCode(): Int {
+    return ops.toList().hashCode()
+  }
+
+  fun copy(): Operation = Operation(ops.toList())
 
   companion object {
     /**
