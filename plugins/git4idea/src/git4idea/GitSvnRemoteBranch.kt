@@ -1,37 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea;
+package git4idea
 
-import git4idea.repo.GitRemote;
-import org.jetbrains.annotations.NotNull;
+import git4idea.repo.GitRemote
 
 /**
- * <p>The naming conventions of SVN remote branches are slightly different from the ordinary remote branches.</p>
+ * The naming conventions of SVN remote branches are slightly different from the ordinary remote branches.
  *
- * <p>No remote is specified: dot (".") is used as a remote.</p>
- * <p>Remote branch name has "refs/remotes/branch" format, i. e. it doesn't have a remote prefix.</p>
+ * No remote is specified: dot (".") is used as a remote.
+ * Remote branch name has "refs/remotes/branch" format, i. e. it doesn't have a remote prefix.
  *
- * <p>Because of these differences, GitSvnRemoteBranch doesn't {@link GitStandardRemoteBranch}. </p>
- *
- * @author Kirill Likhodedov
+ * Because of these differences, GitSvnRemoteBranch doesn't [GitStandardRemoteBranch].
  */
-public class GitSvnRemoteBranch extends GitRemoteBranch {
+class GitSvnRemoteBranch(private val ref: String) : GitRemoteBranch(ref, GitRemote.DOT) {
+  override val nameForRemoteOperations: String
+    get() = ref
 
-  public GitSvnRemoteBranch(@NotNull String fullName) {
-    super(fullName, GitRemote.DOT);
-  }
+  override val nameForLocalOperations: String
+    get() = ref
 
-  @Override
-  public @NotNull String getNameForRemoteOperations() {
-    return getFullName();
-  }
-
-  @Override
-  public @NotNull String getNameForLocalOperations() {
-    return getFullName();
-  }
-
-  @Override
-  public @NotNull String getFullName() {
-    return getName();
-  }
+  override val fullName: String
+    get() = ref
 }
