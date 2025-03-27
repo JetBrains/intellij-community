@@ -427,6 +427,7 @@ class IdeaPluginDescriptorImpl private constructor(
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, containerDescriptor: ContainerDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
     if (containerDescriptor === projectContainerDescriptor && !projectExtensionsCache.isEmpty()) {
+      // projectExtensionsCache is either empty or exactly miscExtensions, in which case the code below is identical to doing just regular doRegisterExtensions
       for ((name, descriptors) in projectExtensionsCache) {
         nameToPoint[name]?.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
       }
