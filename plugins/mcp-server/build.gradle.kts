@@ -51,3 +51,6 @@ kotlin {
     jvmToolchain(17)
 }
 
+tasks.buildSearchableOptions {
+    enabled = false
+}

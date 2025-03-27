@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import org.jetbrains.mcpserverplugin.AbstractMcpTool
+import org.jetbrains.mcpserverplugin.settings.PluginSettings
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.TerminalView
@@ -52,6 +53,7 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
         - Checks if process is running before collecting output
         - Limits output to $maxLineCount lines (truncates excess)
         - Times out after $timeout milliseconds with notification
+        - Requires user confirmation unless "Brave Mode" is enabled in settings
         Returns possible responses:
         - Terminal output (truncated if >$maxLineCount lines)
         - Output with interruption notice if timed out
@@ -81,23 +83,32 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
         val future = CompletableFuture<Response>()
 
         ApplicationManager.getApplication().invokeAndWait {
-            val confirmationDialog = object : DialogWrapper(project, true) {
-                init {
-                    init()
-                    title = "Confirm Command Execution"
-                }
+            val braveMode = ApplicationManager.getApplication().getService(PluginSettings::class.java).state.enableBraveMode
+            var proceedWithCommand = true
+            
+            if (!braveMode) {
+                val confirmationDialog = object : DialogWrapper(project, true) {
+                    init {
+                        init()
+                        title = "Confirm Command Execution"
+                    }
 
-                override fun createCenterPanel(): JComponent? {
-                    return panel {
-                        row {
-                            label("Do you want to run command `${args.command.take(100)}` in the terminal?")
+                    override fun createCenterPanel(): JComponent? {
+                        return panel {
+                            row {
+                                label("Do you want to run command `${args.command.take(100)}` in the terminal?")
+                            }
+                            row {
+                                comment("Note: You can enable 'Brave Mode' in settings to skip this confirmation.")
+                            }
                         }
                     }
                 }
+                confirmationDialog.show()
+                proceedWithCommand = confirmationDialog.isOK
             }
-            confirmationDialog.show()
 
-            if (!confirmationDialog.isOK) {
+            if (!proceedWithCommand) {
                 future.complete(Response(error = "canceled"))
                 return@invokeAndWait
             }

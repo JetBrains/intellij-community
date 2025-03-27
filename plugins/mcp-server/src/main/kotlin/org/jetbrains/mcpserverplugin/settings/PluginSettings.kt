@@ -14,4 +14,5 @@ class MyState : BaseState() {
     var shouldShowNodeNotification: Boolean by property(true)
     var shouldShowClaudeNotification: Boolean by property(true)
     var shouldShowClaudeSettingsNotification: Boolean by property(true)
+    var enableBraveMode: Boolean by property(false)
 }

@@ -39,6 +39,11 @@
         <httpRequestHandler implementation="org.jetbrains.ide.mcp.MCPService"/>
         <notificationGroup id="MCPServerPlugin" displayType="BALLOON"/>
         <postStartupActivity implementation="org.jetbrains.mcpserverplugin.MCPServerStartupValidator"/>
-        <applicationService serviceImplementation="org.jetbrains.mcpserverplugin.settings.PluginSettings"/>"/>
+        <applicationService serviceImplementation="org.jetbrains.mcpserverplugin.settings.PluginSettings"/>
+        <applicationConfigurable 
+            instance="org.jetbrains.mcpserverplugin.settings.PluginSettingsConfigurable"
+            id="org.jetbrains.mcpserverplugin.settings"
+            displayName="MCP Plugin"
+            parentId="tools"/>
     </extensions>
 </idea-plugin>
