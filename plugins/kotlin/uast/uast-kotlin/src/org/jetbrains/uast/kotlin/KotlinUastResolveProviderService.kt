@@ -186,6 +186,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                                     resolveToPsiMethod(operand, descriptor.getMethod)?.let { yield(it) }
                                     descriptor.setMethod?.let { resolveToPsiMethod(operand, it) }?.let { yield(it) }
                                 }
+                                is PropertyDescriptor -> {
+                                    descriptor.getter?.let { resolveToPsiMethod(operand, it) }?.let { yield(it) }
+                                    descriptor.setter?.let { resolveToPsiMethod(operand, it) }?.let { yield(it) }
+                                }
                                 else ->
                                     resolveToDeclaration(operand)?.let { yield(it) }
                             }
@@ -223,6 +227,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                                   is SyntheticJavaPropertyDescriptor -> {
                                       resolveToPsiMethod(ktExpression, descriptor.getMethod)?.let { yield(it) }
                                       descriptor.setMethod?.let { resolveToPsiMethod(ktExpression, it) }?.let { yield(it) }
+                                  }
+                                  is PropertyDescriptor -> {
+                                      descriptor.getter?.let { resolveToPsiMethod(ktExpression, it) }?.let { yield(it) }
+                                      descriptor.setter?.let { resolveToPsiMethod(ktExpression, it) }?.let { yield(it) }
                                   }
                                   is CallableDescriptor ->
                                       resolveToPsiMethod(ktExpression, descriptor)?.let { yield(it) }

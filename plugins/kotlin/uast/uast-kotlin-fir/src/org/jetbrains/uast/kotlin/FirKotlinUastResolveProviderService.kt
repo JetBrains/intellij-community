@@ -202,12 +202,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         }
 
                         is KaCompoundVariableAccessCall -> {
-                            val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol
-                            if (variableSymbol is KaSyntheticJavaPropertySymbol) {
-                                add(variableSymbol.getter)
-                                addIfNotNull(variableSymbol.setter)
-                            } else {
-                                add(variableSymbol)
+                            when (val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol) {
+                                is KaSyntheticJavaPropertySymbol -> {
+                                    add(variableSymbol.javaGetterSymbol)
+                                    addIfNotNull(variableSymbol.javaSetterSymbol)
+                                }
+                                is KaPropertySymbol -> {
+                                    addIfNotNull(variableSymbol.getter)
+                                    addIfNotNull(variableSymbol.setter)
+                                }
+                                else ->
+                                    add(variableSymbol)
                             }
                             add(candidate.compoundOperation.operationPartiallyAppliedSymbol.symbol)
                         }
