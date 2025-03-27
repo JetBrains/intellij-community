@@ -347,7 +347,7 @@ abstract class ComponentManagerImpl(
           if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadless && !listener.activeInHeadlessMode)) {
             continue
           }
-          if (listener.os != null && !listener.os.isSuitableForOs()) {
+          if (listener.os != null && !listener.os!!.isSuitableForOs()) {
             continue
           }
           listenersByTopicName.computeIfAbsent(listener.topicClassName) { ArrayList() }
