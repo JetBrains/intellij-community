@@ -191,17 +191,16 @@ internal sealed class AddMemberToSupertypeFix(
   override fun getFamilyName(): @IntentionFamilyName String =
     KotlinBundle.message("fix.add.member.supertype.family", kind)
 
-  override fun perform(context: ActionContext): ModCommand {
-    return if (candidateMembers.size == 1) {
-      AddSelectedMemberToSupertypeFix(element, candidateMembers.first(), isActionChooser = false).perform(context)
-    }
-    else {
-      ModCommand.chooseAction(
-        KotlinBundle.message("fix.add.member.supertype.choose.type"),
-        candidateMembers.map { candidateMember -> AddSelectedMemberToSupertypeFix(element, candidateMember, isActionChooser = true) },
+  override fun perform(context: ActionContext): ModCommand = ModCommand.chooseAction(
+    KotlinBundle.message("fix.add.member.supertype.choose.type"),
+    candidateMembers.map { candidateMember ->
+      AddSelectedMemberToSupertypeFix(
+        element,
+        candidateMember,
+        isActionChooser = candidateMembers.size == 1
       )
-    }
-  }
+    },
+  )
 }
 
 private fun addMember(
