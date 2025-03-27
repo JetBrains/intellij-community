@@ -516,7 +516,7 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   private fun warnIfResourceBundleIsDefinedForCorePlugin(resourceBundle: String?) {
-    if (resourceBundle != null && id == PluginManagerCore.CORE_ID) {
+    if (resourceBundle != null && id == PluginManagerCore.CORE_ID && moduleName == null) {
       LOG.warn("<resource-bundle>$resourceBundle</resource-bundle> tag is found in an xml descriptor" +
                " included into the platform part of the IDE but the platform part uses predefined bundles " +
                "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
