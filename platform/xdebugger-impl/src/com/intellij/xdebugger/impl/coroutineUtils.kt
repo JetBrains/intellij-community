@@ -14,15 +14,10 @@ internal fun <T> createMutableStateFlow(initialValue: T): MutableStateFlow<T> {
 
 internal fun addOnSessionSelectedListener(session: XDebugSessionProxy, action: () -> Unit) {
   val scope = session.coroutineScope
-  val sessionId = scope.async {
-    session.sessionId()
-  }
   session.project.messageBus.connect(scope).subscribe(FrontendXDebuggerManagerListener.TOPIC, object : FrontendXDebuggerManagerListener {
     override fun activeSessionChanged(previousSessionId: XDebugSessionId?, currentSessionId: XDebugSessionId?) {
-      scope.launch {
-        if (currentSessionId == sessionId.await()) {
-          action()
-        }
+      if (currentSessionId == session.id) {
+        action()
       }
     }
   })

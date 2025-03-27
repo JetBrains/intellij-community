@@ -17,7 +17,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluat
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
-import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
+import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.RpcFlow

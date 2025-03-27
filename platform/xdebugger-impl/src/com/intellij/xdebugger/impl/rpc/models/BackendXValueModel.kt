@@ -13,7 +13,7 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
+import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import kotlinx.collections.immutable.toImmutableSet
