@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -281,6 +281,7 @@ class ChangesViewCommitWorkflowHandler(
   // save state on project close
   // using this method ensures change list comment and commit options are updated before project state persisting
   override fun projectClosingBeforeSave(project: Project) {
+    commitMessagePolicy.saveStateOnDispose()
     saveStateBeforeDispose()
     disposeCommitOptions()
   }
