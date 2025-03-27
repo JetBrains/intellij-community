@@ -19,9 +19,7 @@ class UID private constructor(val id: String) {
 
     private const val LEN = 20
 
-    fun random(): UID = with(Random) {
-      UID(nextUidString(LEN))
-    }
+    fun random(): UID = UID(Random.nextUidString(LEN))
 
     fun isUid(id: String): Boolean = id.matches(uidRegex)
 
