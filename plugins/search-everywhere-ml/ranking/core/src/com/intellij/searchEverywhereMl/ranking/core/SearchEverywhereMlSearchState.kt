@@ -32,13 +32,14 @@ internal class SearchEverywhereMlSearchState(
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
                          priority: Int,
-                         context: SearchEverywhereMLContextInfo): SearchEverywhereMLItemInfo {
+                         context: SearchEverywhereMLContextInfo,
+                         correction: SearchEverywhereSpellCheckResult): SearchEverywhereMLItemInfo {
     val features = arrayListOf<EventPair<*>>()
     val contributorId = contributor.searchProviderId
     val contributorFeatures = getContributorFeatures(contributor)
 
     SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).forEach { provider ->
-      features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
+      features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache, correction))
     }
 
     if (tab == SearchEverywhereTab.All) {

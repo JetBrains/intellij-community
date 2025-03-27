@@ -4,6 +4,7 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
@@ -64,7 +65,8 @@ class SearchEverywhereFileFeaturesProvider
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     val item = (SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>(

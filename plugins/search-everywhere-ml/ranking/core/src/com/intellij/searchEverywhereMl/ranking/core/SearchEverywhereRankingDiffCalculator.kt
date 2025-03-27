@@ -39,6 +39,7 @@ object SearchEverywhereRankingDiffCalculator {
           contributor = it.contributor,
           mlWeight = it.mlWeight,
           mlFeatures = it.mlFeatures,
+          correction = it.correction,
           orderingDiff = positionToOrderingDiff.getOrDefault(index, 0),
           seSearchPosition = index
         )

@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
@@ -41,6 +42,7 @@ internal interface FeaturesProviderTestCase {
       private var query = ""
       private var elementPriority = 0
       private val cache = FeaturesProviderCacheDataProvider().getDataToCache(testCase.testProject)
+      private var correction = SearchEverywhereSpellCheckResult.NoCorrection
 
       /**
        * Specifies the current time / session start time that will be passed when obtaining the features,
@@ -90,14 +92,14 @@ internal interface FeaturesProviderTestCase {
        * Checks whether feature exists or not
        */
       fun exists(expected: Boolean) {
-        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
+        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache, correction)
         if (feature == null) throw IllegalStateException("Cannot check if a feature exists with no feature specified")
         val containsFeature = feature in features.map { it.field }
         assertEquals(expected, containsFeature)
       }
 
       private fun withoutMultipleFeatures(expectedMissingFeatures: List<EventField<*>>) {
-        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
+        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache, correction)
 
         for (missingFeature in expectedMissingFeatures) {
           val actualFeatureByName = features.find { it.field == missingFeature }
@@ -108,7 +110,7 @@ internal interface FeaturesProviderTestCase {
       }
 
       private fun assert(expectedValue: T?) {
-        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache)
+        features = testCase.provider.getElementFeatures(element, currentTime, query, elementPriority, cache, correction)
 
         if (features.isEmpty()) {
           val providerClass = testCase.provider::class.java.simpleName

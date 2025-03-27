@@ -544,6 +544,9 @@ com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 - a:compareItems(com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo,java.util.List):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$SEEqualElementsActionType
 - s:composite(java.util.Collection):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 - s:getProviders():java.util.List
+c:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+- <init>(java.lang.Object,I,com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor,com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult):V
+- <init>(java.lang.String,java.lang.Object,I,com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):V
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 - a:getCurrentlyShownUI():com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager

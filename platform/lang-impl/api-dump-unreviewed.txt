@@ -8597,7 +8597,6 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - sf:SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT:I
 - <init>(com.intellij.openapi.project.Project,java.util.List):V
 - <init>(com.intellij.openapi.project.Project,java.util.List,java.util.function.Function):V
-- <init>(com.intellij.openapi.project.Project,java.util.List,java.util.function.Function,com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector):V
 - addSearchListener(com.intellij.ide.actions.searcheverywhere.SearchListener):V
 - clearResults():V
 - closePopup():V

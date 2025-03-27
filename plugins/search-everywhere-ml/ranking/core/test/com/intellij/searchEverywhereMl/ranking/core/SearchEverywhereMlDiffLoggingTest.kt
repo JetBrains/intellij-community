@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.util.use
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
@@ -135,7 +136,8 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
 
     override fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
                                         element: Any,
-                                        priority: Int): SearchEverywhereFoundElementInfo {
+                                        priority: Int,
+                                        correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo {
       return nextFoundElementInfo(element, contributor)
     }
 
@@ -170,8 +172,9 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
                                                             sePriority: Int = this.heuristicPriority,
                                                             contributor: SearchEverywhereContributor<*> = this.contributor,
                                                             mlWeight: Double? = this.mlWeight,
-                                                            mlFeatures: List<EventPair<*>> = this.mlFeatures) =
-      SearchEverywhereFoundElementInfoWithMl(element, sePriority, contributor, mlWeight, mlFeatures)
+                                                            mlFeatures: List<EventPair<*>> = this.mlFeatures,
+                                                            correction: SearchEverywhereSpellCheckResult = this.correction) =
+      SearchEverywhereFoundElementInfoWithMl(element, sePriority, contributor, mlWeight, mlFeatures, correction)
   }
 
   class MockElementKeyForIdProvider : SearchEverywhereElementKeyProvider {

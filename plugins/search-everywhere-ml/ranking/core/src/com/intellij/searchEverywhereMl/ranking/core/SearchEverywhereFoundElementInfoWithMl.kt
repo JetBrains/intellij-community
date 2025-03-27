@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import org.jetbrains.annotations.Contract
@@ -11,8 +12,9 @@ internal open class SearchEverywhereFoundElementInfoWithMl(
   val heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   val mlWeight: Double?,
-  mlFeatures: List<EventPair<*>>
-) : SearchEverywhereFoundElementInfo(element, getPriority(element, heuristicPriority, mlWeight), contributor) {
+  mlFeatures: List<EventPair<*>>,
+  correction: SearchEverywhereSpellCheckResult = SearchEverywhereSpellCheckResult.NoCorrection,
+) : SearchEverywhereFoundElementInfo(element, getPriority(element, heuristicPriority, mlWeight), contributor, correction) {
   private val _mlFeatures: MutableList<EventPair<*>> = mlFeatures.toMutableList()
 
   val mlFeatures: List<EventPair<*>>
@@ -28,8 +30,9 @@ internal open class SearchEverywhereFoundElementInfoWithMl(
     @Contract("-> new")
     fun withoutMl(element: Any,
                   priority: Int,
-                  contributor: SearchEverywhereContributor<*>) = SearchEverywhereFoundElementInfoWithMl(element, priority, contributor,
-                                                                                                           null, emptyList())
+                  contributor: SearchEverywhereContributor<*>,
+                  correction: SearchEverywhereSpellCheckResult)
+                  = SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, null, emptyList(), correction)
 
     fun from(info: SearchEverywhereFoundElementInfo): SearchEverywhereFoundElementInfoWithMl {
       return when (info) {
@@ -39,10 +42,11 @@ internal open class SearchEverywhereFoundElementInfoWithMl(
           heuristicPriority = info.heuristicPriority,
           contributor = info.contributor,
           mlWeight = info.mlWeight,
-          mlFeatures = info.mlFeatures
+          mlFeatures = info.mlFeatures,
+          correction = info.correction
         )
         else -> {
-          withoutMl(info.element, info.priority, info.contributor)
+          withoutMl(info.element, info.priority, info.contributor, info.correction)
         }
       }
     }
@@ -59,7 +63,13 @@ internal open class SearchEverywhereFoundElementInfoWithMl(
     val sb = StringBuilder()
 
     val searchProviderId = contributor?.searchProviderId ?: "null"
+    val isSpellChecked = correction is SearchEverywhereSpellCheckResult.Correction
     sb.appendLine("Contributor: $searchProviderId")
+    sb.appendLine("Corrected by Spell Checker: ${
+      if (isSpellChecked) "Yes (correction: ${(correction as SearchEverywhereSpellCheckResult.Correction).correction}, " +
+                          "confidence: ${(correction as SearchEverywhereSpellCheckResult.Correction).confidence})"
+      else "No"
+    }")
     sb.appendLine("Weight: ${priority}")
     sb.appendLine("ML Weight: ${mlWeight}")
     sb.appendLine("ML Features:")

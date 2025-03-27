@@ -1,6 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
@@ -52,7 +53,7 @@ internal abstract class SearchEverywhereRankingModelTest
                                  featuresProviderCache: FeaturesProviderCache?): Map<String, Any?> {
     return featuresProviders.map {
       val features = it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight,
-                                           featuresProviderCache)
+                                           featuresProviderCache, SearchEverywhereSpellCheckResult.NoCorrection)
       val featuresAsMap = hashMapOf<String, Any?>()
       for (feature in features) {
         featuresAsMap[feature.field.name] = feature.data
