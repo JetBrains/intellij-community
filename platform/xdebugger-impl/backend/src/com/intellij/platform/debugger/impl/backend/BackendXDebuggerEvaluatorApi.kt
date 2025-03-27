@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.project.asProject
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
@@ -16,22 +15,15 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
+import com.intellij.xdebugger.impl.frame.BackendXValueModel
+import com.intellij.xdebugger.impl.frame.BackendXValueModelsManager
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
 import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
-import com.intellij.xdebugger.impl.rhizome.XValueEntity
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
-import com.jetbrains.rhizomedb.Entity
-import fleet.kernel.change
-import fleet.kernel.rete.collect
-import fleet.kernel.rete.query
-import fleet.kernel.tryWithEntities
-import fleet.kernel.withEntities
+import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
-import fleet.util.UID
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asDeferred
@@ -69,7 +61,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
                            ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val evaluator = stackFrameEntity.obj.evaluator
                     ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
-    val sessionEntity = stackFrameEntity.sessionEntity
+    val session = stackFrameEntity.sessionEntity.session as XDebugSessionImpl
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
@@ -82,7 +74,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           evaluationResult.completeExceptionally(EvaluationException(errorMessage))
         }
       }
-      evaluateFun(sessionEntity.projectEntity.asProject(), evaluator, callback)
+      evaluateFun(session.project, evaluator, callback)
     }
     val evaluationCoroutineScope = EvaluationCoroutineScopeProvider.getInstance().cs
 
@@ -93,8 +85,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       catch (e: EvaluationException) {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
-      val xValueEntity = newXValueEntity(xValue, sessionEntity)
-      val xValueDto = xValueEntity.toXValueDto()
+      val xValueModel = newXValueModel(xValue, session)
+      val xValueDto = xValueModel.toXValueDto()
       XEvaluationResult.Evaluated(xValueDto)
     }
   }
@@ -102,19 +94,13 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 }
 
-internal suspend fun XValueEntity.toXValueDto(): XValueDto {
-  val xValueEntity = this
+internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
+  val xValueModel = this
   val xValue = this.xValue
-  val valueMarkupFlow = channelFlow<XValueMarkerDto?> {
-    tryWithEntities(xValueEntity) {
-      query { xValueEntity.marker }.collect {
-        send(it)
-      }
-    }
-  }.toRpc()
+  val valueMarkupFlow: RpcFlow<XValueMarkerDto?> = xValueModel.marker.toRpc()
 
   return XValueDto(
-    xValueId,
+    xValueModel.id,
     xValue.xValueDescriptorAsync?.asDeferred(),
     canNavigateToSource = xValue.canNavigateToSource(),
     canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
@@ -123,54 +109,25 @@ internal suspend fun XValueEntity.toXValueDto(): XValueDto {
   )
 }
 
-private suspend fun newXValueEntity(
+internal fun newXValueModel(
   xValue: XValue,
-  sessionEntity: XDebugSessionEntity,
-): XValueEntity {
-  val xValueEntity = change {
-    XValueEntity.new {
-      it[XValueEntity.XValueId] = XValueId(UID.random())
-      it[XValueEntity.XValueAttribute] = xValue
-      it[XValueEntity.SessionEntity] = sessionEntity
-    }
-  }
-  return xValueEntity.apply {
+  session: XDebugSessionImpl,
+): BackendXValueModel {
+  // TODO[IJPL-160146]: XValues should be stuck on suspension context coroutine scope, not on session one.
+  val xValueCs = session.coroutineScope
+  val xValueModel = BackendXValueModelsManager.getInstance(session.project).createXValueModel(xValueCs, session, xValue)
+  return xValueModel.apply {
     setInitialMarker()
   }
 }
 
-internal suspend fun newChildXValueEntity(
-  xValue: XValue,
-  parentEntity: Entity,
-  sessionEntity: XDebugSessionEntity,
-): XValueEntity {
-  val xValueEntity = change {
-    XValueEntity.new {
-      it[XValueEntity.XValueId] = XValueId(UID.random())
-      it[XValueEntity.XValueAttribute] = xValue
-      it[XValueEntity.SessionEntity] = sessionEntity
-      it[XValueEntity.ParentEntity] = parentEntity
-    }
-  }
-  return xValueEntity.apply {
-    setInitialMarker()
-  }
-}
-
-private fun XValueEntity.setInitialMarker() {
-  val xValueEntity = this
-  val session = sessionEntity.session
-  (session as XDebugSessionImpl).coroutineScope.launch {
-    withEntities(xValueEntity) {
-      xValue.isReady.await()
-      val markers = session.valueMarkers
-      val marker = markers?.getMarkup(xValue) ?: return@withEntities
-      change {
-        xValueEntity.update {
-          it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
-        }
-      }
-    }
+private fun BackendXValueModel.setInitialMarker() {
+  // TODO[IJPL-160146]: XValues should be stuck on suspension context coroutine scope, not on session one.
+  session.coroutineScope.launch {
+    xValue.isReady.await()
+    val markers = session.valueMarkers
+    val marker = markers?.getMarkup(xValue) ?: return@launch
+    setMarker(marker)
   }
 }
 

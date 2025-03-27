@@ -5,10 +5,10 @@ import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.frame.*
-import com.intellij.xdebugger.impl.rhizome.XValueEntity.Companion.XValueId
+import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XValueId
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.change
 import fleet.util.UID
@@ -25,7 +25,6 @@ private class XDebuggerEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
     return listOf(
       XDebugSessionEntity,
-      XValueEntity,
       XSuspendContextEntity,
       XExecutionStackEntity,
       XStackFrameEntity,
@@ -59,41 +58,6 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
     val ProjectEntity: Required<ProjectEntity> = requiredRef("project", RefFlags.CASCADE_DELETE_BY)
 
     val CurrentSourcePosition: Optional<XSourcePosition> = optionalTransient("currentPosition")
-  }
-}
-
-/**
- * Represents an entity which holds reference to the [XValue].
- * This entity allows sending [XValueId] to a client and afterward retrieving [XValue] by this id.
- *
- * The entity is attached to a session by reference to [XDebugSessionEntity].
- * So, the entity will be removed when the corresponding [XDebugSession] is stopped.
- *
- * This entity cannot be shared between frontend and backend.
- * It should be used only on the backend side.
- *
- * @see [com.intellij.platform.debugger.impl.backend.BackendXDebuggerEvaluatorApi]
- */
-data class XValueEntity(override val eid: EID) : Entity {
-  val xValueId: XValueId by XValueId
-  val xValue: XValue by XValueAttribute
-  val sessionEntity: XDebugSessionEntity by SessionEntity
-
-  val marker: XValueMarkerDto? by Marker
-
-  val fullValueEvaluator: XFullValueEvaluator? by FullValueEvaluator
-
-  companion object : EntityType<XValueEntity>(
-    XValueEntity::class.java.name,
-    "com.intellij.xdebugger.impl.rhizome",
-    ::XValueEntity
-  ) {
-    val XValueId: Required<XValueId> = requiredTransient("xValueId", Indexing.UNIQUE)
-    val XValueAttribute: Required<XValue> = requiredTransient("xValue")
-    val SessionEntity: Required<XDebugSessionEntity> = requiredRef("sessionEntity", RefFlags.CASCADE_DELETE_BY)
-    val ParentEntity: Optional<Entity> = optionalRef<Entity>("parentEntity", RefFlags.CASCADE_DELETE_BY)
-    val FullValueEvaluator: Optional<XFullValueEvaluator> = optionalTransient("fullValueEvaluator")
-    val Marker: Optional<XValueMarkerDto> = optionalTransient("marker")
   }
 }
 

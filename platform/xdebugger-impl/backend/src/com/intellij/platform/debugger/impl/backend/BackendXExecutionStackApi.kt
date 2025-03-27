@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.new
 import com.intellij.xdebugger.impl.rhizome.XExecutionStackEntity
@@ -85,6 +86,6 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
 
   override suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent> {
     val stackFrameEntity = debuggerEntity<XStackFrameEntity>(xStackFrameId.id) ?: return emptyFlow()
-    return computeContainerChildren(stackFrameEntity.obj, stackFrameEntity, stackFrameEntity.sessionEntity)
+    return computeContainerChildren(stackFrameEntity.obj, stackFrameEntity.sessionEntity.session as XDebugSessionImpl)
   }
 }

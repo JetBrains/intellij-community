@@ -5,19 +5,17 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.findProjectOrNull
-import com.intellij.xdebugger.impl.rhizome.XValueEntity
+import com.intellij.xdebugger.impl.frame.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceActionBase
-import com.jetbrains.rhizomedb.entity
 import kotlinx.coroutines.*
 
 internal class BackendXDebuggerNavigationApi : XDebuggerNavigationApi {
   override suspend fun navigateToXValue(xValueId: XValueId): Deferred<Boolean> {
-    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return CompletableDeferred(false)
-    val project = xValueEntity.sessionEntity.projectEntity.projectId.findProjectOrNull() ?: return CompletableDeferred(false)
-    val xValue = xValueEntity.xValue
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return CompletableDeferred(false)
+    val project = xValueModel.session.project
+    val xValue = xValueModel.xValue
     return project.service<BackendXDebuggerNavigationCoroutineScope>().cs.async(Dispatchers.EDT) {
       XJumpToSourceActionBase.navigateByNavigatable(project) { navigatable ->
         xValue.computeSourcePosition(navigatable)
@@ -26,9 +24,9 @@ internal class BackendXDebuggerNavigationApi : XDebuggerNavigationApi {
   }
 
   override suspend fun navigateToXValueType(xValueId: XValueId): Deferred<Boolean> {
-    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return CompletableDeferred(false)
-    val project = xValueEntity.sessionEntity.projectEntity.projectId.findProjectOrNull() ?: return CompletableDeferred(false)
-    val xValue = xValueEntity.xValue
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return CompletableDeferred(false)
+    val project = xValueModel.session.project
+    val xValue = xValueModel.xValue
     return project.service<BackendXDebuggerNavigationCoroutineScope>().cs.async(Dispatchers.EDT) {
       XJumpToSourceActionBase.navigateByNavigatable(project) { navigatable ->
         xValue.computeTypeSourcePosition(navigatable)

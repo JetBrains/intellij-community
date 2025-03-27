@@ -6,6 +6,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
@@ -83,9 +84,12 @@ sealed interface XEvaluationResult {
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
 }
 
+/**
+ * @see com.intellij.xdebugger.impl.frame.BackendXValueModel
+ */
 @ApiStatus.Internal
 @Serializable
-data class XValueId(val uid: UID)
+data class XValueId(override val uid: com.intellij.platform.rpc.UID) : Id
 
 @ApiStatus.Internal
 @Serializable
