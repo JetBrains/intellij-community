@@ -21,7 +21,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.BackendLatencyService
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(AwaitCancellationAndInvoke::class)
@@ -132,7 +132,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
 
     val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
     val observableTtyConnector = ObservableTtyConnector(ttyConnector)
-    val fusActivity = ReworkedTerminalUsageCollector.startBackendOutputActivity()
+    val fusActivity = BackendLatencyService.getInstance().startBackendOutputActivity()
     val session = createTerminalSession(project, observableTtyConnector, termSize, JBTerminalSystemSettingsProvider(), scope, fusActivity)
     val stateAwareSession = StateAwareTerminalSession(session, fusActivity)
 

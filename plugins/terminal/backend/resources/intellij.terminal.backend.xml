@@ -7,6 +7,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.terminal.backend.rpc.TerminalRemoteApiProvider"/>
 
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.fus.BackendLatencyService"
+                        serviceImplementation="com.intellij.terminal.backend.fus.BackendLatencyServiceImpl"/>
     <projectService serviceInterface="com.intellij.terminal.backend.TerminalPortForwardingManager"
                     serviceImplementation="com.intellij.terminal.backend.TerminalNoPortForwardingManager"/>
   </extensions>

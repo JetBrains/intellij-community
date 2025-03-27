@@ -3,14 +3,14 @@ package com.intellij.terminal.backend.util
 
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.plugins.terminal.fus.BackendLatencyService
 import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 
 var backendOutputTestFusActivity: BackendOutputActivity? = null
   private set
 
 fun startTestFusActivity() {
-  backendOutputTestFusActivity = ReworkedTerminalUsageCollector.startBackendOutputActivity()
+  backendOutputTestFusActivity = BackendLatencyService.getInstance().startBackendOutputActivity()
 }
 
 fun stopTestFusActivity() {

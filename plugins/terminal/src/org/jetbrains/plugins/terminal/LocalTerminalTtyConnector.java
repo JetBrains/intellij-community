@@ -10,8 +10,8 @@ import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.fus.BackendLatencyService;
 import org.jetbrains.plugins.terminal.fus.BackendOutputActivity;
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -43,7 +43,7 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
 
   @Override
   public void write(byte[] bytes) throws IOException {
-    var fusActivity = ReworkedTerminalUsageCollector.getBackendTypingActivityOrNull(bytes);
+    var fusActivity = BackendLatencyService.getInstance().getBackendTypingActivityOrNull(bytes);
     try {
       super.write(bytes);
       if (fusActivity != null) {

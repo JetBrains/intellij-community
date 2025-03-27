@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.fus.BackendLatencyService
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
@@ -51,7 +52,7 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
 
   when (event) {
     is TerminalWriteBytesEvent -> {
-      ReworkedTerminalUsageCollector.tryStartBackendTypingActivity(event)
+      BackendLatencyService.getInstance().tryStartBackendTypingActivity(event)
       terminalStarter.sendBytes(event.bytes, false)
     }
     is TerminalResizeEvent -> {
