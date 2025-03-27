@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import git4idea.repo.GitRemote;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class GitSvnRemoteBranch extends GitRemoteBranch {
 
   public GitSvnRemoteBranch(@NotNull String fullName) {
-    super(fullName);
+    super(fullName, GitRemote.DOT);
   }
 
   @Override
@@ -28,11 +28,6 @@ public class GitSvnRemoteBranch extends GitRemoteBranch {
   @Override
   public @NotNull String getNameForLocalOperations() {
     return getFullName();
-  }
-
-  @Override
-  public @NotNull GitRemote getRemote() {
-    return GitRemote.DOT;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import git4idea.branch.GitBranchUtil;
@@ -6,23 +6,15 @@ import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
 
 public final class GitStandardRemoteBranch extends GitRemoteBranch {
-
-  private final @NotNull GitRemote myRemote;
   private final @NotNull String myNameAtRemote;
 
   public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
-    super(formStandardName(remote, GitBranchUtil.stripRefsPrefix(nameAtRemote)));
-    myRemote = remote;
+    super(formStandardName(remote, GitBranchUtil.stripRefsPrefix(nameAtRemote)), remote);
     myNameAtRemote = GitBranchUtil.stripRefsPrefix(nameAtRemote);
   }
 
   private static @NotNull String formStandardName(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
     return remote.getName() + "/" + nameAtRemote;
-  }
-
-  @Override
-  public @NotNull GitRemote getRemote() {
-    return myRemote;
   }
 
   @Override
@@ -34,7 +26,7 @@ public final class GitStandardRemoteBranch extends GitRemoteBranch {
     GitStandardRemoteBranch branch = (GitStandardRemoteBranch)o;
 
     if (!myNameAtRemote.equals(branch.myNameAtRemote)) return false;
-    if (!myRemote.equals(branch.myRemote)) return false;
+    if (!getRemote().equals(branch.getRemote())) return false;
 
     return true;
   }
@@ -42,7 +34,7 @@ public final class GitStandardRemoteBranch extends GitRemoteBranch {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myRemote.hashCode();
+    result = 31 * result + getRemote().hashCode();
     result = 31 * result + myNameAtRemote.hashCode();
     return result;
   }

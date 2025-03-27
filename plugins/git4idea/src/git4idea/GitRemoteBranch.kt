@@ -1,39 +1,26 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea
 
-import com.intellij.openapi.util.NlsSafe;
-import git4idea.repo.GitRemote;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.NlsSafe
+import git4idea.repo.GitRemote
 
-/**
- * @author Kirill Likhodedov
- */
-public abstract class GitRemoteBranch extends GitBranch {
-
-  protected GitRemoteBranch(@NotNull String name) {
-    super(name);
-  }
-
+abstract class GitRemoteBranch protected constructor(name: String, val remote: GitRemote) : GitBranch(name) {
   /**
-   * Returns the name of this remote branch to be used in remote operations: fetch, push, pull.
+   * The name of this remote branch to be used in remote operations: fetch, push, pull.
    * It is the name of this branch how it is defined on the remote.
    * For example, "master".
-   * @see #getNameForLocalOperations()
+   *
+   * @see [nameForLocalOperations]
    */
-  public abstract @NlsSafe @NotNull String getNameForRemoteOperations();
+  abstract val nameForRemoteOperations: @NlsSafe String
 
   /**
-   * Returns the name of this remote branch to be used in local operations: checkout, merge, rebase.
+   * The name of this remote branch to be used in local operations: checkout, merge, rebase.
    * It is the name of this branch how it is references in this local repository.
    * For example, "origin/master".
    */
-  public abstract @NotNull String getNameForLocalOperations();
+  abstract val nameForLocalOperations: @NlsSafe String
 
-  public abstract @NotNull GitRemote getRemote();
-
-  @Override
-  public boolean isRemote() {
-    return true;
-  }
-
+  override val isRemote: Boolean
+    get() = true
 }
