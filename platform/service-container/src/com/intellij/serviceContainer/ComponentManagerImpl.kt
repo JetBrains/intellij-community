@@ -377,7 +377,6 @@ abstract class ComponentManagerImpl(
       for (rootModule in modules) {
         executeRegisterTask(rootModule) { module ->
           module.registerExtensions(nameToPoint = extensionPoints,
-                                    containerDescriptor = getContainerDescriptor(module),
                                     listenerCallbacks = listenerCallbacks)
         }
       }

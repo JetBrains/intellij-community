@@ -423,7 +423,7 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   @ApiStatus.Internal
-  fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, containerDescriptor: ContainerDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
+  fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?) {
     for ((descriptors, point) in intersectMaps(miscExtensions, nameToPoint)) {
       point.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
     }

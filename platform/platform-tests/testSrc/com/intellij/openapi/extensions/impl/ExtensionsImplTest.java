@@ -151,7 +151,7 @@ public class ExtensionsImplTest {
     PluginId id = PluginId.getId(pluginName);
     IdeaPluginDescriptorImpl pluginDescriptor =
       PluginDescriptorLoadUtilsKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
-    pluginDescriptor.registerExtensions(area.getNameToPointMap(), pluginDescriptor.getAppContainerDescriptor(), null);
+    pluginDescriptor.registerExtensions(area.getNameToPointMap(), null);
   }
 
   private static final class TestExtensionClassOne {
