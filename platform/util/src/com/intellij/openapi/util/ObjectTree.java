@@ -212,6 +212,17 @@ public final class ObjectTree {
     }
   }
 
+
+  @TestOnly
+  public void assertNoReferenceKeptInTree(@NotNull Class<Disposable> disposableClass) {
+    synchronized (getTreeLock()) {
+      for (ObjectNode node : myObject2ParentNode.values()) {
+        node.assertNoReferencesKept(disposableClass);
+      }
+    }
+  }
+
+
   @ApiStatus.Internal
   void assertIsEmpty(boolean throwError) {
     synchronized (getTreeLock()) {

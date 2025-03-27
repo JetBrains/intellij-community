@@ -128,6 +128,14 @@ public final class ObjectNode {
     }
   }
 
+  @TestOnly
+  void assertNoReferencesKept(@NotNull Class<Disposable> disposableClass) {
+    assert getObject().getClass() != disposableClass;
+    for (ObjectNode node : myChildren.getAllNodes()) {
+      node.assertNoReferencesKept(disposableClass);
+    }
+  }
+
   ObjectNode findChildNode(@NotNull Disposable object) {
     return myChildren.findChildNode(object);
   }
