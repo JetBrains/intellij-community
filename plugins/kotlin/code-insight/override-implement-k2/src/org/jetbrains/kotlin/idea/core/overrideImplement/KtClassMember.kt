@@ -255,13 +255,15 @@ private fun createRenderer(
         }
 
         modifiersRenderer = modifiersRenderer.with {
-            keywordsRenderer = keywordsRenderer.with {
-                keywordFilter = KaRendererKeywordFilter.without(
-                    TokenSet.orSet(
-                        KtTokens.VISIBILITY_MODIFIERS,
-                        TokenSet.create(KtTokens.OPERATOR_KEYWORD, KtTokens.INFIX_KEYWORD, KtTokens.LATEINIT_KEYWORD),
+            if (mode != MemberGenerateMode.EXPECT) {
+                keywordsRenderer = keywordsRenderer.with {
+                    keywordFilter = KaRendererKeywordFilter.without(
+                        TokenSet.orSet(
+                            KtTokens.VISIBILITY_MODIFIERS,
+                            TokenSet.create(KtTokens.OPERATOR_KEYWORD, KtTokens.INFIX_KEYWORD, KtTokens.LATEINIT_KEYWORD),
+                        )
                     )
-                )
+                }
             }
 
             if (mode != MemberGenerateMode.ACTUAL) {
