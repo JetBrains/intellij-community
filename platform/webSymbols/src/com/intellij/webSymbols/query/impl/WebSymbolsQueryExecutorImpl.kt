@@ -40,6 +40,8 @@ class WebSymbolsQueryExecutorImpl(
   private val rootScope: List<WebSymbolsScope> = initializeCompoundScopes(rootScope)
   private var nestingLevel: Int = 0
 
+  override var keepUnresolvedTopLevelReferences: Boolean = false
+
   override fun hashCode(): Int =
     Objects.hash(location, rootScope, context, namesProvider, resultsCustomizer)
 
@@ -161,9 +163,18 @@ class WebSymbolsQueryExecutorImpl(
         .asSequence()
         .flatMap { scope ->
           ProgressManager.checkCanceled()
-          scope.getMatchingSymbols(qualifiedName, params, Stack(finalContext))
+          val prev = keepUnresolvedTopLevelReferences
+          keepUnresolvedTopLevelReferences = false
+          try {
+            scope.getMatchingSymbols(qualifiedName, params, Stack(finalContext))
+          } finally {
+            keepUnresolvedTopLevelReferences = prev
+          }
         }
-        .filter { it !is WebSymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null) }
+        .filter {
+          keepUnresolvedTopLevelReferences
+          || it !is WebSymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null)
+        }
         .distinct()
         .toList()
         .customizeMatches(params.strictScope, qualifiedName)
@@ -300,7 +311,13 @@ class WebSymbolsQueryExecutorImpl(
           val scopeSymbols = scope
             .takeLastUntilExclusiveScopeFor(qName.qualifiedKind)
             .flatMap {
-              it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
+              val prev = keepUnresolvedTopLevelReferences
+              keepUnresolvedTopLevelReferences = false
+              try {
+                it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
+              } finally {
+                keepUnresolvedTopLevelReferences = prev
+              }
             }
           scopeSymbols.flatMapTo(scope) {
             it.queryScope

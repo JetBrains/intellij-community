@@ -43,6 +43,7 @@ class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvid
           ?.asSingleSymbol()
     else
       queryExecutor
+        .also { it.keepUnresolvedTopLevelReferences = true }
         .runNameMatchQuery(WebSymbol.HTML_ATTRIBUTE_VALUES.withName(name))
         .takeIf {
           it.isNotEmpty()
