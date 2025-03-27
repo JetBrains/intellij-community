@@ -16,8 +16,6 @@ public final class ListenerDescriptor {
   public final boolean activeInTestMode;
   public final boolean activeInHeadlessMode;
 
-  public transient PluginDescriptor pluginDescriptor;
-
   public ListenerDescriptor(@Nullable ExtensionDescriptor.Os os,
                             @NotNull String listenerClassName,
                             @NotNull String topicClassName,
