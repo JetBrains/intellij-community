@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.observable.util.addFocusListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -321,6 +322,7 @@ internal class ReworkedTerminalView(
   ): EditorImpl {
     val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
     result.putUserData(BackgroundHighlightingUtil.IGNORE_EDITOR, true)
+    TextEditorProvider.putTextEditor(result, TerminalOutputTextEditor(result))
 
     result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
     result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
