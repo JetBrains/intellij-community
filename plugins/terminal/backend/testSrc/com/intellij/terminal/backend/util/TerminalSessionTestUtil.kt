@@ -17,7 +17,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalEngine
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.BackendLatencyService
 import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,7 +37,7 @@ internal object TerminalSessionTestUtil {
       .initialTermSize(size)
       .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null") + extraEnvVariables)
       .build()
-    val fusActivity = ReworkedTerminalUsageCollector.startBackendOutputActivity()
+    val fusActivity = BackendLatencyService.getInstance().startBackendOutputActivity()
     val (ttyConnector, _) = startTerminalProcess(project, options)
     val session = createTerminalSession(project, ttyConnector, size, JBTerminalSystemSettingsProviderBase(), coroutineScope, fusActivity)
     return session
