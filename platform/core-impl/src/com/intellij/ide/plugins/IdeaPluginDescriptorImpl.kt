@@ -424,8 +424,8 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, containerDescriptor: ContainerDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
-    if (!containerDescriptor.extensions.isEmpty()) {
-      for ((name, descriptors) in containerDescriptor.extensions) {
+    if (containerDescriptor === projectContainerDescriptor && !projectContainerDescriptor.extensions.isEmpty()) {
+      for ((name, descriptors) in projectContainerDescriptor.extensions) {
         nameToPoint[name]?.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
       }
       return
