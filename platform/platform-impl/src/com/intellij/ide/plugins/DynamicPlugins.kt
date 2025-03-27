@@ -772,7 +772,7 @@ object DynamicPlugins {
     unregisterUnknownLevelExtensions(module.miscExtensions, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
     // note: here was a dead code for unregistering appContainer.extensions, but the map was always empty
-    for (epName in module.projectContainerDescriptor.extensions.keys) {
+    for (epName in module.projectExtensionsCache.keys) {
       for (project in openedProjects) {
         (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(extensionPointName = epName,
                                                                            pluginDescriptor = module,

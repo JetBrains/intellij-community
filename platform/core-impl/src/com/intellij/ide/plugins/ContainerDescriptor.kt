@@ -19,13 +19,13 @@ class ContainerDescriptor(
   @Transient @JvmField var extensions: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
 
   override fun toString(): String {
-    if (services.isEmpty() && components.isEmpty() && extensionPoints.isEmpty() && extensions.isEmpty() && listeners.isEmpty()) {
+    if (services.isEmpty() && components.isEmpty() && extensionPoints.isEmpty() && listeners.isEmpty()) {
       return "ContainerDescriptor(empty)"
     }
     else {
       return "ContainerDescriptor(" +
              "services=$services, components=$components, " +
-             "extensionPoints=$extensionPoints, extensions=$extensions, listeners=$listeners" +
+             "extensionPoints=$extensionPoints, listeners=$listeners" +
              ")"
     }
   }

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.*
+import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -100,6 +101,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
+  var projectExtensionsCache: Map<String, List<ExtensionDescriptor>> = Java11Shim.INSTANCE.mapOf()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
   override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
@@ -424,8 +426,8 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, containerDescriptor: ContainerDescriptor, listenerCallbacks: MutableList<in Runnable>?) {
-    if (containerDescriptor === projectContainerDescriptor && !projectContainerDescriptor.extensions.isEmpty()) {
-      for ((name, descriptors) in projectContainerDescriptor.extensions) {
+    if (containerDescriptor === projectContainerDescriptor && !projectExtensionsCache.isEmpty()) {
+      for ((name, descriptors) in projectExtensionsCache) {
         nameToPoint[name]?.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
       }
       return
@@ -447,7 +449,7 @@ class IdeaPluginDescriptorImpl private constructor(
       val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
 
       if (registeredCount == map.size) {
-        projectContainerDescriptor.extensions = map
+        projectExtensionsCache = map
       }
     }
     else {
