@@ -443,7 +443,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
     if (containerDescriptor === appContainerDescriptor) {
       val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-      containerDescriptor.distinctExtensionPointCount = registeredCount
+      appContainerDescriptor.distinctExtensionPointCount = registeredCount
 
       if (registeredCount == map.size) {
         projectContainerDescriptor.extensions = Java11Shim.INSTANCE.mapOf()
@@ -452,10 +452,10 @@ class IdeaPluginDescriptorImpl private constructor(
     }
     else if (containerDescriptor === projectContainerDescriptor) {
       val registeredCount = doRegisterExtensions(map, nameToPoint, listenerCallbacks)
-      containerDescriptor.distinctExtensionPointCount = registeredCount
+      projectContainerDescriptor.distinctExtensionPointCount = registeredCount
 
       if (registeredCount == map.size) {
-        containerDescriptor.extensions = map
+        projectContainerDescriptor.extensions = map
         moduleContainerDescriptor.extensions = Java11Shim.INSTANCE.mapOf()
       }
       else if (registeredCount == (map.size - appContainerDescriptor.distinctExtensionPointCount)) {
