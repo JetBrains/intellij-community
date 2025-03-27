@@ -213,13 +213,14 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
   }
 }
 
-private val computationMap : MutableMap<Job, Throwable?> = ConcurrentHashMap()
+private val computationMap : MutableMap<Any, Throwable> = ConcurrentHashMap()
 
 private fun dumpObservedComputations(): Set<Throwable> {
-  return computationMap.values.mapNotNullTo(HashSet()) { it }
+  return computationMap.values.mapTo(HashSet()) { it }
 }
 
-internal fun dumpObservedComputationsToString(): String {
+@Internal
+fun dumpObservedComputationsToString(): String {
   if (!Registry.`is`("ide.activity.tracking.enable.debug")) {
     return "Enable 'ide.activity.tracking.enable.debug' registry option to collect activity traces"
   }
@@ -227,12 +228,14 @@ internal fun dumpObservedComputationsToString(): String {
     .joinToString("\n") { it.stackTraceToString() }
 }
 
-internal fun traceObservedComputation(job: Job) {
+@Internal
+fun traceObservedComputation(id: Any) {
   if (Registry.`is`("ide.activity.tracking.enable.debug", false)) {
-    computationMap[job] = Throwable()
+    computationMap[id] = Throwable()
   }
 }
 
-internal fun removeObservedComputation(job: Job) {
-  computationMap.remove(job)
+@Internal
+fun removeObservedComputation(id: Any) {
+  computationMap.remove(id)
 }

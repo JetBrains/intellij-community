@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-
+@RegistryKey("ide.activity.tracking.enable.debug", "true")
 class GradleCreateProjectTest : GradleCreateProjectTestCase() {
 
   @Test
