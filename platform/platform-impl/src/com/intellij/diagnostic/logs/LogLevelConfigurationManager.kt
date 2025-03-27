@@ -208,11 +208,13 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   fun getCategories(): List<LogCategory> = this.state.categories
 
   @Serializable
+  @Internal
   data class State(
     @JvmField val categories: List<LogCategory> = listOf(),
     @JvmField val categoriesWithSeparateFiles: Set<String> = setOf(),
   )
 
+  @Internal
   override fun loadState(state: State) {
     super.loadState(state)
     val fromSystemProperties = collectStateFromSystemProperties()
