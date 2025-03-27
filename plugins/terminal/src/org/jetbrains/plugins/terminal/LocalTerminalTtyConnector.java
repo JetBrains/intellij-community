@@ -9,11 +9,7 @@ import com.pty4j.PtyProcess;
 import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.fus.BackendLatencyService;
-import org.jetbrains.plugins.terminal.fus.BackendOutputActivity;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
@@ -21,40 +17,10 @@ import java.util.concurrent.TimeUnit;
 public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
   private static final Logger LOG = Logger.getInstance(LocalTerminalTtyConnector.class);
   private final @NotNull PtyProcess myProcess;
-  private @Nullable BackendOutputActivity fusActivity;
 
   LocalTerminalTtyConnector(@NotNull PtyProcess process, @NotNull Charset charset) {
     super(process, charset);
     myProcess = process;
-  }
-
-  public void startStatisticsReporting(@NotNull BackendOutputActivity fusActivity) {
-    this.fusActivity = fusActivity;
-  }
-
-  @Override
-  public int read(char[] buf, int offset, int length) throws IOException {
-    var fusActivity = this.fusActivity;
-    var charsRead = super.read(buf, offset, length);
-    if (fusActivity == null) return charsRead;
-    fusActivity.charsRead(charsRead);
-    return charsRead;
-  }
-
-  @Override
-  public void write(byte[] bytes) throws IOException {
-    var fusActivity = BackendLatencyService.getInstance().getBackendTypingActivityOrNull(bytes);
-    try {
-      super.write(bytes);
-      if (fusActivity != null) {
-        fusActivity.reportDuration();
-      }
-    }
-    finally {
-      if (fusActivity != null) {
-        fusActivity.finishBytesProcessing();
-      }
-    }
   }
 
   @Override
