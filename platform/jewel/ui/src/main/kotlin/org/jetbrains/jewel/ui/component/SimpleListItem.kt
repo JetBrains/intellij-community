@@ -239,7 +239,7 @@ public fun SimpleListItem(
  * the [isSelected] and [isActive] values.
  */
 @Deprecated("Use the overload with selected, active, colorFilter and hints")
-@ScheduledForRemoval(inVersion = "Before 2025.3")
+@ScheduledForRemoval(inVersion = "In 2025.3")
 @Composable
 public fun SimpleListItem(
     isSelected: Boolean,
@@ -263,7 +263,7 @@ public fun SimpleListItem(
  * the [isSelected] and [isActive] values.
  */
 @Deprecated("Use the overload with selected, active, colorFilter and hints")
-@ScheduledForRemoval(inVersion = "Before 2025.3")
+@ScheduledForRemoval(inVersion = "In 2025.3")
 @Composable
 public fun SimpleListItem(
     text: String,
@@ -288,7 +288,7 @@ public fun SimpleListItem(
  * the [state].
  */
 @Deprecated("Use the overload with selected, active, colorFilter and hints")
-@ScheduledForRemoval(inVersion = "Before 2025.3")
+@ScheduledForRemoval(inVersion = "In 2025.3")
 @Composable
 public fun SimpleListItem(
     text: String,
@@ -320,7 +320,7 @@ public fun SimpleListItem(
  * the [state].
  */
 @Deprecated("Use the overload with selected, active, colorFilter and hints")
-@ScheduledForRemoval(inVersion = "Before 2025.3")
+@ScheduledForRemoval(inVersion = "In 2025.3")
 @Composable
 public fun SimpleListItem(
     state: ListItemState,
