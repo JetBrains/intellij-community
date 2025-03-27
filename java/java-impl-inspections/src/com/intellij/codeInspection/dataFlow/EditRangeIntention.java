@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public final class EditRangeIntention implements ModCommandAction {
   private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
 
@@ -134,7 +136,7 @@ public final class EditRangeIntention implements ModCommandAction {
     Long minValue = parseValue(min, fromType, true);
     Long maxValue = parseValue(max, fromType, false);
     if (minValue == null || maxValue == null || minValue == fromType.min() && maxValue == fromType.max()) {
-      return ModCommand.nop();
+      return manager.deannotateModCommand(List.of(owner), List.of(JETBRAINS_RANGE));
     }
     if (minValue == Long.MIN_VALUE) {
       min = CommonClassNames.JAVA_LANG_LONG + ".MIN_VALUE";
