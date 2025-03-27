@@ -59,22 +59,22 @@ internal suspend fun <U> withObservableMatches(
     matches.isEmpty() -> WithMatchResult.Success(coroutineScope(body))
     else ->
       withReteDbSource {
+        var handles: List<DisposableHandle>? = null
         val def = async(context = ContextMatches(contextMatches.addAll(matches)),
                         start = CoroutineStart.UNDISPATCHED) {
           val self = this
           // setup invalidation handles before launching [body]
           // if any of the matches is invalidated, [body] might catch a poison, the job should not be active at this point
-          val handles = matches.map { m ->
+          handles = matches.map { m ->
             m.onInvalidation {
               val reason = CancellationReason("match terminated by rete", m)
               self.cancel(UnsatisfiedMatchException(reason))
             }
           }
-          try {
-            WithMatchResult.Success(coroutineScope(body))
-          }
-          finally {
-            handles.forEach { it.dispose() }
+          WithMatchResult.Success(body())
+        }.apply {
+          invokeOnCompletion {
+            handles!!.forEach { it.dispose() }
           }
         }
         try {
