@@ -1238,12 +1238,12 @@ public class JavaKeywordCompletion {
     boolean declaration = isDeclarationStart(position);
     boolean expressionPosition = isExpressionPosition(position);
     boolean inGenerics = PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class) != null;
-    if (isVariableTypePosition(position) ||
+    if ((isVariableTypePosition(position) ||
         inGenerics ||
         inCast ||
         declaration ||
         typeFragment ||
-        expressionPosition) {
+        expressionPosition) && primitivesAreExpected(position)) {
       for (String primitiveType : PRIMITIVE_TYPES) {
         if (!session.isKeywordAlreadyProcessed(primitiveType)) {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
@@ -1260,6 +1260,22 @@ public class JavaKeywordCompletion {
     else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
       result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID));
     }
+  }
+
+  private static boolean primitivesAreExpected(@Nullable PsiElement position) {
+    if (position == null) return false;
+    PsiElement parent = position.getParent();
+    //example: stream.map(i-> i <caret>)
+    if (parent.getParent() instanceof PsiExpressionList) {
+      PsiElement previous = PsiTreeUtil.prevVisibleLeaf(parent);
+      if (previous != null) {
+        PsiExpression expression = PsiTreeUtil.getParentOfType(previous, PsiExpression.class, true);
+        if (expression != null && !PsiTreeUtil.isAncestor(expression, parent, true)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   /**

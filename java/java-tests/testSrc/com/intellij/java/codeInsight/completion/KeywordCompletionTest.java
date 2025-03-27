@@ -312,6 +312,14 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertNotContainItems("package");
   }
 
+  public void testNoPrimitivesAfterExpressions() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions2() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions3() { doTest(); }
+
+  public void testNoPrimitivesAfterExpressions4() { doTest(); }
+
   private void doTest() {
     configureByTestName();
     checkResultByTestName();
