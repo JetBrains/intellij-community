@@ -215,9 +215,60 @@ jvm_import(
 )
 
 jvm_import(
-    name = "opentelemetry-exporter-logging-otlp",
-    jar = "@opentelemetry-exporter-logging-otlp//file",
-    source_jar = "@opentelemetry-exporter-logging-otlp-sources//file",
+    name = "opentelemetry-api",
+    jar = "@opentelemetry-api//file",
+    source_jar = "@opentelemetry-api-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":opentelemetry-sdk",
+        ":opentelemetry-sdk-common",
+        ":opentelemetry-context",
+        ":opentelemetry-sdk-trace",
+        ":opentelemetry-sdk-metrics",
+        ":opentelemetry-sdk-logs",
+        ":opentelemetry-sdk-extension-autoconfigure-spi"
+    ],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk",
+    jar = "@opentelemetry-sdk//file",
+    source_jar = "@opentelemetry-sdk-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-common",
+    jar = "@opentelemetry-sdk-common//file",
+    source_jar = "@opentelemetry-sdk-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-context",
+    jar = "@opentelemetry-context//file",
+    source_jar = "@opentelemetry-context-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-trace",
+    jar = "@opentelemetry-sdk-trace//file",
+    source_jar = "@opentelemetry-sdk-trace-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-metrics",
+    jar = "@opentelemetry-sdk-metrics//file",
+    source_jar = "@opentelemetry-sdk-metrics-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-logs",
+    jar = "@opentelemetry-sdk-logs//file",
+    source_jar = "@opentelemetry-sdk-logs-sources//file",
     visibility = ["//visibility:public"],
 )
 
@@ -229,12 +280,42 @@ jvm_import(
 )
 
 jvm_import(
+    name = "opentelemetry-semconv",
+    jar = "@opentelemetry-semconv//file",
+    source_jar = "@opentelemetry-semconv-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-logging-otlp",
+    jar = "@opentelemetry-exporter-logging-otlp//file",
+    source_jar = "@opentelemetry-exporter-logging-otlp-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-common",
+    jar = "@opentelemetry-exporter-common//file",
+    source_jar = "@opentelemetry-exporter-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-otlp-common",
+    jar = "@opentelemetry-exporter-otlp-common//file",
+    source_jar = "@opentelemetry-exporter-otlp-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "opentelemetry-exporter-otlp",
     jar = "@opentelemetry-exporter-otlp//file",
     source_jar = "@opentelemetry-exporter-otlp-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
         ":opentelemetry-exporter-sender-jdk",
+        ":opentelemetry-exporter-common",
+        ":opentelemetry-exporter-otlp-common",
         ":opentelemetry-sdk-extension-autoconfigure-spi"
     ],
 )
@@ -247,10 +328,20 @@ jvm_import(
 )
 
 jvm_import(
-    name = "fury-core",
-    jar = "@fury-core//file",
-    source_jar = "@fury-core-sources//file",
+    name = "netty-common",
+    jar = "@netty-common//file",
+    source_jar = "@netty-common-sources//file",
     visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "netty-buffer",
+    jar = "@netty-buffer//file",
+    source_jar = "@netty-buffer-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":netty-common"
+    ],
 )
 
 jvm_import(

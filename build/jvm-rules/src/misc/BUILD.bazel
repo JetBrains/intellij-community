@@ -4,11 +4,12 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "worker-lib",
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     srcs = glob(["*.kt"]),
     deps = [
         "//src/worker-framework",
-        "//zip:build-zip",
-        "@lib//:opentelemetry",
+        "//zip",
+        "//:opentelemetry-api",
     ],
     visibility = ["//visibility:public"],
 )

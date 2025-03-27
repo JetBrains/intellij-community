@@ -8,10 +8,11 @@ kt_jvm_library(
     deps = [
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-coroutines-core",
-        "@lib//:opentelemetry",
+        "//:opentelemetry-api",
+        "//:opentelemetry-context",
         "//:collection",
         "//src/worker-util",
-        "//zip:build-zip",
+        "//zip",
         "//:arrow-vector",
         "//:arrow-memory-core",
         "@lib//:jetbrains-annotations",

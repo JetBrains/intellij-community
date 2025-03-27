@@ -10,7 +10,6 @@ kt_jvm_library(
         "//:collection",
         "@lib//:asm",
         "//:kotlin-metadata",
-        "//zip:build-zip",
     ],
     visibility = ["//src/jps-builder:__pkg__"],
 )

@@ -81,15 +81,15 @@ http_file(
 ### auto-generated section `libraries` start
 http_file(
     name = "protobuf-java",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.1/protobuf-java-4.30.1.jar",
-    sha256 = "ff666fc33646eb2b609259b7928fc675782e401ee6e39ef3ae4581e06f642a15",
-    downloaded_file_path = "protobuf-java-4.30.1.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.2/protobuf-java-4.30.2.jar",
+    sha256 = "0f3a4e9264db07cec429f2a68a66030e9b7487277b76863cdd0e9238cece249b",
+    downloaded_file_path = "protobuf-java-4.30.2.jar",
 )
 http_file(
     name = "protobuf-java-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.1/protobuf-java-4.30.1-sources.jar",
-    sha256 = "9c376f39dcd9d2c0c28e7251dc39d1c585cce00415cffbd015eb9316a1de14dd",
-    downloaded_file_path = "protobuf-java-4.30.1-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.2/protobuf-java-4.30.2-sources.jar",
+    sha256 = "250fca364649ed76febb83baedf565e3f8e3060356d62ff35b09d8b190597e4c",
+    downloaded_file_path = "protobuf-java-4.30.2-sources.jar",
 )
 
 http_file(
@@ -288,68 +288,211 @@ http_file(
 )
 
 http_file(
-    name = "opentelemetry-exporter-logging-otlp",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.47.0/opentelemetry-exporter-logging-otlp-1.47.0.jar",
-    sha256 = "aa49634f2f46bd8fa13ec952c35a264295324aaedc1a585958529953861e9269",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.47.0.jar",
+    name = "opentelemetry-api",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-api/1.48.0/opentelemetry-api-1.48.0.jar",
+    sha256 = "8d3781bda58892f7d14216908fc0d1faf6f4e6b806e6e73e23489e41c0ecf012",
+    downloaded_file_path = "opentelemetry-api-1.48.0.jar",
 )
 http_file(
-    name = "opentelemetry-exporter-logging-otlp-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.47.0/opentelemetry-exporter-logging-otlp-1.47.0-sources.jar",
-    sha256 = "2ae0bff948fd5a1f4f4f47e83a50546fd8e335927e2e6576d173c9172045afde",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.47.0-sources.jar",
+    name = "opentelemetry-api-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-api/1.48.0/opentelemetry-api-1.48.0-sources.jar",
+    sha256 = "a961b41ba59fe039d875ca0f1e0c651fe00c5de54aa631da98f873dfe7ceb16b",
+    downloaded_file_path = "opentelemetry-api-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk/1.48.0/opentelemetry-sdk-1.48.0.jar",
+    sha256 = "668e78642d50709dd147406a197cfdd256b1d5931023a23f4a25ed88154c8089",
+    downloaded_file_path = "opentelemetry-sdk-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk/1.48.0/opentelemetry-sdk-1.48.0-sources.jar",
+    sha256 = "25fe09663801e6987bc35e1b2b810bbd16ba8ea4b03cc47eb1c6778333256366",
+    downloaded_file_path = "opentelemetry-sdk-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-common/1.48.0/opentelemetry-sdk-common-1.48.0.jar",
+    sha256 = "d8cfbfe6403965f68fc5efca0c9cb85c2cafd5facda9238cd83468692bc00109",
+    downloaded_file_path = "opentelemetry-sdk-common-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-common/1.48.0/opentelemetry-sdk-common-1.48.0-sources.jar",
+    sha256 = "60d2f30d0427bc070c0ddd540c33a48695b022f60910596ce8becb37892b7a41",
+    downloaded_file_path = "opentelemetry-sdk-common-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-context",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-context/1.48.0/opentelemetry-context-1.48.0.jar",
+    sha256 = "1fcccff0f8171fe2001a17b99da229c12d0c4edcca617e453460344e92249d42",
+    downloaded_file_path = "opentelemetry-context-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-context-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-context/1.48.0/opentelemetry-context-1.48.0-sources.jar",
+    sha256 = "3ace383ef17cc4c52580de82a39eaacad84cf81c46f6e88a8143379e4782ed15",
+    downloaded_file_path = "opentelemetry-context-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-trace",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-trace/1.48.0/opentelemetry-sdk-trace-1.48.0.jar",
+    sha256 = "d575e493f6c2e89d3100b3e73d3a2ae720bb8f3ee2fa0f70a7d0da81d048c87a",
+    downloaded_file_path = "opentelemetry-sdk-trace-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-trace-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-trace/1.48.0/opentelemetry-sdk-trace-1.48.0-sources.jar",
+    sha256 = "e021625bce93f70e73f320ad2fedbc0bb3cf88004877130871f103aaf276cf64",
+    downloaded_file_path = "opentelemetry-sdk-trace-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-metrics",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-metrics/1.48.0/opentelemetry-sdk-metrics-1.48.0.jar",
+    sha256 = "70622ff3bbeee435fba5c49d9ff6b056511a0f9982080aa5959ccfccb8650fd9",
+    downloaded_file_path = "opentelemetry-sdk-metrics-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-metrics-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-metrics/1.48.0/opentelemetry-sdk-metrics-1.48.0-sources.jar",
+    sha256 = "e24b8afa735bd83dfe3454f97d463936800dc31d5c57cabb975f17cd2a95aeb0",
+    downloaded_file_path = "opentelemetry-sdk-metrics-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-logs",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-logs/1.48.0/opentelemetry-sdk-logs-1.48.0.jar",
+    sha256 = "3cb8107e3d142fb990ce7f7198cd051a3364fc9d254daa22d248215246857567",
+    downloaded_file_path = "opentelemetry-sdk-logs-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-logs-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-logs/1.48.0/opentelemetry-sdk-logs-1.48.0-sources.jar",
+    sha256 = "b97b398607adffd1701cd703755c036451d0d9c2dfdedd7e2f4070dd6e7f2bd9",
+    downloaded_file_path = "opentelemetry-sdk-logs-1.48.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-sdk-extension-autoconfigure-spi",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.47.0/opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar",
-    sha256 = "94348d4263e2c59c7039630cad379d969b62644ed09b6178fa952988559b396a",
-    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.48.0/opentelemetry-sdk-extension-autoconfigure-spi-1.48.0.jar",
+    sha256 = "c2f95d66182b71e852a97b9bcb6e545ecf6c3e155a0e3d5faf2dbf96deb1a9df",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.48.0.jar",
 )
 http_file(
     name = "opentelemetry-sdk-extension-autoconfigure-spi-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.47.0/opentelemetry-sdk-extension-autoconfigure-spi-1.47.0-sources.jar",
-    sha256 = "e2eea857013276cb59d4b3ad6463901a8bce5cb324e071f6b3996d2f8e53a262",
-    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.47.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.48.0/opentelemetry-sdk-extension-autoconfigure-spi-1.48.0-sources.jar",
+    sha256 = "2591926439711fe69fbbbae8250827d50ee20a53797352349e993f063fcf4312",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-semconv",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/semconv/opentelemetry-semconv/1.30.0/opentelemetry-semconv-1.30.0.jar",
+    sha256 = "99c2478a9b803b7d385d1624d5c1ab6f9a64cac5a2dc00f44a350744a1d858ac",
+    downloaded_file_path = "opentelemetry-semconv-1.30.0.jar",
+)
+http_file(
+    name = "opentelemetry-semconv-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/semconv/opentelemetry-semconv/1.30.0/opentelemetry-semconv-1.30.0-sources.jar",
+    sha256 = "96bf3ea26a26276d3d877782a0f5c00f7b4d133cea409d08f04b31bbc38ec872",
+    downloaded_file_path = "opentelemetry-semconv-1.30.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-logging-otlp",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.48.0/opentelemetry-exporter-logging-otlp-1.48.0.jar",
+    sha256 = "3dc8bb3d060477a3fc3be3f7ea84eea161de9c70bd263b9023bc3767388e2abe",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-logging-otlp-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.48.0/opentelemetry-exporter-logging-otlp-1.48.0-sources.jar",
+    sha256 = "ef9c5e0e4a2ba3e2c1166a2682c73c8ac9cf0006f7083e67c2d3895f1ec0542d",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-common/1.48.0/opentelemetry-exporter-common-1.48.0.jar",
+    sha256 = "bc7af4f3c4ba1a23c20a6e1945f3e17fd3f5719f6f17d62961b3167d939a18e2",
+    downloaded_file_path = "opentelemetry-exporter-common-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-common/1.48.0/opentelemetry-exporter-common-1.48.0-sources.jar",
+    sha256 = "aaa85452dd8235f212a891782d8418bc42ec2cae2f855fcc1fc88b705f945652",
+    downloaded_file_path = "opentelemetry-exporter-common-1.48.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-otlp-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp-common/1.48.0/opentelemetry-exporter-otlp-common-1.48.0.jar",
+    sha256 = "9b3211ad7f1508f6453d16922aad6c7dce5b2f9a88b7e272171f63875ee78efd",
+    downloaded_file_path = "opentelemetry-exporter-otlp-common-1.48.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-otlp-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp-common/1.48.0/opentelemetry-exporter-otlp-common-1.48.0-sources.jar",
+    sha256 = "ac28aa04c6b29e7dbb298d9f9e321a31871b9077a8865583288cdd0bf4a0950d",
+    downloaded_file_path = "opentelemetry-exporter-otlp-common-1.48.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-exporter-otlp",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.47.0/opentelemetry-exporter-otlp-1.47.0.jar",
-    sha256 = "0bf93192631d8d069f865707abf456432bb8fca316d5a7fd0ff5d1302414c651",
-    downloaded_file_path = "opentelemetry-exporter-otlp-1.47.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.48.0/opentelemetry-exporter-otlp-1.48.0.jar",
+    sha256 = "b66cfe7da3afc1274f93e4c0faa5a7ac52b5f2a4d9567fc27ac84397f03f83c1",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.48.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-otlp-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.47.0/opentelemetry-exporter-otlp-1.47.0-sources.jar",
-    sha256 = "aafc09eaaa3cf90a02f1c9670cb1c00ba73f86ed13e6ad91cc47efb1f3cabe62",
-    downloaded_file_path = "opentelemetry-exporter-otlp-1.47.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.48.0/opentelemetry-exporter-otlp-1.48.0-sources.jar",
+    sha256 = "170cabc77bac7d9778e6a7d078b2d772684ab8d8ccaf75814e4eb7cdcaea1d8b",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.48.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-exporter-sender-jdk",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.47.0/opentelemetry-exporter-sender-jdk-1.47.0.jar",
-    sha256 = "17c8e65e017e506ba520811009a37a64eceb2ceb0d15cd1d0e0cb074e54821cc",
-    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.47.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.48.0/opentelemetry-exporter-sender-jdk-1.48.0.jar",
+    sha256 = "a8e33b293554a46f69ffbb97d0e108ef8c6475f4fcf812b38e8c3bc47fa3b581",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.48.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-sender-jdk-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.47.0/opentelemetry-exporter-sender-jdk-1.47.0-sources.jar",
-    sha256 = "cf54580e7cc05a59cfbb14ecf673fdd82e2ed014717653434cb99cf093193450",
-    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.47.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.48.0/opentelemetry-exporter-sender-jdk-1.48.0-sources.jar",
+    sha256 = "c5f13e26357b6753361267dab43cd38e9438dd70b08300d225e04f83e715ca70",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.48.0-sources.jar",
 )
 
 http_file(
-    name = "fury-core",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/fury/fury-core/0.10.0/fury-core-0.10.0.jar",
-    sha256 = "3ad12c4356029ba4adddc2f95dc1dc99bc0603347f536992c73183c821268615",
-    downloaded_file_path = "fury-core-0.10.0.jar",
+    name = "netty-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.0.RC4/netty-common-4.2.0.RC4.jar",
+    sha256 = "10c73d2ce41cec0d88d312c07d286abce1ea7640afec5191594b7d5f367e122e",
+    downloaded_file_path = "netty-common-4.2.0.RC4.jar",
 )
 http_file(
-    name = "fury-core-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/fury/fury-core/0.10.0/fury-core-0.10.0-sources.jar",
-    sha256 = "0082671d3e190b25b720bbb783a0eb6d50d83048f008828b67aee30d05754b88",
-    downloaded_file_path = "fury-core-0.10.0-sources.jar",
+    name = "netty-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.0.RC4/netty-common-4.2.0.RC4-sources.jar",
+    sha256 = "e5216c285076c10753259ac43f5801f0a92f0c6c4e8d2754ec89424f1d5646cd",
+    downloaded_file_path = "netty-common-4.2.0.RC4-sources.jar",
+)
+
+http_file(
+    name = "netty-buffer",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.0.RC4/netty-buffer-4.2.0.RC4.jar",
+    sha256 = "070f8f5dd3993ff9feb129425de6b0963f3d6e64a57c35eef8c40c9ea74113d7",
+    downloaded_file_path = "netty-buffer-4.2.0.RC4.jar",
+)
+http_file(
+    name = "netty-buffer-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.0.RC4/netty-buffer-4.2.0.RC4-sources.jar",
+    sha256 = "8dc8ae3e60fc111f6e536bfb4122d9422886e0e093584ab000b2e525307036fe",
+    downloaded_file_path = "netty-buffer-4.2.0.RC4-sources.jar",
 )
 
 http_file(
