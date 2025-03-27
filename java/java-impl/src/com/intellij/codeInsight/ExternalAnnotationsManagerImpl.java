@@ -182,7 +182,8 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   @Override
   public @NotNull ModCommand annotateExternallyModCommand(@NotNull PsiModifierListOwner listOwner,
                                                           @NotNull String annotationFQName,
-                                                          PsiNameValuePair @Nullable [] value) {
+                                                          PsiNameValuePair @Nullable [] value,
+                                                          @NotNull List<@NotNull String> annotationsToRemove) {
     ActionContext context = ActionContext.from(null, listOwner.getContainingFile());
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getOriginalElement().getContainingFile();
@@ -197,17 +198,17 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     List<AnnotateForRootCommand> commands = StreamEx.of(AnnotationOrderRootType.getFiles(entry))
       .filter(VirtualFile::isInLocalFileSystem)
       .distinct()
-      .map(root -> new AnnotateForRootCommand(this, root, annotation))
+      .map(root -> new AnnotateForRootCommand(this, root, annotation, annotationsToRemove))
       .toList();
 
     if (!commands.isEmpty()) {
       return ModCommand.chooseAction(JavaBundle.message("external.annotations.roots"), commands);
     }
-    return setupRootAndAnnotateExternally(containingFile, annotation, context);
+    return setupRootAndAnnotateExternally(containingFile, annotation, context, annotationsToRemove);
   }
 
   private @NotNull ModCommand getAddAnnotationCommand(@NotNull VirtualFile root, @NotNull ExternalAnnotation annotation,
-                                                      @NotNull ActionContext context) {
+                                                      @NotNull ActionContext context, @NotNull List<String> annotationsToRemove) {
     Project project = myPsiManager.getProject();
 
     PsiManager psiManager = PsiManager.getInstance(project);
@@ -226,7 +227,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
         return;
       }
       XmlFile file = updater.getWritable(createAnnotationsXml(writableRoot, packageName));
-      annotateExternally(file, annotation);
+      annotateExternally(file, annotation, annotationsToRemove);
     });
     return command;
   }
@@ -235,14 +236,16 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     dropCache();
   }
 
-  private void annotateExternally(@NotNull XmlFile annotationsFile, @NotNull ExternalAnnotation annotation) {
+  private void annotateExternally(@NotNull XmlFile annotationsFile, 
+                                  @NotNull ExternalAnnotation annotation,
+                                  @NotNull List<String> annotationsToRemove) {
     String externalName = getExternalName(annotation.owner());
     if (externalName == null) return;
     externalName = StringUtil.escapeXmlEntities(externalName);
     XmlTag rootTag = extractRootTag(annotationsFile);
     if (rootTag == null) return;
 
-    addAnnotation(rootTag, externalName, annotation);
+    addAnnotation(rootTag, externalName, annotation, annotationsToRemove);
     commitChanges(annotationsFile);
   }
 
@@ -269,18 +272,20 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
    * Adds annotation sub tag after startTag.
    * If startTag is {@code null} searches for all sub tags of rootTag and starts from the first.
    *
-   * @param rootTag    root tag to insert subtag into
-   * @param ownerName  annotations owner name
-   * @param annotation external annotation
+   * @param rootTag             root tag to insert subtag into
+   * @param ownerName           annotations owner name
+   * @param annotation          external annotation
+   * @param annotationsToRemove list of annotation FQNs that should be removed, if present
    */
-  private void addAnnotation(@NotNull XmlTag rootTag, @NotNull String ownerName, @NotNull ExternalAnnotation annotation) {
+  private void addAnnotation(@NotNull XmlTag rootTag, @NotNull String ownerName, @NotNull ExternalAnnotation annotation,
+                             @NotNull List<String> annotationsToRemove) {
     XmlTag startTag = PsiTreeUtil.findChildOfType(rootTag, XmlTag.class);
 
     XmlTag prevItem = null;
     XmlTag curItem = startTag;
 
     while (curItem != null) {
-      XmlTag addedItem = addAnnotation(rootTag, ownerName, annotation, curItem, prevItem);
+      XmlTag addedItem = addAnnotation(rootTag, ownerName, annotation, annotationsToRemove, curItem, prevItem);
       if (addedItem != null) {
         return;
       }
@@ -298,15 +303,16 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
    * Adds between curItem and prevItem if owner's external name < cur item owner external name.
    * Otherwise, does nothing, returns null.
    *
-   * @param rootTag    root tag to insert sub tag into
-   * @param ownerName  annotation owner
-   * @param annotation external annotation
-   * @param curItem    current item with annotations
-   * @param prevItem   previous item with annotations
+   * @param rootTag             root tag to insert sub tag into
+   * @param ownerName           annotation owner
+   * @param annotation          external annotation
+   * @param annotationsToRemove list of annotation FQNs that should be removed, if present
+   * @param curItem             current item with annotations
+   * @param prevItem            previous item with annotations
    * @return added tag
    */
   private @Nullable XmlTag addAnnotation(@NotNull XmlTag rootTag, @NotNull String ownerName, @NotNull ExternalAnnotation annotation,
-                                         @NotNull XmlTag curItem, @Nullable XmlTag prevItem) {
+                                         @NotNull List<String> annotationsToRemove, @NotNull XmlTag curItem, @Nullable XmlTag prevItem) {
 
     @NonNls String curItemName = curItem.getAttributeValue("name");
     if (curItemName == null) {
@@ -318,7 +324,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
     if (compare == 0) {
       //already have external annotations for the owner
-      return appendItemAnnotation(curItem, annotation);
+      return appendItemAnnotation(curItem, annotation, annotationsToRemove);
     }
 
     if (compare < 0) {
@@ -353,10 +359,12 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   /**
    * Appends annotation sub tag into itemTag. It can happen only if the item tag belongs to an annotation owner.
    *
-   * @param itemTag    item tag with annotations
-   * @param annotation external annotation
+   * @param itemTag             item tag with annotations
+   * @param annotation          external annotation
+   * @param annotationsToRemove list of annotation FQNs that should be removed, if present
    */
-  private XmlTag appendItemAnnotation(@NotNull XmlTag itemTag, @NotNull ExternalAnnotation annotation) {
+  private XmlTag appendItemAnnotation(@NotNull XmlTag itemTag, @NotNull ExternalAnnotation annotation,
+                                      @NotNull List<String> annotationsToRemove) {
     @NonNls String annotationFQName = annotation.annotationFQName();
     PsiNameValuePair[] values = annotation.getValues();
 
@@ -365,17 +373,17 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     XmlTag anchor = null;
     for (XmlTag itemAnnotation : itemTag.getSubTags()) {
       String curAnnotationName = itemAnnotation.getAttributeValue("name");
-      if (curAnnotationName == null) {
+      if (curAnnotationName == null || annotationsToRemove.contains(curAnnotationName)) {
         itemAnnotation.delete();
-        continue;
       }
-
+    }
+    for (XmlTag itemAnnotation : itemTag.getSubTags()) {
+      String curAnnotationName = itemAnnotation.getAttributeValue("name");
       if (annotationFQName.equals(curAnnotationName)) {
         // found tag for the same annotation, replacing
         itemAnnotation.delete();
         break;
       }
-
       anchor = itemAnnotation;
     }
 
@@ -391,7 +399,8 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
   private @NotNull ModCommand setupRootAndAnnotateExternally(@NotNull PsiFile containingFile,
                                                              @NotNull ExternalAnnotation annotation,
-                                                             @NotNull ActionContext context) {
+                                                             @NotNull ActionContext context,
+                                                             @NotNull List<@NotNull String> annotationsToRemove) {
     String path = containingFile.getProject().getBasePath();
     class RootConfig implements OptionContainer {
       @SuppressWarnings("FieldMayBeFinal") String myExternalAnnotationsRoot = path;
@@ -418,13 +427,14 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
                                   }
                                   return ModCommand.updateOptionList(containingFile, "OrderEntryConfiguration.externalAnnotations",
                                                                      list -> list.add(newRootFile.getUrl()))
-                                    .andThen(getAddAnnotationCommand(newRootFile, annotation, context));
+                                    .andThen(getAddAnnotationCommand(newRootFile, annotation, context, annotationsToRemove));
                                 });
   }
 
-  private record AnnotateForRootCommand(@NotNull ExternalAnnotationsManagerImpl manager, 
-                                        @NotNull VirtualFile root, 
-                                        @NotNull ExternalAnnotation annotation) implements ModCommandAction {
+  private record AnnotateForRootCommand(@NotNull ExternalAnnotationsManagerImpl manager,
+                                        @NotNull VirtualFile root,
+                                        @NotNull ExternalAnnotation annotation, 
+                                        @NotNull List<@NotNull String> annotationsToRemove) implements ModCommandAction {
     @Override
     public @NotNull Presentation getPresentation(@NotNull ActionContext context) {
       return Presentation.of(root.getPresentableUrl()).withIcon(AllIcons.Modules.Annotation);
@@ -432,7 +442,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
     @Override
     public @NotNull ModCommand perform(@NotNull ActionContext context) {
-      return manager.getAddAnnotationCommand(root, annotation, context);
+      return manager.getAddAnnotationCommand(root, annotation, context, annotationsToRemove);
     }
 
     @Override

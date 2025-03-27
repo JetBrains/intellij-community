@@ -73,6 +73,13 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
   public @NotNull ModCommand annotateExternallyModCommand(@NotNull PsiModifierListOwner listOwner,
                                                           @NotNull String annotationFQName,
                                                           PsiNameValuePair @Nullable [] value) {
+    return annotateExternallyModCommand(listOwner, annotationFQName, value, List.of());
+  }
+
+  public @NotNull ModCommand annotateExternallyModCommand(@NotNull PsiModifierListOwner listOwner,
+                                                          @NotNull String annotationFQName,
+                                                          PsiNameValuePair @Nullable [] value,
+                                                          @NotNull List<@NotNull String> annotationsToRemove) {
     throw new UnsupportedOperationException("annotateExternallyModCommand is not implemented in " + getClass().getName());
   }
 
