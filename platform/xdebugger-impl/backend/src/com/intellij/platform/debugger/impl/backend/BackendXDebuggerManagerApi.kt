@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
@@ -13,19 +14,18 @@ import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
+import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -75,7 +75,26 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   private fun createSessionEvents(currentSession: XDebugSessionImpl): Flow<XDebuggerSessionEvent> = channelFlow {
     currentSession.addSessionListener(object : XDebugSessionListener {
       override fun sessionPaused() {
-        trySend(XDebuggerSessionEvent.SessionPaused())
+        val suspendContext = currentSession.suspendContext ?: return
+        val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
+        val data = async {
+          val suspendContextId = coroutineScope {
+            suspendContext.storeGlobally(suspendScope, currentSession)
+          }
+          val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
+          val executionStackDto = suspendContext.activeExecutionStack?.let {
+            val activeExecutionStackId = it.storeGlobally(suspendScope, currentSession)
+            XExecutionStackDto(activeExecutionStackId, it.displayName, it.icon?.rpcId())
+          }
+          val stackTraceDto = currentSession.currentStackFrame?.let {
+            val currentStackFrameId = it.storeGlobally(suspendScope, currentSession)
+            createXStackFrameDto(it, currentStackFrameId)
+          }
+          PauseData(suspendContextDto,
+                    executionStackDto,
+                    stackTraceDto)
+        }
+        trySend(XDebuggerSessionEvent.SessionPaused(data))
       }
 
       override fun sessionResumed() {

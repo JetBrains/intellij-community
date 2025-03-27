@@ -6,8 +6,10 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +48,9 @@ sealed interface XDebuggerManagerSessionEvent {
 @Serializable
 sealed interface XDebuggerSessionEvent {
   @Serializable
-  class SessionPaused() : XDebuggerSessionEvent
+  class SessionPaused(
+    @Serializable(with = DeferredSerializer::class) val pauseData: Deferred<PauseData?>,
+  ) : XDebuggerSessionEvent
 
   @Serializable
   class SessionResumed() : XDebuggerSessionEvent
@@ -66,6 +70,14 @@ sealed interface XDebuggerSessionEvent {
   @Serializable
   class BreakpointsMuted(val muted: Boolean) : XDebuggerSessionEvent
 }
+
+@ApiStatus.Internal
+@Serializable
+data class PauseData(
+  val suspendContextDto: XSuspendContextDto,
+  val executionStack: XExecutionStackDto?,
+  val stackFrame: XStackFrameDto?,
+)
 
 @ApiStatus.Internal
 @Serializable

@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.openapi.project.Project
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XExecutionStacksEvent
@@ -18,6 +19,12 @@ internal class FrontendXSuspendContext(
 
   val isStepping: Boolean
     get() = suspendContextDto.isStepping
+
+  internal var activeExecutionStack: FrontendXExecutionStack? = null
+
+  override fun getActiveExecutionStack(): XExecutionStack? {
+    return activeExecutionStack
+  }
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
     cs.launch {

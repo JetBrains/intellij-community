@@ -7,19 +7,17 @@ import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.kernel.ids.withNullableIDsFlow
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.rpc.*
-import com.intellij.xdebugger.impl.rpc.models.*
+import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 
@@ -99,56 +97,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.tabInitialized(tab)
-    }
-  }
-
-  override suspend fun currentSuspendContext(sessionId: XDebugSessionId): Flow<XSuspendContextDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return channelFlow {
-      session.getCurrentSuspendContextFlow().collectLatest { suspendContext ->
-        if (suspendContext == null) {
-          send(null)
-          return@collectLatest
-        }
-
-        coroutineScope {
-          val id = suspendContext.storeGlobally(this, session)
-          send(XSuspendContextDto(id, suspendContext is XSteppingSuspendContext))
-        }
-      }
-    }
-  }
-
-  override suspend fun currentExecutionStack(sessionId: XDebugSessionId): Flow<XExecutionStackDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return channelFlow {
-      session.getCurrentExecutionStackFlow().collectLatest { executionStack ->
-        if (executionStack == null) {
-          send(null)
-          return@collectLatest
-        }
-        coroutineScope {
-          val id = executionStack.storeGlobally(this, session)
-          send(XExecutionStackDto(id, executionStack.displayName, executionStack.icon?.rpcId()))
-        }
-      }
-    }
-  }
-
-  override suspend fun currentStackFrame(sessionId: XDebugSessionId): Flow<XStackFrameDto?> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return channelFlow {
-      session.getCurrentStackFrameFlow().collectLatest { frame ->
-        if (frame == null) {
-          send(null)
-          return@collectLatest
-        }
-
-        coroutineScope {
-          val id = frame.storeGlobally(this, session)
-          send(createXStackFrameDto(frame, id))
-        }
-      }
     }
   }
 
