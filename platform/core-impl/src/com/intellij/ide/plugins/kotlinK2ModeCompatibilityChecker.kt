@@ -57,7 +57,7 @@ internal fun pluginCanWorkInK1Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
 
 
 private fun getSupportKotlinPluginModeEPs(plugin: IdeaPluginDescriptorImpl): List<ExtensionDescriptor> {
-  return plugin.miscExtensions[SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME] ?: emptyList()
+  return plugin.extensions[SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME] ?: emptyList()
 }
 
 

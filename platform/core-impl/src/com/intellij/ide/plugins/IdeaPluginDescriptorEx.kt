@@ -18,11 +18,11 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val actions: List<ActionElement>
 
   /**
-   * Extension point name -> list of extension descriptors.
+   * Qualified extension point name -> list of extension descriptors.
    *
-   * Note that it does not contain some scoped extensions (such as listeners, services, extension points)
+   * This map contains extensions whose scope may be determined by extension points from other plugins, hence it is not part of a scoped elements container.
    */
-  val miscExtensions: Map<String, List<ExtensionDescriptor>>
+  val extensions: Map<String, List<ExtensionDescriptor>>
 }
 
 internal val IdeaPluginDescriptorEx.isRequiredContentModule: Boolean

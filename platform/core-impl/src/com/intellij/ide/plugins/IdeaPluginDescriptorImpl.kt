@@ -108,7 +108,7 @@ class IdeaPluginDescriptorImpl private constructor(
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
-  override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.extensions
+  override val extensions: Map<String, List<ExtensionDescriptor>> = raw.extensions
     .let(::convertExtensions)
     .let(::sortExtensions)
 
@@ -423,7 +423,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>, listenerCallbacks: MutableList<in Runnable>?) {
-    for ((descriptors, point) in intersectMaps(miscExtensions, nameToPoint)) {
+    for ((descriptors, point) in intersectMaps(extensions, nameToPoint)) {
       point.registerExtensions(descriptors, pluginDescriptor = this, listenerCallbacks)
     }
   }

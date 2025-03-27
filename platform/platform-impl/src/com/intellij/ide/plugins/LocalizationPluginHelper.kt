@@ -18,7 +18,7 @@ object LocalizationPluginHelper {
    */
   fun isActiveLocalizationPlugin(descriptor: IdeaPluginDescriptor, languageTag: String? = null): Boolean {
     if (descriptor !is IdeaPluginDescriptorImpl) return false
-    val extensionPoints = descriptor.miscExtensions
+    val extensionPoints = descriptor.extensions
     val epName = "com.intellij.languageBundle"
     if (extensionPoints.containsKey(epName)) {
       val locale = extensionPoints[epName]?.firstOrNull()?.element?.attributes?.get("locale")
