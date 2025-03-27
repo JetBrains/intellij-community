@@ -400,7 +400,7 @@ object DynamicPlugins {
    */
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
-    val extensions = (module.miscExtensions.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
+    val extensions = module.miscExtensions.takeIf { it.isNotEmpty() } ?: emptyMap()
     if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name || it.key == LanguageBundleEP.EP_NAME.name}) {
       return false
     }
@@ -771,12 +771,7 @@ object DynamicPlugins {
     val unloadListeners = mutableListOf<Runnable>()
     unregisterUnknownLevelExtensions(module.miscExtensions, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
-    for (epName in module.appContainerDescriptor.extensions.keys) {
-      appExtensionArea.unregisterExtensions(extensionPointName = epName,
-                                            pluginDescriptor = module,
-                                            priorityListenerCallbacks = priorityUnloadListeners,
-                                            listenerCallbacks = unloadListeners)
-    }
+    // note: here was a dead code for unregistering appContainer.extensions, but the map was always empty
     for (epName in module.projectContainerDescriptor.extensions.keys) {
       for (project in openedProjects) {
         (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(extensionPointName = epName,
