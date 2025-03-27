@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.providers.files
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
@@ -10,6 +11,7 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.providers.files.SeFilesFilterData
+import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +22,7 @@ import javax.swing.JComponent
 
 @Internal
 class SeFilesTab(private val delegate: SeTabDelegate): SeTab {
-  override val name: String get() = "Files"
+  override val name: String get() = IdeBundle.message("search.everywhere.group.name.files")
   override val shortName: String get() = name
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
@@ -47,7 +49,8 @@ class SeFilesFilterEditor : ObservableOptionEditor<SeFilterState> {
   override fun getComponent(): JComponent {
     return panel {
       row {
-        val checkBox = checkBox("Project only")
+        @Suppress("DialogTitleCapitalization")
+        val checkBox = checkBox(ProjectScope.getProjectFilesScopeName())
 
         checkBox.component.model.isSelected = current?.isProjectOnly ?: false
         checkBox.onChanged {

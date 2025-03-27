@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
-import com.intellij.lang.LangBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
@@ -22,7 +22,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
   override val name: String
-    get() = LangBundle.message("tab.title.actions")
+    get() = IdeBundle.message("search.everywhere.group.name.actions")
 
   override val shortName: String
     get() = name
@@ -49,7 +49,7 @@ class SeActionsFilterEditor : ObservableOptionEditor<SeFilterState> {
   override fun getComponent(): JComponent {
     return panel {
       row {
-        val checkBox = checkBox("Include disabled")
+        val checkBox = checkBox(IdeBundle.message("checkbox.disabled.included"))
 
         checkBox.component.model.isSelected = current?.includeDisabled ?: false
         checkBox.onChanged {

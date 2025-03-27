@@ -99,6 +99,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         }
 
         presentation.shortcut?.let { shortcutText ->
+          @Suppress("HardCodedStringLiteral")
           text(shortcutText) {
             attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER or SimpleTextAttributes.STYLE_BOLD, groupForeground)
           }
