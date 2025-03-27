@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
@@ -36,13 +35,14 @@ class BundledPluginsStateTest {
   companion object {
     private fun getIdeaDescriptor(id: String, category: Category): IdeaPluginDescriptorImpl {
       val descriptor = IdeaPluginDescriptorImpl(
-        PluginDescriptorBuilder.builder().apply {
+        raw = PluginDescriptorBuilder.builder().apply {
           this.category = category
+          this.id = id
         }.build(),
-        Path.of(""),
-        true,
-        PluginId.getId(id),
-        null)
+        pluginPath = Path.of(""),
+        isBundled = true,
+        id = null,
+        moduleName = null)
       return descriptor
     }
   }

@@ -185,13 +185,16 @@ private fun loadDescriptorFromStream(
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, fileOrDir.toString())
     context.patchPlugin(it.getBuilder())
+    if (id != null) {
+      it.getBuilder().id = id.idString
+    }
     it.build()
   }
   val descriptor = IdeaPluginDescriptorImpl(
     raw = raw,
     pluginPath = pluginDir ?: fileOrDir,
     isBundled = isBundled,
-    id = id,
+    id = null,
     moduleName = null,
     useCoreClassLoader = useCoreClassLoader,
   )

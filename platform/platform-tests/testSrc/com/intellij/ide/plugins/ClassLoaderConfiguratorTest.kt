@@ -28,10 +28,10 @@ internal class ClassLoaderConfiguratorTest {
     val pluginId = PluginId.getId("org.jetbrains.kotlin")
     val emptyPath = Path.of("")
     val plugins = arrayOf(
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = pluginId, moduleName = null),
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = PluginId.getId("org.jetbrains.plugins.gradle"), moduleName = null),
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
+      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = pluginId.idString }.build(), emptyPath, isBundled = false, id = null, moduleName = null),
+      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.plugins.gradle" }.build(), emptyPath, isBundled = false, id = null, moduleName = null),
+      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = pluginId.idString }.build(), emptyPath, isBundled = false, id = null, moduleName = "kotlin.gradle.gradle-java", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
+      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = pluginId.idString }.build(), emptyPath, isBundled = false, id = null, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
     )
     sortDependenciesInPlace(plugins)
     assertThat(plugins.last().moduleName).isNull()
@@ -43,10 +43,14 @@ internal class ClassLoaderConfiguratorTest {
     val emptyPath = Path.of("")
 
     fun createModuleDescriptor(name: String): IdeaPluginDescriptorImpl {
-      return IdeaPluginDescriptorImpl(raw = PluginDescriptorBuilder.builder().apply { `package` = name }.build(),
+      val raw = PluginDescriptorBuilder.builder().apply {
+        id = pluginId.idString
+        `package` = name
+      }.build()
+      return IdeaPluginDescriptorImpl(raw = raw,
                                       pluginPath = emptyPath,
                                       isBundled = false,
-                                      id = pluginId,
+                                      id = null,
                                       moduleName = name,
                                       moduleLoadingRule = ModuleLoadingRule.OPTIONAL)
     }
