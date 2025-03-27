@@ -36,11 +36,11 @@ import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 
 /**
@@ -150,9 +150,12 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
       }
     }
 
-    mainPanel.launchOnShow("PythonProjectSpecificSettingsStep createBasePanel") {
-      panelPlaceholder.component = panel {
-        interpreterPanel.buildPanel(this, this@launchOnShow)
+    SwingUtilities.invokeLater {
+      val scopingComponent = SwingUtilities.getWindowAncestor(mainPanel) ?: mainPanel
+      scopingComponent.launchOnShow("PythonProjectSpecificSettingsStep createBasePanel") {
+        panelPlaceholder.component = panel {
+          interpreterPanel.buildPanel(this, this@launchOnShow)
+        }
       }
     }
 

@@ -17,8 +17,8 @@ import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import kotlinx.coroutines.coroutineScope
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 
 internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> @RequiresEdt constructor(
@@ -40,20 +40,23 @@ internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
       }
     }
 
-    rootPanel.launchOnShow("PyV3UI init") {
-      mainPanelPlaceholder.component = panel {
-        val checkBoxRow = row {
-          checkBox(PyBundle.message("new.project.git")).bindSelected(baseSettings::createGitRepository)
-        }
-        specificUiAndSettings?.first?.configureUpperPanel(specificUiAndSettings.second, checkBoxRow, this)
-        sdkPanel.buildPanel(this, this@launchOnShow)
-        specificUiAndSettings?.first?.advancedSettings?.let {
-          collapsibleGroup(PyBundle.message("black.advanced.settings.panel.title")) {
-            it(this, specificUiAndSettings.second, projectNameProvider)
+    SwingUtilities.invokeLater {
+      val scopingComponent = SwingUtilities.getWindowAncestor(rootPanel) ?: rootPanel
+      scopingComponent.launchOnShow("PyV3UI init") {
+        mainPanelPlaceholder.component = panel {
+          val checkBoxRow = row {
+            checkBox(PyBundle.message("new.project.git")).bindSelected(baseSettings::createGitRepository)
           }
+          specificUiAndSettings?.first?.configureUpperPanel(specificUiAndSettings.second, checkBoxRow, this)
+          sdkPanel.buildPanel(this, this@launchOnShow)
+          specificUiAndSettings?.first?.advancedSettings?.let {
+            collapsibleGroup(PyBundle.message("black.advanced.settings.panel.title")) {
+              it(this, specificUiAndSettings.second, projectNameProvider)
+            }
+          }
+        }.apply {
+          sdkPanel.onShown()
         }
-      }.apply {
-        sdkPanel.onShown()
       }
     }
 
