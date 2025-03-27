@@ -37,7 +37,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
-  public @NotNull LoadCoverageResult loadCoverageDataWithLogging(
+  public @NotNull CoverageLoadingResult loadCoverageData(
     final @NotNull File sessionDataFile,
     final @Nullable CoverageSuite coverageSuite,
     final @NotNull CoverageLoadErrorReporter reporter
@@ -65,7 +65,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         javaSuite.setExcludePatterns(excludePatterns);
       }
     }
-    return new SuccessLoadCoverageResult(projectData);
+    return new SuccessCoverageLoadingResult(projectData);
   }
 
   @Override

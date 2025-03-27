@@ -13,11 +13,11 @@ import java.io.IOException
 private val LOG = logger<XMLReportRunner>()
 
 class XMLReportRunner : CoverageRunner() {
-  override fun loadCoverageDataWithLogging(
+  override fun loadCoverageData(
     sessionDataFile: File,
     baseCoverageSuite: CoverageSuite?,
     reporter: CoverageLoadErrorReporter
-  ): LoadCoverageResult = error("Should not be called")
+  ): CoverageLoadingResult = error("Should not be called")
   override fun getPresentableName() = JavaCoverageBundle.message("coverage.xml.report.title")
   override fun getId() = "jacoco_xml_report"
   override fun getDataFileExtension() = "xml"

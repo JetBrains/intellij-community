@@ -198,7 +198,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
       return null;
     }
     final long startNs = System.nanoTime();
-    final ProjectData projectData = myRunner.loadCoverageData(sessionDataFile, this);
+    final ProjectData projectData = myRunner.loadCoverageDataWithReporting(sessionDataFile, this);
     final long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
     if (projectData != null) {
       CoverageLogger.logReportLoading(myProject, myRunner, timeMs, projectData.getClassesNumber());
