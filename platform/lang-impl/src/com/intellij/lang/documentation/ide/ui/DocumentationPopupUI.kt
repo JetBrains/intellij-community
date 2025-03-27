@@ -106,7 +106,9 @@ internal class DocumentationPopupUI(
       }
     })
     component = UiDataProvider.wrapComponent(pane) { sink ->
-      sink[DOCUMENTATION_POPUP] = myPopup
+      if (this::myPopup.isInitialized) { // invoked during action update on JComponent.addNotify when myPopup is not yet initialized
+        sink[DOCUMENTATION_POPUP] = myPopup
+      }
     }
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
