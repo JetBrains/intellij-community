@@ -2661,4 +2661,13 @@ def foo(param: str | int) -> TypeGuard[str]:
                    expects_list(v)
                    """);
   }
+
+  public void testExplicitlyParameterizedGenericConstructorCall() {
+    doTestByText("""
+                   class A[T]:
+                       def __init__(self, v: T) -> None: ...
+
+                   A[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">""</warning>)
+                   """);
+  }
 }
