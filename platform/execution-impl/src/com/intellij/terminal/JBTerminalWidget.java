@@ -149,11 +149,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   }
 
   public int getFontSize() {
-    return getSettingsProvider().getUiSettingsManager().getFontSize();
+    return Math.round(getSettingsProvider().getTerminalFontSize());
   }
 
   public float getFontSize2D() {
-    return getSettingsProvider().getUiSettingsManager().getFontSize2D();
+    return getSettingsProvider().getTerminalFontSize2D();
   }
 
   public void setFontSize(int fontSize) {
@@ -161,11 +161,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   }
 
   public void setFontSize(float fontSize) {
-    getSettingsProvider().getUiSettingsManager().setFontSize(fontSize);
+    getSettingsProvider().setTerminalFontSize(fontSize);
   }
 
   public void resetFontSize() {
-    getSettingsProvider().getUiSettingsManager().resetFontSize();
+    getSettingsProvider().resetTerminalFontSize();
   }
 
   public @Nullable ProcessTtyConnector getProcessTtyConnector() {
