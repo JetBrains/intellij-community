@@ -72,7 +72,7 @@ object FreezeAnalyzer {
     threadState.stackTrace.lineSequence().map { it.trimStart() }.any {
       it.startsWith("at com.intellij.openapi.application.impl.ReadMostlyRWLock.writeLock") ||
       it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
-      it.startsWith("com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
+      it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
     }
 
   private fun findThreadThatTookReadWriteLock(threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? =
