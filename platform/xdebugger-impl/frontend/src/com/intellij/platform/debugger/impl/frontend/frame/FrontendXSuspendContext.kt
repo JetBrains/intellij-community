@@ -29,14 +29,14 @@ internal class FrontendXSuspendContext(
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
     container.childCoroutineScope(cs, "FrontendXSuspendContext#computeExecutionStacks").launch {
+      val executionStacksCs = this
       XDebugSessionApi.getInstance().computeExecutionStacks(id).collect { executionStackEvent ->
         when (executionStackEvent) {
           is XExecutionStacksEvent.ErrorOccurred -> {
             container.errorOccurred(executionStackEvent.errorMessage)
           }
           is XExecutionStacksEvent.NewExecutionStacks -> {
-            // TODO[IJPL-177087] narrower scope?
-            val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, project, cs) }
+            val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, project, executionStacksCs) }
             container.addExecutionStack(feStacks, executionStackEvent.last)
           }
         }
