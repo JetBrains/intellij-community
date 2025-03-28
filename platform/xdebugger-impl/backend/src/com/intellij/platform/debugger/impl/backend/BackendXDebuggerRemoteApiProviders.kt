@@ -44,5 +44,8 @@ private class BackendXDebuggerRemoteApiProviders : RemoteApiProvider {
     remoteApi(remoteApiDescriptor<XExecutionStackApi>()) {
       BackendXExecutionStackApi()
     }
+    remoteApi(remoteApiDescriptor<XStackFrameApi>()) {
+      BackendXStackFrameApi()
+    }
   }
 }
