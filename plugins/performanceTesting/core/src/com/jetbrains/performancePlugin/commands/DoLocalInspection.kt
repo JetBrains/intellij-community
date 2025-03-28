@@ -72,34 +72,35 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
             return
           }
 
-          val errorsOnHighlighting = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project)
-          val warningsOnHighlighting = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.WARNING, project)
-          val weakWarningsOnHighlighting = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.WEAK_WARNING, project)
+          val highlights = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.WEAK_WARNING, project)
+          val errorsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.ERROR }
+          val warningsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.WARNING }
+          val weakWarningsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.WEAK_WARNING }
           val finishMessage = StringBuilder("Local inspections have been finished with: ")
-          spanRef!!.setAttribute("Errors", errorsOnHighlighting.size.toLong())
+          spanRef.setAttribute("Errors", errorsOnHighlighting.size.toLong())
           if (!errorsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append("Errors: ${errorsOnHighlighting.size}")
+            for (error in errorsOnHighlighting) {
+              finishMessage.append("\n").append("${error.text}: ${error.description}")
+            }
           }
-          for (error in errorsOnHighlighting) {
-            finishMessage.append("\n").append("${error.text}: ${error.description}")
-          }
-          spanRef!!.setAttribute("Warnings", warningsOnHighlighting.size.toLong())
+          spanRef.setAttribute("Warnings", warningsOnHighlighting.size.toLong())
           if (!warningsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append("Warnings: ${warningsOnHighlighting.size}")
+            for (warning in warningsOnHighlighting) {
+              finishMessage.append("\n").append("${warning.text}: ${warning.description}")
+            }
           }
-          for (warning in warningsOnHighlighting) {
-            finishMessage.append("\n").append("${warning.text}: ${warning.description}")
-          }
-          spanRef!!.setAttribute("Weak Warnings", warningsOnHighlighting.size.toLong())
+          spanRef.setAttribute("Weak Warnings", warningsOnHighlighting.size.toLong())
           if (!weakWarningsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append("Weak Warnings: ${weakWarningsOnHighlighting.size}")
+            for (weakWarning in weakWarningsOnHighlighting) {
+              finishMessage.append("\n").append("${weakWarning.text}: ${weakWarning.description}")
+            }
           }
-          for (weakWarning in weakWarningsOnHighlighting) {
-            finishMessage.append("\n").append("${weakWarning.text}: ${weakWarning.description}")
-          }
-          spanRef!!.setAttribute("filePath", psiFile.virtualFile.path)
-          spanRef!!.setAttribute("linesCount", editor!!.getDocument().getLineCount().toLong())
-          spanRef!!.end()
+          spanRef.setAttribute("filePath", psiFile.virtualFile.path)
+          spanRef.setAttribute("linesCount", editor!!.getDocument().getLineCount().toLong())
+          spanRef.end()
           scopeRef!!.close()
           busConnection.disconnect()
           context.message(finishMessage.toString(), line)
