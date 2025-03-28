@@ -37,6 +37,12 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
   }
 
   override fun setupEnvironment(project: Project, sdk: Sdk?) {
+    if (!shouldSetup) {
+      return
+    }
+
+    shouldSetup = true
+
     val basePath = project.basePath
 
     basePath ?: return
