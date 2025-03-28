@@ -15,8 +15,25 @@ public final class AppModeAssertions {
 
   private AppModeAssertions() { }
 
+  public static boolean isFrontend() {
+    return PlatformUtils.isJetBrainsClient();
+  }
+
+  public static boolean isBackend() {
+    return AppMode.isRemoteDevHost();
+  }
+
+  public static boolean isMonolith() {
+    return !isFrontend() && !isBackend();
+  }
+
+  /**
+   * Checks if a frontend operation is permitted to be performed in the current product mode.
+   *
+   * @return `true` in the frontend and monolith mode
+   */
   public static boolean checkFrontend() {
-    return !AppMode.isRemoteDevHost(); // don't report in frontend and monolith
+    return !isBackend();
   }
 
   public static void assertFrontend(boolean hard) {
@@ -32,8 +49,13 @@ public final class AppModeAssertions {
     }
   }
 
+  /**
+   * Checks if a backend operation is permitted to be performed in the current product mode.
+   *
+   * @return `true` in the backend and monolith mode
+   */
   public static boolean checkBackend() {
-    return !PlatformUtils.isJetBrainsClient(); // don't report in backend and monolith
+    return !isFrontend();
   }
 
   public static void assertBackend(boolean hard) {

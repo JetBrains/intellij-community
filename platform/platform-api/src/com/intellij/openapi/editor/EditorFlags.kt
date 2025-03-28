@@ -11,6 +11,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 val isLocalEditorUx: Boolean
   get() = Registry.`is`("editor.rd.local.ux")
 
+fun isMonolith(): Boolean {
+  return isLocalEditorUx || AppModeAssertions.isMonolith()
+}
+
 fun assertFrontend() {
   AppModeAssertions.assertFrontend(isLocalEditorUx)
 }

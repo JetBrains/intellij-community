@@ -1400,7 +1400,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (ProgressManager.getInstance().hasModalProgressIndicator()) {
       return false;
     }
-    if (!Registry.is("editor.rd.local.ux")) {
+    // - The frontend cannot synchronously check file validity;
+    // - typing on the backend is not performed.
+    if (EditorFlags.isMonolith()) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
       VirtualFile file = manager.getFile(myDocument);
       if (file != null && !file.isValid()) {
