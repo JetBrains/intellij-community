@@ -523,6 +523,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
         outputDir = "proprietary-maven-artifacts"
       )
     }
+    mavenArtifacts.validate(builtArtifacts.map { it.module to it.coordinates })
   }
 }
 

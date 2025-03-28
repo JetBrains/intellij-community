@@ -21,7 +21,7 @@ class MavenArtifactsProperties {
   /**
    * If `true` Maven artifacts are generated for all modules included in the IDE distribution.
    */
-  var forIdeModules = false
+  var forIdeModules: Boolean = false
 
   /**
    * Names of additional modules for which Maven artifacts should be generated.
@@ -59,4 +59,7 @@ class MavenArtifactsProperties {
 
   @ApiStatus.Internal
   var isJavadocJarRequired: (JpsModule) -> Boolean = { false }
+
+  @ApiStatus.Internal
+  var validate: (Collection<Pair<JpsModule, MavenCoordinates>>) -> Unit = {}
 }
