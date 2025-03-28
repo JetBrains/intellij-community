@@ -8,7 +8,7 @@ import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.application.useNestedLocking
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.util.coroutines.internal.runSuspend
+import com.intellij.openapi.util.coroutines.runSuspend
 import com.intellij.util.ThrowableRunnable
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
