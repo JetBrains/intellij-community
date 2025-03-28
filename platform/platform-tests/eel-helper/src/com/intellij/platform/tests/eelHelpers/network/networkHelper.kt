@@ -2,6 +2,7 @@
 package com.intellij.platform.tests.eelHelpers.network
 
 import org.jetbrains.annotations.TestOnly
+import java.io.IOException
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
@@ -20,7 +21,13 @@ fun startNetworkServer() {
   val clientChannel = serverSocketChannel.accept()
   clientChannel.write(NetworkConstants.HELLO_FROM_SERVER.toBuffer())
   val readBuffer = ByteBuffer.allocate(4096)
-  clientChannel.read(readBuffer)
+  try {
+    clientChannel.read(readBuffer)
+  }
+  catch (e: IOException) {
+    e.printStackTrace()
+    return
+  }
   readBuffer.flip()
 
   if (NetworkConstants.fromByteBuffer(readBuffer) == NetworkConstants.HELLO_FROM_CLIENT) {

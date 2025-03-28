@@ -40,9 +40,11 @@ sealed interface EelTunnelsApi {
    * Note, that [Connection.receiveChannel] is __not__ closed in this case.
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
+   *
+   * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
    */
   @CheckReturnValue
-  suspend fun getConnectionToRemotePort(@GeneratedBuilder address: HostAddress): EelResult<Connection, EelConnectionError>
+  suspend fun getConnectionToRemotePort(@GeneratedBuilder address: HostAddress, configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit): EelResult<Connection, EelConnectionError>
 
 
   sealed interface ResolvedSocketAddress {
@@ -152,40 +154,9 @@ sealed interface EelTunnelsApi {
     val receiveChannel: EelReceiveChannel<IOException>
 
     /**
-     * Sets the size of send buffer of the socket
-     * @see java.net.SocketOptions.SO_SNDBUF
+     * Configure various socket options
      */
-    suspend fun setSendBufferSize(size: UInt)
-
-    /**
-     * Sets the receive buffer size of the socket
-     * @see java.net.SocketOptions.SO_RCVBUF
-     */
-    suspend fun setReceiveBufferSize(size: UInt)
-
-    /**
-     * Sets the keep alive option for the socket
-     * @see java.net.SocketOptions.SO_KEEPALIVE
-     */
-    suspend fun setKeepAlive(keepAlive: Boolean)
-
-    /**
-     * Sets the possibility to reuse address of the socket
-     * @see java.net.SocketOptions.SO_REUSEADDR
-     */
-    suspend fun setReuseAddr(reuseAddr: Boolean)
-
-    /**
-     * Sets linger timeout for the socket
-     * @see java.net.SocketOptions.SO_LINGER
-     */
-    suspend fun setLinger(lingerInterval: Duration)
-
-    /**
-     * Disables pending data until acknowledgement
-     * @see java.net.SocketOptions.TCP_NODELAY
-     */
-    suspend fun setNoDelay(noDelay: Boolean)
+    suspend fun configureSocket(block: suspend ConfigurableClientSocket.() -> Unit)
 
     /**
      * Closes the connection to the socket.
@@ -223,7 +194,7 @@ sealed interface EelTunnelsApi {
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
   @CheckReturnValue
-  suspend fun getAcceptorForRemotePort(@GeneratedBuilder address: HostAddress): EelResult<ConnectionAcceptor, EelConnectionError>
+  suspend fun getAcceptorForRemotePort(@GeneratedBuilder address: HostAddress, configureServerSocket: ConfigurableSocket.() -> Unit): EelResult<ConnectionAcceptor, EelConnectionError>
 
   /**
    * This is a representation of a remote server bound to [boundAddress].
@@ -246,6 +217,54 @@ sealed interface EelTunnelsApi {
      */
     suspend fun close()
   }
+}
+
+/**
+ * Socket configuration valid both for server and client socket
+ */
+interface ConfigurableSocket {
+  /**
+   * Sets the possibility to reuse address of the socket
+   * @see java.net.SocketOptions.SO_REUSEADDR
+   */
+  suspend fun setReuseAddr(reuseAddr: Boolean)
+
+  /**
+   * Sets the receive buffer size of the socket
+   * @see java.net.SocketOptions.SO_RCVBUF
+   */
+  suspend fun setReceiveBufferSize(size: UInt)
+}
+
+/**
+ * Client only socket options
+ */
+interface ConfigurableClientSocket : ConfigurableSocket {
+
+  /**
+   * Sets the size of send buffer of the socket
+   * @see java.net.SocketOptions.SO_SNDBUF
+   */
+  suspend fun setSendBufferSize(size: UInt)
+
+
+  /**
+   * Sets the keep alive option for the socket
+   * @see java.net.SocketOptions.SO_KEEPALIVE
+   */
+  suspend fun setKeepAlive(keepAlive: Boolean)
+
+  /**
+   * Sets linger timeout for the socket. Null disables it.
+   * @see java.net.SocketOptions.SO_LINGER
+   */
+  suspend fun setLinger(lingerInterval: Duration?)
+
+  /**
+   * Disables pending data until acknowledgement
+   * @see java.net.SocketOptions.TCP_NODELAY
+   */
+  suspend fun setNoDelay(noDelay: Boolean)
 }
 
 /**
@@ -305,6 +324,7 @@ interface EelTunnelsPosixApi : EelTunnelsApi {
 interface EelTunnelsWindowsApi : EelTunnelsApi
 
 /**
+ * TODO: DOC
  * Convenience function for working with a connection to a remote server.
  *
  * Example:
@@ -330,7 +350,7 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
 ): T =
-  when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
+  when (val connectionResult = getConnectionToRemotePort(hostAddress, {})) {
     is EelResult.Error -> errorHandler(connectionResult.error)
     is EelResult.Ok -> closeWithExceptionHandling({ action(connectionResult.value) }, { connectionResult.value.close() })
   }
@@ -379,7 +399,7 @@ suspend fun <T> EelTunnelsApi.withAcceptorForRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(EelTunnelsApi.ConnectionAcceptor) -> T,
 ): T =
-  when (val connectionResult = getAcceptorForRemotePort(hostAddress)) {
+  when (val connectionResult = getAcceptorForRemotePort(hostAddress, {})) {
     is EelResult.Error -> errorHandler(connectionResult.error)
     is EelResult.Ok -> closeWithExceptionHandling({ action(connectionResult.value) }, { connectionResult.value.close() })
   }

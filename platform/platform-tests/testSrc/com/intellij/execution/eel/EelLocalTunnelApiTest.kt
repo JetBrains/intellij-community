@@ -4,15 +4,23 @@ package com.intellij.execution.eel
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.network.NetworkConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
+import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.not
+import org.hamcrest.MatcherAssert.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.ByteBuffer
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
@@ -45,13 +53,7 @@ class EelLocalTunnelApiTest {
 
   @Test
   fun testClientSuccessConnection(): Unit = timeoutRunBlocking(1.minutes) {
-    val helper = localEel.exec.execute(serverExecutor.createBuilderToExecuteMain().build()).getOrThrow()
-    try {
-      val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
-      val connection = localEel.tunnels.getConnectionToRemotePort()
-        .port(port.toUShort())
-        .preferV4()
-        .getOrThrow()
+    withServer { connection, _ ->
       val buffer = ByteBuffer.allocate(4096)
       connection.receiveChannel.receive(buffer).getOrThrow()
       Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer.flip()))
@@ -59,8 +61,20 @@ class EelLocalTunnelApiTest {
       //      Helper closes the stream, so does the channel
       Assertions.assertEquals(ReadResult.EOF, connection.receiveChannel.receive(ByteBuffer.allocate(1)).getOrThrow())
     }
-    finally {
-      helper.kill()
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun testClientLingerZero(setLingerZero: Boolean) = timeoutRunBlocking(1.minutes) {
+    withServer { connection, helper ->
+      if (setLingerZero) {
+        connection.configureSocket { setLinger(0.seconds) }
+      }
+      connection.close()
+      val result = helper.awaitProcessResult()
+      val hasReset = containsString("reset")
+      assertThat("With linger 0 there must be reset. Without linger no.",
+                 result.stderr.decodeToString(), if (setLingerZero) hasReset else not(hasReset))
     }
   }
 
@@ -78,6 +92,24 @@ class EelLocalTunnelApiTest {
     }
     finally {
       conn.close()
+    }
+  }
+
+  private suspend fun withServer(block: suspend CoroutineScope.(EelTunnelsApi.Connection, EelProcess) -> Unit) {
+
+    val helper = localEel.exec.execute(serverExecutor.createBuilderToExecuteMain().build()).getOrThrow()
+    try {
+      val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
+      val connection = localEel.tunnels.getConnectionToRemotePort()
+        .port(port.toUShort())
+        .preferV4()
+        .getOrThrow()
+      coroutineScope {
+        block(connection, helper)
+      }
+    }
+    finally {
+      helper.kill()
     }
   }
 }

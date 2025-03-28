@@ -128,7 +128,7 @@ object EelTunnelsApiHelpers {
           port = port,
           protocolPreference = protocolPreference,
           timeout = timeout,
-        )
+        ), {}
       )
   }
 
@@ -190,7 +190,7 @@ object EelTunnelsApiHelpers {
           port = port,
           protocolPreference = protocolPreference,
           timeout = timeout,
-        )
+        ),{}
       )
   }
 }
