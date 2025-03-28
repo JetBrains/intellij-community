@@ -443,17 +443,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     throw new UnsupportedOperationException();
   }
 
-  protected void registerExternalAnnotations(@NotNull Object key, @NotNull PsiFile annotationsFile) {
-    myExternalAnnotationsCache.compute(key, (k, v) -> {
-      if (v == null || v == NULL_LIST) {
-        return new SmartList<>(annotationsFile);
-      }
-
-      v.add(annotationsFile);
-      return v;
-    });
-  }
-
   public static final class AnnotationData {
     private final @NotNull String annotationClassFqName;
     private final @NotNull String annotationParameters;
