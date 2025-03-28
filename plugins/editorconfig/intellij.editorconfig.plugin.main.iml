@@ -4,6 +4,6 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.editorconfig" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.editorconfig.plugin" scope="RUNTIME" />
   </component>
 </module>

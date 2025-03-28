@@ -1,8 +1,8 @@
-- name: lib/editorconfig.jar
+- name: lib/editorconfig-plugin.jar
   projectLibraries:
   - name: ec4j-core
     files:
     - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar
-    reason: <- intellij.editorconfig
+    reason: <- intellij.editorconfig.plugin
   modules:
-  - name: intellij.editorconfig
+  - name: intellij.editorconfig.plugin
