@@ -141,9 +141,10 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       }
     }
 
+    KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(removedClass);
+
     if (!removedClass.isInnerClass()) {
       // this will affect all imports of this class in kotlin sources
-      KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(removedClass);
       if ((container == null /*is non-kotlin node*/ && !removedClass.isPrivate()) || (container instanceof KmClass && !KJvmUtils.isPrivate(((KmClass)container)))) {
         debug("Affecting lookup usages for removed class ", removedClass.getName());
         affectClassLookupUsages(context, removedClass);
@@ -151,14 +152,19 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
     }
 
     if (!removedClass.isPrivate()) {
+      boolean isDeclarationImportable = container instanceof KmPackage || container instanceof KmClass && Attributes.getKind((KmClass)container) == ClassKind.COMPANION_OBJECT;
       for (KmFunction kmFunction : filter(KJvmUtils.allKmFunctions(removedClass), f -> !KJvmUtils.isPrivate(f))) {
-        debug("Function in a removed class was inlineable, affecting method usages ", kmFunction.getName());
-        affectMemberLookupUsages(context, removedClass, kmFunction.getName(), present);
+        if (isDeclarationImportable || Attributes.isInline(kmFunction)) {
+          debug("Function in a removed class was either importable (a top-level one or a companion object member) or inlineable, affecting method usages ", kmFunction.getName());
+          affectMemberLookupUsages(context, removedClass, kmFunction.getName(), present);
+        }
       }
 
       for (KmProperty prop : filter(KJvmUtils.allKmProperties(removedClass), p -> !KJvmUtils.isPrivate(p))) {
-        debug("Property in a removed class was a constant or had inlineable accessors, affecting property usages ", prop.getName());
-        affectMemberLookupUsages(context, removedClass, prop.getName(), present);
+        if (isDeclarationImportable || KJvmUtils.isInlinable(prop)) {
+          debug("Property in a removed class was a constant or had inlineable accessors or was importable (a top-level one or a companion object member), affecting property usages ", prop.getName());
+          affectMemberLookupUsages(context, removedClass, prop.getName(), present);
+        }
       }
     }
     return true;
@@ -276,12 +282,14 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         affectClassLookupUsages(context, changedClass);
       }
 
+      KmDeclarationContainer container = metaChange.getPast().getDeclarationContainer();
+      boolean isDeclarationImportable = container instanceof KmPackage || container instanceof KmClass && Attributes.getKind((KmClass)container) == ClassKind.COMPANION_OBJECT;
       for (KmFunction removedFunction : metaDiff.functions().removed()) {
         if (KJvmUtils.isPrivate(removedFunction)) {
           continue;
         }
-        if (Attributes.isInline(removedFunction)) {
-          debug("Removed function was inlineable, affecting function usages ", removedFunction.getName());
+        if (isDeclarationImportable || Attributes.isInline(removedFunction)) {
+          debug("Removed function was either importable (a top-level one or a companion object member) or inlineable, affecting function usages ", removedFunction.getName());
           affectMemberLookupUsages(context, changedClass, removedFunction.getName(), present);
         }
 
