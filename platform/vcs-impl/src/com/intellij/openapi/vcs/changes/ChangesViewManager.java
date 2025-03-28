@@ -23,6 +23,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -62,10 +63,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.commit.ChangesViewCommitPanel;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import com.intellij.vcs.commit.CommitModeManager;
-import com.intellij.vcs.commit.FixedSizeScrollPanel;
+import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
@@ -434,6 +432,15 @@ public class ChangesViewManager implements ChangesViewEx,
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
       registerShortcuts(this);
 
+      ApplicationManager.getApplication().getMessageBus().connect(project)
+        .subscribe(AdvancedSettingsChangeListener.TOPIC, new  AdvancedSettingsChangeListener() {
+          @Override
+          public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
+            if (CommitMode.NonModalCommitMode.COMMIT_TOOL_WINDOW_SETTINGS_KEY.equals(id) && oldValue != newValue) {
+              configureToolbars();
+            }
+          }
+        });
       configureToolbars();
 
       myCommitPanelSplitter = new ChangesViewCommitPanelSplitter(myProject);

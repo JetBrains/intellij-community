@@ -2274,6 +2274,8 @@ f:com.intellij.vcs.commit.CommitMode$ModalCommitMode
 - useCommitToolWindow():Z
 f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode
 - com.intellij.vcs.commit.CommitMode
+- sf:COMMIT_TOOL_WINDOW_SETTINGS_KEY:java.lang.String
+- sf:Companion:com.intellij.vcs.commit.CommitMode$NonModalCommitMode$Companion
 - <init>(Z):V
 - f:component1():Z
 - f:copy(Z):com.intellij.vcs.commit.CommitMode$NonModalCommitMode
@@ -2282,6 +2284,7 @@ f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode
 - hashCode():I
 - f:isToggleMode():Z
 - useCommitToolWindow():Z
+f:com.intellij.vcs.commit.CommitMode$NonModalCommitMode$Companion
 f:com.intellij.vcs.commit.CommitMode$PendingCommitMode
 - com.intellij.vcs.commit.CommitMode
 - sf:INSTANCE:com.intellij.vcs.commit.CommitMode$PendingCommitMode
