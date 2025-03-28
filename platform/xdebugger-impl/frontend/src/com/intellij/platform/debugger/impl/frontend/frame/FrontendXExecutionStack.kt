@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.childCoroutineScope
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
@@ -25,15 +26,15 @@ internal class FrontendXExecutionStack(
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
-    cs.launch {
+    container.childCoroutineScope(cs, "FrontendXExecutionStack#computeStackFrames").launch {
+      val stackFramesCs = this
       XExecutionStackApi.getInstance().computeStackFrames(id, firstFrameIndex).collect { event ->
         when (event) {
           is XStackFramesEvent.ErrorOccurred -> {
             container.errorOccurred(event.errorMessage)
           }
           is XStackFramesEvent.XNewStackFrames -> {
-            // TODO Create separate stack frame scope?
-            val feFrames = event.frames.map { FrontendXStackFrame(it, project, cs) }
+            val feFrames = event.frames.map { FrontendXStackFrame(it, project, stackFramesCs) }
             container.addStackFrames(feFrames, event.last)
           }
         }
