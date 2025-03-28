@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
-import com.google.gson.GsonBuilder
 import com.intellij.build.SyncViewManager
 import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyNodeDeserializer
-import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyReportTask
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -17,8 +15,10 @@ import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.platform.eel.fs.createTemporaryFile
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.util.CachedValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -27,14 +27,14 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.execution.loadTaskInitScript
+import org.jetbrains.plugins.gradle.service.execution.loadCollectDependencyInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
-import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readBytes
 
 private typealias DependencyNodes = List<DependencyScopeNode>
@@ -66,19 +66,15 @@ class GradleDependencyNodeIndex(
   }
 
   private suspend fun collectDependencies(moduleData: GradleModuleData): DependencyNodes {
-    val outputFile = FileUtil.createTempFile("dependencies", ".json", true).toPath()
+    val eel = project.getEelDescriptor().upgrade()
+    val taskOutputEelPath = eel.fs.createTemporaryFile()
+      .prefix("$TASK_NAME-output")
+      .getOrThrow()
+    val taskOutputPath = taskOutputEelPath.asNioPath()
     try {
-      val taskConfiguration = """
-          |outputFile = project.file("${outputFile.toCanonicalPath()}")
-          |configurations = []
-        """.trimMargin()
-
       val future = CompletableFuture<Boolean>()
-      val taskName = GradleDependencyReportTask::class.java.getSimpleName()
-      val taskType = GradleDependencyReportTask::class.java.getName()
-      val taskPath = moduleData.gradleIdentityPath.removeSuffix(":") + ":" + taskName
-      val tools = setOf(GradleDependencyReportTask::class.java, GsonBuilder::class.java)
-      val initScript = loadTaskInitScript(moduleData.gradleIdentityPath, taskName, taskType, tools, taskConfiguration)
+      val taskPath = moduleData.gradleIdentityPath.removeSuffix(":") + ":" + TASK_NAME
+      val initScript = loadCollectDependencyInitScript(TASK_NAME, taskOutputEelPath)
       ExternalSystemUtil.runTask(
         TaskExecutionSpec.create()
           .withProject(project)
@@ -102,15 +98,17 @@ class GradleDependencyNodeIndex(
         return emptyList()
       }
 
-      val json = outputFile.readBytes()
+      val json = taskOutputPath.readBytes()
       return GradleDependencyNodeDeserializer.fromJson(json)
     }
     finally {
-      Files.delete(outputFile)
+      taskOutputPath.deleteIfExists()
     }
   }
 
   companion object {
+
+    private const val TASK_NAME = "ijCollectDependencies"
 
     private val DEPENDENCY_NODE_KEY = Key.create<CachedValue<DependencyNodeCache>>("GradleDependencyNodeIndex")
 

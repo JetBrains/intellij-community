@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.util.collectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.DomainObjectCollection;
+import org.gradle.api.PolymorphicDomainObjectContainer;
 
 public final class GradleCollectionUtil {
 
@@ -13,5 +14,18 @@ public final class GradleCollectionUtil {
       return;
     }
     collection.all(action);
+  }
+
+  public static <T, U extends T> void register(
+    PolymorphicDomainObjectContainer<T> collection,
+    String name,
+    Class<U> type,
+    Action<? super U> action
+  ) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
+      collection.register(name, type, action);
+      return;
+    }
+    collection.create(name, type, action);
   }
 }

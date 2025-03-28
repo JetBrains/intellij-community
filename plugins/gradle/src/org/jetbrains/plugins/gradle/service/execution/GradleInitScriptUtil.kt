@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.google.gson.GsonBuilder
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
 import com.intellij.openapi.application.PathManager
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import groovy.lang.MissingMethodException
 import org.gradle.api.invocation.Gradle
@@ -119,6 +121,22 @@ fun loadLegacyDownloadArtifactInitScript(
     "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),
     "GRADLE_PROJECT_PATH" to externalProjectPath.toGroovyStringLiteral(),
   ))
+}
+
+@ApiStatus.Internal
+fun loadCollectDependencyInitScript(
+  taskName: String,
+  outputFile: EelPath,
+): String {
+  return joinInitScripts(
+    loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES + setOf(
+      GsonBuilder::class.java // required by GradleDependencyReportGenerator
+    )),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/dependencyAnalyser/DependencyAnalyserInit.gradle", mapOf(
+      "TASK_NAME" to taskName.toGroovyStringLiteral(),
+      "OUTPUT_PATH" to outputFile.toString().toGroovyStringLiteral(),
+    ))
+  )
 }
 
 @ApiStatus.Internal

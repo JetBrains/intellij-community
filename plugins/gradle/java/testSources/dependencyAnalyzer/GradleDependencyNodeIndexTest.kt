@@ -4,12 +4,14 @@ package org.jetbrains.plugins.gradle.dependencyAnalyzer
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyNodeIndex
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatIsolatedProjectsIsSupported
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {
@@ -25,6 +27,13 @@ class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {
   fun `test collecting dependency nodes with configuration cache`(gradleVersion: GradleVersion) {
     assumeThatConfigurationCacheIsSupported(gradleVersion)
     testCollectingDependencyNodes(gradleVersion, "org.gradle.configuration-cache=true")
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test collecting dependency nodes with isolated projects`(gradleVersion: GradleVersion) {
+    assumeThatIsolatedProjectsIsSupported(gradleVersion)
+    testCollectingDependencyNodes(gradleVersion, "org.gradle.unsafe.isolated-projects=true")
   }
 
   private fun testCollectingDependencyNodes(gradleVersion: GradleVersion, gradleProperties: String) {
@@ -55,7 +64,14 @@ class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {
 
         assertSyncViewTree {
           assertNode("successful") {
-            assertNode(":GradleDependencyReportTask")
+            assertNode(":ijCollectDependencies")
+          }
+        }
+        assertSyncViewNode("successful") { consoleText ->
+          if ("0 problems were found storing the configuration cache" !in consoleText) {
+            Assertions.assertThat(consoleText)
+              .doesNotContain("problem was found storing the configuration cache")
+              .doesNotContain("problems were found storing the configuration cache")
           }
         }
 
