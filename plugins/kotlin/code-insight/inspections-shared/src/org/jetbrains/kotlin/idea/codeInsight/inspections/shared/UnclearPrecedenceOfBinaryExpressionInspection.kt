@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -161,7 +162,7 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
         fun KtExpression.flattenParentheses(): KtExpression? =
             generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.firstOrNull { it !is KtParenthesizedExpression }
 
-        val childToUnclearPrecedenceParentsMapping = listOf(
+        val childToUnclearPrecedenceParentsMapping: List<Pair<Precedence, List<IElementType>>> = listOf(
             Precedence.ELVIS to listOf(Precedence.EQUALITY, Precedence.COMPARISON, Precedence.IN_OR_IS),
             Precedence.SIMPLE_NAME to listOf(Precedence.ELVIS),
             Precedence.ADDITIVE to listOf(Precedence.ELVIS),
@@ -183,12 +184,18 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             if (isRecommendedToPutParentheses(unified)) {
                 return true
             }
+            if (isWhenGuardWithOrSpecialCase(unified)) return true
             if (reportEvenObviousCases) {
                 val parentToken = unified.expression.parent?.toUnified()?.operation?.getReferencedNameElementType()
                     ?: return false
                 return unified.operation.getReferencedNameElementType() != parentToken
             }
             return false
+        }
+
+        private fun isWhenGuardWithOrSpecialCase(unifiedBinaryExpression: UnifiedBinaryExpression): Boolean {
+            val expression = unifiedBinaryExpression.expression as? KtBinaryExpression ?: return false
+            return expression.parent is KtWhenEntryGuard && expression.operationToken == KtTokens.OROR
         }
     }
 }

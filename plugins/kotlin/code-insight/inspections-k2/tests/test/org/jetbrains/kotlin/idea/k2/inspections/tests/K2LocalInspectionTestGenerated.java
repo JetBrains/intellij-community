@@ -13013,29 +13013,34 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableDisabledFeature.kt");
         }
 
-        @TestMetadata("inapplicableNoGuards.kt")
-        public void testInapplicableNoGuards() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableNoGuards.kt");
-        }
-
         @TestMetadata("inapplicableNoWhenGuardsFeature.kt")
         public void testInapplicableNoWhenGuardsFeature() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableNoWhenGuardsFeature.kt");
         }
 
-        @TestMetadata("inapplicableNotOr.kt")
-        public void testInapplicableNotOr() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableNotOr.kt");
-        }
-
-        @TestMetadata("inapplicableOrNotOnTop.kt")
-        public void testInapplicableOrNotOnTop() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableOrNotOnTop.kt");
-        }
-
         @TestMetadata("inapplicableParenthesized.kt")
         public void testInapplicableParenthesized() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableParenthesized.kt");
+        }
+
+        @TestMetadata("multipleParenthesesWithGuard.kt")
+        public void testMultipleParenthesesWithGuard() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/multipleParenthesesWithGuard.kt");
+        }
+
+        @TestMetadata("noGuards.kt")
+        public void testNoGuards() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/noGuards.kt");
+        }
+
+        @TestMetadata("notOr.kt")
+        public void testNotOr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/notOr.kt");
+        }
+
+        @TestMetadata("orNotOnTop.kt")
+        public void testOrNotOnTop() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/orNotOnTop.kt");
         }
 
         @TestMetadata("singleBranch.kt")
