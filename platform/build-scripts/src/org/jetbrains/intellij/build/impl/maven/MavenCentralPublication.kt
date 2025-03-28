@@ -46,7 +46,7 @@ import kotlin.time.Duration.Companion.minutes
 class MavenCentralPublication(
   private val context: BuildContext,
   private val workDir: Path,
-  private val type: PublicationType = PublicationType.AUTOMATIC,
+  private val type: PublishingType = PublishingType.AUTOMATIC,
   private val userName: String? = null,
   private val token: String? = null,
   private val dryRun: Boolean = context.options.isInDevelopmentMode,
@@ -62,7 +62,7 @@ class MavenCentralPublication(
     val JSON = Json { ignoreUnknownKeys = true }
   }
 
-  enum class PublicationType {
+  enum class PublishingType {
     USER_MANAGED,
     AUTOMATIC,
   }
@@ -224,7 +224,7 @@ class MavenCentralPublication(
         return@use null
       }
       val deploymentName = "${coordinates.artifactId}-${coordinates.version}"
-      val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publicationType=$type"
+      val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publishingType=$type"
       callSonatype(uri, builder = {
         it.post(
           MultipartBody.Builder()
@@ -259,8 +259,8 @@ class MavenCentralPublication(
           })
           when {
             deploymentState == DeploymentState.FAILED -> error("$deploymentId status is $deploymentState")
-            deploymentState == DeploymentState.VALIDATED && type == PublicationType.USER_MANAGED ||
-            deploymentState == DeploymentState.PUBLISHED && type == PublicationType.AUTOMATIC -> break
+            deploymentState == DeploymentState.VALIDATED && type == PublishingType.USER_MANAGED ||
+            deploymentState == DeploymentState.PUBLISHED && type == PublishingType.AUTOMATIC -> break
             else -> delay(TimeUnit.SECONDS.toMillis(15))
           }
         }
