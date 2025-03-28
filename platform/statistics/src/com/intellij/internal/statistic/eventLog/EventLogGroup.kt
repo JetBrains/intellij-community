@@ -30,8 +30,7 @@ open class EventLogGroup(@NonNls @EventIdName val id: String,
   @JvmOverloads
   constructor(@NonNls @EventIdName id: String,
               version: Int,
-              recorder: String = "FUS",
-              groupData: List<Pair<EventField<*>, FeatureUsageData.() -> Unit>> = emptyList()) : this(id, version, recorder, null, groupData)
+              recorder: String = "FUS") : this(id, version, recorder, null, emptyList())
 
   // for binary compatibility
   constructor(@NonNls @EventIdName id: String,
