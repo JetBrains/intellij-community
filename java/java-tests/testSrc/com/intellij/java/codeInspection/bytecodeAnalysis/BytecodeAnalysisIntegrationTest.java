@@ -295,7 +295,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           .joining("", "<root>\n", "</root>");
         PsiDirectory directory = getPsiManager().findDirectory(root);
         WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(directory, packageName);
+          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(null, directory, packageName);
           if (xml == null) throw new IllegalStateException("Unable to get XML for package " + packageName + "; root = " + root);
           xml.getVirtualFile().refresh(false, false);
           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());

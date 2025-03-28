@@ -125,9 +125,10 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final PsiFile file = myFixture.getFile();
     final Editor editor = myFixture.getEditor();
 
-    myFixture.launchAction(getAnnotateAction("NotNull"));
+    myFixture.launchAction(getAnnotateAction("NotNull").asIntention());
 
-    FileDocumentManager.getInstance().saveAllDocuments();
+    // Two ModChooseActions -- first for annotation name, second for annotation root; hence two times async task completion 
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
     final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
@@ -153,7 +154,10 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotAvailable("NotNull");
 
     assertFalse(((PsiMethod)getOwner()).isDeprecated());
-    myFixture.launchAction(getAnnotateAction("Deprecated"));
+    myFixture.launchAction(getAnnotateAction("Deprecated").asIntention());
+    // Two ModChooseActions -- first for annotation name, second for annotation root; hence two times async task completion 
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     assertTrue(((PsiMethod)getOwner()).isDeprecated());
   }
 

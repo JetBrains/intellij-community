@@ -16,7 +16,7 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
@@ -61,7 +61,7 @@ public final class AssignmentToNullInspection extends BaseInspection {
     if (JavaPsiFacade.getInstance(variable.getProject()).findClass(annotation, variable.getResolveScope()) == null) {
       return null;
     }
-    return new AddAnnotationPsiFix(annotation, variable);
+    return LocalQuickFix.from(new AddAnnotationModCommandAction(annotation, variable));
   }
 
   @Override

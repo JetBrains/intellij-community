@@ -5,7 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -91,8 +91,8 @@ public final class ReturnNullInspection extends BaseInspection {
     }
 
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(elt.getProject());
-    return new AddAnnotationPsiFix(manager.getDefaultNullable(), method,
-                                   ArrayUtilRt.toStringArray(manager.getNotNulls()));
+    return LocalQuickFix.from(new AddAnnotationModCommandAction(manager.getDefaultNullable(), method,
+                                                                ArrayUtilRt.toStringArray(manager.getNotNulls())));
   }
 
   @Override

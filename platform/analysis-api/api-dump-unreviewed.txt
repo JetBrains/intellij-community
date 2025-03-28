@@ -2932,6 +2932,7 @@ a:com.intellij.modcommand.PsiBasedModCommandAction
 - f:getPresentation(com.intellij.modcommand.ActionContext):com.intellij.modcommand.Presentation
 - p:getPresentation(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.Presentation
 - p:isElementApplicable(com.intellij.psi.PsiElement,com.intellij.modcommand.ActionContext):Z
+- p:isFileAllowed(com.intellij.psi.PsiFile):Z
 - f:perform(com.intellij.modcommand.ActionContext):com.intellij.modcommand.ModCommand
 - pa:perform(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
 - p:stopSearchAt(com.intellij.psi.PsiElement,com.intellij.modcommand.ActionContext):Z
