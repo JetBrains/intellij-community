@@ -1317,7 +1317,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           if (session != null) {
             createdIndicators.add(session.getProgressIndicator());
           }
-          result.add(fileEditor+" submitted="+submitted);
+          result.add("submit fileEditor: "+fileEditor+" submitted="+submitted);
         }
       }
     }
@@ -1533,8 +1533,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       oldProgress.cancel(new Throwable(), "Old indicator: " + System.identityHashCode(oldProgress));
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
-      PassExecutorService.log(progress, null, "createUpdateProgress(" + fileEditor + ");" +
-           (oldProgress == null ? "" : "; oldProgress=" + System.identityHashCode(oldProgress) + (oldProgress.isCanceled() ? "X" : "V")));
+      PassExecutorService.log(progress, null, "createUpdateProgress(" + fileEditor + "); oldProgress=" + oldProgress);
     }
     myDaemonListenerPublisher.daemonStarting(List.of(fileEditor));
     return progress;

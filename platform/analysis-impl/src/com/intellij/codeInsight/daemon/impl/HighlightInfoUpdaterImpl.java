@@ -264,7 +264,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator original = ProgressWrapper.unwrap(indicator);
     return "; progress=" + (indicator == original ? "" : "wrapped:")+
-           (indicator == null ? "null" + "\n" + ExceptionUtil.getThrowableText(new Throwable()) :System.identityHashCode(original) + (indicator.isCanceled() ? "X" : "V"));
+           (indicator == null ? "null" + "\n" + ExceptionUtil.getThrowableText(new Throwable()) : indicator);
   }
 
   // remove `psis` from `data` in one batch for all infos in the list because there can be a lot of them
