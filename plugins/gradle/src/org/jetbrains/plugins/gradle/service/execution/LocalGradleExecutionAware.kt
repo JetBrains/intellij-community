@@ -3,8 +3,6 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
-import com.intellij.execution.wsl.WSLUtil
-import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -25,8 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
@@ -148,8 +145,8 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       LOG.warn("No Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    checkForWslJdkOnWindows(homePath.toCanonicalPath(), projectSettings.externalProjectPath, task)
-    if (!JdkUtil.checkForJdk(homePath, project.isWindowsJDKRequired())) {
+    checkForWslJdkOnWindows(project, homePath, projectSettings.externalProjectPath, task)
+    if (!JdkUtil.checkForJdk(homePath)) {
       LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
@@ -159,18 +156,19 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     }
   }
 
-  private fun checkForWslJdkOnWindows(homePath: String, externalProjectPath: String, task: ExternalSystemTask) {
-    if (WSLUtil.isSystemCompatible() &&
-        WslPath.isWslUncPath(homePath) &&
-        !WslPath.isWslUncPath(externalProjectPath)) {
+  private fun checkForWslJdkOnWindows(project: Project, homePath: Path, externalProjectPath: String, task: ExternalSystemTask) {
+    if (!JdkUtil.isCompatible(homePath, project)) {
       val isResolveProjectTask = task is ExternalSystemResolveProjectTask
       val message = GradleBundle.message("gradle.incorrect.jvm.wslJdk.on.win.issue.description")
-      throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))
+      throw BuildIssueException(
+        IncorrectGradleJdkIssue(
+          externalProjectPath,
+          homePath.toCanonicalPath(),
+          message,
+          isResolveProjectTask
+        )
+      )
     }
-  }
-
-  private fun Project.isWindowsJDKRequired(): Boolean {
-    return EelPath.OS.WINDOWS == getEelDescriptor().operatingSystem
   }
 
   private class GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : GradleServerConfigurationProvider {
