@@ -27,6 +27,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
+import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
@@ -122,6 +123,10 @@ class WebSymbolsHighlightingAnnotator : Annotator {
           .filter { !it.extension }
           .mapNotNull { symbol ->
             WebSymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
+              ?.let { return@mapNotNull it }
+
+            symbol.properties[WebSymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]?.asSafely<String>()
+              ?.let { TextAttributesKey.find(it) }
               ?.let { return@mapNotNull it }
 
             if (symbol.qualifiedKind != parentKind)
