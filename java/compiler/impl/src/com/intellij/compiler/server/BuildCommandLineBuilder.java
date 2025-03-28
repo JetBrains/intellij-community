@@ -36,11 +36,10 @@ interface BuildCommandLineBuilder {
   GeneralCommandLine buildCommandLine() throws ExecutionException;
 
   /**
-   * Uses `nice` command to run process with a lower priority.
+   * Uses {@code nice} command to run the build process with a lower priority.
+   * Doesn't work on Windows because {@code start /low} does not pass the exit code.
    *
-   * Does not work on Windows since start /low does not pass exit code on Windows, see ExecUtil#setupLowPriorityExecution documentation
-   *
-   * @param priority Unix process priority (-20 <= priority <= 19), see https://en.wikipedia.org/wiki/Nice_(Unix)
+   * @param priority Unix process priority ({@code [0..19]}) (see the <a href="https://en.wikipedia.org/wiki/Nice_(Unix)">Wikipedia article</a>)
    */
   void setUnixProcessPriority(int priority);
 

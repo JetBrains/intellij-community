@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
@@ -92,8 +92,8 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   }
 
   static void setUnixProcessPriority(GeneralCommandLine commandLine, int priority) {
-    if (priority < -20 || priority > 19) {
-      throw new IllegalArgumentException("priority must be greater or equal to -20 and less than 20: " + priority);
+    if (priority < 0 || priority > 19) {
+      throw new IllegalArgumentException("priority must be in the [0..19] range: " + priority);
     }
 
     String executablePath = commandLine.getExePath();
