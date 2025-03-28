@@ -8820,6 +8820,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableCurlyBraces.kt");
         }
 
+        @TestMetadata("notApplicableNotReplaceableEntry.kt")
+        public void testNotApplicableNotReplaceableEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableNotReplaceableEntry.kt");
+        }
+
         @TestMetadata("notApplicableSlashEscapedAfterDollar.kt")
         public void testNotApplicableSlashEscapedAfterDollar() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableSlashEscapedAfterDollar.kt");
@@ -8833,6 +8838,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("notApplicableUnderscoredIdentifier.kt")
         public void testNotApplicableUnderscoredIdentifier() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/notApplicableUnderscoredIdentifier.kt");
+        }
+
+        @TestMetadata("oneReplaceableEntryOutOfTwo.kt")
+        public void testOneReplaceableEntryOutOfTwo() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/oneReplaceableEntryOutOfTwo.kt");
         }
 
         @TestMetadata("prefix4Safe.kt")

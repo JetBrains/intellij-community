@@ -250,8 +250,10 @@ fun KtStringTemplateEntry.isEscapedDollar(): Boolean = when (this) {
     else -> false
 }
 
-fun KtStringTemplateExpression.findTextRangesInParentForEscapedDollars(): List<TextRange> {
-    return entries.filter { it.isEscapedDollar() }.map { it.textRangeInParent }
+fun KtStringTemplateExpression.findTextRangesInParentForEscapedDollars(includeUnsafe: Boolean): List<TextRange> {
+    return entries.filter { entry ->
+        entry.isEscapedDollar() && (includeUnsafe || entry.isSafeToReplaceWithDollar(entryPrefixLength))
+    }.map { it.textRangeInParent }
 }
 
 /**

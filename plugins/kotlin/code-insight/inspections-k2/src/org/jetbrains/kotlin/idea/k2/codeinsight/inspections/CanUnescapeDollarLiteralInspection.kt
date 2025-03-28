@@ -69,7 +69,7 @@ class CanUnescapeDollarLiteralInspection :
     }
 
     override fun getApplicableRanges(element: KtStringTemplateExpression): List<TextRange> {
-        return element.findTextRangesInParentForEscapedDollars()
+        return element.findTextRangesInParentForEscapedDollars(includeUnsafe = false)
     }
 
     override fun buildVisitor(
