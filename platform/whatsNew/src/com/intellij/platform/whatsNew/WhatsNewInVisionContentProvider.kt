@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalSerializationApi::class)
 
 package com.intellij.platform.whatsNew
@@ -100,7 +100,7 @@ class ResourceContentSource(private val classLoader: ClassLoader, private val re
   override suspend fun openStream(): InputStream? = withContext(Dispatchers.IO) {
     classLoader.getResourceAsStream(resourceName)
   }
-  override suspend fun checkAvailability() = withContext(Dispatchers.IO) {
+  override suspend fun checkAvailability(): Boolean = withContext(Dispatchers.IO) {
     classLoader.getResource(resourceName) != null
   }
 }

@@ -23,18 +23,11 @@ import org.jetbrains.concurrency.await
 
 internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAware {
   companion object {
-    private val LOG = logger<WhatsNewAction>()
     internal const val PLACE = "WhatsNew"
-    private const val REACTIONS_STATE = "whatsnew.reactions.state"
-    private val reactionChecker = FUSReactionChecker(REACTIONS_STATE)
-
-    fun refresh() {
-      reactionChecker.clearLikenessState()
-      if (LOG.isTraceEnabled) {
-        LOG.trace("EapWhatsNew reaction refresh")
-      }
-    }
   }
+
+  private val REACTIONS_STATE = "whatsnew.reactions.state"
+  private val reactionChecker = FUSReactionChecker(REACTIONS_STATE)
 
   private val hasWhatsNewContent by lazy {
     appScope.async {
@@ -89,3 +82,5 @@ private fun Project.getScope() = this.service<ScopeProvider>().scope
 private class AppScopeProvider(val scope: CoroutineScope)
 private val appScope: CoroutineScope
   get() = service<AppScopeProvider>().scope
+
+private val LOG = logger<WhatsNewAction>()
