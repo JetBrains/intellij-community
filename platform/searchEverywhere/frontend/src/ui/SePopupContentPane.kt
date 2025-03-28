@@ -9,9 +9,11 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
-import com.intellij.platform.searchEverywhere.SeTextItemPresentation
+import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
+import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
@@ -54,12 +56,13 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     layout = GridLayout()
 
     val actionListCellRenderer = SeActionItemPresentationRenderer(resultList).get { textField.text ?: "" }
-    val fileListCellRenderer = SeTargetItemPresentationRenderer().get()
+    val targetListCellRenderer = SeTargetItemPresentationRenderer().get()
+    val textSearchItemListCellRenderer = SeTextSearchItemPresentationRenderer().get()
     val defaultRenderer = listCellRenderer<SeResultListRow> {
       when (val value = value) {
         is SeResultListItemRow -> {
           when (val presentation = value.item.presentation) {
-            is SeTextItemPresentation -> text(presentation.text)
+            is SeSimpleItemPresentation -> text(presentation.text)
             else ->  throw IllegalStateException("Item is not handled: $presentation")
           }
         }
@@ -72,7 +75,10 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
         actionListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       }
       else if (value is SeResultListItemRow && value.item.presentation is SeTargetItemPresentation) {
-        fileListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        targetListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      }
+      else if (value is SeResultListItemRow && value.item.presentation is SeTextSearchItemPresentation) {
+        textSearchItemListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       }
       else {
         defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)

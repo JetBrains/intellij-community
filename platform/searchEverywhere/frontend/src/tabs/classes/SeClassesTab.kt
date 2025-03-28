@@ -22,7 +22,7 @@ class SeClassesTab(private val delegate: SeTabDelegate) : SeTab {
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)
 
-  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState> = SeFilesFilterEditor()
+  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState>? = null
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)

@@ -14,5 +14,6 @@
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.actions.SeActionsProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.classes.SeClassesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.symbols.SeSymbolsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.text.SeTextItemsProviderFactory"/>
   </extensions>
 </idea-plugin>
