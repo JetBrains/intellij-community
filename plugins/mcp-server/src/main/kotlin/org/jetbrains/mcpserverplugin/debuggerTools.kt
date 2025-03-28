@@ -13,6 +13,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
+import org.jetbrains.mcpserverplugin.general.resolveRel
 
 @Serializable
 data class ToggleBreakpointArgs(val filePathInProject: String, val line: Int)
