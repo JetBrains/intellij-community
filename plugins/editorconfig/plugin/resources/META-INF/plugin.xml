@@ -1,0 +1,28 @@
+<!-- Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin allow-bundled-update="true">
+  <id>org.editorconfig.editorconfigjetbrains</id>
+  <name>EditorConfig</name>
+  <category>IDE Settings</category>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    <p>Handles properties in <i>.editorconfig</i> files and applies them to all supported languages in all JetBrains IDEs.
+
+    <h2>Features</h2>
+    <ul>
+      <li>Code assistance for all supported properties, standard and extended
+    </ul>
+    <h2>Getting started</h2>
+    <p>For more information,
+    check the documentation for <a href="https://editorconfig.org/">EditorConfig</a> files and your <a href="https://www.jetbrains.com/help/">IDE</a>.
+  ]]></description>
+
+  <!--
+    Without the following line, the error is triggered:
+    "org.editorconfig.editorconfigjetbrains: Invalid plugin descriptor 'plugin.xml'. Plugin has no dependencies."
+  -->
+  <depends>com.intellij.modules.lang</depends>
+  <content>
+    <module name="intellij.editorconfig.backend" loading="embedded"/>
+  </content>
+</idea-plugin>
