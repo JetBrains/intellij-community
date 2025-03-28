@@ -30,6 +30,7 @@ class McpToolManager {
             GetBreakpointsTool(),
             ReplaceTextByPathTool(),
             ListFilesInFolderTool(),
+            ListDirectoryTreeInFolderTool(),
             SearchInFilesContentTool(),
             RunConfigurationTool(),
             GetRunConfigurationsTool(),

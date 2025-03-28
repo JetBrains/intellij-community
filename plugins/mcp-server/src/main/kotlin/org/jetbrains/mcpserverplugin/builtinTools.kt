@@ -466,6 +466,93 @@ class ListFilesInFolderTool : AbstractMcpTool<ListFilesInFolderArgs>() {
 }
 
 @Serializable
+data class ListDirectoryTreeInFolderArgs(val pathInProject: String, val maxDepth: Int = 5)
+
+class ListDirectoryTreeInFolderTool : AbstractMcpTool<ListDirectoryTreeInFolderArgs>() {
+    override val name: String = "list_directory_tree_in_folder"
+    override val description: String = """
+        Provides a hierarchical tree view of the project directory structure starting from the specified folder.
+        Use this tool to efficiently explore complex project structures in a nested format.
+        Requires a pathInProject parameter (use "/" for project root).
+        Optionally accepts a maxDepth parameter (default: 5) to limit recursion depth.
+        Returns a JSON-formatted tree structure, where each entry contains:
+        - name: The name of the file or directory
+        - type: Either "file" or "directory"
+        - path: Full path relative to project root
+        - children: Array of child entries (for directories only)
+        Returns error if the specified path doesn't exist or is outside project scope.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: ListDirectoryTreeInFolderArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "can't find project dir")
+
+        return runReadAction {
+            try {
+                val targetDir = projectDir.resolveRel(args.pathInProject)
+
+                if (!targetDir.exists()) {
+                    return@runReadAction Response(error = "directory not found")
+                }
+
+                val entryTree = buildDirectoryTree(projectDir, targetDir, args.maxDepth)
+                val jsonTree = entryTreeToJson(entryTree)
+                Response(jsonTree)
+            } catch (e: Exception) {
+                Response(error = "Error creating directory tree: ${e.message}")
+            }
+        }
+    }
+
+    private data class Entry(
+        val name: String,
+        val type: String,
+        val path: String,
+        val children: MutableList<Entry> = mutableListOf()
+    )
+
+    private fun buildDirectoryTree(projectDir: Path, current: Path, maxDepth: Int, currentDepth: Int = 0): Entry {
+        val relativePath = projectDir.relativize(current).toString()
+        val type = if (current.isDirectory()) "directory" else "file"
+        val entry = Entry(name = current.name, type = type, path = relativePath)
+        if (current.isDirectory()) {
+            if (currentDepth >= maxDepth) return entry
+            current.listDirectoryEntries().forEach { childPath ->
+                entry.children.add(buildDirectoryTree(projectDir, childPath, maxDepth, currentDepth + 1))
+            }
+        }
+        return entry
+    }
+
+    private fun entryTreeToJson(entry: Entry): String {
+        val sb = StringBuilder()
+        sb.append("{")
+        sb.append("\"name\":\"${entry.name}\",")
+        sb.append("\"type\":\"${entry.type}\",")
+        sb.append("\"path\":\"${entry.path}\"")
+        if (entry.type == "directory") {
+            sb.append(",\"children\":[")
+            entry.children.forEachIndexed { index, child ->
+                if (index > 0) sb.append(",")
+                sb.append(entryTreeToJson(child))
+            }
+            sb.append("]")
+        }
+        sb.append("}")
+        return sb.toString()
+    }
+
+    private fun escapeJson(str: String): String {
+        return str.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\b", "\\b")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+    }
+}
+
+@Serializable
 data class SearchInFilesArgs(val searchText: String)
 
 class SearchInFilesContentTool : AbstractMcpTool<SearchInFilesArgs>() {
