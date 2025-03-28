@@ -45,6 +45,7 @@ internal class FrontendXDebuggerSession private constructor(
   override val project: Project,
   scope: CoroutineScope,
   sessionDto: XDebugSessionDto,
+  override val processHandler: ProcessHandler,
   override val consoleView: ConsoleView?,
 ) : XDebugSessionProxy {
   private val cs = scope.childScope("Session ${sessionDto.id}")
@@ -126,7 +127,6 @@ internal class FrontendXDebuggerSession private constructor(
     get() = emptyList() // TODO
   override val extraStopActions: List<AnAction>
     get() = emptyList() // TODO
-  override val processHandler: ProcessHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
   override val coroutineScope: CoroutineScope = cs
   override val currentStateMessage: String
     get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
@@ -307,8 +307,9 @@ internal class FrontendXDebuggerSession private constructor(
       scope: CoroutineScope,
       sessionDto: XDebugSessionDto,
     ): FrontendXDebuggerSession {
-      val consoleView = sessionDto.consoleViewData?.consoleView()
-      return FrontendXDebuggerSession(project, scope, sessionDto, consoleView)
+      val processHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
+      val consoleView = sessionDto.consoleViewData?.consoleView(processHandler)
+      return FrontendXDebuggerSession(project, scope, sessionDto, processHandler, consoleView)
     }
   }
 }
