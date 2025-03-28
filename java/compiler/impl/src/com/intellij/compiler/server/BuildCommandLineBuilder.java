@@ -43,6 +43,14 @@ interface BuildCommandLineBuilder {
    */
   void setUnixProcessPriority(int priority);
 
+  /**
+   * Starts the build process in a new session so that the scheduler assigns it to a new autogroup
+   * (see the "The autogroup feature" section in <a href="https://man7.org/linux/man-pages/man7/sched.7.html">sched(7)</a>;
+   * <a href="https://man7.org/linux/man-pages/man1/setsid.1.html">setsid(1)</a>).
+   * Linux-only.
+   */
+  default void setStartNewSession() { }
+
   default void setupAdditionalVMOptions() {
   }
 

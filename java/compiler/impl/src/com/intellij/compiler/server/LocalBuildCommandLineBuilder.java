@@ -87,6 +87,15 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
     setUnixProcessPriority(myCommandLine, priority);
   }
 
+  @Override
+  public void setStartNewSession() {
+    if (!SystemInfo.isLinux) {
+      throw new IllegalArgumentException("'setNewProcessGroup' must be used only on Linux");
+    }
+
+    myCommandLine.withWrappingCommand("setsid", "-w");
+  }
+
   public static @NotNull Path getLocalBuildSystemDirectory() {
     return PathManagerEx.getAppSystemDir().resolve(BuildManager.SYSTEM_ROOT);
   }

@@ -1763,6 +1763,9 @@ public final class BuildManager implements Disposable {
     if (SystemInfo.isUnix && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }
+    if (SystemInfo.isLinux && Registry.is("compiler.process.new.session", true)) {
+      cmdLine.setStartNewSession();
+    }
 
     try {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).beforeBuildProcessStarted(project, sessionId);

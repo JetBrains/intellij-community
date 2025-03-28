@@ -600,7 +600,8 @@
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
 
-    <registryKey defaultValue="true" description="Make Java usage inlays computation single-threaded" key="java.telescope.usages.single.threaded"/>
+    <registryKey key="java.telescope.usages.single.threaded" defaultValue="true" description="Make Java usage inlays computation single-threaded"/>
+    <registryKey key="compiler.process.new.session" defaultValue="true" description="Runs the build process in a new session on Linux via setsid(1)"/>
 
     <projectSdkSetupValidator id="javaSdk" implementation="com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator"/>
 
