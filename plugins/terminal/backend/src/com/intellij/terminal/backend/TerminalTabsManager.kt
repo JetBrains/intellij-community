@@ -3,10 +3,12 @@ package com.intellij.terminal.backend
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.kernel.backend.delete
+import com.intellij.platform.kernel.backend.findValueEntity
+import com.intellij.platform.kernel.backend.newValueEntity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalCloseEvent
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
@@ -86,7 +88,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       val tab = tabs[tabId] ?: return@updateTabsAndStore  // Already removed or never existed
       val sessionId = tab.sessionId
       if (sessionId != null) {
-        val session = findValueById(sessionId, type = TerminalSessionValueIdType)
+        val session = sessionId.eid.findValueEntity<TerminalSession>()?.value
         if (session == null) {
           // If the session is already removed, it means that close event was already sent to the session.
           // It's coroutine scope cancellation is in progress: we already removed the entity, but still not removed the tab.
@@ -115,13 +117,17 @@ internal class TerminalTabsManager(private val project: Project, private val cor
   /**
    * Returns ID of started terminal session and final options used for session start.
    */
-  private fun startTerminalSession(options: ShellStartupOptions, scope: CoroutineScope): Pair<TerminalSessionId, ShellStartupOptions> {
+  private suspend fun startTerminalSession(options: ShellStartupOptions, scope: CoroutineScope): Pair<TerminalSessionId, ShellStartupOptions> {
     val (session, configuredOptions) = startTerminalSession(project, options, JBTerminalSystemSettingsProvider(), scope)
     val stateAwareSession = StateAwareTerminalSession(session)
 
-    val sessionId = storeValueGlobally(scope, stateAwareSession, type = TerminalSessionValueIdType)
+    val sessionEntity = newValueEntity(stateAwareSession)
 
-    return sessionId to configuredOptions
+    scope.awaitCancellationAndInvoke {
+      sessionEntity.delete()
+    }
+
+    return TerminalSessionId(sessionEntity.id) to configuredOptions
   }
 
   private suspend fun <T> updateTabsAndStore(action: suspend (MutableMap<Int, TerminalSessionTab>) -> T): T {
