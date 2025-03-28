@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kaml",
     "@lib//:hash4j",
-    "@rules_jvm//zip:build-zip",
+    "@rules_jvm//zip",
     "//platform/build-scripts/downloader:buildScripts-downloader",
   ],
   runtime_deps = [
