@@ -23,7 +23,7 @@ val useNestedLocking: Boolean = System.getProperty("ide.nested.locking.enabled",
  * - `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT)
  */
 @ApiStatus.Internal
-val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
+val useBackgroundWriteAction: Boolean = useNestedLocking && System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
 
 /**
  * - `false` means wrong action chains are ignored and not reported
