@@ -40,6 +40,7 @@ class ProblemRelatedLocation {
     )
   }
 
+  @ApiStatus.Internal
   constructor(problemDescriptor: ProblemDescriptorBase) {
     this.problemDescriptor = problemDescriptor
   }

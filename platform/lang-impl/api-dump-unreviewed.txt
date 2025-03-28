@@ -6109,7 +6109,7 @@ f:com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection
 - <init>():V
 - <init>(Z,Z):V
 - b:<init>(Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,Z):com.intellij.codeInspection.ProblemDescriptor[]
+- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z,com.intellij.codeInspection.LocalInspectionToolSession):com.intellij.psi.PsiElementVisitor
 - getDefaultLevel():com.intellij.codeHighlighting.HighlightDisplayLevel
 - getOptionsPane():com.intellij.codeInspection.options.OptPane
 - isEnabledByDefault():Z

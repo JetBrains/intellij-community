@@ -2,7 +2,9 @@
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.codeInspection.ProblemDescriptor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface IncorrectFormattingResultHandler {
   fun getResults(reportPerFile: Boolean, helper: IncorrectFormattingInspectionHelper): Array<ProblemDescriptor>?
 }

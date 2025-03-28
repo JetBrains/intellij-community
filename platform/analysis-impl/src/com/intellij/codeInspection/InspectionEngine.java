@@ -91,6 +91,7 @@ public final class InspectionEngine {
     return inspectEx(toolWrappers, psiFile, restrictRange, priorityRange, isOnTheFly, inspectInjectedPsi, ignoreSuppressedElements, indicator, null, foundDescriptorCallback);
   }
 
+  @ApiStatus.Internal
   // returns map (tool -> problem descriptors)
   public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                    @NotNull PsiFile psiFile,
@@ -208,6 +209,7 @@ public final class InspectionEngine {
                            null, foundDescriptorCallback);
   }
 
+  @ApiStatus.Internal
   // returns map tool -> list of descriptors found
   public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                   @NotNull PsiFile psiFile,
