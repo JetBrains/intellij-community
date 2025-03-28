@@ -20,6 +20,7 @@ import org.jetbrains.mcpserverplugin.general.ListFilesInFolderTool
 import org.jetbrains.mcpserverplugin.general.OpenFileInEditorTool
 import org.jetbrains.mcpserverplugin.general.ReplaceCurrentFileTextTool
 import org.jetbrains.mcpserverplugin.general.ReplaceSelectedTextTool
+import org.jetbrains.mcpserverplugin.general.ReplaceSpecificTextTool
 import org.jetbrains.mcpserverplugin.general.ReplaceTextByPathTool
 import org.jetbrains.mcpserverplugin.general.RunConfigurationTool
 import org.jetbrains.mcpserverplugin.general.SearchInFilesContentTool
@@ -52,6 +53,7 @@ class McpToolManager {
             ToggleBreakpointTool(),
             GetBreakpointsTool(),
             ReplaceTextByPathTool(),
+            ReplaceSpecificTextTool(),
             ListFilesInFolderTool(),
             ListDirectoryTreeInFolderTool(),
             SearchInFilesContentTool(),

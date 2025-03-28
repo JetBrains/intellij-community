@@ -22,6 +22,7 @@ import org.jetbrains.ide.mcp.Response
 import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import org.jetbrains.mcpserverplugin.general.relativizeByProjectDir
 import org.jetbrains.mcpserverplugin.general.resolveRel
+import kotlin.text.replace
 
 class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_open_in_editor_file_text"
@@ -186,7 +187,69 @@ class GetFileTextByPathTool : AbstractMcpTool<PathInProject>() {
     }
 }
 
+@Serializable
+data class ReplaceSpecificTextArgs(val pathInProject: String, val oldText: String, val newText: String)
 
+class ReplaceSpecificTextTool : AbstractMcpTool<ReplaceSpecificTextArgs>() {
+    override val name: String = "replace_specific_text"
+    override val description: String = """
+        Replaces specific text occurrences in a file with new text.
+        Use this tool to make targeted changes without replacing the entire file content.
+        Use this method if the file is large and the change is smaller than the old text.
+        Requires three parameters:
+        - pathInProject: The path to the target file, relative to project root
+        - oldText: The text to be replaced
+        - newText: The replacement text
+        Returns one of these responses:
+        - "ok" when replacement happend
+        - error "project dir not found" if project directory cannot be determined
+        - error "file not found" if the file doesn't exist
+        - error "could not get document" if the file content cannot be accessed
+        - error "no occurrences found" if the old text was not found in the file
+        Note: Automatically saves the file after modification
+    """
+
+    override fun handle(project: Project, args: ReplaceSpecificTextArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "project dir not found")
+
+        var document: Document? = null
+        
+        val readResult = runReadAction {
+            val file: VirtualFile = LocalFileSystem.getInstance()
+                .refreshAndFindFileByNioFile(projectDir.resolveRel(args.pathInProject))
+                ?: return@runReadAction "file not found"
+
+            if (!GlobalSearchScope.allScope(project).contains(file)) {
+                return@runReadAction "file not found"
+            }
+
+            document = FileDocumentManager.getInstance().getDocument(file)
+            if (document == null) {
+                return@runReadAction "could not get document"
+            }
+
+            return@runReadAction "ok"
+        }
+
+        if (readResult != "ok") {
+            return Response(error = readResult)
+        }
+
+        val text = document!!.text
+        if (!text.contains(args.oldText)) {
+            return Response(error = "no occurrences found")
+        }
+
+        val newText = text.replace(args.oldText, args.newText, true)
+        WriteCommandAction.runWriteCommandAction(project) {
+            document!!.setText(newText)
+            FileDocumentManager.getInstance().saveDocument(document!!)
+        }
+
+        return Response("ok")
+    }
+}
 
 @Serializable
 data class ReplaceTextByPathToolArgs(val pathInProject: String, val text: String)
