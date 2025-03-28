@@ -74,7 +74,7 @@ internal class VisualStudioCollectionDataProvider : ExternalEditorCollectionData
 
     registry.asSequence()
       .mapNotNull { matchVersion(it) }
-      .filter { it.major == 11 || it.major == 12 || it.major == 14 }
+      .filter { it.major == 14 }
       .map { it.toString() }
   } ?: emptySequence()
 }
