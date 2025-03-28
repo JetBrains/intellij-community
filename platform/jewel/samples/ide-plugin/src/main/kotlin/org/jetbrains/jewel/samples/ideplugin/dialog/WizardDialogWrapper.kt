@@ -3,9 +3,7 @@ package org.jetbrains.jewel.samples.ideplugin.dialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -48,8 +46,6 @@ internal class WizardDialogWrapper(
 
     init {
         require(pages.isNotEmpty()) { "Wizard must have at least one page" }
-        ApplicationManager.getApplication()
-            .invokeLater({ initializeComposeMainDispatcherChecker() }, ModalityState.any())
 
         init()
 
@@ -63,7 +59,7 @@ internal class WizardDialogWrapper(
         val newScope = CoroutineScope(coroutineContext)
         pageScope = newScope
 
-        val pageIndex = currentPageIndex.value
+        val pageIndex = currentPageIndex.intValue
         val page = pages[pageIndex]
 
         backAction.isEnabled = pageIndex > 0 && page.canGoBackwards.value
@@ -99,20 +95,20 @@ internal class WizardDialogWrapper(
     override fun createActions(): Array<Action> = arrayOf(cancelAction, backAction, nextAction, finishAction)
 
     private fun onBackClick() {
-        if (currentPageIndex.value <= 0) {
+        if (currentPageIndex.intValue <= 0) {
             logger.warn("Trying to go back beyond the first page")
             return
         }
-        currentPageIndex.value -= 1
+        currentPageIndex.intValue -= 1
         updateActions()
     }
 
     private fun onNextClick() {
-        if (currentPageIndex.value >= pages.lastIndex) {
+        if (currentPageIndex.intValue >= pages.lastIndex) {
             logger.warn("Trying to go next on or beyond the last page")
             return
         }
-        currentPageIndex.value += 1
+        currentPageIndex.intValue += 1
         updateActions()
     }
 

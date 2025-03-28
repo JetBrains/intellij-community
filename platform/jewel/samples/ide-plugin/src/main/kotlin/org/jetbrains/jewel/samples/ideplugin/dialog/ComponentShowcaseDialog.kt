@@ -8,8 +8,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.toolWindow.ResizeStripeManager
@@ -32,9 +30,6 @@ import org.jetbrains.jewel.ui.theme.iconButtonStyle
 
 internal class ComponentShowcaseDialog(project: Project) : DialogWrapper(project) {
     init {
-        ApplicationManager.getApplication()
-            .invokeLater({ initializeComposeMainDispatcherChecker() }, ModalityState.any())
-
         title = "Jewel Components Showcase"
         init()
         contentPanel.border = JBUI.Borders.empty()
