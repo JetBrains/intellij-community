@@ -438,8 +438,8 @@ private val CASE_INSENSITIVE_STRATEGY: Hash.Strategy<VirtualFileUrl> = object : 
   }
 }
 
-public class WrongVfuInfoTypeException(encounteredType: String) :
-  RuntimeException("VirtualFileUrl should be stored as ab instance or in a set, but $encounteredType was found")
+private class WrongVfuInfoTypeException(encounteredType: String) :
+  RuntimeException("VirtualFileUrl should be stored as an instance or in a set, but $encounteredType was found")
 
-public class WrongProperty2VfuInfoTypeException(encounteredType: String) :
+private class WrongProperty2VfuInfoTypeException(encounteredType: String) :
   RuntimeException("Property to VirtualFileUrl mapping should be stored as a pair or in a map, but $encounteredType was found")
