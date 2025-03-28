@@ -6,9 +6,10 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
-class PluginSettingsConfigurable : Configurable {
+class PluginSettingsConfigurable : SearchableConfigurable {
     private var settingsPanel: DialogPanel? = null
 
     override fun getDisplayName(): String = "MCP Plugin"
@@ -61,4 +62,6 @@ class PluginSettingsConfigurable : Configurable {
     override fun disposeUIResources() {
         settingsPanel = null
     }
+
+    override fun getId(): @NonNls String = "org.jetbrains.mcpserverplugin.settings"
 }

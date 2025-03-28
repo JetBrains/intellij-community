@@ -44,6 +44,7 @@
             instance="org.jetbrains.mcpserverplugin.settings.PluginSettingsConfigurable"
             id="org.jetbrains.mcpserverplugin.settings"
             displayName="MCP Plugin"
+            dynamic="true"
             parentId="tools"/>
     </extensions>
 </idea-plugin>

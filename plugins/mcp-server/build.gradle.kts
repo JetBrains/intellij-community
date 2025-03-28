@@ -50,11 +50,3 @@ intellijPlatform {
 kotlin {
     jvmToolchain(17)
 }
-
-tasks.buildSearchableOptions {
-    enabled = false
-}
-
-tasks.prepareJarSearchableOptions {
-    enabled = false
-}
