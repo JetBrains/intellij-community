@@ -23,6 +23,35 @@ internal class MCPServerStartupValidator : ProjectActivity {
     private val GROUP_ID = "MCPServerPlugin"
 
     val logger by lazy { logger<MCPServerStartupValidator>() }
+    
+    private fun getPathFromCommand(): String {
+        try {
+            val commandLine = GeneralCommandLine("sh", "-c", "echo \$PATH")
+            val handler = OSProcessHandler(commandLine)
+            val output = StringBuilder()
+            
+            handler.addProcessListener(object : ProcessAdapter() {
+                override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                    if (outputType == ProcessOutputTypes.STDOUT) {
+                        output.append(event.text)
+                    }
+                }
+            })
+            
+            handler.startNotify()
+            val completed = handler.waitFor(5000)
+            
+            return if (completed && handler.exitCode == 0) {
+                output.toString().trim()
+            } else {
+                logger.warn("Failed to get PATH from command, falling back to empty string")
+                ""
+            }
+        } catch (e: Exception) {
+            logger.error("Exception while getting PATH from command", e)
+            return ""
+        }
+    }
 
     fun isNpxInstalled(): Boolean {
         return try {
@@ -32,7 +61,9 @@ internal class MCPServerStartupValidator : ProjectActivity {
                 checkNpxWindows()
             } else {
                 logger.info("Detected non-Windows OS, checking known locations")
-                checkNpxUnix()
+                val path = getPathFromCommand()
+                logger.info("Unix PATH retrieved from command: $path")
+                checkNpxUnix(path) || checkNpxUnix(System.getenv("PATH") ?: "")
             }
         } catch (e: Exception) {
             logger.error("Failed to check npx installation", e)
@@ -68,7 +99,7 @@ internal class MCPServerStartupValidator : ProjectActivity {
         return completed && handler.exitCode == 0
     }
 
-    private fun checkNpxUnix(): Boolean {
+    private fun checkNpxUnix(pathEnv: String): Boolean {
         // First try checking known locations including user-specific installations
         val homeDir = System.getProperty("user.home")
         val knownPaths = listOf(
@@ -98,7 +129,6 @@ internal class MCPServerStartupValidator : ProjectActivity {
         val commandLine = GeneralCommandLine("which", "npx")
         
         // Add all potential paths to PATH
-        val currentPath = System.getenv("PATH") ?: ""
         val additionalPaths = listOf(
             "/opt/homebrew/bin",
             "/opt/homebrew/sbin",
@@ -107,7 +137,7 @@ internal class MCPServerStartupValidator : ProjectActivity {
             "$homeDir/.nvm/current/bin",
             "$homeDir/.npm-global/bin"
         ).joinToString(":")
-        commandLine.environment["PATH"] = "$additionalPaths:$currentPath"
+        commandLine.environment["PATH"] = "$additionalPaths:$pathEnv"
         logger.info("Unix - Modified PATH for which command: ${commandLine.environment["PATH"]}")
 
         val handler = OSProcessHandler(commandLine)
