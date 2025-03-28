@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -667,7 +668,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private void paintLineMarkers(Graphics2D g, int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
     if (isLineMarkersShown()) {
-      paintGutterRenderers(g, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
+      InternalUICustomization service = InternalUICustomization.getInstance();
+      Graphics graphics = g.create();
+      Graphics2D g2 = (Graphics2D) ((service != null) ? service.preserveGraphics(graphics) : graphics);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      try {
+        paintGutterRenderers(g2, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
+      } finally {
+        g2.dispose();
+      }
     }
   }
 

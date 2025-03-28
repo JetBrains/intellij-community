@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
@@ -911,20 +912,29 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
       }
 
-      g.setColor(getSeparatorColor());
-      if (myOrientation == SwingConstants.HORIZONTAL) {
-        int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
-        LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);
+      InternalUICustomization service = InternalUICustomization.getInstance();
+      Graphics graphics = g.create();
+      Graphics2D g2 = (Graphics2D) ((service != null) ? service.preserveGraphics(graphics) : graphics);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-        if (myText != null) {
-          FontMetrics fontMetrics = getFontMetrics(getFont());
-          int top = (getHeight() - fontMetrics.getHeight()) / 2;
-          g.setColor(JBColor.foreground());
-          SwingUtilities2.drawString(this, g, myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
+      try {
+        g2.setColor(getSeparatorColor());
+        if (myOrientation == SwingConstants.HORIZONTAL) {
+          int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
+          LinePainter2D.paint(g2, center, gap, center, y2);
+
+          if (myText != null) {
+            FontMetrics fontMetrics = getFontMetrics(getFont());
+            int top = (getHeight() - fontMetrics.getHeight()) / 2;
+            g.setColor(JBColor.foreground());
+            SwingUtilities2.drawString(this, g, myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
+          }
         }
-      }
-      else {
-        LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
+        else {
+          LinePainter2D.paint(g2, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
+        }
+      } finally {
+        g2.dispose();
       }
     }
   }
