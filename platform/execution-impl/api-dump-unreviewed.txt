@@ -2179,8 +2179,8 @@ f:com.intellij.terminal.AppendableTerminalDataStream
 - pushChar(C):V
 - readNonControlCharacters(I):java.lang.String
 c:com.intellij.terminal.JBTerminalPanel
-- com.jediterm.terminal.ui.TerminalPanel
 - com.intellij.openapi.Disposable
+- com.jediterm.terminal.ui.TerminalPanel
 - java.awt.event.FocusListener
 - <init>(com.intellij.terminal.JBTerminalSystemSettingsProviderBase,com.jediterm.terminal.model.TerminalTextBuffer,com.jediterm.terminal.model.StyleState):V
 - addPreKeyEventHandler(java.util.function.Consumer):V
