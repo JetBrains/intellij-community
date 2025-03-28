@@ -19,16 +19,10 @@
                     relative-to-action="XDebugger.Inspect.Frontend"/>
     </action>
 
-    <action id="EvaluateExpression.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendEvaluateAction"
-            icon="AllIcons.Debugger.EvaluateExpression">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.CopyName"/>
-    </action>
-
     <action id="Debugger.AddToWatch.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction"
             icon="AllIcons.Debugger.AddToWatch">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                    relative-to-action="EvaluateExpression.Frontend"/>
+                    relative-to-action="EvaluateExpression"/>
     </action>
 
     <action id="Debugger.ShowReferring.Frontend"
