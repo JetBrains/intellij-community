@@ -138,6 +138,6 @@ object PluginMappings {
   }
 
   fun vsCodeAiMapping(settings: Settings) {
-    settings.plugins["com.intellij.ml.llm"] = PluginFeature(null, "com.intellij.ml.llm", "AI Assistant")
+    settings.plugins["com.intellij.ml.llm"] = PluginFeature(null, "com.intellij.ml.llm", "JetBrains AI Assistant")
   }
 }
