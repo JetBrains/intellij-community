@@ -41,7 +41,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
             public void keyPressed(KeyEvent e) {
               final int column = myTableView.getEditingColumn();
               final int row = myTableView.getEditingRow();
-              if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
+              if (e.getModifiersEx() == 0 && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB)) {
                 e.consume();
                 SwingUtilities.invokeLater(() -> {
                   stopEditing();
