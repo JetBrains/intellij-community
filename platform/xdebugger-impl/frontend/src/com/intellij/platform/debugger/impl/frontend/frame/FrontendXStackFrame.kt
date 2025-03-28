@@ -18,7 +18,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.Icon
 
-// TODO[IJPL-177087] methods
 internal class FrontendXStackFrame(
   private val frameDto: XStackFrameDto,
   private val project: Project,
@@ -65,6 +64,10 @@ internal class FrontendXStackFrame(
 
   override fun computeChildren(node: XCompositeNode) {
     xValueContainer.computeChildren(node)
+  }
+
+  override fun isDocumentEvaluator(): Boolean {
+    return frameDto.evaluator.canEvaluateInDocument
   }
 
   override fun getEvaluator(): XDebuggerEvaluator? = evaluator
