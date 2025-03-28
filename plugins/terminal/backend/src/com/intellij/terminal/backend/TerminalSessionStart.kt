@@ -32,29 +32,32 @@ import java.util.concurrent.CancellationException
 
 private val LOG: Logger = Logger.getInstance(BackendTerminalSession::class.java)
 
+internal fun startTerminalProcess(
+  project: Project,
+  options: ShellStartupOptions,
+): Pair<TtyConnector, ShellStartupOptions> {
+  val runner = LocalBlockTerminalRunner(project)
+  val configuredOptions = runner.configureStartupOptions(options)
+  val process = runner.createProcess(configuredOptions)
+  val connector = runner.createTtyConnector(process)
+
+  return connector to configuredOptions
+}
+
 /**
  * Returns a pair of started terminal session and final options used for session start.
  */
 @OptIn(AwaitCancellationAndInvoke::class)
-internal fun startTerminalSession(
+internal fun createTerminalSession(
   project: Project,
-  options: ShellStartupOptions,
+  ttyConnector: TtyConnector,
+  initialSize: TermSize,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
-): Pair<TerminalSession, ShellStartupOptions> {
-  val termSize = options.initialTermSize ?: run {
-    LOG.warn("No initial terminal size provided, using default 80x24. $options")
-    TermSize(80, 24)
-  }
-  val optionsWithSize = options.builder().initialTermSize(termSize).build()
-
-  val runner = LocalBlockTerminalRunner(project)
-  val configuredOptions = runner.configureStartupOptions(optionsWithSize)
-  val process = runner.createProcess(configuredOptions)
-  val connector = runner.createTtyConnector(process)
+): TerminalSession {
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
-  val services: JediTermServices = createJediTermServices(connector, termSize, maxHistoryLinesCount, settings)
+  val services: JediTermServices = createJediTermServices(ttyConnector, initialSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
@@ -92,8 +95,7 @@ internal fun startTerminalSession(
     }
   }
 
-  val session = BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
-  return session to configuredOptions
+  return BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
 }
 
 private fun createJediTermServices(

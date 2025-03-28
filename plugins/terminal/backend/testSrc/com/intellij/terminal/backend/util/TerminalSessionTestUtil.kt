@@ -4,7 +4,8 @@ import com.google.common.base.Ascii
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.backend.startTerminalSession
+import com.intellij.terminal.backend.createTerminalSession
+import com.intellij.terminal.backend.startTerminalProcess
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.EnvironmentUtil
@@ -34,7 +35,9 @@ internal object TerminalSessionTestUtil {
       .initialTermSize(size)
       .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null"))
       .build()
-    val (session, _) = startTerminalSession(project, options, JBTerminalSystemSettingsProviderBase(), coroutineScope)
+
+    val (ttyConnector, _) = startTerminalProcess(project, options)
+    val session = createTerminalSession(project, ttyConnector, size, JBTerminalSystemSettingsProviderBase(), coroutineScope)
     return session
   }
 
