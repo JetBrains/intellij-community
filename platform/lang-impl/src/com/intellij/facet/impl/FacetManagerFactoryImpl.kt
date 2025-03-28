@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
-internal class FacetManagerFactoryImpl(): FacetManagerFactory {
+class FacetManagerFactoryImpl(): FacetManagerFactory {
   private val facetManagerInstances = ConcurrentHashMap<Module, FacetManager>()
 
   override fun getFacetManager(module: Module): FacetManager {
