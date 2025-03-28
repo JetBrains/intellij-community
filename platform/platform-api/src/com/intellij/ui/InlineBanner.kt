@@ -39,6 +39,7 @@ open class InlineBanner private constructor(
 
   override var status: EditorNotificationPanel.Status = status
     set(value) {
+      field = value
       setIcon(value.icon)
       super.status = value
     }
