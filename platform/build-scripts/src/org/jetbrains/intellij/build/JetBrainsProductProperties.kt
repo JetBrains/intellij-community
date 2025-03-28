@@ -81,7 +81,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
           /**
            * [org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder.kotlinPlugin] is the only exception left
            */
-          if (pluginId != "org.jetbrains.kotlin") {
+          if (pluginId != "org.jetbrains.kotlin" && pluginId != "com.intellij.kmm") {
             add(InvalidPluginDescriptorError("${result.plugin.pluginId} version '$version' cannot be parsed: ${e.message}"))
           }
         }
