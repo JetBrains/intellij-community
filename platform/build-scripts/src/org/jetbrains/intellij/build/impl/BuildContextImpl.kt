@@ -7,6 +7,7 @@ import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_S
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.containers.with
+import com.intellij.util.text.SemVer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
