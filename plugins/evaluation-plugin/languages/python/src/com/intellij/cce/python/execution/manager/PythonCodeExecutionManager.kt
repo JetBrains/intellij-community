@@ -41,7 +41,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
       return
     }
 
-    shouldSetup = true
+    shouldSetup = false
 
     val basePath = project.basePath
 
