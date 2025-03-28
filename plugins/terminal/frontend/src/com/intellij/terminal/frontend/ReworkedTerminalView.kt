@@ -102,7 +102,6 @@ internal class ReworkedTerminalView(
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
     outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
-    val outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
     updatePsiOnOutputModelChange(project, outputModel, coroutineScope.childScope("TerminalOutputPsiUpdater"))
 
     val scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))

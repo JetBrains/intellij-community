@@ -14,16 +14,15 @@ import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.psi.util.PsiUtilBase
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.impl.PsiFileEx
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils.withTimeout
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
@@ -80,22 +79,13 @@ internal class TerminalCommandCompletion(
 
     val startingTime = System.currentTimeMillis()
     val initCmd = Runnable {
-      val psiFile = PsiFileFactory.getInstance(project).createFileFromText(
-        "command_output",
-        PlainTextLanguage.INSTANCE,
-        ""
-      )
-
       var context: CompletionInitializationContextImpl? =
-        ProgressIndicatorUtils.withTimeout<CompletionInitializationContextImpl?>(
-          calcSyncTimeOut(startingTime).toLong(), Computable {
-          PsiDocumentManager.getInstance(project).commitAllDocuments()
-
-          psiFile.putUserData<Boolean?>(PsiFileEx.BATCH_REFERENCE_PROCESSING, true)
-          CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount, psiFile.language)
+        withTimeout<CompletionInitializationContextImpl?>(calcSyncTimeOut(startingTime).toLong(), Computable {
+          CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType)
         })
       val hasValidContext = context != null
       if (!hasValidContext) {
+        val psiFile = PsiUtilBase.getPsiFileInEditor(caret, project)
         context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
       }
 

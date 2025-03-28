@@ -51,7 +51,6 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
       val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
       val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
-
       val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
         tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
       }

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
@@ -19,14 +18,6 @@ public class CompletionInitializationContextImpl extends CompletionInitializatio
                                       PsiFile file,
                                       CompletionType completionType, int invocationCount) {
     super(editor, caret, PsiUtilBase.getLanguageInEditor(editor, file.getProject()), file, completionType, invocationCount);
-    myHostOffsets = new OffsetsInFile(file, getOffsetMap()).toTopLevelFile();
-  }
-
-  public CompletionInitializationContextImpl(Editor editor,
-                                             @NotNull Caret caret,
-                                             PsiFile file,
-                                             CompletionType completionType, int invocationCount, Language language) {
-    super(editor, caret, language, file, completionType, invocationCount);
     myHostOffsets = new OffsetsInFile(file, getOffsetMap()).toTopLevelFile();
   }
 

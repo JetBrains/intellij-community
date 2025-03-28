@@ -14,4 +14,12 @@ internal class TerminalOutputPsiFile(
   override fun accept(visitor: PsiElementVisitor) {
     visitor.visitFile(this)
   }
+
+  override fun clone(): PsiFileImpl {
+    // this logic was added to make the original file not null,
+    // which is used for the pop-up completion
+    var clone = super.clone()
+    clone.setOriginalFile(this)
+    return clone
+  }
 }
