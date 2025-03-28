@@ -2,19 +2,27 @@
 package com.intellij.python.junit5Tests.env.terminal
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.python.community.impl.venv.tests.pyVenvFixture
-import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
+import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
+import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
+import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -24,11 +32,15 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.io.IOException
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -39,7 +51,7 @@ private const val WHERE_EXE = "where.exe"
 /**
  * Run `powershell.exe` with a venv activation script and make sure there are no errors and python is correct
  */
-@PyEnvTestCase
+@PyEnvTestCaseWithConda
 class PyVirtualEnvTerminalCustomizerTest {
   private val projectFixture = projectFixture()
   private val tempDirFixture = tempPathFixture(prefix = "some dir with spaces")
@@ -52,15 +64,38 @@ class PyVirtualEnvTerminalCustomizerTest {
     moduleFixture = moduleFixture
   )
 
+  private var sdkToDelete: Sdk? = null
+
+  @AfterEach
+  fun tearDown(): Unit = timeoutRunBlocking {
+    sdkToDelete?.let { sdk ->
+      edtWriteAction {
+        ProjectJdkTable.getInstance().removeJdk(sdk)
+      }
+    }
+  }
 
   private val powerShell =
     PathEnvironmentVariableUtil.findInPath("powershell.exe")?.toPath()
     ?: Path((System.getenv("SystemRoot") ?: "c:\\windows"), "system32", "WindowsPowerShell", "v1.0", "powershell.exe")
 
   @EnabledOnOs(value = [OS.WINDOWS])
-  @Test
-  fun powershellActivationTest(): Unit = timeoutRunBlocking(10.minutes) {
-    val pythonBinary = VirtualEnvReader.Instance.findPythonInPythonRoot(tempDirFixture.get())!!
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun powershellActivationTest(useConda: Boolean, @CondaEnv condaEnv: PyCondaEnv, @TempDir path: Path): Unit = timeoutRunBlocking(10.minutes) {
+    val (pythonBinary, venvDirName) =
+      if (useConda) {
+        val envDir = path.resolve("some path with spaces")
+        val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList())
+        sdkToDelete = sdk
+        sdk.persist()
+        ModuleRootModificationUtil.setModuleSdk(moduleFixture.get(), sdk)
+        Pair(Path(sdk.homePath!!), envDir.toRealPath().pathString)
+      }
+      else {
+        val venv = VirtualEnvReader.Instance.findPythonInPythonRoot(tempDirFixture.get())!!
+        Pair(venv, tempDirFixture.get().name)
+      }
 
     // binary might be like ~8.3, we need to expand it as venv might report both
     val pythonBinaryReal = try {
@@ -69,7 +104,7 @@ class PyVirtualEnvTerminalCustomizerTest {
     catch (_: IOException) {
       pythonBinary
     }
-    val shellOptions = getShellStartupOptions()
+    val shellOptions = getShellStartupOptions(pythonBinary.parent)
     val command = shellOptions.shellCommand!!
     val exe = command[0]
     val args = if (command.size == 1) emptyList() else command.subList(1, command.size)
@@ -95,8 +130,7 @@ class PyVirtualEnvTerminalCustomizerTest {
 
       assertThat("We ran `$where`, so we there should be python path", output,
                  anyOf(hasItem(pythonBinary.pathString), hasItem(pythonBinaryReal.pathString)))
-      val vendDirName = tempDirFixture.get().name
-      assertThat("There must be a line with ($vendDirName)", output, hasItem(containsString("($vendDirName)")))
+      assertThat("There must be a line with ($venvDirName)", output, hasItem(containsString("($venvDirName)")))
 
       process.exitCode.await()
     }
@@ -107,12 +141,12 @@ class PyVirtualEnvTerminalCustomizerTest {
     }
   }
 
-  private fun getShellStartupOptions(): ShellStartupOptions {
+  private fun getShellStartupOptions(workDir: Path): ShellStartupOptions {
     val sut = PyVirtualEnvTerminalCustomizer()
     val env = mutableMapOf<String, String>()
     val command = sut.customizeCommandAndEnvironment(
       projectFixture.get(),
-      tempDirFixture.get().pathString,
+      workDir.pathString,
       arrayOf(powerShell.pathString),
       env)
 
