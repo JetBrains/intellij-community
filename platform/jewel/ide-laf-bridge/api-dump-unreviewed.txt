@@ -51,7 +51,7 @@ f:org.jetbrains.jewel.bridge.JewelBridgeException$KeysNotFoundException
 - org.jetbrains.jewel.bridge.JewelBridgeException
 - sf:$stable:I
 - <init>(java.util.List,java.lang.String):V
-f:org.jetbrains.jewel.bridge.JewelComposePanelKt
+f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
 - sf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:JewelComposeNoThemePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - sf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent

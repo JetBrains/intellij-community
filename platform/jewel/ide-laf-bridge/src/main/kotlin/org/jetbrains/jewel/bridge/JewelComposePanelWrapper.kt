@@ -13,6 +13,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.toSize
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.registry.Registry
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -80,8 +82,11 @@ public fun JewelToolWindowNoThemeComposePanel(
     }
 }
 
-private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanel) -> Unit): JewelComposePanel {
-    val jewelPanel = JewelComposePanel()
+private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanelWrapper) -> Unit): JewelComposePanelWrapper {
+    if (ApplicationManager.getApplication().isInternal) {
+        System.setProperty("compose.swing.render.on.graphics", Registry.stringValue("compose.swing.render.on.graphics"))
+    }
+    val jewelPanel = JewelComposePanelWrapper()
     jewelPanel.layout = BorderLayout()
     val composePanel = ComposePanel()
     jewelPanel.add(composePanel, BorderLayout.CENTER)
@@ -90,7 +95,7 @@ private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanel) -> 
     return jewelPanel
 }
 
-internal class JewelComposePanel : JPanel(), UiDataProvider {
+internal class JewelComposePanelWrapper : JPanel(), UiDataProvider {
     internal var targetProvider: UiDataProvider? = null
 
     override fun uiDataSnapshot(sink: DataSink) {
