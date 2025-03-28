@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -271,7 +270,7 @@ class KotlinMultiPlatformProjectDescriptor(
         val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
         model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
 
-        setUpSdk(module, model, descriptor)
+        setUpSdk(model, descriptor)
 
         module.createMultiplatformFacetM3(
             platformKind = descriptor.targetPlatform,
@@ -283,21 +282,17 @@ class KotlinMultiPlatformProjectDescriptor(
         descriptor.additionalModuleConfiguration(this, module, model)
     }
 
-    private fun setUpSdk(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
+    private fun setUpSdk(model: ModifiableRootModel, descriptor: PlatformDescriptor) {
         if (descriptor.isKotlinSdkUsed) {
-            setUpKotlinSdk(module)
+            val kotlinSdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
+            if (kotlinSdk != null) {
+                model.sdk = kotlinSdk
+            } else {
+                error("Kotlin sdk is not found for the test project")
+            }
         } else {
             model.sdk = sdk
         }
-    }
-
-    private fun setUpKotlinSdk(module: Module) {
-        KotlinSdkType.setUpIfNeeded(module)
-        ConfigLibraryUtil.configureSdk(
-            module,
-            runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
-                ?: error("Kotlin SDK wasn't created")
-        )
     }
 
     fun cleanupSourceRoots() = runWriteAction {
@@ -309,6 +304,7 @@ class KotlinMultiPlatformProjectDescriptor(
     }
 
     companion object {
+        //clients should not unregister KotlinSDK in their tearDown, otherwise it won't be recreated
         val ALL_PLATFORMS = KotlinMultiPlatformProjectDescriptor()
     }
 }
