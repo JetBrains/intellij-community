@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withTimeout
 import okio.IOException
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.*
@@ -20,6 +22,7 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.name
+import kotlin.time.Duration.Companion.minutes
 
 internal suspend fun downloadCompilationCache(
   serverUrl: URI,
@@ -35,16 +38,15 @@ internal suspend fun downloadCompilationCache(
       val urlPath = "$urlPathPrefix/${item.name}/${item.file.fileName}"
       spanBuilder("download").setAttribute("name", item.name).setAttribute("urlPath", urlPath).use { span ->
         try {
-          downloadedBytes.getAndAdd(
-            download(
-              item = item,
-              urlPath = urlPath,
-              skipUnpack = skipUnpack,
-              saveHash = saveHash,
-              connection = connection,
-              zstdDecompressContextPool = zstdDecompressContextPool,
-            )
+          val downloadedSize = doDownloadWithTimeout(
+            item = item,
+            urlPath = urlPath,
+            skipUnpack = skipUnpack,
+            saveHash = saveHash,
+            connection = connection,
+            zstdDecompressContextPool = zstdDecompressContextPool,
           )
+          downloadedBytes.getAndAdd(downloadedSize)
         }
         catch (e: CancellationException) {
           if (coroutineContext.isActive) {
@@ -58,6 +60,38 @@ internal suspend fun downloadCompilationCache(
         }
       }
     }
+  }
+}
+
+private suspend fun doDownloadWithTimeout(
+  item: FetchAndUnpackItem,
+  urlPath: String,
+  skipUnpack: Boolean,
+  saveHash: Boolean,
+  connection: Http2ClientConnection,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
+): Long {
+  var attempt = 0
+  while (true) {
+    try {
+      return withTimeout(10.minutes) {
+        download(
+          item = item,
+          urlPath = urlPath,
+          skipUnpack = skipUnpack,
+          saveHash = saveHash,
+          connection = connection,
+          zstdDecompressContextPool = zstdDecompressContextPool,
+        )
+      }
+    }
+    catch (e: TimeoutCancellationException) {
+      if (attempt >= 3) {
+        throw IllegalStateException("Cannot download", e)
+      }
+    }
+
+    attempt++
   }
 }
 
