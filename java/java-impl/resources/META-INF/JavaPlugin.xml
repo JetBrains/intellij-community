@@ -1839,7 +1839,7 @@
                      shortName="ClassCanBeRecord" enabledByDefault="true" level="WEAK WARNING"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids16"
                      bundle="messages.JavaBundle" key="class.can.be.record.display.name"
-                     implementationClass="com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection"/>
+                     implementationClass="com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EndlessStream"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"

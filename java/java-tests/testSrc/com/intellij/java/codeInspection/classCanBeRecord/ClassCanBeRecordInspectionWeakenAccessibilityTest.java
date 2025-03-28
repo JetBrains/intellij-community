@@ -29,6 +29,6 @@ public class ClassCanBeRecordInspectionWeakenAccessibilityTest extends LightQuic
 
   @Override
   public void runSingle() throws Throwable {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> super.runSingle());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(super::runSingle);
   }
 }

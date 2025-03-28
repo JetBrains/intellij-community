@@ -22,6 +22,6 @@ public class ClassCanBeRecordInspectionAccessorsRenamingTest extends LightQuickF
 
   @Override
   public void runSingle() throws Throwable {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> super.runSingle());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(super::runSingle);
   }
 }
