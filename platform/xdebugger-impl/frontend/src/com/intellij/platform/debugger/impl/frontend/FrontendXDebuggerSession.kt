@@ -309,7 +309,10 @@ internal class FrontendXDebuggerSession private constructor(
     ): FrontendXDebuggerSession {
       val processHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
       val consoleView = sessionDto.consoleViewData?.consoleView(processHandler)
-      return FrontendXDebuggerSession(project, scope, sessionDto, processHandler, consoleView)
+
+      return FrontendXDebuggerSession(project, scope, sessionDto, processHandler, consoleView).also {
+        processHandler.setReady()
+      }
     }
   }
 }
