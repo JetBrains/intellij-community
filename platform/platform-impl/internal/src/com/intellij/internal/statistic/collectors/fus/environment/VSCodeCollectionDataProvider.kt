@@ -17,7 +17,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
-import java.util.*
 import kotlin.io.path.*
 
 private const val VSCODE_PLUGINS_IDENTIFICATION_TAG = "identifier"
@@ -167,26 +166,4 @@ internal class VSCodeCollectionDataProvider : ExternalEditorCollectionDataProvid
       null
     }
   }
-  
-  /**
-   * Function to get one Windows env var.
-   *
-   * Use without %%. Example: get("APPDATA")
-   *
-   * @return env var value or "null" string if not found
-   */
-  private fun getWindowsEnvVariableValue(variable: String): String {
-    val envMap = try {
-      System.getenv()
-    }
-    catch (e: SecurityException) {
-      logger.debug(e)
-      return "null"
-    }
-
-    val varValue = envMap[variable] ?: envMap[variable.uppercase(Locale.getDefault())].toString()
-    logger.debug { "Detected system env var value - $variable: $varValue" }
-    return varValue
-  }
-
 }
