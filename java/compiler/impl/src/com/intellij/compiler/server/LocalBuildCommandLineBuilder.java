@@ -6,10 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
@@ -18,7 +16,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private final GeneralCommandLine myCommandLine = new GeneralCommandLine();
 
   LocalBuildCommandLineBuilder(String vmExecutablePath) {
-    myCommandLine.setExePath(vmExecutablePath);
+    myCommandLine.withExePath(vmExecutablePath);
   }
 
   @Override
@@ -31,19 +29,19 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myCommandLine.addParameter(prefix + path);
   }
 
-
   @Override
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public void addClasspathParameter(List<String> classpathInHost, List<String> classpathInTarget) {
     StringBuilder builder = new StringBuilder();
     for (String file : classpathInHost) {
       if (!builder.isEmpty()) {
-        builder.append(File.pathSeparator);
+        builder.append(java.io.File.pathSeparator);
       }
       builder.append(FileUtil.toCanonicalPath(file));
     }
     for (String s : classpathInTarget) {
       if (!builder.isEmpty()) {
-        builder.append(File.pathSeparator);
+        builder.append(java.io.File.pathSeparator);
       }
       builder.append(getHostWorkingDirectory().resolve(s));
     }
@@ -52,7 +50,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public @NotNull String getWorkingDirectory() {
-    return FileUtilRt.toSystemIndependentName(getHostWorkingDirectory().toString());
+    return FileUtil.toSystemIndependentName(getHostWorkingDirectory().toString());
   }
 
   @Override
@@ -69,19 +67,18 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public void setCharset(Charset charset) {
-    myCommandLine.setCharset(charset);
+    myCommandLine.withCharset(charset);
   }
 
   @Override
   public GeneralCommandLine buildCommandLine() {
-    myCommandLine.setWorkDirectory(getHostWorkingDirectory().toFile());
-    return myCommandLine;
+    return myCommandLine.withWorkingDirectory(getHostWorkingDirectory());
   }
 
   @Override
   public void setUnixProcessPriority(int priority) {
     if (!SystemInfo.isUnix) {
-      throw new IllegalArgumentException("setUnixProcessPriority must be used only on Unix operating systems");
+      throw new IllegalArgumentException("'setUnixProcessPriority' must be used only on Unix operating systems");
     }
 
     setUnixProcessPriority(myCommandLine, priority);
@@ -96,7 +93,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myCommandLine.withWrappingCommand("setsid", "-w");
   }
 
-  public static @NotNull Path getLocalBuildSystemDirectory() {
+  static @NotNull Path getLocalBuildSystemDirectory() {
     return PathManagerEx.getAppSystemDir().resolve(BuildManager.SYSTEM_ROOT);
   }
 

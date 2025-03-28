@@ -28,7 +28,6 @@ sealed class GitExecutable {
     private const val NICE_PATH = "/usr/bin/nice"
     private val hasNice by lazy { Files.exists(Path.of(NICE_PATH)) }
 
-    @Suppress("SpellCheckingInspection")
     private const val SETSID_PATH = "/usr/bin/setsid"
     private val hasSetSid by lazy { Files.exists(Path.of(SETSID_PATH)) }
 

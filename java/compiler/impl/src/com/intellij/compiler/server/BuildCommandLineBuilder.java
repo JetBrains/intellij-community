@@ -23,11 +23,9 @@ interface BuildCommandLineBuilder {
 
   void addClasspathParameter(List<String> classpathInHost, List<String> classpathInTarget);
 
-  @NotNull
-  String getWorkingDirectory();
+  @NotNull String getWorkingDirectory();
 
-  @NotNull
-  Path getHostWorkingDirectory();
+  @NotNull Path getHostWorkingDirectory();
 
   String getYjpAgentPath(YourKitProfilerService yourKitProfilerService);
 
@@ -51,8 +49,7 @@ interface BuildCommandLineBuilder {
    */
   default void setStartNewSession() { }
 
-  default void setupAdditionalVMOptions() {
-  }
+  default void setupAdditionalVMOptions() { }
 
   /**
    * @param path a path to a project-agnostic file which is available locally to the IDE.
