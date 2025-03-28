@@ -106,8 +106,8 @@ class XNextRoundedBorder private constructor(
 
       val borderShape = RoundRectangle2D.Double(outerInsets.left + x.toDouble() + offset,
                                                 outerInsets.top + y.toDouble()+ offset,
-                                                width.toDouble() - outerInsets.width - (offset *2) ,
-                                                height.toDouble() - outerInsets.height - (offset *2),
+                                                width.toDouble() - outerInsets.width - thickness - offset ,
+                                                height.toDouble() - outerInsets.height - thickness - offset,
                                                 arcDiameter.toDouble(),
                                                 arcDiameter.toDouble())
 
