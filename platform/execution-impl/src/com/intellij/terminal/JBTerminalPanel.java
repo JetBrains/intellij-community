@@ -138,7 +138,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     addFocusListener(this);
 
-    mySettingsProvider.getUiSettingsManager().addListener(this);
+    mySettingsProvider.addUiSettingsListener(this);
     setDefaultCursorShape(settingsProvider.getCursorShape());
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
   }
@@ -338,7 +338,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       text, start, end, fontStyle,
       mySettingsProvider.getColorsScheme().getConsoleFontPreferences(),
       null);
-    return fontInfo.getFont().deriveFont((float)mySettingsProvider.getUiSettingsManager().getFontSize());
+    return fontInfo.getFont().deriveFont(mySettingsProvider.getTerminalFontSize());
   }
 
   @ApiStatus.Internal
@@ -358,7 +358,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
       if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
-        mySettingsProvider.getUiSettingsManager().setFontSize(newFontSize);
+        mySettingsProvider.setTerminalFontSize(newFontSize);
       }
       return;
     }
