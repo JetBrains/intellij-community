@@ -267,6 +267,8 @@ jvm_library(
     "@lib//:io-github-z4kn4fein-semver-jvm",
     "//python/python-pyproject:pyproject",
     "//python/python-hatch:hatch",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-api:externalSystem",
   ],
   exports = [
     "//python/openapi:community",
@@ -402,6 +404,13 @@ jvm_library(
     "//platform/todo",
     "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/setup-test-environment/conda:python-community-testFramework-testEnv-conda",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
   ],
   runtime_deps = [
     ":python-community-tests_test_resources",

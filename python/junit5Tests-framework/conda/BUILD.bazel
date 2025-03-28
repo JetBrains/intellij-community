@@ -18,6 +18,8 @@ jvm_library(
     "//python/setup-test-environment/conda:python-community-testFramework-testEnv-conda",
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",
+    "//platform/execution",
+    "//platform/core-api:core",
   ]
 )
 

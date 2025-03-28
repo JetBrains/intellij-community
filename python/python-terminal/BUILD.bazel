@@ -50,6 +50,8 @@ jvm_library(
     "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",
+    "//python/junit5Tests-framework/conda:python-community-junit5Tests-framework-conda_test_lib",
+    "@lib//:junit5Params",
   ],
   runtime_deps = [":terminal_resources"]
 )
