@@ -39,6 +39,14 @@ interface Window: Component {
 @Remote("java.awt.Color")
 interface ColorRef {
   fun getRGB(): Int
+
+  fun getRed(): Int
+  fun getGreen(): Int
+  fun getBlue(): Int
+}
+
+fun ColorRef.toHexString(): String {
+  return String.format("#%02X%02X%02X", getRed(), getGreen(), getBlue())
 }
 
 @Remote("java.lang.Class")

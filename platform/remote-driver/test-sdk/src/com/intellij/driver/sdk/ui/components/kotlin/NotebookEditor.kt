@@ -79,4 +79,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   val notebookTables: List<JTableUiComponent>
     get() = xx("//div[@class='TableResultView']", JTableUiComponent::class.java).list()
 
+  val toolbar: UiComponent
+    get() = x("//div[@class='JupyterFileEditorToolbar']")
+
 }
