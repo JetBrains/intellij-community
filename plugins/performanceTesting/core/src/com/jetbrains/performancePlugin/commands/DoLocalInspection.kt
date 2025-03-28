@@ -18,6 +18,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.seconds
 
@@ -42,24 +43,25 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     val busConnection = project.messageBus.simpleConnect()
     val spanTag = extractCommandArgument(PREFIX).parameter("spanTag")?.let { "_$it"} ?: ""
     val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME + spanTag).setParent(PerformanceTestSpan.getContext())
-    var spanRef: Span? = null
+    val spanRef = AtomicReference<Span?>()
     var scopeRef: Scope? = null
     val editor = FileEditorManager.getInstance(project).selectedTextEditor
     suspendCancellableCoroutine { continuation ->
       busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
-
         override fun daemonStarting(fileEditors: Collection<FileEditor>) {
           val selectedDocument = FileEditorManager.getInstance(project).selectedTextEditor!!.document
           val selectedPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(selectedDocument)!!
           if (fileEditors.find { editor -> editor.file.name == selectedPsiFile.name } == null) {
             return
           }
-          spanRef = span.startSpan()
-          scopeRef = spanRef!!.makeCurrent()
+          spanRef.updateAndGet { prevSpan ->
+            prevSpan ?: span.startSpan().also { scopeRef = it.makeCurrent() }
+          }
         }
 
         override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
-          if (spanRef == null) {
+          val currentSpan = spanRef.get()
+          if (currentSpan == null) {
             return
           }
           val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
@@ -77,30 +79,30 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
           val warningsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.WARNING }
           val weakWarningsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.WEAK_WARNING }
           val finishMessage = StringBuilder("Local inspections have been finished with: ")
-          spanRef.setAttribute("Errors", errorsOnHighlighting.size.toLong())
+          currentSpan.setAttribute("Errors", errorsOnHighlighting.size.toLong())
           if (!errorsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append("Errors: ${errorsOnHighlighting.size}")
             for (error in errorsOnHighlighting) {
               finishMessage.append("\n").append("${error.text}: ${error.description}")
             }
           }
-          spanRef.setAttribute("Warnings", warningsOnHighlighting.size.toLong())
+          currentSpan.setAttribute("Warnings", warningsOnHighlighting.size.toLong())
           if (!warningsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append("Warnings: ${warningsOnHighlighting.size}")
             for (warning in warningsOnHighlighting) {
               finishMessage.append("\n").append("${warning.text}: ${warning.description}")
             }
           }
-          spanRef.setAttribute("Weak Warnings", warningsOnHighlighting.size.toLong())
+          currentSpan.setAttribute("Weak Warnings", warningsOnHighlighting.size.toLong())
           if (!weakWarningsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append("Weak Warnings: ${weakWarningsOnHighlighting.size}")
             for (weakWarning in weakWarningsOnHighlighting) {
               finishMessage.append("\n").append("${weakWarning.text}: ${weakWarning.description}")
             }
           }
-          spanRef.setAttribute("filePath", psiFile.virtualFile.path)
-          spanRef.setAttribute("linesCount", editor!!.getDocument().getLineCount().toLong())
-          spanRef.end()
+          currentSpan.setAttribute("filePath", psiFile.virtualFile.path)
+          currentSpan.setAttribute("linesCount", editor!!.getDocument().getLineCount().toLong())
+          currentSpan.end()
           scopeRef!!.close()
           busConnection.disconnect()
           context.message(finishMessage.toString(), line)
