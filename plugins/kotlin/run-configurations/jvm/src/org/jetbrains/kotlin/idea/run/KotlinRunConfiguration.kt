@@ -289,7 +289,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun needPrepareTarget(): Boolean {
-        return super.needPrepareTarget() || runsUnderWslJdk()
+        return super.needPrepareTarget() || runsUnderWslJdk() || runsUnderRemoteJdk()
     }
 
     override fun getShortenCommandLine(): ShortenCommandLine? {
