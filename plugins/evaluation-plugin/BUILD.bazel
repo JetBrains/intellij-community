@@ -58,6 +58,7 @@ jvm_test(
     "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/evaluation-plugin/languages/python:evaluationPlugin-languages-python",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.tests` end

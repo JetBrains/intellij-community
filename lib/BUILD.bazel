@@ -8113,15 +8113,15 @@ java_import(
 
 java_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources",
-  jars = ["@components-resources-1_7_0_http//file"],
-  srcjar = "@components-resources-1_7_0-sources_http//file",
+  jars = ["@components-resources-1_8_0-alpha04_http//file"],
+  srcjar = "@components-resources-1_8_0-alpha04-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-  jar = "@components-resources-desktop-1_7_0_http//file",
-  srcjar = "@components-resources-desktop-1_7_0-sources_http//file",
+  jar = "@components-resources-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@components-resources-desktop-1_8_0-alpha04-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8593,8 +8593,8 @@ java_import(
 
 java_import(
   name = "snakeyaml",
-  jars = ["@snakeyaml-2_3_http//file"],
-  srcjar = "@snakeyaml-2_3-sources_http//file",
+  jars = ["@snakeyaml-2_4_http//file"],
+  srcjar = "@snakeyaml-2_4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

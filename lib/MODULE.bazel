@@ -11522,31 +11522,31 @@ http_file(
 )
 
 http_file(
-  name = "components-resources-1_7_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.7.0/components-resources-1.7.0.jar",
-  sha256 = "02b4adef426ee89bd7b7d61a3263b4f635bf7836c48ccbaf268db9032f8e01d2",
-  downloaded_file_path = "components-resources-1.7.0.jar"
+  name = "components-resources-1_8_0-alpha04_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04.jar",
+  sha256 = "7bc14c3ea620289907b3bc666999005ceda75c4da407bc8596d0965cf06990fe",
+  downloaded_file_path = "components-resources-1.8.0-alpha04.jar"
 )
 
 http_file(
-  name = "components-resources-1_7_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.7.0/components-resources-1.7.0-sources.jar",
-  sha256 = "6f35f51f5b780157874d2e58bc44848f97b819b4a76cb28f2e8aa586786f0e53",
-  downloaded_file_path = "components-resources-1.7.0-sources.jar"
+  name = "components-resources-1_8_0-alpha04-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04-sources.jar",
+  sha256 = "c3378781d24a69ad1dd8955cf8888d6b68fe03a34695fa26772be3af9e56cee4",
+  downloaded_file_path = "components-resources-1.8.0-alpha04-sources.jar"
 )
 
 http_file(
-  name = "components-resources-desktop-1_7_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.7.0/components-resources-desktop-1.7.0.jar",
-  sha256 = "1584b739e8f1869e4f340519dc984d4a44582a80ef323e655999ddb18dd954c2",
-  downloaded_file_path = "components-resources-desktop-1.7.0.jar"
+  name = "components-resources-desktop-1_8_0-alpha04_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04.jar",
+  sha256 = "1b58df32c67ffb4f0f3dbc15fda9b959e2ec3f43e0bc56ddb088be351237b9a0",
+  downloaded_file_path = "components-resources-desktop-1.8.0-alpha04.jar"
 )
 
 http_file(
-  name = "components-resources-desktop-1_7_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.7.0/components-resources-desktop-1.7.0-sources.jar",
-  sha256 = "acee37856d910a4da5f97dddbd4900e2fe7ca197e82669c0ae2e13afb2f58352",
-  downloaded_file_path = "components-resources-desktop-1.7.0-sources.jar"
+  name = "components-resources-desktop-1_8_0-alpha04-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04-sources.jar",
+  sha256 = "73c8a65ac92d9369a078205868117d5c0621d95b4259fe0d29cdc627db0bba9a",
+  downloaded_file_path = "components-resources-desktop-1.8.0-alpha04-sources.jar"
 )
 
 http_file(
@@ -12376,17 +12376,17 @@ http_file(
 )
 
 http_file(
-  name = "snakeyaml-2_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/yaml/snakeyaml/2.3/snakeyaml-2.3.jar",
-  sha256 = "63a76fe66b652360bd4c2c107e6f0258daa7d4bb492008ba8c26fcd230ff9146",
-  downloaded_file_path = "snakeyaml-2.3.jar"
+  name = "snakeyaml-2_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/yaml/snakeyaml/2.4/snakeyaml-2.4.jar",
+  sha256 = "ef779af5d29a9dde8cc70ce0341f5c6f7735e23edff9685ceaa9d35359b7bb7f",
+  downloaded_file_path = "snakeyaml-2.4.jar"
 )
 
 http_file(
-  name = "snakeyaml-2_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/yaml/snakeyaml/2.3/snakeyaml-2.3-sources.jar",
-  sha256 = "127d0e66b80324f65821451827affb8c2f70914f0d7b7b0cb99d56d12e9901cc",
-  downloaded_file_path = "snakeyaml-2.3-sources.jar"
+  name = "snakeyaml-2_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/yaml/snakeyaml/2.4/snakeyaml-2.4-sources.jar",
+  sha256 = "0a3c537e86cbb13a9a31ab138c13cee0b2c2cedc17dba38e0dc1f24a2053d8af",
+  downloaded_file_path = "snakeyaml-2.4-sources.jar"
 )
 
 http_file(

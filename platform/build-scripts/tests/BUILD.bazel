@@ -40,7 +40,6 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/util-ex",
     "@rules_jvm//zip:build-zip",
-    "@lib//:netty-buffer",
   ],
   runtime_deps = [":buildScripts-tests_test_resources"]
 )
