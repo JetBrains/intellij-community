@@ -147,6 +147,10 @@
                  defaultValue="true" 
                  description="Enable auto-import of declarations inherited by objects in K2 Mode of Kotlin Plugin"/>
 
+    <registryKey key="kotlin.k2.auto.import.mismatched.arguments.factory.enabled"
+                 defaultValue="true"
+                 description="Enable auto-import for various diagnostics about mismatched value or type arguments in K2 Mode of Kotlin Plugin"/>
+
     <!-- inlay hints -->
     <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
