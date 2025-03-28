@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="studio-platform" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:studio-platform:2024.3.2-alpha05-218">
+    <properties maven-id="org.jetbrains.intellij.deps:studio-platform:2024.3.2-alpha05-220">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-218/studio-platform-2024.3.2-alpha05-218.jar">
-          <sha256sum>1b9eaa223502a5ea12f55500ad00e4dedf36a4960f7533aaad2e58ef24259a24</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-220/studio-platform-2024.3.2-alpha05-220.jar">
+          <sha256sum>8149e6baeff8bfdb3453a68097c431929ecbcb493967c978dc0b6e7be9b4bbd9</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-218/studio-platform-2024.3.2-alpha05-218.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-220/studio-platform-2024.3.2-alpha05-220.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-218/studio-platform-2024.3.2-alpha05-218-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-220/studio-platform-2024.3.2-alpha05-220-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
