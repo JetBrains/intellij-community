@@ -27,6 +27,7 @@ import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -76,11 +77,16 @@ internal class FrontendXDebuggerSession private constructor(
   private val currentExecutionStack = MutableStateFlow<FrontendXExecutionStack?>(null)
   private val currentStackFrame = MutableStateFlow<FrontendXStackFrame?>(null)
 
-  val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
+  // TODO Actually session could have a global evaluator, see
+  //  com.intellij.xdebugger.XDebugProcess.getEvaluator overrides
+  private val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
     currentStackFrame.map { frame ->
       val frameEvaluator = frame?.evaluator ?: return@map null
       frameEvaluator as FrontendXDebuggerEvaluator
     }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  override val currentEvaluator: XDebuggerEvaluator?
+    get() = evaluator.value
 
   override val isStopped: Boolean
     get() = sessionState.value.isStopped

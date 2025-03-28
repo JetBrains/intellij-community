@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.impl.editorId
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 
 /**
@@ -29,8 +31,8 @@ private class FrontendEvaluateAction : AnAction(), ActionRemoteBehaviorSpecifica
       return
     }
 
-    val session = e.frontendDebuggerSession
-    val evaluator = session?.evaluator?.value
+    val session = DebuggerUIUtil.getSessionProxy(e)
+    val evaluator = session?.currentEvaluator
     if (evaluator == null) {
       e.presentation.isEnabled = false
       e.presentation.isVisible = !e.isFromContextMenu
@@ -39,7 +41,7 @@ private class FrontendEvaluateAction : AnAction(), ActionRemoteBehaviorSpecifica
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val evaluator = e.frontendDebuggerSession?.evaluator?.value ?: return
+    val evaluator = e.frontendDebuggerSession?.currentEvaluator as? FrontendXDebuggerEvaluator ?: return
 
     val focusedDataContext = XDebuggerEvaluateActionHandler.extractFocusedDataContext(e.dataContext) ?: e.dataContext
     val editor = CommonDataKeys.EDITOR.getData(focusedDataContext)

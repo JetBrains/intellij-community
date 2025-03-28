@@ -17,6 +17,7 @@ import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -58,6 +59,7 @@ interface XDebugSessionProxy {
   @get:NlsSafe
   val currentStateMessage: String
   val currentStateHyperlinkListener: HyperlinkListener?
+  val currentEvaluator: XDebuggerEvaluator?
 
   fun getCurrentPosition(): XSourcePosition?
   fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition?
@@ -127,6 +129,9 @@ interface XDebugSessionProxy {
 
     override val currentStateMessage: String
       get() = session.debugProcess.currentStateMessage
+
+    override val currentEvaluator: XDebuggerEvaluator?
+      get() = session.debugProcess.evaluator
 
     override fun getCurrentPosition(): XSourcePosition? {
       return session.currentPosition
