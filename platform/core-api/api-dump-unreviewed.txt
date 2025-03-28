@@ -836,6 +836,7 @@ com.intellij.lexer.DocCommentTokenTypes
 - a:tagName():com.intellij.psi.tree.IElementType
 - tagValueColon():com.intellij.psi.tree.IElementType
 - a:tagValueComma():com.intellij.psi.tree.IElementType
+- tagValueDiv():com.intellij.psi.tree.IElementType
 - a:tagValueGT():com.intellij.psi.tree.IElementType
 - a:tagValueLParen():com.intellij.psi.tree.IElementType
 - a:tagValueLT():com.intellij.psi.tree.IElementType

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
@@ -26,7 +26,8 @@ import java.util.Set;
 public final class BasicJavaDocParser {
   private static final TokenSet TAG_VALUES_SET = TokenSet.create(
     JavaDocTokenType.DOC_TAG_VALUE_TOKEN, JavaDocTokenType.DOC_TAG_VALUE_COMMA, JavaDocTokenType.DOC_TAG_VALUE_DOT,
-    JavaDocTokenType.DOC_TAG_VALUE_LPAREN, JavaDocTokenType.DOC_TAG_VALUE_RPAREN, JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
+    JavaDocTokenType.DOC_TAG_VALUE_LPAREN, JavaDocTokenType.DOC_TAG_VALUE_RPAREN,
+    JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN, JavaDocTokenType.DOC_TAG_VALUE_DIV_TOKEN,
     JavaDocTokenType.DOC_TAG_VALUE_LT, JavaDocTokenType.DOC_TAG_VALUE_GT, JavaDocTokenType.DOC_TAG_VALUE_COLON,
     JavaDocTokenType.DOC_TAG_VALUE_QUOTE
   );
