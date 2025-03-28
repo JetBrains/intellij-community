@@ -18,14 +18,14 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.bazel.jvm.util.emptySet
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
-import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
-import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.markAffectedFilesDirty
 import org.jetbrains.bazel.jvm.jps.state.DependencyDescriptor
 import org.jetbrains.bazel.jvm.jps.state.DependencyState
 import org.jetbrains.bazel.jvm.span
+import org.jetbrains.bazel.jvm.util.emptySet
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
+import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Delta
@@ -66,6 +66,7 @@ internal suspend fun checkDependencies(
   span: Span,
   tracer: Tracer,
   dataProvider: BazelBuildDataProvider,
+  dependencyAnalyzer: DependencyAnalyzer,
 ) {
   val changedOrAdded = MutableObjectList<DependencyDescriptor>()
   val usedAbiDir = context.projectDescriptor.dataManager.dataPaths.dataStorageDir.resolve("used-abi")
@@ -73,7 +74,6 @@ internal suspend fun checkDependencies(
   val changedOrAddedNodes = MutableScatterMap<AbiJarSource, NodeUpdateItem>()
   val deletedNodes = MutableScatterMap<AbiJarSource, NodeUpdateItem>()
   val filesToCopy = MutableObjectList<Pair<Path, Path>>()
-  val dependencyAnalyzer = context.scope.dependencyAnalyzer!!
   dataProvider.libRootManager.state.dependencies.forEach { descriptor ->
     if (descriptor.state == DependencyState.DELETED) {
       throw IllegalStateException("Deleted dependency should not be present in the state: $descriptor")

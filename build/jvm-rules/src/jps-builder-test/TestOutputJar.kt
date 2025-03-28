@@ -2,8 +2,8 @@
 package org.jetbrains.bazel.jvm.jps.test
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.bazel.jvm.jps.output.OutputSink
-import org.jetbrains.bazel.jvm.jps.output.createEmptyOutputSink
+import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
+import org.jetbrains.bazel.jvm.worker.core.output.createEmptyOutputSink
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import java.io.File
 

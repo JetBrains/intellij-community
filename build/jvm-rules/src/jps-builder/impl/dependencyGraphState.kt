@@ -9,10 +9,16 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import org.jetbrains.bazel.jvm.util.emptySet
+import org.jetbrains.bazel.jvm.jps.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.jps.dependencies.checkDependencies
-import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.span
+import org.jetbrains.bazel.jvm.util.emptySet
+import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildRootIndex
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
+import org.jetbrains.bazel.jvm.worker.core.BazelDirtyFileHolder
+import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.NodeSource
@@ -39,6 +45,7 @@ internal suspend fun markDirtyDependenciesForInitialRound(
   context: BazelCompileContext,
   dirtyFilesHolder: BazelDirtyFileHolder,
   chunk: ModuleChunk,
+  dependencyAnalyzer: DependencyAnalyzer,
   tracer: Tracer,
 ) {
   val relativizer = dataProvider.relativizer
@@ -51,6 +58,7 @@ internal suspend fun markDirtyDependenciesForInitialRound(
       relativizer = relativizer,
       dataProvider = dataProvider,
       tracer = tracer,
+      dependencyAnalyzer = dependencyAnalyzer,
       span = span,
     )
   }

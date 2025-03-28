@@ -32,8 +32,6 @@
       version: 25.2.10
     - id: org.apache.arrow:arrow-format
       version: 18.2.0
-    - id: org.apache.arrow:arrow-algorithm
-      version: 18.2.0
     - id: org.apache.arrow:arrow-vector
       version: 18.2.0
       runtimeDeps:

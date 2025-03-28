@@ -9,7 +9,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetStateManager
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetType

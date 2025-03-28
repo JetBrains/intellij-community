@@ -6,21 +6,21 @@ package org.jetbrains.bazel.jvm.jps
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.job
-import org.jetbrains.bazel.jvm.util.ArgMap
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
-import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
-import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
-import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
 import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
 import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
-import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.kotlin.NonIncrementalKotlinBuilder
-import org.jetbrains.bazel.jvm.jps.output.createOutputSink
-import org.jetbrains.bazel.jvm.jps.output.writeJarAndAbi
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.use
+import org.jetbrains.bazel.jvm.util.ArgMap
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildRootIndex
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildTargetIndex
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileScope
+import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.worker.core.RequestLog
+import org.jetbrains.bazel.jvm.worker.core.output.createOutputSink
+import org.jetbrains.bazel.jvm.worker.core.output.writeJarAndAbi
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.fs.BuildFSState
@@ -58,7 +58,7 @@ internal suspend fun nonIncrementalBuildUsingJps(
   )
 
   val context = BazelCompileContext(
-    scope = BazelCompileScope(isIncrementalCompilation = false, isRebuild = true, dependencyAnalyzer = null),
+    scope = BazelCompileScope(isIncrementalCompilation = false, isRebuild = true),
     projectDescriptor = projectDescriptor,
     delegateMessageHandler = log,
     coroutineContext = coroutineContext,
@@ -91,10 +91,11 @@ internal suspend fun nonIncrementalBuildUsingJps(
         buildState = null,
         outputSink = outputSink,
         parentSpan = span,
+        dependencyAnalyzer = null,
       )
     }
     if (exitCode == 0) {
-      writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar, sourceDescriptors = null)
+      writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar)
     }
     return exitCode
   }

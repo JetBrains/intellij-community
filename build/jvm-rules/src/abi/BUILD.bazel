@@ -11,7 +11,11 @@ kt_jvm_library(
         "@lib//:asm",
         "//:kotlin-metadata",
     ],
-    visibility = ["//src/jps-builder:__pkg__"],
+    visibility = [
+      "//src/jps-builder:__pkg__",
+      "//src/jvm-builder-core:__pkg__",
+      "//src/kotlin/kotlin-builder:__pkg__",
+    ],
 )
 
 java_binary(

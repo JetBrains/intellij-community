@@ -17,22 +17,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.jps.dependencies.DependencyAnalyzer
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
-import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
-import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
-import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
-import org.jetbrains.bazel.jvm.jps.impl.BazelPathTypeAwareRelativizer
 import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
-import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.createJpsProjectDescriptor
-import org.jetbrains.bazel.jvm.jps.impl.createPathRelativizer
 import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.IncrementalKotlinBuilder
-import org.jetbrains.bazel.jvm.jps.output.OutputSink
-import org.jetbrains.bazel.jvm.jps.output.createOutputSink
-import org.jetbrains.bazel.jvm.jps.output.writeJarAndAbi
 import org.jetbrains.bazel.jvm.jps.state.DependencyStateStorage
 import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
@@ -45,6 +34,18 @@ import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
+import org.jetbrains.bazel.jvm.util.ArgMap
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileScope
+import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
+import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.worker.core.BazelPathTypeAwareRelativizer
+import org.jetbrains.bazel.jvm.worker.core.RequestLog
+import org.jetbrains.bazel.jvm.worker.core.createPathRelativizer
+import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
+import org.jetbrains.bazel.jvm.worker.core.output.createOutputSink
+import org.jetbrains.bazel.jvm.worker.core.output.writeJarAndAbi
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
@@ -224,7 +225,7 @@ suspend fun buildUsingJps(
   var exitCode = try {
     initAndBuild(
       rebuildReason = rebuildReason,
-      compileScope = BazelCompileScope(isIncrementalCompilation = true, dependencyAnalyzer = dependencyAnalyzer, isRebuild = isRebuild),
+      compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),
       requestLog = log,
       dataDir = dataDir,
       targetDigests = targetDigests,
@@ -245,6 +246,7 @@ suspend fun buildUsingJps(
       ),
       sourceFileState = buildState.sourceFileState,
       isDebugEnabled = isDebugEnabled,
+      dependencyAnalyzer = dependencyAnalyzer,
     )
   }
   catch (e: CancellationException) {
@@ -263,7 +265,7 @@ suspend fun buildUsingJps(
     log.resetState()
     exitCode = initAndBuild(
       rebuildReason = rebuildReason,
-      compileScope = BazelCompileScope(isIncrementalCompilation = true, dependencyAnalyzer = dependencyAnalyzer, isRebuild = true),
+      compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = true),
       requestLog = log,
       dataDir = dataDir,
       targetDigests = targetDigests,
@@ -284,6 +286,7 @@ suspend fun buildUsingJps(
       ),
       sourceFileState = null,
       isDebugEnabled = isDebugEnabled,
+      dependencyAnalyzer = dependencyAnalyzer,
     )
   }
 
@@ -328,6 +331,7 @@ private suspend fun initAndBuild(
   jpsModel: JpsModel,
   dataManager: BazelBuildDataProvider,
   sourceFileState: SourceFileStateResult?,
+  dependencyAnalyzer: DependencyAnalyzer,
   isDebugEnabled: Boolean,
 ): Int {
   val isRebuild = compileScope.isRebuild
@@ -406,6 +410,7 @@ private suspend fun initAndBuild(
             builders = builders,
             buildState = sourceFileState,
             outputSink = outputSink,
+            dependencyAnalyzer = dependencyAnalyzer,
             parentSpan = span,
           )
         }
@@ -502,7 +507,6 @@ private fun CoroutineScope.postBuild(
         outputSink = outputSink,
         outJar = outputs.cachedJar,
         abiJar = outputs.cachedAbiJar,
-        sourceDescriptors = sourceDescriptors,
       )
     }
     else {

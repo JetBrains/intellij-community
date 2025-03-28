@@ -4,12 +4,10 @@
 package org.jetbrains.bazel.jvm.jps.java
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader
-import io.netty.buffer.ByteBufAllocator
-import io.netty.buffer.ByteBufOutputStream
-import io.netty.buffer.ByteBufUtil
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import org.jetbrains.bazel.jvm.jps.output.OutputSink
-import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
+import org.jetbrains.bazel.jvm.worker.core.BazelTargetBuildOutputConsumer
+import org.jetbrains.bazel.jvm.worker.core.output.InMemoryJavaOutputFileObject
+import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks.Backend
 import org.jetbrains.jps.incremental.CompileContext
@@ -103,62 +101,6 @@ internal class BazelJpsJavacFileProvider(
     outputs.add(result)
     return result
   }
-}
-
-internal class InMemoryJavaOutputFileObject(
-  @JvmField val path: String,
-  @JvmField val source: File,
-) : JavaFileObject {
-  @JvmField var content: ByteArray? = null
-
-  override fun getKind(): JavaFileObject.Kind = JavaFileObject.Kind.CLASS
-
-  override fun isNameCompatible(simpleName: String, kind: JavaFileObject.Kind): Boolean {
-    return kind == JavaFileObject.Kind.CLASS && simpleName == path
-  }
-
-  override fun getNestingKind(): NestingKind? = null
-
-  override fun getAccessLevel(): Modifier? = null
-
-  override fun toUri(): URI? = throw UnsupportedOperationException()
-
-  override fun getName(): String = path
-
-  override fun openOutputStream(): OutputStream {
-    val buffer = ByteBufAllocator.DEFAULT.buffer()
-    return object : ByteBufOutputStream(buffer, false) {
-      private var isClosed = false
-
-      override fun close() {
-        if (isClosed) {
-          return
-        }
-
-        isClosed = true
-        try {
-          super.close()
-          content = ByteBufUtil.getBytes(buffer)
-        }
-        finally {
-          buffer.release()
-        }
-      }
-    }
-  }
-
-  override fun openWriter(): Writer = openOutputStream().writer()
-
-  override fun openInputStream(): InputStream = throw IllegalStateException()
-
-  override fun openReader(ignoreEncodingErrors: Boolean): Reader = throw IllegalStateException()
-
-  override fun getCharContent(ignoreEncodingErrors: Boolean): String = throw IllegalStateException()
-
-  override fun getLastModified(): Long = 1
-
-  // never called, JPS impl also implements as `return false`
-  override fun delete() = throw IllegalStateException()
 }
 
 private class InMemoryJavaInputFileObject(

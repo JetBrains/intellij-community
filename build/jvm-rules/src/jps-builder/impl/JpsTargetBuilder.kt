@@ -13,22 +13,31 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.jps.output.OutputSink
+import org.jetbrains.bazel.jvm.jps.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
 import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
-import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
+import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.worker.core.BazelBuildRootIndex
+import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
+import org.jetbrains.bazel.jvm.worker.core.BazelDirtyFileHolder
+import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.worker.core.BazelTargetBuildOutputConsumer
+import org.jetbrains.bazel.jvm.worker.core.BazelTargetBuilder
+import org.jetbrains.bazel.jvm.worker.core.RequestLog
+import org.jetbrains.bazel.jvm.worker.core.cleanOutputsCorrespondingToChangedFiles
+import org.jetbrains.bazel.jvm.worker.core.initFsStateForCleanBuild
+import org.jetbrains.bazel.jvm.worker.core.markTargetUpToDate
+import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
-import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.BuildListener
 import org.jetbrains.jps.incremental.Builder
-import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -44,7 +53,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
 import org.jetbrains.jps.incremental.messages.ProgressMessage
-import org.jetbrains.jps.model.module.JpsModule
 import java.io.IOException
 import java.nio.file.Path
 import java.util.Map
@@ -54,26 +62,6 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlin.time.toJavaDuration
-
-internal abstract class BazelTargetBuilder(category: BuilderCategory) : ModuleLevelBuilder(category) {
-  abstract suspend fun build(
-    context: BazelCompileContext,
-    module: JpsModule,
-    chunk: ModuleChunk,
-    target: BazelModuleBuildTarget,
-    dirtyFilesHolder: BazelDirtyFileHolder,
-    outputConsumer: BazelTargetBuildOutputConsumer,
-    outputSink: OutputSink,
-  ): ExitCode
-  final override fun build(
-    context: CompileContext,
-    chunk: ModuleChunk,
-    dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
-    outputConsumer: OutputConsumer,
-  ): ExitCode? {
-    throw IllegalStateException("Should not be called")
-  }
-}
 
 internal class JpsTargetBuilder(
   private val log: RequestLog,
@@ -90,6 +78,7 @@ internal class JpsTargetBuilder(
     buildState: SourceFileStateResult?,
     outputSink: OutputSink,
     parentSpan: Span,
+    dependencyAnalyzer: DependencyAnalyzer?,
   ): Int {
     try {
       context.setDone(0.0f)
@@ -101,7 +90,14 @@ internal class JpsTargetBuilder(
       }
 
       try {
-        buildTarget(context = context, target = moduleTarget, builders = builders, outputSink = outputSink, buildState = buildState)
+        buildTarget(
+          context = context,
+          target = moduleTarget,
+          builders = builders,
+          outputSink = outputSink,
+          buildState = buildState,
+          dependencyAnalyzer = dependencyAnalyzer,
+        )
       }
       finally {
         for (builder in builders) {
@@ -159,11 +155,12 @@ internal class JpsTargetBuilder(
     target: BazelModuleBuildTarget,
     builders: Array<out ModuleLevelBuilder>,
     outputSink: OutputSink,
+    dependencyAnalyzer: DependencyAnalyzer?,
     parentSpan: Span,
   ): Boolean {
     val chunk = ModuleChunk(java.util.Set.of<ModuleBuildTarget>(target))
 
-    if (context.scope.isIncrementalCompilation) {
+    if (context.scope.isIncrementalCompilation && dependencyAnalyzer != null) {
       // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
       // that all such files are compiled in the first round.
       tracer.span("markDirtyDependenciesForInitialRound") { span ->
@@ -173,6 +170,7 @@ internal class JpsTargetBuilder(
           dirtyFilesHolder = BazelDirtyFileHolder(context, context.projectDescriptor.fsState, chunk.targets.single() as BazelModuleBuildTarget),
           chunk = chunk,
           tracer = tracer,
+          dependencyAnalyzer = dependencyAnalyzer,
           dataProvider = dataManager!!,
         )
       }
@@ -306,6 +304,7 @@ internal class JpsTargetBuilder(
     builders: Array<out ModuleLevelBuilder>,
     buildState: SourceFileStateResult?,
     outputSink: OutputSink,
+    dependencyAnalyzer: DependencyAnalyzer?,
   ) {
     val targets = java.util.Set.of<BuildTarget<*>>(target)
     try {
@@ -358,7 +357,14 @@ internal class JpsTargetBuilder(
       fsState.beforeChunkBuildStart(context, targets)
 
       tracer.span("runModuleLevelBuilders") { span ->
-        if (runModuleLevelBuilders(context, target, builders, outputSink, span)) {
+        if (runModuleLevelBuilders(
+            context = context,
+            target = target,
+            builders = builders,
+            outputSink = outputSink,
+            dependencyAnalyzer = dependencyAnalyzer,
+            parentSpan = span,
+          )) {
           doneSomething = true
         }
       }

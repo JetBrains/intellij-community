@@ -10,12 +10,13 @@ import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.jps.state.isDependencyTracked
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
+import org.jetbrains.bazel.jvm.util.ArgMap
+import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -24,8 +25,6 @@ import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.JpsReferenceableElement
-import org.jetbrains.jps.model.ex.JpsElementBase
-import org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -205,19 +204,6 @@ private fun configureKotlinCompiler(
 
   module.container.setChild(JpsKotlinFacetModuleExtension.KIND, JpsKotlinFacetModuleExtension(kotlinFacetSettings))
   return kotlinArgs
-}
-
-internal class BazelConfigurationHolder(
-  @JvmField val classPath: Array<Path>,
-  @JvmField val args: ArgMap<JvmBuilderFlags>,
-  @JvmField val kotlinArgs: K2JVMCompilerArguments,
-  @JvmField val classPathRootDir: Path,
-  @JvmField val sources: List<Path>,
-  @JvmField val trackableDependencyFiles: ObjectList<Path>,
-) : JpsElementBase<BazelConfigurationHolder>() {
-  companion object {
-    @JvmField val KIND: JpsElementChildRoleBase<BazelConfigurationHolder> = JpsElementChildRoleBase.create<BazelConfigurationHolder>("kotlin facet extension")
-  }
 }
 
 private fun configureJdk(

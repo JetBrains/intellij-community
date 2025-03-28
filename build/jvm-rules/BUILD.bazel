@@ -57,7 +57,9 @@ jvm_import(
     source_jar = "@jps-standalone_http//file",
     visibility = [
       "//src/jps-builder:__subpackages__",
+      "//src/jvm-builder-core:__subpackages__",
       "//src/jps-shadow:__subpackages__",
+      "//src/kotlin/kotlin-builder:__subpackages__",
     ],
 )
 
@@ -169,13 +171,6 @@ jvm_import(
     name = "arrow-format",
     jar = "@arrow-format//file",
     source_jar = "@arrow-format-sources//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "arrow-algorithm",
-    jar = "@arrow-algorithm//file",
-    source_jar = "@arrow-algorithm-sources//file",
     visibility = ["//visibility:public"],
 )
 

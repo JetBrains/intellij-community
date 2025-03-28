@@ -223,19 +223,6 @@ http_file(
 )
 
 http_file(
-    name = "arrow-algorithm",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.2.0/arrow-algorithm-18.2.0.jar",
-    sha256 = "0c4089bde0ce62f00720d64dc0b7f08a6cb23e96c424ec7e061b4c4e6e4bba82",
-    downloaded_file_path = "arrow-algorithm-18.2.0.jar",
-)
-http_file(
-    name = "arrow-algorithm-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.2.0/arrow-algorithm-18.2.0-sources.jar",
-    sha256 = "c596851108722c8a5165e24d0fb8775fc5768305623f2b91d23e7b9b903055ec",
-    downloaded_file_path = "arrow-algorithm-18.2.0-sources.jar",
-)
-
-http_file(
     name = "arrow-vector",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-vector/18.2.0/arrow-vector-18.2.0.jar",
     sha256 = "29fe15fac68e30fdd59364bcd8b5058490cc85269fd47fb460abaff1fb61243d",
