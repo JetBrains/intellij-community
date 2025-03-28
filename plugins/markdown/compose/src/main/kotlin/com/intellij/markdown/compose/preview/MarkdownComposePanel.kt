@@ -31,6 +31,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -61,7 +62,7 @@ internal class MarkdownComposePanel(
   private val scrollToLineFlow = MutableSharedFlow<Int>(replay = 1)
 
   private val panelComponent by lazy {
-    JBComposePanel {
+    JewelComposePanel {
       // TODO temporary styling, we will likely need our own in the future for JCEF-like rendering
       MarkdownPanel()
     }
