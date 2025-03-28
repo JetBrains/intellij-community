@@ -1,15 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("LiftReturnOrAssignment")
-
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
-import org.apache.commons.io.output.ByteArrayOutputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.io.ZipFileWriter
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
 import java.util.*
