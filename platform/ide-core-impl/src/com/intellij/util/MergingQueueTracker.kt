@@ -45,11 +45,11 @@ private class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
 
   fun registerEnter(update: TrackedUpdate) {
     counter.incrementAndGet()
-    traceObservedComputation(update)
+    traceObservedComputation(update.id)
   }
 
   fun registerExit(update: TrackedUpdate) {
-    removeObservedComputation(update)
+    removeObservedComputation(update.id)
     counter.decrementAndGet()
   }
 }
@@ -57,6 +57,13 @@ private class MergingUpdateQueueTrackerImpl : MergingUpdateQueueTracker {
 private class TrackedUpdate(
   private val original: Update,
 ) : Update(original) {
+
+  /**
+   * The equals and hashcode methods are overridden in the [Update] class.
+   * Therefore, we need an additional unique identifier of this update for debug tracing.
+   */
+  val id = Any()
+
   // we have to delegate ALL overrideable methods because we don't know which ones are overridden in the original Update
   // also Update is an abstract class, so we cannot use Kotlin Delegation
   override val isDisposed: Boolean get() = original.isDisposed
