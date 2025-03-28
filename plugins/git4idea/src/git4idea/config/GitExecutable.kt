@@ -34,27 +34,22 @@ sealed class GitExecutable {
 
     private fun setupLowPriorityExecution(commandLine: GeneralCommandLine) {
       if (Registry.`is`("ide.allow.low.priority.process")) {
-        val executablePath = commandLine.exePath
         if (SystemInfo.isWindows) {
-          commandLine.withExePath(CommandLineUtil.getWinShellName())
-          commandLine.parametersList.prependAll("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
+          commandLine.withWrappingCommand(CommandLineUtil.getWinShellName(), "/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""))
         }
         else if (hasNice) {
-          commandLine.withExePath(NICE_PATH)
-          commandLine.parametersList.prependAll("-n", "10", executablePath)
+          commandLine.withWrappingCommand(NICE_PATH, "-n", "10")
         }
       }
     }
 
     private fun setupNoTtyExecution(commandLine: GeneralCommandLine, wait: Boolean) {
       if (SystemInfo.isLinux && hasSetSid) {
-        val executablePath = commandLine.exePath
-        commandLine.withExePath(SETSID_PATH)
         if (wait) {
-          commandLine.parametersList.prependAll("-w", executablePath)
+          commandLine.withWrappingCommand(SETSID_PATH, "-w")
         }
         else {
-          commandLine.parametersList.prependAll(executablePath)
+          commandLine.withWrappingCommand(SETSID_PATH)
         }
       }
     }

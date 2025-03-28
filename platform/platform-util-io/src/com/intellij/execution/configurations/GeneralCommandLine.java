@@ -158,6 +158,18 @@ public class GeneralCommandLine implements UserDataHolder {
     withExePath(exePath);
   }
 
+  /**
+   * Turns the command line into parameters of a new one.
+   * Case in point &ndash; running a process with lower priority: {@code commandLine.withWrappingCommand("nice", "-n", "10")}.
+   */
+  @ApiStatus.Experimental
+  public @NotNull GeneralCommandLine withWrappingCommand(@NotNull String command, @NotNull String @NotNull ... args) {
+    if (myExePath == null || myExePath.isBlank()) throw new IllegalStateException("Executable is not set yet");
+    myProgramParams.prepend(myExePath);
+    myProgramParams.prependAll(args);
+    return withExePath(command);
+  }
+
   /** Please use {@link #getWorkingDirectory()}. */
   @ApiStatus.Obsolete(since = "2024.2")
   public File getWorkDirectory() {

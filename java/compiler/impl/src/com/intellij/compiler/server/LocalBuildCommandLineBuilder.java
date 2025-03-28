@@ -96,8 +96,6 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
       throw new IllegalArgumentException("priority must be in the [0..19] range: " + priority);
     }
 
-    String executablePath = commandLine.getExePath();
-    commandLine.setExePath("nice");
-    commandLine.getParametersList().prependAll("-n", Integer.toString(priority), executablePath);
+    commandLine.withWrappingCommand("nice", "-n", Integer.toString(priority));
   }
 }
