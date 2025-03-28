@@ -7,13 +7,15 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   @Override
   public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
-    XDebugSession session = DebuggerUIUtil.getSession(event);
+    XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(event);
     if (session != null) {
       perform(session, event.getDataContext());
     }
@@ -22,11 +24,40 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   @Override
   public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     if (LightEdit.owns(project)) return false;
-    XDebugSession session = DebuggerUIUtil.getSession(event);
+    XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(event);
     return session != null && isEnabled(session, event.getDataContext());
   }
 
-  protected abstract boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext);
+  /**
+   * @deprecated Override {@link XDebuggerActionHandler#isEnabled(XDebugSessionProxy, DataContext)} instead
+   */
+  @Deprecated
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+    throw new AbstractMethodError("Override isEnabled(XDebugSessionProxy, DataContext) in " + getClass().getName());
+  }
 
-  protected abstract void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext);
+  /**
+   * @deprecated Override {@link XDebuggerActionHandler#perform(XDebugSessionProxy, DataContext)} instead
+   */
+  @Deprecated
+  @ApiStatus.OverrideOnly
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+    throw new AbstractMethodError("Override perform(XDebugSessionProxy, DataContext) in " + getClass().getName());
+  }
+
+  @ApiStatus.Internal
+  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    if (session instanceof XDebugSessionProxy.Monolith monolith) {
+      return isEnabled(monolith.getSession(), dataContext);
+    }
+    return false;
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.OverrideOnly
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    if (session instanceof XDebugSessionProxy.Monolith monolith) {
+      perform(monolith.getSession(), dataContext);
+    }
+  }
 }

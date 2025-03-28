@@ -91,13 +91,13 @@ internal class FrontendXDebuggerSession private constructor(
   override val environmentProxy: ExecutionEnvironmentProxy?
     get() = null // TODO: implement!
 
-  val isReadOnly: Boolean
+  override val isReadOnly: Boolean
     get() = sessionState.value.isReadOnly
 
   val isPauseActionSupported: Boolean
     get() = sessionState.value.isPauseActionSupported
 
-  val isSuspended: Boolean
+  override val isSuspended: Boolean
     get() = sessionState.value.isSuspended
 
   override val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider

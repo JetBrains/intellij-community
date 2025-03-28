@@ -50,6 +50,8 @@ interface XDebugSessionProxy {
   val sessionTab: XDebugSessionTab?
   val isStopped: Boolean
   val isPaused: Boolean
+  val isSuspended: Boolean
+  val isReadOnly: Boolean
 
   val environmentProxy: ExecutionEnvironmentProxy?
 
@@ -115,6 +117,10 @@ interface XDebugSessionProxy {
       get() = null // Monolith shouldn't provide proxy, since the real one ExecutionEnvironment will be used
     override val isStopped: Boolean
       get() = session.isStopped
+    override val isReadOnly: Boolean
+      get() = (session as? XDebugSessionImpl)?.isReadOnly ?: false
+    override val isSuspended: Boolean
+      get() = session.isSuspended
 
     override val currentStateHyperlinkListener: HyperlinkListener?
       get() = session.debugProcess.currentStateHyperlinkListener
