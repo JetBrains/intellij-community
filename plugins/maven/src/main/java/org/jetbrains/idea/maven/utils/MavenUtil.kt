@@ -1832,25 +1832,14 @@ object MavenUtil {
     return settings.getMavenHomeType() is MavenWrapper
   }
 
-  fun suggestProjectSdk(rootProjectPath: Path): Sdk? {
+  fun suggestProjectSdk(project: Project): Sdk? {
     val projectJdkTable = ProjectJdkTable.getInstance()
     val sdkType = ExternalSystemJdkUtil.getJavaSdkType()
-    return projectJdkTable.getSdksOfType(sdkType).stream()
-      .filter { it: Sdk? -> isGoodSdk(it!!, rootProjectPath) }
-      .max(sdkType.versionComparator())
-      .orElse(null)
-  }
-
-  private fun isGoodSdk(sdk: Sdk, rootProjectPath: Path): Boolean {
-    val sdkRoot = sdk.getHomeDirectory()
-    if (sdkRoot == null) return false
-
-    val isWindowsProjectRoot = rootProjectPath.getRoot().toString() != "/"
-    val isWindowsSdkRoot = sdkRoot.toNioPath().getRoot().toString() != "/"
-    if (isWindowsSdkRoot != isWindowsProjectRoot) return false
-
-    //need better checking, can perform when IDEA-364602 is ready
-    return JdkUtil.checkForJdk(sdkRoot.toNioPath(), isWindowsProjectRoot)
+    return projectJdkTable.getSdksOfType(sdkType)
+      .filterNotNull()
+      .filter { it: Sdk -> JdkUtil.isCompatible(it, project) }
+      .filter { it: Sdk -> it.homeDirectory?.toNioPath()?.let { JdkUtil.checkForJdk(it) } == true }
+      .maxWithOrNull(sdkType.versionComparator())
   }
 
   fun getRemoteResolvedRepositories(project: Project): Set<MavenRemoteRepository> {

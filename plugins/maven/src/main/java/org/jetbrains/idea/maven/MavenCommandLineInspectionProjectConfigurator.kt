@@ -94,7 +94,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         writeIntentReadAction {
           FileDocumentManager.getInstance().saveAllDocuments()
         }
-        MavenAsyncUtil.setupProjectSdk(project, context.projectPath)
+        MavenAsyncUtil.setupProjectSdk(project)
       }
 
       // GradleWarmupConfigurator sets "external.system.auto.import.disabled" to true, but we have to import the project nevertheless
