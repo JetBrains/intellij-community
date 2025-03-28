@@ -9,10 +9,12 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.math.abs
 
 
+@ApiStatus.Internal
 class IncorrectFormattingInspectionHelper(
   private val formattingChanges: FormattingChanges,
   val file: PsiFile,

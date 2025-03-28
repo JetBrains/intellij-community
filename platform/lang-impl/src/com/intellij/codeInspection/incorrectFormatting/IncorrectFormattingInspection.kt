@@ -33,7 +33,7 @@ class IncorrectFormattingInspection(
 
   private val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
 
-  fun getResultsForFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean, globalContext: GlobalInspectionContext?): Array<ProblemDescriptor>? {
+  private fun getResultsForFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean, globalContext: GlobalInspectionContext?): Array<ProblemDescriptor>? {
 
     // Skip files we are not able to fix
     if (!file.isWritable) return null

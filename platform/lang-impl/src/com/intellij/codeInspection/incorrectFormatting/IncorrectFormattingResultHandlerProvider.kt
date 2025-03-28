@@ -2,9 +2,10 @@
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.codeInspection.GlobalInspectionContext
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface IncorrectFormattingResultHandlerProvider {
   companion object {
     val EP_NAME: ExtensionPointName<IncorrectFormattingResultHandlerProvider> = ExtensionPointName("com.intellij.resultHandlerProvider")

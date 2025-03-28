@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 val GlobalInspectionContextKey = Key<GlobalInspectionContext>("GlobalInspectionContext")
 
+@ApiStatus.Internal
 fun LocalInspectionToolSession.globalInspectionContext(): GlobalInspectionContext? {
   return getUserData(GlobalInspectionContextKey)
 }
