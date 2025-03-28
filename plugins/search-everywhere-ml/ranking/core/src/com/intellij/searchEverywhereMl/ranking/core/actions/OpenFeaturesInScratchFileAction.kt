@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereFoundElementInfoWithMl
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereRankingDiffCalculator
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
@@ -106,7 +107,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to state.orderByMl,
-      EXPERIMENT_GROUP_KEY to mlSessionService.experiment.experimentGroup,
+      EXPERIMENT_GROUP_KEY to SearchEverywhereMlExperiment.experimentGroup,
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
       SEARCH_STATE_FEATURES_KEY to state.searchStateFeatures.associate { it.field.name to it.data },
       CONTRIBUTORS_KEY to contributorFeatures.map { c -> c.associate { it.field.name to it.data }.toSortedMap() },

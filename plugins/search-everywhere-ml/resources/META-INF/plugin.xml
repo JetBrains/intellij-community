@@ -28,6 +28,7 @@
   <resource-bundle>messages.searchEverywhereMlCoreBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!-- Please add the appropriate getter in the SearchEverywhereMlRegistry after adding a new key here -->
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
                  key="search.everywhere.ml.experiment.group"/>

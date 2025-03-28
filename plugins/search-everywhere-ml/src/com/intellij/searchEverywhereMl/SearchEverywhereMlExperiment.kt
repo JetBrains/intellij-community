@@ -3,12 +3,10 @@ package com.intellij.searchEverywhereMl
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.Companion.VERSION
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.VERSION
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.util.MathUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Handles the machine learning experiments in Search Everywhere.
@@ -16,88 +14,56 @@ import org.jetbrains.annotations.VisibleForTesting
  * Please update the [VERSION] number if you need to reshuffle experiment groups.
  * This might be helpful to avoid the impact of the previous experiments on the current experiments.
  */
-class SearchEverywhereMlExperiment {
-  companion object {
-    const val VERSION = 2
-    const val NUMBER_OF_GROUPS = 4
-  }
+object SearchEverywhereMlExperiment {
+  const val VERSION: Int = 2
+  const val NUMBER_OF_GROUPS: Int = 4
 
   var isExperimentalMode: Boolean = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP
     @TestOnly set
 
-  private val tabsWithEnabledLogging = setOf(
-    SearchEverywhereTabWithMlRanking.ACTION.tabId,
-    SearchEverywhereTabWithMlRanking.FILES.tabId,
-    SearchEverywhereTabWithMlRanking.CLASSES.tabId,
-    SearchEverywhereTabWithMlRanking.SYMBOLS.tabId,
-    SearchEverywhereTabWithMlRanking.ALL.tabId
-  )
-
-  private val tabExperiments = hashMapOf(
-    SearchEverywhereTabWithMlRanking.ACTION to Experiment(
-      1 to ExperimentType.ExactMatchManualFix,
-      2 to ExperimentType.NoMl,
-      3 to ExperimentType.Typos,
-    ),
-
-    SearchEverywhereTabWithMlRanking.FILES to Experiment(
-      1 to ExperimentType.SemanticSearch,
-      3 to ExperimentType.NoMl
-    ),
-
-    SearchEverywhereTabWithMlRanking.CLASSES to Experiment(
-      1 to ExperimentType.SemanticSearch,
-      3 to ExperimentType.NoMl
-    ),
-
-    SearchEverywhereTabWithMlRanking.SYMBOLS to Experiment(
-      1 to ExperimentType.SemanticSearch,
-    ),
-
-    SearchEverywhereTabWithMlRanking.ALL to Experiment(
-      1 to ExperimentType.EssentialContributorPrediction,
-      2 to ExperimentType.ExperimentalModel,
-    )
-  )
-
   val isAllowed: Boolean
-    get() = isExperimentalMode && !Registry.`is`("search.everywhere.force.disable.logging.ml")
+    get() = isExperimentalMode && !SearchEverywhereMlRegistry.disableLogging
 
+  /**
+   * Overrides the experiment group assignment for testing purposes.
+   * This is an internal variable intended for use in test environments only.
+   *
+   * When set to a non-null value, it forces the experiment group to the specified integer.
+   * A null value indicates that no override is applied, and the default group assignment logic is used.
+   */
+  @TestOnly
+  var experimentGroupOverride: Int? = null
+
+  /**
+   * Determines the experiment group number for a feature, based on various conditions.
+   * The group number is derived from the following steps:
+   * 1. Checks if there's an override for the experiment group; if present, returns it.
+   * 2. If experimental mode is enabled:
+   *    - Retrieves the experiment group number from the registry.
+   *    - If a valid registry group is found (non-negative), returns it.
+   *    - Otherwise, calculates and returns the computed group number.
+   * 3. If experimental mode is disabled, returns -1.
+   */
+  @get:JvmStatic
   val experimentGroup: Int
-    get() = if (isExperimentalMode) {
-      val registryExperimentGroup = Registry.intValue("search.everywhere.ml.experiment.group", -1, -1, NUMBER_OF_GROUPS - 1)
-      if (registryExperimentGroup >= 0) registryExperimentGroup else computedGroup
+    get() {
+      val override = experimentGroupOverride
+      if (override != null) {
+        return override
+      }
+
+      return if (isExperimentalMode) {
+        val registryExperimentGroup = SearchEverywhereMlRegistry.experimentGroupNumber
+        if (registryExperimentGroup >= 0) registryExperimentGroup else computedGroup
+      }
+      else -1
     }
-    else -1
 
   private val computedGroup: Int by lazy {
     val mlseLogConfiguration = EventLogConfiguration.getInstance().getOrCreate(MLSE_RECORDER_ID)
     // experiment groups get updated on the VERSION property change:
     MathUtil.nonNegativeAbs((mlseLogConfiguration.deviceId + VERSION).hashCode()) % NUMBER_OF_GROUPS
   }
-
-  fun isLoggingEnabledForTab(tabId: String) = tabsWithEnabledLogging.contains(tabId)
-
-  @Suppress("UnresolvedPluginConfigReference")
-  private fun isDisableExperiments(tab: SearchEverywhereTabWithMlRanking): Boolean {
-    return Registry.`is`("search.everywhere.force.disable.experiment.${tab.name.lowercase()}.ml")
-  }
-
-  fun getExperimentForTab(tab: SearchEverywhereTabWithMlRanking): ExperimentType {
-    if (!isAllowed || isDisableExperiments(tab)) {
-      return ExperimentType.NoExperiment
-    }
-
-    val experimentByGroup = tabExperiments[tab]?.getExperimentByGroup(experimentGroup)
-    if (experimentByGroup == null || experimentByGroup == ExperimentType.NoExperiment) {
-      return ExperimentType.NoExperiment
-    }
-
-    return experimentByGroup
-  }
-
-  @TestOnly
-  internal fun getTabExperiments(): Map<SearchEverywhereTabWithMlRanking, Experiment> = tabExperiments
 
   sealed interface ExperimentType {
     /**
@@ -152,12 +118,5 @@ class SearchEverywhereMlExperiment {
      * (see, for example, IJPL-171760 or IJPL-55751)
      */
     object ExactMatchManualFix : ActiveExperiment(true)
-  }
-
-  @VisibleForTesting
-  internal class Experiment(vararg experiments: Pair<Int, ExperimentType>) {
-    val tabExperiments: Map<Int, ExperimentType> = hashMapOf(*experiments)
-
-    fun getExperimentByGroup(group: Int) = tabExperiments.getOrDefault(group, ExperimentType.NoExperiment)
   }
 }

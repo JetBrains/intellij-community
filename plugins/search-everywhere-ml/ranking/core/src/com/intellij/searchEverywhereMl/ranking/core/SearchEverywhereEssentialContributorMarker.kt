@@ -7,9 +7,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContri
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
+import com.intellij.searchEverywhereMl.isEssentialContributorPredictionExperiment
 import com.intellij.searchEverywhereMl.ranking.core.model.CatBoostModelFactory
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereCatBoostBinaryClassifierModel
 
@@ -29,21 +28,12 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     .withResourceDirectory(RESOURCE_DIR)
     .buildBinaryClassifier(TRUE_THRESHOLD)
 
-  private val isExperimentDisabledByRegistry
-    get() = Registry.`is`("search.everywhere.force.disable.experiment.essential.contributors.ml")
-
   override fun isAvailable(): Boolean {
     return isActiveExperiment() && isSearchStateActive()
   }
 
   private fun isActiveExperiment(): Boolean {
-    if (isExperimentDisabledByRegistry) {
-      return false
-    }
-
-    val experiment = SearchEverywhereMlExperiment()
-    val experimentForAllTab = experiment.getExperimentForTab(SearchEverywhereTabWithMlRanking.ALL)
-    return experimentForAllTab == SearchEverywhereMlExperiment.ExperimentType.EssentialContributorPrediction
+    return SearchEverywhereTab.All.isEssentialContributorPredictionExperiment
   }
 
   private fun isSearchStateActive(): Boolean {

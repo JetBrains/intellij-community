@@ -2,10 +2,10 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.features.*
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.ML_SCORE_KEY
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereModelProvider
@@ -14,7 +14,7 @@ import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereRankin
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
   val searchIndex: Int, val searchStartReason: SearchRestartReason,
-  val tabId: String, val experimentGroup: Int, val orderByMl: Boolean,
+  val tab: SearchEverywhereTab, val experimentGroup: Int, val orderByMl: Boolean,
   val keysTyped: Int, val backspacesTyped: Int, val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
@@ -23,11 +23,11 @@ internal class SearchEverywhereMlSearchState(
   searchScope: ScopeDescriptor?,
   isSearchEverywhere: Boolean,
 ) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(project, tabId, searchQuery,
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(project, tab, searchQuery,
                                                                                            searchScope, isSearchEverywhere)
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
-  private val model: SearchEverywhereRankingModel by lazy { modelProvider.getModel(tabId) }
+  private val model: SearchEverywhereRankingModel by lazy { modelProvider.getModel(tab as SearchEverywhereTab.TabWithMlRanking) }
   fun getElementFeatures(elementId: Int?,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
@@ -41,8 +41,8 @@ internal class SearchEverywhereMlSearchState(
       features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
     }
 
-    if (tabId == ALL_CONTRIBUTORS_GROUP_ID) {
-      val mlScore = getElementMLScoreForAllTab(tabId, contributorId, context.features, features, contributorFeatures)
+    if (tab == SearchEverywhereTab.All) {
+      val mlScore = getElementMLScoreForAllTab(contributorId, context.features, features, contributorFeatures)
       features.putIfValueNotNull(ML_SCORE_KEY, mlScore)
     }
 
@@ -54,21 +54,17 @@ internal class SearchEverywhereMlSearchState(
    * where elements from different contributors are included in the search results.
    * This function should only be called for All tab, and it will throw an exception if called with a different tabId.
    * If there is no ML model for the given element, the function will return null.
-   * @param tabId The ID of the search tab where this function is being called.
    * @param contributorId The ID of the contributor that provided the element.
    * @param contextFeatures The list of context-related features.
    * @param elementFeatures The list of element-related features.
    * @param contributorFeatures The list of contributor-related features.
    */
-  private fun getElementMLScoreForAllTab(tabId: String,
-                                         contributorId: String,
+  private fun getElementMLScoreForAllTab(contributorId: String,
                                          contextFeatures: List<EventPair<*>>,
                                          elementFeatures: List<EventPair<*>>,
                                          contributorFeatures: List<EventPair<*>>): Double? {
+    check(tab == SearchEverywhereTab.All) { "This function should only be called in the All tab" }
 
-    if (tabId != ALL_CONTRIBUTORS_GROUP_ID) {
-      throw IllegalArgumentException("Supported only for All tab.")
-    }
     return try {
       val features = getAllFeatures(contextFeatures, elementFeatures, contributorFeatures)
       val model = getForContributor(contributorId)
@@ -89,15 +85,14 @@ internal class SearchEverywhereMlSearchState(
   }
 
   private fun getForContributor(contributorId: String): SearchEverywhereRankingModel {
-    val tabId = when (contributorId) {
-      ActionSearchEverywhereContributor::class.java.simpleName -> ActionSearchEverywhereContributor::class.java.simpleName
-      FileSearchEverywhereContributor::class.java.simpleName, RecentFilesSEContributor::class.java.simpleName ->
-        FileSearchEverywhereContributor::class.java.simpleName
-      ClassSearchEverywhereContributor::class.java.simpleName -> ClassSearchEverywhereContributor::class.java.simpleName
+    val tab = when (contributorId) {
+      ActionSearchEverywhereContributor::class.java.simpleName -> SearchEverywhereTab.Actions
+      FileSearchEverywhereContributor::class.java.simpleName, RecentFilesSEContributor::class.java.simpleName -> SearchEverywhereTab.Files
+      ClassSearchEverywhereContributor::class.java.simpleName -> SearchEverywhereTab.Classes
       else -> throw IllegalArgumentException("Unsupported contributorId: $contributorId")
     }
 
-    return modelProvider.getModel(tabId)
+    return modelProvider.getModel(tab)
   }
 
   fun getMLWeight(context: SearchEverywhereMLContextInfo,
