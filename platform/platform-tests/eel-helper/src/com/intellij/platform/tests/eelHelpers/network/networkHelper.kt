@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel
  * Prints port, accepts connections, sends hello, receives the answer
  */
 @TestOnly
-fun startNetworkClientHelper() {
+fun startNetworkServer() {
   val serverSocketChannel = ServerSocketChannel.open().also { channel ->
     channel.bind(InetSocketAddress(0))
   }
@@ -37,10 +37,10 @@ fun startNetworkClientHelper() {
  * Read port number from stdin, connect and write hello there
  */
 @TestOnly
-fun startNetworkConnectionHelper() {
+fun startNetworkClient() {
   val port = readLine()!!.trim().toInt()
   SocketChannel.open().use {
     it.connect(InetSocketAddress(port))
-    it.write(NetworkConstants.HELLO_FROM_SERVER.toBuffer())
+    it.write(NetworkConstants.HELLO_FROM_CLIENT.toBuffer())
   }
 }

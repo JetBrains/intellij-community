@@ -22,14 +22,16 @@ import kotlin.time.Duration.Companion.seconds
 class EelLocalTunnelApiTest {
   companion object {
 
-    private lateinit var clientExecutor: JavaMainClassExecutor
     private lateinit var serverExecutor: JavaMainClassExecutor
+    private lateinit var clientExecutor: JavaMainClassExecutor
 
     @BeforeAll
     @JvmStatic
     fun createExecutor() {
+      // helper is SERVER (we connect)
+      serverExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_SERVER.name)
+      // helper is CLIENT (we are the server)
       clientExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_CLIENT.name)
-      serverExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_CONNECTION.name)
     }
   }
 
@@ -43,7 +45,7 @@ class EelLocalTunnelApiTest {
 
   @Test
   fun testClientSuccessConnection(): Unit = timeoutRunBlocking(1.minutes) {
-    val helper = localEel.exec.execute(clientExecutor.createBuilderToExecuteMain().build()).getOrThrow()
+    val helper = localEel.exec.execute(serverExecutor.createBuilderToExecuteMain().build()).getOrThrow()
     try {
       val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
       val connection = localEel.tunnels.getConnectionToRemotePort()
@@ -64,7 +66,7 @@ class EelLocalTunnelApiTest {
 
   @Test
   fun testServerListensForConnection(): Unit = timeoutRunBlocking(1.minutes) {
-    val helper = localEel.exec.execute(serverExecutor.createBuilderToExecuteMain().build()).getOrThrow()
+    val helper = localEel.exec.execute(clientExecutor.createBuilderToExecuteMain().build()).getOrThrow()
     val acceptor = localEel.tunnels.getAcceptorForRemotePort().getOrThrow()
     helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n").getOrThrow()
     val conn = acceptor.incomingConnections.receive()
@@ -72,7 +74,7 @@ class EelLocalTunnelApiTest {
       val buff = ByteBuffer.allocate(1024)
       conn.receiveChannel.receive(buff).getOrThrow()
       val fromServer = NetworkConstants.fromByteBuffer(buff.flip())
-      assertEquals(NetworkConstants.HELLO_FROM_SERVER, fromServer)
+      assertEquals(NetworkConstants.HELLO_FROM_CLIENT, fromServer)
     }
     finally {
       conn.close()
