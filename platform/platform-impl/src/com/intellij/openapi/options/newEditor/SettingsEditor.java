@@ -2,15 +2,14 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.actions.BackAction;
+import com.intellij.ide.actions.ForwardAction;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -488,8 +487,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   private JComponent withHistoryToolbar(JComponent component) {
-    ActionGroup group = ActionUtil.getActionGroup("Back", "Forward");
-    if (group == null) return component;
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionUtil.copyFrom(new BackAction(), "Back"));
+    group.add(ActionUtil.copyFrom(new ForwardAction(), "Forward"));
     JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
