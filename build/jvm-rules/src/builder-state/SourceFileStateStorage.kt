@@ -21,8 +21,8 @@ import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.emptyStringArray
+import org.jetbrains.bazel.jvm.util.emptyList
+import org.jetbrains.bazel.jvm.util.emptyStringArray
 import java.io.IOException
 import java.nio.file.Path
 

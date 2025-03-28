@@ -1,6 +1,7 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java.nodeBuilder
 
-import org.jetbrains.bazel.jvm.emptyStringArray
+import org.jetbrains.bazel.jvm.util.emptyStringArray
 import org.jetbrains.jps.dependency.java.KotlinMeta
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes

@@ -13,8 +13,6 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.emptyMap
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
@@ -23,8 +21,10 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
 import org.jetbrains.bazel.jvm.jps.output.OutputSink
-import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.use
+import org.jetbrains.bazel.jvm.util.emptyList
+import org.jetbrains.bazel.jvm.util.emptyMap
+import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
@@ -63,7 +63,7 @@ import org.jetbrains.jps.service.JpsServiceManager
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.function.BiConsumer
 import java.util.function.Function
 import javax.tools.Diagnostic

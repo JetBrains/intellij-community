@@ -11,9 +11,9 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.concat
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.emptySet
+import org.jetbrains.bazel.jvm.util.concat
+import org.jetbrains.bazel.jvm.util.emptyList
+import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
@@ -28,7 +28,7 @@ import org.jetbrains.bazel.jvm.kotlin.configureModule
 import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
-import org.jetbrains.bazel.jvm.linkedSet
+import org.jetbrains.bazel.jvm.util.linkedSet
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java.JavaBuilderUtil

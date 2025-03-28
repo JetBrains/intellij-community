@@ -15,7 +15,7 @@ import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.performTestInvocation
 import org.jetbrains.bazel.jvm.span
-import org.jetbrains.bazel.jvm.toScatterMap
+import org.jetbrains.bazel.jvm.util.toScatterMap
 import java.nio.file.Files
 import java.security.MessageDigest
 import kotlin.io.path.ExperimentalPathApi
@@ -27,7 +27,7 @@ internal object TestJpsBuildWorker {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
 
-    val testModule = TestModules.LANG_IMPL
+    val testModule = TestModules.PLATFORM_IMPL
     val sources = testModule.sourcePaths.flatMap { collectSources(sourceDirPath = it, paths = testPaths) }
     require(sources.isNotEmpty())
     val testParams = testModule.getParams(baseDir)

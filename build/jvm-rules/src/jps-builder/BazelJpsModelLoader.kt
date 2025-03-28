@@ -10,7 +10,7 @@ import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.bazel.jvm.ArgMap
+import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.jps.state.isDependencyTracked

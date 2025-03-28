@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection", "ReplaceGetOrSet")
 
 package org.jetbrains.jps.dependency.java
@@ -5,8 +6,8 @@ package org.jetbrains.jps.dependency.java
 import androidx.collection.MutableScatterMap
 import com.intellij.util.containers.toArray
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.emptySet
+import org.jetbrains.bazel.jvm.util.emptyList
+import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.Node

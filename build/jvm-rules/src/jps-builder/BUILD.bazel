@@ -19,7 +19,7 @@ kt_jvm_library(
         "//src/jps-shadow",
         "//:jps",
         "//src/abi",
-        "//src/kotlin-compiler",
+        "//src/kotlin/kotlin-compiler",
         "//src/worker-framework",
         # before kotlin-jps-plugin
         "//:kotlin-compiler",

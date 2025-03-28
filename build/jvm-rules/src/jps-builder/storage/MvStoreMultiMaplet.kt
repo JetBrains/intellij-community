@@ -10,8 +10,8 @@ import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.collections.immutable.plus
 import kotlinx.collections.immutable.toPersistentHashSet
 import org.h2.mvstore.MVMap
-import org.jetbrains.bazel.jvm.removeAll
-import org.jetbrains.bazel.jvm.toPersistentHashSet
+import org.jetbrains.bazel.jvm.util.removeAll
+import org.jetbrains.bazel.jvm.util.toPersistentHashSet
 import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import java.util.function.BiFunction

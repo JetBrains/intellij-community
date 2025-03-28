@@ -1,10 +1,11 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.bazel.jvm.jps.impl
 
 import androidx.collection.ScatterMap
 import org.apache.arrow.memory.RootAllocator
-import org.jetbrains.bazel.jvm.emptyStringArray
+import org.jetbrains.bazel.jvm.util.emptyStringArray
 import org.jetbrains.bazel.jvm.jps.state.DependencyStateStorage
 import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
 import org.jetbrains.jps.builders.BuildTarget

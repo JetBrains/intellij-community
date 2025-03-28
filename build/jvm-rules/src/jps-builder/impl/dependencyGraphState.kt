@@ -9,9 +9,9 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import org.jetbrains.bazel.jvm.emptySet
+import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.bazel.jvm.jps.dependencies.checkDependencies
-import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
+import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.dependency.Delta

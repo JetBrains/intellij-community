@@ -4,7 +4,7 @@ package org.jetbrains.bazel.jvm.kotlin
 import androidx.compose.compiler.plugins.kotlin.ComposeCommandLineProcessor
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import fleet.multiplatform.expects.ExpectsPluginRegistrar
-import org.jetbrains.bazel.jvm.ArgMap
+import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue

@@ -16,7 +16,7 @@ import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
 import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
-import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
+import org.jetbrains.bazel.jvm.util.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.ModuleChunk
