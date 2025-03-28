@@ -91,7 +91,8 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
     context(KaSession)
     private fun resolvesWithoutErrors(originalCallExpression: KtElement, candidate: ImportCandidate): Boolean {
         if (!Registry.`is`("kotlin.k2.auto.import.mismatched.arguments.factory.applicability.filter.enabled")) {
-            return false
+            // do not do any filtering, let all candidates pass
+            return true
         }
         
         val containingFile = originalCallExpression.containingKtFile
