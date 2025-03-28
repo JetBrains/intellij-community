@@ -12,7 +12,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(AwaitCancellationAndInvoke::class)
@@ -43,6 +42,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = false,
       shellCommand = null,
       sessionId = null,
+      portForwardingId = null,
     )
     updateTabsAndStore { tabs ->
       tabs[newTab.id] = newTab
@@ -51,12 +51,12 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     return newTab
   }
 
-  suspend fun startTerminalSessionForTab(tabId: Int, options: ShellStartupOptions): TerminalSessionId {
+  suspend fun startTerminalSessionForTab(tabId: Int, options: ShellStartupOptions): TerminalSessionTab {
     return updateTabsAndStore { tabs ->
       val tab = tabs[tabId] ?: error("No TerminalSessionTab with ID: $tabId")
       val existingSessionId = tab.sessionId
       if (existingSessionId != null) {
-        return@updateTabsAndStore existingSessionId
+        return@updateTabsAndStore tab
       }
 
       val scope = coroutineScope.childScope("TerminalSession")
@@ -64,7 +64,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
 
       val updatedTab = tab.copy(
         shellCommand = result.configuredOptions.shellCommand,
-        sessionId = result.sessionId
+        sessionId = result.sessionId,
+        portForwardingId = result.portForwardingId,
       )
       tabs[tabId] = updatedTab
 
@@ -74,7 +75,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         }
       }
 
-      result.sessionId
+      updatedTab
     }
   }
 
@@ -136,6 +137,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
       sessionId = null,
+      portForwardingId = null,
     )
   }
 

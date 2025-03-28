@@ -17,7 +17,7 @@ interface TerminalTabsManagerApi : RemoteApi<Unit> {
 
   suspend fun createNewTerminalTab(projectId: ProjectId): TerminalSessionTab
 
-  suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionId
+  suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionTab
 
   suspend fun closeTerminalTab(projectId: ProjectId, tabId: Int)
 
