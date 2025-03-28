@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 
 final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
-  private final GlobalSearchScope @NotNull [] myScopes;
+  final GlobalSearchScope @NotNull [] myScopes;
 
   @Override
   public @Nullable VirtualFileEnumeration extractFileEnumeration() {
