@@ -6,5 +6,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.terminal.backend.rpc.TerminalRemoteApiProvider"/>
+
+    <projectService serviceInterface="com.intellij.terminal.backend.TerminalPortForwardingManager"
+                    serviceImplementation="com.intellij.terminal.backend.TerminalNoPortForwardingManager"/>
   </extensions>
 </idea-plugin>

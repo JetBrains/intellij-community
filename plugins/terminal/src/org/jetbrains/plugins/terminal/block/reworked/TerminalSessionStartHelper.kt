@@ -7,13 +7,9 @@ import com.intellij.platform.project.projectId
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
@@ -21,7 +17,6 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
-import java.lang.Runnable
 import java.util.concurrent.CompletableFuture
 
 internal object TerminalSessionStartHelper {
@@ -109,6 +104,7 @@ internal object TerminalSessionStartHelper {
 
   private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionId {
     val api = TerminalTabsManagerApi.getInstance()
-    return api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
+    val updatedTab: TerminalSessionTab = api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
+    return updatedTab.sessionId ?: error("Updated TerminalSessionTab does not contain sessionId after terminal session start")
   }
 }
