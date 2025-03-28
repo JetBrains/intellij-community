@@ -21,6 +21,7 @@ import okhttp3.Response
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -32,10 +33,7 @@ import kotlin.time.Duration.Companion.minutes
 
 /**
  * @param workDir is expected to contain:
- * * [jar]
- * * [pom]
- * * [javadoc] jar
- * * [sources] jar
+ * * a set of [MavenArtifacts];
  * * md5, sha1, sha256 and sha512 checksum files (optional, will be verified if present)
  *
  * @param type https://central.sonatype.org/publish/publish-portal-api/#uploading-a-deployment-bundle
@@ -67,74 +65,90 @@ class MavenCentralPublication(
     AUTOMATIC,
   }
 
-  private lateinit var jar: Path
-  private lateinit var pom: Path
-  private lateinit var javadoc: Path
-  private lateinit var sources: Path
-  private lateinit var coordinates: MavenCoordinates
+  private inner class MavenArtifacts(
+    val pom: Path,
+    val coordinates: MavenCoordinates,
+    val jar: Path,
+    val sources: Path,
+    val javadoc: Path,
+  ) {
+    val distributionFiles: List<Path> = listOf(jar, pom, javadoc, sources)
 
-  private fun requireFile(name: String): Path {
-    val matchingFiles = workDir.listDirectoryEntries(name)
+    val signatures: List<Path>
+      get() = if (sign) files(extension = "asc") else emptyList()
+
+    val checksums: List<Path>
+      get() = files("md5") +
+              files("sha1") +
+              files("sha256") +
+              files("sha512")
+  }
+
+  private fun file(name: String): Path {
+    val matchingFiles = workDir.listDirectoryEntries(glob = name)
     return requireNotNull(matchingFiles.singleOrNull()) {
       "A single $name file is expected to be present in $workDir but found: $matchingFiles"
     }
   }
 
-  private fun bootstrap() {
-    pom = requireFile("*.pom")
-    val project = readXmlAsModel(pom)
-    require(project.name == "project") {
-      "$pom doesn't contain <project> root element"
+  private fun files(extension: String): List<Path> {
+    val matchingFiles = workDir.listDirectoryEntries(glob = "*.$extension")
+    require(matchingFiles.any()) {
+      "No *.$extension files in $workDir"
     }
-    coordinates = MavenCoordinates(
-      groupId = project.getChild("groupId")?.content ?: error("$pom doesn't contain <groupId> element"),
-      artifactId = project.getChild("artifactId")?.content ?: error("$pom doesn't contain <artifactId> element"),
-      version = project.getChild("version")?.content ?: error("$pom doesn't contain <version> element"),
-    )
-    jar = requireFile(coordinates.getFileName(packaging = "jar"))
-    sources = requireFile(coordinates.getFileName(classifier = "sources", packaging = "jar"))
-    javadoc = requireFile(coordinates.getFileName(classifier = "javadoc", packaging = "jar"))
+    return matchingFiles
+  }
+
+  private val artifacts: List<MavenArtifacts> by lazy {
+    files(extension = "pom").map { pom ->
+      val project = readXmlAsModel(pom)
+      check(project.name == "project") {
+        "$pom doesn't contain <project> root element"
+      }
+      val coordinates = MavenCoordinates(
+        groupId = project.getChild("groupId")?.content ?: error("$pom doesn't contain <groupId> element"),
+        artifactId = project.getChild("artifactId")?.content ?: error("$pom doesn't contain <artifactId> element"),
+        version = project.getChild("version")?.content ?: error("$pom doesn't contain <version> element"),
+      )
+      val jar = file(coordinates.getFileName(packaging = "jar"))
+      val sources = file(coordinates.getFileName(classifier = "sources", packaging = "jar"))
+      val javadoc = file(coordinates.getFileName(classifier = "javadoc", packaging = "jar"))
+      MavenArtifacts(pom = pom, coordinates = coordinates, jar = jar, sources = sources, javadoc = javadoc)
+    }
   }
 
   suspend fun execute() {
-    bootstrap()
     sign()
     generateOrVerifyChecksums()
     val deploymentId = publish(bundle())
     if (deploymentId != null) wait(deploymentId)
   }
 
-  private val distributionFiles: List<Path> get() = listOf(jar, pom, javadoc, sources)
-
   private suspend fun sign() {
     if (sign) {
-      context.proprietaryBuildTools.signTool.signFilesWithGpg(distributionFiles, context)
+      context.proprietaryBuildTools.signTool.signFilesWithGpg(
+        artifacts.flatMap { it.distributionFiles }, context
+      )
     }
-  }
-
-  private fun signatures(): List<Path> {
-    if (!sign) return emptyList()
-    val signatures = workDir.listDirectoryEntries(glob = "*.asc")
-    check(signatures.any()) {
-      "Missing .asc signatures"
-    }
-    return signatures
   }
 
   private suspend fun generateOrVerifyChecksums() {
     coroutineScope {
-      for (file in distributionFiles.asSequence().plus(signatures())) {
-        launch(CoroutineName("checksums for $file")) {
-          val checksums = Checksums(file, sha1(), sha256(), sha512(), md5())
-          generateOrVerifyChecksum(file, extension = "sha1", checksums.sha1sum)
-          generateOrVerifyChecksum(file, extension = "sha256", checksums.sha256sum)
-          generateOrVerifyChecksum(file, extension = "sha512", checksums.sha512sum)
-          generateOrVerifyChecksum(file, extension = "md5", checksums.md5sum)
+      for (artifact in artifacts) {
+        for (file in artifact.distributionFiles.asSequence() + artifact.signatures) {
+          launch(CoroutineName("checksums for $file")) {
+            val checksums = Checksums(file, sha1(), sha256(), sha512(), md5())
+            generateOrVerifyChecksum(file, extension = "sha1", checksums.sha1sum)
+            generateOrVerifyChecksum(file, extension = "sha256", checksums.sha256sum)
+            generateOrVerifyChecksum(file, extension = "sha512", checksums.sha512sum)
+            generateOrVerifyChecksum(file, extension = "md5", checksums.md5sum)
+          }
         }
       }
     }
   }
 
+  @VisibleForTesting
   class ChecksumMismatch(message: String) : RuntimeException(message)
 
   private fun CoroutineScope.generateOrVerifyChecksum(file: Path, extension: String, value: String) {
@@ -158,30 +172,20 @@ class MavenCentralPublication(
     }
   }
 
-  private fun checksums(extension: String): List<Path> {
-    val signatures = workDir.listDirectoryEntries(glob = "*.$extension")
-    check(signatures.any()) {
-      "Missing .$extension checksums"
-    }
-    return signatures
-  }
-
-  private fun checksums(): List<Path> {
-    return checksums("md5") +
-           checksums("sha1") +
-           checksums("sha256") +
-           checksums("sha512")
-  }
-
   /**
    * https://central.sonatype.org/publish/publish-portal-upload/
    */
   private suspend fun bundle(): Path {
     return spanBuilder("creating a bundle").use {
       val bundle = workDir.resolve("bundle.zip")
-      Compressor.Zip(bundle).use {
-        for (file in distributionFiles.asSequence() + signatures() + checksums()) {
-          it.addFile("${coordinates.directoryPath}/${file.name}", file)
+      Compressor.Zip(bundle).use { zip ->
+        for (artifact in artifacts) {
+          artifact.distributionFiles.asSequence()
+            .plus(artifact.signatures)
+            .plus(artifact.checksums)
+            .forEach {
+              zip.addFile("${artifact.coordinates.directoryPath}/${it.name}", it)
+            }
         }
       }
       bundle
@@ -223,7 +227,7 @@ class MavenCentralPublication(
         span.addEvent("skipped in the dryRun mode")
         return@use null
       }
-      val deploymentName = "${coordinates.artifactId}-${coordinates.version}"
+      val deploymentName = "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
       val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publishingType=$type"
       callSonatype(uri, builder = {
         it.post(
