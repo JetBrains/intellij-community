@@ -14,6 +14,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -215,7 +216,9 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
 
 private val computationMap : MutableMap<Any, Throwable> = ConcurrentHashMap()
 
-private fun dumpObservedComputations(): Set<Throwable> {
+@Internal
+@VisibleForTesting
+fun dumpObservedComputations(): Set<Throwable> {
   return computationMap.values.mapTo(HashSet()) { it }
 }
 

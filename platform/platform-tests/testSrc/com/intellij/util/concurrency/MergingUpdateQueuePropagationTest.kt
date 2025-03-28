@@ -2,21 +2,29 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.mock.MockProject
+import com.intellij.openapi.util.use
+import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.backend.observation.dumpObservedComputations
+import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.MergingUpdateQueueActivityTracker
-import com.intellij.util.application
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.util.ui.update.queueTracked
 import kotlinx.coroutines.Job
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.EmptyCoroutineContext
 
+@Suppress("UsagesOfObsoleteApi")
 @TestApplication
 class MergingUpdateQueuePropagationTest {
+
+  private val project by projectFixture(openAfterCreation = true)
 
   fun testNoContext(schedule: MergingUpdateQueue.(Update) -> Unit) = timeoutRunBlocking {
     val queue = MergingUpdateQueue("test queue", 200, true, null)
@@ -39,7 +47,7 @@ class MergingUpdateQueuePropagationTest {
       completionJob.complete()
     })
     val tracker = MergingUpdateQueueActivityTracker()
-    assertEquals(tracker.isInProgress(MockProject(null, application)), shouldBeTracked)
+    assertEquals(tracker.isInProgress(project), shouldBeTracked)
     proceedJob.complete()
     completionJob.join()
   }
@@ -50,4 +58,34 @@ class MergingUpdateQueuePropagationTest {
   @Test
   fun `tracked queuing is tracked`() : Unit = testWaitCompletion(MergingUpdateQueue::queueTracked, true)
 
+  @Test
+  @RegistryKey("ide.activity.tracking.enable.debug", "true")
+  fun `test observed computation dumping for nested updates with same identity`(): Unit = timeoutRunBlocking {
+    // wait for project initialization
+    Observation.awaitConfiguration(project)
+
+    MergingUpdateQueue("test queue", 200, true, null).use { queue ->
+
+      assertThat(dumpObservedComputations()).hasSize(0)
+
+      val updateAssertion = ListenerAssertion()
+
+      val id = Any()
+      repeat(2) {
+        queue.queueTracked(Update.create(id) {
+          updateAssertion.trace {
+            assertThat(dumpObservedComputations()).hasSize(1)
+          }
+        })
+      }
+      Observation.awaitConfiguration(project)
+
+      updateAssertion.assertListenerState(1) {
+        "Updates with the same id should be merged."
+      }
+      updateAssertion.assertListenerFailures()
+
+      assertThat(dumpObservedComputations()).hasSize(0)
+    }
+  }
 }
