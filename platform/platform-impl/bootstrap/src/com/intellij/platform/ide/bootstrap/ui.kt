@@ -228,6 +228,7 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
 
     if (StartupUiUtil.isXToolkit()) {
       launch(CoroutineName("frame class updating")) {
+        appInfoDeferred.join()
         try {
           val toolkit = Toolkit.getDefaultToolkit()
           val aClass = toolkit.javaClass
@@ -237,7 +238,8 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
               .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (_: Throwable) {
+        catch (t: Throwable) {
+          logger<AppStarter>().warn("Failed to set WM frame class in XToolkit: $t")
         }
       }
     }
