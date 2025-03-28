@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.coroutines
 
+import com.intellij.concurrency.currentThreadContext
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -8,15 +11,17 @@ import kotlin.coroutines.startCoroutine
 
 // Copied from kotlin.coroutines.jvm.internal.RunSuspend.kt
 
+@OptIn(InternalCoroutinesApi::class)
 fun <T> runSuspend(block: suspend () -> T): T {
-  val run = RunSuspend<T>()
+  val currentJob = currentThreadContext()[Job]
+  val run = RunSuspend<T>(currentJob)
   block.startCoroutine(run)
   return run.await()
 }
 
-private class RunSuspend<T> : Continuation<T> {
+private class RunSuspend<T>(val job: Job?) : Continuation<T> {
   override val context: CoroutineContext
-    get() = EmptyCoroutineContext
+    get() = job ?: EmptyCoroutineContext
 
   var result: Result<T>? = null
 

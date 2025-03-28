@@ -96,18 +96,6 @@ private class ComputationState(
   }
 
   /**
-   * Obtains a write permit if nothing is being held by this thread
-   */
-  fun acquireWritePermit() {
-    // we need to start with the write-intent permit here, because write permit may be released at some point
-    // (most likely by `suspendingWriteAction`), and we must not allow other write action to start
-    val writeIntentPermit = runSuspend {
-      thisLevelLock.acquireWriteIntentPermit()
-    }
-    return upgradeWritePermit(writeIntentPermit, null)
-  }
-
-  /**
    * Obtains a write permit if current thread holds a write-intent permit
    */
   fun upgradeWritePermit(permit: WriteIntentPermit) {
@@ -828,16 +816,39 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
   override fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T {
     val computationState = getComputationState()
-    val releases = startWrite(computationState, clazz)
-    return try {
-      action()
+    val writeIntentInitResult = prepareWriteIntentAcquiredBeforeWrite(computationState, clazz)
+    try {
+      val writeLockInitResult = prepareWriteFromWriteIntent(computationState, clazz, writeIntentInitResult)
+      return try {
+        action()
+      }
+      finally {
+        writeLockInitResult.release()
+      }
     }
     finally {
-      endWrite(computationState, clazz, releases)
+      writeIntentInitResult.release()
+    }
+
+  }
+
+  /**
+   * The process of obtaining pure WA happens in two steps:
+   * 1. First, we acquire the write-intent permit;
+   * 2. Then, we upgrade the write-intent permit into write.
+   * This is needed for code that temporarily releases the write lock.
+   * Since we still want to preserve the atomicity of write action, we pre-acquire the write-intent lock before write.
+   */
+  private data class PreparatoryWriteIntent(val permit: Permit, val needRelease: Boolean, val state: ComputationState, val listener: WriteActionListener?) {
+    fun release() {
+      if (!(needRelease && permit is WriteIntentPermit)) {
+        return
+      }
+      state.releaseWriteIntentPermit(permit)
     }
   }
 
-  private fun startWrite(computationState: ComputationState, clazz: Class<*>): WriteListenerInitResult2 {
+  private fun prepareWriteIntentAcquiredBeforeWrite(computationState: ComputationState, clazz: Class<*>): PreparatoryWriteIntent {
     val listener = myWriteActionListener
     // Read permit is incompatible
     check(computationState.getThisThreadPermit() !is ParallelizablePermit.Read) { "WriteAction can not be called from ReadAction" }
@@ -859,43 +870,57 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
       fireBeforeWriteActionStart(listener, clazz)
     }
 
-    val currentReadState = myTopmostReadAction.get()
-    myTopmostReadAction.set(false)
-
     val permit = computationState.getThisThreadPermit()
-
-    var shouldRelease = false
 
     when (permit) {
       null -> {
-        shouldRelease = true
-        processWriteLockAcquisition {
-          computationState.acquireWritePermit()
-        }
+        val writeIntent = computationState.acquireWriteIntentPermit()
+        return PreparatoryWriteIntent(writeIntent, true, computationState, listener)
       }
       is ParallelizablePermit.Read -> {
         endPendingWriteAction(computationState)
         error("WriteAction can not be called from ReadAction")
       }
       is ParallelizablePermit.WriteIntent -> {
-        shouldRelease = true
-        processWriteLockAcquisition {
-          computationState.upgradeWritePermit(permit.writeIntentPermit)
-        }
         checkWriteFromRead("Write", "Write Intent")
+        return PreparatoryWriteIntent(permit.writeIntentPermit, false, computationState, listener)
       }
       is ParallelizablePermit.Write -> {
         checkWriteFromRead("Write", "Write")
+        return PreparatoryWriteIntent(permit.writePermit, false, computationState, listener)
       }
+    }
+  }
+
+  private fun prepareWriteFromWriteIntent(state: ComputationState, clazz: Class<*>, preparatoryWriteIntent: PreparatoryWriteIntent): WriteLockInitResult {
+    val shouldRelease = try {
+      when (preparatoryWriteIntent.permit) {
+        is WriteIntentPermit -> {
+          processWriteLockAcquisition {
+            state.upgradeWritePermit(preparatoryWriteIntent.permit)
+          }
+          true
+        }
+        is WritePermit -> false
+        else -> error("Only WriteIntentPermit or WritePermit must be passed to this function")
+      }
+    }
+    catch (e: Throwable) {
+      endPendingWriteAction(state)
+      throw e
     }
 
     myWriteAcquired = Thread.currentThread()
-    endPendingWriteAction(computationState)
+    endPendingWriteAction(state)
+
+    val currentReadState = myTopmostReadAction.get()
+    myTopmostReadAction.set(false)
+
 
     myWriteActionsStack.push(clazz)
-    fireWriteActionStarted(listener, clazz)
+    fireWriteActionStarted(preparatoryWriteIntent.listener, clazz)
 
-    return WriteListenerInitResult2(shouldRelease, currentReadState, listener)
+    return WriteLockInitResult(shouldRelease, currentReadState, preparatoryWriteIntent.listener, state, clazz)
   }
 
   private fun startPendingWriteAction(state: ComputationState) {
@@ -908,24 +933,27 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     myWriteActionPending.get()[stateLevel].decrementAndGet()
   }
 
-  private data class WriteListenerInitResult2(
+  private data class WriteLockInitResult(
     val shouldRelease: Boolean,
     val currentReadState: Boolean,
     val listener: WriteActionListener?,
-  )
-
-  private fun endWrite(computationState: ComputationState, clazz: Class<*>, initResult: WriteListenerInitResult2) {
-    fireWriteActionFinished(initResult.listener, clazz)
-    myWriteActionsStack.pop()
-    if (initResult.shouldRelease) {
-      myWriteAcquired = null
-      computationState.releaseWritePermit()
-    }
-    myTopmostReadAction.set(initResult.currentReadState)
-    if (initResult.shouldRelease) {
-      fireAfterWriteActionFinished(initResult.listener, clazz)
+    val state: ComputationState,
+    val clazz: Class<*>,
+  ) {
+    fun release() {
+      fireWriteActionFinished(listener, clazz)
+      myWriteActionsStack.pop()
+      if (shouldRelease) {
+        myWriteAcquired = null
+        state.releaseWritePermit()
+      }
+      myTopmostReadAction.set(currentReadState)
+      if (shouldRelease) {
+        fireAfterWriteActionFinished(listener, clazz)
+      }
     }
   }
+
 
   override fun executeSuspendingWriteAction(action: () -> Unit) {
     val state = getComputationState()
@@ -1172,15 +1200,27 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   @Deprecated("")
   private class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
     val compState = getComputationState()
-    val releases = startWrite(compState, clazz)
+    val writeIntentPreparatoryData: PreparatoryWriteIntent
+    val writeLockInitResult: WriteLockInitResult
 
     init {
       markThreadNameInStackTrace()
+      writeIntentPreparatoryData = prepareWriteIntentAcquiredBeforeWrite(compState, clazz)
+      writeLockInitResult = try {
+        prepareWriteFromWriteIntent(compState, clazz, writeIntentPreparatoryData)
+      }
+      catch (e: Throwable) {
+        // this code can be cancelled during the acquisition of a write lock
+        // we need to not forget to release the acquired write-intent lock
+        writeIntentPreparatoryData.release()
+        throw e
+      }
     }
 
     override fun finish() {
       try {
-        endWrite(compState, clazz, releases)
+        writeLockInitResult.release()
+        writeIntentPreparatoryData.release()
       }
       finally {
         unmarkThreadNameInStackTrace()
