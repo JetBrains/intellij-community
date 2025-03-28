@@ -40,6 +40,7 @@ import com.jediterm.terminal.ui.TerminalActionProvider;
 import com.jediterm.terminal.ui.TerminalPanel;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-public class JBTerminalPanel extends TerminalPanel implements FocusListener, Disposable {
+public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalUiSettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
 
   @Language("devkit-action-id")
@@ -338,6 +339,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     return fontInfo.getFont().deriveFont((float)mySettingsProvider.getUiSettingsManager().getFontSize());
   }
 
+  @ApiStatus.Internal
+  @Override
+  public void cursorChanged() {
+    setCursorShape(mySettingsProvider.getCursorShape());
+    repaint();
+  }
+
+  @Override
   public void fontChanged() {
     reinitFontAndResize();
   }
