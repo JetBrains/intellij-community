@@ -9,11 +9,32 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.DistFileContent
+import org.jetbrains.intellij.build.InMemoryDistFileContent
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LocalDistFileContent
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.SoftwareBillOfMaterials
+import org.jetbrains.intellij.build.buildSearchableOptions
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
@@ -23,18 +44,31 @@ import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
 import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.logFreeDiskSpace
+import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.zipSourcesOfModules
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
-import java.util.*
+import java.util.Collections
+import java.util.EnumSet
+import java.util.SortedSet
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
 import kotlin.io.path.relativeTo
@@ -57,7 +91,14 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     buildProjectArtifacts(distState.platform, getEnabledPluginModules(distState.pluginsToPublish, context), context)
 
     val searchableOptionSet = buildSearchableOptions(context)
-    buildNonBundledPlugins(pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distState, searchableOptionSet, context)
+    buildNonBundledPlugins(
+      pluginsToPublish = pluginsToPublish,
+      compressPluginArchive = context.options.compressZipFiles,
+      buildPlatformLibJob = null,
+      state = distState,
+      searchableOptionSet = searchableOptionSet,
+      context = context,
+    )
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -413,7 +454,14 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         context.productProperties.productLayout,
         toPublish = true
       )
-      buildNonBundledPlugins(pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distributionState, buildSearchableOptions(context), context)
+      buildNonBundledPlugins(
+        pluginsToPublish = pluginsToPublish,
+        compressPluginArchive = context.options.compressZipFiles,
+        buildPlatformLibJob = null,
+        state = distributionState,
+        searchableOptionSet = buildSearchableOptions(context),
+        context = context,
+      )
       return@coroutineScope
     }
 

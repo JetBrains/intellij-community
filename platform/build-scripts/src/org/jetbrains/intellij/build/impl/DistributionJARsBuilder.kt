@@ -142,14 +142,27 @@ internal suspend fun buildDistribution(
 
     val buildNonBundledPlugins = async(CoroutineName("build non-bundled plugins")) {
       val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
-      buildNonBundledPlugins(state.pluginsToPublish, compressPluginArchive, buildPlatformJob, state, searchableOptionSet, context)
+      buildNonBundledPlugins(
+        pluginsToPublish = state.pluginsToPublish,
+        compressPluginArchive = compressPluginArchive,
+        buildPlatformLibJob = buildPlatformJob,
+        state = state,
+        searchableOptionSet = searchableOptionSet,
+        context = context,
+      )
     }
 
     val bundledPluginItems = buildBundledPluginsForAllPlatforms(
-      state, pluginLayouts, isUpdateFromSources, buildPlatformJob, searchableOptionSet, moduleOutputPatcher, context
+      state = state,
+      pluginLayouts = pluginLayouts,
+      isUpdateFromSources = isUpdateFromSources,
+      buildPlatformJob = buildPlatformJob,
+      searchableOptionSetDescriptor = searchableOptionSet,
+      moduleOutputPatcher = moduleOutputPatcher,
+      context = context,
     )
 
-    ContentReport(buildPlatformJob.await(), bundledPluginItems, buildNonBundledPlugins.await())
+    ContentReport(platform = buildPlatformJob.await(), bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
   }
 
   coroutineScope {
@@ -418,11 +431,19 @@ internal suspend fun buildNonBundledPlugins(
       dirToJar.add(NonBundledPlugin(sourceDir = pluginDirOrFile, targetZip = destFile, optimizedZip = !plugin.enableSymlinksAndExecutableResources))
     }
 
-    archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context)
+    archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context = context)
 
-    val helpPlugin = buildHelpPlugin(pluginVersion = context.pluginBuildNumber, context)
+    val helpPlugin = buildHelpPlugin(pluginVersion = context.pluginBuildNumber, context = context)
     if (helpPlugin != null) {
-      val spec = buildHelpPlugin(helpPlugin, stageDir, context.nonBundledPluginsToBePublished, moduleOutputPatcher, state, searchableOptionSet, context)
+      val spec = buildHelpPlugin(
+        helpPlugin = helpPlugin,
+        pluginsToPublishDir = stageDir,
+        targetDir = context.nonBundledPluginsToBePublished,
+        moduleOutputPatcher = moduleOutputPatcher,
+        state = state,
+        searchableOptionSetDescriptor = searchableOptionSet,
+        context = context,
+      )
       pluginSpecs.add(spec)
     }
 
@@ -1152,7 +1173,11 @@ private suspend fun checkModuleExcludes(moduleExcludes: Map<String, List<String>
   }
 }
 
-private data class NonBundledPlugin(@JvmField val sourceDir: Path, @JvmField val targetZip: Path, @JvmField val optimizedZip: Boolean)
+private data class NonBundledPlugin(
+  @JvmField val sourceDir: Path,
+  @JvmField val targetZip: Path,
+  @JvmField val optimizedZip: Boolean,
+)
 
 private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress: Boolean, withBlockMap: Boolean, context: BuildContext) {
   context.executeStep(
@@ -1167,7 +1192,7 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
           .setAttribute("outputFile", target.toString())
           .setAttribute("optimizedZip", optimized)
           .use {
-            archivePlugin(optimized, target, compress, source, context)
+            archivePlugin(optimized = optimized, target = target, compress = compress, source = source, context = context)
           }
         if (withBlockMap) {
           spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).use {
