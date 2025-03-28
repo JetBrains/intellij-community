@@ -35,9 +35,6 @@ class IjentWslNioPath(
       this
   }
 
-  /** It's false if [presentablePath] points on `\\wsl.localhost\distro\mnt\c` or something like that. */
-  val hasDifferentActualPath: Boolean = presentablePath != actualPath
-
   override fun getFileSystem(): IjentWslNioFileSystem = fileSystem
 
   override fun isAbsolute(): Boolean = presentablePath.isAbsolute
@@ -81,7 +78,7 @@ class IjentWslNioPath(
 
     val ijentNioPath = fileSystem.provider().toIjentNioPath(this)
     val ijentNioRealPath =
-      if (hasDifferentActualPath) {
+      if (presentablePath != actualPath) {
         // `presentablePath` looks like `\\wsl$\distro\mnt\c`, any access to it from inside WSL throws permission denied errors.
         ijentNioPath.normalize()
       }
@@ -125,7 +122,7 @@ private infix fun IjentWslNioPath.wslPathEqual(other: IjentWslNioPath): Boolean 
   }
 
   if (
-    (hasDifferentActualPath || other.hasDifferentActualPath)
+    (presentablePath != actualPath || other.presentablePath != other.actualPath)
     && actualPath == other.actualPath
   ) {
     return false

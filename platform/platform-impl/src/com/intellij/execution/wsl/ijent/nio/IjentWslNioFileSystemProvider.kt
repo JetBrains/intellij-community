@@ -264,34 +264,33 @@ class IjentWslNioFileSystemProvider(
     }
   }
 
-  override fun isSameFile(path: Path, path2: Path): Boolean =
-    if (path is IjentWslNioPath && path2 is IjentWslNioPath)
-      when {
-        path.hasDifferentActualPath && path2.hasDifferentActualPath ->
-          Files.isSameFile(path.actualPath, path2.actualPath)
-
-        path.hasDifferentActualPath || path2.hasDifferentActualPath -> {
-          // Here, both paths start with `\\wsl` and just one of the paths points to a kind of `/mnt/c`.
-          false
-        }
-
-        path.fileSystem != path2.fileSystem -> {
-          // The paths are in different WSL distributions.
-          false
-        }
-
-        else ->
-          ijentFsProvider.isSameFile(path.toIjentPath(), path2.toIjentPath())
+  override fun isSameFile(path: Path, path2: Path): Boolean {
+    if (path !is IjentWslNioPath) {
+      if (path2 !is IjentWslNioPath) {
+        throw ProviderMismatchException(
+          "Neither $path (${path::class}) nor $path2 (${path2::class}) are ${IjentWslNioPath::class.java.name}"
+        )
       }
+      return isSameFile(path2, path)
+    }
 
-    else if (path is IjentWslNioPath)
-      path2.fileSystem.provider().isSameFile(path.actualPath, path2)
+    if (path2 !is IjentWslNioPath) {
+      return if (path.actualPath.fileSystem.provider() == path2.fileSystem.provider())
+        Files.isSameFile(path.actualPath, path2)
+      else
+        false
+    }
 
-    else if (path2 is IjentWslNioPath)
-      isSameFile(path, path2.actualPath)
+    if (path.actualPath == path.presentablePath && path2.actualPath == path2.presentablePath) {
+      return Files.isSameFile(path.toIjentPath(), path2.toIjentPath())
+    }
 
-    else
-      path2.fileSystem.provider().isSameFile(path, path2)
+    if (path.actualPath.fileSystem.provider() == path2.actualPath.fileSystem.provider()) {
+      return Files.isSameFile(path.actualPath, path2.actualPath)
+    }
+
+    return false
+  }
 
   override fun isHidden(path: Path): Boolean =
     originalFsProvider.isHidden(path.toOriginalPathWithSameNotation())
