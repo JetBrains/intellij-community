@@ -280,7 +280,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       return null
     }
 
-    val artifactData = MavenArtifactData(generateMavenCoordinatesForModule(module), dependencies)
+    val artifactData = MavenArtifactData(module, generateMavenCoordinatesForModule(module), dependencies)
     results[module] = artifactData
     return artifactData
   }
@@ -315,6 +315,7 @@ data class MavenCoordinates(
 }
 
 internal data class MavenArtifactData(
+  val module: JpsModule,
   val coordinates: MavenCoordinates,
   val dependencies: List<MavenArtifactDependency>
 )

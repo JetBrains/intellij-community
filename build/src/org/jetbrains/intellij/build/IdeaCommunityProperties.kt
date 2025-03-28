@@ -31,6 +31,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.maven.testFramework",
       "intellij.tools.reproducibleBuilds.diff",
       "intellij.space.java.jps",
+      *JewelMavenArtifacts.STANDALONE.keys.toTypedArray(),
     )
   }
 
@@ -75,6 +76,23 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.util.base.multiplatform",
       "intellij.platform.util.zip",
     ))
+    mavenArtifacts.patchCoordinates = { module, coordinates ->
+      when {
+        JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.patchCoordinates(module, coordinates)
+        else -> coordinates
+      }
+    }
+    mavenArtifacts.addPomMetadata = { module, model ->
+      when {
+        JewelMavenArtifacts.isJewel(module) -> JewelMavenArtifacts.addPomMetadata(module, model)
+      }
+    }
+    mavenArtifacts.isJavadocJarRequired = {
+      JewelMavenArtifacts.isJewel(it)
+    }
+    mavenArtifacts.validate = { context, artifacts ->
+      JewelMavenArtifacts.validate(context, artifacts)
+    }
 
     versionCheckerConfig = CE_CLASS_VERSIONS
     baseDownloadUrl = "https://download.jetbrains.com/idea/"
