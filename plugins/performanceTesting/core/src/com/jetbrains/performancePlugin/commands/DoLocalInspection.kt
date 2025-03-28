@@ -74,30 +74,20 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
             return
           }
 
-          val highlights = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.WEAK_WARNING, project)
-          val errorsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.ERROR }
-          val warningsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.WARNING }
-          val weakWarningsOnHighlighting = highlights.filter { it.severity == HighlightSeverity.WEAK_WARNING }
+          val toReport = mapOf(HighlightSeverity.ERROR to "Errors",
+                               HighlightSeverity.WARNING to "Warnings",
+                               HighlightSeverity.WEAK_WARNING to "Weak Warnings")
+          val highlights = DaemonCodeAnalyzerImpl.getHighlights(document, toReport.keys.min(), project)
           val finishMessage = StringBuilder("Local inspections have been finished with: ")
-          currentSpan.setAttribute("Errors", errorsOnHighlighting.size.toLong())
-          if (!errorsOnHighlighting.isEmpty()) {
-            finishMessage.append("\n").append("Errors: ${errorsOnHighlighting.size}")
-            for (error in errorsOnHighlighting) {
-              finishMessage.append("\n").append("${error.text}: ${error.description}")
-            }
-          }
-          currentSpan.setAttribute("Warnings", warningsOnHighlighting.size.toLong())
-          if (!warningsOnHighlighting.isEmpty()) {
-            finishMessage.append("\n").append("Warnings: ${warningsOnHighlighting.size}")
-            for (warning in warningsOnHighlighting) {
-              finishMessage.append("\n").append("${warning.text}: ${warning.description}")
-            }
-          }
-          currentSpan.setAttribute("Weak Warnings", warningsOnHighlighting.size.toLong())
-          if (!weakWarningsOnHighlighting.isEmpty()) {
-            finishMessage.append("\n").append("Weak Warnings: ${weakWarningsOnHighlighting.size}")
-            for (weakWarning in weakWarningsOnHighlighting) {
-              finishMessage.append("\n").append("${weakWarning.text}: ${weakWarning.description}")
+          for (entry in toReport.entries) {
+            val filtered = highlights.filter { it.severity == entry.key }
+            val name = entry.value
+            currentSpan.setAttribute(name, filtered.size.toLong())
+            if (!filtered.isEmpty()) {
+              finishMessage.append("\n").append("$name: ${filtered.size}")
+              for (info in filtered) {
+                finishMessage.append("\n").append("${info.text}: ${info.description}")
+              }
             }
           }
           currentSpan.setAttribute("filePath", psiFile.virtualFile.path)
