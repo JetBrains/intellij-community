@@ -62,8 +62,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
@@ -102,9 +102,9 @@ import java.awt.event.*;
 import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.*;
 import java.util.List;
 import java.util.Vector;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -1452,6 +1452,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       //noinspection HardCodedStringLiteral
       showEmptyText(message);
       header.loadingIcon.setIcon(EmptyIcon.ICON_16);
+      myHelper.onSearchStop();
     });
   }
 
