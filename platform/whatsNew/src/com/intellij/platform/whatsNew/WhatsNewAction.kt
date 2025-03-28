@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.await
 
@@ -32,6 +33,12 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
       if (LOG.isTraceEnabled) {
         LOG.trace("EapWhatsNew reaction refresh")
       }
+    }
+  }
+
+  private val hasWhatsNewContent by lazy {
+    appScope.async {
+      WhatsNewContent.hasWhatsNewContent()
     }
   }
 
@@ -57,9 +64,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun update(e: AnActionEvent) {
-    appScope.launch {
-      e.presentation.isEnabledAndVisible = WhatsNewContent.hasWhatsNewContent()
-    }
+    e.presentation.isEnabledAndVisible = if (hasWhatsNewContent.isCompleted) hasWhatsNewContent.getCompleted() else false
     e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
     e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
   }
