@@ -86,7 +86,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/implementAsConstructorParameter", pattern = pattern)
             model("${idea}intentions/insertCurlyBracesToTemplate", pattern = pattern)
             model("${idea}intentions/replaceUntilWithRangeTo", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertLateinitPropertyToNullable", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertLateinitPropertyToNullable", pattern = pattern)
             model("${idea}intentions/swapStringEqualsIgnoreCase", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceExplicitFunctionLiteralParamWithIt", pattern = pattern)
             model("${idea}intentions/nullableBooleanEqualityCheckToElvis", pattern = pattern)
