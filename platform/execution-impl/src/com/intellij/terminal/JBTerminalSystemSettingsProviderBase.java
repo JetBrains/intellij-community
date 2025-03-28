@@ -4,6 +4,7 @@ package com.intellij.terminal;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -50,7 +51,9 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     myUiSettingsManager = TerminalUiSettingsManager.getInstance();
   }
 
-  @NotNull TerminalUiSettingsManager getUiSettingsManager() {
+  @ApiStatus.Internal
+  @NotNull
+  protected Disposable getDisposable() {
     return myUiSettingsManager;
   }
 
