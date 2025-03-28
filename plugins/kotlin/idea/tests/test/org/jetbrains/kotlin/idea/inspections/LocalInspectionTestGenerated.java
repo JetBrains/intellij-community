@@ -17428,6 +17428,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedReceiverParameter/companionPure.kt");
         }
 
+        @TestMetadata("componentNUsedInside.kt")
+        public void testComponentNUsedInside() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/componentNUsedInside.kt");
+        }
+
         @TestMetadata("contextParameter.kt")
         public void testContextParameter() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/contextParameter.kt");
@@ -17446,6 +17451,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("delegateReceiverExplicitGetter.kt")
         public void testDelegateReceiverExplicitGetter() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/delegateReceiverExplicitGetter.kt");
+        }
+
+        @TestMetadata("delegationUsedInside.kt")
+        public void testDelegationUsedInside() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/delegationUsedInside.kt");
         }
 
         @TestMetadata("functionInSameClass.kt")
@@ -17493,9 +17503,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedReceiverParameter/iterable.kt");
         }
 
+        @TestMetadata("iteratorUsedInside.kt")
+        public void testIteratorUsedInside() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/iteratorUsedInside.kt");
+        }
+
         @TestMetadata("memberFunctionWithGenericParameter.kt")
         public void testMemberFunctionWithGenericParameter() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/memberFunctionWithGenericParameter.kt");
+        }
+
+        @TestMetadata("nextOperatorUsedInside.kt")
+        public void testNextOperatorUsedInside() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/nextOperatorUsedInside.kt");
         }
 
         @TestMetadata("object.kt")
