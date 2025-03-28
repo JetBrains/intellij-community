@@ -107,6 +107,7 @@ public final class JBCefApp {
     if (SettingsHelper.isDebugMode()) {
       // Init VERBOSE java logging
       LOG.info("Use verbose CefLog to stderr.");
+      //noinspection UseOfSystemOutOrSystemErr
       System.err.println("Use verbose CefLog to stderr.");
       CefLog.init(null, CefSettings.LogSeverity.LOGSEVERITY_VERBOSE);
 
@@ -179,13 +180,15 @@ public final class JBCefApp {
 
       if (IS_REMOTE_ENABLED) {
         StartupTest.checkBrowserCreation(myCefApp, () -> restartJCEF(true, true));
-        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFActionId", new AnAction("Restart JCEF") {
+        //noinspection UnresolvedPluginConfigReference
+        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFActionId", new AnAction(JcefBundle.message("action.RestartJCEFActionId.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             restartJCEF(false, true);
           }
         });
-        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFWithDebugActionId", new AnAction("Restart JCEF with verbose logging") {
+        //noinspection UnresolvedPluginConfigReference
+        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFWithDebugActionId", new AnAction(JcefBundle.message("action.RestartJCEFWithDebugActionId.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             restartJCEF(true, true);
@@ -198,8 +201,9 @@ public final class JBCefApp {
   }
 
   private boolean restartJCEF(boolean withVerboseLogging, boolean withNewCachePath) {
-    if (!IS_REMOTE_ENABLED)
+    if (!IS_REMOTE_ENABLED) {
       return false;
+    }
 
     boolean result = false;
     // Temporary use reflection to avoid jcef-version increment
