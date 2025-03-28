@@ -6,26 +6,54 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
+import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.utils.EelPathUtils.calculateFileHashUsingMetadata
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.URI
+import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
-import java.nio.file.attribute.*
+import java.nio.file.attribute.BasicFileAttributeView
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.DosFileAttributes
+import java.nio.file.attribute.PosixFileAttributeView
+import java.nio.file.attribute.PosixFileAttributes
+import java.nio.file.attribute.PosixFilePermission
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.fileAttributesView
+import kotlin.io.path.fileAttributesViewOrNull
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.relativeTo
 
 @ApiStatus.Internal
 object EelPathUtils {
@@ -164,12 +192,12 @@ object EelPathUtils {
    *   - The temporary directory will be automatically deleted upon exit.
    *
    * ### Hash Calculation:
-   * - **Purpose**: A SHA-256 hash is calculated for the source file to ensure that the file is transferred only when its contents have changed.
-   * - **Mechanism**:
-   *   - The hash is computed by reading the file in chunks (default: 1 MB) for memory efficiency.
-   *   - A hash cache is maintained to store the relationship between the source file and its hash, reducing redundant file transfers.
-   * - **Rehashing**:
-   *   - If the file is modified (i.e., the current hash differs from the cached hash), the file is re-transferred to the remote environment, and the hash is updated.
+   * - **Purpose:** A SHA-256 hash is computed for the source file to determine whether its content has changed,
+   *   thereby avoiding unnecessary transfers.
+   * - **Mechanism:** The hash is computed using [calculateFileHashUsingMetadata], which calculates a SHA-256 digest
+   *   based solely on the file's metadata (including file size, last modified time, creation time, and file key).
+   *   This fast, metadata-based approach minimizes I/O overhead while detecting meaningful changes.
+   * - A hash cache is maintained to map source files to their computed hashes, reducing redundant transfers.
    *
    * ### Parameters:
    * @param eel the [EelApi] instance representing the target environment (local or remote).
@@ -191,10 +219,9 @@ object EelPathUtils {
    * ```
    *
    * ### Internal Details:
-   * The function internally uses [TransferredContentHolder] to manage the caching and transfer logic:
-   * - It checks the hash of the file using `MessageDigest` with the `SHA-256` algorithm.
-   * - If the file's content is unchanged (based on the hash), the cached result is reused.
-   * - If the content differs or is not in the cache, the file is transferred, and the hash is updated.
+   * The function uses the [TransferredContentHolder] to manage caching and file transfers.
+   * The file hash is computed using [calculateFileHashUsingMetadata] to detect changes based on metadata,
+   * thereby minimizing unnecessary transfers.
    *
    * ### See Also:
    * - [TransferredContentHolder]: For detailed caching and transfer mechanisms.
@@ -226,10 +253,10 @@ object EelPathUtils {
 
     check(sourceDescriptor is LocalEelDescriptor)
 
-    val sourceHash = calculateFileHash(source)
+    val sourceHash = calculateFileHashUsingPartialContent(source)
 
     val remoteHash = if (Files.exists(remotePath)) {
-      calculateFileHash(remotePath)
+      calculateFileHashUsingPartialContent(remotePath)
     }
     else {
       ""
@@ -247,14 +274,15 @@ object EelPathUtils {
     // eel descriptor -> source path string ->> source hash -> transferred file
     private val cache = ConcurrentHashMap<Pair<EelDescriptor, String>, Deferred<Pair<String, Path>>>()
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun transferIfNeeded(eel: EelApi, source: Path, fileAttributesStrategy: FileTransferAttributesStrategy): Path {
       return cache.compute(eel.descriptor to source.toString()) { _, deferred ->
+        val sourceHash by lazy { calculateFileHashUsingMetadata(source) }
+
         if (deferred != null) {
           if (deferred.isCompleted) {
             val (oldSourceHash, _) = deferred.getCompleted()
-            if (oldSourceHash == calculateFileHash(source)) {
+            if (oldSourceHash == sourceHash) {
               return@compute deferred
             }
           }
@@ -266,7 +294,7 @@ object EelPathUtils {
         scope.async {
           val temp = eel.createTempFor(source, true)
           walkingTransfer(source, temp, false, fileAttributesStrategy)
-          calculateFileHash(source) to temp
+          sourceHash to temp
         }
       }!!.await().second
     }
@@ -281,21 +309,112 @@ object EelPathUtils {
     }
   }
 
-  private fun calculateFileHash(path: Path): String {
-    val digest = MessageDigest.getInstance("SHA-256")
+  /**
+   * Calculates a SHA-256 hash for a given file using only its metadata.
+   *
+   * This function computes a hash based solely on file attributes:
+   * - File size.
+   * - Last modified time.
+   * - Creation time.
+   * - File key (if available).
+   *
+   * @param path the file path for which the hash is calculated.
+   * @return a hexadecimal string representing the computed SHA-256 hash.
+   */
+  private fun calculateFileHashUsingMetadata(path: Path): String {
     val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
     val fileSize = attributes.size()
     val lastModified = attributes.lastModifiedTime().toMillis()
+    val creationTime = attributes.creationTime().toMillis()
+    val fileKey = attributes.fileKey()?.toString() ?: ""
+
+    val digest = MessageDigest.getInstance("SHA-256")
 
     digest.update(fileSize.toString().toByteArray())
     digest.update(lastModified.toString().toByteArray())
+    digest.update(creationTime.toString().toByteArray())
+    digest.update(fileKey.toByteArray())
+
+    return digest.digest().joinToString("") { "%02x".format(it) }
+  }
+
+  /**
+   * Calculates a SHA-256 hash for a given file by reading only selected parts of its content.
+   *
+   * This function computes a hash by updating a SHA-256 digest with:
+   * - The file size (converted to a string and then to bytes).
+   * - Partial content of the file read in 1 MB chunks:
+   *   - **Small files (<= 2 MB):** the entire file content is read.
+   *   - **Medium files (<= 3 MB):** only the first and last 1 MB chunks are read.
+   *   - **Large files (> 3 MB):** three chunks are read – the first, middle, and last 1 MB segments.
+   *
+   * This selective reading strategy minimizes I/O overhead while capturing key parts of the file.
+   *
+   * @param path the file path for which the hash is calculated.
+   * @return a hexadecimal string representing the computed SHA-256 hash.
+   */
+  private fun calculateFileHashUsingPartialContent(path: Path): String {
+    val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
+    val fileSize = attributes.size()
+    val digest = MessageDigest.getInstance("SHA-256")
+
+    digest.update(fileSize.toString().toByteArray())
+
+    // (1 MB)
+    val chunkSize = 1024 * 1024L
+
+    fun readFully(channel: FileChannel, buffer: ByteBuffer, startPosition: Long) {
+      var pos = startPosition
+      while (buffer.hasRemaining()) {
+        val bytesRead = channel.read(buffer, pos)
+        if (bytesRead <= 0) break
+        pos += bytesRead
+      }
+    }
 
     FileChannel.open(path, READ).use { channel ->
-      val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
-      while (channel.read(buffer) > 0) {
-        buffer.flip()
-        digest.update(buffer)
-        buffer.clear()
+      when {
+        fileSize <= chunkSize * 2 -> { // For small files, read the entire file content
+          val buffer = ByteBuffer.allocate(fileSize.toInt())
+          readFully(channel, buffer, 0)
+          buffer.flip()
+          digest.update(buffer)
+        }
+        fileSize <= chunkSize * 3 -> { // For medium files, read first and last chunks
+          val buffer = ByteBuffer.allocate(chunkSize.toInt())
+
+          // Read the first chunk
+          readFully(channel, buffer, 0)
+          buffer.flip()
+          digest.update(buffer)
+
+          // Read the last chunk
+          buffer.clear()
+          readFully(channel, buffer, fileSize - chunkSize)
+          buffer.flip()
+          digest.update(buffer)
+        }
+        else -> { // For large files, read first, middle, and last chunks
+          val buffer = ByteBuffer.allocate(chunkSize.toInt())
+
+          // Read the first chunk
+          readFully(channel, buffer, 0)
+          buffer.flip()
+          digest.update(buffer)
+
+          // Read the middle chunk
+          buffer.clear()
+          val middlePosition = fileSize / 2 - chunkSize / 2
+          readFully(channel, buffer, middlePosition)
+          buffer.flip()
+          digest.update(buffer)
+
+          // Read the last chunk
+          buffer.clear()
+          readFully(channel, buffer, fileSize - chunkSize)
+          buffer.flip()
+          digest.update(buffer)
+        }
       }
     }
 
