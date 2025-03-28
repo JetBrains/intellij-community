@@ -2,10 +2,12 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
+import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -30,7 +32,14 @@ internal class TerminalSessionsManager {
     project: Project,
     scope: CoroutineScope,
   ): TerminalSessionStartResult {
-    val (session, configuredOptions) = startTerminalSession(project, options, JBTerminalSystemSettingsProvider(), scope)
+    val termSize = options.initialTermSize ?: run {
+      thisLogger().warn("No initial terminal size provided, using default 80x24. $options")
+      TermSize(80, 24)
+    }
+    val optionsWithSize = options.builder().initialTermSize(termSize).build()
+
+    val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
+    val session = createTerminalSession(project, ttyConnector, termSize, JBTerminalSystemSettingsProvider(), scope)
     val stateAwareSession = StateAwareTerminalSession(session)
 
     val sessionId = storeSession(stateAwareSession, scope)
