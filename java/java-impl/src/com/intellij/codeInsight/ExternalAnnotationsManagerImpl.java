@@ -226,7 +226,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
         updater.cancel(JavaBundle.message("external.annotations.no.package"));
         return;
       }
-      XmlFile file = updater.getWritable(createAnnotationsXml(writableRoot, packageName));
+      XmlFile file = updater.getWritable(createAnnotationsXml(updater, writableRoot, packageName));
       annotateExternally(file, annotation, annotationsToRemove);
     });
     return command;
@@ -577,8 +577,8 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
                                           ? null
                                           : new MyExternalPromptDialog(project);
     if (dialog != null && dialog.isToBeShown()) {
-      final PsiElement highlightElement = element instanceof PsiNameIdentifierOwner
-                                          ? ((PsiNameIdentifierOwner)element).getNameIdentifier()
+      final PsiElement highlightElement = element instanceof PsiNameIdentifierOwner owner
+                                          ? owner.getNameIdentifier()
                                           : element.getNavigationElement();
       LOG.assertTrue(highlightElement != null);
       final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -628,13 +628,16 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
   }
 
   @VisibleForTesting
-  public static @NotNull XmlFile createAnnotationsXml(@NotNull PsiDirectory root, @NonNls @NotNull String packageName) {
+  public static @NotNull XmlFile createAnnotationsXml(@Nullable ModPsiUpdater updater, @NotNull PsiDirectory root, @NonNls @NotNull String packageName) {
     final String[] dirs = packageName.split("\\.");
     for (String dir : dirs) {
       if (dir.isEmpty()) break;
       PsiDirectory subdir = root.findSubdirectory(dir);
       if (subdir == null) {
         subdir = root.createSubdirectory(dir);
+      }
+      else if (updater != null) {
+        subdir = updater.getWritable(subdir);
       }
       root = subdir;
     }
