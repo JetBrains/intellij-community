@@ -38,7 +38,7 @@ func init() {
 	WarningLogger = RepairLogger{log.New(mw, "WARNING: ", 0), "warning"}
 	ErrorLogger = RepairLogger{log.New(mw, "ERROR: ", 0), "error"}
 	FatalLogger = RepairLogger{log.New(mw, "FATAL ERROR: ", 0), "fatal"}
-	InfoLogger.Printf("Log file %s cretaed", LogFile.Name())
+	InfoLogger.Printf("Log file %s created", LogFile.Name())
 }
 func RemoveLogFile() {
 	if _, err := os.Open(LogFile.Name()); err == nil {
