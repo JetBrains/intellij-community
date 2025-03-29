@@ -171,8 +171,6 @@ def find_user_password(self, realm, authuri):
     except error.Abort:
         def read_hgrc_authtoken(ui, authuri):
             from mercurial.httpconnection import readauthforuri
-            from inspect import getargspec
-            args, _, _, _ = getargspec(readauthforuri)
             res = readauthforuri(self.ui, authuri, "")
             if res:
                 group, auth = res
