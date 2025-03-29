@@ -31,7 +31,7 @@ internal class RunConfigurationSchemeManager(
     return when {
       isShared -> {
         if (scheme.type.isManaged) {
-          scheme.name
+          "${scheme.type.id}-${scheme.name}"
         }
         else {
           // do not use name as a scheme key for Unknown RC or for Rider (some Rider RC types can use RC with not unique names)
