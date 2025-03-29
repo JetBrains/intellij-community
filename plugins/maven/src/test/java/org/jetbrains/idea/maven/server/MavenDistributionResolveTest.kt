@@ -5,6 +5,8 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
@@ -114,6 +116,40 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     assertEquals(
       MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     //assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
+  }
+
+  @Throws(IOException::class)
+  @Test fun testShouldUseSystemPropertyOverridesWhenDownloadingWrapper() = runBlocking {
+    runWithServer { url ->
+
+      val envVariables = mapOf(
+        "MVNW_REPOURL" to url.substringBeforeLast("/"),
+        "MVNW_USERNAME" to "user_123",
+        "MVNW_PASSWORD" to "pass_abc"
+      )
+      val environment = object : Environment {
+        override fun property(name: String): String? {
+          throw NotImplementedError()
+        }
+
+        override fun variable(name: String): String? {
+          return envVariables[name]
+        }
+      }
+
+      ApplicationManager.getApplication().replaceService(Environment::class.java, environment, testRootDisposable)
+
+      createProjectPom("<groupId>test</groupId>" +
+                       "<artifactId>project</artifactId>" +
+                       "<version>1</version>")
+      createWrapperProperties("distributionUrl=https://something.com/org/apache/maven/apache-maven/3.6.3/apache-maven-3.6.3-bin.zip")
+      MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+      importProjectAsync()
+      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+      assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
+      assertNotContains<BuildEvent> { it.message.contains("something.com") }
+      assertContainsOnce<BuildEvent> { it.message == "Downloading Maven wrapper with Basic authentication\n" }
+    }
   }
 
 
