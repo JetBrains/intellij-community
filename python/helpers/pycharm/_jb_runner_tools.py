@@ -97,15 +97,25 @@ class NewTeamcityServiceMessages(_old_service_messages):
         full_name = properties["name"]
         try:
             # Report directory so Java site knows which folder to resolve names against
-
-            # tests with docstrings are reported in format "test.name (some test here)".
-            # text should be part of name, but not location.
-            possible_location = str(full_name)
-            loc = possible_location.find("(")
-            if loc > 0:
-                possible_location = possible_location[:loc].strip()
-            properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR,
-                                                                    possible_location)
+            path = properties.get('path')
+            if not path or path.endswith('.py'):
+                # For Python tests, it's better to reference the test name as the location
+                # because line numbers can shift around when the test is edited.
+                possible_location = str(full_name)
+                # tests with docstrings are reported in format "test.name (some test here)".
+                # text should be part of name, but not location.
+                loc = possible_location.find("(")
+                if loc > 0:
+                    possible_location = possible_location[:loc].strip()
+                properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR,
+                                                                        possible_location)
+            else:
+                # For data-driven tests, we reference the test by file and line number.
+                location_hint = "file:/" + path
+                lineno = properties.get('lineno')
+                if lineno:
+                    location_hint += ":{}".format(lineno)
+                properties["locationHint"] = location_hint
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -179,13 +189,16 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self.testStarted(".".join(_TREE_MANAGER_HOLDER.manager.current_branch + [name]))
         self._latest_subtest_result = subTestResult
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None, path=None, lineno=None):
         test_name_as_list = self._test_to_list(testName)
         testName = ".".join(test_name_as_list)
 
         def _write_start_message():
             # testName, captureStandardOutput, flowId
             args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo": metainfo}
+            if path is not None and lineno is not None:
+                args["path"] = path
+                args["lineno"] = str(lineno)
             if is_suite:
                 self.message("testSuiteStarted", **args)
             else:
@@ -194,7 +207,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         commands = _TREE_MANAGER_HOLDER.manager.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
             self.do_commands(commands)
-            self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
+            self.testStarted(testName, captureStandardOutput, metainfo=metainfo, path=path, lineno=lineno)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(self._test_to_list(testName))
