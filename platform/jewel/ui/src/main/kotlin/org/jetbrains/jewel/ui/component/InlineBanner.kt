@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.modifier.thenIf
@@ -47,6 +48,7 @@ import org.jetbrains.jewel.ui.theme.inlineBannerStyle
  * optional actions.
  *
  * @param text the primary content of the banner, briefly describing the information it conveys.
+ * @param title an optional title, rendered in bold bold font, above the text
  * @param modifier a [Modifier] to customize the layout and appearance of the banner.
  * @param icon a composable representation of an optional 16x16 dp "information" icon displayed to the left of the
  *   banner. Pass `null` to hide the icon. By default, it shows the "information" icon.
@@ -81,6 +83,7 @@ import org.jetbrains.jewel.ui.theme.inlineBannerStyle
 public fun InformationInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
+    title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -89,6 +92,7 @@ public fun InformationInlineBanner(
 ) {
     InlineBannerImpl(
         text = text,
+        title = title,
         style = style,
         textStyle = textStyle,
         icon = icon,
@@ -106,6 +110,7 @@ public fun InformationInlineBanner(
  * user actions.
  *
  * @param text the main content of the banner, succinctly describing the successful operation or state.
+ * @param title an optional title, rendered in bold bold font, above the text
  * @param modifier a [Modifier] to customize the layout, padding, or size of the banner.
  * @param icon a composable for an optional 16x16 dp "success" icon displayed on the left side of the banner. The
  *   success icon is shown by default. Pass `null` to hide the icon.
@@ -140,6 +145,7 @@ public fun InformationInlineBanner(
 public fun SuccessInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
+    title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -148,6 +154,7 @@ public fun SuccessInlineBanner(
 ) {
     InlineBannerImpl(
         text = text,
+        title = title,
         style = style,
         textStyle = textStyle,
         icon = icon,
@@ -164,6 +171,7 @@ public fun SuccessInlineBanner(
  * additional actions if provided.
  *
  * @param text the main content of the banner, describing the warning or potential issue.
+ * @param title an optional title, rendered in bold bold font, above the text
  * @param modifier a [Modifier] for applying layout modifications to the banner, such as padding or size changes.
  * @param icon a composable element for an optional 16x16 dp "warning" icon displayed at the banner's left edge. The
  *   warning icon is shown by default. Set `null` to omit the icon.
@@ -198,6 +206,7 @@ public fun SuccessInlineBanner(
 public fun WarningInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
+    title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -206,6 +215,7 @@ public fun WarningInlineBanner(
 ) {
     InlineBannerImpl(
         text = text,
+        title = title,
         style = style,
         textStyle = textStyle,
         icon = icon,
@@ -222,6 +232,7 @@ public fun WarningInlineBanner(
  * and actions to assist the user in resolving it.
  *
  * @param text the main content of the banner, describing the error context or failure details.
+ * @param title an optional title, rendered in bold bold font, above the text
  * @param modifier a [Modifier] for layout customization (e.g., padding, width).
  * @param icon a composable that displays an optional 16x16 dp "error" icon at the banner's left side. The error icon is
  *   displayed by default and can be omitted by passing `null`.
@@ -255,6 +266,7 @@ public fun WarningInlineBanner(
 public fun ErrorInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
+    title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -265,6 +277,7 @@ public fun ErrorInlineBanner(
         text = text,
         style = style,
         textStyle = textStyle,
+        title = title,
         icon = icon,
         actions = actions,
         modifier = modifier,
@@ -278,6 +291,7 @@ private fun InlineBannerImpl(
     text: String,
     style: InlineBannerStyle,
     textStyle: TextStyle,
+    title: String?,
     icon: @Composable (() -> Unit)?,
     actions: @Composable (FlowRowScope.() -> Unit)?,
     actionIcons: @Composable (RowScope.() -> Unit)?,
@@ -305,6 +319,10 @@ private fun InlineBannerImpl(
                         .padding(top = 12.dp, bottom = 12.dp) // kftmt plz behave
                         .thenIf(actionIcons == null) { padding(end = 12.dp) }
             ) {
+                if (title != null) {
+                    Text(text = title, style = textStyle, fontWeight = Bold)
+                    Spacer(Modifier.height(8.dp))
+                }
                 Text(text = text, style = textStyle)
 
                 if (actions != null) {
