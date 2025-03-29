@@ -19,12 +19,15 @@ import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.renderer.render
 
 fun surroundWithBracesIfInStringTemplate(context: InsertionContext): Boolean {
     val startOffset = context.startOffset
@@ -214,3 +217,5 @@ private fun String.unindent(indent: String): String {
         }
     }
 }
+
+fun Name.renderIdentifier(): String = render().let { if (it.isIdentifier()) it else "`$it`" }
