@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
@@ -132,8 +131,8 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
     return
   }
 
-  val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
-  return transformZipUsingTempFile(jarFile, packageIndexBuilder) { zipCreator ->
+  val packageIndexBuilder = PackageIndexBuilder()
+  return transformZipUsingTempFile(jarFile, packageIndexBuilder.indexWriter) { zipCreator ->
     sourceZipFile.use { sourceZip ->
       val entries = sourceZip.entries.filterTo(mutableListOf()) { !it.isDirectory && it.name != INDEX_FILENAME }
       // ignore the existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
@@ -161,8 +160,9 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
 
       for (entry in entries) {
         packageIndexBuilder.addFile(entry.name)
-        zipCreator.uncompressedData(path = entry.name, data = entry.getByteBuffer(sourceZip, null))
+        zipCreator.uncompressedData(nameString = entry.name, data = entry.getByteBuffer(sourceZip, null))
       }
+      packageIndexBuilder.writePackageIndex(zipCreator)
     }
   }
 }

@@ -15,65 +15,16 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.DistFile
-import org.jetbrains.intellij.build.InMemoryDistFileContent
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.MAVEN_REPO
-import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
-import org.jetbrains.intellij.build.PluginBuildDescriptor
-import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import org.jetbrains.intellij.build.PluginDistribution
-import org.jetbrains.intellij.build.ProductModulesLayout
-import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.antToRegex
-import org.jetbrains.intellij.build.buildSearchableOptions
-import org.jetbrains.intellij.build.createPluginLayoutSet
-import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.generateClasspath
-import org.jetbrains.intellij.build.generatePluginClassPath
-import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
-import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport
-import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
-import org.jetbrains.intellij.build.injectAppInfo
-import org.jetbrains.intellij.build.io.W_CREATE_NEW
-import org.jetbrains.intellij.build.io.ZipArchiver
-import org.jetbrains.intellij.build.io.archiveDir
-import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.io.copyFile
-import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
-import org.jetbrains.intellij.build.io.zip
-import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.writePluginClassPathHeader
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
@@ -921,7 +872,7 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
       arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
     ).map {
       async(CoroutineName("build keymap plugin for ${it[0]}")) {
-        buildKeymapPlugin(keymaps = it, buildNumber = context.buildNumber, targetDir = targetDir, keymapDir = keymapDir)
+        buildKeymapPlugin(keymaps = it, context.buildNumber, targetDir, keymapDir)
       }
     }
   }.map { it.getCompleted() }
@@ -1062,7 +1013,7 @@ private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): B
 private suspend fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
   // quick fix for a very annoying FileAlreadyExistsException in CLion dev build
   val overwrite = ("intellij.rider.plugins.clion.radler" == (layout as? PluginLayout)?.mainModule)
-  layoutResourcePaths(layout = layout, context = context, targetDirectory = targetDirectory, overwrite = overwrite)
+  layoutResourcePaths(layout, context, targetDirectory, overwrite)
   if (layout !is PluginLayout) {
     return
   }

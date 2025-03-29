@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode", "SSBasedInspection")
 
 package org.jetbrains.intellij.build.http2Client
@@ -17,18 +17,14 @@ import io.netty.handler.codec.http2.Http2HeadersFrame
 import io.netty.handler.codec.http2.Http2StreamChannel
 import io.netty.util.AsciiString
 import kotlinx.coroutines.CompletableDeferred
-import org.jetbrains.intellij.build.io.ZipIndexWriter
-import org.jetbrains.intellij.build.io.archiveDir
-import org.jetbrains.intellij.build.io.unmapBuffer
-import org.jetbrains.intellij.build.io.use
-import org.jetbrains.intellij.build.io.writeZipLocalFileHeader
+import org.jetbrains.intellij.build.io.*
 import java.io.EOFException
 import java.io.File
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.EnumSet
+import java.util.*
 import java.util.zip.ZipEntry
 import kotlin.math.min
 
@@ -117,7 +113,7 @@ private suspend fun compressDir(
   sourceBuffer: ByteBuf,
 ): UploadResult {
   val localPrefixLength = dir.toString().length + 1
-  val zipIndexWriter = ZipIndexWriter(null)
+  val zipIndexWriter = ZipIndexWriter(indexWriter = null)
   try {
     var uncompressedPosition = 0L
     var uploadedSize = 0L
@@ -137,14 +133,14 @@ private suspend fun compressDir(
         assert(channel.size() <= Int.MAX_VALUE)
         val size = channel.size().toInt()
         val relativeOffsetOfLocalFileHeader = uncompressedPosition
-        writeZipLocalFileHeader(path = name, size = size, crc32 = 0, buffer = sourceBuffer)
+        writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = ZipEntry.STORED, buffer = sourceBuffer)
         zipIndexWriter.writeCentralFileHeader(
-          path = name,
           size = size,
           compressedSize = size,
           method = ZipEntry.STORED,
+          name = name,
           crc = 0,
-          headerOffset = relativeOffsetOfLocalFileHeader,
+          localFileHeaderOffset = relativeOffsetOfLocalFileHeader,
           dataOffset = -1,
         )
 
@@ -173,7 +169,7 @@ private suspend fun compressDir(
       }
     })
 
-    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = uncompressedPosition, indexDataEnd = -1)
+    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = uncompressedPosition, indexWriter = null, indexDataEnd = -1)
     var toRead = zipIndexData.readableBytes()
     uncompressedPosition += toRead
 

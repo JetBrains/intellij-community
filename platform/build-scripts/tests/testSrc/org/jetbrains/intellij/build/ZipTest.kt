@@ -1,46 +1,36 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.io.toByteArray
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.Unpooled
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
-import org.jetbrains.intellij.build.io.AddDirEntriesMode
-import org.jetbrains.intellij.build.io.ByteBufferDataWriter
-import org.jetbrains.intellij.build.io.MappedFileDataWriter
-import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.RW_NEW
-import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
-import org.jetbrains.intellij.build.io.ZipIndexWriter
-import org.jetbrains.intellij.build.io.compressedData
-import org.jetbrains.intellij.build.io.fileDataWriter
-import org.jetbrains.intellij.build.io.zip
-import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.io.zipWithPackageIndex
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractTest.Companion.data
+import org.jetbrains.intellij.build.io.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
-import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiConsumer
 import java.util.function.Predicate
-import java.util.zip.CRC32
-import java.util.zip.Deflater
-import java.util.zip.ZipInputStream
 import kotlin.random.Random
 
 class ZipTest {
+  @RegisterExtension
+  @JvmField
+  // not used in every test because we want to check the real FS behavior
+  val fs = InMemoryFsExtension()
+
   @Test
   fun `interrupt thread`(@TempDir tempDir: Path) {
     val (list, archiveFile) = createLargeArchive(128, tempDir)
@@ -48,7 +38,7 @@ class ZipTest {
       val tasks = mutableListOf<ForkJoinTask<*>>()
       // force init of AssertJ to avoid ClosedByInterruptException on reading FileLoader index
       ConfigurationProvider.CONFIGURATION_PROVIDER
-      repeat (100) {
+      for (i in 0..100) {
         tasks.add(ForkJoinTask.adapt(Runnable {
           val ioThread = runInThread {
             while (!Thread.currentThread().isInterrupted) {
@@ -70,15 +60,32 @@ class ZipTest {
   }
 
   @Test
-  fun `read zip file with more than 65K entries`(@TempDir tempDir: Path) {
+  fun `read zip file with more than 65K entries`() {
     assumeTrue(SystemInfoRt.isUnix)
 
-    val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, tempDir)
+    val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, fs.root)
     checkZip(archiveFile) { zipFile ->
       for (name in list) {
         assertThat(zipFile.getResource(name)).isNotNull()
       }
     }
+  }
+
+  private fun createLargeArchive(size: Int, tempDir: Path): Pair<MutableList<String>, Path> {
+    val random = Random(42)
+
+    val dir = tempDir.resolve("dir")
+    Files.createDirectories(dir)
+    val list = mutableListOf<String>()
+    for (i in 0..size) {
+      val name = "entry-item${random.nextInt()}-$i"
+      list.add(name)
+      Files.write(dir.resolve(name), random.nextBytes(random.nextInt(32)))
+    }
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    zip(archiveFile, mapOf(dir to ""))
+    return Pair(list, archiveFile)
   }
 
   @Test
@@ -180,7 +187,7 @@ class ZipTest {
     Files.write(dir.resolve("zip-included"), random.nextBytes(random.nextInt(128)))
     Files.write(dir.resolve("zip-excluded"), random.nextBytes(random.nextInt(128)))
     val zip = tempDir.resolve("test.zip")
-    zipWithPackageIndex(zip, dir)
+    zip(zip, mapOf(dir to ""))
 
     val archiveFile = tempDir.resolve("archive.zip")
     val regex = Regex("^zip-excl.*")
@@ -202,7 +209,7 @@ class ZipTest {
     Files.writeString(dir.resolve("file2"), "2")
 
     val archiveFile = tempDir.resolve("archive.zip")
-    buildJar(targetFile = archiveFile, sources = listOf(DirSource(dir)), compress = true)
+    buildJar(archiveFile, listOf(DirSource(dir = dir, excludes = emptyList())), compress = true)
 
     java.util.zip.ZipFile(archiveFile.toString()).use { zipFile ->
       assertThat(zipFile.entries().asSequence().map { it.name }.toList())
@@ -231,222 +238,6 @@ class ZipTest {
   }
 
   @Test
-  fun undeclared(@TempDir tempDir: Path) {
-    val archiveFile = tempDir.resolve("archive.zip")
-
-    val random = Random(42)
-
-    val list = ArrayList<TestEntryItem>(2)
-
-    ZipArchiveOutputStream(
-      dataWriter = fileDataWriter(archiveFile),
-      zipIndexWriter = ZipIndexWriter(null),
-    ).use {
-      repeat(100) { number ->
-        val item = TestEntryItem(name = "a$number.class", size = random.nextInt(4096))
-        list.add(item)
-        it.uncompressedData(item.name.toByteArray(), random.nextBytes(item.size), null)
-        it.writeUndeclaredData(random.nextInt(number, 1 * 1024 * 1024)) { buffer, _ ->
-          buffer.putInt(12)
-          Int.SIZE_BYTES
-        }
-      }
-
-      val item = TestEntryItem(name = "b.class", size = random.nextInt(4096))
-      list.add(item)
-      it.uncompressedData(item.name.toByteArray(), random.nextBytes(item.size), null)
-    }
-
-    checkZip(archiveFile) { zipFile ->
-      for (item in list) {
-        val entry = zipFile.getResource(item.name) ?: error("Entry ${item.name} not found")
-        assertThat(entry).isNotNull()
-        assertThat(entry.uncompressedSize).describedAs { "Entry ${item.name}" }.isEqualTo(item.size)
-      }
-    }
-  }
-
-  @Test
-  fun `undeclared with known size`(@TempDir tempDir: Path) {
-    val archiveFile = tempDir.resolve("archive.zip")
-    val random = Random(42)
-    val list = ArrayList<TestEntryItem>(3)
-
-    class TestUndeclaredEntryItem(@JvmField val offset: Int, @JvmField val data: ByteArray)
-
-    val undeclaredList = ArrayList<TestUndeclaredEntryItem>(2)
-
-    ZipArchiveOutputStream(
-      dataWriter = fileDataWriter(archiveFile),
-      zipIndexWriter = ZipIndexWriter(null),
-    ).use {
-      var item = TestEntryItem(name = "a.class", size = random.nextInt(4096))
-      list.add(item)
-      it.uncompressedData(item.name.toByteArray(), random.nextBytes(item.size), null)
-      it.writeUndeclaredDataWithKnownSize(ByteBuffer.allocate(100))
-
-      item = TestEntryItem(name = "b.class", size = random.nextInt(4096))
-      list.add(item)
-      it.uncompressedData(item.name.toByteArray(), random.nextBytes(item.size), null)
-
-      // test writing a buffer with a non-zero position
-      val data = random.nextBytes(2 * 4096)
-      val offset = it.writeUndeclaredDataWithKnownSize(ByteBuffer.wrap(data).position(42)).toInt()
-      undeclaredList.add(TestUndeclaredEntryItem(offset = offset, data = data.copyOfRange(42, data.size)))
-
-      item = TestEntryItem(name = "c.class", size = ZipArchiveOutputStream.INITIAL_BUFFER_CAPACITY * 8)
-      // test ByteBuffer variant
-      it.uncompressedData(item.name.toByteArray(), ByteBuffer.wrap(random.nextBytes(item.size)), null)
-      list.add(item)
-    }
-
-    checkZip(archiveFile) { zipFile ->
-      for (item in list) {
-        val entry = zipFile.getResource(item.name) ?: error("Entry ${item.name} not found")
-        assertThat(entry).isNotNull()
-        assertThat(entry.uncompressedSize).describedAs { "Entry ${item.name}" }.isEqualTo(item.size)
-      }
-
-      if (zipFile is HashMapZipFile) {
-        for (item in undeclaredList) {
-          val onDisk = zipFile.__getRawSlice().slice(item.offset, item.data.size).toByteArray()
-          assertThat(onDisk).isEqualTo(item.data)
-        }
-      }
-    }
-  }
-
-  @Test
-  fun `undeclared data various sizes`(@TempDir tempDir: Path) {
-    val archiveFile = tempDir.resolve("archive.zip")
-    val random = Random(42)
-    val list = ArrayList<TestEntryItem>(20)
-
-    class TestUndeclaredEntryItem(@JvmField val offset: Int, @JvmField val data: ByteArray)
-
-    val undeclaredList = ArrayList<TestUndeclaredEntryItem>(20)
-
-    val dataSizes = listOf(
-      0, 1, 100, 4095, 4096, 4097,
-      8191, 8192, 8193,
-      16383, 16384, 16385,
-      32767, 32768, 32769,
-      65535, 65536, 65537,
-      1024 * 1024 - 1, 1024 * 1024, 1024 * 1024 + 1, ZipArchiveOutputStream.FLUSH_THRESHOLD * 2,
-    )
-
-    ZipArchiveOutputStream(
-      dataWriter = fileDataWriter(archiveFile),
-      zipIndexWriter = ZipIndexWriter(null),
-    ).use { stream ->
-      for ((index, size) in dataSizes.withIndex()) {
-        // Test uncompressed data
-        val item = TestEntryItem(name = "uncompressed$index.data", size = size)
-        list.add(item)
-        stream.uncompressedData(item.name.toByteArray(), random.nextBytes(size), null)
-
-        // Test undeclared data
-        val data = random.nextBytes(size)
-        val offset = stream.writeUndeclaredDataWithKnownSize(ByteBuffer.wrap(data)).toInt()
-        undeclaredList.add(TestUndeclaredEntryItem(offset = offset, data = data))
-      }
-    }
-
-    checkZip(archiveFile) { zipFile ->
-      for (item in list) {
-        val entry = zipFile.getResource(item.name) ?: error("Entry ${item.name} not found")
-        assertThat(entry).isNotNull()
-        assertThat(entry.uncompressedSize).describedAs { "Entry ${item.name}" }.isEqualTo(item.size)
-      }
-
-      if (zipFile is HashMapZipFile) {
-        for (item in undeclaredList) {
-          val onDisk = zipFile.__getRawSlice().slice(item.offset, item.data.size).toByteArray()
-          assertThat(onDisk).isEqualTo(item.data)
-        }
-      }
-    }
-  }
-
-  @Test
-  fun `byteBuff writer`(@TempDir tempDir: Path) {
-    val archiveFile = tempDir.resolve("archive.zip")
-
-    val random = Random(42)
-    val testData1 = "META-INF/pluginIcon.svg" to random.nextBytes(3453)
-
-    ZipArchiveOutputStream(
-      dataWriter = fileDataWriter(archiveFile),
-      zipIndexWriter = ZipIndexWriter(null),
-    ).use {
-      it.writeDataWithUnknownSize(path = "keymap.jar".toByteArray(), estimatedSize = -1, crc32 = CRC32()) { byteBuf ->
-        writeTestJar(byteBuf = byteBuf, testData1 = testData1, random = random, tempDir = tempDir)
-
-        assertThat(byteBuf.readableBytes()).isEqualTo(12202)
-      }
-    }
-
-    checkZip(archiveFile) { zipFile ->
-      val entry = zipFile.getResource("keymap.jar")!!
-      assertThat(entry).isNotNull()
-      assertThat(entry.byteBuffer.remaining()).isEqualTo(12162)
-
-      ZipInputStream(entry.inputStream).use { zipInputStream ->
-        val entry = zipInputStream.nextEntry!!
-        assertThat(entry.name).isEqualTo("META-INF/pluginIcon.svg")
-        assertThat(zipInputStream.readBytes().size).isEqualTo(3453)
-        zipInputStream.closeEntry()
-
-        assertThat(zipInputStream.nextEntry!!.name).isEqualTo("META-INF/pluginIcon_dark.svg")
-        zipInputStream.closeEntry()
-
-        assertThat(zipInputStream.nextEntry!!.name).isEqualTo("__index__")
-        zipInputStream.closeEntry()
-
-        assertThat(zipInputStream.nextEntry).isNull()
-      }
-    }
-  }
-
-  @Test
-  fun compressedData(@TempDir tempDir: Path) {
-    val archiveFile = tempDir.resolve("archive.zip")
-
-    val random = Random(42)
-    val testData1 = "META-INF/pluginIcon.svg" to randomCompressibleBytes(4096, random)
-
-    ZipArchiveOutputStream(
-      dataWriter = fileDataWriter(archiveFile),
-      zipIndexWriter = ZipIndexWriter(null),
-    ).use { outerZipWriter ->
-      val byteBuf = ByteBuffer.allocate(32 * 1024)
-      val nettyBuffer = Unpooled.wrappedBuffer(byteBuf).writerIndex(0)
-      writeTestJar(byteBuf = nettyBuffer, testData1 = testData1, random = random, tempDir = tempDir)
-
-      byteBuf.position(0).limit(nettyBuffer.writerIndex())
-
-      compressedData(
-        path = "keymap.jar",
-        data = byteBuf,
-        deflater = Deflater(Deflater.DEFAULT_COMPRESSION, true),
-        crc32 = CRC32(),
-        resultStream = outerZipWriter,
-      )
-    }
-
-    checkZip(archiveFile) { zipFile ->
-      val entry = zipFile.getResource("keymap.jar")!!
-      assertThat(entry).isNotNull()
-      assertThat(entry.uncompressedSize).isEqualTo(12805)
-      assertThat(entry.byteBuffer.remaining()).isEqualTo(12805)
-
-      if (zipFile is HashMapZipFile) {
-        assertThat(zipFile.getRawEntry("keymap.jar")!!.isCompressed).isTrue()
-      }
-    }
-  }
-
-  @Test
   fun `compress small`(@TempDir tempDir: Path) {
     doCompressTest(tempDir = tempDir, fileSize = 12 * 1024)
   }
@@ -460,39 +251,24 @@ class ZipTest {
     val dir = tempDir.resolve("dir")
     Files.createDirectories(dir)
     val random = Random(42)
-    val list = ArrayList<TestEntryItem>()
-    for ((index, chunkSize) in splitIntoChunks(size = fileSize, chunkSize = 1024 * 1024).withIndex()) {
-      val data = randomCompressibleBytes(chunkSize, random)
-      val item = TestEntryItem(name = "file-$index-$chunkSize", size = chunkSize, data = data)
-      list.add(item)
-      Files.write(dir.resolve(item.name), data)
+    Files.newOutputStream(dir.resolve("file")).use {
+      for (chunkSize in splitIntoChunks(size = fileSize, chunkSize = 32 * 1024)) {
+        it.write(random.nextBytes(chunkSize))
+      }
     }
 
     val archiveFile = tempDir.resolve("archive.zip")
     zipWithCompression(archiveFile, mapOf(dir to ""))
 
     HashMapZipFile.load(archiveFile).use { zipFile ->
-      for (item in list) {
-        val entry = zipFile.getRawEntry(item.name)
-        assertThat(entry).isNotNull()
-        assertThat(entry!!.uncompressedSize).isEqualTo(item.size)
-        assertThat(entry.getData(zipFile)).describedAs { item.name }.isEqualTo(item.data)
-        assertThat(entry.isCompressed).isTrue()
-      }
+      val entry = zipFile.getRawEntry("file")
+      assertThat(entry).isNotNull()
+      assertThat(entry!!.isCompressed).isTrue()
     }
   }
 
   @Test
   fun `large file`(@TempDir tempDir: Path) {
-    doTestLargeFile(tempDir, useCrc = true)
-  }
-
-  @Test
-  fun `large file without crc`(@TempDir tempDir: Path) {
-    doTestLargeFile(tempDir, useCrc = false)
-  }
-
-  private fun doTestLargeFile(tempDir: Path, useCrc: Boolean) {
     val dir = tempDir.resolve("dir")
     Files.createDirectories(dir)
     val random = Random(42)
@@ -501,7 +277,7 @@ class ZipTest {
     Files.write(dir.resolve("largeFile3"), random.nextBytes(2 * 1024 * 1024))
 
     val archiveFile = tempDir.resolve("archive.zip")
-    zip(targetFile = archiveFile, dirs = mapOf(dir to ""), useCrc = useCrc)
+    zip(archiveFile, mapOf(dir to ""))
 
     checkZip(archiveFile) { zipFile ->
       val entry = zipFile.getResource("largeFile1")
@@ -550,65 +326,28 @@ class ZipTest {
   }
 
   @Test
-  fun `various chunk size`(@TempDir tempDir: Path) {
-    Files.createDirectories(tempDir)
-
+  fun uncompressedData(@TempDir tempDir: Path) {
+    val dir = tempDir.resolve("dir")
+    Files.createDirectories(dir)
     val random = Random(42)
-    runBlocking(Dispatchers.IO.limitedParallelism(8)) {
-      repeat(36) { count ->
-        launch {
-          val archiveFile = tempDir.resolve("archive-${count}.zip")
-          val chunkSize = random.nextInt(1024, 64 * 1024 * 1024)
-          val fileCount = random.nextInt(1, 100)
-          try {
-            doTest(mappedChunkSize = chunkSize, fileCount = fileCount, archiveFile = archiveFile, random = random)
-          }
-          catch (e: Exception) {
-            throw RuntimeException("Failed (chunkSize=$chunkSize, fileCount=$fileCount)", e)
-          }
-          finally {
-            Files.deleteIfExists(archiveFile)
-          }
-        }
-      }
-    }
-  }
 
-  //@Test
-  //fun `chunk size`(@TempDir tempDir: Path) {
-  //  Files.createDirectories(tempDir)
-  //
-  //  val archiveFile = tempDir.resolve("archive.zip")
-  //  val chunkSize = 179952404L
-  //  val fileCount = 71
-  //  val random = Random(42)
-  //  doTest(mappedChunkSize = chunkSize, fileCount = fileCount, archiveFile = archiveFile, random = random)
-  //}
-
-  private fun doTest(mappedChunkSize: Int, fileCount: Int, archiveFile: Path, random: Random) {
-    val list = ArrayList<TestEntryItem>(fileCount)
-    val crc32 = CRC32()
-    ZipArchiveOutputStream(MappedFileDataWriter(archiveFile, RW_NEW, mappedChunkSize), ZipIndexWriter(null)).use { writer ->
-      var totalSize = 0L
-      repeat(fileCount) {
-        val byteSize = random.nextInt(0, 32 * 1024 * 1024)
-
-        totalSize += byteSize + 100
-        if (totalSize > Int.MAX_VALUE) {
-          return@repeat
-        }
-
-        val path = "file $it"
-        writer.uncompressedData(path = path.toByteArray(), data = random.nextBytes(byteSize), crc32 = crc32)
-        list.add(TestEntryItem(byteSize, path))
+    val archiveFile = tempDir.resolve("archive.zip")
+    val size = 2 * 1024
+    ZipFileWriter(
+      channel = FileChannel.open(archiveFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE),
+      deflater = null,
+      zipIndexWriter = ZipIndexWriter(indexWriter = null),
+    ).use { writer ->
+      repeat(3) {
+        writer.uncompressedData("file $it", data = random.nextBytes(size))
       }
     }
 
     checkZip(archiveFile) { zipFile ->
-      for (item in list) {
-        val entry = zipFile.getData(item.name)
+      repeat(3) {
+        val entry = zipFile.getData("file $it")
         assertThat(entry).isNotNull()
-        assertThat(entry!!.size).isEqualTo(item.size)
+        assertThat(entry!!.size).isEqualTo(size)
       }
     }
   }
@@ -640,41 +379,6 @@ class ZipTest {
   }
 }
 
-private fun randomCompressibleBytes(size: Int, random: Random): ByteArray {
-  // leave the second half as zeros (ensure that is compressible)
-  val bytes = ByteArray(size)
-  random.nextBytes(bytes, 0, size / 2)
-  return bytes
-}
-
-private fun writeTestJar(
-  byteBuf: ByteBuf,
-  testData1: Pair<String, ByteArray>,
-  random: Random,
-  tempDir: Path,
-) {
-  val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
-  val dataWriter = ByteBufferDataWriter(byteBuf)
-  val crc32 = CRC32()
-  ZipArchiveOutputStream(dataWriter, ZipIndexWriter(packageIndexBuilder)).use { writer ->
-    packageIndexBuilder.addFile("META-INF/pluginIcon.svg")
-    writer.uncompressedData(testData1.first.toByteArray(), testData1.second, crc32)
-
-    packageIndexBuilder.addFile("META-INF/pluginIcon_dark.svg")
-    writer.uncompressedData("META-INF/pluginIcon_dark.svg".toByteArray(), random.nextBytes(2 * 4096), crc32)
-  }
-
-  val archiveFile = tempDir.resolve("innerArchive.zip")
-  Files.write(archiveFile, dataWriter.toByteArray())
-
-  HashMapZipFile.load(archiveFile).use { zipFile ->
-    val entry = zipFile.getRawEntry(testData1.first)
-    assertThat(entry).isNotNull()
-    assertThat(entry!!.isCompressed).isFalse()
-    assertThat(entry.getData(zipFile)).isEqualTo(testData1.second)
-  }
-}
-
 private fun runInThread(block: () -> Unit): Thread {
   val thread = Thread(block, "test interrupt")
   thread.isDaemon = true
@@ -689,31 +393,4 @@ private fun splitIntoChunks(size: Int, @Suppress("SameParameterValue") chunkSize
     yield(chunk)
     remaining -= chunk
   }
-}
-
-private class TestEntryItem(
-  @JvmField val size: Int,
-  @JvmField val name: String,
-  @JvmField var data: ByteArray? = null,
-)
-
-private fun createLargeArchive(size: Int, tempDir: Path, minFileSize: Int = 0, maxFileSize: Int = 32): Pair<List<String>, Path> {
-  val (dir, list) = createDirOnDisk(tempDir, size, minFileSize, maxFileSize)
-  val archiveFile = tempDir.resolve("archive.zip")
-  zipWithPackageIndex(archiveFile, dir)
-  return Pair(list, archiveFile)
-}
-
-internal fun createDirOnDisk(tempDir: Path, size: Int, minFileSize: Int, maxFileSize: Int): Pair<Path, List<String>> {
-  val random = Random(42)
-
-  val dir = tempDir.resolve("dir")
-  Files.createDirectories(dir)
-  val list = ArrayList<String>(size)
-  for (i in 0..size) {
-    val name = "entry-item${random.nextInt()}-$i"
-    list.add(name)
-    Files.write(dir.resolve(name), random.nextBytes(random.nextInt(minFileSize, maxFileSize)))
-  }
-  return Pair(dir, list)
 }

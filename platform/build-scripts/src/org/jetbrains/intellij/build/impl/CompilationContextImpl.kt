@@ -17,12 +17,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -42,17 +38,9 @@ import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.jps.model.JpsDummyElement
-import org.jetbrains.jps.model.JpsElementFactory
-import org.jetbrains.jps.model.JpsGlobal
-import org.jetbrains.jps.model.JpsModel
-import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference
 import org.jetbrains.jps.model.module.JpsModule
@@ -63,13 +51,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.extension
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.pathString
-import kotlin.io.path.readBytes
-import kotlin.io.path.relativeToOrNull
+import kotlin.io.path.*
 
 @Obsolete
 fun createCompilationContextBlocking(
@@ -143,6 +125,15 @@ class CompilationContextImpl private constructor(
     nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
   }
 
+  override suspend fun getStableJdkHome(): Path {
+    var jdkHome = cachedJdkHome
+    if (jdkHome == null) {
+      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
+      cachedJdkHome = jdkHome
+    }
+    return jdkHome
+  }
+
   override val stableJavaExecutable: Path by lazy {
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
@@ -153,14 +144,12 @@ class CompilationContextImpl private constructor(
     JdkDownloader.getJavaExecutable(jdkHome)
   }
 
-  companion object {
-    init {
-      // https://github.com/netty/netty/issues/11532
-      if (System.getProperty("io.netty.tryReflectionSetAccessible") == null) {
-        System.setProperty("io.netty.tryReflectionSetAccessible", "true")
-      }
-    }
+  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
+    generateRuntimeModuleRepository(this)
+    return OriginalModuleRepositoryImpl(this)
+  }
 
+  companion object {
     suspend fun createCompilationContext(
       projectHome: Path,
       buildOutputRootEvaluator: (JpsProject) -> Path,
@@ -227,20 +216,6 @@ class CompilationContextImpl private constructor(
       BuildMessagesHandler.initLogging(messages)
       return context
     }
-  }
-
-  override suspend fun getStableJdkHome(): Path {
-    var jdkHome = cachedJdkHome
-    if (jdkHome == null) {
-      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, infoLog = Span.current()::addEvent)
-      cachedJdkHome = jdkHome
-    }
-    return jdkHome
-  }
-
-  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
-    generateRuntimeModuleRepository(this)
-    return OriginalModuleRepositoryImpl(this)
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {

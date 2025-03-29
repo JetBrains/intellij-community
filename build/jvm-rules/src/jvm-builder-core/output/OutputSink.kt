@@ -171,8 +171,8 @@ class OutputSink internal constructor(
   }
 
   fun writeToZip(outJar: Path) {
-    val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE, writeCrc32 = false)
-    writeZipUsingTempFile(outJar, packageIndexBuilder) { stream ->
+    val packageIndexBuilder = PackageIndexBuilder(writeCrc32 = false)
+    writeZipUsingTempFile(outJar, packageIndexBuilder.indexWriter) { stream ->
       doWriteToZip(
         oldZipFile = oldZipFile,
         fileToData = fileToData,
@@ -185,6 +185,8 @@ class OutputSink internal constructor(
       fileToData.clear()
       // now, close the old file, before writing to it
       oldZipFile?.close()
+
+      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
     }
   }
 
@@ -226,17 +228,22 @@ internal inline fun doWriteToZip(
   crossinline newDataProcessor: (ByteArray, String, ByteArray) -> Unit,
 ) {
   for ((path, info) in fileToData.entries) {
-    packageIndexBuilder?.addFile(name = path)
+    packageIndexBuilder?.addFile(name = path, addClassDir = false)
     val name = path.toByteArray()
     if (info is ImmutableZipEntry) {
       val hashMapZipFile = oldZipFile!!
       val data = info.getByteBuffer(hashMapZipFile, null)
-      stream.uncompressedData(name, data, null)
+      stream.write(name, estimatedSize = data.remaining()) { buffer ->
+        buffer.writeBytes(data)
+      }
+
       oldDataProcessor(path, name)
     }
     else {
       val data = info as ByteArray
-      stream.uncompressedData(name, data, null)
+      stream.write(name, estimatedSize = data.size) { buffer ->
+        buffer.writeBytes(data)
+      }
       newDataProcessor(data, path, name)
     }
   }
