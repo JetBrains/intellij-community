@@ -4365,6 +4365,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("asTopLevelFunctions.kt")
+            public void testAsTopLevelFunctions() throws Exception {
+                runTest("testData/intentions/conventionNameCalls/replaceContains/asTopLevelFunctions.kt");
+            }
+
             @TestMetadata("containsFromJava.kt")
             public void testContainsFromJava() throws Exception {
                 runTest("testData/intentions/conventionNameCalls/replaceContains/containsFromJava.kt");

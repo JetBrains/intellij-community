@@ -1850,6 +1850,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("asTopLevelFunctions.kt")
+        public void testAsTopLevelFunctions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/conventionNameCalls/replaceContains/asTopLevelFunctions.kt");
+        }
+
         @TestMetadata("containsFromJava.kt")
         public void testContainsFromJava() throws Exception {
             runTest("../../../idea/tests/testData/intentions/conventionNameCalls/replaceContains/containsFromJava.kt");
