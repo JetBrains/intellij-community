@@ -47,7 +47,11 @@ public value class MimeType(private val mimeType: String) {
                 }
             }
 
+            Known.HTML.mimeType -> "HTML"
+            Known.XHTML.mimeType -> "XHTML"
             Known.JSON.mimeType -> "JSON"
+            Known.JSON5.mimeType -> "JSON5"
+            Known.JSON_LINES.mimeType -> "JSON Lines"
             Known.TEXT.mimeType -> "Text"
             Known.REGEX.mimeType -> "Regular Expression"
             Known.GROOVY.mimeType -> if (isGradle()) "Gradle" else "Groovy"
@@ -269,7 +273,12 @@ public value class MimeType(private val mimeType: String) {
         public val XML: MimeType = MimeType("text/xml")
         public val PROPERTIES: MimeType = MimeType("text/properties")
         public val TOML: MimeType = MimeType("text/toml")
+        public val HTML: MimeType = MimeType("text/html")
+        public val XHTML: MimeType = MimeType("application/xhtml+xml")
+        public val CSS: MimeType = MimeType("text/css")
         public val JSON: MimeType = MimeType("text/json")
+        public val JSON5: MimeType = MimeType("text/json5")
+        public val JSON_LINES: MimeType = MimeType("application/x-ndjson")
         public val REGEX: MimeType = MimeType("text/x-regex-source")
         public val GROOVY: MimeType = MimeType("text/groovy")
         public val C: MimeType = MimeType("text/c")
@@ -305,8 +314,13 @@ public value class MimeType(private val mimeType: String) {
 
                 "java" -> JAVA
                 "xml" -> XML
-                "json",
-                "json5" -> JSON
+                "html" -> HTML
+                "xhtml" -> XHTML
+                "css" -> CSS
+                "json" -> JSON
+                "json5" -> JSON5
+                "json lines",
+                "jsonl" -> JSON_LINES
 
                 "regex",
                 "regexp" -> REGEX
@@ -345,6 +359,48 @@ public value class MimeType(private val mimeType: String) {
 
                 else -> null
             }
+
+        public fun MimeType.toFileExtensionIfKnown(): String? {
+            return when (mimeType) {
+                AGSL.mimeType -> "agsl"
+                AIDL.mimeType -> "aidl"
+                C.mimeType -> "c"
+                CPP.mimeType -> "cpp"
+                CSS.mimeType -> "css"
+                DART.mimeType -> "dart"
+                GO.mimeType -> "go"
+                GRADLE.mimeType -> "gradle"
+                GRADLE_KTS.mimeType -> "kts"
+                GROOVY.mimeType -> "groovy"
+                JAVA.mimeType -> "java"
+                JAVASCRIPT.mimeType -> "js"
+                JSON.mimeType -> "json"
+                JSON5.mimeType -> "json5"
+                JSON_LINES.mimeType -> "jsonl"
+                KOTLIN.mimeType -> "kt"
+                MANIFEST.mimeType -> "xml" // Manifest files
+                PROGUARD.mimeType -> "pro"
+                PROPERTIES.mimeType -> "properties"
+                PROTO.mimeType -> "proto"
+                PYTHON.mimeType -> "py"
+                REGEX.mimeType -> "regex"
+                RESOURCE.mimeType -> "xml" // Resource files
+                RUST.mimeType -> "rs"
+                SHELL.mimeType -> "sh"
+                SQL.mimeType -> "sql"
+                SVG.mimeType -> "svg"
+                TEXT.mimeType -> "txt"
+                TOML.mimeType -> "toml"
+                TYPESCRIPT.mimeType -> "ts"
+                VERSION_CATALOG.mimeType -> "toml"
+                XML.mimeType -> "xml"
+                YAML.mimeType -> "yaml"
+                "text/x-ruby" -> "rb"
+                "text/x-objectivec" -> "m"
+                "text/x-erlang" -> "erl"
+                else -> null
+            }
+        }
     }
 }
 
