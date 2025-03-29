@@ -907,7 +907,6 @@ public final class org/jetbrains/jewel/foundation/theme/JewelTheme$Companion {
 	public final fun getGlobalColors (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 	public final fun getName (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
-	public final fun getTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun isDark (Landroidx/compose/runtime/Composer;I)Z
 	public final fun isSwingCompatMode (Landroidx/compose/runtime/Composer;I)Z
 }
@@ -945,8 +944,6 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeColorPalette {
 	public final fun grayOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
 	public final fun green-vNxB06k (I)J
 	public final fun greenOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
-	public final fun grey-vNxB06k (I)J
-	public final fun greyOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
 	public fun hashCode ()I
 	public final fun lookup-ijrfgN4 (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public final fun orange-vNxB06k (I)J
