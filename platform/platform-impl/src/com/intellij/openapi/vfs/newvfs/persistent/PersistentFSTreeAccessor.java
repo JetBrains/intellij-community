@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
@@ -50,8 +48,6 @@ public class PersistentFSTreeAccessor {
   protected final PersistentFSConnection connection;
 
   protected final @Nullable FsRootDataLoader fsRootDataLoader;
-
-  protected final Lock rootsAccessLock = new ReentrantLock();
 
   PersistentFSTreeAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
                            @NotNull PersistentFSRecordAccessor recordAccessor,
@@ -207,91 +203,79 @@ public class PersistentFSTreeAccessor {
   }
 
   int findOrCreateRootRecord(@NotNull String rootUrl) throws IOException {
-    rootsAccessLock.lock();
-    try {
-      PersistentFSConnection connection = this.connection;
+    PersistentFSConnection connection = this.connection;
 
-      int rootUrlId = connection.names().tryEnumerate(rootUrl);
+    int rootUrlId = connection.names().tryEnumerate(rootUrl);
 
-      int[] rootUrls = ArrayUtilRt.EMPTY_INT_ARRAY;
-      int[] rootIds = ArrayUtilRt.EMPTY_INT_ARRAY;
-      try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        if (input != null) {
-          int rootsCount = DataInputOutputUtil.readINT(input);
-          if (rootsCount < 0) {
-            throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0");
-          }
-          rootUrls = ArrayUtil.newIntArray(rootsCount);
-          rootIds = ArrayUtil.newIntArray(rootsCount);
-          int prevRootId = 0;
-          int prevUrlId = 0;
-
-          for (int i = 0; i < rootsCount; i++) {
-            int urlId = DataInputOutputUtil.readINT(input) + prevUrlId;
-            int rootId = DataInputOutputUtil.readINT(input) + prevRootId;
-            if (urlId == rootUrlId) {
-              checkChildIdValid(SUPER_ROOT_ID, rootId, i, connection.records().maxAllocatedID());
-              return rootId;
-            }
-
-            prevUrlId = rootUrls[i] = urlId;
-            prevRootId = rootIds[i] = rootId;
-          }
+    int[] rootUrls = ArrayUtilRt.EMPTY_INT_ARRAY;
+    int[] rootIds = ArrayUtilRt.EMPTY_INT_ARRAY;
+    try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      if (input != null) {
+        int rootsCount = DataInputOutputUtil.readINT(input);
+        if (rootsCount < 0) {
+          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0");
         }
-      }
+        rootUrls = ArrayUtil.newIntArray(rootsCount);
+        rootIds = ArrayUtil.newIntArray(rootsCount);
+        int prevRootId = 0;
+        int prevUrlId = 0;
 
-      rootUrlId = connection.names().enumerate(rootUrl);
+        for (int i = 0; i < rootsCount; i++) {
+          int urlId = DataInputOutputUtil.readINT(input) + prevUrlId;
+          int rootId = DataInputOutputUtil.readINT(input) + prevRootId;
+          if (urlId == rootUrlId) {
+            checkChildIdValid(SUPER_ROOT_ID, rootId, i, connection.records().maxAllocatedID());
+            return rootId;
+          }
 
-      try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
-
-        int index = Arrays.binarySearch(rootIds, newRootFileId);
-        if (index >= 0) {
-          throw new AssertionError("Newly allocated newRootFileId(=" + newRootFileId + ") already exists in root record: " +
-                                   "rootIds(=" + Arrays.toString(rootIds) + "), rootUrls(=" + Arrays.toString(rootUrls) + "), " +
-                                   "rootUrl(=" + rootUrl + "), rootUrlId(=" + rootUrlId + ")");
+          prevUrlId = rootUrls[i] = urlId;
+          prevRootId = rootIds[i] = rootId;
         }
-        rootIds = ArrayUtil.insert(rootIds, -index - 1, newRootFileId);
-        rootUrls = ArrayUtil.insert(rootUrls, -index - 1, rootUrlId);
-
-        saveNameIdSequenceWithDeltas(rootUrls, rootIds, output);
-        //RC: we should assign connection.records.setNameId(newRootFileId, root_Name_Id), but we don't
-        //    have rootNameId here -- we have only rootUrlId. Actually, rootNameId is assigned to the root
-        //    in a PersistentFSImpl.findRoot() method
-        return newRootFileId;
       }
     }
-    finally {
-      rootsAccessLock.unlock();
+
+    rootUrlId = connection.names().enumerate(rootUrl);
+
+    try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
+
+      int index = Arrays.binarySearch(rootIds, newRootFileId);
+      if (index >= 0) {
+        throw new AssertionError("Newly allocated newRootFileId(=" + newRootFileId + ") already exists in root record: " +
+                                 "rootIds(=" + Arrays.toString(rootIds) + "), rootUrls(=" + Arrays.toString(rootUrls) + "), " +
+                                 "rootUrl(=" + rootUrl + "), rootUrlId(=" + rootUrlId + ")");
+      }
+      rootIds = ArrayUtil.insert(rootIds, -index - 1, newRootFileId);
+      rootUrls = ArrayUtil.insert(rootUrls, -index - 1, rootUrlId);
+
+      saveNameIdSequenceWithDeltas(rootUrls, rootIds, output);
+      //RC: we should assign connection.records.setNameId(newRootFileId, root_Name_Id), but we don't
+      //    have rootNameId here -- we have only rootUrlId. Actually, rootNameId is assigned to the root
+      //    in a PersistentFSImpl.findRoot() method
+      return newRootFileId;
     }
   }
 
   /** supplies all the roots into rootConsumer, along with appropriate rootUrlId */
   void forEachRoot(final @NotNull BiConsumer<Integer, Integer> rootConsumer) throws IOException {
-    rootsAccessLock.lock();
-    try {
-      try (final DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        if (input != null) {
-          final int count = DataInputOutputUtil.readINT(input);
-          if (count < 0) {
-            throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
-          }
-          int prevId = 0;
-          int prevNameId = 0;
+    try (final DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      if (input != null) {
+        final int count = DataInputOutputUtil.readINT(input);
+        if (count < 0) {
+          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
+        }
+        int prevId = 0;
+        int prevNameId = 0;
 
-          for (int i = 0; i < count; i++) {
-            final int nameId = DataInputOutputUtil.readINT(input) + prevNameId;
-            final int rootId = DataInputOutputUtil.readINT(input) + prevId;
-            prevNameId = nameId;
-            prevId = rootId;
+        for (int i = 0; i < count; i++) {
+          final int nameId = DataInputOutputUtil.readINT(input) + prevNameId;
+          final int rootId = DataInputOutputUtil.readINT(input) + prevId;
+          prevNameId = nameId;
+          prevId = rootId;
 
-            rootConsumer.accept(rootId, nameId);
-          }
+          rootConsumer.accept(rootId, nameId);
         }
       }
-    }
-    finally {
-      rootsAccessLock.unlock();
     }
   }
 
@@ -300,25 +284,13 @@ public class PersistentFSTreeAccessor {
                          @NotNull CharSequence childName,
                          @NotNull NewVirtualFileSystem fs) throws IOException {
     if (fsRootDataLoader != null) {
-      rootsAccessLock.lock();
-      try {
-        fsRootDataLoader.loadDirectoryData(getRootsStoragePath(fsRootDataLoader), id, parent, childName, fs);
-      }
-      finally {
-        rootsAccessLock.unlock();
-      }
+      fsRootDataLoader.loadDirectoryData(getRootsStoragePath(fsRootDataLoader), id, parent, childName, fs);
     }
   }
 
   void loadRootData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) throws IOException {
     if (fsRootDataLoader != null) {
-      rootsAccessLock.lock();
-      try {
-        fsRootDataLoader.loadRootData(getRootsStoragePath(fsRootDataLoader), id, path, fs);
-      }
-      finally {
-        rootsAccessLock.unlock();
-      }
+      fsRootDataLoader.loadRootData(getRootsStoragePath(fsRootDataLoader), id, path, fs);
     }
   }
 
@@ -329,42 +301,36 @@ public class PersistentFSTreeAccessor {
   }
 
   void deleteRootRecord(int fileId) throws IOException {
-    rootsAccessLock.lock();
-    try {
-      if (fsRootDataLoader != null) {
-        fsRootDataLoader.deleteRootRecord(getRootsStoragePath(fsRootDataLoader), fileId);
-      }
+    if (fsRootDataLoader != null) {
+      fsRootDataLoader.deleteRootRecord(getRootsStoragePath(fsRootDataLoader), fileId);
+    }
 
-      int[] names;
-      int[] ids;
-      try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        assert input != null;
-        int count = DataInputOutputUtil.readINT(input);
+    int[] names;
+    int[] ids;
+    try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      assert input != null;
+      int count = DataInputOutputUtil.readINT(input);
 
-        names = ArrayUtil.newIntArray(count);
-        ids = ArrayUtil.newIntArray(count);
-        int prevId = 0;
-        int prevNameId = 0;
-        for (int i = 0; i < count; i++) {
-          names[i] = DataInputOutputUtil.readINT(input) + prevNameId;
-          ids[i] = DataInputOutputUtil.readINT(input) + prevId;
-          prevId = ids[i];
-          prevNameId = names[i];
-        }
-      }
-
-      int index = ArrayUtil.find(ids, fileId);
-      assert index >= 0;
-
-      names = ArrayUtil.remove(names, index);
-      ids = ArrayUtil.remove(ids, index);
-
-      try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-        saveNameIdSequenceWithDeltas(names, ids, output);
+      names = ArrayUtil.newIntArray(count);
+      ids = ArrayUtil.newIntArray(count);
+      int prevId = 0;
+      int prevNameId = 0;
+      for (int i = 0; i < count; i++) {
+        names[i] = DataInputOutputUtil.readINT(input) + prevNameId;
+        ids[i] = DataInputOutputUtil.readINT(input) + prevId;
+        prevId = ids[i];
+        prevNameId = names[i];
       }
     }
-    finally {
-      rootsAccessLock.unlock();
+
+    int index = ArrayUtil.find(ids, fileId);
+    assert index >= 0;
+
+    names = ArrayUtil.remove(names, index);
+    ids = ArrayUtil.remove(ids, index);
+
+    try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
+      saveNameIdSequenceWithDeltas(names, ids, output);
     }
   }
 
