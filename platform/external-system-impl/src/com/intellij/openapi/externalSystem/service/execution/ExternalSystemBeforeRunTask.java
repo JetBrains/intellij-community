@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.util.Key;
@@ -42,6 +43,10 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     if (myTaskExecutionSettings.getScriptParameters() != null) {
       element.setAttribute("scriptParameters", myTaskExecutionSettings.getScriptParameters());
     }
+
+    if (!myTaskExecutionSettings.getEnv().isEmpty()) {
+      EnvironmentVariablesComponent.writeExternal(element, myTaskExecutionSettings.getEnv());
+    }
   }
 
   @Override
@@ -51,6 +56,7 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     myTaskExecutionSettings.setExternalProjectPath(element.getAttributeValue("externalProjectPath"));
     myTaskExecutionSettings.setVmOptions(element.getAttributeValue("vmOptions"));
     myTaskExecutionSettings.setScriptParameters(element.getAttributeValue("scriptParameters"));
+    EnvironmentVariablesComponent.readExternal(element, myTaskExecutionSettings.getEnv());
   }
 
   @Override
