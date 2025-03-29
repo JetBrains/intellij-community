@@ -444,7 +444,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     synchronized (myData) {
       PersistentFSImpl pFS = owningPersistentFS();
       boolean wasChildrenLoaded = pFS.areChildrenLoaded(this);
-      List<? extends ChildInfo> children = pFS.listAll(this); //could it be wrong VFS?
+      List<? extends ChildInfo> children = pFS.listAll(this);
       int[] result = ArrayUtil.newIntArray(children.size());
       VirtualFile[] files;
       if (children.isEmpty()) {
