@@ -1195,7 +1195,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         range == null ? file.getTextRange() : range;
       ApplicationManager.getApplication().runReadAction(() -> {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-          runInspectionEngine(localTools, file, restrictRange, restrictRange, false,
+          runInspectionEngine(localTools, file, restrictRange, restrictRange, true,
                               myProgressIndicator,
                               (__, ___) -> true);
         for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
