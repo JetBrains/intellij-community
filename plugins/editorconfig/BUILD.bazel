@@ -96,3 +96,13 @@ jvm_test(
   runtime_deps = [":editorconfig_test_lib"]
 )
 ### auto-generated section `build intellij.editorconfig` end
+
+### auto-generated section `build intellij.editorconfig.plugin.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "editorconfig-plugin-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = ["//plugins/editorconfig"]
+)
+### auto-generated section `build intellij.editorconfig.plugin.main` end
