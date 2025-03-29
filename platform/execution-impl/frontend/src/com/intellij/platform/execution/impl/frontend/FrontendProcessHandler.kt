@@ -65,8 +65,8 @@ open class FrontendSessionProcessHandler(
       processHandlerDto.processHandlerEvents.toFlow().collect { event ->
         when (event) {
           is ProcessHandlerEvent.StartNotified -> {
-            if (!isStartNotified) {
-              events.trySend {
+            events.trySend {
+              if (!isStartNotified) {
                 startNotify()
               }
             }
