@@ -24,7 +24,18 @@ public enum UpdateMethod {
    * Rebase local commits upon the fetched branch
    */
   REBASE("settings.git.update.method.rebase",
-         "settings.git.update.method.rebase.description");
+         "settings.git.update.method.rebase.description"),
+  /**
+   * Don't update, just fetch from the default remote.
+   */
+  FETCH_DEFAULT("settings.git.update.method.fetch.default",
+         "settings.git.update.method.fetch.default.description"),
+  /**
+   * Don't update, just fetch from all remotes.
+   */
+  FETCH_ALL("settings.git.update.method.fetch.all",
+         "settings.git.update.method.fetch.all.description"),
+  ;
 
   private final @NotNull String myName;
   private final @NotNull String myPresentation;
