@@ -29,6 +29,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/importMember", pattern = pattern)
             model("${idea}intentions/chop", pattern = pattern)
             model("${idea}intentions/convertConcatenationToBuildString", pattern = pattern)
+            model("${idea}intentions/conventionNameCalls/replaceContains", pattern = pattern)
             model("${idea}intentions/convertLambdaToReference", pattern = pattern)
             model("${idea}intentions/convertStringTemplateToBuildString", pattern = pattern)
             model("${idea}intentions/convertStringTemplateToBuildStringMultiDollarPrefix", pattern = pattern)
