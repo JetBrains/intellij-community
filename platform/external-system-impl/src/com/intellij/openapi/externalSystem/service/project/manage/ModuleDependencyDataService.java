@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -69,7 +68,8 @@ public final class ModuleDependencyDataService extends AbstractDependencyDataSer
       }
     }
     final Set<ModuleDependencyData> processed = new HashSet<>();
-    final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
+    final ArrayList<ModifiableRootModel.Dependency> dependencyToBeAdded = new ArrayList<>(toImport.size());
+    final ArrayList<ModuleDependencyData> dependencyDataToBeAdded = new ArrayList<>(toImport.size());
     for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
       final ModuleDependencyData dependencyData = dependencyNode.getData();
 
@@ -79,39 +79,47 @@ public final class ModuleDependencyDataService extends AbstractDependencyDataSer
       final ModuleData moduleData = dependencyData.getTarget();
       Module ideDependencyModule = modelsProvider.findIdeModule(moduleData);
 
-      if (ideDependencyModule != null) {
-        final String targetModuleName = ideDependencyModule.getName();
-        toRemove.remove(Pair.create(targetModuleName, dependencyData.getScope()));
-        dependencyData.setInternalName(targetModuleName);
-      }
-
-      ModuleOrderEntry orderEntry;
       if (module.equals(ideDependencyModule)) {
         // skip recursive module dependency check
         continue;
       }
-      else {
-        if (ideDependencyModule == null) {
-          LOG.warn(String.format(
-            "Can't import module dependency for '%s' module. Reason: target module (%s) is not found at the ide",
-            module.getName(), dependencyData
-          ));
-        }
-        orderEntry = modelsProvider.findIdeModuleDependency(dependencyData, module);
-        if (orderEntry == null) {
-          orderEntry = ReadAction.compute(() ->
-            ideDependencyModule == null
-            ? modifiableRootModel.addInvalidModuleEntry(moduleData.getInternalName())
-            : modifiableRootModel.addModuleOrderEntry(ideDependencyModule));
-        }
+
+      if (ideDependencyModule == null) {
+        LOG.warn(String.format(
+          "Can't import module dependency for '%s' module. Reason: target module (%s) is not found at the ide",
+          module.getName(), dependencyData
+        ));
+        dependencyToBeAdded.add(new ModifiableRootModel.InvalidModuleDependency(
+          moduleData.getInternalName(),
+          dependencyData.getScope(),
+          dependencyData.isExported(),
+          dependencyData.isProductionOnTestDependency()
+        ));
+        dependencyDataToBeAdded.add(dependencyData);
+        continue;
       }
+      final String targetModuleName = ideDependencyModule.getName();
+      ModuleOrderEntry existingOrderEntry = toRemove.remove(Pair.create(targetModuleName, dependencyData.getScope()));
+      dependencyData.setInternalName(targetModuleName);
 
-      orderEntry.setScope(dependencyData.getScope());
-      orderEntry.setExported(dependencyData.isExported());
+      if (existingOrderEntry != null) {
+        // Already existing module, continue to next one
+        orderEntryDataMap.put(existingOrderEntry, dependencyData);
+        continue;
+      }
+      dependencyToBeAdded.add(new ModifiableRootModel.ValidModuleDependency(
+        ideDependencyModule,
+        dependencyData.getScope(),
+        dependencyData.isExported(),
+        dependencyData.isProductionOnTestDependency()
+      ));
+      dependencyDataToBeAdded.add(dependencyData);
 
-      orderEntry.setProductionOnTestDependency(dependencyData.isProductionOnTestDependency());
-
-      orderEntryDataMap.put(orderEntry, dependencyData);
+    }
+    final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
+    List<OrderEntry> entries = modifiableRootModel.addEntries(dependencyToBeAdded);
+    for (int i=0; i < dependencyToBeAdded.size(); i++) {
+      orderEntryDataMap.put(entries.get(i), dependencyDataToBeAdded.get(i));
     }
 
     if (!toRemove.isEmpty() || !duplicatesToRemove.isEmpty()) {

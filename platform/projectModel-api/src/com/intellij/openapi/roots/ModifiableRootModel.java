@@ -120,11 +120,16 @@ public interface ModifiableRootModel extends ModuleRootModel {
   @NotNull
   ModuleOrderEntry addInvalidModuleEntry(@NotNull String name);
 
+  sealed interface Dependency {}
+  record ValidModuleDependency(Module module, DependencyScope scope, boolean exported, boolean productionOnTest) implements Dependency {}
+  record InvalidModuleDependency(String moduleName, DependencyScope scope, boolean exported, boolean productionOnTest) implements Dependency {}
+  record LibraryDependency(Library library, DependencyScope scope, boolean exported) implements Dependency {}
+
   /**
    * Adds dependencies on several {@code modules} and sets the specified {@code scope} and {@code exported} flag for them. This works
    * faster than adding these dependencies one-by-one via {@link #addModuleOrderEntry}.
    */
-  void addModuleEntries(@NotNull List<Module> modules, @NotNull DependencyScope scope, boolean exported);
+  List<OrderEntry> addEntries(@NotNull List<Dependency> dependencies);
 
   @Nullable
   ModuleOrderEntry findModuleOrderEntry(@NotNull Module module);
