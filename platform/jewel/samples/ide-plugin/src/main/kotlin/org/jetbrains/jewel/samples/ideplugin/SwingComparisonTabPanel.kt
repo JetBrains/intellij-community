@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -53,7 +53,6 @@ import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.component.TextField
@@ -197,7 +196,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     }
 
     private fun Panel.comboBoxesRow() {
-        row("ComboBoxes:") {
+        row("Combo Boxes:") {
                 // Swing ComboBoxes
                 val zoomLevels = arrayOf("100%", "125%", "150%", "175%", "200%", "300%")
 
@@ -270,86 +269,68 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             "Joy",
                         )
                     }
-                    var selectedComboBox1: String? by remember { mutableStateOf(comboBoxItems.first()) }
-                    var selectedComboBox2: String? by remember { mutableStateOf(comboBoxItems.first()) }
-                    var selectedComboBox3: String? by remember { mutableStateOf(comboBoxItems.first()) }
-                    var selectedComboBox4: String? by remember { mutableStateOf(comboBoxItems.first()) }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Column {
+                            var selectedIndex by remember { mutableIntStateOf(0) }
+                            val selectedText: String = comboBoxItems[selectedIndex]
+
                             Text("Not editable")
-                            Text(text = "Selected item: $selectedComboBox1")
+                            Text(text = "Selected item: $selectedText")
 
                             ListComboBox(
                                 items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
                                 modifier = Modifier.width(200.dp),
-                                onSelectedItemChange = { _, text -> selectedComboBox1 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
                             )
                         }
 
                         Column {
+                            var selectedIndex by remember { mutableIntStateOf(0) }
+                            val selectedText: String = comboBoxItems[selectedIndex]
+
                             Text("Not editable + disabled")
-                            Text(text = "Selected item: $selectedComboBox2")
+                            Text(text = "Selected item: $selectedText")
 
                             ListComboBox(
                                 items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
                                 modifier = Modifier.width(200.dp),
-                                isEnabled = false,
-                                onSelectedItemChange = { _, text -> selectedComboBox2 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
+                                enabled = false,
                             )
                         }
 
                         Column {
+                            var selectedIndex by remember { mutableIntStateOf(0) }
+                            val selectedText: String = comboBoxItems[selectedIndex]
+
                             Text("Editable")
-                            Text(text = "Selected item: $selectedComboBox3")
+                            Text(text = "Selected item: $selectedText")
+
                             EditableListComboBox(
                                 items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
                                 modifier = Modifier.width(200.dp),
                                 maxPopupHeight = 150.dp,
-                                onSelectedItemChange = { _, text -> selectedComboBox3 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
                             )
                         }
 
                         Column {
+                            var selectedIndex by remember { mutableIntStateOf(0) }
+                            val selectedText: String = comboBoxItems[selectedIndex]
+
                             Text("Editable + disabled")
-                            Text(text = "Selected item: $selectedComboBox4")
+                            Text(text = "Selected item: $selectedText")
+
                             EditableListComboBox(
                                 items = comboBoxItems,
+                                selectedIndex = selectedIndex,
+                                onSelectedItemChange = { selectedIndex = it },
                                 modifier = Modifier.width(200.dp),
-                                isEnabled = false,
-                                onSelectedItemChange = { _, text -> selectedComboBox4 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
+                                enabled = false,
                             )
                         }
                     }
