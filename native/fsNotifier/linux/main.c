@@ -141,7 +141,6 @@ static bool main_loop(void) {
   struct timeval timeout;
 
   while (true) {
-    usleep(50000);
 
     FD_ZERO(&rfds);
     FD_SET(input_fd, &rfds);
