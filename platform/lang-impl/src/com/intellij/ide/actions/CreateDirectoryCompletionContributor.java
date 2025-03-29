@@ -16,8 +16,8 @@ import java.util.Collection;
  */
 public interface CreateDirectoryCompletionContributor {
   /**
-   * @return A short description for the suggested variants, to be shown as a group's title in the completion list.<br>
-   * E.g 'Gradle Source Sets', 'Maven Source Directories'
+   * @return A short description for the suggested variants, to be shown as a group's title in the completion list,
+   * e.g. 'Gradle Source Sets', 'Maven Source Directories'.
    */
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -28,14 +28,14 @@ public interface CreateDirectoryCompletionContributor {
    */
   @RequiresReadLock
   @NotNull
-  Collection<Variant> getVariants(@NotNull PsiDirectory directory);
+  Collection<@NotNull Variant> getVariants(@NotNull PsiDirectory directory);
 
   final class Variant {
     final @NotNull String path;
     final @Nullable JpsModuleSourceRootType<?> rootType;
 
     /**
-     * @param path absolute or relative path to a directory
+     * @param path     absolute or relative path to a directory
      * @param rootType root type with which the created directory will be marked automatically marked
      */
     public Variant(@NotNull String path, @Nullable JpsModuleSourceRootType<?> rootType) {
