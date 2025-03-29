@@ -62,6 +62,7 @@ internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel
                              scope = model.scope, uiContext = model.uiContext)
 
           .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(state.condaExecutable))
+          .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(state.selectedCondaEnv))
           .validationOnInput {
             return@validationOnInput if (it.isVisible && it.selectedItem == null) ValidationInfo(message("python.sdk.conda.no.env.selected.error")) else null
           }
