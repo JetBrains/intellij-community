@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -71,10 +72,10 @@ object GradleDaemonJvmHelper {
   }
 
   @JvmStatic
-  fun getGradleJvmForUpdateDaemonJvmTask(id: ExternalSystemTaskId): String? {
-    val project = id.findProject() ?: return null
-    val projectRootManager = ProjectRootManager.getInstance(project)
-    return projectRootManager.projectSdk?.homePath
+  fun getGradleJvmForUpdateDaemonJvmTask(id: ExternalSystemTaskId): String {
+    return id.findProject()?.let { project ->
+      ProjectRootManager.getInstance(project).projectSdk?.homePath
+    } ?: SystemProperties.getJavaHome()
   }
 
   @JvmStatic
