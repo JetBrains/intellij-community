@@ -23,6 +23,8 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
+
 import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
@@ -34,6 +36,19 @@ import static org.junit.Assert.*;
  * @author Eugene Zhuravlev
  */
 public class StringUtilTest {
+
+  @Test
+  public void testStripHtml() {
+    BiConsumer<String, String> sh = (html, stripped) -> assertEquals(stripped, StringUtil.stripHtml(html, "\n"));
+    sh.accept("foo<br \n \r>baz","foo\nbaz");
+    sh.accept("foo<br \n \r/>baz","foo\nbaz");
+    sh.accept("foo<br \n \r/ >baz","foo\nbaz");
+    sh.accept("foo<BR \n \r/ >baz","foo\nbaz");
+    sh.accept("foo< \n bar \n  \r >baz", "foobaz");
+    sh.accept("foo< \n bar \n  \r />baz", "foobaz");
+    sh.accept("foo< \n bar \n  \r / >baz", "foobaz");
+  }
+
   private final char myDecimalSeparator = new DecimalFormat("0.##").getDecimalFormatSymbols().getDecimalSeparator();
 
   @Test
