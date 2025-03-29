@@ -529,7 +529,7 @@ class ModuleRedeclarator(object):
             if p_name != "__new__" and type(descriptor).__name__.startswith('classmethod'):
                 # 'classmethod_descriptor' in Python 2.x and 3.x, 'classmethod' in Jython
                 deco = "classmethod"
-            elif type(p_func).__name__.startswith('staticmethod'):
+            elif type(descriptor).__name__.startswith('staticmethod'):
                 deco = "staticmethod"
         if p_name == "__new__":
             deco = "staticmethod"
