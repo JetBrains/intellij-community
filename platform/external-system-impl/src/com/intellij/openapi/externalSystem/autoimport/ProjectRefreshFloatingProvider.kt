@@ -8,6 +8,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider.Companion.EP_NAME
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.DisposableWrapperList
@@ -15,7 +16,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
+class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
   override val autoHideable = false
 
   private val toolbarComponents = DisposableWrapperList<Pair<Project, FloatingToolbarComponent>>()
@@ -24,7 +25,7 @@ internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(
     return isInsideMainEditor(dataContext)
   }
 
-  private fun updateToolbarComponents(project: Project) {
+  fun updateToolbarComponents(project: Project) {
     // init service outside of EDT if not initialized yet
     ExternalSystemProjectNotificationAware.getInstance(project)
 
@@ -55,8 +56,8 @@ internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(
 
   internal class Listener : ExternalSystemProjectNotificationAware.Listener {
     override fun onNotificationChanged(project: Project) {
-      FloatingToolbarProvider.getProvider<ProjectRefreshFloatingProvider>()
-        .updateToolbarComponents(project)
+      EP_NAME.findExtension(ProjectRefreshFloatingProvider::class.java)
+        ?.updateToolbarComponents(project)
     }
   }
 
