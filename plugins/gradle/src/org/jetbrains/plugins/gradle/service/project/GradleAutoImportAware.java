@@ -126,6 +126,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       files.add(new File(gradleUserHome, "gradle.properties"));
       files.add(new File(gradleUserHome, "init.gradle"));
       files.add(new File(externalProjectPath, "gradle.properties"));
+      files.add(new File(new File(externalProjectPath, ".gradle"), "config.properties"));
       return files;
     }
   }
