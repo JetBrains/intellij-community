@@ -590,6 +590,11 @@ def imported_names_collected():
             imported_names.add(fullname)
             return None
 
+        # noinspection PyMethodMayBeStatic
+        def find_spec(self, fullname, path, target=None):
+            imported_names.add(fullname)
+            return None
+
     my_finder = MyFinder()
     sys.meta_path.insert(0, my_finder)
     try:
