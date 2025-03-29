@@ -34,8 +34,8 @@ repositories {
 dependencies {
     api(projects.markdown.core)
     api(projects.ideLafBridge)
-    compileOnly(projects.markdown.extension.gfmAlerts)
-    compileOnly(projects.markdown.extension.gfmTables)
+    compileOnly(projects.markdown.extensions.gfmAlerts)
+    compileOnly(projects.markdown.extensions.gfmTables)
 
     intellijPlatform {
         intellijIdeaCommunity(libs.versions.idea)
