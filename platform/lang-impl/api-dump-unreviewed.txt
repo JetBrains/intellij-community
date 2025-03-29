@@ -8104,6 +8104,8 @@ com.intellij.ide.actions.CreateDirectoryCompletionContributor
 - a:getVariants(com.intellij.psi.PsiDirectory):java.util.Collection
 f:com.intellij.ide.actions.CreateDirectoryCompletionContributor$Variant
 - <init>(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType):V
+- <init>(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,javax.swing.Icon):V
+- getIcon():javax.swing.Icon
 - getPath():java.lang.String
 - getRootType():org.jetbrains.jps.model.module.JpsModuleSourceRootType
 c:com.intellij.ide.actions.CreateDirectoryOrPackageAction

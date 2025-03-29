@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import javax.swing.Icon;
 import java.util.Collection;
 
 /**
@@ -33,14 +34,20 @@ public interface CreateDirectoryCompletionContributor {
   final class Variant {
     final @NotNull String path;
     final @Nullable JpsModuleSourceRootType<?> rootType;
+    final @Nullable Icon icon;
+
+    public Variant(@NotNull String path, @Nullable JpsModuleSourceRootType<?> rootType) {
+      this( path, rootType, null);
+    }
 
     /**
      * @param path     absolute or relative path to a directory
      * @param rootType root type with which the created directory will be marked automatically marked
      */
-    public Variant(@NotNull String path, @Nullable JpsModuleSourceRootType<?> rootType) {
+    public Variant(@NotNull String path, @Nullable JpsModuleSourceRootType<?> rootType, @Nullable Icon icon) {
       this.path = path;
       this.rootType = rootType;
+      this.icon = icon;
     }
 
     public @NotNull String getPath() {
@@ -49,6 +56,10 @@ public interface CreateDirectoryCompletionContributor {
 
     public @Nullable JpsModuleSourceRootType<?> getRootType() {
       return rootType;
+    }
+
+    public @Nullable Icon getIcon() {
+      return icon;
     }
   }
 }

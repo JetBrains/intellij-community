@@ -254,6 +254,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
           variant.rootType != null ? ModuleSourceRootEditHandler.getEditHandler(variant.rootType) : null;
 
         Icon icon = handler == null ? null : handler.getRootIcon();
+        if (icon == null) icon = variant.icon;
         if (icon == null) icon = AllIcons.Nodes.Folder;
 
         CompletionItem completionItem = new CompletionItem(contributor, relativePath, icon, variant.rootType);
