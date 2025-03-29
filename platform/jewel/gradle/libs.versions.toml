@@ -2,18 +2,19 @@
 commonmark = "0.24.0"
 composeDesktop = "1.8.0-alpha04"
 detekt = "1.23.6"
-dokka = "1.9.20"
-idea = "2024.3.4.1"
-intelliJPlatformBuild = "243.25659.59"
-ideaPlugin = "2.3.0"
-jna = "5.14.0"
-kotlin = "2.0.21"
-kotlinSarif = "0.5.0"
-kotlinpoet = "1.18.1"
+dokka = "2.0.0"
+filepicker = "3.1.0"
+idea = "251.23774.109"
+intelliJPlatformBuild = "251.23774.109-EAP-SNAPSHOT"
+ideaPlugin = "2.4.0"
+jna = "5.17.0"
+kotlin = "2.1.10"
+kotlinSarif = "0.6.0"
+kotlinpoet = "2.1.0"
 kotlinterGradlePlugin = "5.0.1"
-kotlinxSerialization = "1.7.3"
-kotlinxBinaryCompat = "0.16.3"
-ktfmtGradlePlugin = "0.20.1"
+kotlinxSerialization = "1.8.0"
+kotlinxBinaryCompat = "0.17.0"
+ktfmtGradlePlugin = "0.22.0"
 
 [libraries]
 commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
@@ -21,7 +22,7 @@ commonmark-ext-autolink = { module = "org.commonmark:commonmark-ext-autolink", v
 commonmark-ext-gfm-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
 commonmark-ext-gfm-tables = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
 
-filePicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" }
+filePicker = { module = "com.darkrockstudios:mpfilepicker", version.ref = "filepicker" }
 
 kotlinSarif = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "kotlinSarif" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }

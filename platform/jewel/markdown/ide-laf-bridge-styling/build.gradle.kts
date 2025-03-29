@@ -37,9 +37,7 @@ dependencies {
     compileOnly(projects.markdown.extension.gfmAlerts)
     compileOnly(projects.markdown.extension.gfmTables)
 
-    intellijPlatform {
-        intellijIdeaCommunity(libs.versions.idea)
-    }
+    intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 
     testImplementation(compose.desktop.uiTestJUnit4)
 }

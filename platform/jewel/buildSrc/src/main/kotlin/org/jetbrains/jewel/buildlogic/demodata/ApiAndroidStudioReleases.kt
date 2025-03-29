@@ -20,7 +20,7 @@ internal data class ApiAndroidStudioReleases(@SerialName("content") val content:
             @SerialName("download") val download: List<Download> = listOf(),
             @SerialName("name") val name: String,
             @SerialName("platformBuild") val platformBuild: String,
-            @SerialName("platformVersion") val platformVersion: String,
+            @SerialName("platformVersion") val platformVersion: String?,
             @SerialName("version") val version: String,
         ) {
 

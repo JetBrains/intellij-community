@@ -51,7 +51,6 @@ public abstract interface class com/jetbrains/WindowMove {
 
 public final class org/jetbrains/jewel/window/ComposableSingletons$TitleBarKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/window/ComposableSingletons$TitleBarKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
 	public final fun getLambda-1$decorated_window ()Lkotlin/jvm/functions/Function2;
 }

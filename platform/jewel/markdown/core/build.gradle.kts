@@ -15,9 +15,7 @@ dependencies {
     testImplementation(compose.desktop.currentOs)
 }
 
-publicApiValidation {
-    excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.MarkdownBlock.*")
-}
+publicApiValidation { excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.MarkdownBlock.*") }
 
 publishing.publications.named<MavenPublication>("main") {
     val ijpTarget = project.property("ijp.target") as String

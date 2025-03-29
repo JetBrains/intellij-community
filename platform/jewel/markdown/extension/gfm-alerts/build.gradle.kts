@@ -12,9 +12,7 @@ dependencies {
     testImplementation(compose.desktop.uiTestJUnit4)
 }
 
-publicApiValidation {
-    excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.extensions.github.alerts.*")
-}
+publicApiValidation { excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.extensions.github.alerts.*") }
 
 publishing.publications.named<MavenPublication>("main") {
     val ijpTarget = project.property("ijp.target") as String
