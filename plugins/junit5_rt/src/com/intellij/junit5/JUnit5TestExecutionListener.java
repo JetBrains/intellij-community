@@ -8,6 +8,7 @@ import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
+import org.junit.platform.engine.support.descriptor.ClasspathResourceSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.CompositeTestSource;
 import org.junit.platform.engine.support.descriptor.FileSource;
@@ -58,9 +59,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       myIdSuffix = String.valueOf(System.currentTimeMillis());
     }
   }
-  
+
   public void initializeIdSuffix(int i) {
-    myIdSuffix = i + "th"; 
+    myIdSuffix = i + "th";
   }
 
   @Override
@@ -382,6 +383,15 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     if (testSource instanceof ClassSource) {
       String className = ((ClassSource)testSource).getClassName();
       return javaLocation(className, null, false);
+    }
+
+    if (testSource instanceof ClasspathResourceSource) {
+      ClasspathResourceSource classpathResourceSource = ((ClasspathResourceSource)testSource);
+      String classPathName =classpathResourceSource.getClasspathResourceName();
+      String line =classpathResourceSource.getPosition()
+        .map(fp -> ":" +fp.getLine())
+        .orElse("");
+      return "classpath:" + classPathName + line;
     }
 
     if (parentSource != null) {
