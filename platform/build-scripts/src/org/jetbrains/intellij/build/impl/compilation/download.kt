@@ -4,12 +4,17 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeout
 import okio.IOException
 import org.jetbrains.intellij.build.forEachConcurrent
-import org.jetbrains.intellij.build.http2Client.*
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
+import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
+import org.jetbrains.intellij.build.http2Client.checkMirrorAndConnect
+import org.jetbrains.intellij.build.http2Client.download
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -18,11 +23,14 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.name
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+
+internal val downloadTimeout: Duration = Integer.getInteger("intellij.build.compilation.download.timeout.minutes", 10).minutes
 
 internal suspend fun downloadCompilationCache(
   serverUrl: URI,
@@ -45,6 +53,7 @@ internal suspend fun downloadCompilationCache(
             saveHash = saveHash,
             connection = connection,
             zstdDecompressContextPool = zstdDecompressContextPool,
+            span = span,
           )
           downloadedBytes.getAndAdd(downloadedSize)
         }
@@ -70,11 +79,12 @@ private suspend fun doDownloadWithTimeout(
   saveHash: Boolean,
   connection: Http2ClientConnection,
   zstdDecompressContextPool: ZstdDecompressContextPool,
+  span: Span,
 ): Long {
   var attempt = 0
   while (true) {
     try {
-      return withTimeout(10.minutes) {
+      return withTimeout(downloadTimeout) {
         download(
           item = item,
           urlPath = urlPath,
@@ -86,6 +96,7 @@ private suspend fun doDownloadWithTimeout(
       }
     }
     catch (e: TimeoutCancellationException) {
+      span.addEvent("download timed out ($downloadTimeout), attempt $attempt")
       if (attempt >= 3) {
         throw IllegalStateException("Cannot download", e)
       }
@@ -127,7 +138,6 @@ private suspend fun download(
 }
 
 internal class CompilePartDownloadFailedError(@JvmField val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause) {
-  @Suppress("DEPRECATION")
   override fun toString(): String = "item: $item, error: ${super.toString()}"
 }
 
