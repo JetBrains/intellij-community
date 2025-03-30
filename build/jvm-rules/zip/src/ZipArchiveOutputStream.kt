@@ -13,6 +13,17 @@ import java.nio.file.Path
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 
+fun zipWriter(
+  targetFile: Path,
+  packageIndexBuilder: PackageIndexBuilder?,
+  overwrite: Boolean = false,
+): ZipArchiveOutputStream {
+  return ZipArchiveOutputStream(
+    dataWriter = fileDataWriter(file = targetFile, overwrite = overwrite, isTemp = false),
+    zipIndexWriter = ZipIndexWriter(packageIndexBuilder),
+  )
+}
+
 class ZipArchiveOutputStream(
   private val dataWriter: DataWriter,
   private val zipIndexWriter: ZipIndexWriter,
@@ -106,36 +117,39 @@ class ZipArchiveOutputStream(
   internal data class CompressedSizeAndCrc(@JvmField val compressedSize: Int, @JvmField val crc: Long)
 
   @Synchronized
-  internal fun writeMaybeCompressed(path: ByteArray, dataSize: Int, task: (ByteBuffer) -> CompressedSizeAndCrc) {
+  internal fun writeMaybeCompressed(path: ByteArray, dataSize: Int, task: (resultConsumer: (ByteBuffer) -> Unit) -> CompressedSizeAndCrc) {
     val headerSize = 30 + path.size
-    val headerAndDataSize = headerSize + estimateDeflateBound(dataSize)
-    writeUsingNioBufferAndAllocateSeparateIfLargeData(headerAndDataSize) { buffer, localFileHeaderOffset ->
-      val headerPosition = buffer.position()
-      buffer.position(buffer.position() + headerSize)
-
-      var (compressedSize, crc) = task(buffer)
-      val method = if (compressedSize == -1) {
-        compressedSize = dataSize
-        ZipEntry.STORED
-      }
-      else {
-        ZipEntry.DEFLATED
-      }
-
-      buffer.position(headerPosition)
-      writeZipLocalFileHeader(path = path, size = dataSize, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
-
-      zipIndexWriter.writeCentralFileHeader(
-        path = path,
-        size = dataSize,
-        compressedSize = compressedSize,
-        method = method,
-        crc = crc,
-        headerOffset = localFileHeaderOffset,
-        dataOffset = localFileHeaderOffset + headerSize,
-      )
-      headerSize + compressedSize
+    val localFileHeaderOffset = flushBufferIfNeeded(0)
+    channelPosition += headerSize
+    var (compressedSize, crc) = task(::writeBuffer)
+    val method = if (compressedSize == -1) {
+      compressedSize = dataSize
+      ZipEntry.STORED
     }
+    else {
+      ZipEntry.DEFLATED
+    }
+
+    val endPosition = channelPosition
+    val compressedSizeByPosition = endPosition - localFileHeaderOffset - headerSize
+    require(compressedSizeByPosition.toInt() == compressedSize) {
+      "Expected $compressedSize, actual $compressedSizeByPosition"
+    }
+    writeZipLocalFileHeader(path = path, size = dataSize, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
+    require(buffer.readableBytes() == headerSize)
+    dataWriter.write(buffer, localFileHeaderOffset)
+    buffer.clear()
+    channelPosition = endPosition
+
+    zipIndexWriter.writeCentralFileHeader(
+      path = path,
+      size = dataSize,
+      compressedSize = compressedSize,
+      method = method,
+      crc = crc,
+      headerOffset = localFileHeaderOffset,
+      dataOffset = localFileHeaderOffset + headerSize,
+    )
   }
 
   @Suppress("unused")
@@ -204,7 +218,7 @@ class ZipArchiveOutputStream(
     }
   }
 
-  internal fun getChannelPosition(): Long = channelPosition + buffer.readableBytes()
+  internal fun getChannelPosition(): Long = flushBufferIfNeeded(0)
 
   @Synchronized
   internal fun transferFromFileChannel(path: ByteArray, source: FileChannel, size: Int, crc32: CRC32?) {
@@ -301,15 +315,10 @@ class ZipArchiveOutputStream(
         buffer.clear()
       }
 
-      if (buffer.writableBytes() < headerAndDataSize) {
-        if (headerAndDataSize > FLUSH_THRESHOLD) {
-          // instead of resizing the current buffer, it's preferable to obtain a buffer of the required size from a pool
-          buffer = ByteBufAllocator.DEFAULT.directBuffer(headerAndDataSize)
-          releaseBuffer = true
-        }
-        else {
-          buffer.ensureWritable(headerAndDataSize)
-        }
+      if (headerAndDataSize > INITIAL_BUFFER_CAPACITY) {
+        // instead of resizing the current buffer, it's preferable to obtain a buffer of the required size from a pool
+        buffer = ByteBufAllocator.DEFAULT.directBuffer(headerAndDataSize)
+        releaseBuffer = true
       }
 
       channelPosition
@@ -475,8 +484,4 @@ class ZipArchiveOutputStream(
       }
     }
   }
-}
-
-private fun estimateDeflateBound(inputSize: Int): Int {
-  return inputSize + (inputSize / 16) + 64 + 3
 }

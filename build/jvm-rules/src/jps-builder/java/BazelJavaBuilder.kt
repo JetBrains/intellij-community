@@ -5,6 +5,7 @@ package org.jetbrains.bazel.jvm.jps.java
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.currentJavaVersion
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
@@ -243,7 +244,7 @@ internal class BazelJavaBuilder(
       getForkedJavacSdk(diagnostic = diagnosticSink, module = module, targetLanguageLevel = targetLanguageLevel, span = span) ?: return false
     }
 
-    val compilerSdkVersion = forkSdk?.second ?: JavaVersion.current().feature
+    val compilerSdkVersion = forkSdk?.second ?: currentJavaVersion().feature
     val compilingTool = JavacCompilerTool()
     val vmCompilerOptions = getCompilationOptions(
       compilerSdkVersion = compilerSdkVersion,

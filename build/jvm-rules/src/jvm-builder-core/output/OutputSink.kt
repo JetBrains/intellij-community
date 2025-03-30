@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
-import org.jetbrains.intellij.build.io.writeZipUsingTempFile
+import org.jetbrains.intellij.build.io.writeZipWithoutChecksumUsingTempFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.build.GeneratedFile
 import java.io.File
@@ -172,7 +172,7 @@ class OutputSink internal constructor(
 
   fun writeToZip(outJar: Path) {
     val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE, writeCrc32 = false)
-    writeZipUsingTempFile(outJar, packageIndexBuilder) { stream ->
+    writeZipWithoutChecksumUsingTempFile(outJar, packageIndexBuilder) { stream ->
       doWriteToZip(
         oldZipFile = oldZipFile,
         fileToData = fileToData,

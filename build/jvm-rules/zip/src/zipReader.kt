@@ -8,7 +8,7 @@ import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.EnumSet
 import java.util.zip.DataFormatException
 import java.util.zip.Inflater
 import java.util.zip.ZipException
@@ -76,6 +76,7 @@ internal inline fun readCentralDirectory(
   centralDirPosition: Int,
   centralDirSize: Int,
   entryProcessor: EntryProcessor,
+  byteBufferAllocator: ByteBufferAllocator,
 ) {
   var offset = centralDirPosition
 
@@ -85,43 +86,40 @@ internal inline fun readCentralDirectory(
   // and introduces char buffer allocation for each decode operation
   val tempNameBytes = ByteArray(4096)
   val endOffset = centralDirPosition + centralDirSize
-  val byteBufferAllocator = ByteBufferAllocator()
-  byteBufferAllocator.use {
-    while (offset < endOffset) {
-      if (buffer.getInt(offset) != 33639248) {
-        throw EOFException("Expected central directory size $centralDirSize" +
-                           " but only at $offset no valid central directory file header signature")
-      }
-      val compressedSize = buffer.getInt(offset + 20)
-      val uncompressedSize = buffer.getInt(offset + 24)
-      val headerOffset = buffer.getInt(offset + 42)
-      val method = (buffer.getShort(offset + 10) and 0xffff.toShort()).toByte()
-      val nameLengthInBytes = (buffer.getShort(offset + 28) and 0xffff.toShort()).toInt()
-      val extraFieldLength = (buffer.getShort(offset + 30) and 0xffff.toShort()).toInt()
-      val commentLength = (buffer.getShort(offset + 32) and 0xffff.toShort()).toInt()
-      offset += 46
-      buffer.position(offset)
-      val isDir = buffer.get(offset + nameLengthInBytes - 1) == '/'.code.toByte()
-      offset += nameLengthInBytes + extraFieldLength + commentLength
+  while (offset < endOffset) {
+    if (buffer.getInt(offset) != 33639248) {
+      throw EOFException("Expected central directory size $centralDirSize" +
+                         " but only at $offset no valid central directory file header signature")
+    }
+    val compressedSize = buffer.getInt(offset + 20)
+    val uncompressedSize = buffer.getInt(offset + 24)
+    val headerOffset = buffer.getInt(offset + 42)
+    val method = (buffer.getShort(offset + 10) and 0xffff.toShort()).toByte()
+    val nameLengthInBytes = (buffer.getShort(offset + 28) and 0xffff.toShort()).toInt()
+    val extraFieldLength = (buffer.getShort(offset + 30) and 0xffff.toShort()).toInt()
+    val commentLength = (buffer.getShort(offset + 32) and 0xffff.toShort()).toInt()
+    offset += 46
+    buffer.position(offset)
+    val isDir = buffer.get(offset + nameLengthInBytes - 1) == '/'.code.toByte()
+    offset += nameLengthInBytes + extraFieldLength + commentLength
 
-      if (isDir) {
-        continue
-      }
+    if (isDir) {
+      continue
+    }
 
-      buffer.get(tempNameBytes, 0, nameLengthInBytes)
-      val name = String(tempNameBytes, 0, nameLengthInBytes, Charsets.UTF_8)
-      if (name != INDEX_FILENAME) {
-        entryProcessor(name) {
-          getByteBuffer(
-            buffer = buffer,
-            compressedSize = compressedSize,
-            uncompressedSize = uncompressedSize,
-            headerOffset = headerOffset,
-            nameLengthInBytes = nameLengthInBytes,
-            method = method,
-            byteBufferAllocator = byteBufferAllocator,
-          )
-        }
+    buffer.get(tempNameBytes, 0, nameLengthInBytes)
+    val name = String(tempNameBytes, 0, nameLengthInBytes, Charsets.UTF_8)
+    if (name != INDEX_FILENAME) {
+      entryProcessor(name) {
+        getByteBuffer(
+          buffer = buffer,
+          compressedSize = compressedSize,
+          uncompressedSize = uncompressedSize,
+          headerOffset = headerOffset,
+          nameLengthInBytes = nameLengthInBytes,
+          method = method,
+          byteBufferAllocator = byteBufferAllocator,
+        )
       }
     }
   }
@@ -239,12 +237,16 @@ private inline fun readZipEntries(buffer: ByteBuffer, fileSize: Int, entryProces
     centralDirSize = buffer.getInt(offset + 12)
     centralDirPosition = buffer.getInt(offset + 16)
   }
-  readCentralDirectory(
-    buffer = buffer,
-    centralDirPosition = centralDirPosition,
-    centralDirSize = centralDirSize,
-    entryProcessor = entryProcessor,
-  )
+
+  ByteBufferAllocator().use { byteBufferAllocator ->
+    readCentralDirectory(
+      buffer = buffer,
+      centralDirPosition = centralDirPosition,
+      centralDirSize = centralDirSize,
+      entryProcessor = entryProcessor,
+      byteBufferAllocator = byteBufferAllocator
+    )
+  }
   buffer.clear()
 }
 

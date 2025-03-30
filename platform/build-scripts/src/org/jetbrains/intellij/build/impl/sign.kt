@@ -29,7 +29,7 @@ import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
-import org.jetbrains.intellij.build.io.transformZipUsingTempFile
+import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.ByteBuffer
@@ -134,7 +134,7 @@ private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, c
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .use {
       val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
-      transformZipUsingTempFile(file = origin, packageIndexBuilder) { zipWriter ->
+      writeZipUsingTempFile(file = origin, packageIndexBuilder) { zipWriter ->
         readZipFile(origin) { name, dataSupplier ->
           packageIndexBuilder.addFile(name)
           if (entries.containsKey(name)) {

@@ -13,10 +13,9 @@ import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.ZipIndexWriter
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
-import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.zipWriter
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -25,7 +24,6 @@ import java.util.zip.Deflater
 import kotlin.io.path.name
 
 private const val listOfEntitiesFileName = "META-INF/listOfEntities.txt"
-
 
 fun interface DistributionFileEntryProducer {
   fun consume(size: Int, hash: Long, targetFile: Path): DistributionFileEntry
@@ -56,7 +54,7 @@ internal suspend fun buildJar(
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder(if (addDirEntries) AddDirEntriesMode.ALL else AddDirEntriesMode.NONE)
   Files.createDirectories(targetFile.parent)
   ZipFileWriter(
-    ZipArchiveOutputStream(fileDataWriter(targetFile), ZipIndexWriter(packageIndexBuilder)),
+    zipWriter(targetFile, packageIndexBuilder),
     deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
   ).use { zipCreator ->
     val uniqueNames = HashMap<String, Path>()
@@ -224,7 +222,7 @@ private suspend fun handleZipSource(
         zipCreator.compressedData(name, data)
       }
       else {
-        zipCreator.uncompressedData(path = name, data = data)
+        zipCreator.uncompressedData(name, data)
       }
     }
 

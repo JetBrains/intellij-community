@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import java.nio.file.Files
@@ -40,7 +40,7 @@ class LazySource(
 
   suspend fun getSources(): Sequence<Source> = sourceSupplier()
 
-  override fun toString() = "LazySource(name=$name, precomputedHash=$precomputedHash)"
+  override fun toString(): String = "LazySource(name=$name, precomputedHash=$precomputedHash)"
 }
 
 data class ZipSource(
@@ -131,7 +131,7 @@ data class InMemoryContentSource(@JvmField val relativePath: String, @JvmField v
   override var size: Int = 0
   override var hash: Long = 0
 
-  override fun toString() = "InMemory(relativePath=$relativePath)"
+  override fun toString(): String = "InMemory(relativePath=$relativePath)"
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

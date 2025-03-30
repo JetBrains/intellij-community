@@ -8,7 +8,7 @@ import androidx.collection.MutableScatterSet
 import com.intellij.util.lang.HashMapZipFile
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.writeZipUsingTempFile
+import org.jetbrains.intellij.build.io.writeZipWithoutChecksumUsingTempFile
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder
 import org.jetbrains.jps.dependency.storage.ByteBufferGraphDataOutput
 import org.jetbrains.jps.incremental.RebuildRequestedException
@@ -75,7 +75,7 @@ internal class IncrementalAbiHelper(
   fun write(abiJar: Path) {
     val nodeIndex = nodeIndex.value
     val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE, writeCrc32 = false)
-    writeZipUsingTempFile(abiJar, packageIndexBuilder) { stream ->
+    writeZipWithoutChecksumUsingTempFile(abiJar, packageIndexBuilder) { stream ->
       doWriteToZip(
         oldZipFile = oldAbiZipFile,
         fileToData = abiFileToData,

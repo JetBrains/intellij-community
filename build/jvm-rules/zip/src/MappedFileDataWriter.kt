@@ -18,7 +18,7 @@ private const val MAX_CHUNK_SIZE = Int.MAX_VALUE.toLong()
  */
 class MappedFileDataWriter(
   file: Path,
-  options: Set<OpenOption> = RW,
+  options: Set<OpenOption>,
   private var chunkSize: Int = 128 * 1024,
 ) : DataWriter {
   private var mappedBuffer: MappedByteBuffer

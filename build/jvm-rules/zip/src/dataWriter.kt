@@ -5,7 +5,6 @@ import io.netty.buffer.ByteBuf
 import java.io.EOFException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.EnumSet
@@ -13,11 +12,19 @@ import java.util.EnumSet
 internal val READ = EnumSet.of(StandardOpenOption.READ)
 
 val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
-val W_OVERWRITE: EnumSet<StandardOpenOption> =
-  EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
+private val WRITE: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE)
 
-val RW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.READ, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-val RW_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
+private val W_OVERWRITE: EnumSet<StandardOpenOption> = EnumSet.of(
+  StandardOpenOption.WRITE,
+  StandardOpenOption.CREATE,
+  StandardOpenOption.TRUNCATE_EXISTING,
+)
+
+val RW: EnumSet<StandardOpenOption> = EnumSet.of(
+  StandardOpenOption.READ,
+  StandardOpenOption.WRITE,
+  StandardOpenOption.CREATE,
+)
 
 interface DataWriter {
   val isNioBufferSupported: Boolean
@@ -36,12 +43,29 @@ interface DataWriter {
 
 private val useMappedFileWriter = System.getProperty("idea.zip.use.mapped.file.writer", "false").toBoolean()
 
-fun fileDataWriter(file: Path, options: Set<OpenOption> = RW, useMapped: Boolean = useMappedFileWriter): DataWriter {
-  if (useMapped) {
-    return MappedFileDataWriter(file, options)
+@PublishedApi
+internal fun fileDataWriter(file: Path, overwrite: Boolean, isTemp: Boolean): DataWriter {
+  if (useMappedFileWriter) {
+    // TRUNCATE_EXISTING option is unnecessary as the MappedFileDataWriter already calls truncate() during its close operation
+    return MappedFileDataWriter(file, RW, chunkSize = 128 * 1024)
   }
   else {
+    val options = when {
+      overwrite -> W_OVERWRITE
+      isTemp -> WRITE
+      else -> W_CREATE_NEW
+    }
     return FileChannelDataWriter(FileChannel.open(file, options))
+  }
+}
+
+// test-only
+fun testOnlyDataWriter(file: Path, useMapped: Boolean): DataWriter {
+  if (useMapped) {
+    return MappedFileDataWriter(file, RW)
+  }
+  else {
+    return FileChannelDataWriter(FileChannel.open(file, W_OVERWRITE))
   }
 }
 
@@ -104,10 +128,10 @@ private fun transferToFully(from: FileChannel, size: Long, to: FileChannel, posi
   var currentPosition = position
   val newPosition = currentPosition + size
   while (currentPosition < newPosition) {
-    val n = to.transferFrom(from, currentPosition, size)
-    if (n < 0) {
+    val n = to.transferFrom(from, currentPosition, newPosition - currentPosition)
+    if (n <= 0) {
       throw EOFException("Unexpected end of file while transferring data from position " +
-                         "$currentPosition to $newPosition (transferred $n bytes)")
+                         "$currentPosition to $newPosition (transferred ${currentPosition - position} bytes)")
     }
     currentPosition += n
   }

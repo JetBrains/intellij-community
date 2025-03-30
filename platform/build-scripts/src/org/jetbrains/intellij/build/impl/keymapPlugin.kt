@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.ZipIndexWriter
-import org.jetbrains.intellij.build.io.fileDataWriter
+import org.jetbrains.intellij.build.io.zipWriter
 import java.nio.file.Path
 import java.util.Locale
 import java.util.zip.CRC32
@@ -21,10 +21,7 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
   val pluginXmlData = keymapPluginXml(version = buildNumber, id = shortName.lowercase(Locale.ENGLISH), name = longName, keymaps = keymaps).toByteArray()
 
   val resultFile = targetDir.resolve("${shortName}Keymap.zip")
-  ZipArchiveOutputStream(
-    dataWriter = fileDataWriter(resultFile),
-    zipIndexWriter = ZipIndexWriter(null),
-  ).use {
+  zipWriter(resultFile, null).use {
     it.writeDataWithUnknownSize(path = "${shortName}Keymap/lib/${shortName}Keymap.jar".toByteArray(), estimatedSize = -1, crc32 = CRC32()) { byteBuf ->
       createPluginJar(byteBuf = byteBuf, pluginXmlData = pluginXmlData, keymaps = keymaps, keymapDir = keymapDir)
     }

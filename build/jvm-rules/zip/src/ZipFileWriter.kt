@@ -3,38 +3,34 @@
 
 package org.jetbrains.intellij.build.io
 
+import io.netty.buffer.ByteBufAllocator
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream.CompressedSizeAndCrc
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.FileChannel.MapMode
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.zip.CRC32
 import java.util.zip.Deflater
-import kotlin.math.min
 
 private const val compressThreshold = 8 * 1024
-// 8 MB (as JDK)
-private const val mappedTransferSize = 8L * 1024L * 1024L
+private const val maxCompressChunkSize = 8L * 1024L * 1024L
 
-fun transformZipUsingTempFile(file: Path, packageIndexBuilder: PackageIndexBuilder?, task: (ZipFileWriter) -> Unit) {
-  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
-  try {
-    ZipFileWriter(ZipArchiveOutputStream(dataWriter = fileDataWriter(tempFile), zipIndexWriter = ZipIndexWriter(packageIndexBuilder))).use {
+fun writeZipUsingTempFile(file: Path, packageIndexBuilder: PackageIndexBuilder?, task: (ZipFileWriter) -> Unit) {
+  writeFileUsingTempFile(file) { tempFile ->
+    ZipFileWriter(ZipArchiveOutputStream(
+      dataWriter = fileDataWriter(file = tempFile, overwrite = false, isTemp = true),
+      zipIndexWriter = ZipIndexWriter(packageIndexBuilder),
+    )).use {
       task(it)
     }
-    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
-  }
-  finally {
-    Files.deleteIfExists(tempFile)
   }
 }
 
 inline fun writeNewZipWithoutIndex(file: Path, compress: Boolean = false, task: (ZipFileWriter) -> Unit) {
   Files.createDirectories(file.parent)
   ZipFileWriter(
-    ZipArchiveOutputStream(fileDataWriter(file, W_OVERWRITE), ZipIndexWriter(null)),
+    resultStream = zipWriter(targetFile = file, packageIndexBuilder = null),
     deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
   ).use {
     task(it)
@@ -64,24 +60,18 @@ class ZipFileWriter(
       val isCompressed = size >= compressThreshold && deflater != null && !nameString.endsWith(".png")
       val path = nameString.toByteArray()
       if (isCompressed) {
-        resultStream.writeMaybeCompressed(path = path, dataSize = size) { buffer ->
-          compressAndWriteFile(fileSize = size.toLong(), channel = channel, deflater = deflater, resultBuffer = buffer, crc32 = crc32)
+        resultStream.writeMaybeCompressed(path = path, dataSize = size) { writer ->
+          compressAndWriteFile(fileSize = size.toLong(), channel = channel, deflater = deflater, writer = writer, crc32 = crc32)
         }
       }
       else {
-        resultStream.transferFromFileChannel(path, channel, size, crc32)
+        resultStream.transferFromFileChannel(path = path, source = channel, size = size, crc32 = crc32)
       }
     }
   }
 
   fun compressedData(nameString: String, data: ByteBuffer) {
-    compressedData(
-      path = nameString,
-      data = data,
-      deflater = deflater!!,
-      crc32 = crc32!!,
-      resultStream = resultStream,
-    )
+    compressedData(path = nameString, data = data, deflater = deflater!!, crc32 = crc32, resultStream = resultStream)
   }
 
   fun uncompressedData(nameString: String, data: String) {
@@ -111,89 +101,84 @@ private fun compressAndWriteFile(
   fileSize: Long,
   channel: FileChannel,
   deflater: Deflater,
-  resultBuffer: ByteBuffer,
+  writer: (ByteBuffer) -> Unit,
   crc32: CRC32,
 ): CompressedSizeAndCrc {
-  var remaining = fileSize
-  var position = 0L
-  var compressedSize = 0L
-
-  val oldOutPosition = resultBuffer.position()
-  val oldOutLimit = resultBuffer.limit()
-
-  crc32.reset()
-  while (remaining > 0L) {
-    val size = min(remaining, mappedTransferSize)
-    val buffer = channel.map(MapMode.READ_ONLY, position, size)
-
-    remaining -= size
-    position += size
-
-    try {
-      buffer.mark()
-      crc32.update(buffer)
-      buffer.reset()
-
-      deflater.setInput(buffer)
-
-      // deflate until input buffer is exhausted
-      while (!deflater.needsInput()) {
-        val n = deflater.deflate(resultBuffer, Deflater.NO_FLUSH)
-        if (n > 0) {
-          compressedSize += n
-        }
-        else if (n == 0 && deflater.needsInput()) {
-          // deflater needs more input, break to read more data
-          break
-        }
-        else if (n == 0 && !resultBuffer.hasRemaining()) {
-          throw IllegalStateException("Output buffer is full ($resultBuffer")
-        }
-      }
-    }
-    finally {
-      unmapBuffer(buffer)
-    }
+  val chunkSize = if (fileSize <= maxCompressChunkSize) {
+    fileSize
   }
+  else {
+    (fileSize / (((fileSize + maxCompressChunkSize) - 1) / maxCompressChunkSize))
+  }.toInt()
 
-  // finish deflation
-  deflater.finish()
-  while (!deflater.finished()) {
-    val n = deflater.deflate(resultBuffer, Deflater.NO_FLUSH)
-    if (n > 0) {
+  val input = channel.map(MapMode.READ_ONLY, 0, fileSize)
+  try {
+    channel.close()
+
+    crc32.compute(input)
+
+    deflater.setInput(input)
+    deflater.finish()
+
+    val compressedSize = doDeflate(chunkSize = chunkSize, deflater = deflater, writer = writer)
+    return CompressedSizeAndCrc(compressedSize, crc32.value)
+  }
+  finally {
+    channel.close()
+    unmapBuffer(input)
+  }
+}
+
+private fun doDeflate(chunkSize: Int, deflater: Deflater, writer: (ByteBuffer) -> Unit): Int {
+  var compressedSize = 0
+  ByteBufAllocator.DEFAULT.directBuffer(chunkSize).use { nettyOutput ->
+    val output = nettyOutput.internalNioBuffer(nettyOutput.writerIndex(), chunkSize)!!
+
+    val oldPosition = output.position()
+    val oldLimit = output.limit()
+    do {
+      val n = deflater.deflate(output)
+      if (n <= 0) {
+        continue
+      }
+
+      output.limit(output.position())
+      output.position(oldPosition)
+      require((oldPosition + n) == output.limit())
+
+      require(output.remaining() == n) {
+        "Deflate must return `n` equal to `output.remaining()``" +
+        " (remaining: ${output.remaining()}, n: $n, compressedSize: $compressedSize)" +
+        " (oldPosition: $oldPosition, oldLimit: $oldLimit)" +
+        " (chunkSize: $chunkSize, compressedSize: $compressedSize, n: $n)" +
+        " (deflater: $deflater)"
+      }
+
       compressedSize += n
+
+      writer(output)
+      output.limit(oldLimit)
+      output.position(oldPosition)
     }
+    while (!deflater.finished())
   }
   deflater.reset()
-
-  resultBuffer.limit(resultBuffer.position())
-  resultBuffer.position(oldOutPosition)
-
-  if ((fileSize - compressedSize) < 4096) {
-    resultBuffer.limit(oldOutLimit)
-    resultBuffer.position(oldOutPosition)
-    // incompressible
-    return CompressedSizeAndCrc(-1, crc32.value)
-  }
-
-  return CompressedSizeAndCrc(compressedSize.toInt(), crc32.value)
+  return compressedSize
 }
 
 // visible for test
-fun compressedData(path: String, data: ByteBuffer, deflater: Deflater, crc32: CRC32, resultStream: ZipArchiveOutputStream) {
-  resultStream.writeMaybeCompressed(path = path.toByteArray(), dataSize = data.remaining()) { output ->
-    val crc = crc32.compute(data)
+fun compressedData(path: String, data: ByteBuffer, deflater: Deflater, crc32: CRC32?, resultStream: ZipArchiveOutputStream) {
+  resultStream.writeMaybeCompressed(path = path.toByteArray(), dataSize = data.remaining()) { writer ->
+    val crc = crc32?.compute(data) ?: 0
 
     deflater.setInput(data)
     deflater.finish()
-    var compressedSize = 0
-    do {
-      val n = deflater.deflate(output, Deflater.SYNC_FLUSH)
-      assert(n != 0)
-      compressedSize += n
-    }
-    while (data.hasRemaining())
-    deflater.reset()
+
+    val compressedSize = doDeflate(chunkSize = estimateDeflateBound(data.remaining()), deflater = deflater, writer = writer)
     CompressedSizeAndCrc(compressedSize, crc)
   }
+}
+
+private fun estimateDeflateBound(inputSize: Int): Int {
+  return inputSize + (inputSize / 16) + 64 + 3
 }

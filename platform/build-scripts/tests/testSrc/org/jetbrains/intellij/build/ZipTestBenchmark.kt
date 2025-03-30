@@ -8,12 +8,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.RW
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.ZipIndexWriter
 import org.jetbrains.intellij.build.io.archiveDirToZipWriter
-import org.jetbrains.intellij.build.io.fileDataWriter
+import org.jetbrains.intellij.build.io.testOnlyDataWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.CRC32
@@ -88,7 +87,7 @@ private suspend fun measureWriteOnTheFly(useMapped: Boolean) {
           launch {
             val random = Random(42)
             val crc32 = CRC32()
-            ZipArchiveOutputStream(fileDataWriter(tempDir.resolve("archive-$fileNumber.zip"), RW, useMapped = useMapped), ZipIndexWriter(null)).use { writer ->
+            ZipArchiveOutputStream(testOnlyDataWriter(tempDir.resolve("archive-$fileNumber.zip"), useMapped = useMapped), ZipIndexWriter(null)).use { writer ->
               repeat(10_000) { number ->
                 writer.writeDataWithUnknownSize("$number-entry".toByteArray(), -1, crc32) { buffer ->
                   buffer.writeInt(number)
@@ -110,7 +109,7 @@ private suspend fun measureWriteOnTheFly(useMapped: Boolean) {
 
 private fun doArchive(dir: Path, targetFile: Path, useMapped: Boolean) {
   val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE)
-  ZipFileWriter(ZipArchiveOutputStream(fileDataWriter(targetFile, RW, useMapped = useMapped), ZipIndexWriter(packageIndexBuilder))).use { zipFileWriter ->
+  ZipFileWriter(ZipArchiveOutputStream(testOnlyDataWriter(targetFile, useMapped = useMapped), ZipIndexWriter(packageIndexBuilder))).use { zipFileWriter ->
     archiveDirToZipWriter(
       zipFileWriter = zipFileWriter,
       fileAdded = { name, _ ->

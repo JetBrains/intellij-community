@@ -34,7 +34,7 @@ fun zipWithCompression(
     Files.createDirectories(targetFile.parent)
   }
   ZipFileWriter(
-    ZipArchiveOutputStream(fileDataWriter(targetFile, if (overwrite) W_OVERWRITE else RW_NEW), ZipIndexWriter(null)),
+    zipWriter(targetFile = targetFile, packageIndexBuilder = null, overwrite = overwrite),
     deflater = if (compressionLevel == Deflater.NO_COMPRESSION) null else Deflater(compressionLevel, true),
   ).use { zipFileWriter ->
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
@@ -77,10 +77,7 @@ fun zip(
 ) {
   Files.createDirectories(targetFile.parent)
   if (addDirEntriesMode == AddDirEntriesMode.NONE) {
-    ZipFileWriter(
-      ZipArchiveOutputStream(fileDataWriter(targetFile, if (overwrite) W_OVERWRITE else RW_NEW), ZipIndexWriter(null)),
-      useCrc = useCrc,
-    ).use { zipFileWriter ->
+    ZipFileWriter(zipWriter(targetFile, null, overwrite), useCrc = useCrc).use { zipFileWriter ->
       archiveDirToZipWriter(
         zipFileWriter = zipFileWriter,
         fileAdded = if (fileFilter == null) null else { name, _ -> fileFilter(name) },
@@ -122,10 +119,7 @@ private fun doZipWithPackageIndex(
   dirs: Map<Path, String>,
 ) {
   val packageIndexBuilder = PackageIndexBuilder(addDirEntriesMode)
-  ZipFileWriter(
-    ZipArchiveOutputStream(fileDataWriter(targetFile, if (overwrite) W_OVERWRITE else RW_NEW), ZipIndexWriter(packageIndexBuilder)),
-    useCrc = useCrc,
-  ).use { zipFileWriter ->
+  ZipFileWriter(zipWriter(targetFile, packageIndexBuilder, overwrite), useCrc = useCrc).use { zipFileWriter ->
     archiveDirToZipWriter(
       zipFileWriter = zipFileWriter,
       fileAdded = { name, _ ->
@@ -236,10 +230,10 @@ inline fun archiveDir(startDir: Path, addFile: (file: Path) -> Unit, excludes: L
 }
 
 @Suppress("unused")
-inline fun writeZipUsingTempFile(file: Path, packageIndexBuilder: PackageIndexBuilder?, task: (ZipArchiveOutputStream) -> Unit) {
+inline fun writeZipWithoutChecksumUsingTempFile(file: Path, packageIndexBuilder: PackageIndexBuilder?, task: (ZipArchiveOutputStream) -> Unit) {
   writeFileUsingTempFile(file) { tempFile ->
     ZipArchiveOutputStream(
-      dataWriter = fileDataWriter(tempFile),
+      dataWriter = fileDataWriter(file = tempFile, overwrite = false, isTemp = true),
       zipIndexWriter = ZipIndexWriter(packageIndexBuilder),
     ).use {
       task(it)

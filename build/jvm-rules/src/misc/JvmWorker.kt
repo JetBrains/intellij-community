@@ -6,10 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.W_OVERWRITE
-import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
-import org.jetbrains.intellij.build.io.ZipIndexWriter
-import org.jetbrains.intellij.build.io.fileDataWriter
+import org.jetbrains.intellij.build.io.zipWriter
 import java.io.File
 import java.io.Writer
 import java.nio.file.Path
@@ -89,10 +86,7 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
 
   withContext(Dispatchers.IO) {
     val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.RESOURCE_ONLY)
-    ZipArchiveOutputStream(
-      dataWriter = fileDataWriter(outJar, W_OVERWRITE),
-      zipIndexWriter = ZipIndexWriter(packageIndexBuilder),
-    ).use { stream ->
+    zipWriter(targetFile = outJar, packageIndexBuilder = packageIndexBuilder, overwrite = true).use { stream ->
       for (path in files) {
         packageIndexBuilder.addFile(name = path)
         stream.fileWithoutCrc(path = path.toByteArray(), file = root.resolve(path))

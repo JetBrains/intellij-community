@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.ByteBuffer
@@ -8,29 +10,38 @@ import java.nio.ByteOrder
 
 // not thread-safe, intended only for single thread for one time use
 internal class ByteBufferAllocator() : AutoCloseable {
-  private var byteBuffer: ByteBuffer? = null
+  private var byteBuf: ByteBuf? = null
+  private var nioByteBuffer: ByteBuffer? = null
 
+  @Synchronized
   fun allocate(size: Int): ByteBuffer {
-    var result = byteBuffer
+    var result = byteBuf
     if (result != null && result.capacity() < size) {
-      // clear references to object to make sure that it can be collected by GC
-      byteBuffer = null
-      unmapBuffer(result)
+      doRelease()
       result = null
     }
 
     if (result == null) {
-      result = ByteBuffer.allocateDirect(roundUpInt(size, 65_536))!!
-      result.order(ByteOrder.LITTLE_ENDIAN)
-      byteBuffer = result
+      result = ByteBufAllocator.DEFAULT.directBuffer(roundUpInt(size, 65_536))
+      byteBuf = result
     }
-    result.rewind()
-    result.limit(size)
-    return result
+    else {
+      result.clear()
+    }
+
+    return result.internalNioBuffer(result.writerIndex(), size).order(ByteOrder.LITTLE_ENDIAN).also { nioByteBuffer = it }
   }
 
+  @Synchronized
   override fun close() {
-    byteBuffer?.let { unmapBuffer(it) }
+    doRelease()
+  }
+
+  private fun doRelease() {
+    nioByteBuffer?.order(ByteOrder.BIG_ENDIAN)
+    nioByteBuffer = null
+    byteBuf?.release()
+    byteBuf = null
   }
 }
 
