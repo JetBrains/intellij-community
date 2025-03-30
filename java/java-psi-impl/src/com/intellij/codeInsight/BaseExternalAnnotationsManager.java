@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -234,7 +235,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(fileText))), handler);
     }
     catch (SAXParseException e) {
-      if (externalAnnotationsManager != null) {
+      if (externalAnnotationsManager != null && !ApplicationManager.getApplication().isUnitTestMode()) {
         externalAnnotationsManager.reportXmlParseError(virtualFile, e);
       } else {
         LOG.error(virtualFile.getPath(), e);
@@ -568,6 +569,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         }
         myArguments.append(attributes.getValue("val"));
       }
+      else if (!"root".equals(qName)) {
+        LOG.error("Unknown element name: " + qName + " in " + myFile.getPath());
+      }
     }
 
     @Override
@@ -581,13 +585,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
           if (existingData.annotationClassFqName.equals(myAnnotationFqn)
               && Objects.equals(myTypePath, existingData.typePath)
               && myExternalAnnotationsManager != null) {
-            myExternalAnnotationsManager.duplicateError(myFile, myExternalName, "Duplicate annotation '" +
-                                                                                myAnnotationFqn +
-                                                                                "'"
-                                                                                +
-                                                                                (myTypePath == null
-                                                                                 ? ""
-                                                                                 : " for type path '" + myTypePath + "'"));
+            String error = "Duplicate annotation '" + myAnnotationFqn + "'" + (myTypePath == null ? "" : " for type path '" + myTypePath + "'");
+            myExternalAnnotationsManager.duplicateError(myFile, myExternalName, error);
           }
         }
 

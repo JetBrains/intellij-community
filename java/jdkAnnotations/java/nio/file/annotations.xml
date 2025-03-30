@@ -1038,7 +1038,6 @@
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
