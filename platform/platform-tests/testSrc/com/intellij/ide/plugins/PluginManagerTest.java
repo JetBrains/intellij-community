@@ -233,8 +233,8 @@ public class PluginManagerTest {
     var text = new StringBuilder();
     for (var descriptor : loadPluginResult.pluginSet.getEnabledModules()) {
       text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString());
-      if (descriptor.moduleName != null) {
-        text.append(" | ").append(descriptor.moduleName);
+      if (descriptor.getModuleName() != null) {
+        text.append(" | ").append(descriptor.getModuleName());
       }
       text.append('\n');
     }
@@ -374,7 +374,7 @@ public class PluginManagerTest {
       var descriptor = PluginDescriptorLoadUtilsKt.createFromDescriptor(
         pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
       list.add(descriptor);
-      descriptor.jarFiles = List.of();
+      descriptor.setJarFiles(List.of());
     }
     parentContext.close();
     var result = new PluginLoadingResult(false);
@@ -413,15 +413,15 @@ public class PluginManagerTest {
       sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPluginPath().getFileName().getParent()).append("/META-INF/plugin.xml\">");
       sb.append("\n    <id>").append(escape.apply(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
-      for (PluginId module : d.pluginAliases) {
+      for (PluginId module : d.getPluginAliases()) {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
-      for (var dependency : d.pluginDependencies) {
+      for (var dependency : d.getDependencies()) {
         if (!dependency.isOptional()) {
           sb.append("\n    <depends>").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
         }
         else {
-          var optionalConfigPerId = dependency.subDescriptor;
+          var optionalConfigPerId = dependency.getSubDescriptor();
           if (optionalConfigPerId == null) {
             sb.append("\n    <depends optional=\"true\" config-file=\"???\">")
               .append(escape.apply(dependency.getPluginId().getIdString()))

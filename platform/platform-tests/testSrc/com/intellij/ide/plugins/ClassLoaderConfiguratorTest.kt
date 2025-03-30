@@ -44,7 +44,7 @@ internal class ClassLoaderConfiguratorTest {
 
     fun createModuleDescriptor(name: String): IdeaPluginDescriptorImpl {
       return IdeaPluginDescriptorImpl(raw = PluginDescriptorBuilder.builder().apply { `package` = name }.build(),
-                                      path = emptyPath,
+                                      pluginPath = emptyPath,
                                       isBundled = false,
                                       id = pluginId,
                                       moduleName = name,

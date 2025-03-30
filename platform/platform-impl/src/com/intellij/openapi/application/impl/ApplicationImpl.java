@@ -1228,7 +1228,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   protected @NotNull ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.appContainerDescriptor;
+    return pluginDescriptor.getAppContainerDescriptor();
   }
 
   @Override

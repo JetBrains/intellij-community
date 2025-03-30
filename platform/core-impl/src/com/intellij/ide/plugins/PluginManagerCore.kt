@@ -489,7 +489,7 @@ object PluginManagerCore {
     if (explicitlyEnabled == null && shouldLoadPlugins) {
       for (essentialId in essentialPlugins) {
         val essentialPlugin = idMap[essentialId] ?: continue
-        for (incompatibleId in essentialPlugin.incompatibilities) {
+        for (incompatibleId in essentialPlugin.incompatiblePlugins) {
           val incompatiblePlugin = idMap[incompatibleId] ?: continue
           if (incompatiblePlugin.isEnabled) {
             incompatiblePlugin.isEnabled = false
@@ -974,12 +974,12 @@ object PluginManagerCore {
   @Internal
   fun getNonOptionalDependenciesIds(descriptor: IdeaPluginDescriptorImpl): Set<PluginId> {
     val dependencies = LinkedHashSet<PluginId>()
-    for (dependency in descriptor.pluginDependencies) {
+    for (dependency in descriptor.dependencies) {
       if (!dependency.isOptional) {
         dependencies.add(dependency.pluginId)
       }
     }
-    for (plugin in descriptor.dependencies.plugins) {
+    for (plugin in descriptor.dependenciesV2.plugins) {
       dependencies.add(plugin.id)
     }
     return dependencies

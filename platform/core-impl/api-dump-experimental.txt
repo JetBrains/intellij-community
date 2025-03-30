@@ -3,6 +3,10 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - *:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
 - *pf:getElementTypeImpl():com.intellij.psi.tree.IElementType
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
+*:com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic
+- com.intellij.ide.plugins.IdeaPluginDescriptor
+- a:getDependenciesV2():com.intellij.ide.plugins.ModuleDependenciesDescriptor
+- a:getModuleName():java.lang.String
 *:com.intellij.ide.plugins.PluginEnabler
 - sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
 - a:disable(java.util.Collection):Z

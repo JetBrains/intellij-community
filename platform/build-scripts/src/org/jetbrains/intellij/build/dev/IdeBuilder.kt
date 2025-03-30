@@ -10,24 +10,73 @@ import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.protobuf.ProtoBuf
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildOptions.Companion.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.ScrambleTool
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.computeAppClassPath
+import org.jetbrains.intellij.build.excludedLibJars
+import org.jetbrains.intellij.build.generatePluginClassPath
+import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
+import org.jetbrains.intellij.build.impl.ArchivedCompilationContext
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
+import org.jetbrains.intellij.build.impl.collectIncludedPluginModules
+import org.jetbrains.intellij.build.impl.collectPlatformModules
+import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
+import org.jetbrains.intellij.build.impl.copyDistFiles
+import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
+import org.jetbrains.intellij.build.impl.createPlatformLayout
+import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBuild
+import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
+import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
+import org.jetbrains.intellij.build.impl.getToolModules
+import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
+import org.jetbrains.intellij.build.postData
+import org.jetbrains.intellij.build.readSearchableOptionIndex
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.writePluginClassPathHeader
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.io.ByteArrayOutputStream
@@ -327,7 +376,7 @@ private suspend fun computeIdeFingerprint(
   runDir: Path,
   homePath: Path,
 ) {
-  val hasher = Hashing.komihash5_0().hashStream()
+  val hasher = Hashing.xxh3_64().hashStream()
   val debug = StringBuilder()
 
   val distributionFileEntries = platformDistributionEntriesDeferred.await()
@@ -626,8 +675,8 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
     return ""
   }
   else {
-    val hash = Hashing.komihash5_0().hashStream()
-    hash.putUnorderedIterable(additionalModules, HashFunnel.forString(), Hashing.komihash5_0())
+    val hash = Hashing.xxh3_64().hashStream()
+    hash.putUnorderedIterable(additionalModules, HashFunnel.forString(), Hashing.xxh3_64())
     return "-" + additionalModules.joinToString(separator = "-") { it.removePrefix("intellij.").take(4) } + "-" +
            java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
   }

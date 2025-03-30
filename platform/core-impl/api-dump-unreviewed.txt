@@ -416,8 +416,6 @@ c:com.intellij.ide.highlighter.custom.tokens.WhitespaceParser
 - com.intellij.ide.highlighter.custom.tokens.TokenParser
 - <init>():V
 - hasToken(I):Z
-f:com.intellij.ide.plugins.IdeaPluginDescriptorImplKt
-- sf:toPluginIdSet(java.lang.Iterable):java.util.Set
 f:com.intellij.ide.plugins.PluginLoadingError
 - sf:Companion:com.intellij.ide.plugins.PluginLoadingError$Companion
 - f:disabledDependency:com.intellij.openapi.extensions.PluginId

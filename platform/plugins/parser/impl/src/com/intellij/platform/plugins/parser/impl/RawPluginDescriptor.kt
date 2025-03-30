@@ -2,11 +2,7 @@
 package com.intellij.platform.plugins.parser.impl
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement
-import com.intellij.platform.plugins.parser.impl.elements.ContentElement
-import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.DependsElement
-import com.intellij.platform.plugins.parser.impl.elements.MiscExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.*
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
 
@@ -36,7 +32,7 @@ class RawPluginDescriptor(
 
   val isUseIdeaClassLoader: Boolean,
   val isBundledUpdateAllowed: Boolean,
-  val implementationDetail: Boolean,
+  val isImplementationDetail: Boolean,
   val isRestartRequired: Boolean,
   val isLicenseOptional: Boolean,
   // makes sense only for product modules for now

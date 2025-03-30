@@ -201,7 +201,7 @@ public final class ExtensionsRootType extends RootType {
     if (resources == null) {
       return Collections.emptyList();
     }
-    else if (plugin.isUseIdeaClassLoader) {
+    else if (plugin.isUseIdeaClassLoader()) {
       return ContainerUtil.toList(resources);
     }
 
@@ -210,7 +210,7 @@ public final class ExtensionsRootType extends RootType {
       urls.add(resources.nextElement());
     }
     // exclude parent classloader resources from list
-    for (PluginDependency it : plugin.pluginDependencies) {
+    for (var it : plugin.getDependencies()) {
       IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(it.getPluginId());
       if (descriptor == null) {
         continue;

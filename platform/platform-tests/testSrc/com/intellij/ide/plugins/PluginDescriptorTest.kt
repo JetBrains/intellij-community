@@ -2,6 +2,7 @@
 @file:Suppress("UsePropertyAccessSyntax", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -49,7 +50,7 @@ class PluginDescriptorTest {
   fun `descriptor with depends-optional loads`() {
     val descriptor = loadDescriptorFromTestDataDir("dependsOptional")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies)
+    assertThat(descriptor.dependencies)
       .singleElement()
       .extracting { it.isOptional }.isEqualTo(true)
   }
@@ -58,7 +59,7 @@ class PluginDescriptorTest {
   fun `descriptor with multiple depends-optional loads`() {
     val descriptor = loadDescriptorFromTestDataDir("multipleDependsOptional")
     assertThat(descriptor).isNotNull()
-    val pluginDependencies = descriptor.pluginDependencies
+    val pluginDependencies = descriptor.dependencies
     assertThat(pluginDependencies).hasSize(2)
     assertThat(pluginDependencies.map { it.isOptional }).allMatch { it == true }
     assertThat(pluginDependencies.map { it.pluginId.idString }).containsExactly("dep2", "dep1")
@@ -68,7 +69,7 @@ class PluginDescriptorTest {
   fun `descriptor with multiple plugin dependencies loads`() {
     val descriptor = loadDescriptorFromTestDataDir("multiplePluginDependencies")
     assertThat(descriptor).isNotNull()
-    val pluginDependencies = descriptor.dependencies.plugins
+    val pluginDependencies = descriptor.dependenciesV2.plugins
     assertThat(pluginDependencies).hasSize(2)
     assertThat(pluginDependencies.map { it.id.idString }).containsExactly("dep1", "dep2")
   }
@@ -107,8 +108,8 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-strict")
     assertThat(descriptor).isNotNull()
     // fixme what is that result o_O
-    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
-    assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, true))
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
+    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(false, true))
     //assertThat(descriptor.pluginDependencies.map { it.pluginId }).isEqualTo(listOf("foo", "foo", "foo"))
     //assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, false, false))
   }
@@ -117,8 +118,8 @@ class PluginDescriptorTest {
   fun `multiple optional depends on the same plugin is allowed`() {
     val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-optional")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
-    assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(true, true))
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
+    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(true, true))
   }
 
   @Test
@@ -284,6 +285,114 @@ class PluginDescriptorTest {
       .hasExactlyApplicationServices("foo.module.service")
   }
 
+  @Test
+  fun `id, version, name are inherited in content modules`() {
+    PluginBuilder.empty()
+      .id("bar")
+      .name("Bar")
+      .version("1.0.0")
+      .module(
+        moduleName = "bar.sub",
+        moduleDescriptor = PluginBuilder.empty()
+          .id("bar 2")
+          .name("Bar Sub")
+          .version("2.0.0")
+      )
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.name).isEqualTo("Bar")
+    assertThat(descriptor.version).isEqualTo("1.0.0")
+    assertThat(descriptor.content.modules).hasSize(1)
+    val subDesc = descriptor.content.modules[0].requireDescriptor()
+    assertThat(subDesc.pluginId.idString).isEqualTo("bar")
+    assertThat(subDesc.name).isEqualTo("Bar")
+    assertThat(subDesc.version).isEqualTo("1.0.0")
+  }
+
+  @Test
+  fun `id, version, name can't overridden in submodules`() {
+    PluginBuilder.empty()
+      .id("bar")
+      .name("Bar")
+      .version("1.0.0")
+      .module(
+        moduleName = "bar.sub",
+        moduleDescriptor = PluginBuilder.empty()
+          .id("bar 2")
+          .name("Bar Sub")
+          .version("2.0.0")
+      )
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.name).isEqualTo("Bar")
+    assertThat(descriptor.version).isEqualTo("1.0.0")
+    assertThat(descriptor.content.modules).hasSize(1)
+    val subDesc = descriptor.content.modules[0].requireDescriptor()
+    assertThat(subDesc.pluginId.idString).isEqualTo("bar")
+    assertThat(subDesc.name).isEqualTo("Bar")
+    assertThat(subDesc.version).isEqualTo("1.0.0")
+  }
+
+  @Test
+  fun `resource bundle is not inherited in content modules`() {
+    PluginBuilder.empty().id("bar")
+      .resourceBundle("resourceBundle")
+      .module(moduleName = "bar.opt", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .module(moduleName = "bar.req", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module(moduleName = "bar.emb", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
+    assertThat(descriptor.content.modules).hasSize(3)
+    assertThat(descriptor.content.modules).allMatch { it.requireDescriptor().resourceBundleBaseName == null }
+  }
+
+  @Test
+  fun `resource bundle can be set in content modules`() {
+    PluginBuilder.empty().id("bar")
+      .resourceBundle("resourceBundle")
+      .module(moduleName = "opt", moduleDescriptor = PluginBuilder.empty().resourceBundle("opt"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .module(moduleName = "req", moduleDescriptor = PluginBuilder.empty().resourceBundle("req"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module(moduleName = "emb", moduleDescriptor = PluginBuilder.empty().resourceBundle("emb"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .build(pluginDirPath)
+
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    assertThat(descriptor.pluginId.idString).isEqualTo("bar")
+    assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
+    assertThat(descriptor.content.modules).hasSize(3)
+    assertThat(descriptor.content.modules).allMatch { it.requireDescriptor().resourceBundleBaseName == it.name }
+  }
+
+  @Test
+  fun `core plugin has implicit host and product mode plugin aliases`() {
+    PluginBuilder.empty()
+      .id("com.intellij")
+      .build(pluginDirPath)
+    val descriptor = loadDescriptorInTest(pluginDirPath)
+    assertThat(descriptor).isNotNull
+    val hostIds = IdeaPluginOsRequirement.getHostOsModuleIds()
+    if (hostIds.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
+    }
+    val productAliases = IdeaPluginDescriptorImpl.productModeAliasesForCorePlugin()
+    if (productAliases.isEmpty()) {
+      logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
+    }
+    assertThat(descriptor.pluginAliases)
+      .containsAll(hostIds)
+      .containsAll(productAliases)
+  }
+
   // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun `only one instance of a plugin is loaded if it's duplicated`() {
@@ -345,7 +454,7 @@ class PluginDescriptorTest {
     )
     assertFalse(descriptor.isEnabled)
     assertEquals("This is a disabled plugin", descriptor.description)
-    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
   }
 
   companion object {

@@ -127,7 +127,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         continue
       }
 
-      for (ref in module.dependencies.modules) {
+      for (ref in module.dependenciesV2.modules) {
         if (!enabledModuleV2Ids.containsKey(ref.name) && !enabledRequiredContentModules.containsKey(ref.name)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           if (module.moduleName != null) {
@@ -136,7 +136,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
           continue@m
         }
       }
-      for (ref in module.dependencies.plugins) {
+      for (ref in module.dependenciesV2.plugins) {
         if (!enabledPluginIds.containsKey(ref.id)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
           if (module.moduleName != null) {
@@ -298,7 +298,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     errors: MutableMap<PluginId, PluginLoadingError>,
   ): PluginLoadingError? {
     val isNotifyUser = !descriptor.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(descriptor.pluginId, fullIdMap)
-    for (incompatibleId in descriptor.incompatibilities) {
+    for (incompatibleId in descriptor.incompatiblePlugins) {
       if (!enabledPluginIds.containsKey(incompatibleId) || disabledPlugins.contains(incompatibleId)) {
         continue
       }
@@ -320,7 +320,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
       }
 
-    return descriptor.dependencies.modules.asSequence().map { it.name }
+    return descriptor.dependenciesV2.modules.asSequence().map { it.name }
       .firstOrNull { it !in enabledModuleV2Ids }
       ?.let {
         PluginLoadingError(
@@ -386,9 +386,9 @@ private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String
 }
 
 private fun getAllPluginDependencies(ideaPluginDescriptorImpl: IdeaPluginDescriptorImpl): Sequence<PluginId> {
-  return ideaPluginDescriptorImpl.pluginDependencies.asSequence()
+  return ideaPluginDescriptorImpl.dependencies.asSequence()
            .filterNot { it.isOptional }
            .map { it.pluginId } +
-         ideaPluginDescriptorImpl.dependencies.plugins.asSequence()
+         ideaPluginDescriptorImpl.dependenciesV2.plugins.asSequence()
            .map { it.id }
 }

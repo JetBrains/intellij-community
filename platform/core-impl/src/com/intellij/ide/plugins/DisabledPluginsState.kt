@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginUtils.joinedPluginIds
+import com.intellij.ide.plugins.PluginUtils.toPluginIdSet
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -14,7 +16,6 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.Throws
 import kotlin.io.path.Path
 
 @ApiStatus.Internal

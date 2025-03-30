@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.plugins.parser.impl
 
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement
-import com.intellij.platform.plugins.parser.impl.elements.ContentElement
-import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.DependsElement
-import com.intellij.platform.plugins.parser.impl.elements.MiscExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.util.Java11Shim
 import java.time.LocalDate
 
@@ -35,7 +31,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
 
   override var isUseIdeaClassLoader: Boolean = false
   override var isBundledUpdateAllowed: Boolean = false
-  override var implementationDetail: Boolean = false
+  override var isImplementationDetail: Boolean = false
   override var isRestartRequired: Boolean = false
   override var isLicenseOptional: Boolean = false
   override var isIndependentFromCoreClassLoader: Boolean = false
@@ -138,7 +134,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     resourceBundleBaseName = resourceBundleBaseName,
     isUseIdeaClassLoader = isUseIdeaClassLoader,
     isBundledUpdateAllowed = isBundledUpdateAllowed,
-    implementationDetail = implementationDetail,
+    isImplementationDetail = isImplementationDetail,
     isRestartRequired = isRestartRequired,
     isLicenseOptional = isLicenseOptional,
     isIndependentFromCoreClassLoader = isIndependentFromCoreClassLoader,

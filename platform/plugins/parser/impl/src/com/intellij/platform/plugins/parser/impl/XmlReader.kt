@@ -110,7 +110,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
       PluginXmlConst.PLUGIN_URL_ATTR -> builder.url = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR -> builder.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_ALLOW_BUNDLED_UPDATE_ATTR -> builder.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
-      PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> builder.implementationDetail = reader.getAttributeAsBoolean(i)
+      PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR -> builder.isImplementationDetail = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_REQUIRE_RESTART_ATTR -> builder.isRestartRequired = reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_DEPENDENT_ON_CORE_ATTR -> builder.isIndependentFromCoreClassLoader = !reader.getAttributeAsBoolean(i)
       PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> builder.isSeparateJar = reader.getAttributeAsBoolean(i)

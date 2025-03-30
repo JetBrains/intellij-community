@@ -98,7 +98,7 @@ class KotlinK1andK2ModesTest {
     val plugin = getSinglePlugin(rootDir)
     assertThat(plugin.isEnabled).isTrue()
 
-    val dependency = plugin.pluginDependencies.single()
+    val dependency = plugin.dependencies.single()
     assertThat(dependency.subDescriptor).isNull()
   }
 
@@ -122,7 +122,7 @@ class KotlinK1andK2ModesTest {
     val plugin = getSinglePlugin(rootDir)
     assertThat(plugin.isEnabled).isTrue()
 
-    val dependency = plugin.pluginDependencies.single()
+    val dependency = plugin.dependencies.single()
     assertThat(dependency.subDescriptor).isNotNull()
   }
 }

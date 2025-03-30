@@ -2,11 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.PluginXmlConst
-import com.intellij.platform.plugins.parser.impl.ReadModuleContext
-import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.*
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
@@ -68,6 +64,7 @@ class PluginBuilder private constructor() {
   private var packagePrefix: String? = null
   private val dependsTags = mutableListOf<DependsTag>()
   private var applicationListeners: String? = null
+  private var resourceBundleBaseName: String? = null
   private var actions: String? = null
   private val extensions = mutableListOf<ExtensionBlock>()
   private var extensionPoints: String? = null
@@ -165,6 +162,11 @@ class PluginBuilder private constructor() {
     return this
   }
 
+  fun resourceBundle(resourceBundle: String?): PluginBuilder {
+    resourceBundleBaseName = resourceBundle
+    return this
+  }
+
   fun untilBuild(buildNumber: String): PluginBuilder {
     untilBuild = buildNumber
     return this
@@ -236,6 +238,7 @@ class PluginBuilder private constructor() {
       }
       extensionPoints?.let { append("<extensionPoints>$it</extensionPoints>") }
       applicationListeners?.let { append("<applicationListeners>$it</applicationListeners>") }
+      resourceBundleBaseName?.let { append("""<resource-bundle>$it</resource-bundle>""") }
       actions?.let { append("<actions>$it</actions>") }
 
       if (content.isNotEmpty()) {

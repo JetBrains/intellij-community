@@ -247,12 +247,12 @@ public class CoreApplicationEnvironment {
       return;
     }
 
-    List<ExtensionPointDescriptor> extensionPoints = descriptor.appContainerDescriptor.getExtensionPoints();
+    List<ExtensionPointDescriptor> extensionPoints = descriptor.getAppContainerDescriptor().getExtensionPoints();
     ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
     if (!extensionPoints.isEmpty()) {
       areaImpl.registerExtensionPoints(extensionPoints, descriptor);
     }
-    descriptor.registerExtensions(areaImpl.getNameToPointMap(), descriptor.appContainerDescriptor, null);
+    descriptor.registerExtensions(areaImpl.getNameToPointMap(), descriptor.getAppContainerDescriptor(), null);
   }
 
   public @NotNull CoreLocalFileSystem getLocalFileSystem() {

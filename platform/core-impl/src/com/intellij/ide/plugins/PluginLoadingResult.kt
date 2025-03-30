@@ -158,17 +158,17 @@ data class PluginManagerState internal constructor(
 internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescriptorImpl): Boolean {
   return !descriptor.isBundled &&
          descriptor.packagePrefix == null &&
-         !descriptor.implementationDetail &&
+         !descriptor.isImplementationDetail &&
          descriptor.content.modules.isEmpty() &&
-         descriptor.dependencies.modules.isEmpty() &&
-         descriptor.dependencies.plugins.isEmpty() &&
+         descriptor.dependenciesV2.modules.isEmpty() &&
+         descriptor.dependenciesV2.plugins.isEmpty() &&
          descriptor.pluginId != PluginManagerCore.CORE_ID &&
          descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
          !hasModuleDependencies(descriptor)
 }
 
 private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
-  for (dependency in descriptor.pluginDependencies) {
+  for (dependency in descriptor.dependencies) {
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
         PluginManagerCore.JAVA_MODULE_ID == dependencyPluginId ||
