@@ -26,14 +26,12 @@ import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.amper.dependency.resolution.LocalM2RepositoryFinder
 import org.jetbrains.kotlin.idea.core.script.*
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.ucache.relativeName
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
@@ -194,7 +192,8 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
         val urlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
         val storage = this
 
-        val classes = toVfsRoots(configurationWrapper.dependenciesClassPath).filterNot { it.toVirtualFileUrl(urlManager) in rootsToSkip }
+        val classes = configurationWrapper.dependenciesClassPath.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
+            .filterNot { it.toVirtualFileUrl(urlManager) in rootsToSkip }
             .sortedBy { it.name }.distinct()
 
         return buildList {
@@ -202,7 +201,8 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
 
             if (configurationWrapper.isUberDependencyAllowed()) {
                 val sources =
-                    toVfsRoots(configurationWrapper.dependenciesSources).filterNot { it.toVirtualFileUrl(urlManager) in rootsToSkip }
+                    configurationWrapper.dependenciesSources.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
+                        .filterNot { it.toVirtualFileUrl(urlManager) in rootsToSkip }
                         .sortedBy { it.name }
                 addIfNotNull(storage.createUberDependency(locationName, classes, sources, source))
 

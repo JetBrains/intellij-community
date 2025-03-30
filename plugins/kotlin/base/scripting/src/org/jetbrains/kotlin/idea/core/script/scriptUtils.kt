@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
@@ -14,8 +15,8 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
+import org.jetbrains.kotlin.idea.core.script.k2.ClassPathVirtualFileCache
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
 import org.jetbrains.kotlin.psi.KtFile
@@ -36,11 +37,17 @@ fun MutableEntityStorage.getDefinitionLibraryEntity(
         return entity
     }
 
-    val classes =
-        toVfsRoots(definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies].toClassPathOrEmpty()).sortedBy { it.name }
+    val virtualFileCache = project.service<ClassPathVirtualFileCache>()
 
-    val sources =
-        toVfsRoots(definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources].toClassPathOrEmpty()).sortedBy { it.name }
+    val classes = definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies]
+        .toClassPathOrEmpty()
+        .mapNotNull { virtualFileCache.get(it.path) }
+        .sortedBy { it.name }
+
+    val sources = definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources]
+        .toClassPathOrEmpty()
+        .mapNotNull { virtualFileCache.get(it.path) }
+        .sortedBy { it.name }
 
     if (classes.isEmpty() && sources.isEmpty()) {
         return null

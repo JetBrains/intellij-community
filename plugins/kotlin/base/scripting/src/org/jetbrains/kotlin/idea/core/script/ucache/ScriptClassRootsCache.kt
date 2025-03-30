@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -11,14 +12,12 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
-import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
+import org.jetbrains.kotlin.idea.core.script.k2.ClassPathVirtualFileCache
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
-import kotlin.io.path.Path
 
 class ScriptClassRootsCache(
     val scripts: Map<String, LightScriptInfo>,
@@ -27,17 +26,18 @@ class ScriptClassRootsCache(
     val customDefinitionsUsed: Boolean,
     val sdks: ScriptSdks,
     private val classpathVfsHint: MutableMap<String, VirtualFile?>?,
+    private val project: Project?
 ) {
     companion object {
-        val EMPTY = ScriptClassRootsCache(
+        val EMPTY: ScriptClassRootsCache = ScriptClassRootsCache(
             mapOf(), setOf(), setOf(), true,
             ScriptSdks(mapOf(), setOf(), setOf()),
-            null
+            null, null
         )
     }
 
-    fun withUpdatedSdks(newSdks: ScriptSdks) =
-        ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks, classpathVfsHint)
+    fun withUpdatedSdks(newSdks: ScriptSdks): ScriptClassRootsCache =
+        ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks, classpathVfsHint, project)
 
     fun builder(project: Project): ScriptClassRootsBuilder {
         return ScriptClassRootsBuilder(
@@ -72,9 +72,9 @@ class ScriptClassRootsCache(
         val sdk: Sdk?
     )
 
-    fun scriptsPaths() = scripts.keys
+    fun scriptsPaths(): Set<String> = scripts.keys
 
-    fun getLightScriptInfo(file: String) = scripts[file]
+    fun getLightScriptInfo(file: String): LightScriptInfo? = scripts[file]
 
     fun contains(file: VirtualFile): Boolean = file.path in scripts
 
@@ -99,7 +99,7 @@ class ScriptClassRootsCache(
         val configuration = lightScriptInfo.buildConfiguration() ?: return null
 
         val roots = configuration.dependenciesClassPath
-        val vfsRoots = toVfsRoots(roots)
+        val vfsRoots = roots.mapNotNull { project?.service<ClassPathVirtualFileCache>()?.get(it.path) }
         val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
         fun heavyInfoForRoots(roots: List<VirtualFile>): HeavyScriptInfo {
@@ -126,7 +126,7 @@ class ScriptClassRootsCache(
             return if (classpathVfsHint?.containsKey(this) == true) {
                 classpathVfsHint[this]
             } else {
-                classpathEntryToVfs(Path(this)).also { vFile ->
+                project?.let { ClassPathVirtualFileCache.getInstance(it) }?.get(this).also { vFile ->
                     classpathVfsHint?.put(this, vFile)
                 }
             }
@@ -141,9 +141,9 @@ class ScriptClassRootsCache(
         }
     }
 
-    val allDependenciesClassFilesScope = compose(allDependenciesClassFiles.toList() + sdks.nonIndexedClassRoots)
+    val allDependenciesClassFilesScope: GlobalSearchScope = compose(allDependenciesClassFiles.toList() + sdks.nonIndexedClassRoots)
 
-    val allDependenciesSourcesScope = compose(allDependenciesSources.toList() + sdks.nonIndexedSourceRoots)
+    val allDependenciesSourcesScope: GlobalSearchScope = compose(allDependenciesSources.toList() + sdks.nonIndexedSourceRoots)
 
     fun getScriptConfiguration(file: VirtualFile): ScriptCompilationConfigurationWrapper? =
         getHeavyScriptInfo(file.path)?.scriptConfiguration
@@ -161,8 +161,9 @@ class ScriptClassRootsCache(
         getHeavyScriptInfo(file.path)?.classFiles ?: emptyList()
 
     fun getScriptDependenciesSourceFiles(file: VirtualFile): List<VirtualFile> {
-        return getHeavyScriptInfo(file.path)?.scriptConfiguration?.dependenciesSources?.mapNotNull { classpathEntryToVfs(it.toPath()) }
-            ?: emptyList()
+        return getHeavyScriptInfo(file.path)?.scriptConfiguration?.dependenciesSources?.mapNotNull { file ->
+            project?.let { ClassPathVirtualFileCache.getInstance(project) }?.get(file.path)
+        } ?: emptyList()
     }
 
     fun diff(old: ScriptClassRootsCache): Updates =
@@ -219,7 +220,7 @@ class ScriptClassRootsCache(
         val updatedScripts: Set<String>
     ) : Updates {
         override val hasUpdatedScripts: Boolean get() = updatedScripts.isNotEmpty()
-        override fun isScriptChanged(scriptPath: String) = scriptPath in updatedScripts
+        override fun isScriptChanged(scriptPath: String): Boolean = scriptPath in updatedScripts
 
         override val changed: Boolean
             get() = hasNewRoots || updatedScripts.isNotEmpty() || hasOldRoots

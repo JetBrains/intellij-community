@@ -16,7 +16,7 @@ class ScriptClassRootsBuilder(
     private val sources: MutableSet<String> = mutableSetOf(),
     private val scripts: MutableMap<String, ScriptClassRootsCache.LightScriptInfo> = mutableMapOf()
 ) {
-    val sdks = ScriptSdksBuilder(project)
+    val sdks: ScriptSdksBuilder = ScriptSdksBuilder(project)
 
     private var customDefinitionsUsed: Boolean = false
     private var shouldWarnAboutDependenciesExistence: Boolean = true
@@ -35,7 +35,7 @@ class ScriptClassRootsBuilder(
         ScriptClassRootsCache(
             scripts, classes, sources,
             customDefinitionsUsed, sdks.build(),
-            classpathVfsHint
+            classpathVfsHint, project
         )
 
     fun useCustomScriptDefinition() {
@@ -115,7 +115,7 @@ class ScriptClassRootsBuilder(
     }
 
     companion object {
-        fun fromStorage(project: Project, storage: ScriptClassRootsStorage) = ScriptClassRootsBuilder(
+        fun fromStorage(project: Project, storage: ScriptClassRootsStorage): ScriptClassRootsBuilder = ScriptClassRootsBuilder(
             project,
             storage.classpath.toMutableSet(),
             storage.sources.toMutableSet(),

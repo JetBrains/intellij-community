@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.idea.core.script
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -12,7 +13,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
+import org.jetbrains.kotlin.idea.core.script.k2.ClassPathVirtualFileCache
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -52,7 +53,8 @@ fun getUpdatedStorage(
 
         val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
-        val libraryDependencies = toVfsRoots(configuration.dependenciesClassPath).sortedBy { it.name }
+        val libraryDependencies = configuration.dependenciesClassPath.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
+            .sortedBy { it.name }
             .map { updatedFactory.get(it, source) }
 
         val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies

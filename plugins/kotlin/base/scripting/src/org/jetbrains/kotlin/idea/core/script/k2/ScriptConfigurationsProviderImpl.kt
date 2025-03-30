@@ -12,12 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
-import org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
-import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
-import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
-import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
+import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -31,11 +26,6 @@ private class ScriptDependenciesData(
     val sources: Set<VirtualFile> = mutableSetOf(),
     val sdks: Set<Sdk> = mutableSetOf(),
 )
-
-//Temporary bridge between K1 and K2 ide scripting api; to be removed
-interface ScriptConfigurationSourceAware {
-    fun getScriptConfigurationSource(project: Project): ScriptConfigurationsSource<*>?
-}
 
 class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsProvider(project), ScriptDependencyAware {
     private val allDependencies = AtomicReference(ScriptDependenciesData())
@@ -60,8 +50,8 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
             val sdks = data.values.mapNotNull { it.sdk }
 
             configurations.forEach {
-                allScriptsSources.addAll(toVfsRoots(it.dependenciesSources))
-                allScriptClasses.addAll(toVfsRoots(it.dependenciesClassPath))
+                allScriptsSources.addAll(it.dependenciesSources.mapNotNull { file -> project.service<ClassPathVirtualFileCache>().get(file.path) })
+                allScriptClasses.addAll(it.dependenciesClassPath.mapNotNull { file -> project.service<ClassPathVirtualFileCache>().get(file.path) })
             }
 
             allScriptsSdks.addAll(sdks)
@@ -95,7 +85,7 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
         val (configuration, sdk) = getConfigurationWithSdk(virtualFile) ?: return GlobalSearchScope.EMPTY_SCOPE
         val configurationWrapper = configuration.valueOrNull() ?: return GlobalSearchScope.EMPTY_SCOPE
 
-        val roots = toVfsRoots(configurationWrapper.dependenciesClassPath)
+        val roots = configurationWrapper.dependenciesClassPath.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
 
         val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
 
@@ -104,7 +94,7 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
 
     override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> {
         val dependencies = getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull()?.dependenciesClassPath ?: return emptyList()
-        return toVfsRoots(dependencies)
+        return dependencies.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
     }
 
     override fun getFirstScriptsSdk(): Sdk? = getProjectSdk() ?: allDependencies.get().sdks.firstOrNull()
