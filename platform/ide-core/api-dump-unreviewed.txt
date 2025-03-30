@@ -2036,13 +2036,14 @@ com.intellij.openapi.ui.popup.JBPopup
 - a:setCaption(java.lang.String):V
 - a:setCaptionIcon(javax.swing.Icon):V
 - a:setCaptionIconPosition(Z):V
-- a:setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+- setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - a:setFinalRunnable(java.lang.Runnable):V
 - a:setLocation(java.awt.Point):V
 - a:setMinimumSize(java.awt.Dimension):V
 - a:setRequestFocus(Z):V
 - a:setSize(java.awt.Dimension):V
 - setSize(java.awt.Point,java.awt.Dimension):V
+- setUiDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - a:setUiVisible(Z):V
 - setUserData(java.util.List):V
 - show(com.intellij.openapi.ui.popup.PopupShowOptions):V

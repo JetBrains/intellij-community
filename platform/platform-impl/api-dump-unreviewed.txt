@@ -15865,6 +15865,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - setSpeedSearchEmptyText(java.lang.String):V
 - setStretchToOwnerHeight(Z):V
 - setStretchToOwnerWidth(Z):V
+- setUiDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - setUiVisible(Z):V
 - setUserData(java.util.List):V
 - setWarning(java.lang.String):V
@@ -15888,7 +15889,7 @@ c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(com.intellij.ui.PopupBorder):V
 - computePreferredSize():java.awt.Dimension
-- setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+- setDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ui.popup.ActionPopupOptions
 - autoSelectionEnabled():Z

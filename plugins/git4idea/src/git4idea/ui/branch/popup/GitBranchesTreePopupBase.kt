@@ -8,7 +8,12 @@ import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
@@ -19,10 +24,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.*
+import com.intellij.ui.ActiveComponent
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.SmartExpander
+import com.intellij.ui.TreeActions
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -48,7 +62,11 @@ import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.*
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitTagHolder
+import git4idea.repo.GitTagLoaderListener
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
@@ -71,10 +89,20 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Cursor
 import java.awt.Point
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import java.util.function.Function
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.ActionMap
+import javax.swing.InputMap
+import javax.swing.JComponent
+import javax.swing.JTree
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreeModel
@@ -129,10 +157,10 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
         .initBranchSyncPolicyIfNotInitialized()
     }
     installBranchSettingsListener()
-    setDataProvider(EdtNoGetDataProvider { sink ->
+    setUiDataProvider { sink ->
       sink[POPUP_KEY] = this@GitBranchesTreePopupBase
       sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = treeStep.repositories
-    })
+    }
 
     GitDisposable.getInstance(project).coroutineScope
       .childScope("Git Branches Tree Popup")
