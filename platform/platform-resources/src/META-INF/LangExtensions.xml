@@ -901,36 +901,45 @@
     <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleOnSelectedFragment</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.hints.AddToExcludeListCurrentMethodIntention</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.hints.DisableCustomHintsOption</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.hints.EnableCustomHintsOption</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.language.injection</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.ide.scratch.ScratchFromSelectionIntention</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
@@ -1057,7 +1066,7 @@
                     serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
     <registryKey defaultValue="false" key="ide.project.view.coroutines" restartRequired="true"
                  description="Use the new experimental coroutine-based Project View implementation"/>
-    <registryKey defaultValue="true" description="Show the New File or Directory button in the Project View title"
+    <registryKey defaultValue="true" description="Show the new file or directory button in the project view title"
                  key="ide.project.view.show.new.element.button" />
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
@@ -1084,7 +1093,7 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper"
                              order="last"/>
-    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor"/>
+    <psi.referenceContributor language="" implementation="com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor"/>
 
     <projectConfigurable groupId="editor"
                          groupWeight="140"
@@ -1103,42 +1112,42 @@
 
     <applicationService serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
-    <globalInspection shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
+    <globalInspection language="" shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="ERROR"
                       bundle="messages.InspectionsBundle" key="inspection.annotator.display.name"
                       implementationClass="com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection"/>
-    <localInspection shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"
+    <localInspection language="" shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.LossyEncodingInspection"/>
-    <localInspection shortName="ReassignedToPlainText" bundle="messages.InspectionsBundle" key="reassigned.to.plain.text.inspection.name"
+    <localInspection language="" shortName="ReassignedToPlainText" bundle="messages.InspectionsBundle" key="reassigned.to.plain.text.inspection.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReassignedToPlainTextInspection"/>
-    <localInspection shortName="NonAsciiCharacters" bundle="messages.LangBundle" key="non.ascii.characters"
+    <localInspection language="" shortName="NonAsciiCharacters" bundle="messages.LangBundle" key="non.ascii.characters"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.NonAsciiCharactersInspection"/>
-    <localInspection shortName="ProblematicWhitespace" bundle="messages.LangBundle" key="problematic.whitespace.display.name"
+    <localInspection language="" shortName="ProblematicWhitespace" bundle="messages.LangBundle" key="problematic.whitespace.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspectionMerger"/>
-    <localInspection shortName="IncorrectFormatting" bundle="messages.LangBundle" key="inspection.incorrect.formatting.display.name"
+    <localInspection language="" shortName="IncorrectFormatting" bundle="messages.LangBundle" key="inspection.incorrect.formatting.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WEAK WARNING"
                      implementationClass="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection"
                      runForWholeFile="true"/>
-    <localInspection shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
+    <localInspection language="" shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.TodoCommentInspection"/>
-    <localInspection shortName="LongLine" bundle="messages.LangBundle" key="long.line.display.name"
+    <localInspection language="" shortName="LongLine" bundle="messages.LangBundle" key="long.line.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.longLine.LongLineInspection"/>
-    <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
+    <globalInspection language="" shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupKey="inspection.general.tools.group.name" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
-    <globalInspection shortName="EmptyDirectory" bundle="messages.LangBundle" key="empty.directory.display.name"
+    <globalInspection language="" shortName="EmptyDirectory" bundle="messages.LangBundle" key="empty.directory.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                       level="WARNING" implementationClass="com.intellij.codeInspection.EmptyDirectoryInspection"/>
 
