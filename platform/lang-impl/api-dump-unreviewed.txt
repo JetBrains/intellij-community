@@ -6287,6 +6287,7 @@ f:com.intellij.codeInspection.ui.InspectionTree
 - getSelectedDescriptors(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.codeInspection.CommonProblemDescriptor[]
 - s:getSelectedElement(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.psi.PsiElement
 - getSelectedElements():com.intellij.codeInspection.reference.RefEntity[]
+- getSelectedElements(Z):com.intellij.codeInspection.reference.RefEntity[]
 - getSelectedGroupPath():java.lang.String[]
 - s:getSelectedRefElements(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.codeInspection.reference.RefEntity[]
 - getSelectedToolWrapper(Z):com.intellij.codeInspection.ex.InspectionToolWrapper

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -292,18 +292,26 @@ public final class InspectionTree extends Tree {
   }
 
   public RefEntity @NotNull [] getSelectedElements() {
+    return getSelectedElements(true);
+  }
+
+  public RefEntity @NotNull [] getSelectedElements(boolean allowResolved) {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
-    return getElementsFromSelection(selectionPaths);
+    return getElementsFromSelection(selectionPaths, allowResolved);
   }
 
   RefEntity @NotNull [] getElementsFromSelection(TreePath @NotNull [] selectionPaths) {
+    return getElementsFromSelection(selectionPaths, true);
+  }
+
+  private RefEntity @NotNull [] getElementsFromSelection(TreePath @NotNull [] selectionPaths, boolean allowResolved) {
     InspectionToolWrapper<?,?> toolWrapper = getSelectedToolWrapper(true, selectionPaths);
     if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
     Set<RefEntity> result = new LinkedHashSet<>();
     for (TreePath selectionPath : selectionPaths) {
       final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
-      addElementsInNode(node, result);
+      addElementsInNode(node, result, allowResolved);
     }
     return ArrayUtil.reverseArray(result.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
   }
@@ -318,19 +326,21 @@ public final class InspectionTree extends Tree {
     if (path != null) TreeUtil.promiseSelect(this, path);
   }
 
-  private static void addElementsInNode(@NotNull InspectionTreeNode node, @NotNull Set<? super RefEntity> out) {
+  private static void addElementsInNode(@NotNull InspectionTreeNode node, @NotNull Set<? super RefEntity> out, boolean allowResolved) {
     if (!node.isValid()) return;
-    if (node instanceof RefElementNode) {
-      final RefEntity element = ((RefElementNode)node).getElement();
-      out.add(element);
+    if (node instanceof RefElementNode refNode) {
+      if (isNodeValidAndIncluded(refNode, allowResolved)) {
+        out.add(refNode.getElement());
+      }
     }
-    if (node instanceof ProblemDescriptionNode) {
-      final RefEntity element = ((ProblemDescriptionNode)node).getElement();
-      out.add(element);
+    if (node instanceof ProblemDescriptionNode problemNode) {
+      if (isNodeValidAndIncluded(problemNode, allowResolved)) {
+        out.add(problemNode.getElement());
+      }
     }
 
     for (InspectionTreeNode child : node.getChildren()) {
-      addElementsInNode(child, out);
+      addElementsInNode(child, out, allowResolved);
     }
   }
 
@@ -465,7 +475,7 @@ public final class InspectionTree extends Tree {
     return count;
   }
 
-  private static boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved) {
+  private static boolean isNodeValidAndIncluded(SuppressableInspectionTreeNode node, boolean allowResolved) {
     return node.isValid() && (allowResolved ||
                               (!node.isExcluded() &&
                                !node.isAlreadySuppressedFromView() &&
@@ -598,7 +608,7 @@ public final class InspectionTree extends Tree {
     if (nodes != null) {
       HashSet<RefEntity> entities = new HashSet<>();
       for (Object node : nodes) {
-        addElementsInNode((InspectionTreeNode)node, entities);
+        addElementsInNode((InspectionTreeNode)node, entities, true);
       }
       return entities.toArray(entities.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
     }
