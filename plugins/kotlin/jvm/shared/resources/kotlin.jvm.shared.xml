@@ -34,6 +34,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.inspections.JavaOutsideModuleDetector"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
 
     <buildProcess.parametersProvider

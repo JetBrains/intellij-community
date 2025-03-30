@@ -561,8 +561,6 @@
                              order="first"/> <!--before lombok -->
 
     <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
-
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.inspections.JavaOutsideModuleDetector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">
