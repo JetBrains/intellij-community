@@ -21,7 +21,7 @@ interface PluginInstallationCustomization {
 
   val pluginId: PluginId
 
-  fun createLicensePanel(update: Boolean): JComponent?
+  fun createLicensePanel(isMarketplace: Boolean, update: Boolean): JComponent?
   
   fun beforeInstallOrUpdate(update: Boolean)
 }
