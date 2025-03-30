@@ -52,9 +52,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
 import static java.util.Arrays.asList;
 
 public class ShShellcheckExternalAnnotator
@@ -98,7 +99,7 @@ public class ShShellcheckExternalAnnotator
         FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shellcheckExecutable), forceExecutePermission).toString())
+        .withExePath(asEelPath(transferContentsIfNonLocal(eel, Path.of(shellcheckExecutable), null, forceExecutePermission)).toString())
         .withParameters(fileInfo.executionParams);
       if (!ApplicationManager.getApplication().isUnitTestMode()) commandLine.withWorkDirectory(fileInfo.workDirectory);
       long timestamp = fileInfo.modificationStamp;

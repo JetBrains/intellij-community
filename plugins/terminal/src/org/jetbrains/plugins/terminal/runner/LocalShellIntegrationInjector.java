@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isBlockTerminalSupported;
 
@@ -204,7 +205,7 @@ public final class LocalShellIntegrationInjector {
     result.add(rcfileOption);
     if (eelDescriptor != null) {
       final var eelApi = EelProviderUtil.upgradeBlocking(eelDescriptor);
-      result.add(EelPathUtils.transferLocalContentToRemoteTempIfNeeded(eelApi, Path.of(rcFilePath)).toString());
+      result.add(asEelPath(transferContentsIfNonLocal(eelApi, Path.of(rcFilePath))).toString());
     }
     else {
       result.add(rcFilePath);

@@ -268,7 +268,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     }
 
     if (distribution is DaemonedMavenDistribution) {
-     return distribution.daemonHome.resolve("bin").resolve(if (isWindows()) "mvnd.cmd" else "mvnd.sh").asEelPath().toString()
+      return distribution.daemonHome.resolve("bin").resolve(if (isWindows()) "mvnd.cmd" else "mvnd.sh").asEelPath().toString()
     }
     else {
       return mavenHome.resolve("bin").resolve(if (isWindows()) "mvn.cmd" else "mvn").asEelPath().toString()

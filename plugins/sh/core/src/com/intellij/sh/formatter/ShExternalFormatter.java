@@ -32,7 +32,7 @@ import java.util.*;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP_ID;
 
@@ -111,7 +111,7 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
         FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shFmtExecutable), forceExecutePermission).toString())
+        .withExePath(asEelPath(transferContentsIfNonLocal(eel, Path.of(shFmtExecutable), null, forceExecutePermission)).toString())
         .withWorkingDirectory(path.getParent())
         .withParameters(params);
 

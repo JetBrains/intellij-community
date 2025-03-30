@@ -2,14 +2,17 @@
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
+import com.intellij.execution.configurations.ParameterTargetValuePart
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -21,7 +24,7 @@ import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
@@ -160,7 +163,7 @@ private class EelMavenCmdState(
     eelParams.charset = parameters.charset
     eelParams.vmParametersList.add("-classpath")
     eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull {
-      runBlockingCancellable { EelPathUtils.maybeUploadPath(scope, Path(it), eel.descriptor).toString() }
+      transferContentsIfNonLocal(eel, Path(it)).asEelPath().toString()
     }.joinToString(eel.fs.pathSeparator))
 
     return eelParams
@@ -172,9 +175,7 @@ private class EelMavenCmdState(
         for (part in item.parts) {
           when (part) {
             is ParameterTargetValuePart.Const -> append(part.localValue)
-            is ParameterTargetValuePart.Path -> runBlockingCancellable {
-              append(EelPathUtils.maybeUploadPath(scope, Path.of(part.localValue), eel.descriptor).toString())
-            }
+            is ParameterTargetValuePart.Path -> append(transferContentsIfNonLocal(eel, Path.of(part.localValue)).asEelPath().toString())
             ParameterTargetValuePart.PathSeparator -> append(eel.fs.pathSeparator)
             is ParameterTargetValuePart.PromiseValue -> append(part.localValue) // todo?
           }
