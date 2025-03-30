@@ -94,7 +94,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
-      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
   <item name='java.io.ByteArrayInputStream long skip(long)'>
@@ -583,9 +583,11 @@
       <val name="mutates" val="&quot;this,io&quot;"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.InputStream byte[] readNBytes(int) 0'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
-      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
   <item name="java.io.InputStream int read()">
@@ -627,7 +629,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
-      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
   <item name="java.io.InputStream long skip(long)">
