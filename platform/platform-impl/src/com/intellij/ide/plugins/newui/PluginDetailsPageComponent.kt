@@ -1258,7 +1258,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val descriptor = descriptorForActions
     val productCode = descriptor!!.productCode
     val customization = PluginInstallationCustomization.findPluginInstallationCustomization(descriptor.pluginId)
-    val customLicense = customization?.createLicensePanel(updateDescriptor != null)
+    val customLicense = customization?.createLicensePanel(isMarketplace, updateDescriptor != null)
+
+    customLicensePanel.removeAll()
 
     if (customLicense != null) {
       customLicensePanel.add(customLicense, BorderLayout.CENTER)
@@ -1267,7 +1269,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       return
     }
 
-    customLicensePanel.removeAll()
     customLicensePanel.isVisible = false
     licensePanel.isVisible = true
 
