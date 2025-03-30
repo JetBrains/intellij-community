@@ -205,7 +205,9 @@ public final class LocalShellIntegrationInjector {
     result.add(rcfileOption);
     if (eelDescriptor != null) {
       final var eelApi = EelProviderUtil.upgradeBlocking(eelDescriptor);
-      result.add(asEelPath(transferContentsIfNonLocal(eelApi, Path.of(rcFilePath))).toString());
+      final var rcFile = Path.of(rcFilePath);
+      final var bashSupportDir = transferContentsIfNonLocal(eelApi, rcFile.getParent());
+      result.add(asEelPath(bashSupportDir.resolve(rcFile.getFileName().toString())).toString());
     }
     else {
       result.add(rcFilePath);
