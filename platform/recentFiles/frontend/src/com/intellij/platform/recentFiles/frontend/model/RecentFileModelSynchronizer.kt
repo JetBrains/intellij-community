@@ -24,7 +24,7 @@ internal class RecentFileModelSynchronizer : ProjectActivity {
       frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_EDITED)
     }
     synchronizationScope.launch {
-      LOG.debug("Subscribe to backend recently edited files updates")
+      LOG.debug("Subscribe to backend recently opened unpinned files updates")
       frontendRecentFilesModel.subscribeToBackendRecentFilesUpdates(RecentFileKind.RECENTLY_OPENED_UNPINNED)
     }
 
@@ -37,7 +37,7 @@ internal class RecentFileModelSynchronizer : ProjectActivity {
       frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_EDITED, project)
     }
     synchronizationScope.launch {
-      LOG.debug("Fetch initial recently opened pinned files data")
+      LOG.debug("Fetch initial recently opened unpinned files data")
       frontendRecentFilesModel.fetchInitialData(RecentFileKind.RECENTLY_OPENED_UNPINNED, project)
     }
   }

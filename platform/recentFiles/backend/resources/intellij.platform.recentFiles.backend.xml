@@ -8,9 +8,4 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.recentFiles.backend.RecentFilesBackendApiProvider"/>
   </extensions>
-
-  <projectListeners>
-    <listener class="com.intellij.platform.recentFiles.backend.ChangedFilesVfsListener"
-              topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener"/>
-  </projectListeners>
 </idea-plugin>

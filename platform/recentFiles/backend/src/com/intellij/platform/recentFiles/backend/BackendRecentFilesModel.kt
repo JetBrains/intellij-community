@@ -8,10 +8,12 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,6 +50,11 @@ internal class BackendRecentFilesModel(private val project: Project, private val
     replay = bufferSize,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
+
+  init {
+    project.messageBus.connect(coroutineScope)
+      .subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, ChangedFilesVfsListener(project))
+  }
 
   fun getRecentFiles(fileKind: RecentFileKind): Flow<RecentFilesEvent> {
     LOG.debug("Switcher get recent files for kind: $fileKind")
@@ -143,6 +150,10 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   companion object {
     fun getInstance(project: Project): BackendRecentFilesModel {
       return project.service<BackendRecentFilesModel>()
+    }
+
+    suspend fun getInstanceAsync(project: Project): BackendRecentFilesModel {
+      return project.serviceAsync<BackendRecentFilesModel>()
     }
   }
 }

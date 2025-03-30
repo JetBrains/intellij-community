@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 
-private class ChangedFilesVfsListener(private val project: Project) : IdeDocumentHistoryImpl.RecentPlacesListener {
+internal class ChangedFilesVfsListener(private val project: Project) : IdeDocumentHistoryImpl.RecentPlacesListener {
   override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
     updateRecentFilesModel(isChanged, true, changePlace)
   }
