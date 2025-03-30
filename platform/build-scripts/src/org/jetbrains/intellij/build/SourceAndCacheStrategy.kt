@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import java.nio.file.*
-import java.util.*
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.EnumSet
 import java.util.zip.ZipFile
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -21,10 +25,10 @@ fun createMarkFile(file: Path): Boolean {
     Files.newByteChannel(file, TOUCH_OPTIONS)
     return true
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return false
   }
-  catch (ignore: FileAlreadyExistsException) {
+  catch (_: FileAlreadyExistsException) {
     return true
   }
 }
@@ -64,7 +68,7 @@ internal sealed interface SourceAndCacheStrategy {
   val source: Source
 
   /**
-   * The [updateAssetDigest] must be called prior to invoking this method.
+   * The [updateAssetDigest] must be called before invoking this method.
    */
   fun getHash(): Long
 
@@ -82,7 +86,7 @@ private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : S
 
   override fun updateAssetDigest(digest: HashStream64) {
     val relativePath = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
-    hash = Hashing.komihash5_0().hashCharsToLong(relativePath)
+    hash = Hashing.xxh3_64().hashCharsToLong(relativePath)
     digest.putString(relativePath)
   }
 }
@@ -106,7 +110,7 @@ private class NonMavenJarSourceAndCacheStrategy(override val source: ZipSource) 
   override fun getSize() = Files.size(source.file)
 
   override fun updateAssetDigest(digest: HashStream64) {
-    val hasher = Hashing.komihash5_0().hashStream()
+    val hasher = Hashing.xxh3_64().hashStream()
     ZipFile(source.file.toFile()).use { zip ->
       for (entry in zip.entries()) {
         hasher.putString(entry.name)
@@ -157,7 +161,7 @@ private class InMemorySourceAndCacheStrategy(override val source: InMemoryConten
 
   override fun updateAssetDigest(digest: HashStream64) {
     digest.putString(source.relativePath)
-    hash = Hashing.komihash5_0().hashBytesToLong(source.data)
+    hash = Hashing.xxh3_64().hashBytesToLong(source.data)
     digest.putLong(hash).putInt(source.data.size)
   }
 }
@@ -178,7 +182,7 @@ internal fun computeHashForModuleOutput(source: DirSource): Long {
   try {
     return Files.getLastModifiedTime(markFile).toMillis()
   }
-  catch (e: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     if (createMarkFile(markFile)) {
       return Files.getLastModifiedTime(markFile).toMillis()
     }

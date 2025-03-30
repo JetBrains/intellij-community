@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -14,6 +14,6 @@ class StripedMutex(stripeCount: Int = 64) {
   private val locks = Array(mask + 1) { Mutex() }
 
   fun getLock(string: String): Mutex {
-    return locks[Hashing.komihash5_0().hashCharsToInt(string) and mask]
+    return locks[Hashing.xxh3_64().hashBytesToInt(string.toByteArray()) and mask]
   }
 }
