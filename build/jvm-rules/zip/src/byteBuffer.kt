@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import java.lang.invoke.MethodHandles
@@ -47,6 +47,6 @@ fun unmapBuffer(buffer: ByteBuffer) {
   }
 }
 
-private fun roundUpInt(x: Int, @Suppress("SameParameterValue") blockSizePowerOf2: Int): Int {
+internal fun roundUpInt(x: Int, blockSizePowerOf2: Int): Int {
   return x + blockSizePowerOf2 - 1 and -blockSizePowerOf2
 }

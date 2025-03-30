@@ -74,8 +74,8 @@ internal class IncrementalAbiHelper(
 
   fun write(abiJar: Path) {
     val nodeIndex = nodeIndex.value
-    val packageIndexBuilder = PackageIndexBuilder(writeCrc32 = false)
-    writeZipUsingTempFile(abiJar, packageIndexBuilder.indexWriter) { stream ->
+    val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.NONE, writeCrc32 = false)
+    writeZipUsingTempFile(abiJar, packageIndexBuilder) { stream ->
       doWriteToZip(
         oldZipFile = oldAbiZipFile,
         fileToData = abiFileToData,
@@ -97,10 +97,8 @@ internal class IncrementalAbiHelper(
             "Incorrect slice for path $path, corrupted ABI?"
           }
 
-          stream.writeUndeclaredData { buffer, offsetInFile ->
-            buffer.writeBytes(oldIcData)
-            nodeIndex.updateOffset(pathHash = pathHash, offsetInFile = offsetInFile, oldNodeIndexEntry = nodeInfo)
-          }
+          val offsetInFile = stream.writeUndeclaredDataWithKnownSize(oldIcData)
+          nodeIndex.updateOffset(pathHash = pathHash, offsetInFile = offsetInFile, oldNodeIndexEntry = nodeInfo)
         },
         newDataProcessor = f@ { data, path, pathBytes ->
           // we must write kotlin_module
@@ -118,21 +116,18 @@ internal class IncrementalAbiHelper(
             skipPrivateMethodsAndFields = false,
           )
 
-          stream.writeUndeclaredData { buffer, offsetInFile ->
-            buffer.ensureWritable(data.size * 2)
-            val initialPosition = buffer.writerIndex()
-            buffer.writeIntLE(ABI_IC_NODE_FORMAT_VERSION)
+          stream.writeUndeclaredData(maxSize = data.size * 2) { buffer, offsetInFile ->
+          assert(buffer.order() == ByteOrder.LITTLE_ENDIAN)
+            val initialPosition = buffer.position()
+            buffer.putInt(ABI_IC_NODE_FORMAT_VERSION)
             try {
-              val nioBuffer = buffer.nioBuffer(buffer.writerIndex(), buffer.writableBytes()).order(ByteOrder.LITTLE_ENDIAN)
-              val position = nioBuffer.position()
-              node.write(ByteBufferGraphDataOutput(nioBuffer))
-              buffer.writerIndex(buffer.writerIndex() + (nioBuffer.position() - position))
+              node.write(ByteBufferGraphDataOutput(buffer))
             }
             catch (e: BufferOverflowException) {
               throw RuntimeException("Cannot write $path to $abiJar (buffer=$buffer, classDataSize=${data.size})", e)
             }
 
-            val size = buffer.writerIndex() - initialPosition
+            val size = buffer.position() - initialPosition
             nodeIndex.put(pathHash = pathHash, data = data, offsetInFile = offsetInFile, size = size)
             size
           }
@@ -144,14 +139,9 @@ internal class IncrementalAbiHelper(
       oldAbiZipFile?.close()
 
       // write node index after ^^^ to reduce memory usage
-      stream.write(NODE_INDEX_FILENAME_BYTES, estimatedSize = nodeIndex.serializedSize()) { buffer ->
-        val nioBuffer = buffer.nioBuffer(buffer.writerIndex(), buffer.writableBytes()).order(ByteOrder.LITTLE_ENDIAN)
-        val position = nioBuffer.position()
-        nodeIndex.write(nioBuffer)
-        buffer.writerIndex(buffer.writerIndex() + (nioBuffer.position() - position))
+      stream.writeDataWithKnownSize(NODE_INDEX_FILENAME_BYTES, size = nodeIndex.serializedSize()) { buffer ->
+        nodeIndex.write(buffer)
       }
-
-      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.NONE)
     }
   }
 
