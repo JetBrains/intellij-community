@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -114,11 +115,13 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
 }
 
 internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project): SwitcherRpcDto.File {
+  ProgressManager.checkCanceled()
   val parentPath = virtualFile.parent?.path?.toNioPathOrNull()
   val sameNameFiles = FilenameIndex.getVirtualFilesByName(virtualFile.name, GlobalSearchScope.projectScope(project))
   val result = if (parentPath == null ||
                    parentPath.nameCount == 0 ||
-                   sameNameFiles.size <= 1) {
+                   sameNameFiles.size <= 1
+  ) {
     ""
   }
   else {
@@ -126,7 +129,8 @@ internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Projec
     val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
     if (projectPath != null && FileUtil.isAncestor(projectPath, filePath, true)) {
       val locationRelativeToProjectDir = FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
-      if (locationRelativeToProjectDir != null && Path(locationRelativeToProjectDir).nameCount != 0) locationRelativeToProjectDir else filePath
+      if (locationRelativeToProjectDir != null && Path(locationRelativeToProjectDir).nameCount != 0) locationRelativeToProjectDir
+      else filePath
     }
     else if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
       val locationRelativeToUserHome = FileUtil.getLocationRelativeToUserHome(filePath)
@@ -137,6 +141,7 @@ internal fun createRecentFileViewModel(virtualFile: VirtualFile, project: Projec
     }
   }
 
+  ProgressManager.checkCanceled()
   return SwitcherRpcDto.File(
     mainText = EditorTabPresentationUtil.getCustomEditorTabTitle(project, virtualFile) ?: virtualFile.presentableName,
     statusText = FileUtil.getLocationRelativeToUserHome(virtualFile.parent?.presentableUrl ?: virtualFile.presentableUrl),

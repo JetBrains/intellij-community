@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -26,6 +28,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG by lazy { fileLogger() }
 
@@ -52,8 +55,14 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   )
 
   init {
-    project.messageBus.connect(coroutineScope)
-      .subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, ChangedFilesVfsListener(project))
+    // Workaround for `disposed temporary` state that coroutines do not respect when being launched inside project service scope.
+    // The active subscription leads to coroutine A launched during test A being executed during test B or in between (!) and producing various
+    // `already disposed` and alike exceptions. It needs to be fixed on the platform side,
+    // maybe by cancelling project service scope' children during temporary dispose phase
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      project.messageBus.connect(coroutineScope)
+        .subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, ChangedFilesVfsListener(project))
+    }
   }
 
   fun getRecentFiles(fileKind: RecentFileKind): Flow<RecentFilesEvent> {
@@ -85,11 +94,20 @@ internal class BackendRecentFilesModel(private val project: Project, private val
     }
   }
 
+  val count = AtomicInteger()
+
   fun applyBackendChanges(fileKind: RecentFileKind, file: VirtualFile, isAdded: Boolean) {
+    val n = count.incrementAndGet()
+    println("Count before: $n")
     coroutineScope.launch {
+      Thread.sleep(30)
+      println("Count after: ${n}")
       LOG.debug("Switcher emit file update initiated by backend, file: $file, isAdded: ${isAdded}, project: $project")
       val fileEvent = if (isAdded) {
-        val fileModel = readAction { createRecentFileViewModel(file, project) }
+        val fileModel = readAction {
+          println("Count readlok $n")
+          createRecentFileViewModel(file, project)
+        }
         RecentFilesEvent.ItemsAdded(listOf(fileModel))
       }
       else {
