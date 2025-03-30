@@ -6258,13 +6258,13 @@ c:com.intellij.ui.InlineBanner
 - f:addAction(java.lang.String,java.lang.Runnable):com.intellij.ui.InlineBanner
 - f:addAction(java.lang.String,javax.swing.Icon,java.lang.Runnable):com.intellij.ui.components.labels.LinkLabel
 - f:close():V
-- p:getStatus():com.intellij.ui.EditorNotificationPanel$Status
+- getStatus():com.intellij.ui.EditorNotificationPanel$Status
 - removeFromParent():V
 - f:setCloseAction(java.lang.Runnable):com.intellij.ui.InlineBanner
 - f:setGearAction(java.lang.String,java.lang.Runnable):com.intellij.ui.InlineBanner
 - f:setIcon(javax.swing.Icon):com.intellij.ui.InlineBanner
 - f:setMessage(java.lang.String):com.intellij.ui.InlineBanner
-- p:setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
+- setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
 - f:showCloseButton(Z):com.intellij.ui.InlineBanner
 a:com.intellij.ui.InlineBannerBase
 - com.intellij.ui.components.JBPanel
@@ -6273,11 +6273,11 @@ a:com.intellij.ui.InlineBannerBase
 - pf:getIconPanel():javax.swing.JPanel
 - pf:getMessage():javax.swing.JEditorPane
 - pf:getMessageText():java.lang.String
-- p:getStatus():com.intellij.ui.EditorNotificationPanel$Status
+- getStatus():com.intellij.ui.EditorNotificationPanel$Status
 - p:paintComponent(java.awt.Graphics):V
 - setBounds(I,I,I,I):V
 - pf:setMessageText(java.lang.String):V
-- p:setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
+- setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
 a:com.intellij.ui.InplaceAddEditRemovePanel
 - com.intellij.ui.AddEditRemovePanel
 - <init>(com.intellij.ui.AddEditRemovePanel$TableModel,java.util.List):V
