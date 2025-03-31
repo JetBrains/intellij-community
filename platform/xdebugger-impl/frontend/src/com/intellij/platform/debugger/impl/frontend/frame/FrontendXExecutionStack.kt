@@ -3,7 +3,6 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.frontend.evaluate.quick.childCoroutineScope
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
@@ -26,15 +25,18 @@ internal class FrontendXExecutionStack(
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
-    container.childCoroutineScope(cs, "FrontendXExecutionStack#computeStackFrames").launch {
-      val stackFramesCs = this
+    cs.launch {
       XExecutionStackApi.getInstance().computeStackFrames(id, firstFrameIndex).collect { event ->
         when (event) {
           is XStackFramesEvent.ErrorOccurred -> {
             container.errorOccurred(event.errorMessage)
           }
           is XStackFramesEvent.XNewStackFrames -> {
-            val feFrames = event.frames.map { FrontendXStackFrame(it, project, stackFramesCs) }
+            // TODO[IJPL-177087]: here we are binding FrontendXExecutionStack to the suspend context scope,
+            //  which is the safest-narrowest scope in our possession.
+            //  However, maybe it's possible to set up, for example, a scope that ends when another stack is selected from a combobox.
+            //  But it requires further investigation.
+            val feFrames = event.frames.map { FrontendXStackFrame(it, project, cs) }
             container.addStackFrames(feFrames, event.last)
           }
         }
