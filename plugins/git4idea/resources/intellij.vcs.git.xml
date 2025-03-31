@@ -762,7 +762,7 @@
                  description="Detect HEAD relative reference while pushing up to selected commit to the current branch"
                  restartRequired="false"/>
 
-    <registryKey key="git.modal.commit.deprecation.removed.in" defaultValue=""
+    <registryKey key="git.modal.commit.deprecation.removed.in" defaultValue="2025.2"
                  description="Show notification about modal commit deprecation if the version is specified"
                  restartRequired="false"/>
 
