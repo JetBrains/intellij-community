@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.idea.jvm.shared.scratch.ui
 
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 
-@InternalIgnoreDependencyViolation
 abstract class KtScratchFileEditorProvider : AsyncFileEditorProvider {
     private val KTS_SCRATCH_EDITOR_PROVIDER: String = "KtsScratchFileEditorProvider"
 
