@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.core.ui.impl;
 
-import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder;
-import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher;
-import com.intellij.debugger.streams.core.trace.TraceElement;
-import com.intellij.debugger.streams.core.trace.Value;
+import com.intellij.debugger.streams.core.trace.*;
 import com.intellij.debugger.streams.core.ui.PaintingListener;
 import com.intellij.debugger.streams.core.ui.TraceContainer;
 import com.intellij.debugger.streams.core.ui.ValuesSelectionListener;
@@ -18,8 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.util.List;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,10 +43,10 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
   private boolean myIgnoreExternalSelectionEvents = false;
 
   protected CollectionTree(@NotNull List<TraceElement> traceElements,
-                 @NotNull DebuggerCommandLauncher launcher,
+                 @NotNull GenericEvaluationContext context,
                  @NotNull CollectionTreeBuilder collectionTreeBuilder,
                  @NotNull String debugName) {
-    super(launcher.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
+    super(context.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
     myDebugName = debugName;
 
@@ -73,13 +71,14 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
   public static CollectionTree create(@Nullable Value streamResult,
                                       @NotNull List<TraceElement> traceElements,
                                       @NotNull DebuggerCommandLauncher debuggerCommandLauncher,
+                                      @NotNull GenericEvaluationContext evaluationContext,
                                       @NotNull CollectionTreeBuilder collectionTreeBuilder,
                                       @NotNull String debugName) {
     if (streamResult == null) {
-      return new IntermediateTree(traceElements, debuggerCommandLauncher, collectionTreeBuilder, debugName);
+      return new IntermediateTree(traceElements, evaluationContext, collectionTreeBuilder, debugName);
     }
     else {
-      return new TerminationTree(streamResult, traceElements, debuggerCommandLauncher, collectionTreeBuilder, debugName);
+      return new TerminationTree(streamResult, traceElements, debuggerCommandLauncher, evaluationContext, collectionTreeBuilder, debugName);
     }
   }
 
