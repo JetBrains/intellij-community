@@ -957,7 +957,10 @@ public final class JavaCompletionUtil {
       PsiClass topLevel = PsiUtil.getTopLevelClass(psiClass);
       if (topLevel != null) {
         String fqName = topLevel.getQualifiedName();
-        return fqName == null || !StringUtil.isEmpty(StringUtil.getPackageName(fqName));
+        if (fqName == null || !StringUtil.isEmpty(StringUtil.getPackageName(fqName))) return true;
+        if (!(topLevel instanceof PsiImplicitClass)) return false;
+        PsiClass contextClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
+        return contextClass != null && fqName.equals(contextClass.getQualifiedName());
       }
     }
 
