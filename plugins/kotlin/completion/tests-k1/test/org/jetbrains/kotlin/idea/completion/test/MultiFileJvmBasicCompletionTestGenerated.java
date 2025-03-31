@@ -80,6 +80,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ConstructorReferenceNotImported/");
     }
 
+    @TestMetadata("CovarianceExtensionFunction")
+    public void testCovarianceExtensionFunction() throws Exception {
+        runTest("../testData/basic/multifile/CovarianceExtensionFunction/");
+    }
+
     @TestMetadata("DoNotCompleteWithConstraints")
     public void testDoNotCompleteWithConstraints() throws Exception {
         runTest("../testData/basic/multifile/DoNotCompleteWithConstraints/");
