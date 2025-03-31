@@ -1,7 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.psi.impl
 
-import com.intellij.lang.*
+import com.intellij.lang.ASTFactory
+import com.intellij.lang.ASTNode
+import com.intellij.lang.LighterASTNode
+import com.intellij.lang.LighterLazyParseableNode
+import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -13,9 +17,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
-import com.intellij.platform.syntax.parser.*
+import com.intellij.platform.syntax.parser.OpaqueElementPolicy
+import com.intellij.platform.syntax.parser.ProductionResult
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.builder
+import com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
+import com.intellij.platform.syntax.parser.prepareProduction
 import com.intellij.platform.syntax.psi.ElementTypeConverter
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilder
@@ -28,14 +35,18 @@ import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.impl.source.tree.LazyParseableElement
 import com.intellij.psi.text.BlockSupport
 import com.intellij.psi.text.BlockSupport.ReparsedSuccessfullyException
-import com.intellij.psi.tree.*
+import com.intellij.psi.tree.CustomLanguageASTComparator
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.IFileElementType
+import com.intellij.psi.tree.ILazyParseableElementTypeBase
+import com.intellij.psi.tree.TokenSet
 import com.intellij.util.CharTable
 import com.intellij.util.ThreeState
 import com.intellij.util.TripleFunction
 import com.intellij.util.diff.FlyweightCapableTreeStructure
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.ArrayDeque
 import kotlin.math.max
 
 internal class PsiSyntaxBuilderImpl(
@@ -196,8 +207,8 @@ internal class PsiSyntaxBuilderImpl(
     @Suppress("UNCHECKED_CAST")
     val originalLexTypes = arrayOfNulls<SyntaxElementType>(tokenCount) as Array<SyntaxElementType>
     productionResult.copyTokenTypesToArray(originalLexTypes, 0, 0, tokenCount)
-    @Suppress("UNCHECKED_CAST")
-    val lexTypes = tokenConverter.convert(originalLexTypes) as Array<IElementType>
+    val lexTypes = tokenConverter.convert(originalLexTypes)
+    assertAllElementsConverted(lexTypes, originalLexTypes)
 
     val compositeOptionalData = CompositeOptionalData()
 
@@ -209,7 +220,7 @@ internal class PsiSyntaxBuilderImpl(
       whitespaceTokens = parserDefinition.whitespaceTokens,
       lexemeCount = tokenCount,
       lexTypes = originalLexTypes,
-      convertedLexTypes = lexTypes,
+      convertedLexTypes = lexTypes as Array<IElementType>,
       charTable = this.charTable,
       astFactory = parserDefinition as? ASTFactory,
       textArray = this.textArray,
@@ -275,6 +286,17 @@ internal class PsiSyntaxBuilderImpl(
     checkTreeDepth(maxDepth, rootMarker.tokenType is IFileElementType, hasCollapsedChameleons)
 
     return rootMarker
+  }
+
+  private fun assertAllElementsConverted(
+    lexTypes: Array<IElementType?>,
+    originalLexTypes: Array<SyntaxElementType>,
+  ) {
+    for (i in 0..<lexTypes.size) {
+      if (lexTypes[i] == null) {
+        throw IllegalStateException("IElementType for token ${originalLexTypes[i]} is missing. TokenConverter = $tokenConverter")
+      }
+    }
   }
 
   private fun markCollapsedNodes(
