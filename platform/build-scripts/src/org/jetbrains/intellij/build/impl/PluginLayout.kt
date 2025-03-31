@@ -4,11 +4,23 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.plus
+import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CustomAssetDescriptor
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.FileSystemException
@@ -135,17 +147,19 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     // we cannot break compatibility / risk to change the existing plugin dir name
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
-      plugin(mainModuleName, auto = true, body)
+    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName, auto = true, body)
+    }
 
     // we cannot break compatibility / risk to change the existing plugin dir name
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
-      plugin(mainModuleName, auto = true) { spec ->
+    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName, auto = true) { spec ->
         spec.directoryName = dirName
         spec.mainJarName = "${dirName}.jar"
         body(spec)
       }
+    }
 
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
@@ -182,12 +196,19 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
   }
 
-  override fun toString(): String =
-    "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
+  override fun toString(): String {
+    return "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
+  }
 
-  override fun getRelativeJarPath(moduleName: String): String =
-    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) "${convertModuleNameToFileName(moduleName)}.jar"  // must be in a separate JAR
-    else mainJarName
+  override fun getRelativeJarPath(moduleName: String): String {
+    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
+      // must be in a separate JAR
+      return "${convertModuleNameToFileName(moduleName)}.jar"
+    }
+    else {
+      return mainJarName
+    }
+  }
 
   sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
