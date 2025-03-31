@@ -50,7 +50,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.config" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
@@ -247,5 +246,8 @@
     <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.configuration" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.serialization.kotlin" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.model" level="project" />
   </component>
 </module>

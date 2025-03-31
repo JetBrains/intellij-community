@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.fus
 
-import com.intellij.internal.statistic.config.EventLogExternalSettings
+import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -10,10 +10,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.downloadAsBytes
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.createSkippableJob
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import java.util.concurrent.CancellationException
 
 /**
@@ -33,7 +33,7 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
         moduleOutputPatcher.patchModuleOutput(
           moduleName = "intellij.platform.ide.impl",
           path = "resources/event-log-metadata/$recorderId/events-scheme.json",
-          content = download(appendProductCode(metadataServiceUri(featureUsageStatisticsProperties, context), context))
+          content = download(metadataServiceUri(featureUsageStatisticsProperties, context))
         )
       }
       catch (e: CancellationException) {
@@ -63,7 +63,10 @@ private suspend fun metadataServiceUri(featureUsageStatisticsProperties: Feature
   val providerUri = appendProductCode(featureUsageStatisticsProperties.metadataProviderUri, context)
   Span.current().addEvent("parsing", Attributes.of(AttributeKey.stringKey("url"), providerUri))
   val appInfo = context.applicationInfo
-  val settings = EventLogExternalSettings.parseSendSettings(download(providerUri).inputStream().reader(),
-                                                            "${appInfo.majorVersion}.${appInfo.minorVersion}")
-  return settings.getEndpoint("metadata")!!
+  val configurationClient = ConfigurationClientFactory.create(
+    download(providerUri).inputStream().reader(),
+    context.applicationInfo.productCode,
+    "${appInfo.majorVersion}.${appInfo.minorVersion}"
+  )
+  return configurationClient.provideMetadataProductUrl()!!
 }
