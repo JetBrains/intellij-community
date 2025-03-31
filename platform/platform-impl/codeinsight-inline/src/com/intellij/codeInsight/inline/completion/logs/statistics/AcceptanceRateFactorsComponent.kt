@@ -202,13 +202,14 @@ internal class AcceptanceRateFeatures() {
   private val component
     get() = AcceptanceRateFactorsComponent.getInstance()
 
-  fun getTimeSinceLastSelection(): Long =
-    Instant.now().toEpochMilli() - component.lastSelectionTimeToday
+  val timeSinceLastSelection: Long
+    get() = Instant.now().toEpochMilli() - component.lastSelectionTimeToday
 
-  fun getTimeSinceLastShowup(): Long =
-    Instant.now().toEpochMilli() - component.lastShowUpTimeToday
+  val timeSinceLastShowup: Long
+    get() = Instant.now().toEpochMilli() - component.lastShowUpTimeToday
 
-  fun prevSelected(): Boolean = component.prevSelected
+  val prevSelected: Boolean
+    get() = component.prevSelected
 
   fun smoothedAcceptanceRate(decayDuration: Duration): Double =
     component.smoothedAcceptanceRate(decayDuration)

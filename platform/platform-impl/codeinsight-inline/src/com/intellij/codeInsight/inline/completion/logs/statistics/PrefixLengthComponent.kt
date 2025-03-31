@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs.statistics
 
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
+import com.intellij.util.xmlb.annotations.XMap
 
 /**
  * Component for storing prefix length factors with date structure using a map.
@@ -17,37 +19,29 @@ import com.intellij.openapi.components.service
   storages = [(Storage(value = UserStatisticConstants.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED))],
   reportStatistic = false
 )
-internal class PrefixLengthComponent : UserFactorComponent<PrefixLengthComponent.State>(State()) {
+internal class PrefixLengthComponent : SimplePersistentStateComponent<PrefixLengthComponent.State>(State()) {
 
-  class State : BaseState() {
-    class DailyData : BaseState() {
+  class State : UserFactorState<State.DailyData, Int>({ DailyData() }) {
+    class DailyData : BaseState(), ModifiableStorage<Int> {
+      @get:XMap
       var prefixLengths: MutableMap<Int, Int> by map()
 
-      fun increment(length: Int) {
-        prefixLengths[length] = (prefixLengths[length] ?: 0) + 1
+      override fun update(param: Int) {
+        prefixLengths[param] = (prefixLengths[param] ?: 0) + 1
         incrementModificationCount()
       }
     }
 
-    var dailyData: MutableMap<String, DailyData> by map<String, DailyData>()
-
-    fun incrementOnDay(day: String, length: Int) {
-      dailyData.getOrPut(day) { DailyData() }.increment(length)
-      incrementModificationCount()
-    }
+    @get:XMap
+    override var dailyDataMap: MutableMap<String, DailyData> by map()
   }
-
-  override fun getDailyDataMap(): MutableMap<String, *> = state.dailyData
 
   /**
    * Records that a completion was performed with a specific prefix length.
    * @param prefixLength The length of the prefix that triggered the completion
    */
   fun fireCompletionPerformed(prefixLength: Int) {
-    val oldModificationCount = state.modificationCount
-    state.incrementOnDay(getCurrentDate(), prefixLength)
-    assert(state.modificationCount > oldModificationCount) {"prefix assert ${state.modificationCount} ${oldModificationCount}"}
-    cleanupOldData()
+    state.increment(prefixLength)
   }
 
 
@@ -57,7 +51,7 @@ internal class PrefixLengthComponent : UserFactorComponent<PrefixLengthComponent
    */
   fun getCountsByPrefixLength(): Map<Int, Int> {
     val result = mutableMapOf<Int, Int>()
-    for (dailyData in state.dailyData.values) {
+    for (dailyData in state.dailyDataMap.values) {
       for ((length, count) in dailyData.prefixLengths.entries) {
         result[length] = (result[length] ?: 0) + count
       }

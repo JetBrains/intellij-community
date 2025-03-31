@@ -43,5 +43,5 @@ internal object UserStatisticConstants {
   /**
    * Standard date formatter used across components for consistent date handling.
    */
-  val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+  val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 }

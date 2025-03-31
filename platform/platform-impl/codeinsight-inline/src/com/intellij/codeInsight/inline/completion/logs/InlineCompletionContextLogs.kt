@@ -42,9 +42,9 @@ internal object InlineCompletionContextLogs {
         add(showupField with showUpCountDecayedBy(duration))
         add(acceptanceField with smoothedAcceptanceRate(duration))
       }
-      add(Logs.PREV_SELECTED with prevSelected())
-      add(Logs.TIME_SINCE_LAST_SHOWUP with getTimeSinceLastShowup())
-      add(Logs.TIME_SINCE_LAST_SELECTION with getTimeSinceLastSelection())
+      add(Logs.PREV_SELECTED with prevSelected)
+      add(Logs.TIME_SINCE_LAST_SHOWUP with timeSinceLastShowup)
+      add(Logs.TIME_SINCE_LAST_SELECTION with timeSinceLastSelection)
     }
 
     with(CompletionFinishTypeFeatures()) {

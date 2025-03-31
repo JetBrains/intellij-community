@@ -4,9 +4,11 @@ package com.intellij.codeInsight.inline.completion.logs.statistics
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.util.xmlb.annotations.XMap
 
 /**
  * Component for storing time between typing events with date structure using a map.
@@ -17,36 +19,29 @@ import com.intellij.openapi.components.service
   storages = [(Storage(value = UserStatisticConstants.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED))],
   reportStatistic = false
 )
-internal class TimeBetweenTypingComponent : UserFactorComponent<TimeBetweenTypingComponent.State>(State()) {
+internal class TimeBetweenTypingComponent : SimplePersistentStateComponent<TimeBetweenTypingComponent.State>(State()) {
 
-  class State : BaseState() {
-    class DailyData : BaseState() {
+  class State : UserFactorState<State.DailyData, Long>({ DailyData() }) {
+    class DailyData : BaseState(), ModifiableStorage<Long> {
       var count: Int by property(0)
       var totalTime: Long by property(0L)
 
-      fun increment(time: Long) {
-        totalTime += time
+      override fun update(param: Long) {
+        totalTime += param
         count += 1
       }
     }
 
-    var dailyData: MutableMap<String, DailyData> by map<String, DailyData>()
-
-    fun incrementOnDay(day: String, time: Long) {
-      dailyData.getOrPut(day) { DailyData() }.increment(time)
-      incrementModificationCount()
-    }
+    @get:XMap
+    override var dailyDataMap: MutableMap<String, DailyData> by map()
   }
-
-  override fun getDailyDataMap(): MutableMap<String, *> = state.dailyData
 
   /**
    * Records a typing event with the specified delay since the last typing event.
    * @param delayMs The delay in milliseconds since the last typing event
    */
   fun fireTypingPerformed(delayMs: Long) {
-    state.incrementOnDay(getCurrentDate(), delayMs)
-    cleanupOldData()
+    state.increment(delayMs)
   }
 
 
@@ -55,8 +50,8 @@ internal class TimeBetweenTypingComponent : UserFactorComponent<TimeBetweenTypin
    * @return The average time in milliseconds, or null if no typing events have been recorded
    */
   fun getAverageTimeBetweenTyping(): Double? {
-    val totalCount = state.dailyData.values.sumOf { it.count }
-    val totalTime = state.dailyData.values.sumOf { it.totalTime }
+    val totalCount = state.dailyDataMap.values.sumOf { it.count }
+    val totalTime = state.dailyDataMap.values.sumOf { it.totalTime }
     return safeDiv(totalTime, totalCount.toLong())
   }
 

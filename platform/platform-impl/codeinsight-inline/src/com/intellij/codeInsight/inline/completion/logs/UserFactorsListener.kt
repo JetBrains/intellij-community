@@ -20,9 +20,12 @@ internal class UserFactorsListener : InlineCompletionEventAdapter {
    */
   private var holder = Holder()
 
-  private val acceptanceRateFactors = AcceptanceRateFactorsComponent.getInstance()
-  private val completionFinishType = CompletionFinishedTypeComponent.getInstance()
-  private val prefixLength = PrefixLengthComponent.getInstance()
+  private val acceptanceRateFactors
+    get() = AcceptanceRateFactorsComponent.getInstance()
+  private val completionFinishType
+    get() = CompletionFinishedTypeComponent.getInstance()
+  private val prefixLength
+    get() = PrefixLengthComponent.getInstance()
 
   /**
    * Fields inside [Holder] are not thread-safe, please access them only on EDT.
