@@ -5,11 +5,11 @@ import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.psi.TokenType
 
 internal class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
-  override fun getElementTypeConverter(): ElementTypeConverter = CommonElementTypeConverter
-}
+  override fun getElementTypeConverter(): ElementTypeConverter = commonConverter
 
-private val CommonElementTypeConverter: ElementTypeConverter = elementTypeConverterOf(
-  SyntaxTokenTypes.ERROR_ELEMENT to TokenType.ERROR_ELEMENT,
-  SyntaxTokenTypes.WHITE_SPACE to TokenType.WHITE_SPACE,
-  SyntaxTokenTypes.BAD_CHARACTER to TokenType.BAD_CHARACTER,
-)
+  private val commonConverter: ElementTypeConverter = elementTypeConverterOf(
+    SyntaxTokenTypes.ERROR_ELEMENT to TokenType.ERROR_ELEMENT,
+    SyntaxTokenTypes.WHITE_SPACE to TokenType.WHITE_SPACE,
+    SyntaxTokenTypes.BAD_CHARACTER to TokenType.BAD_CHARACTER,
+  )
+}
