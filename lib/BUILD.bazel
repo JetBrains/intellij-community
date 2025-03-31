@@ -245,69 +245,241 @@ kt_jvm_import(
 java_library(
   name = "android-adt-ui-compose-jetbrains-compose-ui-test-junit4-desktop",
   exports = [
-    ":ui-test-junit4-desktop-1_7_0-beta02_http_import",
-    ":ui-test-desktop-1_7_0-beta02_http_import",
+    ":ui-test-junit4-desktop-1_7_1_http_import",
+    ":ui-test-desktop-1_7_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "ui-test-junit4-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-test-junit4-desktop-1_7_0-beta02_http//file"
+  name = "ui-test-junit4-desktop-1_7_1_http_import",
+  jar = "@ui-test-junit4-desktop-1_7_1_http//file"
 )
 
 kt_jvm_import(
-  name = "ui-test-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-test-desktop-1_7_0-beta02_http//file"
+  name = "ui-test-desktop-1_7_1_http_import",
+  jar = "@ui-test-desktop-1_7_1_http//file"
 )
 
 java_import(
-  name = "android-adt-ui-compose-jetbrains-skiko-awt-runtime-all-0-8-9",
-  jars = ["@skiko-awt-runtime-all-0_8_12_http//file"],
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "android-adt-ui-compose-jewel-int-ui-standalone-242",
-  jar = "@jewel-int-ui-standalone-242-0_25_0_http//file",
+  name = "android-adt-ui-compose-jetbrains-skiko-awt-runtime-all-0-8-18",
+  jars = ["@skiko-awt-runtime-all-0_8_18_http//file"],
+  srcjar = "@skiko-awt-runtime-all-0_8_18-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
-  name = "android-adt-ui-compose-jewel-markdown-ide-laf-bridge-styling-242",
+  name = "android-adt-ui-compose-jewel-ide-laf-bridge-243",
   exports = [
-    ":jewel-markdown-ide-laf-bridge-styling-242-0_25_0_http_import",
-    ":jewel-markdown-core-242-0_25_0_http_import",
-    ":commonmark-0_22_0_http_import",
-    ":jewel-ide-laf-bridge-242-0_25_0_http_import",
+    ":jewel-ide-laf-bridge-243-0_27_0_http_import",
+    ":jewel-ui-243-0_27_0_http_import",
+    ":jewel-foundation-243-0_27_0_http_import",
+    ":foundation-desktop-1_7_1_http_import",
+    ":annotation-jvm-1_8_0_http_import",
+    ":collection-jvm-1_4_0_http_import",
+    ":animation-desktop-1_7_1_http_import",
+    ":animation-core-desktop-1_7_1_http_import",
+    ":ui-geometry-desktop-1_7_1_http_import",
+    ":foundation-layout-desktop-1_7_1_http_import",
+    ":ui-desktop-1_7_1_http_import",
+    ":lifecycle-common-jvm-2_8_5_http_import",
+    ":lifecycle-runtime-desktop-2_8_5_http_import",
+    ":core-common-2_2_0_http_import",
+    ":lifecycle-viewmodel-desktop-2_8_5_http_import",
+    ":lifecycle-runtime-compose-desktop-2_8_4_http_import",
+    ":annotation-1_8_0_http_import",
+    ":runtime-saveable-desktop-1_7_1_http_import",
+    ":ui-graphics-desktop-1_7_1_http_import",
+    ":ui-unit-desktop-1_7_1_http_import",
+    ":ui-text-desktop-1_7_1_http_import",
+    ":ui-util-desktop-1_7_1_http_import",
+    ":skiko-awt-0_8_18_http_import",
+    ":components-resources-desktop-1_7_1_http_import",
+    ":runtime-desktop-1_7_1_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "jewel-markdown-ide-laf-bridge-styling-242-0_25_0_http_import",
-  jar = "@jewel-markdown-ide-laf-bridge-styling-242-0_25_0_http//file"
+  name = "jewel-ide-laf-bridge-243-0_27_0_http_import",
+  jar = "@jewel-ide-laf-bridge-243-0_27_0_http//file"
 )
 
 kt_jvm_import(
-  name = "jewel-markdown-core-242-0_25_0_http_import",
-  jar = "@jewel-markdown-core-242-0_25_0_http//file"
+  name = "jewel-ui-243-0_27_0_http_import",
+  jar = "@jewel-ui-243-0_27_0_http//file"
 )
 
 kt_jvm_import(
-  name = "commonmark-0_22_0_http_import",
-  jar = "@commonmark-0_22_0_http//file"
+  name = "jewel-foundation-243-0_27_0_http_import",
+  jar = "@jewel-foundation-243-0_27_0_http//file"
 )
 
 kt_jvm_import(
-  name = "jewel-ide-laf-bridge-242-0_25_0_http_import",
-  jar = "@jewel-ide-laf-bridge-242-0_25_0_http//file"
+  name = "foundation-desktop-1_7_1_http_import",
+  jar = "@foundation-desktop-1_7_1_http//file"
 )
 
 kt_jvm_import(
-  name = "android-adt-ui-compose-jewel-markdown-int-ui-standalone-styling-242",
-  jar = "@jewel-markdown-int-ui-standalone-styling-242-0_25_0_http//file",
+  name = "annotation-jvm-1_8_0_http_import",
+  jar = "@annotation-jvm-1_8_0_http//file"
+)
+
+kt_jvm_import(
+  name = "collection-jvm-1_4_0_http_import",
+  jar = "@collection-jvm-1_4_0_http//file"
+)
+
+kt_jvm_import(
+  name = "animation-desktop-1_7_1_http_import",
+  jar = "@animation-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "animation-core-desktop-1_7_1_http_import",
+  jar = "@animation-core-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-geometry-desktop-1_7_1_http_import",
+  jar = "@ui-geometry-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "foundation-layout-desktop-1_7_1_http_import",
+  jar = "@foundation-layout-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-desktop-1_7_1_http_import",
+  jar = "@ui-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-common-jvm-2_8_5_http_import",
+  jar = "@lifecycle-common-jvm-2_8_5_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-runtime-desktop-2_8_5_http_import",
+  jar = "@lifecycle-runtime-desktop-2_8_5_http//file"
+)
+
+kt_jvm_import(
+  name = "core-common-2_2_0_http_import",
+  jar = "@core-common-2_2_0_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-viewmodel-desktop-2_8_5_http_import",
+  jar = "@lifecycle-viewmodel-desktop-2_8_5_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-runtime-compose-desktop-2_8_4_http_import",
+  jar = "@lifecycle-runtime-compose-desktop-2_8_4_http//file"
+)
+
+kt_jvm_import(
+  name = "annotation-1_8_0_http_import",
+  jar = "@annotation-1_8_0_http//file"
+)
+
+kt_jvm_import(
+  name = "runtime-saveable-desktop-1_7_1_http_import",
+  jar = "@runtime-saveable-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-graphics-desktop-1_7_1_http_import",
+  jar = "@ui-graphics-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-unit-desktop-1_7_1_http_import",
+  jar = "@ui-unit-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-text-desktop-1_7_1_http_import",
+  jar = "@ui-text-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-util-desktop-1_7_1_http_import",
+  jar = "@ui-util-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "skiko-awt-0_8_18_http_import",
+  jar = "@skiko-awt-0_8_18_http//file"
+)
+
+kt_jvm_import(
+  name = "components-resources-desktop-1_7_1_http_import",
+  jar = "@components-resources-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "runtime-desktop-1_7_1_http_import",
+  jar = "@runtime-desktop-1_7_1_http//file"
+)
+
+kt_jvm_import(
+  name = "android-adt-ui-compose-jewel-int-ui-standalone-243",
+  jar = "@jewel-int-ui-standalone-243-0_27_0_http//file",
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "android-adt-ui-compose-jewel-markdown-ide-laf-bridge-styling-243",
+  exports = [
+    ":jewel-markdown-ide-laf-bridge-styling-242-0_27_0_http_import",
+    ":jewel-markdown-core-242-0_27_0_http_import",
+    ":commonmark-0_24_0_http_import",
+    ":jewel-ide-laf-bridge-242-0_27_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "jewel-markdown-ide-laf-bridge-styling-242-0_27_0_http_import",
+  jar = "@jewel-markdown-ide-laf-bridge-styling-242-0_27_0_http//file"
+)
+
+kt_jvm_import(
+  name = "jewel-markdown-core-242-0_27_0_http_import",
+  jar = "@jewel-markdown-core-242-0_27_0_http//file"
+)
+
+kt_jvm_import(
+  name = "commonmark-0_24_0_http_import",
+  jar = "@commonmark-0_24_0_http//file"
+)
+
+kt_jvm_import(
+  name = "jewel-ide-laf-bridge-242-0_27_0_http_import",
+  jar = "@jewel-ide-laf-bridge-242-0_27_0_http//file"
+)
+
+java_library(
+  name = "android-adt-ui-compose-jewel-markdown-int-ui-standalone-styling-243",
+  exports = [
+    ":jewel-markdown-int-ui-standalone-styling-243-0_27_0_http_import",
+    ":jewel-markdown-core-243-0_27_0_http_import",
+    ":commonmark-0_24_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "jewel-markdown-int-ui-standalone-styling-243-0_27_0_http_import",
+  jar = "@jewel-markdown-int-ui-standalone-styling-243-0_27_0_http//file"
+)
+
+kt_jvm_import(
+  name = "jewel-markdown-core-243-0_27_0_http_import",
+  jar = "@jewel-markdown-core-243-0_27_0_http//file"
 )
 
 java_import(
@@ -325,24 +497,6 @@ java_import(
 java_import(
   name = "android-app-inspection-inspectors-network-model-brotli-dec",
   jars = ["@dec-0_1_2_http//file"],
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "android-core-gradle-libandroid-core-proto",
-  jars = ["@libandroid-core-proto-232_1_23_0_http//file"],
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "android-core-testartifacts-libstudio-android-test-plugin-host-retention-proto",
-  jars = ["@libstudio_android-test-plugin-host-retention-proto-232_1_23_0_http//file"],
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "android-core-tests-libandroid-core-proto-test",
-  jars = ["@libandroid-core-proto-test-232_1_23_0_http//file"],
   visibility = ["//visibility:public"]
 )
 
@@ -392,12 +546,6 @@ java_import(
 java_import(
   name = "android-profilers-ui-traceprocessor-protos",
   jars = ["@traceprocessor_protos-232_1_23_0_http//file"],
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "android-project_system-gradle-psd-tests-liblint-checks-proto-lib",
-  jars = ["@liblint-checks-proto_lib-232_1_23_0_http//file"],
   visibility = ["//visibility:public"]
 )
 
@@ -811,22 +959,15 @@ java_library(
 
 java_import(
   name = "commons-codec",
-  jars = ["@commons-codec-1_17_1_http//file"],
-  srcjar = "@commons-codec-1_17_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "commons-codec-provided",
-  exports = [":commons-codec"],
-  neverlink = True,
+  jars = ["@commons-codec-1_18_0_http//file"],
+  srcjar = "@commons-codec-1_18_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_import(
   name = "commons-compress",
-  jars = ["@commons-compress-1_26_1_http//file"],
-  srcjar = "@commons-compress-1_26_1-sources_http//file",
+  jars = ["@commons-compress-1_27_1_http//file"],
+  srcjar = "@commons-compress-1_27_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -839,8 +980,8 @@ java_import(
 
 java_import(
   name = "commons-io",
-  jars = ["@commons-io-2_16_1_http//file"],
-  srcjar = "@commons-io-2_16_1-sources_http//file",
+  jars = ["@commons-io-2_18_0_http//file"],
+  srcjar = "@commons-io-2_18_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2504,6 +2645,13 @@ kt_jvm_import(
 )
 
 java_import(
+  name = "jet-sign",
+  jars = ["@jet-sign-45_64_http//file"],
+  srcjar = "@jet-sign-45_64-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
   name = "jet_check",
   jars = ["@jetCheck-0_2_2_http//file"],
   srcjar = "@jetCheck-0_2_2-sources_http//file",
@@ -2689,158 +2837,6 @@ kt_jvm_import(
   jar = "@ml-tools-suspendable-76_http//file",
   srcjar = "@ml-tools-suspendable-76-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "jewel-ide-laf-bridge",
-  exports = [
-    ":jewel-ide-laf-bridge-242-0_25_0_http_import",
-    ":jewel-ui-242-0_25_0_http_import",
-    ":jewel-foundation-242-0_25_0_http_import",
-    ":foundation-desktop-1_7_0-beta02_http_import",
-    ":annotation-jvm-1_8_0_http_import",
-    ":collection-jvm-1_4_0_http_import",
-    ":animation-desktop-1_7_0-beta02_http_import",
-    ":animation-core-desktop-1_7_0-beta02_http_import",
-    ":ui-geometry-desktop-1_7_0-beta02_http_import",
-    ":foundation-layout-desktop-1_7_0-beta02_http_import",
-    ":ui-desktop-1_7_0-beta02_http_import",
-    ":lifecycle-common-jvm-2_8_4_http_import",
-    ":lifecycle-runtime-desktop-2_8_4_http_import",
-    ":core-common-2_2_0_http_import",
-    ":lifecycle-viewmodel-desktop-2_8_4_http_import",
-    ":lifecycle-runtime-compose-desktop-2_8_2_http_import",
-    ":annotation-1_8_0_http_import",
-    ":runtime-saveable-desktop-1_7_0-beta02_http_import",
-    ":ui-graphics-desktop-1_7_0-beta02_http_import",
-    ":ui-unit-desktop-1_7_0-beta02_http_import",
-    ":ui-text-desktop-1_7_0-beta02_http_import",
-    ":ui-util-desktop-1_7_0-beta02_http_import",
-    ":skiko-awt-0_8_12_http_import",
-    ":components-resources-desktop-1_7_0-beta02_http_import",
-    ":runtime-desktop-1_7_0-beta02_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "jewel-ui-242-0_25_0_http_import",
-  jar = "@jewel-ui-242-0_25_0_http//file"
-)
-
-kt_jvm_import(
-  name = "jewel-foundation-242-0_25_0_http_import",
-  jar = "@jewel-foundation-242-0_25_0_http//file"
-)
-
-kt_jvm_import(
-  name = "foundation-desktop-1_7_0-beta02_http_import",
-  jar = "@foundation-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "annotation-jvm-1_8_0_http_import",
-  jar = "@annotation-jvm-1_8_0_http//file"
-)
-
-kt_jvm_import(
-  name = "collection-jvm-1_4_0_http_import",
-  jar = "@collection-jvm-1_4_0_http//file"
-)
-
-kt_jvm_import(
-  name = "animation-desktop-1_7_0-beta02_http_import",
-  jar = "@animation-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "animation-core-desktop-1_7_0-beta02_http_import",
-  jar = "@animation-core-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-geometry-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-geometry-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "foundation-layout-desktop-1_7_0-beta02_http_import",
-  jar = "@foundation-layout-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-common-jvm-2_8_4_http_import",
-  jar = "@lifecycle-common-jvm-2_8_4_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-runtime-desktop-2_8_4_http_import",
-  jar = "@lifecycle-runtime-desktop-2_8_4_http//file"
-)
-
-kt_jvm_import(
-  name = "core-common-2_2_0_http_import",
-  jar = "@core-common-2_2_0_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-viewmodel-desktop-2_8_4_http_import",
-  jar = "@lifecycle-viewmodel-desktop-2_8_4_http//file"
-)
-
-kt_jvm_import(
-  name = "lifecycle-runtime-compose-desktop-2_8_2_http_import",
-  jar = "@lifecycle-runtime-compose-desktop-2_8_2_http//file"
-)
-
-kt_jvm_import(
-  name = "annotation-1_8_0_http_import",
-  jar = "@annotation-1_8_0_http//file"
-)
-
-kt_jvm_import(
-  name = "runtime-saveable-desktop-1_7_0-beta02_http_import",
-  jar = "@runtime-saveable-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-graphics-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-graphics-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-unit-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-unit-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-text-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-text-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "ui-util-desktop-1_7_0-beta02_http_import",
-  jar = "@ui-util-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "skiko-awt-0_8_12_http_import",
-  jar = "@skiko-awt-0_8_12_http//file"
-)
-
-kt_jvm_import(
-  name = "components-resources-desktop-1_7_0-beta02_http_import",
-  jar = "@components-resources-desktop-1_7_0-beta02_http//file"
-)
-
-kt_jvm_import(
-  name = "runtime-desktop-1_7_0-beta02_http_import",
-  jar = "@runtime-desktop-1_7_0-beta02_http//file"
 )
 
 java_import(
@@ -4397,7 +4393,7 @@ java_import(
 
 java_import(
   name = "layoutlib",
-  jars = ["@layoutlib-15_0_3_http//file"],
+  jars = ["@layoutlib-15_1_2_http//file"],
   visibility = ["//visibility:public"]
 )
 
@@ -8031,12 +8027,6 @@ java_import(
 )
 
 java_import(
-  name = "commonmark-0_24_0_http_import",
-  jars = ["@commonmark-0_24_0_http//file"],
-  srcjar = "@commonmark-0_24_0-sources_http//file"
-)
-
-java_import(
   name = "autolink-0_11_0_http_import",
   jars = ["@autolink-0_11_0_http//file"],
   srcjar = "@autolink-0_11_0-sources_http//file"
@@ -8665,8 +8655,8 @@ java_import(
 
 kt_jvm_import(
   name = "studio-platform",
-  jar = "@studio-platform-2024_2_2-canary5-202_http//file",
-  srcjar = "@studio-platform-2024_2_2-canary5-202-sources_http//file",
+  jar = "@studio-platform-2024_3_2-alpha05-220_http//file",
+  srcjar = "@studio-platform-2024_3_2-alpha05-220-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8679,8 +8669,8 @@ java_library(
 
 kt_jvm_import(
   name = "studio-test-platform",
-  jar = "@studio-test-platform-2024_2_2-canary5-202_http//file",
-  srcjar = "@studio-test-platform-2024_2_2-canary5-202-sources_http//file",
+  jar = "@studio-test-platform-2024_3_2-alpha05-220_http//file",
+  srcjar = "@studio-test-platform-2024_3_2-alpha05-220-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

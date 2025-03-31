@@ -1,27 +1,27 @@
-### auto-generated section `build intellij.editorconfig` start
+### auto-generated section `build intellij.editorconfig.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "editorconfig_resources",
+  name = "editorconfig-plugin_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_resources(
-  name = "editorconfig_resources_1",
+  name = "editorconfig-plugin_resources_1",
   files = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
 jvm_resources(
-  name = "editorconfig_test_resources",
+  name = "editorconfig-plugin_test_resources",
   files = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
 jvm_library(
-  name = "editorconfig",
-  module_name = "intellij.editorconfig",
+  name = "editorconfig-plugin",
+  module_name = "intellij.editorconfig.plugin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
@@ -46,16 +46,16 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
   ],
   runtime_deps = [
-    ":editorconfig_resources",
-    ":editorconfig_resources_1",
+    ":editorconfig-plugin_resources",
+    ":editorconfig-plugin_resources_1",
   ]
 )
 
 jvm_library(
-  name = "editorconfig_test_lib",
+  name = "editorconfig-plugin_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":editorconfig"],
+  associates = [":editorconfig-plugin"],
   deps = [
     "//platform/core-api:core",
     "//platform/platform-api:ide",
@@ -85,17 +85,17 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
   ],
   runtime_deps = [
-    ":editorconfig_resources",
-    ":editorconfig_resources_1",
-    ":editorconfig_test_resources",
+    ":editorconfig-plugin_resources",
+    ":editorconfig-plugin_resources_1",
+    ":editorconfig-plugin_test_resources",
   ]
 )
 
 jvm_test(
-  name = "editorconfig_test",
-  runtime_deps = [":editorconfig_test_lib"]
+  name = "editorconfig-plugin_test",
+  runtime_deps = [":editorconfig-plugin_test_lib"]
 )
-### auto-generated section `build intellij.editorconfig` end
+### auto-generated section `build intellij.editorconfig.plugin` end
 
 ### auto-generated section `build intellij.editorconfig.plugin.main` start
 load("@rules_java//java:defs.bzl", "java_library")
@@ -103,6 +103,6 @@ load("@rules_java//java:defs.bzl", "java_library")
 java_library(
   name = "editorconfig-plugin-main",
   visibility = ["//visibility:public"],
-  runtime_deps = ["//plugins/editorconfig"]
+  runtime_deps = ["//plugins/editorconfig:editorconfig-plugin"]
 )
 ### auto-generated section `build intellij.editorconfig.plugin.main` end

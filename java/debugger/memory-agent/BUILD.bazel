@@ -9,7 +9,6 @@ jvm_library(
   deps = [
     "//platform/util",
     "@lib//:java-debugger-memory-agent-debugger-memory-agent",
-    "@lib//:commons-io",
     "@lib//:kotlin-stdlib",
   ]
 )
