@@ -5441,6 +5441,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/brokenPsi.kt");
                     }
 
+                    @TestMetadata("brokenReceiver.kt")
+                    public void testBrokenReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/brokenReceiver.kt");
+                    }
+
                     @TestMetadata("explicitVsImplicitReceiver.kt")
                     public void testExplicitVsImplicitReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/explicitVsImplicitReceiver.kt");
@@ -7299,6 +7304,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
 
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("brokenReceiver.kt")
+                    public void testBrokenReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/brokenReceiver.kt");
                     }
 
                     @TestMetadata("extensionRefInImport.kt")

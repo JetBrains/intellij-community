@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQua
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -65,7 +66,7 @@ object CreateKotlinCallableActionTextBuilder {
             val receiverTypeText: String
 
             val renderer = if (request.isExtension) RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT else RAW_RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT
-            if (request.receiverExpression == null) {
+            if (request.receiverExpression == null || request.receiverExpression.expressionType is KaErrorType) {
                 if (request.receiverType == null) return "" to ""
                 receiverSymbol = null
                 receiverTypeText = request.receiverType.render(renderer, Variance.INVARIANT)
