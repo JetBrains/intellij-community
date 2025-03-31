@@ -258,13 +258,19 @@ class MavenCentralPublication(
             it.post("{}".toRequestBody("application/json".toMediaType()))
           }, action = {
             val response = it.body.string()
+            context.messages.info(response)
             span.addEvent(response)
             parseDeploymentState(response)
           })
           when {
-            deploymentState == DeploymentState.FAILED -> error("$deploymentId status is $deploymentState")
-            deploymentState == DeploymentState.VALIDATED && type == PublishingType.USER_MANAGED ||
-            deploymentState == DeploymentState.PUBLISHED && type == PublishingType.AUTOMATIC -> break
+            deploymentState == DeploymentState.FAILED -> context.messages.error("$deploymentId status is $deploymentState")
+            deploymentState == DeploymentState.VALIDATED && type == PublishingType.USER_MANAGED -> break
+            deploymentState == DeploymentState.PUBLISHED && type == PublishingType.AUTOMATIC -> {
+              artifacts.forEach {
+                context.messages.info("Expected to be available in https://repo1.maven.org/maven2/${it.coordinates.directoryPath} shortly")
+              }
+              break
+            }
             else -> delay(TimeUnit.SECONDS.toMillis(15))
           }
         }
