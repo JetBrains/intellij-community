@@ -320,7 +320,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   private final class InspectionResultSink extends DefaultMatchResultSink {
     private final Configuration myConfiguration;
-    private final ProblemsHolder myHolder;
+    private ProblemsHolder myHolder;
 
     private final Set<? super SmartPsiElementPointer<?>> duplicates;
 
@@ -358,6 +358,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     public void matchingFinished() {
       duplicates.clear();
+      myHolder = null; // to avoid leaking holder with InspectionProblemHolder retaining LocalInspectionPass
     }
   }
 
