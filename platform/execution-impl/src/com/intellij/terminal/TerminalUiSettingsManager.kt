@@ -24,8 +24,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @ApiStatus.Internal
 interface TerminalUiSettingsListener {
-  fun cursorChanged()
-  fun fontChanged()
+  fun cursorChanged() {}
+  fun fontChanged() {}
 }
 
 @State(name = "TerminalUiSettingsManager", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
