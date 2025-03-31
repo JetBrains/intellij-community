@@ -43,7 +43,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     val busConnection = project.messageBus.simpleConnect()
     val spanTag = extractCommandArgument(PREFIX).parameter("spanTag")?.let { "_$it"} ?: ""
     val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME + spanTag).setParent(PerformanceTestSpan.getContext())
-    val spanRef = AtomicReference<Span?>()
+    var spanRef:Span? = null
     var scopeRef: Scope? = null
     val editor = FileEditorManager.getInstance(project).selectedTextEditor
     suspendCancellableCoroutine { continuation ->
@@ -54,13 +54,21 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
           if (fileEditors.find { editor -> editor.file.name == selectedPsiFile.name } == null) {
             return
           }
-          spanRef.updateAndGet { prevSpan ->
-            prevSpan ?: span.startSpan().also { scopeRef = it.makeCurrent() }
+          synchronized(span) {
+            if (spanRef == null) {
+              spanRef = span.startSpan()
+              scopeRef = spanRef.makeCurrent()
+            }
           }
         }
 
         override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
-          val currentSpan = spanRef.get()
+          val currentSpan: Span?
+          val currentScope: Scope?
+          synchronized(span) {
+            currentSpan = spanRef
+            currentScope = scopeRef
+          }
           if (currentSpan == null) {
             return
           }
@@ -93,7 +101,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
           currentSpan.setAttribute("filePath", psiFile.virtualFile.path)
           currentSpan.setAttribute("linesCount", editor!!.getDocument().getLineCount().toLong())
           currentSpan.end()
-          scopeRef!!.close()
+          currentScope!!.close()
           busConnection.disconnect()
           context.message(finishMessage.toString(), line)
           continuation.resume(Unit)
