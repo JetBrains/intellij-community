@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
 import com.intellij.collaboration.async.cancelledWith
@@ -37,6 +37,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SmartExpander
 import com.intellij.ui.TreeActions
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -50,6 +51,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -88,6 +90,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Cursor
+import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
@@ -211,6 +214,19 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     val searchBorder = mySpeedSearchPatternField.border
     mySpeedSearchPatternField.border = null
 
+    val topPanel = BorderLayoutPanel().apply {
+      val dragArea = simplePanel().apply {
+        preferredSize = Dimension(0, 8)
+        background = JBUI.CurrentTheme.Popup.BACKGROUND
+        isOpaque = true
+      }
+      addToCenter(dragArea)
+      background = JBUI.CurrentTheme.Popup.BACKGROUND
+      border = JBUI.Borders.empty(2, 0)
+
+      WindowMoveListener(this).installTo(this)
+    }
+
     val panel = BorderLayoutPanel()
       .addToCenter(mySpeedSearchPatternField)
       .apply {
@@ -221,7 +237,14 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
         background = JBUI.CurrentTheme.Popup.BACKGROUND
       }
 
-    return panel
+    val headerComponent = BorderLayoutPanel()
+      .addToTop(topPanel)
+      .addToCenter(panel)
+      .apply {
+        background = JBUI.CurrentTheme.Popup.BACKGROUND
+      }
+
+    return headerComponent
   }
 
   protected open fun getOldUiHeaderComponent(c: JComponent?): JComponent? = c
