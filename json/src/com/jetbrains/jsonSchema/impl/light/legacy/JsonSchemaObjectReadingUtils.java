@@ -354,7 +354,7 @@ public final class JsonSchemaObjectReadingUtils {
 
   public static boolean matchPattern(final @NotNull Pattern pattern, final @NotNull String s) {
     try {
-      return pattern.matcher(StringUtil.newBombedCharSequence(s, 300)).matches();
+      return pattern.matcher(StringUtil.newBombedCharSequence(s, 300)).find();
     }
     catch (ProcessCanceledException e) {
       // something wrong with the pattern, infinite cycle?
@@ -371,17 +371,10 @@ public final class JsonSchemaObjectReadingUtils {
 
   public static Pair<Pattern, String> compilePattern(final @NotNull String pattern) {
     try {
-      return Pair.create(Pattern.compile(adaptSchemaPattern(pattern)), null);
+      return Pair.create(Pattern.compile(pattern), null);
     }
     catch (PatternSyntaxException e) {
       return Pair.create(null, e.getMessage());
     }
-  }
-
-  private static @NotNull String adaptSchemaPattern(String pattern) {
-    pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
-    pattern = pattern.endsWith("+") || pattern.endsWith("*") || pattern.endsWith("$") ? pattern : (pattern + ".*");
-    pattern = pattern.replace("\\\\", "\\");
-    return pattern;
   }
 }
