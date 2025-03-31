@@ -12,7 +12,7 @@
 - sf:elementTypeConverterOf(kotlin.Pair[]):com.intellij.platform.syntax.psi.ElementTypeConverter
 *f:com.intellij.platform.syntax.psi.ElementTypeConverters
 - sf:INSTANCE:com.intellij.platform.syntax.psi.ElementTypeConverters
-- f:getConverter(com.intellij.lang.Language):com.intellij.platform.syntax.psi.ElementTypeConverter
+- sf:getConverter(com.intellij.lang.Language):com.intellij.platform.syntax.psi.ElementTypeConverter
 *:com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 - a:getCommentTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
 - a:getLexer():com.intellij.platform.syntax.lexer.Lexer

@@ -28,9 +28,10 @@ object ElementTypeConverters {
     }, false, null)
   }
 
+  @JvmStatic
   fun getConverter(
     language: Language,
-  ): ElementTypeConverter? = cache.getOrPut(language) {
+  ): ElementTypeConverter = cache.getOrPut(language) {
     inferConverter(language) ?: run {
       logger<ElementTypeConverters>().error("No ElementTypeConverter for language $language")
       elementTypeConverterOf()
