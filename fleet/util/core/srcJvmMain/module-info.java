@@ -22,6 +22,6 @@ module fleet.util.core {
   requires fleet.reporting.shared;
   requires kotlinx.datetime;
   requires fleet.reporting.api;
-  requires fleet.util.multiplatform;
+  requires static fleet.util.multiplatform;
   requires kotlin.codepoints.jvm;
 }

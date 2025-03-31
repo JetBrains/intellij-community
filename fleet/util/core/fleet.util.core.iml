@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="fleet.multiplatform.shims" exported="" />
     <orderEntry type="module" module-name="fleet.fastutil" exported="" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
-    <orderEntry type="module" module-name="fleet.util.multiplatform" />
+    <orderEntry type="module" module-name="fleet.util.multiplatform" scope="PROVIDED" />
     <orderEntry type="library" name="de.cketti.unicode.kotlin.codepoints.jvm" level="project" />
   </component>
 </module>

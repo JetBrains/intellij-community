@@ -82,7 +82,10 @@ kotlin {
     implementation(project(":reporting-shared"))
     api(project(":multiplatform-shims"))
     api(project(":fastutil"))
-    implementation(project(":util-multiplatform"))
+    compileOnly(project(":util-multiplatform"))
+  }
+  sourceSets.wasmJsMain.dependencies {
+    api(project(":util-multiplatform"))
   }
   // KOTLIN__MARKER_END
 }
