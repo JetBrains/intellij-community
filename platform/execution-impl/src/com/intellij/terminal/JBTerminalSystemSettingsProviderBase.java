@@ -46,20 +46,34 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     TextAttributesKey.createTextAttributesKey("TERMINAL_COMMAND_TO_RUN_USING_IDE");
 
   private final TerminalUiSettingsManager myUiSettingsManager;
+  private final TerminalFontSizeProvider myFontSizeProvider = createFontSizeProvider();
 
   public JBTerminalSystemSettingsProviderBase() {
     myUiSettingsManager = TerminalUiSettingsManager.getInstance();
   }
 
   @ApiStatus.Internal
-  @NotNull
-  protected Disposable getDisposable() {
-    return myUiSettingsManager;
+  protected @NotNull TerminalFontSizeProvider createFontSizeProvider() {
+    return new TerminalConsoleFontSizeProvider();
   }
 
   @ApiStatus.Internal
   public void addUiSettingsListener(@NotNull Disposable parentDisposable, @NotNull TerminalUiSettingsListener listener) {
-    myUiSettingsManager.addListener(parentDisposable, listener);
+    myUiSettingsManager.addListener(parentDisposable, new TerminalUiSettingsListener() {
+      @Override
+      public void cursorChanged() {
+        listener.cursorChanged();
+      }
+    });
+
+    // Do not get font change notifications from TerminalUiSettingsManager directly.
+    // Use `myFontSettingsProvider` to make it possible to substitute another implementation in descendants.
+    myFontSizeProvider.addListener(parentDisposable, new TerminalFontSizeProvider.Listener() {
+      @Override
+      public void fontChanged() {
+        listener.fontChanged();
+      }
+    });
   }
 
   @NotNull EditorColorsScheme getColorsScheme() {
@@ -249,7 +263,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public float getTerminalFontSize() {
-    return (float)myUiSettingsManager.getFontSize();
+    return (float)myFontSizeProvider.getFontSize();
   }
 
   /**
@@ -258,17 +272,17 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
    */
   @ApiStatus.Internal
   public float getTerminalFontSize2D() {
-    return myUiSettingsManager.getFontSize2D();
+    return myFontSizeProvider.getFontSize2D();
   }
 
   @ApiStatus.Internal
   public void setTerminalFontSize(float fontSize) {
-    myUiSettingsManager.setFontSize(fontSize);
+    myFontSizeProvider.setFontSize(fontSize);
   }
 
   @ApiStatus.Internal
   public void resetTerminalFontSize() {
-    myUiSettingsManager.resetFontSize();
+    myFontSizeProvider.resetFontSize();
   }
 
   @Override
