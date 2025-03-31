@@ -4,9 +4,9 @@ import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.rdTarget
+import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.withRetries
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -18,6 +18,9 @@ fun Finder.bookmarksToolWindow(action: BookmarksToolWindowUiComponent.() -> Unit
 class BookmarksToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
 
   val bookmarksTree by lazy {
+    if (isRemoteIdeMode) {
+      wait(1.seconds) // wait till tree initialization
+    }
     tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
   }
 
