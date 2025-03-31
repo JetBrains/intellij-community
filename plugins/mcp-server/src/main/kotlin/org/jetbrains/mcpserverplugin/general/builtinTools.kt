@@ -7,38 +7,32 @@ import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.application.*
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.OrderEnumerator
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.Processor
-import com.intellij.util.application
-import com.intellij.util.io.createParentDirectories
 import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.pathString
 
 fun Path.resolveRel(pathInProject: String): Path {
     return when (pathInProject) {
@@ -196,23 +190,20 @@ class ListAvailableActionsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<N
         }
 
         val actionIds = actionManager.getActionIdList("")
-        val availableActions = actionIds.mapNotNull { actionId ->
-            val action = actionManager.getAction(actionId) ?: return@mapNotNull null
-            val presentation = action.templatePresentation.clone()
-
-            val event = AnActionEvent.createFromAnAction(action, null, "", dataContext)
-
-            invokeAndWaitIfNeeded {
-                runCatching { action.update(event) }
-            }
-
-            if (event.presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
-                """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
-            } else {
-                null
-            }
+        val presentationFactory = PresentationFactory()
+        val visibleActions = invokeAndWaitIfNeeded {
+            Utils.expandActionGroup(
+                DefaultActionGroup(
+                    actionIds.mapNotNull { actionManager.getAction(it) }
+                ), presentationFactory, dataContext, "", ActionUiKind.NONE)
         }
-
+        val availableActions = visibleActions.mapNotNull {
+            val presentation = presentationFactory.getPresentation(it)
+            val actionId = actionManager.getId(it)
+            if (presentation.isEnabledAndVisible && !presentation.text.isNullOrBlank()) {
+                """{"id": "$actionId", "text": "${presentation.text.replace("\"", "\\\"")}"}"""
+            } else null
+        }
         return Response(availableActions.joinToString(",\n", prefix = "[", postfix = "]"))
     }
 }
