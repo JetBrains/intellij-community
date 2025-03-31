@@ -38,6 +38,89 @@ sealed class Op {
   }
 }
 
+class OpsIterator(
+  private val owner: Any?,
+  private var cursor: Rope.Cursor<Array<Op>>?,
+  private val size: Int,
+  private var index: Int = 0,
+  private var elementIndex: Int = 0
+): Iterator<Op> {
+  sealed interface Pos {
+    object Begin: Pos
+    object End: Pos
+    data class LenBefore(val offset: Int): Pos
+    data class LenAfter(val offset: Int): Pos
+  }
+
+  override fun next(): Op {
+    require(hasNext())
+
+    if (elementIndex >= cursor!!.element.size) {
+      cursor = cursor!!.next(owner)
+      elementIndex = 0
+    }
+    val op = cursor!!.element[elementIndex]
+    ++elementIndex
+    ++index
+    return op
+  }
+
+  override fun hasNext(): Boolean {
+    return cursor != null && index < size
+  }
+
+  fun prev(): Op {
+    require(hasPrev())
+
+    if (elementIndex == 0) {
+      cursor = cursor!!.prev(owner)
+      elementIndex = cursor!!.element.size
+    }
+    --elementIndex
+    --index
+    return cursor!!.element[elementIndex]
+  }
+
+  fun hasPrev(): Boolean {
+    return index > 0
+  }
+
+  fun scanTo(pos: Pos) {
+    when (pos) {
+      Pos.Begin -> {
+        cursor = cursor!!.scan(owner, OperationMonoid.Count, 0)
+        index = 0
+        elementIndex = 0
+      }
+      Pos.End -> {
+        cursor = cursor!!.scan(owner, OperationMonoid.Count, size)
+        index = size
+        elementIndex = MAX_LEAF_SIZE
+      }
+      is Pos.LenBefore -> {
+        val c = cursor!!
+        cursor = c.scan(owner, OperationMonoid.LenBefore, pos.offset)
+        elementIndex = 0
+        index = c.size(OperationMonoid.Count)
+        while (elementIndex < c.element.size && c.element[elementIndex].lenBefore <= pos.offset) {
+          ++elementIndex
+          ++index
+        }
+      }
+      is Pos.LenAfter -> {
+        val c = cursor!!
+        cursor = c.scan(owner, OperationMonoid.LenAfter, pos.offset)
+        elementIndex = 0
+        index = c.size(OperationMonoid.Count)
+        while (elementIndex < c.element.size && c.element[elementIndex].lenAfter <= pos.offset) {
+          ++elementIndex
+          ++index
+        }
+      }
+    }
+  }
+}
+
 /**
  * After introducing Replace operation there still exists two asymmetries:
  * 1. Insert operations at the same place do not commute, so that {transform} function is not commutative
@@ -52,13 +135,20 @@ sealed class Op {
 class Operation(internal val rope: OpsRope) {
   constructor(ops: List<Op>): this(OperationMonoid.ropeOf(listOf(ops.toTypedArray())))
 
-  val ops: Sequence<Op> get() = sequence {
+  val ops: Sequence<Op> get() = sequence { yieldAll(begin()) }
+
+  fun begin(): OpsIterator {
     val owner = Any()
-    var cursor: Rope.Cursor<Array<Op>>? = rope.cursor(owner)
-    while (cursor != null) {
-      yieldAll(cursor.element.iterator())
-      cursor = cursor.next(owner)
-    }
+    val iterator = OpsIterator(owner, rope.cursor(owner), size)
+    iterator.scanTo(OpsIterator.Pos.Begin)
+    return iterator
+  }
+
+  fun end(): OpsIterator {
+    val owner = Any()
+    val iterator = OpsIterator(owner, rope.cursor(owner), size)
+    iterator.scanTo(OpsIterator.Pos.End)
+    return iterator
   }
 
   val size: Int

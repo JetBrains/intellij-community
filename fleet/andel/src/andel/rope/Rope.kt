@@ -94,7 +94,7 @@ class Rope<T> internal constructor(
 
     /**
      * Returns a pointer to the next chunk.
-     * If [owner] is the same as before, the previous Cursur is recycled and it's internals are reused for creating a new one.
+     * If [owner] is the same as before, the previous Cursor is recycled and it's internals are reused for creating a new one.
      * */
     fun next(owner: Any?): Cursor<T>? =
       zipper.nextLeaf(owner, monoid)?.let { leaf ->
@@ -102,8 +102,17 @@ class Rope<T> internal constructor(
       }
 
     /**
+     * Returns a pointer to the prev chunk.
+     * If [owner] is the same as before, the previous Cursor is recycled and it's internals are reused for creating a new one.
+     * */
+    fun prev(owner: Any?): Cursor<T>? =
+      zipper.prevLeaf(owner, monoid)?.let { leaf ->
+        cursor(leaf)
+      }
+
+    /**
      * Builds a new rope, accomodating all changes made to the cursor.
-     * If [owner] is the same as before, the previous Cursur is recycled and it's internals are reused.
+     * If [owner] is the same as before, the previous Cursor is recycled and it's internals are reused.
      * */
     fun rope(owner: Any?): Rope<T> =
       zipper.rope(owner, monoid)
