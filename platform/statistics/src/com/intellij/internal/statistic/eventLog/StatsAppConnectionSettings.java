@@ -2,12 +2,13 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.ide.ui.IdeUiService;
-import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
-import com.intellij.internal.statistic.eventLog.connection.request.StatsProxyInfo;
+import com.jetbrains.fus.reporting.model.http.StatsProxyInfo;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,11 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public final class EventLogAppConnectionSettings implements EventLogConnectionSettings {
+@ApiStatus.Internal
+public final class StatsAppConnectionSettings implements StatsConnectionSettings {
   private static final StatsProxyInfo NO_PROXY = new StatsProxyInfo(Proxy.NO_PROXY, null);
 
   @Override
-  public @NotNull String getUserAgent() {
+  public @NotNull String provideUserAgent() {
     Application app = ApplicationManager.getApplication();
     if (app != null && !app.isDisposed()) {
       String productName = ApplicationNamesInfo.getInstance().getFullProductName();
@@ -34,7 +36,7 @@ public final class EventLogAppConnectionSettings implements EventLogConnectionSe
   }
 
   @Override
-  public @NotNull StatsProxyInfo selectProxy(@NotNull String url) {
+  public @NotNull StatsProxyInfo provideProxy(@NotNull String url) {
     Application app = ApplicationManager.getApplication();
     if (app != null && !app.isDisposed()) {
       Proxy proxy = findProxy(url);
@@ -46,12 +48,12 @@ public final class EventLogAppConnectionSettings implements EventLogConnectionSe
   }
 
   @Override
-  public @Nullable SSLContext getSSLContext() {
+  public @Nullable SSLContext provideSSLContext() {
     return IdeUiService.getInstance().getSslContext();
   }
 
   @Override
-  public @NotNull Map<String, String> getExtraHeaders() {
+  public @NotNull Map<String, String> provideExtraHeaders() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     if (externalEventLogSettings != null) {
       return externalEventLogSettings.getExtraLogUploadHeaders();
@@ -62,7 +64,7 @@ public final class EventLogAppConnectionSettings implements EventLogConnectionSe
 
   private static @Nullable StatsProxyInfo.StatsProxyAuthProvider getAuthProvider() {
     if (IdeUiService.getInstance().isProxyAuth()) {
-      return EventLogAppProxyAuth.INSTANCE;
+      return StatsAppProxyAuth.INSTANCE;
     }
     return null;
   }
@@ -78,8 +80,8 @@ public final class EventLogAppConnectionSettings implements EventLogConnectionSe
     return Proxy.NO_PROXY;
   }
 
-  private static final class EventLogAppProxyAuth implements StatsProxyInfo.StatsProxyAuthProvider {
-    private static final EventLogAppProxyAuth INSTANCE = new EventLogAppProxyAuth();
+  private static final class StatsAppProxyAuth implements StatsProxyInfo.StatsProxyAuthProvider {
+    private static final StatsAppProxyAuth INSTANCE = new StatsAppProxyAuth();
 
     @Override
     public @Nullable String getProxyLogin() {
