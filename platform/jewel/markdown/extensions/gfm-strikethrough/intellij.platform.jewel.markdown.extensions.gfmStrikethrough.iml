@@ -45,19 +45,17 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-strikethrough/0.24.0/commonmark-ext-gfm-strikethrough-0.24.0.jar">
               <sha256sum>7385cb637f04dc4cbda4ddca9c2fcd2af7ac536a50e4c8d2c77f4748bb14bf41</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar">
-              <sha256sum>679338e0b7fc15c02d275d598654b01a149893bc28a87992e90123c8d06af25b</sha256sum>
-            </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="org.commonmark:commonmark" />
+          </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-strikethrough/0.24.0/commonmark-ext-gfm-strikethrough-0.24.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-strikethrough/0.24.0/commonmark-ext-gfm-strikethrough-0.24.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -1,56 +1,3 @@
-org.jetbrains.jewel.markdown.extensions.github.alerts.Alert
-- org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
-- a:getContent():java.util.List
-f:org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Caution
-- org.jetbrains.jewel.markdown.extensions.github.alerts.Alert
-- sf:$stable:I
-- <init>(java.util.List):V
-- f:component1():java.util.List
-- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Caution
-- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Caution,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Caution
-- equals(java.lang.Object):Z
-- getContent():java.util.List
-- hashCode():I
-f:org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Important
-- org.jetbrains.jewel.markdown.extensions.github.alerts.Alert
-- sf:$stable:I
-- <init>(java.util.List):V
-- f:component1():java.util.List
-- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Important
-- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Important,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Important
-- equals(java.lang.Object):Z
-- getContent():java.util.List
-- hashCode():I
-f:org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Note
-- org.jetbrains.jewel.markdown.extensions.github.alerts.Alert
-- sf:$stable:I
-- <init>(java.util.List):V
-- f:component1():java.util.List
-- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Note
-- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Note,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Note
-- equals(java.lang.Object):Z
-- getContent():java.util.List
-- hashCode():I
-f:org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Tip
-- org.jetbrains.jewel.markdown.extensions.github.alerts.Alert
-- sf:$stable:I
-- <init>(java.util.List):V
-- f:component1():java.util.List
-- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Tip
-- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Tip,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Tip
-- equals(java.lang.Object):Z
-- getContent():java.util.List
-- hashCode():I
-f:org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Warning
-- org.jetbrains.jewel.markdown.extensions.github.alerts.Alert
-- sf:$stable:I
-- <init>(java.util.List):V
-- f:component1():java.util.List
-- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Warning
-- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Warning,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.Alert$Warning
-- equals(java.lang.Object):Z
-- getContent():java.util.List
-- hashCode():I
 f:org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling$Companion
@@ -89,6 +36,59 @@ f:org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling
 - getTitleTextStyle():androidx.compose.ui.text.TextStyle
 - hashCode():I
 f:org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling$Companion
+org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert
+- org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock
+- a:getContent():java.util.List
+f:org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Caution
+- org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Caution
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Caution,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Caution
+- equals(java.lang.Object):Z
+- getContent():java.util.List
+- hashCode():I
+f:org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Important
+- org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Important
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Important,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Important
+- equals(java.lang.Object):Z
+- getContent():java.util.List
+- hashCode():I
+f:org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Note
+- org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Note
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Note,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Note
+- equals(java.lang.Object):Z
+- getContent():java.util.List
+- hashCode():I
+f:org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Tip
+- org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Tip
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Tip,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Tip
+- equals(java.lang.Object):Z
+- getContent():java.util.List
+- hashCode():I
+f:org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Warning
+- org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert
+- sf:$stable:I
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Warning
+- bs:copy$default(org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Warning,java.util.List,I,java.lang.Object):org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert$Warning
+- equals(java.lang.Object):Z
+- getContent():java.util.List
+- hashCode():I
 f:org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertBlockRenderer
 - org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 - sf:$stable:I
