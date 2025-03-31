@@ -17,7 +17,7 @@ import java.util.List;
 @ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 18);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 19);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -105,6 +105,12 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
 
   public static final EventId1<Boolean> PREVIEW_SWITCHED = GROUP.registerEvent("previewSwitched", EventFields.Boolean("previewState"));
   public static final EventId1<Boolean> PREVIEW_CLOSED = GROUP.registerEvent("previewClosed", EventFields.Boolean("previewClosed"));
+
+  public static final EventId FUZZY_SEARCH_STARTED = GROUP.registerEvent("fuzzySearchStarted");
+  public static final LongEventField FUZZY_SEARCH_DURATION_MS = EventFields.Long("fuzzySearchDurationMs");
+  public static final IntEventField FUZZY_SEARCH_RESULTS_COUNT = EventFields.Int("fuzzySearchResultsCount");
+  public static final VarargEventId FUZZY_SEARCH_FINISHED =
+    GROUP.registerVarargEvent("fuzzySearchFinished", FUZZY_SEARCH_DURATION_MS, FUZZY_SEARCH_RESULTS_COUNT);
 
   @Override
   public EventLogGroup getGroup() {

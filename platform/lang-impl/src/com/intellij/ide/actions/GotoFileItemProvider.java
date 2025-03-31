@@ -39,6 +39,8 @@ import java.util.*;
 import java.util.HashMap;
 import java.util.function.Function;
 
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance(GotoFileItemProvider.class);
 
@@ -122,6 +124,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                                         @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                                         @NotNull ProgressIndicator indicator) {
     long start = System.currentTimeMillis();
+    FUZZY_SEARCH_STARTED.log(myProject);
 
     List<String> patternComponents = LevenshteinCalculator.normalizeString(parameters.getCompletePattern());
     if (patternComponents.isEmpty()) {
@@ -149,9 +152,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return false;
     }
 
+    long duration = System.currentTimeMillis() - start;
+    FUZZY_SEARCH_FINISHED.log(myProject, pairs -> {
+                                pairs.add(FUZZY_SEARCH_DURATION_MS.with(duration));
+                                pairs.add(FUZZY_SEARCH_RESULTS_COUNT.with(matchingItems.size()));
+                              }
+    );
+
     if (LOG.isDebugEnabled()) {
       LOG.debug(
-        "Process items with levenshtein \"" + parameters.getCompletePattern() + "\" took " + (System.currentTimeMillis() - start) + " ms");
+        "Process items with levenshtein \"" + parameters.getCompletePattern() + "\" took " + duration + " ms");
     }
 
     return true;
