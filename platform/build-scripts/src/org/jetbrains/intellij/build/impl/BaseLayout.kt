@@ -169,14 +169,7 @@ sealed class BaseLayout {
 
   internal fun withProjectLibraries(libraryNames: Sequence<String>, outPath: String? = null) {
     for (libraryName in libraryNames) {
-      includedProjectLibraries.add(
-        ProjectLibraryData(
-          libraryName = libraryName,
-          packMode = LibraryPackMode.MERGED,
-          reason = "withProjectLibrary",
-          outPath = outPath,
-        )
-      )
+      includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, reason = "withProjectLibrary", outPath = outPath))
     }
   }
 
