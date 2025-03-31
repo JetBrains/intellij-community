@@ -8,19 +8,19 @@ import com.intellij.execution.wsl.WslPath
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.execution.wsl.target.WslTargetType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.upgradeBlocking
-import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenEelUtil.collectMavenDirectories
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.nio.file.Path
 
 private val MAVEN_HOME_DIR = Key.create<Path>("MAVEN_HOME_DIR")
@@ -40,11 +40,7 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
   }
 
   private fun prepareMavenData(project: Project, dataHolder: UserDataHolder) {
-    val wslDistribution = project.basePath?.let { project.tryGetWslDistribution() }
-
-    if (wslDistribution == null) {
-      return
-    }
+    val wslDistribution = project.basePath?.let { project.tryGetWslDistribution() } ?: return
 
     val eel = project.getEelDescriptor().upgradeBlocking()
 
@@ -55,8 +51,13 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
     val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
     dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)
-    val jdkPath = getJdkPath(eel)
+    val jdkPath = getJdkPath(project)
     dataHolder.putUserData(JDK_PATH, jdkPath)
+  }
+
+  private fun getJdkPath(project: Project): String? {
+    val jdk = ProjectRootManager.getInstance(project).getProjectSdk() ?: getJdkForImporter(project)
+    return jdk.homePath
   }
 
   private fun configureForProject(project: Project, dataHolder: UserDataHolder) {
@@ -118,10 +119,6 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     configuration.addLanguageRuntime(javaConfig)
 
     return javaConfig
-  }
-
-  private fun getJdkPath(eel: EelApi): String? {
-    return eel.exec.fetchLoginShellEnvVariablesBlocking()["JDK_HOME"]
   }
 
   private fun createWslTarget(project: Project, wslDistribution: WSLDistribution): WslTargetEnvironmentConfiguration {
