@@ -30,7 +30,7 @@ import org.jetbrains.uast.util.ClassSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jetbrains.uast.util.ClassSetKt.isInstanceOf;
+import static org.jetbrains.uast.util.ClassSetKt.*;
 
 /**
  * This ModificationTracker is incremented if changes in file (class) of VFS could change the number of stereotype components scanned
@@ -336,7 +336,8 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       return modifierListOwner == null // just added annotation
              || isInstanceOf(modifierListOwner, possiblePsiTypes.forClasses)
              || (isInstanceOf(modifierListOwner, possiblePsiTypes.forMethods)
-                 && !isInstanceOf(modifierListOwner, possiblePsiTypes.forVariables));
+                 && !isInstanceOf(modifierListOwner, possiblePsiTypes.forVariables))
+             || isInstanceOf(modifierListOwner, possiblePsiTypes.forPackageStatements);
     }
 
     private @Nullable MyPsiPossibleTypes getPossiblePsiTypesFor(@NotNull String languageId) {
@@ -360,6 +361,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     public final @NotNull ClassSet<PsiElement> forImports;
     public final @NotNull ClassSet<PsiElement> forAnnotations;
     public final @NotNull ClassSet<PsiElement> forAnnotationOwners;
+    public final @NotNull ClassSet<PsiElement> forPackageStatements;
 
     private MyPsiPossibleTypes(@NotNull UastLanguagePlugin uastPlugin) {
       this.forClasses = uastPlugin.getPossiblePsiSourceTypes(UClass.class);
@@ -367,7 +369,8 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       this.forVariables = uastPlugin.getPossiblePsiSourceTypes(UVariable.class);
       this.forImports = uastPlugin.getPossiblePsiSourceTypes(UImportStatement.class);
       this.forAnnotations = uastPlugin.getPossiblePsiSourceTypes(UAnnotation.class);
-      this.forAnnotationOwners = uastPlugin.getPossiblePsiSourceTypes(UAnnotated.class);
+      this.forPackageStatements = classSetOf(PsiPackageStatement.class);
+      this.forAnnotationOwners = classSetsUnion(uastPlugin.getPossiblePsiSourceTypes(UAnnotated.class), forPackageStatements);
     }
   }
 }
