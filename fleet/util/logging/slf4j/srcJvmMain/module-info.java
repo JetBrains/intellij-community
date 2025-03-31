@@ -9,7 +9,6 @@ module fleet.util.logging.slf4j {
 
   requires kotlin.stdlib;
   requires transitive org.slf4j;
-  requires transitive kotlinx.coroutines.slf4j;
   requires fleet.util.logging.api;
 
   provides KLoggerFactory with Slf4jKLoggerFactory;

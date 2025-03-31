@@ -4,6 +4,7 @@ import fleet.buildtool.jpms.withJavaSourceSet
 // IMPORT__MARKER_END
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
+  id("fleet-module")
   id("fleet.project-module-conventions")
   id("fleet.multiplatform-module-conventions")
   id("fleet.toolchain-conventions")
