@@ -15,11 +15,12 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.plaf.basic.ComboPopup;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +66,12 @@ public final class FontComboBox extends AbstractFontCombo {
         }
         else if (value instanceof Model.NoFontItem nfi) {
           item.append(nfi.toString());
+        }
+        else if (value instanceof Model.LoadingFontsItem lfi) {
+          item.append(lfi.toString(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        else if (value instanceof String s) {
+          item.append(s); //NON-NLS
         }
       }
     });
@@ -137,6 +144,8 @@ public final class FontComboBox extends AbstractFontCombo {
 
   private static final class Model extends AbstractListModel implements ComboBoxModel {
     private final NoFontItem myNoFontItem;
+    private LoadingFontsItem myLoadingFontsItem = null;
+
     private volatile List<FontInfo> myAllFonts = Collections.emptyList();
     private volatile List<FontInfo> myMonoFonts = Collections.emptyList();
     private boolean myMonospacedOnly;
@@ -149,9 +158,11 @@ public final class FontComboBox extends AbstractFontCombo {
         setFonts(FontInfo.getAll(withAllStyles), filterNonLatin);
       }
       else {
+        myLoadingFontsItem = new LoadingFontsItem();
         application.executeOnPooledThread(() -> {
           List<FontInfo> all = FontInfo.getAll(withAllStyles);
           application.invokeLater(() -> {
+            myLoadingFontsItem = null;
             setFonts(all, filterNonLatin);
             onModelToggled();
           }, ModalityState.any());
@@ -223,22 +234,28 @@ public final class FontComboBox extends AbstractFontCombo {
 
     @Override
     public int getSize() {
-      List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
-      int size = list.size();
-      if (mySelectedItem instanceof String)  size ++;
-      if (myNoFontItem != null) size++;
-      return size;
+      return getAllElements().size();
     }
 
     @Override
     public Object getElementAt(int index) {
-      int i = index;
+      List<Object> items = getAllElements();
+      return 0 <= index && index < items.size() ? items.get(index) : null;
+    }
+
+    private @NotNull List<Object> getAllElements() {
+      List<List<?>> groups = new ArrayList<>();
       if (myNoFontItem != null) {
-        if (index == 0) return myNoFontItem;
-        i --;
+        groups.add(Collections.singletonList(myNoFontItem));
       }
-      List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
-      return 0 <= i && i < list.size() ? list.get(i) : mySelectedItem;
+      groups.add(myMonospacedOnly ? myMonoFonts : myAllFonts);
+      if (mySelectedItem instanceof String) {
+        groups.add(Collections.singletonList(mySelectedItem));
+      }
+      if (myLoadingFontsItem != null) {
+        groups.add(Collections.singletonList(myLoadingFontsItem));
+      }
+      return ContainerUtil.concat(groups);
     }
 
     private FontInfo getInfo(Object item) {
@@ -254,6 +271,13 @@ public final class FontComboBox extends AbstractFontCombo {
       @Override
       public @NlsSafe String toString() {
         return ApplicationBundle.message("settings.editor.font.none");
+      }
+    }
+
+    private static final class LoadingFontsItem {
+      @Override
+      public @NlsSafe String toString() {
+        return ApplicationBundle.message("settings.editor.font.loading");
       }
     }
   }
