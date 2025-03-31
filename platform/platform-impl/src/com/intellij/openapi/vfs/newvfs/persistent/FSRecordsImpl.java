@@ -300,29 +300,29 @@ public final class FSRecordsImpl implements Closeable {
   private final int currentVersion;
 
 
-  //TODO RC: Thread-safety is organized in a tricky way in PersistentFSImpl/FSRecordsImpl. Historically, all VFS modifications
-  //         are done in WriteAction, and all reads in ReadAction (same as for other 'model' accesses in IJ platform) -- which
-  //         means WA/RA locks protects VFS, and there is no need for additional locks.
-  //         The issue is: because VFS is basically a cache on top of real FSes, read-access to VFS could require modification
-  //         of VFS internal data structures, if it is a cache-miss, and new chunk of data must be cached as a result. So the
-  //         read-lock provided by RA is not enough, and all cache modifications should be protected by exclusive lock.
-  //         Historically, though, the issues with concurrent modifications during RA were most visible for _hierarchy_ updates
-  //         -- i.e. changing of parent-children relationship. Children lists processing is much longer than individual file-record
-  //         fields update, hence a window for concurrent modifications is much larger. So the exclusive lock was introduced only
-  //         for hierarchy updates: .update() method protected by fileHierarchyLock -- while updates of individual file record
-  //         files (flags, nameId, timestamp, etc) are volatile, but not lock-protected, and attributes update was protected by
-  //         its own lock.
-  //         This schema is not 100% bulletproof, and it generates _some_ % of errors in VFS -- but not too much, so it was used
-  //         for quite a while.
-  //         Now, as we're moving forward, we'd like to get rid of those errors altogether. Also, we're in the process of
-  //         reconsidering WA/RA for VFS access (IJPL-418), and probably will decide to move VFS accesses out of WA/RA.
-  //         Both goals require accurate in-VFS thread-safety. For that fileRecordLock was introduced, and all the logical
-  //         modifications of >1 fields are now done via .updateRecordFields() method, which is fileRecordLock-protected,
-  //         while hierarchy (children) accesses are protected by fileRecordLock.lockForHierarchyUpdate(). This is because
-  //         hierarchy updates could be quite long and involve IO, while per-record accesses are short and StampedLock could
-  //         be used effectively.
-
-  /** Lock to protect individual file-records updates */
+  /**
+   * Lock to protect individual file-records updates.
+   * <b>BEWARE</b>: FileRecordLock is not-reentrant (see it's docs), i.e. repeated attempt to lock in the same thread causes deadlock.
+   * This property makes locking with this lock quite fragile and bad (leaky) abstraction -- which is why all the usages of this
+   * lock should be contained in this class, otherwise it will very hard to ensure the correct usage.
+   * <p>
+   * Details of thread-safety:
+   * <ul>
+   * <li>All <b>read-only</b> accesses to file records, attributes, children must be done under {@link FileRecordLock#lockForRead(int)}.
+   *   Special case: single-field reads from {@link PersistentFSRecordsStorage} (but not from attributes, and not from children!)
+   *   could be done without the lock, because all fields accessors have volatile semantics -- this is an option for optimization.</li>
+   * <li>All <b>write</b> accesses of file records, attributes must be done under {@link FileRecordLock#lockForWrite(int)} inside
+   *   this class. {@link #updateRecordFields(int, RecordUpdater)} should be used by clients outside of this class.</li>
+   * <li><b>Children</b> access has some specifics: read/write accesses to the children must be done under {@link FileRecordLock#lockForRead(int)}
+   *   {@link FileRecordLock#lockForWrite(int)}, as usual (because currently children are stored in file attributes), but
+   *   <b>read-modify-write</b> operations on children must be _additionally_ protected by {@link FileRecordLock#lockForHierarchyUpdate(int)}
+   *   </li>
+   * </ul>
+   * Why dedicated 'hierarchyUpdateLock' was introduced: because read-modify-write updates on children could be quite long, and sometimes
+   * even involve IO (see {@link #update(VirtualFile, int, Function)} method, and it's usages), while per-record accesses are mostly short,
+   * so StampedLock could be used quite effectively. Protecting children read-modify-write ops with regular write lock prevents concurrent
+   * reads, which is undesirable -- hence the trick.
+   */
   private final FileRecordLock fileRecordLock = new FileRecordLock();
 
   /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
@@ -582,16 +582,11 @@ public final class FSRecordsImpl implements Closeable {
 
   int @NotNull [] listRoots() {
     checkNotClosed();
-    //use 'hierarchy update lock' even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     try {
       return withRecordReadLock(PersistentFSTreeAccessor.SUPER_ROOT_ID, treeAccessor::listRoots);
     }
     catch (IOException e) {
       throw handleError(e);
-    }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     }
   }
 
@@ -599,6 +594,8 @@ public final class FSRecordsImpl implements Closeable {
     checkNotClosed();
 
     //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
+    //MAYBE RC: Combine (lockForHierarchyUpdate + writeLock) into a single method, with some useless repetition removed?
+    //          Not sure how much performance benefits it provides though
     fileRecordLock.lockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     try {
       return withRecordWriteLock(PersistentFSTreeAccessor.SUPER_ROOT_ID, () -> treeAccessor.findOrCreateRootRecord(rootUrl));
@@ -615,8 +612,6 @@ public final class FSRecordsImpl implements Closeable {
   void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
     checkNotClosed();
 
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
     try {
       //could be a long lock acquisition...
       withRecordReadLock(
@@ -633,22 +628,13 @@ public final class FSRecordsImpl implements Closeable {
     catch (IOException e) {
       throw handleError(e);
     }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(PersistentFSTreeAccessor.SUPER_ROOT_ID);
-    }
   }
 
   void loadRootData(int fileId,
                     @NotNull String path,
                     @NotNull NewVirtualFileSystem fs) {
     try {
-      withRecordWriteLock(
-        PersistentFSTreeAccessor.SUPER_ROOT_ID,
-        () -> {
-          treeAccessor.loadRootData(fileId, path, fs);
-          return null;
-        }
-      );
+      treeAccessor.loadRootData(fileId, path, fs);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -683,10 +669,7 @@ public final class FSRecordsImpl implements Closeable {
                          @NotNull CharSequence path,
                          @NotNull NewVirtualFileSystem fs) {
     try {
-      withRecordReadLock(id, () -> {
-        treeAccessor.loadDirectoryData(id, parent, path, fs);
-        return null;
-      });
+      treeAccessor.loadDirectoryData(id, parent, path, fs);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -694,8 +677,6 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   boolean mayHaveChildren(int fileId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(fileId);
     try {
       StampedLock lock = fileRecordLock.lockFor(fileId);
       long readLockStamp = lock.readLock();
@@ -709,14 +690,9 @@ public final class FSRecordsImpl implements Closeable {
     catch (IOException e) {
       throw handleError(e);
     }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(fileId);
-    }
   }
 
   boolean wereChildrenAccessed(int fileId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(fileId);
     try {
       StampedLock lock = fileRecordLock.lockFor(fileId);
       long readLockStamp = lock.readLock();
@@ -730,14 +706,9 @@ public final class FSRecordsImpl implements Closeable {
     catch (IOException e) {
       throw handleError(e);
     }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(fileId);
-    }
   }
 
   public int @NotNull [] listIds(int fileId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(fileId);
     try {
       StampedLock lock = fileRecordLock.lockFor(fileId);
       long readLockStamp = lock.readLock();
@@ -751,25 +722,17 @@ public final class FSRecordsImpl implements Closeable {
     catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
     }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(fileId);
-    }
   }
 
   /**
    * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
    */
   public @NotNull ListResult list(int parentId) {
-    //use 'update' lock even though 'read' lock would be enough -- but we don't have 'hierarchy read lock'
-    fileRecordLock.lockForHierarchyUpdate(parentId);
     try {
       return loadChildrenUnderRecordLock(parentId);
     }
     catch (IOException | IllegalArgumentException e) {
       throw handleError(e);
-    }
-    finally {
-      fileRecordLock.unlockForHierarchyUpdate(parentId);
     }
   }
 
