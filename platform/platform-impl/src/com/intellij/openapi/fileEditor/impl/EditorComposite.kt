@@ -573,12 +573,19 @@ open class EditorComposite internal constructor(
     val container = (if (top) topComponents.get(editor) else bottomComponents.get(editor))!!
     selfBorder = false
     if (remove) {
-      container.remove(component.parent)
-      if (top) {
-        dispatcher.multicaster.topComponentRemoved(editor, component, container)
+      val componentParent = component.parent
+      if (componentParent == null) {
+        LOG.warn("Attempting to remove component '$component' from the editor '$editor'," +
+                 "but the component has no parent", Throwable())
       }
       else {
-        dispatcher.multicaster.bottomComponentRemoved(editor, component, container)
+        container.remove(componentParent)
+        if (top) {
+          dispatcher.multicaster.topComponentRemoved(editor, component, container)
+        }
+        else {
+          dispatcher.multicaster.bottomComponentRemoved(editor, component, container)
+        }
       }
     }
     else {
