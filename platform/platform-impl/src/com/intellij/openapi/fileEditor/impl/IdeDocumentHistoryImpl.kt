@@ -76,9 +76,10 @@ open class IdeDocumentHistoryImpl(
   private val forwardPlaces = ArrayDeque<PlaceInfo>()
   private var backInProgress = false
   private var forwardInProgress = false
-  private var currentCommandGroupId: Any? = null
+  // weak reference here is to avoid leaking Document when it's used as a group id
+  private var currentCommandGroupId: Reference<Any>? = null
   // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
-  private var lastGroupId: Reference<Any?>? = null
+  private var lastGroupId: Reference<Any>? = null
   private var registeredBackPlaceInLastGroup = false
 
   // change's navigation
@@ -223,7 +224,7 @@ open class IdeDocumentHistoryImpl(
   }
 
   fun onCommandStarted(commandGroupId: Any?) {
-    currentCommandGroupId = commandGroupId
+    currentCommandGroupId = commandGroupId?.let { WeakReference(it) }
     commandStartPlace = getCurrentPlaceInfo()
     currentCommandIsNavigation = false
     currentCommandHasChanges = false
@@ -325,7 +326,7 @@ open class IdeDocumentHistoryImpl(
       state = RecentlyChangedFilesState(changedPaths)
     }
 
-    putLastOrMerge(next = placeInfo, limit = CHANGE_QUEUE_LIMIT, isChanged = true, groupId = currentCommandGroupId)
+    putLastOrMerge(next = placeInfo, limit = CHANGE_QUEUE_LIMIT, isChanged = true, groupId = currentCommandGroupId?.get())
     currentIndex = changePlaces.size
   }
 
@@ -654,6 +655,7 @@ open class IdeDocumentHistoryImpl(
 
   override fun dispose() {
     lastGroupId = null
+    currentCommandGroupId = null
     val map = recentFileTimestampMap.valueIfInitialized ?: return
     try {
       map.close()
