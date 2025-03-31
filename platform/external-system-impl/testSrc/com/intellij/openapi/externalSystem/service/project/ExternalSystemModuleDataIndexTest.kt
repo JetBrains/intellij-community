@@ -1,32 +1,30 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
-import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.testFramework.project
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class ExternalSystemModuleDataIndexTest : ExternalSystemModuleDataIndexTestCase() {
 
   @Test
-  fun `test module data finding`(@TestDisposable disposable: Disposable) = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test module data finding`(): Unit = runBlocking {
     val systemId1 = ProjectSystemId("build-tool-1")
     val systemId2 = ProjectSystemId("build-tool-2")
 
     val manager1 = createManager(systemId1, "$projectPath/project1")
     val manager2 = createManager(systemId2, "$projectPath/project2")
 
-    ExternalSystemManager.EP_NAME.point.registerExtension(manager1, disposable)
-    ExternalSystemManager.EP_NAME.point.registerExtension(manager2, disposable)
+    ExternalSystemManager.EP_NAME.point.registerExtension(manager1, asDisposable())
+    ExternalSystemManager.EP_NAME.point.registerExtension(manager2, asDisposable())
 
     val dataStorage = createDataStorage(
       project(name = "project1", projectPath = "$projectPath/project1", systemId = systemId1) {
@@ -41,7 +39,7 @@ class ExternalSystemModuleDataIndexTest : ExternalSystemModuleDataIndexTestCase(
       }
     )
 
-    project.replaceService(ExternalProjectsDataStorage::class.java, dataStorage, disposable)
+    project.replaceService(ExternalProjectsDataStorage::class.java, dataStorage, asDisposable())
 
     project.workspaceModel.update("Test description") { storage ->
       storage addEntity ExternalSystemModuleOptionsEntity(ENTITY_SOURCE) {

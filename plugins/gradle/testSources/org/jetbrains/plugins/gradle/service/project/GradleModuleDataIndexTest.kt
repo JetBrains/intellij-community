@@ -1,19 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.service.project1
+package org.jetbrains.plugins.gradle.service.project
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
-import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.testFramework.project
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
-import org.jetbrains.plugins.gradle.service.project.GradleModuleDataIndex
-import org.jetbrains.plugins.gradle.service.project.GradleModuleDataIndexTestCase
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.dataNode.GradleSourceSet.Companion.gradleSourceSet
@@ -23,7 +19,7 @@ import org.junit.jupiter.api.Test
 class GradleModuleDataIndexTest : GradleModuleDataIndexTestCase() {
 
   @Test
-  fun `test module data finding`(@TestDisposable disposable: Disposable) = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test module data finding`(): Unit = runBlocking {
     val settings = GradleSettings.getInstance(project)
     settings.linkedProjectsSettings = listOf(
       GradleProjectSettings().also {
@@ -48,7 +44,7 @@ class GradleModuleDataIndexTest : GradleModuleDataIndexTestCase() {
       }
     )
 
-    project.replaceService(ExternalProjectsDataStorage::class.java, dataStorage, disposable)
+    project.replaceService(ExternalProjectsDataStorage::class.java, dataStorage, asDisposable())
 
     project.workspaceModel.update("Test description") { storage ->
       storage addEntity ExternalSystemModuleOptionsEntity(ENTITY_SOURCE) {
