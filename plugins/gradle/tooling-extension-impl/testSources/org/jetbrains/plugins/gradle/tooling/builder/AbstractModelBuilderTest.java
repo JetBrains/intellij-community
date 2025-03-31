@@ -25,6 +25,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.SystemPropertiesAdjuster;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
@@ -161,7 +162,9 @@ public abstract class AbstractModelBuilderTest {
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(getDaemonMaxIdleTimeSeconds(), TimeUnit.SECONDS);
 
     try (ProjectConnection connection = connector.connect()) {
-      GradleModelHolderState state = connection.action(buildAction)
+      GradleIdeaModelHolder models = new GradleIdeaModelHolder();
+      GradleModelHolderState state = SystemPropertiesAdjuster.executeAdjusted(testDir.getAbsolutePath(), () -> {
+        GradleModelHolderState result = connection.action(buildAction)
         .setStandardError(System.err)
         .setStandardOutput(System.out)
         .setJavaHome(new File(gradleJvmHomePath))
@@ -169,9 +172,9 @@ public abstract class AbstractModelBuilderTest {
         .withSystemProperties(Collections.emptyMap())
         .setJvmArguments(executionSettings.getJvmArguments())
         .run();
-      Assert.assertNotNull(state);
-
-      GradleIdeaModelHolder models = new GradleIdeaModelHolder();
+      Assert.assertNotNull(result);
+      return result;
+      });
       models.addState(state);
       return models;
     }
