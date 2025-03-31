@@ -94,8 +94,11 @@ internal abstract class CustomNewEnvironmentCreator(
     }.getOr { return it }
 
     newSdk.persist()
-
     module?.excludeInnerVirtualEnv(newSdk)
+    if (!model.state.makeAvailable.get()) {
+      module?.let { newSdk.setAssociationToModule(it) }
+    }
+
     model.addInterpreter(newSdk)
 
     return Result.success(newSdk)
@@ -105,8 +108,8 @@ internal abstract class CustomNewEnvironmentCreator(
     InterpreterStatisticsInfo(interpreterType,
                               target.toStatisticsField(),
                               false,
+                              model.state.makeAvailable.get(),
                               false,
-                              false, //presenter.projectLocationContext is WslContext,
                               false, // todo fix for wsl
                               InterpreterCreationMode.CUSTOM)
 

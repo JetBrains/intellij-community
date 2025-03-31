@@ -14,6 +14,7 @@ import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.sdk.configurePythonSdk
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -37,10 +38,10 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
     if (supportsNotEmptyModuleStructure) {
       sdkCreator.createPythonModuleStructure(module).getOr { return@coroutineScope it }
     }
-    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@coroutineScope it }
-    sdk.setAssociationToModule(module)
-    module.pythonSdk = sdk
-    module.project.pythonSdk = sdk
+    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module)
+      .getOr { return@coroutineScope it }
+
+    configurePythonSdk(project, module, sdk)
     return@coroutineScope com.jetbrains.python.Result.success(Pair(sdk, interpreterStatistics))
   }
 

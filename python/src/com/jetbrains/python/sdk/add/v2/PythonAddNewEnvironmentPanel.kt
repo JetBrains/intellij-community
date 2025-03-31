@@ -103,8 +103,6 @@ internal class PythonAddNewEnvironmentPanel(
 
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
 
-
-
     with(outerPanel) {
       if (allowedInterpreterTypes.size > 1) { // No need to show control with only one selection
         row(message("sdk.create.interpreter.type")) {
@@ -159,7 +157,7 @@ internal class PythonAddNewEnvironmentPanel(
     model.scope.launch(Dispatchers.EDT + modalityState) {
       initMutex.withLock {
         if (!initialized) {
-          model.initialize()
+          model.initialize(null)
           pythonBaseVersionComboBox.setItems(model.baseInterpreters)
           custom.onShown()
           updateVenvLocationHint()

@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.NioFiles
@@ -20,14 +21,12 @@ import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.failure
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.isFailure
-import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
@@ -51,7 +50,10 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
 
 @OptIn(ExperimentalCoroutinesApi::class)
-abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, private val systemPythonService: SystemPythonService = SystemPythonService()) {
+abstract class PythonAddInterpreterModel(
+  params: PyInterpreterModelParams,
+  private val systemPythonService: SystemPythonService = SystemPythonService(),
+) {
 
   val propertyGraph = PropertyGraph()
   val navigator = PythonNewEnvironmentDialogNavigator()
@@ -70,21 +72,23 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
   val manuallyAddedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
   private var installable: List<PythonSelectableInterpreter> = emptyList()
   val condaEnvironments: MutableStateFlow<List<PyCondaEnv>> = MutableStateFlow(emptyList())
-  val hatchEnvironmentsResult: MutableStateFlow<com.jetbrains.python.Result<List<HatchVirtualEnvironment>, PyError>?> = MutableStateFlow(null)
+  val hatchEnvironmentsResult: MutableStateFlow<com.jetbrains.python.Result<List<HatchVirtualEnvironment>, PyError>?> = MutableStateFlow(
+    null)
 
-  var allInterpreters: StateFlow<List<PythonSelectableInterpreter>> = combine(knownInterpreters,
-                                                                              detectedInterpreters,
+  var allInterpreters: StateFlow<List<PythonSelectableInterpreter>> = combine(knownInterpreters, detectedInterpreters,
                                                                               manuallyAddedInterpreters) { known, detected, added ->
     added + known + detected
-  }
-    .stateIn(scope + uiContext, started = SharingStarted.Eagerly, initialValue = emptyList())
+  }.stateIn(scope + uiContext, started = SharingStarted.Eagerly, initialValue = emptyList())
 
-  val baseInterpreters: StateFlow<List<PythonSelectableInterpreter>> = allInterpreters
-    .map { it.filter { it.isBasePython() } }
-    .mapLatest {
-      it.filter { it !is ExistingSelectableInterpreter || it.isSystemWide } + installable
-    }
-    .stateIn(scope + uiContext, started = SharingStarted.Eagerly, initialValue = emptyList())
+  val baseInterpreters: StateFlow<List<PythonSelectableInterpreter>> =
+    allInterpreters
+      .map { all ->
+        all.filter { interpreter ->
+          interpreter.isBasePython()
+        }
+      }.mapLatest { all ->
+        all.filter { it !is ExistingSelectableInterpreter || it.isSystemWide } + installable
+      }.stateIn(scope + uiContext, started = SharingStarted.Eagerly, initialValue = emptyList())
 
   val interpreterLoading = MutableStateFlow(false)
   val condaEnvironmentsLoading = MutableStateFlow(false)
@@ -92,13 +96,16 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
 
   open fun createBrowseAction(): () -> String? = TODO()
 
-  open suspend fun initialize() {
+  // If the project is provided, sdks associated with it will be kept in the list of interpreters. If not, then they will be filtered out.
+  open suspend fun initialize(project: Project?) {
     interpreterLoading.value = true
-    initInterpreterList()
-    detectCondaExecutable()
+    initInterpreterList(project)
+
     condaEnvironmentsLoading.value = true
+    detectCondaExecutable()
     detectCondaEnvironments()
     condaEnvironmentsLoading.value = false
+
     interpreterLoading.value = false
   }
 
@@ -118,20 +125,20 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
   /**
    * Returns error or `null` if no error
    */
-  suspend fun detectCondaEnvironments(): @NlsSafe String? =
-    withContext(Dispatchers.IO) {
-      val commandExecutor = targetEnvironmentConfiguration.toExecutor()
-      val fullCondaPathOnTarget = state.condaExecutable.get()
-      if (fullCondaPathOnTarget.isBlank()) return@withContext message("python.sdk.conda.no.exec")
-      val environments = PyCondaEnv.getEnvs(commandExecutor, fullCondaPathOnTarget).getOrElse { return@withContext it.localizedMessage }
-      val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
+  suspend fun detectCondaEnvironments(): @NlsSafe String? = withContext(Dispatchers.IO) {
+    val commandExecutor = targetEnvironmentConfiguration.toExecutor()
+    val fullCondaPathOnTarget = state.condaExecutable.get()
+    if (fullCondaPathOnTarget.isBlank()) return@withContext message("python.sdk.conda.no.exec")
+    val environments = PyCondaEnv.getEnvs(commandExecutor, fullCondaPathOnTarget)
+      .getOrElse { return@withContext it.localizedMessage }
+    val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
 
-      withContext(uiContext) {
-        condaEnvironments.value = environments
-        state.baseCondaEnv.set(baseConda)
-      }
-      return@withContext null
+    withContext(uiContext) {
+      condaEnvironments.value = environments
+      state.baseCondaEnv.set(baseConda)
     }
+    return@withContext null
+  }
 
   suspend fun detectHatchEnvironments(
     hatchExecutablePathString: String,
@@ -140,8 +147,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
       val projectPath = myProjectPathFlows.projectPathWithDefault.first()
       val hatchExecutablePath = NioFiles.toPath(hatchExecutablePathString)
                                 ?: return@withContext com.jetbrains.python.Result.failure(
-                                  HatchUIError.HatchExecutablePathIsNotValid(hatchExecutablePathString)
-                                )
+                                  HatchUIError.HatchExecutablePathIsNotValid(hatchExecutablePathString))
       val hatchWorkingDirectory = if (projectPath.isDirectory()) projectPath else projectPath.parent
       val hatchService = hatchWorkingDirectory.getHatchService(hatchExecutablePath).getOr { return@withContext it }
 
@@ -156,30 +162,35 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
     return environmentsResult
   }
 
-  private suspend fun initInterpreterList() {
+  private suspend fun initInterpreterList(project: Project?) {
     withContext(Dispatchers.IO) {
-      val existingSdks = PyConfigurableInterpreterList.getInstance(null).getModel().sdks.toList()
+      val allValidSdks = PythonSdkUtil
+        .getAllSdks()
+        .filter { sdk ->
+          val projectBasePath = project?.basePath
+          val associatedModulePath = sdk.associatedModulePath
+          associatedModulePath == null || (projectBasePath != null && associatedModulePath.startsWith(projectBasePath))
+        }
+        .map {
+          ExistingSelectableInterpreter(
+            it,
+            PySdkUtil.getLanguageLevelForSdk(it),
+            it.isSystemWide)
+        }
 
-
-      val allValidSdks = ProjectSpecificSettingsStep.getValidPythonSdks(existingSdks)
-        .map { ExistingSelectableInterpreter(it, PySdkUtil.getLanguageLevelForSdk(it), it.isSystemWide) }
-
-      val languageLevels = allValidSdks.mapTo(HashSet()) { it.languageLevel } // todo add detected here
-      val filteredInstallable = getSdksToInstall()
-        .map { LanguageLevel.fromPythonVersion(it.versionString) to it }
+      val languageLevels = allValidSdks.mapTo(HashSet()) { it.languageLevel }
+      val filteredInstallable = getSdksToInstall().map {
+        LanguageLevel.fromPythonVersion(it.versionString) to it
+      }
         .filter { it.first !in languageLevels }
         .sortedByDescending { it.first }
         .map { InstallableSelectableInterpreter(it.second) }
 
-
       val existingSdkPaths = existingSdks.mapNotNull { it.homePath }.mapNotNull { tryResolvePath(it) }.toSet()
-
 
       // Venvs are not detected manually, but must migrate to VenvService or so
       val venvs: List<PythonWithLanguageLevel> = PythonWithLanguageLevelImpl.createByPythonBinaries(
-        VirtualEnvSdkFlavor.getInstance()
-          .suggestLocalHomePaths(null, null)
-      ).mapNotNull { (venv, r) ->
+        VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, null)).mapNotNull { (venv, r) ->
         when (r) {
           is com.jetbrains.python.Result.Failure -> {
             fileLogger().warn("Skipping $venv : ${r.error}")
@@ -193,10 +204,14 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
       val system: List<SystemPython> = systemPythonService.findSystemPythons()
 
       // Python + isBase. Both: system and venv.
-      val detected = (venvs.map { Triple(it, false, null) } + system.map { Triple(it, true, it.ui) })
-        .filterNot { (python, _) -> python.pythonBinary in existingSdkPaths }
-        .map { (python, base, ui) -> DetectedSelectableInterpreter(python.pythonBinary.pathString, python.languageLevel, base, ui) }
-        .sorted()
+      val detected =
+        (
+          venvs.map { Triple(it, false, null) } +
+          system.map { Triple(it, true, it.ui) }
+        )
+          .filterNot { (python, _) -> python.pythonBinary in existingSdkPaths }
+          .map { (python, base, ui) -> DetectedSelectableInterpreter(python.pythonBinary.pathString, python.languageLevel, base, ui) }
+          .sorted()
 
       withContext(uiContext) {
         installable = filteredInstallable
@@ -248,8 +263,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
   }
 }
 
-abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams)
-  : PythonAddInterpreterModel(params) {
+abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams) : PythonAddInterpreterModel(params) {
   override val state: MutableTargetState = MutableTargetState(propertyGraph)
 
   init {
@@ -265,8 +279,8 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
     }
   }
 
-  override suspend fun initialize() {
-    super.initialize()
+  override suspend fun initialize(project: Project?) {
+    super.initialize(project)
     detectPoetryExecutable()
     detectPipEnvExecutable()
     detectUvExecutable()
@@ -307,17 +321,13 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
   }
 }
 
-class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
-  : PythonMutableTargetAddInterpreterModel(params) {
-
-  override suspend fun initialize() {
-    super.initialize()
+class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams) : PythonMutableTargetAddInterpreterModel(params) {
+  override suspend fun initialize(project: Project?) {
+    super.initialize(project)
 
     val mostRecentlyUsedBasePath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
     val interpreterToSelect = detectedInterpreters.value.find { it.homePath == mostRecentlyUsedBasePath }
-                              ?: baseInterpreters.value
-                                .filterIsInstance<ExistingSelectableInterpreter>()
-                                .maxByOrNull { it.languageLevel }
+                              ?: baseInterpreters.value.filterIsInstance<ExistingSelectableInterpreter>().maxByOrNull { it.languageLevel }
 
     if (interpreterToSelect != null) {
       state.baseInterpreter.set(interpreterToSelect)
@@ -348,11 +358,14 @@ sealed class PythonSelectableInterpreter {
   abstract val homePath: String
   abstract val languageLevel: LanguageLevel
   open val uiCustomization: UICustomization? = null
-  override fun toString(): String =
-    "PythonSelectableInterpreter(homePath='$homePath')"
+  override fun toString(): String = "PythonSelectableInterpreter(homePath='$homePath')"
 }
 
-class ExistingSelectableInterpreter(val sdk: Sdk, override val languageLevel: LanguageLevel, val isSystemWide: Boolean) : PythonSelectableInterpreter() {
+class ExistingSelectableInterpreter(
+  val sdk: Sdk,
+  override val languageLevel: LanguageLevel,
+  val isSystemWide: Boolean,
+) : PythonSelectableInterpreter() {
   override suspend fun isBasePython(): Boolean = withContext(Dispatchers.IO) {
     !sdk.sdkFlavor.isPlatformIndependent
   }
@@ -363,19 +376,25 @@ class ExistingSelectableInterpreter(val sdk: Sdk, override val languageLevel: La
 /**
  * [isBase] is a system interpreter, see [isBasePython]
  */
-class DetectedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel, private val isBase: Boolean, override val uiCustomization: UICustomization? = null) : PythonSelectableInterpreter(), Comparable<DetectedSelectableInterpreter> {
+class DetectedSelectableInterpreter(
+  override val homePath: String,
+  override val languageLevel: LanguageLevel,
+  private val isBase: Boolean,
+  override val uiCustomization: UICustomization? = null,
+) : PythonSelectableInterpreter(), Comparable<DetectedSelectableInterpreter> {
   override suspend fun isBasePython(): Boolean = isBase
 
 
-  override fun compareTo(other: DetectedSelectableInterpreter): Int {
-    // First by type
-    val byType = (uiCustomization?.title ?: "").compareTo(other.uiCustomization?.title ?: "")
-    // Then from the highest python to the lowest
+  override fun compareTo(other: DetectedSelectableInterpreter): Int { // First by type
+    val byType = (uiCustomization?.title ?: "").compareTo(other.uiCustomization?.title ?: "") // Then from the highest python to the lowest
     return if (byType != 0) byType else (languageLevel.compareTo(other.languageLevel) * -1)
   }
 }
 
-class ManuallyAddedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter() {
+class ManuallyAddedSelectableInterpreter(
+  override val homePath: String,
+  override val languageLevel: LanguageLevel,
+) : PythonSelectableInterpreter() {
   constructor(python: PythonWithLanguageLevel) : this(python.pythonBinary.pathString, python.languageLevel)
 }
 

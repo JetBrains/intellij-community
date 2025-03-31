@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -40,7 +41,10 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
 
   val venvPython = createVenv(baseSdkPath, venvPath, inheritSitePackages = state.inheritSitePackages.get()).getOr { return it }
 
-  if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
+  if (targetEnvironmentConfiguration != null) {
+    error("Remote targets aren't supported")
+  }
+
   val homeFile =
     // refresh needs write action
     edtWriteAction {
@@ -53,15 +57,19 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
   val newSdk = createSdk(homeFile, projectPath, existingSdks.toTypedArray())
 
   // todo check exclude
-  ProjectManager.getInstance().openProjects
+  val module = ProjectManager.getInstance().openProjects
     .firstNotNullOfOrNull {
       withContext(Dispatchers.IO) {
         ModuleUtil.findModuleForFile(homeFile, it)
       }
     }
-    ?.excludeInnerVirtualEnv(newSdk)
-  return com.jetbrains.python.Result.success(newSdk)
 
+  module?.excludeInnerVirtualEnv(newSdk)
+  if (!this.state.makeAvailable.get()) {
+    module?.let { newSdk.setAssociationToModule(module) }
+  }
+
+  return com.jetbrains.python.Result.success(newSdk)
 }
 
 

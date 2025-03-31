@@ -14,6 +14,7 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.runExecutable
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.setAssociationToPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -98,10 +99,7 @@ suspend fun setupPipEnvSdkUnderProgress(
     setUpPipEnv(projectPath, python, installPackages)
   }.getOrElse { return Result.failure(it) }
 
-  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(projectPath), PyPipEnvSdkAdditionalData()).onSuccess { sdk ->
-    // FIXME: multi module project support - associate with module path
-    sdk.setAssociationToPath(projectPath)
-  }
+  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(projectPath),PyPipEnvSdkAdditionalData())
 }
 
 /**

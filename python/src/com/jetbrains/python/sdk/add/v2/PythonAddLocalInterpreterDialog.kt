@@ -17,7 +17,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
@@ -74,7 +73,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
         mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
       }.apply {
         model.scope.launch(model.uiContext) {
-          model.initialize()
+          model.initialize(dialogPresenter.moduleOrProject.project,)
           mainPanel.onShown()
         }
       }

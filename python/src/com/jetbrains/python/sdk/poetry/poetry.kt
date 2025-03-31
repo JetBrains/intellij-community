@@ -56,17 +56,16 @@ suspend fun setupPoetrySdkUnderProgress(
                     ?: return Result.failure(FileNotFoundException("Can't find path to project or module"))
 
   val actualProject = project ?: module?.project
-  val pythonExecutablePath =  if (actualProject != null) {
-      withBackgroundProgress(actualProject, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
-        setUpPoetry(projectPath, python, installPackages, poetryPath)
-      }
-  } else {
+  val pythonExecutablePath = if (actualProject != null) {
+    withBackgroundProgress(actualProject, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
+      setUpPoetry(projectPath, python, installPackages, poetryPath)
+    }
+  }
+  else {
     setUpPoetry(projectPath, python, installPackages, poetryPath)
   }.getOrElse { return Result.failure(it) }
 
-  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData()).onSuccess { sdk ->
-    module?.let { sdk.setAssociationToModule(it) }
-  }
+  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData())
 }
 
 internal val Sdk.isPoetry: Boolean

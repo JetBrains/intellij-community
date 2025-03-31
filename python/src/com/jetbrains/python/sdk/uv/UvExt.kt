@@ -77,9 +77,5 @@ suspend fun setupExistingEnvAndSdk(
     suggestedSdkName(projectDir),
     UvSdkAdditionalData(envWorkingDir, usePip))
 
-  sdk.onSuccess {
-    it.setAssociationToPath(projectDir.pathString)
-  }
-
   return sdk
 }

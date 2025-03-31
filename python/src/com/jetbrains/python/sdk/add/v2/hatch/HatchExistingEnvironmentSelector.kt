@@ -17,11 +17,13 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.resolvePythonBinary
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.destructured
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
@@ -59,19 +61,23 @@ internal class HatchExistingEnvironmentSelector(
     val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
       existingHatchVenv.pythonHomePath.resolvePythonBinary().toString()
     }
-    val existingSdk = ProjectJdkTable.getInstance().allJdks.find { it.homePath == venvPythonBinaryPathString }
-    val sdk = when {
+
+    val existingSdk = PythonSdkUtil.getAllSdks().find { it.homePath == venvPythonBinaryPathString }
+    val result = when {
       existingSdk != null -> Result.success(existingSdk)
       else -> {
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
-        environment.createSdk(workingDirectory, module)
+        environment.createSdk(workingDirectory, module).onSuccess { sdk ->
+          module?.let { module -> sdk.setAssociationToModule(module) }
+        }
       }
     }.onSuccess {
       val executablePath = executable.get().toPath().getOr { return@onSuccess }
       HatchConfiguration.persistPathForTarget(hatchExecutablePath = executablePath)
     }
-    return sdk
+
+    return result
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

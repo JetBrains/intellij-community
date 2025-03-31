@@ -40,7 +40,6 @@ suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module
   }
 
   withContext(Dispatchers.EDT) {
-    module?.let { sdk.setAssociationToModule(it) }
     sdk.persist()
   }
 
