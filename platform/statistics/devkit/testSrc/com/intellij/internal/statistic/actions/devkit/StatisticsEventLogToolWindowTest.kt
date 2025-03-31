@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogMessageBuilder
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.internal.statistic.devkit.toolwindow.StatisticsLogFilterModel
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
@@ -120,8 +121,8 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
 
   fun testAllValidationTypesUsed() {
     val correctValidationTypes = setOf(ACCEPTED, THIRD_PARTY)
-    for (resultType in entries) {
-      assertTrue("Don't forget to change toolWindow logic in case of a new value in ValidationResult",
+    for (resultType in ValidationResultType.entries) {
+      assertTrue("Don't forget to change toolWindow logic in case of a new value ${resultType.name} in ValidationResult",
                  StatisticsEventLogToolWindow.rejectedValidationTypes.contains(resultType) || correctValidationTypes.contains(resultType))
     }
   }

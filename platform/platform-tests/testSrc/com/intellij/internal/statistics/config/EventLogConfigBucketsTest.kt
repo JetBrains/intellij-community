@@ -1,15 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.config
 
-import com.intellij.internal.statistic.config.bean.EventLogBucketRange
-import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.*
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import org.junit.Test
 
 class EventLogConfigBucketsTest : EventLogConfigBaseParserTest() {
 
-  private fun doTestBuckets(buckets: String, vararg expected: EventLogBucketRange) {
+  private fun doTestBuckets(buckets: String, vararg expected: ConfigurationBucketRange) {
     val config = """
 {
   "productCode": "IU",
@@ -30,7 +29,7 @@ class EventLogConfigBucketsTest : EventLogConfigBaseParserTest() {
     }
   ]
 }"""
-    val existingConfig: Map<EventLogBuildType, EventLogSendConfiguration> = if (expected.isNotEmpty()) hashMapOf(RELEASE to EventLogSendConfiguration(expected.toList())) else emptyMap()
+    val existingConfig: Map<EventLogBuildType, List<ConfigurationBucketRange>> = if (expected.isNotEmpty()) hashMapOf(RELEASE to expected.toList()) else emptyMap()
     val notExistingConfig: Set<EventLogBuildType> = if (expected.isNotEmpty()) hashSetOf(EAP, UNKNOWN) else hashSetOf(EAP, UNKNOWN, RELEASE)
     val endpoints = hashMapOf(
       "send" to "https://send/endpoint",
@@ -49,20 +48,20 @@ class EventLogConfigBucketsTest : EventLogConfigBaseParserTest() {
   fun `test parse single bucket range`() {
     doTestBuckets("""
 "from":0, "to":256
-""", EventLogBucketRange(0, 256))
+""", ConfigurationBucketRange(0, 256))
   }
 
   @Test
   fun `test parse bucket range without from`() {
     doTestBuckets("""
 "to":128
-""", EventLogBucketRange(0, 128))
+""", ConfigurationBucketRange(0, 128))
   }
 
   @Test
   fun `test parse bucket range without to`() {
     doTestBuckets("""
 "from":64
-""", EventLogBucketRange(64, Int.MAX_VALUE))
+""", ConfigurationBucketRange(64, Int.MAX_VALUE))
   }
 }
