@@ -58,7 +58,10 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     for (DependencyOnPlugin plugin : dependencies) {
       String pluginId = plugin.getPluginId();
       IdeaPluginDescriptorImpl descriptor = PluginManagerCore.findPlugin(PluginId.getId(pluginId));
-      var canBeEnabled = descriptor == null ||
+      if (descriptor == null) {
+        continue;
+      }
+      var canBeEnabled =
         !ContainerUtil.exists(descriptor.getDependencies(), it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
       if (canBeEnabled) {
         result.add(plugin);
