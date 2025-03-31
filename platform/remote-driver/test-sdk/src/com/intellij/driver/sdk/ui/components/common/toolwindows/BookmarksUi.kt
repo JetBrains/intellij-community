@@ -18,7 +18,7 @@ fun Finder.bookmarksToolWindow(action: BookmarksToolWindowUiComponent.() -> Unit
 class BookmarksToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
 
   val bookmarksTree by lazy {
-    if (isRemoteIdeMode) {
+    if (isRemDevMode) {
       wait(1.seconds) // wait till tree initialization
     }
     tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }

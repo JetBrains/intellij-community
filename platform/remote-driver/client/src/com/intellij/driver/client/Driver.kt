@@ -68,7 +68,10 @@ interface Driver : AutoCloseable {
    */
   val isConnected: Boolean
 
-  val isRemoteIdeMode: Boolean
+  /**
+   * @return true only for frontend's driver in remote development mode.
+   */
+  val isRemDevMode: Boolean
 
   /**
    * @return information about the product under test
@@ -147,8 +150,8 @@ interface Driver : AutoCloseable {
      */
     @JvmStatic
     @Contract(pure = true)
-    fun create(host: JmxHost? = JmxHost(null, null, "localhost:7777"), isRemoteIdeMode: Boolean = false): Driver =
-      DriverImpl(host, isRemoteIdeMode)
+    fun create(host: JmxHost? = JmxHost(null, null, "localhost:7777"), isRemDevMode: Boolean = false): Driver =
+      DriverImpl(host, isRemDevMode)
   }
 }
 
