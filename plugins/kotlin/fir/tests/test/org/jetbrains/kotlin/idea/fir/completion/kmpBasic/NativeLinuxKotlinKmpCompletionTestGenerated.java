@@ -748,6 +748,31 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion.kt");
         }
 
+        @TestMetadata("ExpectedEnumEntryCompletion2.kt")
+        public void testExpectedEnumEntryCompletion2() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion2.kt");
+        }
+
+        @TestMetadata("ExpectedEnumEntryCompletion3.kt")
+        public void testExpectedEnumEntryCompletion3() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion3.kt");
+        }
+
+        @TestMetadata("ExpectedEnumEntryCompletion4.kt")
+        public void testExpectedEnumEntryCompletion4() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion4.kt");
+        }
+
+        @TestMetadata("ExpectedEnumEntryCompletion5.kt")
+        public void testExpectedEnumEntryCompletion5() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion5.kt");
+        }
+
+        @TestMetadata("ExpectedEnumEntryCompletion6.kt")
+        public void testExpectedEnumEntryCompletion6() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion6.kt");
+        }
+
         @TestMetadata("InvisibleEnumEntryCompletion.kt")
         public void testInvisibleEnumEntryCompletion() throws Exception {
             runTest("../../completion/testData/basic/common/enums/InvisibleEnumEntryCompletion.kt");

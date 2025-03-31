@@ -257,7 +257,7 @@ fun generateMember(
 }
 
 @OptIn(KaExperimentalApi::class)
-inline fun KaDeclarationRenderer.Builder.withoutLabel() {
+fun KaDeclarationRenderer.Builder.withoutLabel() {
     contextReceiversRenderer = contextReceiversRenderer.with {
         contextReceiverLabelRenderer = WITHOUT_LABEL
     }
