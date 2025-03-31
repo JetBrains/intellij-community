@@ -24,6 +24,7 @@ jvm_library(
     "//platform/util/text-matching",
     "//java/codeserver/highlighting:java-codeserver-highlighting",
     "//java/codeserver/core:java-codeserver-core",
+    "//java/java-syntax:syntax",
   ]
 )
 ### auto-generated section `build intellij.java.impl.inspections` end

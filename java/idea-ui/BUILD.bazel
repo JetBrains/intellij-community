@@ -45,6 +45,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/eel-provider",
     "//platform/util/concurrency",
+    "//java/java-syntax:syntax",
   ],
   runtime_deps = [":ui_resources"]
 )

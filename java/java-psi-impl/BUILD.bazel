@@ -21,11 +21,14 @@ jvm_library(
     "//platform/util",
     "@lib//:stream_ex",
     "@lib//:fastutil-min",
+    "//java/java-syntax:syntax",
+    "//platform/syntax/syntax-psi:psi",
   ],
   exports = [
     "//java/java-psi-api:psi",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//platform/core-impl",
+    "//platform/syntax/syntax-psi:psi",
   ],
   runtime_deps = [":psi-impl_resources"]
 )

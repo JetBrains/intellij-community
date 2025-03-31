@@ -12,6 +12,7 @@ jvm_library(
     "//platform/util",
     "//java/java-frontback-psi-api:frontback-psi",
     "@lib//:kotlin-stdlib",
+    "//java/java-syntax:syntax",
   ],
   exports = [
     "//platform/core-api:core",

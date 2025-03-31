@@ -29,6 +29,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
     "//platform/usageView",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":lang-core_resources"]
 )

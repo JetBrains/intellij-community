@@ -44,6 +44,7 @@ jvm_library(
     "//platform/backend/observation",
     "//java/debugger/shared:java-debugger-impl-shared",
     "//platform/xdebugger-testFramework:debugger-testFramework",
+    "//java/java-syntax:syntax",
   ],
   exports = [
     "//java/testFramework/shared:java-testFramework-shared",

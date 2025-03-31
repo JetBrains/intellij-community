@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.idea.community.build.tasks` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
-jvm_resources(
-  name = "tasks_resources",
-  files = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "tasks",
@@ -39,7 +33,6 @@ jvm_library(
     "@rules_jvm//zip",
   ],
   runtime_deps = [
-    ":tasks_resources",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "@lib//:bouncy-castle-provider",
@@ -84,8 +77,7 @@ jvm_library(
     "@lib//:tc_service_messages",
     "@lib//:opentelemetry-extension-kotlin",
     "@rules_jvm//zip",
-  ],
-  runtime_deps = [":tasks_resources"]
+  ]
 )
 
 jvm_test(

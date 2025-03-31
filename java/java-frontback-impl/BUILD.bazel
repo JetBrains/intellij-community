@@ -24,6 +24,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/core-api:core",
     "//platform/util/jdom",
+    "//platform/syntax/syntax-psi:psi",
   ],
   exports = [
     "//java/java-frontback-psi-api:frontback-psi",
