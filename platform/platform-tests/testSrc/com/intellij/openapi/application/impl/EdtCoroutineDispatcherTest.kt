@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -391,8 +392,9 @@ class EdtCoroutineDispatcherTest {
     }
   }
 
-  @Test
-  fun `main dispatcher allows locking actions`(): Unit = timeoutRunBlocking(context = Dispatchers.Main) {
+  @UiThreadDispatcherTest
+  fun `main and relaxed dispatcher allows locking actions`(dispatcher: CoroutineContext): Unit = timeoutRunBlocking(context = dispatcher) {
+    Assumptions.assumeTrue(dispatcher == Dispatchers.Main || dispatcher == Dispatchers.ui(UiDispatcherKind.RELAX))
     val counter = AtomicInteger()
     assertThat(application.isReadAccessAllowed).isFalse
     assertThat(application.isWriteAccessAllowed).isFalse
@@ -494,4 +496,5 @@ internal fun uiThreadDispatchers(): List<Arguments> = listOf(
   Dispatchers.EDT,
   Dispatchers.UI,
   Dispatchers.Main,
+  Dispatchers.ui(UiDispatcherKind.RELAX)
 ).map { Arguments.of(it) }

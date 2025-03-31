@@ -9,7 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -143,7 +147,7 @@ sealed interface ReadResult<out R> {
 
   @Internal
   companion object : ReadAndWriteScope {
-    
+
     @JvmStatic
     override fun <R> value(value: R): ReadResult<R> = Value(value)
 
@@ -324,7 +328,8 @@ Thread dump:
 ${dump.rawDump}""")
       }
 
-    } else null
+    }
+    else null
     try {
       @Suppress("ForbiddenInSuspectContextMethod")
       ApplicationManager.getApplication().runWriteAction(ThrowableComputable(action))
@@ -371,15 +376,57 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
  * This dispatcher is also installed as [Dispatchers.Main]. Prefer [Dispatchers.UI] for computations on EDT.
  */
 @Suppress("UnusedReceiverParameter")
-val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
+val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().uiDispatcher(UiDispatcherKind.LEGACY, false)
+
+/**
+ * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
+ *
+ * The behavior of the Write-Intent lock can be configured by the use of [kind].
+ *
+ * Prefer [Dispatchers.UI] for computations on EDT.
+ */
+@Experimental
+@Suppress("UnusedReceiverParameter")
+@JvmOverloads
+fun Dispatchers.ui(kind: UiDispatcherKind = UiDispatcherKind.STRICT, immediate: Boolean = false): CoroutineContext = coroutineSupport().uiDispatcher(kind, immediate)
+
+/**
+ * Defines the behavior of a dispatcher that manages Event Dispatch Thread.
+ * The behavior of the dispatchers differs in their treatment of the Read-Write lock
+ * and possibility of interaction with the IntelliJ Platform model (PSI, VFS, etc.)
+ * By default, consider using [RELAX].
+ */
+@Experimental
+enum class UiDispatcherKind {
+  /**
+   * This UI dispatcher **forbids** any attempt to access the RW lock.
+   * Use it if you are performing strictly UI-related computations.
+   */
+  STRICT,
+
+  /**
+   * This UI dispatcher **allows** taking the RW lock, but **does not** acquire it by default.
+   * Use it for incremental migration from [LEGACY].
+   */
+  RELAX,
+
+  /**
+   * This UI dispatcher **acquires** the Write-Intent lock for all computations by default.
+   * We would like to move away from unconditional acquisition of the Read-Write lock, so please use [RELAX] for replacement.
+   */
+  @ApiStatus.Obsolete
+  LEGACY;
+}
+
 
 @Suppress("UnusedReceiverParameter")
 @get:Experimental
-val Dispatchers.EdtImmediate: CoroutineContext get() = coroutineSupport().immediateEdtDispatcher()
+val Dispatchers.EdtImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.LEGACY, immediate = true)
 
 @Suppress("UnusedReceiverParameter")
 @get:Experimental
-val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().immediateUiDispatcher()
+val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = true)
 
 /**
  * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
@@ -392,6 +439,6 @@ val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().immedia
  */
 @get:Experimental
 @Suppress("UnusedReceiverParameter")
-val Dispatchers.UI: CoroutineContext get() = coroutineSupport().uiDispatcher()
+val Dispatchers.UI: CoroutineContext get() = coroutineSupport().uiDispatcher(kind = UiDispatcherKind.STRICT, immediate = false)
 
 private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)

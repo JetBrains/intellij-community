@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -226,7 +227,7 @@ class SingleAlarm @Internal constructor(
 
     @Internal
     fun getEdtDispatcher(): CoroutineContext {
-      val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
+      val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false)
       if (edtDispatcher == null) {
         // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
         LOG.warn("Do not use an alarm in an early executing code")
