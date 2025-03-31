@@ -303,6 +303,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/quotedName.kt");
         }
 
+        @TestMetadata("receiverParameter.kt")
+        public void testReceiverParameter() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/receiverParameter.kt");
+        }
+
         @TestMetadata("refInReturn.kt")
         public void testRefInReturn() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/refInReturn.kt");

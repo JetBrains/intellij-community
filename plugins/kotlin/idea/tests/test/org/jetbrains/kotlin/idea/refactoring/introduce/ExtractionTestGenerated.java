@@ -1534,6 +1534,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/quotedName.kt");
             }
 
+            @TestMetadata("receiverParameter.kt")
+            public void testReceiverParameter() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/receiverParameter.kt");
+            }
+
             @TestMetadata("refInReturn.kt")
             public void testRefInReturn() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/refInReturn.kt");
