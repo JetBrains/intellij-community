@@ -39,7 +39,6 @@ generics_self_usage.py
 generics_syntax_declarations.py
 generics_syntax_infer_variance.py
 generics_syntax_scoping.py
-generics_type_erasure.py
 generics_typevartuple_args.py
 generics_typevartuple_basic.py
 generics_typevartuple_overloads.py
