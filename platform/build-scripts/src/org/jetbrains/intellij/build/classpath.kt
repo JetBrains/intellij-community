@@ -40,27 +40,10 @@ private fun processClassReport(consumer: (String, String) -> Unit) {
   }
 }
 
-private val sourceToNames: Map<String, MutableList<String>> by lazy {
-  val sourceToNames = LinkedHashMap<String, MutableList<String>>()
-  processClassReport { classFilePath, jarPath ->
-    sourceToNames.computeIfAbsent(jarPath) { mutableListOf() }.add(classFilePath)
-  }
-  sourceToNames
+internal fun excludedLibJars(context: BuildContext): Set<String> {
+  return setOf(PlatformJarNames.TEST_FRAMEWORK_JAR) +
+         if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)) setOf(PLATFORM_CORE_NIO_FS) else emptySet()
 }
-
-suspend fun reorderJar(relativePath: String, file: Path) {
-  val orderedNames = sourceToNames[relativePath] ?: return
-  spanBuilder("reorder jar")
-    .setAttribute("relativePath", relativePath)
-    .setAttribute("file", file.toString())
-    .use {
-      reorderJar(jarFile = file, orderedNames = orderedNames)
-    }
-}
-
-internal fun excludedLibJars(context: BuildContext): Set<String> =
-  setOf(PlatformJarNames.TEST_FRAMEWORK_JAR) +
-  if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)) setOf(PLATFORM_CORE_NIO_FS) else emptySet()
 
 internal suspend fun generateClasspath(context: BuildContext): List<String> {
   val homeDir = context.paths.distAllDir

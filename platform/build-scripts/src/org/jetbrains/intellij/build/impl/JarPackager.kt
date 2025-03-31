@@ -14,11 +14,37 @@ import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap
-import kotlinx.coroutines.*
-import org.jetbrains.intellij.build.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.DirSource
+import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.InMemoryContentSource
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.NativeFileHandler
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.SignNativeFileMode
+import org.jetbrains.intellij.build.Source
+import org.jetbrains.intellij.build.UTIL_8_JAR
+import org.jetbrains.intellij.build.UTIL_JAR
+import org.jetbrains.intellij.build.ZipSource
+import org.jetbrains.intellij.build.buildJar
+import org.jetbrains.intellij.build.computeHashForModuleOutput
+import org.jetbrains.intellij.build.computeModuleSourcesByContent
+import org.jetbrains.intellij.build.defaultLibrarySourcesNamesFilter
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
-import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.inferModuleSources
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.jarCache.SourceBuilder
@@ -28,13 +54,12 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.*
+import java.util.TreeMap
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
@@ -274,12 +299,12 @@ class JarPackager private constructor(
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
       assets.computeIfAbsent(moduleOutDir) { file ->
-        AssetDescriptor(isDir = true, file = file, relativePath = "", pathInClassLog = "", nativeFiles = nativeFiles)
+        AssetDescriptor(isDir = true, file = file, relativePath = "", nativeFiles = nativeFiles)
       }
     }
     else {
       assets.computeIfAbsent(outFile) { file ->
-        createAssetDescriptor(outDir = outDir, relativeOutputFile = item.relativeOutputFile, targetFile = file, context = context, nativeFiles = nativeFiles)
+        createAssetDescriptor(relativeOutputFile = item.relativeOutputFile, targetFile = file, nativeFiles = nativeFiles)
       }
     }
 
@@ -339,7 +364,6 @@ class JarPackager private constructor(
           isDir = false,
           file = targetFile,
           relativePath = relativePath,
-          pathInClassLog = "",
           nativeFiles = null,
           useCacheAsTargetFile = false,
         )
@@ -652,7 +676,7 @@ class JarPackager private constructor(
 
   private fun getJarAsset(targetFile: Path, relativeOutputFile: String, nativeFiles: List<String>?): AssetDescriptor {
     return assets.computeIfAbsent(targetFile) {
-      createAssetDescriptor(outDir = outDir, targetFile = targetFile, relativeOutputFile = relativeOutputFile, context = context, nativeFiles = nativeFiles)
+      createAssetDescriptor(targetFile = targetFile, relativeOutputFile = relativeOutputFile, nativeFiles = nativeFiles)
     }
   }
 }
@@ -689,7 +713,6 @@ private data class AssetDescriptor(
   @JvmField val file: Path,
   @JvmField val relativePath: String,
   @JvmField var effectiveFile: Path = file,
-  @JvmField val pathInClassLog: String,
   @JvmField val nativeFiles: List<String>?,
   @JvmField val useCacheAsTargetFile: Boolean = true,
 ) {
@@ -842,9 +865,6 @@ private suspend fun buildJars(
             )
           }
 
-        if (asset.pathInClassLog.isNotEmpty()) {
-          reorderJar(relativePath = asset.pathInClassLog, file = file)
-        }
         nativeFileHandler?.sourceToNativeFiles ?: emptyMap()
       }
     }
@@ -945,24 +965,8 @@ private fun JpsModule.toSource(outputDir: Path, excludes: List<PathMatcher>): So
   }
 }
 
-private fun createAssetDescriptor(outDir: Path, relativeOutputFile: String, targetFile: Path, context: BuildContext, nativeFiles: List<String>?): AssetDescriptor {
-  var pathInClassLog = ""
-  if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-    if (context.paths.distAllDir == outDir.parent) {
-      pathInClassLog = outDir.parent.relativize(targetFile).toString().replace(File.separatorChar, '/')
-    }
-    else if (outDir.startsWith(context.paths.distAllDir)) {
-      pathInClassLog = context.paths.distAllDir.relativize(targetFile).toString().replace(File.separatorChar, '/')
-    }
-    else {
-      val parent = outDir.parent
-      if (parent?.fileName.toString() == "plugins") {
-        pathInClassLog = parent.parent.relativize(targetFile).toString().replace(File.separatorChar, '/')
-      }
-    }
-  }
-
-  return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile, pathInClassLog = pathInClassLog, nativeFiles = nativeFiles)
+private fun createAssetDescriptor(relativeOutputFile: String, targetFile: Path, nativeFiles: List<String>?): AssetDescriptor {
+  return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile, nativeFiles = nativeFiles)
 }
 
 private fun computeDistributionFileEntries(asset: AssetDescriptor, hasher: HashStream64, list: MutableList<DistributionFileEntry>, dryRun: Boolean, cacheManager: JarCacheManager) {
