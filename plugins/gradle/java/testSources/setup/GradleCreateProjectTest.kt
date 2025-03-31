@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 @RegistryKey("ide.activity.tracking.enable.debug", "true")
+@SystemProperty("intellij.progress.task.ignoreHeadless", "true")
 class GradleCreateProjectTest : GradleCreateProjectTestCase() {
 
   @Test

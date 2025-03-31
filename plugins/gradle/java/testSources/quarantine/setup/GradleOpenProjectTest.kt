@@ -9,6 +9,7 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAsser
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.vfs.createFile
@@ -20,7 +21,8 @@ import org.jetbrains.plugins.gradle.setup.GradleOpenProjectTestCase
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-
+@RegistryKey("ide.activity.tracking.enable.debug", "true")
+@SystemProperty("intellij.progress.task.ignoreHeadless", "true")
 class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
@@ -208,7 +210,6 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
   }
 
   @Test
-  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
   fun `test auto-link project from new gradle_xml`(): Unit = runBlocking {
     val projectInfo = getSimpleProjectInfo("project")
     initProject(projectInfo)
