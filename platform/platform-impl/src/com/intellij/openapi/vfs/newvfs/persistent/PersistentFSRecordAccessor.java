@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,7 +69,7 @@ public final class PersistentFSRecordAccessor {
       return newRecordId;
     }
 
-    final int reusedRecordId = connection.reserveFreeRecord();
+    int reusedRecordId = connection.reserveFreeRecord();
     if (reusedRecordId < 0) {
       int newRecordId = records.allocateRecord();
 
@@ -151,11 +151,11 @@ public final class PersistentFSRecordAccessor {
 
   public boolean isDeleted(int id) throws IOException {
     //TODO RC: why first condition is not enough? How could recordId be in freeRecords, if it doesn't have FREE_RECORD flag on it?
-    final int flags = connection.records().getFlags(id);
+    int flags = connection.records().getFlags(id);
     return hasDeletedFlag(flags) || newFreeRecords.contains(id);
   }
 
-  public static boolean hasDeletedFlag(final int flags) {
+  public static boolean hasDeletedFlag(int flags) {
     return BitUtil.isSet(flags, FREE_RECORD_FLAG);
   }
 

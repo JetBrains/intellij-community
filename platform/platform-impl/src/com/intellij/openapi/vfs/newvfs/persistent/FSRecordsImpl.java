@@ -161,7 +161,7 @@ public final class FSRecordsImpl implements Closeable {
 
   public static int currentImplementationVersion() {
     //bumped main version (63 -> 64) because AppendOnlyLog ids assignment algo changed
-    final int mainVFSFormatVersion = 64;
+    int mainVFSFormatVersion = 64;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
            nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
@@ -367,7 +367,7 @@ public final class FSRecordsImpl implements Closeable {
     }
 
     if (BACKGROUND_VFS_FLUSH) {
-      final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
+      ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
       flushingTask = PersistentFSConnection.startFlusher(scheduler, connection, USE_GENTLE_FLUSHER);
     }
     else {
@@ -1709,8 +1709,8 @@ public final class FSRecordsImpl implements Closeable {
    * logged, if cause is null -- the scenario is considered not an 'error', but a regular
    * request -- e.g. no errors logged.
    */
-  public void scheduleRebuild(final @Nullable String diagnosticMessage,
-                              final @Nullable Throwable cause) {
+  public void scheduleRebuild(@Nullable String diagnosticMessage,
+                              @Nullable Throwable cause) {
     checkNotClosed();
     connection.scheduleVFSRebuild(diagnosticMessage, cause);
   }

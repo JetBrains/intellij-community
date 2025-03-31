@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.core.CoreBundle;
@@ -280,7 +280,7 @@ public final class PersistentFSConnection {
   static void scheduleVFSRebuild(@NotNull Path corruptionMarkerFile,
                                  @Nullable String message,
                                  @Nullable Throwable errorCause) {
-    final VFSCorruptedException corruptedException = new VFSCorruptedException(
+    VFSCorruptedException corruptedException = new VFSCorruptedException(
       message == null ? "(No specific reason of corruption was given)" : message,
       errorCause
     );
@@ -294,7 +294,7 @@ public final class PersistentFSConnection {
     }
 
     try {
-      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
       try (PrintStream stream = new PrintStream(out, false, UTF_8)) {
         stream.println("VFS files are corrupted and must be rebuilt from the scratch on next startup");
         corruptedException.printStackTrace(stream);
@@ -455,7 +455,7 @@ public final class PersistentFSConnection {
     }
 
     @Override
-    protected FlushResult flushAsMuchAsPossibleWithinQuota(final /*InOut*/ IntRef contentionQuota) throws IOException {
+    protected FlushResult flushAsMuchAsPossibleWithinQuota(/*InOut*/ IntRef contentionQuota) throws IOException {
       if (!connection.isDirty()) {
         return FlushResult.NOTHING_TO_FLUSH_NOW;
       }
@@ -533,7 +533,7 @@ public final class PersistentFSConnection {
 
   /** Created to make stacktraces easily recognizable in logs */
   private static final class VFSCorruptedException extends Exception {
-    VFSCorruptedException(final String message, final Throwable cause) {
+    VFSCorruptedException(String message, Throwable cause) {
       super(message, cause);
     }
   }
