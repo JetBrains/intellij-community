@@ -9,6 +9,7 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaRenameVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCompletionVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaMultiLineEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaTextCompletionEvaluationVisitor"/>
     <setupSdkStep implementation="com.intellij.cce.java.evaluation.SetupJDKStep"/>
     <lineCompletionVisitorFactory implementation="com.intellij.cce.java.visitor.JavaLineCompletionVisitorFactory"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaTestGenerationVisitor"/>
