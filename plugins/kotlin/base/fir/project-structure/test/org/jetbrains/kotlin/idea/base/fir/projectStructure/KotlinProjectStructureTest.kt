@@ -13,6 +13,8 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.*
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -37,8 +40,10 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.util.compileScriptsIntoDirectory
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
@@ -816,6 +821,55 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         assertKaModuleType<KaScriptModule>("myScript.kts")
+    }
+
+    fun `test compiled script class always belongs to KaLibraryModule`() {
+        val fileStructure = directoryContent {
+            dir("test") {
+                file("A.kts",
+                     """
+                     fun foo() = 42
+                     foo()
+                 """.trimIndent()
+                )
+            }
+
+            dir("toCompile") {
+                file("Simple.kts", "class Simple {}")
+            }
+
+            dir("compiled") {
+            }
+        }
+
+        val rootFile = fileStructure.generateInVirtualTempDir()
+        val scriptModule = createModule(moduleName ="scriptA", resourceContentSpec = fileStructure)
+        val compiledScriptsDirectory = rootFile.findChild("compiled")!!
+
+        val scriptFile = VfsUtil.virtualToIoFile(rootFile.findFile("toCompile/Simple.kts")!!)
+        /*
+        To store compiled script artifacts,
+        one should use 'KotlinCompilerStandalone' directly.
+         */
+        compiledScriptsDirectory.compileScriptsIntoDirectory(listOf(scriptFile))
+        compiledScriptsDirectory.refresh(false, true)
+
+        moduleLibrary(
+            scriptModule,
+            libraryName = "libWithCompiledScripts",
+            classesRoot = compiledScriptsDirectory,
+        )
+
+        val scriptPsiFile = (getFile("A.kts") as KtFile).script as KtScript
+        val compiledScriptPsiFile = getFile("Simple.class")
+
+        assertKaModuleType<KaLibraryModuleImpl>(
+            compiledScriptPsiFile,
+            kaModule(scriptPsiFile)
+        )
+        assertKaModuleType<KaLibraryModuleImpl>(
+            compiledScriptPsiFile
+        )
     }
 
     fun `test element to library mapping consistency with contextual library module`() {
