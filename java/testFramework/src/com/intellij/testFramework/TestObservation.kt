@@ -50,7 +50,7 @@ object TestObservation {
       val threadDump = dumpThreadsToString()
 
       System.err.println("""
-        |The waiting takes too long. Expected to take no more than $timeout ms.
+        |The waiting takes too long. Expected to take no more than $timeout.
         |------ Operation log begin ------
         |$operationLog
         |------- Operation log end -------
@@ -67,7 +67,7 @@ object TestObservation {
         |$coroutineDump
         |------- Coroutine dump end ------
       """.trimMargin())
-      throw AssertionError("The waiting takes too long. Expected to take no more than $timeout ms.")
+      throw AssertionError("The waiting takes too long. Expected to take no more than $timeout.")
     }
   }
 
