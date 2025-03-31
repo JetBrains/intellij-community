@@ -31,8 +31,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.KeyStroke;
+import java.awt.Font;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -58,8 +58,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   @ApiStatus.Internal
-  public void addUiSettingsListener(@NotNull TerminalUiSettingsListener listener) {
-    myUiSettingsManager.addListener(listener);
+  public void addUiSettingsListener(@NotNull Disposable parentDisposable, @NotNull TerminalUiSettingsListener listener) {
+    myUiSettingsManager.addListener(parentDisposable, listener);
   }
 
   @NotNull EditorColorsScheme getColorsScheme() {
