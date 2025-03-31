@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.jarCache
@@ -34,7 +34,7 @@ import kotlin.time.Duration.Companion.days
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 14
+private const val cacheVersion: Byte = 15
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
@@ -60,28 +60,17 @@ internal class LocalDiskJarCacheManager(
   ): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, productionClassOutDir = productionClassOutDir)
 
-    val targetFileNamePrefix = targetFile.fileName.toString().removeSuffix(jarSuffix)
-
-    val hash = Hashing.xxh3_64().hashStream()
+    val hash = Hashing.xxh3_128().hashStream()
     hash.putByte(cacheVersion)
     for (source in items) {
       source.updateAssetDigest(hash)
     }
     hash.putInt(items.size)
+    val r = hash.get()
+    val hash1 = java.lang.Long.toUnsignedString(r.mostSignificantBits, Character.MAX_RADIX)
+    val hash2 = java.lang.Long.toUnsignedString(r.leastSignificantBits, Character.MAX_RADIX)
 
-    val hash1 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
-
-    // another 64-bit hash without `source.updateAssetDigest` to reduce the chance of collision
-    hash.reset()
-    hash.putByte(cacheVersion)
-    for (source in items) {
-      hash.putLong(source.getHash())
-    }
-    hash.putInt(items.size)
-    producer.updateDigest(hash)
-
-    val hash2 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
-
+    val targetFileNamePrefix = targetFile.fileName.toString().removeSuffix(jarSuffix)
     val cacheName = "$targetFileNamePrefix-$hash1-$hash2"
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
@@ -90,7 +79,8 @@ internal class LocalDiskJarCacheManager(
       // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       try {
         Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
-      } catch (e: IOException) {
+      }
+      catch (e: IOException) {
         Span.current().addEvent("update cacheFile modification time failed: $e")
       }
 
@@ -107,7 +97,7 @@ internal class LocalDiskJarCacheManager(
       }
       else {
         Files.createDirectories(targetFile.parent)
-        Files.copy(cacheFile, targetFile)
+        Files.createLink(targetFile, cacheFile)
         return targetFile
       }
     }
@@ -119,7 +109,7 @@ internal class LocalDiskJarCacheManager(
       try {
         Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
       }
-      catch (e: AtomicMoveNotSupportedException) {
+      catch (_: AtomicMoveNotSupportedException) {
         Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING)
       }
       fileMoved = true
@@ -162,7 +152,7 @@ internal class LocalDiskJarCacheManager(
     }
 
     if (source is DirSource && Files.notExists(source.dir)) {
-      // not existent dir are not packed
+      // not existent dir is not packed
       return
     }
 
@@ -170,12 +160,14 @@ internal class LocalDiskJarCacheManager(
   }
 }
 
-private fun checkCache(cacheMetadataFile: Path,
-                       cacheFile: Path,
-                       sources: List<Source>,
-                       items: List<SourceAndCacheStrategy>,
-                       nativeFiles: MutableMap<ZipSource, List<String>>?,
-                       span: Span): Boolean {
+private fun checkCache(
+  cacheMetadataFile: Path,
+  cacheFile: Path,
+  sources: List<Source>,
+  items: List<SourceAndCacheStrategy>,
+  nativeFiles: MutableMap<ZipSource, List<String>>?,
+  span: Span,
+): Boolean {
   if (Files.notExists(cacheMetadataFile) || Files.notExists(cacheFile)) {
     return false
   }
