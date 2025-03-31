@@ -1,6 +1,18 @@
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend
+- name: lib/jackson-dataformat-toml.jar
+  projectLibraries:
+  - name: jackson-dataformat-toml
+    files:
+    - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar
+    reason: withProjectLibrary
+- name: lib/javax-inject.jar
+  projectLibraries:
+  - name: javax-inject
+    files:
+    - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
+    reason: withProjectLibrary
 - name: lib/jps/kotlin-jps-plugin.jar
   projectLibraries:
   - name: kotlinc.kotlin-jps-plugin-classpath
@@ -32,14 +44,6 @@
   - name: kotlin.formatter.minimal
 - name: lib/kotlin-plugin.jar
   projectLibraries:
-  - name: jackson-dataformat-toml
-    files:
-    - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar
-    reason: withProjectLibrary
-  - name: javax-inject
-    files:
-    - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
-    reason: withProjectLibrary
   - name: kotlin-metadata
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
@@ -85,11 +89,6 @@
   - name: kotlinc.symbol-light-classes
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
-  - name: vavr
-    files:
-    - name: $MAVEN_REPOSITORY$/io/vavr/vavr/0/vavr-0.jar
-    - name: $MAVEN_REPOSITORY$/io/vavr/vavr-match/0/vavr-match-0.jar
-    reason: withProjectLibrary
   modules:
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k1
@@ -380,4 +379,11 @@
   - name: kotlinc.scripting-compiler-plugin
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2/scripting-compiler-plugin-for-ide-2.jar
+    reason: withProjectLibrary
+- name: lib/vavr.jar
+  projectLibraries:
+  - name: vavr
+    files:
+    - name: $MAVEN_REPOSITORY$/io/vavr/vavr/0/vavr-0.jar
+    - name: $MAVEN_REPOSITORY$/io/vavr/vavr-match/0/vavr-match-0.jar
     reason: withProjectLibrary

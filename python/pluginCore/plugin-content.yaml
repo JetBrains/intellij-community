@@ -1,9 +1,11 @@
+- name: lib/libthrift.jar
+  projectLibraries:
+  - name: libthrift
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
+    reason: withProjectLibrary
 - name: lib/python-ce.jar
   projectLibraries:
-  - name: XmlRPC
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
-    reason: withProjectLibrary
   - name: io.github.z4kn4fein.semver.jvm
     files:
     - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
@@ -16,10 +18,6 @@
     files:
     - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
     reason: <- intellij.python.community.impl
-  - name: libthrift
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
-    reason: withProjectLibrary
   - name: tuweni-toml
     files:
     - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
@@ -69,3 +67,9 @@
   - name: intellij.python.ast
   - name: intellij.python.syntax
   - name: intellij.python.syntax.core
+- name: lib/xmlrpc.jar
+  projectLibraries:
+  - name: XmlRPC
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
+    reason: withProjectLibrary

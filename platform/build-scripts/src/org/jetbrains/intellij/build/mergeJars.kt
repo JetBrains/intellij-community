@@ -8,7 +8,15 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.INDEX_FILENAME
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
+import org.jetbrains.intellij.build.io.ZipArchiver
+import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.io.ZipIndexWriter
+import org.jetbrains.intellij.build.io.archiveDir
+import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
+import org.jetbrains.intellij.build.io.writeNewFile
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path

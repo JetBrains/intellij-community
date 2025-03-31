@@ -583,40 +583,40 @@ class JarPackager private constructor(
       val outPath = libraryData.outPath
       if (packMode == LibraryPackMode.MERGED && outPath == null) {
         toMerge.put(library, getLibraryFiles(library, copiedFiles, targetFile = null))
+        continue
+      }
+
+      var libOutputDir = outDir
+      if (outPath != null) {
+        if (outPath.endsWith(".jar")) {
+          val targetFile = outDir.resolve(outPath)
+          filesToSourceWithMapping(
+            asset = getJarAsset(targetFile = targetFile, relativeOutputFile = outPath, nativeFiles = null),
+            files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile),
+            library = library,
+            relativeOutputFile = outPath,
+          )
+          continue
+        }
+
+        libOutputDir = outDir.resolve(outPath)
+      }
+
+      if (packMode == LibraryPackMode.STANDALONE_MERGED) {
+        val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
+        val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
+        addLibrary(library = library, targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = getLibraryFiles(library, copiedFiles, targetFile))
       }
       else {
-        var libOutputDir = outDir
-        if (outPath != null) {
-          if (outPath.endsWith(".jar")) {
-            val targetFile = outDir.resolve(outPath)
-            filesToSourceWithMapping(
-              getJarAsset(targetFile, outPath, nativeFiles = null),
-              getLibraryFiles(library, copiedFiles, targetFile),
-              library,
-              outPath
-            )
-            continue
+        for (file in library.getPaths(JpsOrderRootType.COMPILED)) {
+          var fileName = file.fileName.toString()
+          if (packMode == LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
+            fileName = removeVersionFromJar(fileName)
           }
 
-          libOutputDir = outDir.resolve(outPath)
-        }
-
-        if (packMode == LibraryPackMode.STANDALONE_MERGED) {
-          val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
+          val targetFile = libOutputDir.resolve(fileName)
           val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
-          addLibrary(library = library, targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = getLibraryFiles(library, copiedFiles, targetFile))
-        }
-        else {
-          for (file in library.getPaths(JpsOrderRootType.COMPILED)) {
-            var fileName = file.fileName.toString()
-            if (packMode == LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
-              fileName = removeVersionFromJar(fileName)
-            }
-
-            val targetFile = libOutputDir.resolve(fileName)
-            val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
-            addLibrary(library = library, targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = listOf(file))
-          }
+          addLibrary(library = library, targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = listOf(file))
         }
       }
     }
