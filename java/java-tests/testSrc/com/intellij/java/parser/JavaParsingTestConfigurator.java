@@ -129,7 +129,7 @@ public class JavaParsingTestConfigurator implements AbstractBasicJavaParsingTest
   }
 
   private static class JavaTestElementTypeConverterExtension implements ElementTypeConverterFactory {
-    public static final @NotNull ElementTypeConverter CONVERTER =
+    private static final @NotNull ElementTypeConverter CONVERTER =
       ElementTypeConverterKt.elementTypeConverterOf(new Pair<>(mySyntaxElementType, myTestFileElementType));
 
     @Override

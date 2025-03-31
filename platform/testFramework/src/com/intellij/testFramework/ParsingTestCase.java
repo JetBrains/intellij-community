@@ -24,11 +24,14 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
@@ -128,6 +131,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
+    addExplicitExtensionForAnyLanguage(ElementTypeConverters.getInstance(), new CommonElementTypeConverterFactory());
+
     myLangParserDefinition = app.getExtensionArea().registerFakeBeanPoint(LanguageParserDefinitions.INSTANCE.getName(), getPluginDescriptor());
 
     if (myDefinitions.length > 0) {
@@ -192,13 +197,21 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
   }
 
+  protected final <T> void addExplicitExtensionForAnyLanguage(@NotNull LanguageExtension<T> collector, @NotNull T object) {
+    addExplicitExtensionImpl(collector, "any", object);
+  }
+
   protected final <T> void addExplicitExtension(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
+    addExplicitExtensionImpl(collector, language.getID(), object);
+  }
+
+  private <T> void addExplicitExtensionImpl(@NotNull LanguageExtension<T> collector, @NotNull @NlsSafe String languageID, @NotNull T object) {
     ExtensionsAreaImpl area = app.getExtensionArea();
     PluginDescriptor pluginDescriptor = getPluginDescriptor();
     if (!area.hasExtensionPoint(collector.getName())) {
       area.registerFakeBeanPoint(collector.getName(), pluginDescriptor);
     }
-    LanguageExtensionPoint<T> extension = new LanguageExtensionPoint<>(language.getID(), object);
+    LanguageExtensionPoint<T> extension = new LanguageExtensionPoint<>(languageID, object);
     extension.setPluginDescriptor(pluginDescriptor);
     ExtensionTestUtil.addExtension(area, collector, extension);
   }

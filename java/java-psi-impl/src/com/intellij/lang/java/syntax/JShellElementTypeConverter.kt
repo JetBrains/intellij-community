@@ -9,12 +9,12 @@ import com.intellij.platform.syntax.psi.elementTypeConverterOf
 import com.intellij.psi.impl.source.tree.JShellElementType
 
 internal class JShellElementTypeConverterExtension : ElementTypeConverterFactory {
-  override fun getElementTypeConverter(): ElementTypeConverter = JShellElementTypeConverter
-}
+  override fun getElementTypeConverter(): ElementTypeConverter = jShellConverter
 
-internal val JShellElementTypeConverter: ElementTypeConverter = elementTypeConverterOf(
-  JShellSyntaxElementType.FILE to JShellParserDefinition.FILE_ELEMENT_TYPE,
-  JShellSyntaxElementType.ROOT_CLASS to JShellElementType.ROOT_CLASS,
-  JShellSyntaxElementType.IMPORT_HOLDER to JShellElementType.IMPORT_HOLDER,
-  JShellSyntaxElementType.STATEMENTS_HOLDER to JShellElementType.STATEMENTS_HOLDER,
-)
+  private val jShellConverter: ElementTypeConverter = elementTypeConverterOf(
+    JShellSyntaxElementType.FILE to JShellParserDefinition.FILE_ELEMENT_TYPE,
+    JShellSyntaxElementType.ROOT_CLASS to JShellElementType.ROOT_CLASS,
+    JShellSyntaxElementType.IMPORT_HOLDER to JShellElementType.IMPORT_HOLDER,
+    JShellSyntaxElementType.STATEMENTS_HOLDER to JShellElementType.STATEMENTS_HOLDER,
+  )
+}
