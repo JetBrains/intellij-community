@@ -1163,7 +1163,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
         ))
       }
       else {
-        val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED, reason = "<- artifact ${artifact.name}")
+        val libraryData = ProjectLibraryData(libraryName = library.name, reason = "<- artifact ${artifact.name}")
         entries.add(ProjectLibraryEntry(
           path = artifactFile,
           data = libraryData,

@@ -576,8 +576,13 @@ class JarPackager private constructor(
       libToMetadata.put(library, libraryData)
       val libName = library.name
       var packMode = libraryData.packMode
-      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.any { it.second(libName, frontendModuleFilter) } && !isLibraryMergeable(libName)) {
-        packMode = LibraryPackMode.STANDALONE_MERGED
+      if (packMode == LibraryPackMode.MERGED) {
+        if (layout is PluginLayout) {
+          throw IllegalStateException("PackMode.MERGED is deprecated for plugins, please check why the library is marked as MERGED (libName=$libName, plugin=${layout.mainModule})")
+        }
+        else if (!predefinedMergeRules.any { it.second(libName, frontendModuleFilter) } && !isLibraryMergeable(libName)) {
+          packMode = LibraryPackMode.STANDALONE_MERGED
+        }
       }
 
       val outPath = libraryData.outPath

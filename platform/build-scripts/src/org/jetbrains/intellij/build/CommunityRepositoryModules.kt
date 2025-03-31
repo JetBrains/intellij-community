@@ -5,10 +5,15 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAutoWithCustomDirName
+import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
@@ -19,7 +24,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 object CommunityRepositoryModules {
   /**
@@ -673,7 +678,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
   val antDir = pluginDir.resolve("dist")
   return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).use {
     val sources = ArrayList<ZipSource>()
-    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.MERGED, reason = "ant")
+    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.STANDALONE_MERGED, reason = "ant")
     copyDir(
       sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
       targetDir = antDir,
