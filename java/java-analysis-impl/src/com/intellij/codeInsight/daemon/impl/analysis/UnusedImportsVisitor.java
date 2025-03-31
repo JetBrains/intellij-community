@@ -18,6 +18,7 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -75,9 +76,9 @@ class UnusedImportsVisitor extends JavaElementVisitor {
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.setErrorFoundFlag(myDocument, myContext, true);
     }
-    IntentionAction fixNotOnFly = null;
+    ModCommandAction fixNotOnFly = null;
     if (requiresFix) {
-      IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+      ModCommandAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
       OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
       fixNotOnFly = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
     }

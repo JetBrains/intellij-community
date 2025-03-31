@@ -282,7 +282,7 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createCreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair pair);
 
-  public abstract @NotNull IntentionAction createOptimizeImportsFix(boolean fixOnTheFly, @NotNull PsiFile file);
+  public abstract @NotNull ModCommandAction createOptimizeImportsFix(boolean fixOnTheFly, @NotNull PsiFile file);
 
   public abstract @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter, boolean excludingHierarchy);
 
