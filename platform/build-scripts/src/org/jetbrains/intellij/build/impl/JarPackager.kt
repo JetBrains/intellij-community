@@ -430,7 +430,7 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName")
+          projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName")
           val library = element.library ?: throw IllegalStateException("cannot find $libRef")
           libToMetadata.put(library, projectLibraryData)
         }
@@ -443,7 +443,7 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.STANDALONE_MERGED, reason = "<- $moduleName (always packed into plugin)")
+          projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName (always packed into plugin)")
           val library = element.library ?: throw IllegalStateException("cannot find $libRef")
           libToMetadata.put(library, projectLibraryData)
         }
