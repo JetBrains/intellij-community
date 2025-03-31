@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.UISettingsUtils;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Disposer;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
 import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions;
 
-import java.awt.*;
+import java.awt.Font;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -48,7 +49,7 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
   }
 
   @Override
-  public void addUiSettingsListener(@NotNull TerminalUiSettingsListener listener) {
+  public void addUiSettingsListener(@NotNull Disposable parentDisposable, @NotNull TerminalUiSettingsListener listener) {
     // A bit complicated:
     // we delegate the cursor part to the parent
     // but do the font size part here.
@@ -60,14 +61,10 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
       @Override
       public void fontChanged() { }
-
-      @Override
-      public void dispose() { }
     };
-    Disposer.register(listener, cursorListener); // unsubscribe the cursor listener when the provided one is disposed
-    super.addUiSettingsListener(cursorListener); // subscribe to cursor changes
+    super.addUiSettingsListener(parentDisposable, cursorListener); // subscribe to cursor changes
     myListeners.add(listener); // subscribe to font changes
-    Disposer.register(listener, () -> myListeners.remove(listener));
+    Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
 
   @Override

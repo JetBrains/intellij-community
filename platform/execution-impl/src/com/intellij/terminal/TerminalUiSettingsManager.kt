@@ -8,7 +8,12 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -18,7 +23,7 @@ import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 
 @ApiStatus.Internal
-interface TerminalUiSettingsListener : Disposable {
+interface TerminalUiSettingsListener {
   fun cursorChanged()
   fun fontChanged()
 }
@@ -60,9 +65,9 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
   }
 
   @JvmName("addListener")
-  internal fun addListener(listener: TerminalUiSettingsListener) {
+  internal fun addListener(parentDisposable: Disposable, listener: TerminalUiSettingsListener) {
     listeners.add(listener)
-    Disposer.register(listener) { listeners.remove(listener) }
+    Disposer.register(parentDisposable) { listeners.remove(listener) }
   }
 
   var cursorShape: CursorShape
