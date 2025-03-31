@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -13,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
-import org.jetbrains.kotlin.idea.core.script.k2.ClassPathVirtualFileCache
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathVirtualFileCache
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.lang.ref.Reference
@@ -26,18 +25,17 @@ class ScriptClassRootsCache(
     val customDefinitionsUsed: Boolean,
     val sdks: ScriptSdks,
     private val classpathVfsHint: MutableMap<String, VirtualFile?>?,
-    private val project: Project?
 ) {
     companion object {
         val EMPTY: ScriptClassRootsCache = ScriptClassRootsCache(
             mapOf(), setOf(), setOf(), true,
             ScriptSdks(mapOf(), setOf(), setOf()),
-            null, null
+            null
         )
     }
 
     fun withUpdatedSdks(newSdks: ScriptSdks): ScriptClassRootsCache =
-        ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks, classpathVfsHint, project)
+        ScriptClassRootsCache(scripts, classes, sources, customDefinitionsUsed, newSdks, classpathVfsHint)
 
     fun builder(project: Project): ScriptClassRootsBuilder {
         return ScriptClassRootsBuilder(
@@ -98,8 +96,7 @@ class ScriptClassRootsCache(
     private fun computeHeavy(lightScriptInfo: LightScriptInfo): HeavyScriptInfo? {
         val configuration = lightScriptInfo.buildConfiguration() ?: return null
 
-        val roots = configuration.dependenciesClassPath
-        val vfsRoots = roots.mapNotNull { project?.service<ClassPathVirtualFileCache>()?.get(it.path) }
+        val vfsRoots = configuration.dependenciesClassPath.mapNotNull { ScriptClassPathVirtualFileCache.findVirtualFile(it.path) }
         val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
         fun heavyInfoForRoots(roots: List<VirtualFile>): HeavyScriptInfo {
@@ -126,7 +123,7 @@ class ScriptClassRootsCache(
             return if (classpathVfsHint?.containsKey(this) == true) {
                 classpathVfsHint[this]
             } else {
-                project?.let { ClassPathVirtualFileCache.getInstance(it) }?.get(this).also { vFile ->
+                ScriptClassPathVirtualFileCache.findVirtualFile(this).also { vFile ->
                     classpathVfsHint?.put(this, vFile)
                 }
             }
@@ -162,7 +159,7 @@ class ScriptClassRootsCache(
 
     fun getScriptDependenciesSourceFiles(file: VirtualFile): List<VirtualFile> {
         return getHeavyScriptInfo(file.path)?.scriptConfiguration?.dependenciesSources?.mapNotNull { file ->
-            project?.let { ClassPathVirtualFileCache.getInstance(project) }?.get(file.path)
+            ScriptClassPathVirtualFileCache.findVirtualFile(file.path)
         } ?: emptyList()
     }
 

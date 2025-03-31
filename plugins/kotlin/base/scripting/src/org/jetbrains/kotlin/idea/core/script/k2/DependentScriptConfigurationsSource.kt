@@ -192,7 +192,9 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
         val urlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
         val storage = this
 
-        val classes = configurationWrapper.dependenciesClassPath.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
+        val scriptClassPathCache = ScriptClassPathVirtualFileCache.getInstance()
+
+        val classes = configurationWrapper.dependenciesClassPath.mapNotNull { scriptClassPathCache.findVirtualFile(it.path) }
             .filterNot { it.toVirtualFileUrl(urlManager) in rootsToSkip }
             .sortedBy { it.name }.distinct()
 
@@ -201,7 +203,7 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
 
             if (configurationWrapper.isUberDependencyAllowed()) {
                 val sources =
-                    configurationWrapper.dependenciesSources.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
+                    configurationWrapper.dependenciesSources.mapNotNull { scriptClassPathCache.findVirtualFile(it.path) }
                         .filterNot { it.toVirtualFileUrl(urlManager) in rootsToSkip }
                         .sortedBy { it.name }
                 addIfNotNull(storage.createUberDependency(locationName, classes, sources, source))

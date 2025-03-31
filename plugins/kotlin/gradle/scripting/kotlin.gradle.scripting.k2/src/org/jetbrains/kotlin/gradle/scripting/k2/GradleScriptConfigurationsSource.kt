@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.gradle.scripting.k2
 
 import com.intellij.openapi.application.smartReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.dependencies.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.ClassPathVirtualFileCache
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathVirtualFileCache
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
@@ -100,7 +99,8 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
         val result = MutableEntityStorage.create()
 
         val urlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
-        val dependencyFactory = ScriptDependencyFactory(result, configurations)
+        val virtualFileCache = ScriptClassPathVirtualFileCache.getInstance()
+        val dependencyFactory = ScriptDependencyFactory(result, configurations, virtualFileCache)
 
         for ((scriptFile, configurationWithSdk) in configurations) {
             val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
@@ -113,10 +113,10 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
 
             val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
-            val classes = configuration.dependenciesClassPath.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }.toMutableSet()
+            val classes = configuration.dependenciesClassPath.mapNotNull { virtualFileCache.findVirtualFile(it.path) }.toMutableSet()
 
             val allDependencies = listOfNotNull(sdkDependency) + buildList {
-                val sources = configuration.dependenciesSources.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }.toMutableSet()
+                val sources = configuration.dependenciesSources.mapNotNull { virtualFileCache.findVirtualFile(it.path) }.toMutableSet()
                 add(
                     result.groupRootsByPredicate(classes, sources, source, "kotlin-stdlib dependencies") {
                         it.name.contains("kotlin-stdlib")
@@ -194,6 +194,7 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
     inner class ScriptDependencyFactory(
         private val entityStorage: MutableEntityStorage,
         scripts: Map<VirtualFile, ScriptConfigurationWithSdk>,
+        virtualFileCache: ScriptClassPathVirtualFileCache,
     ) {
         private val nameCache = HashMap<String, Set<VirtualFile>>()
 
@@ -202,7 +203,7 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
                 it.dependenciesClassPath
             }.toSet()
 
-            classes.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }.forEach {
+            classes.mapNotNull { virtualFileCache.findVirtualFile(it.path) }.forEach {
                 nameCache.compute(it.name) { _, list ->
                     (list ?: emptySet()) + it
                 }

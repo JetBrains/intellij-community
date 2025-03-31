@@ -35,7 +35,7 @@ class ScriptClassRootsBuilder(
         ScriptClassRootsCache(
             scripts, classes, sources,
             customDefinitionsUsed, sdks.build(),
-            classpathVfsHint, project
+            classpathVfsHint
         )
 
     fun useCustomScriptDefinition() {

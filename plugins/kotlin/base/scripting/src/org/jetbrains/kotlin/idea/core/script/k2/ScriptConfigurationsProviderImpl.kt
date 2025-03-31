@@ -44,14 +44,15 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
 
         val sourceByDefinition = mutableMapOf<String, ScriptConfigurationsSource<*>>()
 
+        val virtualFileCache = ScriptClassPathVirtualFileCache.getInstance()
         configurationSources.forEach { source ->
             val data = source.data.get()
             val configurations = data.values.mapNotNull { it.scriptConfiguration.valueOrNull() }
             val sdks = data.values.mapNotNull { it.sdk }
 
             configurations.forEach {
-                allScriptsSources.addAll(it.dependenciesSources.mapNotNull { file -> project.service<ClassPathVirtualFileCache>().get(file.path) })
-                allScriptClasses.addAll(it.dependenciesClassPath.mapNotNull { file -> project.service<ClassPathVirtualFileCache>().get(file.path) })
+                allScriptsSources.addAll(it.dependenciesSources.mapNotNull { file -> virtualFileCache.findVirtualFile(file.path) })
+                allScriptClasses.addAll(it.dependenciesClassPath.mapNotNull { file -> virtualFileCache.findVirtualFile(file.path) })
             }
 
             allScriptsSdks.addAll(sdks)
@@ -85,7 +86,7 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
         val (configuration, sdk) = getConfigurationWithSdk(virtualFile) ?: return GlobalSearchScope.EMPTY_SCOPE
         val configurationWrapper = configuration.valueOrNull() ?: return GlobalSearchScope.EMPTY_SCOPE
 
-        val roots = configurationWrapper.dependenciesClassPath.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
+        val roots = configurationWrapper.dependenciesClassPath.mapNotNull { ScriptClassPathVirtualFileCache.findVirtualFile(it.path) }
 
         val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
 
@@ -94,7 +95,7 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
 
     override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> {
         val dependencies = getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull()?.dependenciesClassPath ?: return emptyList()
-        return dependencies.mapNotNull { project.service<ClassPathVirtualFileCache>().get(it.path) }
+        return dependencies.mapNotNull { ScriptClassPathVirtualFileCache.findVirtualFile(it.path) }
     }
 
     override fun getFirstScriptsSdk(): Sdk? = getProjectSdk() ?: allDependencies.get().sdks.firstOrNull()

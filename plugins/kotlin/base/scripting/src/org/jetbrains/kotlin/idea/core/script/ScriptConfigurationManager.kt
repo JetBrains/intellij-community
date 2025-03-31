@@ -14,7 +14,6 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
-import org.jetbrains.kotlin.idea.core.script.k2.ClassPathVirtualFileCache
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
@@ -126,7 +125,6 @@ interface ScriptConfigurationManager : ScriptDependencyAware {
 
         @TestOnly
         fun clearCaches(project: Project) {
-            ClassPathVirtualFileCache.getInstance(project).clear()
             defaultScriptingSupport(project).updateScriptDefinitionsReferences()
         }
     }
