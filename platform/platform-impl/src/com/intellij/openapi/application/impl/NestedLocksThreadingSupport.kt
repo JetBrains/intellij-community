@@ -417,6 +417,14 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   @Volatile
   private var myWriteAcquired: Thread? = null
 
+  /**
+   * Performance optimization.
+   * The IDE often asserts the presence of write or write-intent lock.
+   * We would like to avoid the traversal of coroutine contexts each time, hence we store a thread-local
+   */
+  private val myWriteIntentAcquired: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
+
   override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken> {
     if (!isLockStoredInContext) {
       return EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
@@ -557,38 +565,44 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(false)
-
+    val currentWriteIntentState = myWriteIntentAcquired.get()
+    myWriteIntentAcquired.set(true)
     val computationState = getComputationState()
     val currentPermit = computationState.getThisThreadPermit()
-    var permitToRelease: WriteIntentPermit? = null
-    when (currentPermit) {
-      null -> {
-        permitToRelease = computationState.acquireWriteIntentPermit()
-      }
-      is ParallelizablePermit.Read -> {
-        error("WriteIntentReadAction can not be called from ReadAction")
-      }
-      is ParallelizablePermit.WriteIntent, is ParallelizablePermit.Write -> {}
-    }
-
     try {
-      fireWriteIntentActionStarted(listener, computation.javaClass)
-      return computation()
+      var permitToRelease: WriteIntentPermit? = null
+      when (currentPermit) {
+        null -> {
+          permitToRelease = computationState.acquireWriteIntentPermit()
+        }
+        is ParallelizablePermit.Read -> {
+          error("WriteIntentReadAction can not be called from ReadAction")
+        }
+        is ParallelizablePermit.WriteIntent, is ParallelizablePermit.Write -> {}
+      }
+      try {
+        fireWriteIntentActionStarted(listener, computation.javaClass)
+        return computation()
+      }
+      finally {
+        fireWriteIntentActionFinished(listener, computation.javaClass)
+        if (permitToRelease != null) {
+          computationState.releaseWriteIntentPermit(permitToRelease)
+        }
+      }
     }
     finally {
-      fireWriteIntentActionFinished(listener, computation.javaClass)
-      if (permitToRelease != null) {
-        computationState.releaseWriteIntentPermit(permitToRelease)
-      }
+      myWriteIntentAcquired.set(currentWriteIntentState)
       myTopmostReadAction.set(currentReadState)
       afterWriteIntentReadActionFinished(listener, computation.javaClass)
     }
   }
 
   override fun isWriteIntentLocked(): Boolean {
-    val currentState = getComputationState()
-    val currentPermit = currentState.getThisThreadPermit()
-    return currentPermit is ParallelizablePermit.WriteIntent || currentPermit is ParallelizablePermit.Write
+    if (myWriteAcquired == Thread.currentThread()) {
+      return true
+    }
+    return myWriteIntentAcquired.get()
   }
 
   override fun isReadAccessAllowed(): Boolean {
