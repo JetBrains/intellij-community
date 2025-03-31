@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -293,6 +294,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     PsiFile file = context.file();
     List<IntentionPreviewInfo.CustomDiff> customDiffList = new ArrayList<>();
     IntentionPreviewInfo navigateInfo = IntentionPreviewInfo.EMPTY;
+    List<@NlsSafe String> createdDirs = new ArrayList<>();
     for (ModCommand command : modCommand.unpack()) {
       if (command instanceof ModUpdateFileText modFile) {
         VirtualFile vFile = modFile.file();
@@ -308,7 +310,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       else if (command instanceof ModCreateFile createFile) {
         VirtualFile vFile = createFile.file();
         if (createFile.content() instanceof ModCreateFile.Directory) {
-          navigateInfo = new IntentionPreviewInfo.Html(text(AnalysisBundle.message("preview.create.directory", vFile.getPath())));
+          createdDirs.add(getFileNamePresentation(project, vFile));
         } else {
           String content =
             createFile.content() instanceof ModCreateFile.Text text ? text.text() : AnalysisBundle.message("preview.binary.content");
@@ -369,8 +371,19 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
     }
     customDiffList.sort(Comparator.comparing(diff -> diff.fileName() != null));
-    return customDiffList.isEmpty() ? navigateInfo :
-           customDiffList.size() == 1 ? customDiffList.get(0) :
+    if (customDiffList.isEmpty()) {
+      if (!createdDirs.isEmpty()) {
+        if (createdDirs.size() == 1) {
+          return new IntentionPreviewInfo.Html(text(AnalysisBundle.message("preview.create.directory", createdDirs.get(0))));
+        }
+        return new IntentionPreviewInfo.Html(
+          tag("p").addText(AnalysisBundle.message("preview.create.directories"))
+            .child(tag("ul").children(ContainerUtil.map(createdDirs, text -> tag("li").addText(text))))
+        );
+      }
+      return navigateInfo;
+    }
+    return customDiffList.size() == 1 ? customDiffList.get(0) :
            new IntentionPreviewInfo.MultiFileDiff(customDiffList);
   }
 

@@ -42,7 +42,7 @@ public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
     assertEquals(ModCommandExecutor.Result.INTERACTIVE, result);
   }
   
-  public void testCreateDirectories() throws IOException {
+  public void testCreateDirectories() {
     configureFromFileText("dummy.txt", "");
     ModCommand command = ModCommand.psiUpdate(getFile(), (f, u) -> {
       PsiDirectory d = u.getWritable(getFile().getContainingDirectory());
@@ -68,5 +68,19 @@ public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
     assertNotNull(target);
     PsiFile targetFile = PsiManager.getInstance(getProject()).findFile(target);
     assertEquals("hello", targetFile.getFileDocument().getCharsSequence().toString());
+  }
+  
+  public void testCreateDirectoriesPreview() {
+    configureFromFileText("dummy.txt", "");
+    ModCommand command = ModCommand.psiUpdate(getFile(), (f, u) -> {
+      PsiDirectory d = u.getWritable(getFile().getContainingDirectory());
+      PsiDirectory dir1 = d.createSubdirectory("a");
+      dir1.createSubdirectory("b");
+      dir1.createSubdirectory("c");
+    });
+    IntentionPreviewInfo preview = ModCommandExecutor.getInstance().getPreview(command, ActionContext.from(null, getFile()));
+    IntentionPreviewInfo.Html html = assertInstanceOf(preview, IntentionPreviewInfo.Html.class);
+    String actual = html.content().toString();
+    assertEquals("<p>Create directories:<ul><li>a</li><li>a/b</li><li>a/c</li></ul></p>", actual);
   }
 }
