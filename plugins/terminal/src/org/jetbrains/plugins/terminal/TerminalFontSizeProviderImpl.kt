@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.roundToInt
 
 @Service(Service.Level.APP)
-internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider {
+internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposable {
   private val listeners = CopyOnWriteArrayList<TerminalFontSizeProvider.Listener>()
 
   private var fontSize: Float? = null
@@ -22,6 +22,12 @@ internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider {
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       resetFontSize() // presentation mode, Zoom IDE...
     })
+
+    TerminalFontOptions.getInstance().addListener(object : TerminalFontOptionsListener {
+      override fun fontOptionsChanged() {
+        resetFontSize()
+      }
+    }, disposable = this)
   }
 
   override fun getFontSize(): Int {
@@ -58,6 +64,8 @@ internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider {
   override fun addListener(parentDisposable: Disposable, listener: TerminalFontSizeProvider.Listener) {
     TerminalUtil.addItem(listeners, listener, parentDisposable)
   }
+
+  override fun dispose() {}
 
   companion object {
     @JvmStatic

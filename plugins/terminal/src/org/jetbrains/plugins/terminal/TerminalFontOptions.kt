@@ -49,6 +49,8 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
   }
 
   fun setSettings(settings: TerminalFontSettings) {
+    val oldSettings = getSettings()
+
     val newPreferences = FontPreferencesImpl()
     // start with the console preferences as the default
     AppConsoleFontOptions.getInstance().fontPreferences.copyTo(newPreferences)
@@ -61,7 +63,10 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     columnSpacing = settings.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
     update(newPreferences)
-    fireListeners()
+
+    if (settings != oldSettings) {
+      fireListeners()
+    }
   }
 
   override fun createFontState(fontPreferences: FontPreferences): PersistentTerminalFontPreferences =
@@ -131,7 +136,29 @@ data class TerminalFontSettings(
   val fontSize: Float,
   val lineSpacing: Float,
   val columnSpacing: Float,
-)
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TerminalFontSettings
+
+    if (!sameFontSizes(fontSize, other.fontSize)) return false
+    if (!sameLineSpacings(lineSpacing, other.lineSpacing)) return false
+    if (!sameColumnSpacings(columnSpacing, other.columnSpacing)) return false
+    if (fontFamily != other.fontFamily) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = (fontSize.toInt()).hashCode()
+    result = 31 * result + ((lineSpacing * 10).toInt()).hashCode()
+    result = 31 * result + ((columnSpacing * 10).toInt()).hashCode()
+    result = 31 * result + fontFamily.hashCode()
+    return result
+  }
+}
 
 @ApiStatus.Internal
 class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPreferences {
