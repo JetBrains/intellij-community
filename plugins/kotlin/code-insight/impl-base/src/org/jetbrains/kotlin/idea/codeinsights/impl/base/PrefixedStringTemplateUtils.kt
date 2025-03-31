@@ -301,12 +301,12 @@ fun convertToMultiDollarString(element: KtStringTemplateExpression, contextInfo:
 }
 
 /**
- * Convert a multi-dollar string to a plain string with the same quotes
+ * Convert a multi-dollar string to a plain string with the same quotes.
+ *
+ * @return the replacement string without the interpolation prefix or the original string if it doesn't have a prefix
  */
 fun convertToStringWithoutPrefix(element: KtStringTemplateExpression): KtStringTemplateExpression {
-    require(element.interpolationPrefix != null) {
-        "A string template with an interpolation prefix is expected, got: ${element.text}"
-    }
+    if (element.interpolationPrefix == null) return element
 
     replaceExpressionEntries(element, 1)
     val psiFactory = KtPsiFactory(element.project)
