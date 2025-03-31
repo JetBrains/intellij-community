@@ -11,9 +11,12 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.config" exported="" />
-    <orderEntry type="library" name="ap-validation" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.model" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.serialization.kotlin" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.configuration" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
   </component>
 </module>
