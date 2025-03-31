@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.ErrorDefaultBanner
 import org.jetbrains.jewel.ui.component.ErrorInlineBanner
@@ -131,14 +132,15 @@ public fun Banners() {
                 InformationInlineBanner(
                     icon = null,
                     style = JewelTheme.inlineBannerStyle.information,
-                    text = LONG_IPSUM,
                     title = optionalTitle,
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Info inline no icon Action Icon clicked" }) {
                             Icon(AllIconsKeys.General.Close, "Close button")
                         }
                     },
-                )
+                ) {
+                    Markdown("This is a **Markdown** banner — [watch](https://youtu.be/dQw4w9WgXcQ) `this` out ;)")
+                }
 
                 InformationInlineBanner(
                     icon = null,
