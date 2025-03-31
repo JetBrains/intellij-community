@@ -31,13 +31,10 @@ import org.cef.handler.CefAppHandlerAdapter;
 import org.cef.misc.BoolRef;
 import org.cef.misc.CefLog;
 import org.jdom.IllegalDataException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,7 +42,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,7 +64,7 @@ public final class JBCefApp {
   private static final boolean SKIP_VERSION_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_version_check");
   private static final boolean SKIP_MODULE_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_module_check");
   private static final boolean IS_REMOTE_ENABLED;
-  static final String REGISTRY_REMOTE_KEY = "ide.browser.jcef.out-of-process.enabled";
+  private static final String REGISTRY_REMOTE_KEY = "ide.browser.jcef.out-of-process.enabled";
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
@@ -80,8 +76,8 @@ public final class JBCefApp {
 
   private final @Nullable CefDelegate myDelegate;
   private @Nullable CefApp myCefApp;
-  private @Nullable String[] myCefArgs;
-  private @Nullable CefSettings myCefSettings;
+  private String @Nullable [] myCefArgs;
+  private final @Nullable CefSettings myCefSettings;
   private final @NotNull CompletableFuture<Integer> myDebuggingPort = new CompletableFuture<>();
 
   private final @NotNull Disposable myDisposable = new Disposable() {
@@ -159,7 +155,7 @@ public final class JBCefApp {
         LOG.info(String.format("JCEF logging: level=%s, file=%s", settings.log_severity, settings.log_file));
 
       myCefArgs = args;
-      CefApp.addAppHandler(new MyCefAppHandler(myCefArgs, trackGPUCrashes.get()));
+      CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
       myCefSettings = settings;
       myCefApp = CefApp.getInstance(settings);
       CEFAPP_INSTANCE_COUNT.intValue();
@@ -208,12 +204,14 @@ public final class JBCefApp {
     boolean result = false;
     // Temporary use reflection to avoid jcef-version increment
     // TODO: use setDefaultInstance directly  (CefApp cefApp)
-    Class cefAppClass = null;
+    Class<?> cefAppClass = null;
     Method setDefaultMethod = null;
     try {
       cefAppClass = Class.forName("org.cef.CefApp");
       setDefaultMethod = cefAppClass.getMethod("setDefaultInstance", cefAppClass);
-    } catch (NoSuchMethodException | ClassNotFoundException  ignored) {}
+    }
+    catch (NoSuchMethodException | ClassNotFoundException ignored) {
+    }
 
     if (setDefaultMethod != null) {
       if (withVerboseLogging) {
@@ -435,13 +433,14 @@ public final class JBCefApp {
    *
    * @param consumer - the port number consumer.
    */
-  public void getRemoteDebuggingPort(Consumer<@Nullable Integer> consumer) {
+  public void getRemoteDebuggingPort(@NotNull Consumer<? super @Nullable Integer> consumer) {
     myDebuggingPort.whenCompleteAsync(
       (integer, throwable) -> {
         if (throwable != null) {
           LOG.error("Failed to get JCEF debugging port: " + throwable.getMessage());
           consumer.accept(null);
-        } else {
+        }
+        else {
           consumer.accept(integer);
         }
       },
@@ -513,8 +512,9 @@ public final class JBCefApp {
     ourCustomSchemeHandlerFactoryList.add(factory);
   }
 
+  @Contract(pure = true)
   @ApiStatus.Internal
-  public static List<JBCefCustomSchemeHandlerFactory> getCefCustomSchemeHandlerFactories() {
+  public static @NotNull @UnmodifiableView List<JBCefCustomSchemeHandlerFactory> getCefCustomSchemeHandlerFactories() {
     return Collections.unmodifiableList(ourCustomSchemeHandlerFactoryList);
   }
 
@@ -539,8 +539,8 @@ public final class JBCefApp {
 
   private static class MyCefAppHandler extends CefAppHandlerAdapter {
     private final int myGPUCrashLimit;
-    private int myGPULaunchCounter = 0;
-    private boolean myNotificationShown = false;
+    private int myGPULaunchCounter;
+    private boolean myNotificationShown;
     private final String myArgs;
 
     MyCefAppHandler(String @Nullable [] args, boolean trackGPUCrashes) {
@@ -548,7 +548,8 @@ public final class JBCefApp {
       myArgs = Arrays.toString(args);
       if (trackGPUCrashes) {
         myGPUCrashLimit = Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10);
-      } else {
+      }
+      else {
         myGPUCrashLimit = -1;
       }
     }
@@ -622,7 +623,7 @@ public final class JBCefApp {
     return IS_REMOTE_ENABLED;
   }
 
-  static int readDebugPortFile(Path filePath) throws IOException {
+  private static int readDebugPortFile(@NotNull Path filePath) throws IOException {
     try (Stream<String> lines = Files.lines(filePath)) {
       String portNumber = lines.findFirst().orElseThrow(() -> {
         return new IllegalArgumentException("Failed to read JCEF debugging port number in " + filePath);
