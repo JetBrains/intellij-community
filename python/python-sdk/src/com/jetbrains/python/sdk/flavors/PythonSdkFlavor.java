@@ -97,6 +97,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * On local targets some flavours could be detected. It returns path to python interpreters for such cases.
    */
+  @RequiresBackgroundThread
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     return ContainerUtil.map(suggestHomePaths(module, context), Path::of);
   }

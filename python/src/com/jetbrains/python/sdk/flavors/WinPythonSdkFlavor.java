@@ -11,24 +11,23 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import kotlin.text.Regex;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxFiles;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
+import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
 
 /**
  * This class knows how to find python in Windows Registry according to
@@ -47,6 +46,22 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private static final Map<String, String> REGISTRY_MAP =
     ImmutableMap.of("Python", "python.exe",
                     "IronPython", "ipy.exe");
+  /**
+   * When looking for pythons, we start from `c:\`, but might use this property if set
+   *
+   * @see #findInCandidatePaths(Set, String...)
+   */
+  @ApiStatus.Internal
+  @TestOnly
+  public static final String ROOT_TO_SEARCH_PYTHON_IN = "pycharm.root.to.search.python.in";
+
+  /**
+   * Inside @{link {@link #ROOT_TO_SEARCH_PYTHON_IN}} directory must begin with this property (python otherwise)
+   *
+   * @see #findInstallations(Set, String, String...)
+   */
+  @TestOnly
+  public static final String DIR_WITH_PYTHON_NAME = "dir_with_python_name";
 
   private final @NotNull SynchronizedClearableLazy<Set<String>> myRegistryCache =
     new SynchronizedClearableLazy<>(() -> findInRegistry(getWinRegistryService()));
@@ -67,6 +82,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return PyFlavorData.Empty.class;
   }
 
+  @RequiresBackgroundThread
   @Override
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
@@ -75,9 +91,12 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return ContainerUtil.map(candidates, Path::of);
   }
 
+  @RequiresBackgroundThread
   private void findInCandidatePaths(Set<String> candidates, String... exe_names) {
+    @SuppressWarnings("TestOnlyProblems")
+    var root = System.getProperty(ROOT_TO_SEARCH_PYTHON_IN, "C:\\");
     for (String name : exe_names) {
-      findInstallations(candidates, name, "C:\\", "C:\\Program Files\\");
+      findInstallations(candidates, name, root, "C:\\Program Files\\");
       findInPath(candidates, name);
     }
 
@@ -133,9 +152,12 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return ApplicationManager.getApplication().getService(WinRegistryService.class);
   }
 
+  @RequiresBackgroundThread
   private static void findInstallations(Set<String> candidates, String exe_name, String... roots) {
+    @SuppressWarnings("TestOnlyProblems")
+    var prefix = System.getProperty(DIR_WITH_PYTHON_NAME, FileUtilRt.getNameWithoutExtension(exe_name));
     for (String root : roots) {
-      findSubdirInstallations(candidates, root, FileUtilRt.getNameWithoutExtension(exe_name), exe_name);
+      findSubdirInstallations(candidates, root, prefix, exe_name);
     }
   }
 
@@ -195,19 +217,31 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   }
 
 
-  private static void findSubdirInstallations(Collection<String> candidates, String rootDir, String dir_prefix, String exe_name) {
-    VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(rootDir);
-    if (rootVDir != null) {
-      if (rootVDir instanceof NewVirtualFile) {
-        ((NewVirtualFile)rootVDir).markDirty();
-      }
-      rootVDir.refresh(true, false);
-      for (VirtualFile dir : rootVDir.getChildren()) {
-        if (dir.isDirectory() && StringUtil.toLowerCase(dir.getName()).startsWith(dir_prefix)) {
-          VirtualFile python_exe = dir.findChild(exe_name);
-          if (python_exe != null) candidates.add(FileUtil.toSystemDependentName(python_exe.getPath()));
+  /**
+   * Given <pre>rootDir/dirStartsWithPrefix/exeName</pre> adds `exeName` to candidates.
+   *
+   * @param candidates adds a result here
+   * @param rootDir    searching for files here
+   * @param dirPrefix  if a child of root begins with it
+   * @param exeName    and child of root contains this exe file
+   */
+  @RequiresBackgroundThread
+  private static void findSubdirInstallations(@NotNull Collection<String> candidates,
+                                              @NotNull String rootDir,
+                                              @NotNull String dirPrefix,
+                                              @NotNull String exeName) {
+    try {
+      var rootDirNio = Path.of(rootDir);
+      try (var f = Files.newDirectoryStream(rootDirNio)) {
+        for (Path dir : f) {
+          if (Files.isDirectory(dir) && StringUtil.toLowerCase(dir.getFileName().toString()).startsWith(dirPrefix)) {
+            var pythonExe = dir.resolve(exeName);
+            if (Files.isExecutable(pythonExe)) candidates.add(FileUtil.toSystemDependentName(pythonExe.toString()));
+          }
         }
       }
+    }
+    catch (IOException | InvalidPathException ignored) {
     }
   }
 }
