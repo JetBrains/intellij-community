@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.platform.jewel.markdown.extension.gfmAlerts` start
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -14,14 +14,14 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-extension-gfmAlerts_resources",
+  name = "jewel-markdown-extensions-gfmAlerts_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-extension-gfmAlerts",
-  module_name = "intellij.platform.jewel.markdown.extension.gfmAlerts",
+  name = "jewel-markdown-extensions-gfmAlerts",
+  module_name = "intellij.platform.jewel.markdown.extensions.gfmAlerts",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
@@ -34,15 +34,15 @@ jvm_library(
     "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
   ],
-  runtime_deps = [":jewel-markdown-extension-gfmAlerts_resources"],
+  runtime_deps = [":jewel-markdown-extensions-gfmAlerts_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 
 jvm_test(
-  name = "jewel-markdown-extension-gfmAlerts_test",
+  name = "jewel-markdown-extensions-gfmAlerts_test",
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
-  associates = [":jewel-markdown-extension-gfmAlerts"],
+  associates = [":jewel-markdown-extensions-gfmAlerts"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -56,7 +56,7 @@ jvm_test(
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":jewel-markdown-extension-gfmAlerts_resources"],
+  runtime_deps = [":jewel-markdown-extensions-gfmAlerts_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
-### auto-generated section `build intellij.platform.jewel.markdown.extension.gfmAlerts` end
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` end
