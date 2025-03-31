@@ -15,7 +15,9 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImportPaths
 import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
@@ -34,12 +36,10 @@ import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirec
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class WeighingContext private constructor(
@@ -144,6 +144,7 @@ internal class WeighingContext private constructor(
                 // TODO: calculate actual types for callable references correctly and use information about expected type
                 is KotlinCallableReferencePositionContext -> null
                 else -> nameExpression.expectedType
+                    ?: getEqualityExpectedType(nameExpression)
             }
 
             val symbolToSkip = when (positionContext) {
@@ -174,6 +175,37 @@ internal class WeighingContext private constructor(
                 ),
                 symbolsToSkip = setOfNotNull(symbolToSkip),
             )
+        }
+
+        context(KaSession)
+        private fun getEqualityExpectedType(
+            nameExpression: KtElement,
+        ): KaType? {
+            val binaryExpression = nameExpression.parent as? KtBinaryExpression
+                ?: return null
+
+            val isEqualityCheck = when (binaryExpression.operationToken) {
+                KtTokens.EQEQ, KtTokens.EXCLEQ,
+                KtTokens.EQEQEQ, KtTokens.EXCLEQEQEQ -> true
+
+                else -> false
+            }
+            if (!isEqualityCheck) return null
+
+            val left = binaryExpression.left
+                ?: return null
+            val right = binaryExpression.right
+                ?: return null
+
+            val expression = when (nameExpression) {
+                left -> right
+                right -> left
+                else -> null
+            }
+
+            return expression?.expressionType
+                ?.takeUnless { it is KaErrorType }
+                ?.withNullability(newNullability = KaTypeNullability.NULLABLE)
         }
 
         private fun Set<ImportPath>.hasImport(name: FqName): Boolean {
