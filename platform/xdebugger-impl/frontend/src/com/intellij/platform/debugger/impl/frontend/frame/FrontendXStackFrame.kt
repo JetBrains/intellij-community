@@ -13,7 +13,12 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
+import com.intellij.xdebugger.impl.rpc.XStackFrameApi
+import com.intellij.xdebugger.impl.rpc.XStackFrameDto
+import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.XStackFramePresentationEvent
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.Icon
@@ -95,5 +100,13 @@ internal class FrontendXStackFrame(
         }
       }
     }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return other is FrontendXStackFrame && other.id == id
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
   }
 }

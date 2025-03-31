@@ -41,4 +41,12 @@ internal class FrontendXExecutionStack(
       }
     }
   }
+
+  override fun equals(other: Any?): Boolean {
+    return other is FrontendXExecutionStack && other.id == id
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
 }

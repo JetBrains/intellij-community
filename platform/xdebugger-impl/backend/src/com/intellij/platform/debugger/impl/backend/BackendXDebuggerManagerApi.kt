@@ -10,22 +10,44 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.asDisposable
-import com.intellij.xdebugger.*
+import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.PauseData
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDataDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XDebugSessionState
+import com.intellij.xdebugger.impl.rpc.XDebugSessionsList
+import com.intellij.xdebugger.impl.rpc.XDebuggerEditorsProviderDto
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerSessionEvent
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
+import com.intellij.xdebugger.impl.rpc.XExecutionStackDto
+import com.intellij.xdebugger.impl.rpc.XSuspendContextDto
+import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
+import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -83,11 +105,11 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
           }
           val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
           val executionStackDto = suspendContext.activeExecutionStack?.let {
-            val activeExecutionStackId = it.storeGlobally(suspendScope, currentSession)
+            val activeExecutionStackId = it.getOrStoreGlobally(suspendScope, currentSession)
             XExecutionStackDto(activeExecutionStackId, it.displayName, it.icon?.rpcId())
           }
           val stackTraceDto = currentSession.currentStackFrame?.let {
-            val currentStackFrameId = it.storeGlobally(suspendScope, currentSession)
+            val currentStackFrameId = it.getOrStoreGlobally(suspendScope, currentSession)
             createXStackFrameDto(it, currentStackFrameId)
           }
           PauseData(suspendContextDto,
