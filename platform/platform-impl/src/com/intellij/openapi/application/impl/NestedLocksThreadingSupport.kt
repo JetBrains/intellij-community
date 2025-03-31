@@ -547,16 +547,12 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
            ?: zeroLevelComputationState
   }
 
-  override fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T {
-    return doRunWriteIntentReadAction(computation)
-  }
-
   override fun <T> runWriteIntentReadAction(computation: () -> T): T {
     handleLockAccess("write-intent lock")
-    return doRunWriteIntentReadAction(computation)
+    return runPreventiveWriteIntentReadAction(computation)
   }
 
-  private fun <T> doRunWriteIntentReadAction(computation: () -> T): T {
+  override fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T {
     val listener = myWriteIntentActionListener
     fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
     val currentReadState = myTopmostReadAction.get()
