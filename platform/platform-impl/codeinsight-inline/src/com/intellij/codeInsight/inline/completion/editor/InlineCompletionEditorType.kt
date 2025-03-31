@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.editor
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -27,6 +28,11 @@ enum class InlineCompletionEditorType {
     @ApiStatus.Internal
     fun get(editor: Editor): InlineCompletionEditorType {
       editor.getUserData(forcedInlineCompletionEditorType)?.let { return it }
+      // Determining the editor type in unit tests is not possible.
+      // Therefore, MAIN_EDITOR is used if no other editor type is explicitly forced.
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return MAIN_EDITOR
+      }
       if (EditorUtil.isRealFileEditor(editor)) {
         return MAIN_EDITOR
       }
