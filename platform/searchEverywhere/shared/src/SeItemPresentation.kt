@@ -120,8 +120,12 @@ class SeTargetItemPresentation(
 @Serializable
 class SeTextSearchItemPresentation(
   override val text: @NlsSafe String,
+  val textChunks: List<SerializableTextChunk>,
   private val backgroundColorId: ColorId?,
   val fileString: @NlsSafe String
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
+
+  @Serializable
+  class SerializableTextChunk(val text: @NlsSafe String, val foregroundColorId: ColorId?, val fontType: Int)
 }
