@@ -256,6 +256,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertContainsItems("module");
   }
 
+  public void testImportKeywordModuleFile() {
+    configureFromFileText("module-info.java", "im<caret>port something");
+    complete();
+    assertContainsItems("import");
+  }
+
   public void testOverwriteCatch() {
     configureByTestName();
     selectItem(myItems[0], Lookup.REPLACE_SELECT_CHAR);
