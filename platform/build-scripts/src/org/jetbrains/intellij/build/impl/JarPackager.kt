@@ -186,12 +186,12 @@ class JarPackager private constructor(
       searchableOptionSet: SearchableOptionSetDescriptor? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
-      val packager = JarPackager(outputDir, context, platformLayout, isRootDir, moduleOutputPatcher)
-      packager.computeModuleSources(includedModules, layout, searchableOptionSet)
+      val packager = JarPackager(outDir = outputDir, context = context, platformLayout = platformLayout, isRootDir = isRootDir, moduleOutputPatcher = moduleOutputPatcher)
+      packager.computeModuleSources(includedModules = includedModules, layout = layout, searchableOptionSet = searchableOptionSet)
       packager.computeModuleCustomLibrarySources(layout)
 
       val frontendModuleFilter = context.getFrontendModuleFilter()
-      val libraryToMerge = packager.computeProjectLibrariesSources(outputDir, layout, packager.copiedFiles, frontendModuleFilter)
+      val libraryToMerge = packager.computeProjectLibrariesSources(outDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles, frontendModuleFilter = frontendModuleFilter)
       if (isRootDir) {
         for ((jarName, predicate) in predefinedMergeRules) {
           packager.mergeLibsByPredicate(jarName = jarName, libraryToMerge = libraryToMerge, outputDir = outputDir, predicate = predicate, frontendModuleFilter = frontendModuleFilter)
@@ -426,7 +426,7 @@ class JarPackager private constructor(
             continue
           }
 
-          if (helper.hasLibraryInDependencyChainOfModuleDependencies(module, libName, layout.includedModules, withTests)) {
+          if (helper.hasLibraryInDependencyChainOfModuleDependencies(dependentModule = module, libraryName = libName, siblings = layout.includedModules, withTests = withTests)) {
             continue
           }
 
@@ -443,7 +443,7 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName (always packed into plugin)")
+          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.STANDALONE_MERGED, reason = "<- $moduleName (always packed into plugin)")
           val library = element.library ?: throw IllegalStateException("cannot find ${libRef}")
           libToMetadata.put(library, projectLibraryData)
         }
