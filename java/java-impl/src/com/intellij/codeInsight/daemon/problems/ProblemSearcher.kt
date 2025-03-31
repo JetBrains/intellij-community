@@ -3,7 +3,23 @@ package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector
 import com.intellij.pom.Navigatable
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiCatchSection
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiForeachStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.util.PsiTreeUtil
 
 /**
@@ -106,7 +122,7 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
   }
 
   private fun findProblem(element: PsiElement) {
-    if (element !is Navigatable) return
+    if (element !is Navigatable || element is SyntheticElement) return
     val error = JavaErrorCollector.findSingleError(element) ?: return
     val context = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement::class.java,
                                                        PsiClass::class.java, PsiMethod::class.java, PsiVariable::class.java) ?: element
