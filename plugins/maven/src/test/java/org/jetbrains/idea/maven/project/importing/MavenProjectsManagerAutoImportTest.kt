@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -551,6 +552,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 
+  @IJIgnore(issue = "IDEA-370031")
   @Test
   fun testUpdatingProjectsWhenAbsentManagedProjectFileAppears() = runBlocking {
     importProjectAsync("""
