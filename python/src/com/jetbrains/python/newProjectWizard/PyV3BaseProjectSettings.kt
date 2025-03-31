@@ -40,6 +40,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
     val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@coroutineScope it }
     sdk.setAssociationToModule(module)
     module.pythonSdk = sdk
+    module.project.pythonSdk = sdk
     return@coroutineScope com.jetbrains.python.Result.success(Pair(sdk, interpreterStatistics))
   }
 
