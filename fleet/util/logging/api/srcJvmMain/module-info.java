@@ -2,8 +2,8 @@
 module fleet.util.logging.api {
   exports fleet.util.logging;
 
-  requires kotlin.stdlib;
-  requires kotlinx.coroutines.core;
+  requires transitive kotlin.stdlib;
+  requires transitive kotlinx.coroutines.core;
   requires static fleet.util.multiplatform;
 
   uses fleet.util.logging.KLoggerFactory;

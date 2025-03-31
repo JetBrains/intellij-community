@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.logging
 
-import java.util.*
+import fleet.util.multiplatform.linkToActual
 import kotlin.reflect.KClass
 
 object KLoggers {
-  internal val loggerFactory: KLoggerFactory = ServiceLoader.load(KLoggerFactory::class.java, KLoggerFactory::class.java.classLoader).first()
+  internal val loggerFactory: KLoggerFactory = getLoggerFactory()
 
   fun logger(owner: KClass<*>): KLogger = loggerFactory.logger(owner)
   fun logger(owner: Any): KLogger = loggerFactory.logger(owner)
@@ -18,3 +18,5 @@ object KLoggers {
 inline fun <reified T> logger(): KLogger = KLoggers.logger(T::class)
 
 fun KClass<*>.logger(): KLogger = KLoggers.logger(this)
+
+internal fun getLoggerFactory(): KLoggerFactory = linkToActual()

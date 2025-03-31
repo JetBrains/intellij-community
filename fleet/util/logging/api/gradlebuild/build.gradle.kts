@@ -13,6 +13,7 @@ plugins {
   id("fleet-build-jps-module-plugin")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
+  alias(jps.plugins.expects)
   // GRADLE_PLUGINS__MARKER_END
 }
 
@@ -51,12 +52,16 @@ kotlin {
     sourceSets.wasmJsTest.configure { resources.srcDir(layout.projectDirectory.dir("../testResourcesWasmJsTest")) }
   }
   sourceSets.commonMain.dependencies {
-    implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
+    api(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.com.intellij.platform.kotlinx.coroutines.core.jvm134738847.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
+    api(jps.com.intellij.platform.kotlinx.coroutines.core.jvm134738847.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
+    compileOnly(project(":util-multiplatform"))
+  }
+  sourceSets.wasmJsMain.dependencies {
+    api(project(":util-multiplatform"))
   }
   // KOTLIN__MARKER_END
 }
