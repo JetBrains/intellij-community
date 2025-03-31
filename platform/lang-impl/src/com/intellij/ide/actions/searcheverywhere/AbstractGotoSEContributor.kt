@@ -297,12 +297,13 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
   ) {
     fetchWeightedElementsMixing(
       pattern, progressIndicator, consumer,
-      { localPattern, localProgressIndicator, localConsumer -> performByGotoContributorSearch(localPattern, localProgressIndicator, localConsumer) },
+      // Ordering is important here
       *(
         contributorModules?.map2Array<SearchEverywhereContributorModule, (String, ProgressIndicator, Processor<in FoundItemDescriptor<Any>>) -> Unit> {
           { localPattern, localProgressIndicator, localConsumer -> it.perProductFetchWeightedElements(localPattern, localProgressIndicator, localConsumer) }
         } ?: emptyArray()
-      )
+       ),
+      { localPattern, localProgressIndicator, localConsumer -> performByGotoContributorSearch(localPattern, localProgressIndicator, localConsumer) },
     )
   }
 
