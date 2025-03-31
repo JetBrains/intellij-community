@@ -17,6 +17,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.entryPoint implementation="com.intellij.platform.searchEverywhere.frontend.SeEntryPoint"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.files.SeFilesTabFactory"/>

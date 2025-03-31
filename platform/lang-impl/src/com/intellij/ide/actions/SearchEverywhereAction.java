@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
@@ -31,8 +32,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SearchEverywhereAction extends SearchEverywhereBaseAction
   implements CustomComponentAction, RightAlignedToolbarAction, DumbAware, DataProvider {
+  private static final Logger LOG = Logger.getInstance(SearchEverywhereAction.class);
 
   public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
@@ -115,7 +117,25 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
       }
     }
 
-    ReadAction.run(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
+    if (!tryToOpenExternalEntryPoint(e)) {
+      ReadAction.run(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
+    }
+  }
+
+  private static boolean tryToOpenExternalEntryPoint(@NotNull AnActionEvent e) {
+    try {
+      for (SearchEverywhereEntryPoint entryPoint: SearchEverywhereEntryPoint.EP_NAME.getExtensionList()) {
+        if (entryPoint.isAvailable(e)) {
+          entryPoint.initiateSearchPopup(e);
+          return true;
+        }
+      }
+    }
+    catch (Throwable t) {
+      LOG.warn(t);
+    }
+
+    return false;
   }
 }
 
