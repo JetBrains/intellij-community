@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs.statistics
 
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.service
+import com.intellij.util.xmlb.annotations.XMap
 
 /**
  * Enum representing the different types of completion finishes.
@@ -27,17 +29,17 @@ internal enum class CompletionFinishType {
   storages = [(Storage(value = UserStatisticConstants.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED))],
   reportStatistic = false
 )
-internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionFinishedTypeComponent.State>(State()) {
+internal class CompletionFinishedTypeComponent : SimplePersistentStateComponent<CompletionFinishedTypeComponent.State>(State()) {
 
-  class State : BaseState() {
-    class DailyData : BaseState() {
+  class State : UserFactorState<State.DailyData, CompletionFinishType>({ DailyData() }) {
+    class DailyData : BaseState(), ModifiableStorage<CompletionFinishType> {
       var explicitCancel: Int by property(0)
       var selected: Int by property(0)
       var invalidated: Int by property(0)
       var other: Int by property(0)
 
-      fun increment(type: CompletionFinishType) {
-        when (type) {
+      override fun update(param: CompletionFinishType) {
+        when (param) {
           CompletionFinishType.EXPLICIT_CANCEL -> explicitCancel += 1
           CompletionFinishType.SELECTED -> selected += 1
           CompletionFinishType.INVALIDATED -> invalidated += 1
@@ -46,23 +48,16 @@ internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionF
       }
     }
 
-    var dailyData: MutableMap<String, DailyData> by map<String, DailyData>()
-
-    fun incrementOnDay(day: String, type: CompletionFinishType) {
-      dailyData.getOrPut(day) { DailyData() }.increment(type)
-      incrementModificationCount()
-    }
+    @get:XMap
+    override var dailyDataMap: MutableMap<String, DailyData> by map()
   }
-
-  override fun getDailyDataMap(): MutableMap<String, *> = state.dailyData
 
   /**
    * Records that a completion was explicitly canceled.
    * Increments the explicit cancel counter for today.
    */
   fun fireExplicitCancel() {
-    state.incrementOnDay(getCurrentDate(), CompletionFinishType.EXPLICIT_CANCEL)
-    cleanupOldData()
+    state.increment(CompletionFinishType.EXPLICIT_CANCEL)
   }
 
   /**
@@ -70,8 +65,7 @@ internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionF
    * Increments the selected counter for today.
    */
   fun fireSelected() {
-    state.incrementOnDay(getCurrentDate(), CompletionFinishType.SELECTED)
-    cleanupOldData()
+    state.increment(CompletionFinishType.SELECTED)
   }
 
   /**
@@ -79,8 +73,7 @@ internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionF
    * Increments the invalidated counter for today.
    */
   fun fireInvalidated() {
-    state.incrementOnDay(getCurrentDate(), CompletionFinishType.INVALIDATED)
-    cleanupOldData()
+    state.increment(CompletionFinishType.INVALIDATED)
   }
 
   /**
@@ -88,8 +81,7 @@ internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionF
    * Increments the other counter for today.
    */
   fun fireOther() {
-    state.incrementOnDay(getCurrentDate(), CompletionFinishType.OTHER)
-    cleanupOldData()
+    state.increment(CompletionFinishType.OTHER)
   }
 
 
@@ -99,7 +91,7 @@ internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionF
    * @return The count of completions for the specified finish type
    */
   fun getCountByType(type: CompletionFinishType): Int {
-    return state.dailyData.values.sumOf { dailyData ->
+    return state.dailyDataMap.values.sumOf { dailyData ->
       when (type) {
         CompletionFinishType.EXPLICIT_CANCEL -> dailyData.explicitCancel
         CompletionFinishType.SELECTED -> dailyData.selected
@@ -114,7 +106,7 @@ internal class CompletionFinishedTypeComponent : UserFactorComponent<CompletionF
    * @return The total count of completions
    */
   fun getTotalCount(): Int {
-    return state.dailyData.values.sumOf { dailyData ->
+    return state.dailyDataMap.values.sumOf { dailyData ->
       dailyData.explicitCancel + dailyData.selected + dailyData.invalidated + dailyData.other
     }
   }
