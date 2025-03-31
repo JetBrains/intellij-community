@@ -8,6 +8,7 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.Nls
@@ -24,6 +25,8 @@ internal class ReworkedTerminalWidget(
   private val sessionFuture = CompletableFuture<TerminalSession>()
   private val view: TerminalContentView = ReworkedTerminalView(project, settings, sessionFuture)
 
+  private val panel: BorderLayoutPanel = BorderLayoutPanel()
+
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
   override val termSize: TermSize?
@@ -37,6 +40,8 @@ internal class ReworkedTerminalWidget(
   init {
     Disposer.register(parentDisposable, this)
     Disposer.register(this, view)
+
+    panel.addToCenter(view.component)
   }
 
   override fun connectToSession(session: TerminalSession) {
@@ -48,7 +53,7 @@ internal class ReworkedTerminalWidget(
   }
 
   override fun getComponent(): JComponent {
-    return view.component
+    return panel
   }
 
   override fun getPreferredFocusableComponent(): JComponent {
@@ -75,15 +80,18 @@ internal class ReworkedTerminalWidget(
     view.addTerminationCallback(onTerminated, parentDisposable)
   }
 
+  override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
+    panel.addToTop(notificationComponent)
+    Disposer.register(disposable) {
+      panel.remove(notificationComponent)
+    }
+  }
+
   override fun writePlainMessage(message: @Nls String) {
     // TODO: implement
   }
 
   override fun setCursorVisible(visible: Boolean) {
-    // TODO: implement
-  }
-
-  override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
     // TODO: implement
   }
 

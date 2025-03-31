@@ -7,13 +7,17 @@ import com.intellij.platform.project.projectId
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
@@ -76,9 +80,9 @@ internal object TerminalSessionStartHelper {
     sessionTab: TerminalSessionTab,
   ) {
     terminalProjectScope(project).launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
-      val sessionId = if (sessionTab.sessionId != null) {
+      val startedSessionTab = if (sessionTab.sessionId != null) {
         // Session is already started for this tab, reuse it
-        sessionTab.sessionId
+        sessionTab
       }
       else {
         // Start new terminal session
@@ -88,8 +92,14 @@ internal object TerminalSessionStartHelper {
         }
       }
 
+      val sessionId = startedSessionTab.sessionId
+                      ?: error("Updated TerminalSessionTab does not contain sessionId after terminal session start")
       val session = FrontendTerminalSession(sessionId)
       widget.connectToSession(session)
+
+      if (startedSessionTab.portForwardingId != null) {
+        setupPortForwarding(project, startedSessionTab.portForwardingId, widget)
+      }
     }
   }
 
@@ -102,9 +112,15 @@ internal object TerminalSessionStartHelper {
     else options
   }
 
-  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionId {
+  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionTab {
     val api = TerminalTabsManagerApi.getInstance()
-    val updatedTab: TerminalSessionTab = api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
-    return updatedTab.sessionId ?: error("Updated TerminalSessionTab does not contain sessionId after terminal session start")
+    return api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
+  }
+
+  private fun setupPortForwarding(project: Project, id: TerminalPortForwardingId, widget: TerminalWidget) {
+    val component = TerminalPortForwardingUiProvider.getInstance(project).createComponent(id, disposable = widget)
+    if (component != null) {
+      widget.addNotification(component, disposable = widget)
+    }
   }
 }
