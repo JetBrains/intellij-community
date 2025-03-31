@@ -14,7 +14,12 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.DirSource
+import org.jetbrains.intellij.build.InMemoryContentSource
+import org.jetbrains.intellij.build.Source
+import org.jetbrains.intellij.build.SourceAndCacheStrategy
+import org.jetbrains.intellij.build.ZipSource
+import org.jetbrains.intellij.build.createSourceAndCacheStrategyList
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
 import java.io.IOException
 import java.nio.file.AtomicMoveNotSupportedException

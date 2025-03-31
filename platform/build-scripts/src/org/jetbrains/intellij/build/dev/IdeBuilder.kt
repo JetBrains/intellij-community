@@ -652,7 +652,7 @@ private suspend fun layoutPlatform(
 
         classPath.add(file)
       }
-      sortedClassPath = computeAppClassPath(libDir = libDir, existing = classPath, homeDir = runDir)
+      sortedClassPath = computeAppClassPath(libDir = libDir, existing = classPath)
     }
 
     launch(Dispatchers.IO) {

@@ -1,48 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.trace.Span
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.io.INDEX_FILENAME
-import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.transformZipUsingTempFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private fun processClassReport(consumer: (String, String) -> Unit) {
-  val osName = System.getProperty("os.name")
-  val classifier = when {
-    osName.startsWith("windows", ignoreCase = true) -> "windows"
-    osName.startsWith("mac", ignoreCase = true) -> "mac"
-    else -> "linux"
-  }
-  PackageIndexBuilder::class.java.classLoader.getResourceAsStream("${classifier}/class-report.txt")!!.bufferedReader().use {
-    it.forEachLine { line ->
-      val (classFilePath, libPath) = line.split(':', limit = 2)
-      consumer(classFilePath, libPath)
-    }
-  }
-}
-
 internal fun excludedLibJars(context: BuildContext): Set<String> {
-  return setOf(PlatformJarNames.TEST_FRAMEWORK_JAR) +
-         if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)) setOf(PLATFORM_CORE_NIO_FS) else emptySet()
+  return java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR) +
+         if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)) java.util.Set.of(PLATFORM_CORE_NIO_FS) else java.util.Set.of()
 }
 
 internal suspend fun generateClasspath(context: BuildContext): List<String> {
@@ -53,101 +33,22 @@ internal suspend fun generateClasspath(context: BuildContext): List<String> {
     .use { span ->
       val excluded = excludedLibJars(context)
       val existing = HashSet<Path>()
-      addJarsFromDir(libDir) { paths ->
-        paths.filterTo(existing) { !excluded.contains(it.fileName.toString()) }
+      Files.newDirectoryStream(libDir).use { stream ->
+        stream.asSequence().filterTo(existing) { it.toString().endsWith(".jar") && !excluded.contains(it.fileName.toString()) }
       }
-      val files = computeAppClassPath(libDir, existing, homeDir)
-      val result = files.map { libDir.relativize(it).toString() }
+      val result = computeAppClassPath(libDir, existing).map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
       result
     }
 }
 
-fun computeAppClassPath(libDir: Path, existing: Set<Path>, homeDir: Path): LinkedHashSet<Path> {
+internal fun computeAppClassPath(libDir: Path, existing: Set<Path>): LinkedHashSet<Path> {
   val result = LinkedHashSet<Path>(existing.size + 4)
   // add first - should be listed first
-  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, UTIL_JAR).map(libDir::resolve).filterTo(result, existing::contains)
-  computeCoreSources().asSequence().map { homeDir.resolve(it) }.filterTo(result) { existing.contains(it) }
+  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, "app-client.jar", UTIL_JAR, "product.jar", "app.jar", "app.jar").map(libDir::resolve).filterTo(result, existing::contains)
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) existing.sortedBy(Path::toString) else existing.sorted())
   return result
-}
-
-private fun computeCoreSources(): Set<String> {
-  val result = LinkedHashSet<String>()
-  processClassReport { _, jarPath ->
-    if (jarPath.startsWith("lib/")) {
-      result.add(jarPath)
-    }
-  }
-  return result
-}
-
-private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit) {
-  Files.newDirectoryStream(dir).use { stream ->
-    consumer(stream.asSequence().filter { it.toString().endsWith(".jar") })
-  }
-}
-
-@VisibleForTesting
-fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, List<String>> {
-  val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
-  classLoadingLog.bufferedReader().forEachLine {
-    val data = it.split(':', limit = 2)
-    val sourcePath = data[1]
-    sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data[0])
-  }
-  return sourceToNames
-}
-
-@VisibleForTesting
-fun reorderJar(jarFile: Path, orderedNames: List<String>) {
-  val orderedNameToIndex = Object2IntOpenHashMap<String>(orderedNames.size)
-  orderedNameToIndex.defaultReturnValue(-1)
-  for ((index, orderedName) in orderedNames.withIndex()) {
-    orderedNameToIndex.put(orderedName, index)
-  }
-
-  val sourceZipFile = HashMapZipFile.loadIfNotEmpty(jarFile)
-  if (sourceZipFile == null) {
-    Span.current().addEvent("skip - file is empty")
-    return
-  }
-
-  val packageIndexBuilder = PackageIndexBuilder()
-  return transformZipUsingTempFile(jarFile, packageIndexBuilder.indexWriter) { zipCreator ->
-    sourceZipFile.use { sourceZip ->
-      val entries = sourceZip.entries.filterTo(mutableListOf()) { !it.isDirectory && it.name != INDEX_FILENAME }
-      // ignore the existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
-      entries.sortWith { o1, o2 ->
-        val o2p = o2.name
-        if ("META-INF/plugin.xml" == o2p) {
-          return@sortWith Int.MAX_VALUE
-        }
-
-        val o1p = o1.name
-        if ("META-INF/plugin.xml" == o1p) {
-          -Int.MAX_VALUE
-        }
-        else {
-          val i1 = orderedNameToIndex.getInt(o1p)
-          if (i1 == -1) {
-            if (orderedNameToIndex.containsKey(o2p)) 1 else 0
-          }
-          else {
-            val i2 = orderedNameToIndex.getInt(o2p)
-            if (i2 == -1) -1 else (i1 - i2)
-          }
-        }
-      }
-
-      for (entry in entries) {
-        packageIndexBuilder.addFile(entry.name)
-        zipCreator.uncompressedData(nameString = entry.name, data = entry.getByteBuffer(sourceZip, null))
-      }
-      packageIndexBuilder.writePackageIndex(zipCreator)
-    }
-  }
 }
 
 internal data class PluginBuildDescriptor(
@@ -165,7 +66,7 @@ internal fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolea
 
   // main plugin
   val mainDescriptor = moduleOutputPatcher.getPatchedContent(context.productProperties.applicationInfoModule).let {
-    it["META-INF/plugin.xml"] ?: it["META-INF/${context.productProperties.platformPrefix}Plugin.xml"]
+    it.get("META-INF/plugin.xml") ?: it.get("META-INF/${context.productProperties.platformPrefix}Plugin.xml")
   }
 
   val mainPluginDescriptorContent = requireNotNull(mainDescriptor) {
@@ -254,7 +155,7 @@ internal fun generatePluginClassPathFromPrebuiltPluginFiles(pluginEntries: List<
     val files = entries.toMutableList()
     if (files.size > 1) {
       // always sort
-      putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
+      putMoreLikelyPluginJarsFirst(pluginDirName = pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
     }
 
     // move a dir with "plugin.xml" to the top (it may not exist if for some reason the main module dir still being packed into JAR)

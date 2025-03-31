@@ -15,16 +15,65 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.InMemoryDistFileContent
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.MAVEN_REPO
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
+import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.PluginDistribution
+import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.antToRegex
+import org.jetbrains.intellij.build.buildSearchableOptions
+import org.jetbrains.intellij.build.createPluginLayoutSet
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.generateClasspath
+import org.jetbrains.intellij.build.generatePluginClassPath
+import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
+import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleTestOutputEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport
+import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
+import org.jetbrains.intellij.build.injectAppInfo
+import org.jetbrains.intellij.build.io.W_CREATE_NEW
+import org.jetbrains.intellij.build.io.ZipArchiver
+import org.jetbrains.intellij.build.io.archiveDir
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
+import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.writePluginClassPathHeader
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
@@ -41,7 +90,6 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.function.Predicate
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.invariantSeparatorsPathString
@@ -253,7 +301,7 @@ private suspend fun doBuildBundledPlugins(
       buildPlatformSpecificPluginResources(
         plugins = pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
         targetDirs = getPluginDirs(context, isUpdateFromSources),
-        context,
+        context = context,
       )
 
       entries
@@ -318,7 +366,7 @@ suspend fun copyAdditionalPlugins(context: BuildContext, pluginDir: Path): List<
       copyDir(sourceDir, targetDir)
       val entries = targetDir.resolve(LIB_DIRECTORY).listDirectoryEntries("*.jar")
       check(entries.isNotEmpty()) {
-        "Suspicious additional plugin (no 'lib/*.jar' files): ${sourceDir}"
+        "Suspicious additional plugin (no 'lib/*.jar' files): $sourceDir"
       }
       allEntries.add(targetDir to entries)
     }
@@ -355,11 +403,19 @@ internal suspend fun buildNonBundledPlugins(
 
     // buildPlugins pluginBuilt listener is called concurrently
     val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
-    val prepareCustomPluginRepository =
-      context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-      !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
+    val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+                                        !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
     val plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
-    val mappings = buildPlugins(moduleOutputPatcher, plugins, os = null, stageDir, state, context, buildPlatformLibJob, searchableOptionSet) { plugin, pluginDirOrFile ->
+    val mappings = buildPlugins(
+      moduleOutputPatcher = moduleOutputPatcher,
+      plugins = plugins,
+      os = null,
+      targetDir = stageDir,
+      state = state,
+      context = context,
+      buildPlatformJob = buildPlatformLibJob,
+      searchableOptionSet = searchableOptionSet,
+    ) { plugin, pluginDirOrFile ->
       val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
         context.buildNumber
       }
@@ -480,12 +536,12 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
     val moduleOutputPatcher = ModuleOutputPatcher()
     val libDirLayout = async(CoroutineName("layout platform distribution")) {
       layoutPlatformDistribution(
-        moduleOutputPatcher,
+        moduleOutputPatcher = moduleOutputPatcher,
         targetDirectory = context.paths.distAllDir,
         platform = platformLayout,
         searchableOptionSet = null,
         copyFiles = false,
-        context,
+        context = context,
       )
     }
 
@@ -498,14 +554,14 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
       if (satisfiesBundlingRequirements(plugin, osFamily = null, arch = null, context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
         entries.add(PluginBuildDescriptor(targetDirectory, os = null, plugin, moduleNames = emptyList()) to layoutDistribution(
-          plugin,
-          platformLayout,
-          targetDirectory,
+          layout = plugin,
+          platformLayout = platformLayout,
+          targetDirectory = targetDirectory,
           copyFiles = false,
-          moduleOutputPatcher,
+          moduleOutputPatcher = moduleOutputPatcher,
           includedModules = plugin.includedModules,
           searchableOptionSet = null,
-          context,
+          context = context,
         ).first)
       }
     }
@@ -556,10 +612,10 @@ internal suspend fun buildPlugins(
             platformLayout = state.platform,
             targetDirectory = pluginDir,
             copyFiles = true,
-            moduleOutputPatcher,
-            plugin.includedModules,
-            searchableOptionSet,
-            context,
+            moduleOutputPatcher = moduleOutputPatcher,
+            includedModules = plugin.includedModules,
+            searchableOptionSet = searchableOptionSet,
+            context = context,
           )
           pluginBuilt?.invoke(plugin, file)
           entries
@@ -655,7 +711,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
     }
     for (layout in layouts) {
       check(layout.mainModule == "kotlin-ultimate.kmm-plugin" || result.add(layout)) {
-        "Plugin layout for module ${moduleName} is already added (duplicated module name?)"
+        "Plugin layout for module $moduleName is already added (duplicated module name?)"
       }
     }
   }
@@ -672,7 +728,14 @@ suspend fun buildLib(
   context: BuildContext,
 ): List<DistributionFileEntry> {
   val targetDirectory = context.paths.distAllDir
-  val libDirMappings = layoutPlatformDistribution(moduleOutputPatcher, targetDirectory, platform, searchableOptionSetDescriptor, copyFiles = true, context)
+  val libDirMappings = layoutPlatformDistribution(
+    moduleOutputPatcher = moduleOutputPatcher,
+    targetDirectory = targetDirectory,
+    platform = platform,
+    searchableOptionSet = searchableOptionSetDescriptor,
+    copyFiles = true,
+    context = context,
+  )
   context.proprietaryBuildTools.scrambleTool?.validatePlatformLayout(platform.includedModules, context)
   return libDirMappings
 }
@@ -982,7 +1045,7 @@ private fun layoutResourcePaths(layout: BaseLayout, context: BuildContext, targe
       }
       else {
         if (overwrite) {
-          copyDir(source, target, fileFilter = Predicate {
+          copyDir(source, target, fileFilter = {
             copyIfChanged(target, source, it)
           })
         }

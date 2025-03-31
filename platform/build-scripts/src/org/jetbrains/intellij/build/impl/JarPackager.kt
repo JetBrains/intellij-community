@@ -237,7 +237,7 @@ class JarPackager private constructor(
         }
 
         val list = mutableListOf<DistributionFileEntry>()
-        val hasher = Hashing.komihash5_0().hashStream()
+        val hasher = Hashing.xxh3_64().hashStream()
         for (item in packager.assets.values) {
           computeDistributionFileEntries(asset = item, hasher = hasher, list = list, dryRun = dryRun, cacheManager = cacheManager)
         }
@@ -338,7 +338,7 @@ class JarPackager private constructor(
       result
     }
 
-    val source = module.toSource(moduleOutDir, excludes)
+    val source = toSource(module, moduleOutDir, excludes)
     if (source != null) {
       moduleSources += source
     }
@@ -431,7 +431,7 @@ class JarPackager private constructor(
           }
 
           projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName")
-          val library = element.library ?: throw IllegalStateException("cannot find ${libRef}")
+          val library = element.library ?: throw IllegalStateException("cannot find $libRef")
           libToMetadata.put(library, projectLibraryData)
         }
         else if (platformLayout != null && platformLayout.isLibraryAlwaysPackedIntoPlugin(libName)) {
@@ -444,7 +444,7 @@ class JarPackager private constructor(
           }
 
           projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.STANDALONE_MERGED, reason = "<- $moduleName (always packed into plugin)")
-          val library = element.library ?: throw IllegalStateException("cannot find ${libRef}")
+          val library = element.library ?: throw IllegalStateException("cannot find $libRef")
           libToMetadata.put(library, projectLibraryData)
         }
         else {
@@ -452,7 +452,7 @@ class JarPackager private constructor(
         }
       }
 
-      val library = element.library ?: throw IllegalStateException("cannot find ${libRef}")
+      val library = element.library ?: throw IllegalStateException("cannot find $libRef")
       val libraryName = getLibraryFileName(library)
       if (excluded.contains(libraryName) || alreadyHasLibrary(layout, libraryName)) {
         continue
@@ -687,8 +687,7 @@ private val agentLibrariesNotForcedInSeparateJars = listOf(
 )
 
 private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
-  if (fileName.endsWith("-rt.jar")
-      || (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) })) {
+  if (fileName.endsWith("-rt.jar") || (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) })) {
     return true
   }
 
@@ -902,7 +901,9 @@ private class NativeFileHandlerImpl(private val context: BuildContext, private v
   }
 
   override fun isCompatibleWithTargetPlatform(name: String): Boolean {
-    if (!isNative(name)) return true
+    if (!isNative(name)) {
+      return true
+    }
     return NativeFilesMatcher.isCompatibleWithTargetPlatform(name, context.options.targetOs, context.options.targetArch)
   }
 
@@ -945,22 +946,16 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
     sources = moduleNames.mapNotNull { moduleName ->
       val module = context.findRequiredModule(moduleName)
       val output = context.getModuleOutputDir(module)
-      module.toSource(output, commonModuleExcludes)
+      toSource(module = module, outputDir = output, excludes = commonModuleExcludes)
     },
   )
 }
 
-private fun JpsModule.toSource(outputDir: Path, excludes: List<PathMatcher>): Source? {
+private fun toSource(module: JpsModule, outputDir: Path, excludes: List<PathMatcher>): Source? {
   return when {
-    Files.isDirectory(outputDir) -> {
-      DirSource(dir = outputDir, excludes = excludes)
-    }
-    Files.exists(outputDir) -> {
-      ZipSource(file = outputDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
-    }
-    sourceRoots.any { !it.rootType.isForTests } -> {
-      error("Module $name output does not exist: $outputDir")
-    }
+    Files.isDirectory(outputDir) -> DirSource(dir = outputDir, excludes = excludes)
+    Files.exists(outputDir) -> ZipSource(file = outputDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+    module.sourceRoots.any { !it.rootType.isForTests } -> error("Module ${module.name} output does not exist: $outputDir")
     else -> null
   }
 }
