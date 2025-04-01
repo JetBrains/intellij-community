@@ -19,21 +19,13 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
+import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.Replacement
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.containsNonReplaceableOperation
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getReplacementForOldKotlinOptionIfNeeded
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
-import kotlin.collections.any
 
 private val kotlinCompileTasksNames = setOf(
     "org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile",
@@ -43,12 +35,12 @@ private val kotlinCompileTasksNames = setOf(
 )
 
 internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinInspection() {
-
     override fun isAvailableForFile(file: PsiFile): Boolean {
-        if (file.virtualFile.name == "settings.gradle.kts") return false
-        return file.virtualFile.name.endsWith(".gradle.kts") &&
-                (ApplicationManager.getApplication().isUnitTestMode() || kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file))
-        // Inspection tests don't treat tested build script files properly, and thus they ignore Kotlin versions used in scripts
+        val virtualFile = (file as? KtFile)?.alwaysVirtualFile ?: return false
+        if (virtualFile.name == "settings.gradle.kts") return false
+        return virtualFile.name.endsWith(".gradle.kts")
+                && (ApplicationManager.getApplication().isUnitTestMode() // Inspection tests don't treat tested build script files properly, and thus they ignore Kotlin versions used in scripts
+                || kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file))
     }
 
     override fun buildVisitor(

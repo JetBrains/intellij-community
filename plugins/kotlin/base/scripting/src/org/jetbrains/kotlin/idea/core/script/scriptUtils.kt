@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
 
+val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
+
 @ApiStatus.Internal
 fun MutableEntityStorage.getDefinitionLibraryEntity(
     definition: ScriptDefinition, project: Project, entitySource: KotlinScriptEntitySource

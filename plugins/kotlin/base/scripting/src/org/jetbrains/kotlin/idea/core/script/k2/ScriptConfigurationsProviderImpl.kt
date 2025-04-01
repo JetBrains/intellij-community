@@ -132,8 +132,6 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
     private fun ScriptDependenciesData.getSdkClasses(): List<VirtualFile> =
         sdks.flatMap { it.rootProvider.getFiles(OrderRootType.CLASSES).toList() }
 
-    private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
-
     companion object {
         fun getInstance(project: Project): ScriptConfigurationsProviderImpl =
             project.service<ScriptConfigurationsProvider>() as ScriptConfigurationsProviderImpl
