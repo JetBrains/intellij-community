@@ -207,6 +207,9 @@ internal class FrontendXDebuggerSession private constructor(
       }
       is XDebuggerSessionEvent.SessionStopped -> {
         cs.cancel()
+        suspendContext.value = null
+        currentExecutionStack.value = null
+        currentStackFrame.value = null
       }
       else -> {}
     }
