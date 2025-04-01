@@ -4,15 +4,18 @@ package com.intellij.vcs.git.commit.modal
 import com.intellij.ide.util.runOnceForApp
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.impl.VcsInitObject
+import com.intellij.openapi.vcs.impl.VcsStartupActivity
 
-class GitModalCommitToggler : ProjectActivity {
+internal class GitModalCommitToggler : VcsStartupActivity {
   override suspend fun execute(project: Project) {
     runOnceForApp("git.modal.commit.toggle") {
-      if (!VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) {
-        AdvancedSettings.setBoolean(GitModalCommitModeProvider.SETTING_ID, true)
-      }
+      AdvancedSettings.setBoolean(GitModalCommitModeProvider.SETTING_ID,
+                                  !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES)
     }
   }
+
+  override val order: Int
+    get() = VcsInitObject.MAPPINGS.order + 1
 }
