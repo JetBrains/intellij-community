@@ -2,7 +2,6 @@ com/intellij/concurrency/JobLauncher
 com/intellij/diagnostic/Activity
 com/intellij/diagnostic/ActivityCategory
 com/intellij/ide/plugins/DescriptorListLoadingContext
-com/intellij/ide/plugins/ModuleDependenciesDescriptor
 com/intellij/ide/plugins/PluginLoadingResult
 com/intellij/ide/plugins/PluginManagerState
 com/intellij/lang/impl/PsiBuilderImpl$MyTreeStructure

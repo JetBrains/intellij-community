@@ -1377,7 +1377,6 @@ f:com.intellij.openapi.components.ServiceBean
 f:com.intellij.openapi.components.ServiceDescriptor
 - f:client:com.intellij.openapi.client.ClientKind
 - f:headlessImplementation:java.lang.String
-- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
 - f:overrides:Z
 - f:serviceImplementation:java.lang.String
 - f:serviceInterface:java.lang.String

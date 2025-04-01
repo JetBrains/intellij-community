@@ -8,8 +8,21 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 *:com.intellij.ide.plugins.IdeaPluginDescriptorImplPublic
 - com.intellij.ide.plugins.IdeaPluginDescriptor
-- a:getDependenciesV2():com.intellij.ide.plugins.ModuleDependenciesDescriptor
+- a:getDependenciesV2():com.intellij.ide.plugins.ModuleDependencies
 - a:getModuleName():java.lang.String
+*f:com.intellij.ide.plugins.ModuleDependencies
+- *sf:Companion:com.intellij.ide.plugins.ModuleDependencies$Companion
+- sf:EMPTY:com.intellij.ide.plugins.ModuleDependencies
+- f:modules:java.util.List
+- f:plugins:java.util.List
+- <init>(java.util.List,java.util.List):V
+*f:com.intellij.ide.plugins.ModuleDependencies$Companion
+*f:com.intellij.ide.plugins.ModuleDependencies$ModuleReference
+- f:name:java.lang.String
+- <init>(java.lang.String):V
+*f:com.intellij.ide.plugins.ModuleDependencies$PluginReference
+- f:id:com.intellij.openapi.extensions.PluginId
+- <init>(com.intellij.openapi.extensions.PluginId):V
 *:com.intellij.ide.plugins.PluginEnabler
 - sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
 - a:disable(java.util.Collection):Z
