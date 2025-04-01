@@ -19,7 +19,7 @@ class BazelPathTypeAwareRelativizer(
   private val baseDirParent: Path,
   private val parentOfBaseDirPrefix: String,
 ) : PathTypeAwareRelativizer {
-  @JvmField val sourceRelativizer = object : org.jetbrains.bazel.jvm.jps.state.PathRelativizer {
+  @JvmField val sourceRelativizer = object : org.jetbrains.bazel.jvm.worker.state.PathRelativizer {
     override fun toRelative(file: Path): String {
       return sourcePathToRelative(file.invariantSeparatorsPathString)
     }

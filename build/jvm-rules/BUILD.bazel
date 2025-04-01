@@ -56,7 +56,7 @@ jvm_import(
     jar = "@jps-standalone_http//file",
     source_jar = "@jps-standalone_http//file",
     visibility = [
-      "//src/jps-builder:__subpackages__",
+      "//src/jvm-builder:__subpackages__",
       "//src/jvm-builder-core:__subpackages__",
       "//src/jps-shadow:__subpackages__",
       "//src/kotlin/kotlin-builder:__subpackages__",

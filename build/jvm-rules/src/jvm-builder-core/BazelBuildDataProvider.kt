@@ -5,8 +5,8 @@ package org.jetbrains.bazel.jvm.worker.core
 
 import androidx.collection.ScatterMap
 import org.apache.arrow.memory.RootAllocator
-import org.jetbrains.bazel.jvm.jps.state.DependencyStateStorage
-import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
+import org.jetbrains.bazel.jvm.worker.state.DependencyStateStorage
+import org.jetbrains.bazel.jvm.worker.state.SourceDescriptor
 import org.jetbrains.bazel.jvm.util.emptyStringArray
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
