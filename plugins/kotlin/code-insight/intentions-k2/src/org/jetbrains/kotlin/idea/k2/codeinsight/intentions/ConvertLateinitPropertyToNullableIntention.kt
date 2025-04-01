@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -47,6 +47,6 @@ internal class ConvertLateinitPropertyToNullableIntention :
         element.removeModifier(KtTokens.LATEINIT_KEYWORD)
         element.typeReference = KtPsiFactory(actionContext.project).createType(elementContext.nullableType)
         element.initializer = KtPsiFactory(element.project).createExpression(KtTokens.NULL_KEYWORD.value)
-        ShortenReferencesFacility.getInstance().shorten(element)
+        shortenReferences(element)
     }
 }
