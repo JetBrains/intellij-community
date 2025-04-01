@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -556,6 +557,20 @@ internal class PluginDependenciesTest {
     val sub = bar.dependencies[0].subDescriptor!!
     val subsub = sub.dependencies[0].subDescriptor!!
     assertThat(subsub).hasExactlyApplicationServices("service")
+  }
+
+  @Test
+  fun `content module can't have depends dependencies`() {
+    foo()
+    PluginBuilder.empty()
+      .id("bar")
+      .module("content.module",
+              PluginBuilder.empty().depends("foo").separateJar(true),
+              loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginDirPath.resolve("bar"))
+    assertThatThrownBy {
+      buildPluginSet()
+    }.hasMessageContainingAll("content.module", "shouldn't have plugin dependencies", "foo")
   }
 
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
