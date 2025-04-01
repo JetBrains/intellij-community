@@ -1288,8 +1288,10 @@ public class HighlightInfo implements Segment {
                                            anchorInfo.type.getSeverity(null), false, null, false, 0,
                                            anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(),
                                            anchorInfo.hasHint(), anchorInfo.getLazyQuickFixes());
-    info.highlighter = anchorInfo.getHighlighter();
-    info.myIntentionActionDescriptors = ContainerUtil.concat(ContainerUtil.map(infos, i-> ((HighlightInfo)i).myIntentionActionDescriptors));
+    synchronized (info) {
+      info.highlighter = anchorInfo.getHighlighter();
+      info.myIntentionActionDescriptors = ContainerUtil.concat(ContainerUtil.map(infos, i-> ((HighlightInfo)i).myIntentionActionDescriptors));
+    }
     return info;
   }
   private static @Nullable @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
@@ -1367,18 +1369,19 @@ public class HighlightInfo implements Segment {
     QuickFixActionRegistrar registrarDelegate = new QuickFixActionRegistrar() {
       @Override
       public void register(@NotNull IntentionAction action) {
-        register(getFixTextRange(), action, null);
+        doRegister(getFixTextRange(), action, null);
       }
 
       @Override
       public void register(@NotNull TextRange fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key) {
-        register((Segment)fixRange, action, key);
+        doRegister(fixRange, action, key);
       }
-      void register(@NotNull Segment fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key) {
+      private void doRegister(@NotNull Segment fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key) {
         IntentionActionDescriptor descriptor = new IntentionActionDescriptor(action, null, null, null, key, myProblemGroup, severity, fixRange);
         newDescriptors.add(descriptor);
         synchronized (HighlightInfo.this) {
           updateFields(List.of(descriptor), document);
+          assertIntentionActionDescriptorsAreRangeMarkerBased(List.of(descriptor));
         }
       }
     };
@@ -1389,7 +1392,7 @@ public class HighlightInfo implements Segment {
 
   private static void assertIntentionActionDescriptorsAreRangeMarkerBased(@NotNull List<? extends IntentionActionDescriptor> descriptors) {
     for (IntentionActionDescriptor descriptor : descriptors) {
-      assert descriptor.myFixRange  == null || descriptor.myFixRange instanceof RangeMarker : descriptors;
+      assert descriptor.myFixRange  == null || descriptor.myFixRange instanceof RangeMarker : descriptor +"; descriptors:"+descriptors;
     }
   }
 
@@ -1458,10 +1461,12 @@ public class HighlightInfo implements Segment {
       new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, description, toolTip, severity,
                         isAfterEndOfLine(), needUpdateOnTyping(), isFileLevelAnnotation(), navigationShift, myProblemGroup, toolId,
                         gutterIconRenderer, group, hasHint(), List.of());
-    info.myIntentionActionDescriptors = myIntentionActionDescriptors;
-    info.myLazyQuickFixes = myLazyQuickFixes;
-    info.myFlags = myFlags;
-    info.fixMarker = fixMarker;
+    synchronized (info) {
+      info.myIntentionActionDescriptors = myIntentionActionDescriptors;
+      info.myLazyQuickFixes = myLazyQuickFixes;
+      info.myFlags = myFlags;
+      info.fixMarker = fixMarker;
+    }
     return info;
   }
 }
