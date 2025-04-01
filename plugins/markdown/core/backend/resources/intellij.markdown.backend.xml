@@ -6,5 +6,7 @@
     <extensions defaultExtensionNs="com.intellij">
       <platform.rpc.backend.remoteApiProvider
         implementation="org.intellij.plugins.markdown.backend.providers.LinkOpenerApiProvider"/>
+      <platform.rpc.backend.remoteApiProvider
+        implementation="org.intellij.plugins.markdown.backend.providers.ProjectStructureProvider"/>
     </extensions>
 </idea-plugin>
