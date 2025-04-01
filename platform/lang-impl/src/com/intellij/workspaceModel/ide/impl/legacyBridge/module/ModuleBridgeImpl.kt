@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetManagerFactory
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
@@ -12,6 +13,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
@@ -107,6 +109,8 @@ class ModuleBridgeImpl(
 
   override suspend fun callCreateComponentsNonBlocking() {
     getModuleComponentManager().createComponentsNonBlocking()
+    // We want to initialize FacetManager early to avoid initializing it on EDT in ModuleManagerBridgeImpl.loadModules
+    project.serviceAsync<FacetManagerFactory>().getFacetManager(this)
   }
 
   override fun initFacets() = facetsInitializationTimeMs.addMeasuredTime {
