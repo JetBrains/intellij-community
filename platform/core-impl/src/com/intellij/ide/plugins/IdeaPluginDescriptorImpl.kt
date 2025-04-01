@@ -93,7 +93,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private val vendorUrl: String? = raw.vendorUrl
   private val url: String? = raw.url
 
-  private val dependenciesV1: List<PluginDependencyImpl> = raw.depends
+  private val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::fixDepends)
     .let(::convertDepends)
   override val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
@@ -198,7 +198,7 @@ class IdeaPluginDescriptorImpl private constructor(
    *
    * Note that it's different from [moduleDependencies]
    */
-  override fun getDependencies(): List<PluginDependency> = dependenciesV1
+  override fun getDependencies(): List<PluginDependency> = pluginDependencies
 
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
@@ -292,7 +292,7 @@ class IdeaPluginDescriptorImpl private constructor(
                                        pathResolver: PathResolver,
                                        dataLoader: DataLoader) {
     var visitedFiles: MutableList<String>? = null
-    for (dependency in dependenciesV1) {
+    for (dependency in pluginDependencies) {
       // context.isPluginIncomplete must be not checked here as another version of a plugin may be supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
         if (!dependency.isOptional && isIncomplete == null) {
