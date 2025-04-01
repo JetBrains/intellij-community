@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -31,7 +32,15 @@ import kotlin.io.path.exists
 import kotlin.io.path.isExecutable
 import kotlin.io.path.name
 
+
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
+  private companion object {
+    const val JEDITERM_SOURCE = "JEDITERM_SOURCE"
+    const val JEDITERM_SOURCE_ARGS = "JEDITERM_SOURCE_ARGS"
+    const val JEDITERM_SOURCE_SINGLE_ARG = "JEDITERM_SOURCE_SINGLE_ARG"
+    val logger = fileLogger()
+  }
+
   private fun generatePowerShellActivateScript(sdk: Sdk, sdkHomePath: VirtualFile): String? {
     // TODO: This should be migrated to Targets API: each target provides terminal
     val condaData = (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavorAndData?.data as? PyCondaFlavorData
@@ -103,13 +112,18 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
           val shellName = Path(shellPath).name
           if (isPowerShell(shellName)) {
             generatePowerShellActivateScript(sdk, sdkHomePath)?.let {
-              envs.put("JEDITERM_SOURCE", it)
+              envs.put(JEDITERM_SOURCE, it)
             }
           }
           else {
             findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->
-              envs.put("JEDITERM_SOURCE", activate.first)
-              envs.put("JEDITERM_SOURCE_ARGS", activate.second ?: "")
+              envs.put(JEDITERM_SOURCE, activate.first)
+              envs.put(JEDITERM_SOURCE_ARGS, activate.second ?: "")
+              // **nix shell integration scripts split arguments;
+              // since a path may contain spaces, we do not want it to be split into several arguments.
+              if (activate.second != null) {
+                envs.put(JEDITERM_SOURCE_SINGLE_ARG, "1")
+              }
             }
           }
         }
@@ -124,6 +138,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
       }
     }
 
+    logger.debug("Running ${command.joinToString(" ")} with ${envs.entries.joinToString("\n")}")
     return command
   }
 
@@ -162,6 +177,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 
 
 }
+
 @ApiStatus.Internal
 internal class SettingsState {
   var virtualEnvActivate: Boolean = true
