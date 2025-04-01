@@ -111,7 +111,6 @@
       - name: $MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2/slf4j-api-2.jar
       - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0/serialization-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0/core-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3/maven-artifact-3.jar
       - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1/kotlinx-coroutines-core-1.jar
   - name: kotlin.base.analysis-api-platform
   - name: kotlin.base.analysis
@@ -380,6 +379,7 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2/scripting-compiler-plugin-for-ide-2.jar
     reason: withProjectLibrary
+- name: lib/maven-artifact.jar
 - name: lib/vavr.jar
   projectLibraries:
   - name: vavr

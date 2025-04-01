@@ -8,11 +8,9 @@ import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.lang.ZipFile
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -404,7 +402,7 @@ class JarPackager private constructor(
     }
   }
 
-  private suspend fun computeSourcesForModuleLibs(
+  private fun computeSourcesForModuleLibs(
     item: ModuleItem,
     layout: BaseLayout,
     module: JpsModule,
@@ -463,7 +461,7 @@ class JarPackager private constructor(
       for (i in (files.size - 1) downTo 0) {
         val file = files[i]
         val fileName = file.fileName.toString()
-        if (item.reason != ModuleIncludeReasons.PRODUCT_MODULES && isSeparateJar(fileName = fileName, file = file, jarPath = asset.value.relativePath)) {
+        if (item.reason != ModuleIncludeReasons.PRODUCT_MODULES && isSeparateJar(fileName)) {
           files.removeAt(i)
           addLibrary(library = library, targetFile = outDir.resolve(removeVersionFromJar(fileName)), relativeOutputFile = item.relativeOutputFile, files = listOf(file))
         }
@@ -691,25 +689,11 @@ private val agentLibrariesNotForcedInSeparateJars = listOf(
   "code-agents-core"
 )
 
-private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
+private fun isSeparateJar(fileName: String): Boolean {
   if (fileName.endsWith("-rt.jar") || (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) })) {
     return true
   }
-
-  if (!fileName.startsWith("maven-")) {
-    return false
-  }
-
-  val filePreventingMerging = "META-INF/sisu/javax.inject.Named"
-  val result = withContext(Dispatchers.IO) {
-    ZipFile.load(file).use {
-      it.getResource(filePreventingMerging) != null
-    }
-  }
-  if (result) {
-    Span.current().addEvent("$fileName contains file '$filePreventingMerging' that prevent its merging into $jarPath")
-  }
-  return result
+  return fileName.startsWith("maven-")
 }
 
 private data class AssetDescriptor(
