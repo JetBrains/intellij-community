@@ -16,6 +16,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.findProjectOrNull
@@ -23,6 +25,7 @@ import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -57,7 +60,7 @@ internal class BackendRecentFilesModel(private val project: Project, private val
     // The active subscription leads to coroutine A launched during test A being executed during test B or in between (!) and producing various
     // `already disposed` and alike exceptions. It needs to be fixed on the platform side,
     // maybe by cancelling project service scope' children during temporary dispose phase
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    if (!ApplicationManager.getApplication().isUnitTestMode && project is ProjectEx) {
       project.messageBus.connect(coroutineScope)
         .subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, ChangedFilesVfsListener(project))
     }
@@ -93,18 +96,18 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   }
 
 
-  fun applyBackendChanges(fileKind: RecentFileKind, file: VirtualFile, isAdded: Boolean) {
+  fun applyBackendChanges(fileKind: RecentFileKind, files: List<VirtualFile>, isAdded: Boolean) {
     coroutineScope.launch {
       Thread.sleep(30)
-      LOG.debug("Switcher emit file update initiated by backend, file: $file, isAdded: ${isAdded}, project: $project")
+      LOG.debug("Switcher emit file update initiated by backend, file: $files, isAdded: ${isAdded}, project: $project")
       val fileEvent = if (isAdded) {
-        val fileModel = readAction {
-          createRecentFileViewModel(file, project)
+        val models = readAction {
+          files.map { createRecentFileViewModel(it, project) }
         }
-        RecentFilesEvent.ItemsAdded(listOf(fileModel))
+        RecentFilesEvent.ItemsAdded(models)
       }
       else {
-        RecentFilesEvent.ItemsRemoved(listOf(file.rpcId()))
+        RecentFilesEvent.ItemsRemoved(files.map { it.rpcId() })
       }
 
       chooseTargetFlow(fileKind).emit(fileEvent)
