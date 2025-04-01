@@ -10,14 +10,17 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
@@ -40,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.renderer.render
 import kotlin.reflect.KClass
+import kotlin.sequences.emptySequence
 
 internal open class FirClassifierCompletionContributor(
     parameters: KotlinFirCompletionParameters,
@@ -134,8 +138,22 @@ internal open class FirClassifierCompletionContributor(
         context: WeighingContext,
     ): Sequence<LookupElementBuilder> {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
-        val scopeClassifiers = context.scopeContext!!
-            .scopes
+        val scopesToCheck = context.scopeContext!!.scopes.toMutableList()
+
+        context.preferredSubtype?.symbol?.let { preferredSubtypeSymbol ->
+            preferredSubtypeSymbol.staticScope?.let {
+                if (!scopesToCheck.contains(it)) {
+                    scopesToCheck.add(it)
+                }
+            }
+            preferredSubtypeSymbol.containingSymbol?.staticScope?.let {
+                if (!scopesToCheck.contains(it)) {
+                    scopesToCheck.add(it)
+                }
+            }
+        }
+
+        val scopeClassifiers = scopesToCheck
             .asSequence()
             .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker) }
             .filter { filterClassifiers(it.symbol) }
