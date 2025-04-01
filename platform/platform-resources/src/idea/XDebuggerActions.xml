@@ -11,6 +11,10 @@
       <separator/>
       <group id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend"/>
     </group>
+    <group id="XDebugger.Inspect.Tree.Popup.Watches.Frontend">
+      <separator/>
+      <reference ref="XDebugger.Inspect.Tree.Popup.Frontend"/>
+    </group>
     <group id="XDebugger.Actions">
       <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
@@ -39,18 +43,28 @@
 
       <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
 
-      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.General.Add"/>
-      <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
+      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.General.Add">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="first"/>
+      </action>
+      <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.RemoveAllWatches"/>
+      </action>
       <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"/>
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.General.Remove"
-              use-shortcut-of="$Delete"/>
+              use-shortcut-of="$Delete">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.NewWatch"/>
+      </action>
       <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MoveLineUp"/>
       <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MoveLineDown"/>
       <action id="XDebugger.SeparateWatches" class="com.intellij.xdebugger.impl.frame.actions.XSeparateWatchesAndVariables"
               icon="AllIcons.Debugger.Watch"/>
-      <action id="XDebugger.PauseWatch" class="com.intellij.xdebugger.impl.frame.actions.XPauseWatchAction"/>
+      <action id="XDebugger.PauseWatch" class="com.intellij.xdebugger.impl.frame.actions.XPauseWatchAction">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.EditWatch"/>
+      </action>
       <action id="XDebugger.ToggleEvaluateExpressionField" class="com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction"/>
-      <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
+      <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Watches.Frontend" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
+      </action>
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="AllIcons.Debugger.MuteBreakpoints"/>
       <action id="XDebugger.RemoveAllButThisBreakpoint" class="com.intellij.xdebugger.impl.actions.RemoveAllButThisBreakpointAction">

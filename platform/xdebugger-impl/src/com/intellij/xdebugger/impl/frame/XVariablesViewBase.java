@@ -37,10 +37,9 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
@@ -57,11 +56,14 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected XVariablesViewBase(@NotNull Project project,
                                @NotNull XDebuggerEditorsProvider editorsProvider,
                                @Nullable XValueMarkers<?, ?> markers) {
-    String actionGroupId = areFrontendDebuggerActionsEnabled()
-                           ? XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND
-                           : (this instanceof XWatchesView
-                              ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP
-                              : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    boolean isWatchesView = this instanceof XWatchesView;
+    String frontendGroupId = isWatchesView
+                             ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP_FRONTEND
+                             : XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND;
+    String monolithGroupId = isWatchesView
+                             ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP
+                             : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP;
+    String actionGroupId = areFrontendDebuggerActionsEnabled() ? frontendGroupId : monolithGroupId;
     myTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, actionGroupId, markers);
     getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
     getTree().addTreeListener(new XDebuggerTreeListener() {

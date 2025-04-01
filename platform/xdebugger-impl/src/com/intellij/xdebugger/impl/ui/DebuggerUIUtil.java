@@ -48,7 +48,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
@@ -412,9 +411,9 @@ public final class DebuggerUIUtil {
     XWatchesView view = e.getData(XWatchesView.DATA_KEY);
     Project project = e.getProject();
     if (view == null && project != null) {
-      XDebugSession session = getSession(e);
-      if (session != null) {
-        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+      XDebugSessionProxy proxy = getSessionProxy(e);
+      if (proxy != null) {
+        XDebugSessionTab tab = proxy.getSessionTab();
         if (tab != null) {
           return tab.getWatchesView();
         }
