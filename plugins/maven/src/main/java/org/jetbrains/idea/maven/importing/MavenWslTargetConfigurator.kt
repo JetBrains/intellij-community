@@ -16,10 +16,13 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.upgradeBlocking
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
+import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenEelUtil.collectMavenDirectories
-import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.server.LocalMavenDistribution
+import org.jetbrains.idea.maven.server.MavenDistribution
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenEelUtil.findMavenDistribution
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.nio.file.Path
 
@@ -41,16 +44,15 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
 
   private fun prepareMavenData(project: Project, dataHolder: UserDataHolder) {
     val wslDistribution = project.basePath?.let { project.tryGetWslDistribution() } ?: return
+    dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
 
     val eel = project.getEelDescriptor().upgradeBlocking()
+    val distribution = eel.findMavenDistribution()?.asMavenDistribution() ?: project.getMavenUsedForSync()
+    val mavenHome = distribution.mavenHome
+    dataHolder.putUserData(MAVEN_HOME_DIR, mavenHome)
+    dataHolder.putUserData(MAVEN_TARGET_PATH, mavenHome.asEelPath().toString())
+    dataHolder.putUserData(MAVEN_HOME_VERSION, distribution.version)
 
-    dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
-    val mavenPath = eel.collectMavenDirectories().firstOrNull()?.let { MavenUtil.getMavenHomePath(it) }
-    dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
-    val targetMavenPath = mavenPath?.let { it.asEelPath().toString() }
-    dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
-    val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
-    dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)
     val jdkPath = getJdkPath(project)
     dataHolder.putUserData(JDK_PATH, jdkPath)
   }
@@ -58,6 +60,14 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
   private fun getJdkPath(project: Project): String? {
     val jdk = ProjectRootManager.getInstance(project).getProjectSdk() ?: getJdkForImporter(project)
     return jdk.homePath
+  }
+
+  private fun MavenInSpecificPath.asMavenDistribution(): MavenDistribution {
+    return LocalMavenDistribution(Path.of(mavenHome), title)
+  }
+
+  private fun Project.getMavenUsedForSync(): MavenDistribution {
+    return MavenDistributionsCache.getInstance(this).getMavenDistribution(basePath)
   }
 
   private fun configureForProject(project: Project, dataHolder: UserDataHolder) {
