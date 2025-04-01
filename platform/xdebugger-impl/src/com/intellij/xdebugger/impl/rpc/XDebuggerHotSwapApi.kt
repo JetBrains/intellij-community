@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebuggerHotSwapApi : RemoteApi<Unit> {
   suspend fun currentSessionStatus(projectId: ProjectId): Flow<XDebugHotSwapCurrentSessionStatus?>
   suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapStatistics.HotSwapSource)
-  suspend fun hide(id: ProjectId)
+  suspend fun hide(projectId: ProjectId)
 
   companion object {
     @JvmStatic

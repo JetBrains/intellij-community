@@ -44,10 +44,7 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
   override suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapStatistics.HotSwapSource) {
     val session = findValueById(sessionId, type = HowSwapSessionValueIdType) ?: return
     HotSwapStatistics.logHotSwapCalled(session.project, source)
-
-    fun <T> doHotSwap(session: HotSwapSession<T>) = session.provider.performHotSwap(session)
-
-    doHotSwap(session)
+    session.performHotSwap()
   }
 
   override suspend fun hide(projectId: ProjectId) {
