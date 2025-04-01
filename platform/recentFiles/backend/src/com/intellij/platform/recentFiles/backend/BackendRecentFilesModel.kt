@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -28,7 +27,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG by lazy { fileLogger() }
 
@@ -94,18 +92,13 @@ internal class BackendRecentFilesModel(private val project: Project, private val
     }
   }
 
-  val count = AtomicInteger()
 
   fun applyBackendChanges(fileKind: RecentFileKind, file: VirtualFile, isAdded: Boolean) {
-    val n = count.incrementAndGet()
-    println("Count before: $n")
     coroutineScope.launch {
       Thread.sleep(30)
-      println("Count after: ${n}")
       LOG.debug("Switcher emit file update initiated by backend, file: $file, isAdded: ${isAdded}, project: $project")
       val fileEvent = if (isAdded) {
         val fileModel = readAction {
-          println("Count readlok $n")
           createRecentFileViewModel(file, project)
         }
         RecentFilesEvent.ItemsAdded(listOf(fileModel))
