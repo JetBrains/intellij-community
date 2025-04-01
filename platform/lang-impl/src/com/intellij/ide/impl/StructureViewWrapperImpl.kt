@@ -8,7 +8,11 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.ide.structureView.*
+import com.intellij.ide.structureView.StructureView
+import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.ide.structureView.StructureViewEventsCollector
+import com.intellij.ide.structureView.StructureViewWrapper
+import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.impl.StructureViewComposite.StructureViewDescriptor
 import com.intellij.ide.structureView.impl.StructureViewState
@@ -17,9 +21,22 @@ import com.intellij.idea.AppMode
 import com.intellij.lang.LangBundle
 import com.intellij.lang.PsiStructureViewFactory
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
@@ -40,7 +57,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLargeForIntellijSense
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
@@ -53,18 +74,28 @@ import com.intellij.ui.content.ContentManagerEvent.ContentOperation
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.PlatformUtils
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import java.util.*
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Container
+import java.awt.KeyboardFocusManager
+import java.util.Optional
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
@@ -187,7 +218,14 @@ class StructureViewWrapperImpl(
           }
         }
         .collectLatest {
-            rebuildImpl()
+          writeIntentReadAction {
+            if (!myToolWindow.contentManager.isDisposed) {
+              launch {
+                rebuildImpl()
+              }
+                .cancelOnDispose(myToolWindow.contentManager)
+            }
+          }
         }
     }
   }
