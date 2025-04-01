@@ -3,6 +3,7 @@ package com.intellij.java.syntax.parser
 
 import com.intellij.java.syntax.element.JavaDocSyntaxElementType
 import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
+import com.intellij.java.syntax.element.JavaSyntaxElementType
 import com.intellij.java.syntax.parser.JavaParserUtil.emptyElement
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
@@ -478,6 +479,8 @@ class JavaDocParser(
   }
 
   private fun parseSeeTagValue(allowBareFieldReference: Boolean) {
+    parseModuleRef(builder.mark())
+
     val tokenType = getTokenType()
     if (tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
       parseMethodRef(builder.mark())
@@ -503,6 +506,18 @@ class JavaDocParser(
       val tagValue = builder.mark()
       builder.advanceLexer()
       tagValue.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
+    }
+  }
+
+  private fun parseModuleRef(
+    refStart: SyntaxTreeBuilder.Marker,
+  ) {
+    builder.advanceLexer()
+    if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN) {
+      refStart.done(JavaSyntaxElementType.MODULE_REFERENCE)
+      builder.advanceLexer()
+    } else {
+      refStart.rollbackTo()
     }
   }
 
@@ -604,7 +619,7 @@ class JavaDocParser(
 private val TAG_VALUES_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA, JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOT,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_RPAREN,
-  JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
+  JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE
 )
