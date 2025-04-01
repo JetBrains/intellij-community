@@ -22,8 +22,4 @@
     <module name="intellij.vcs.github.git"/>
     <module name="intellij.vcs.github.tracker"/>
   </content>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <pluginSuggestionProvider implementation="org.jetbrains.plugins.github.GitHubUltimateSuggestionProvider"/>
-  </extensions>
 </idea-plugin>

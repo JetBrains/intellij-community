@@ -1,0 +1,7 @@
+<idea-plugin>
+  <incompatible-with>com.intellij.modules.ultimate</incompatible-with>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <pluginSuggestionProvider implementation="com.intellij.vcs.github.ultimatePromo.GitHubUltimateSuggestionProvider"/>
+  </extensions>
+</idea-plugin>

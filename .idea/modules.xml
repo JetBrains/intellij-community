@@ -1196,6 +1196,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-git/intellij.vcs.github.git.iml" filepath="$PROJECT_DIR$/plugins/github/github-git/intellij.vcs.github.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" filepath="$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.iml" filepath="$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/github/ultimate-promo/intellij.vcs.github.ultimatePromo.iml" filepath="$PROJECT_DIR$/plugins/github/ultimate-promo/intellij.vcs.github.ultimatePromo.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gitlab/gitlab-core/intellij.vcs.gitlab.iml" filepath="$PROJECT_DIR$/plugins/gitlab/gitlab-core/intellij.vcs.gitlab.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gitlab/gitlab-community/intellij.vcs.gitlab.community.iml" filepath="$PROJECT_DIR$/plugins/gitlab/gitlab-community/intellij.vcs.gitlab.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gitlab/gitlab-git/intellij.vcs.gitlab.git.iml" filepath="$PROJECT_DIR$/plugins/gitlab/gitlab-git/intellij.vcs.gitlab.git.iml" />
