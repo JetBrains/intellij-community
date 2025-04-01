@@ -224,7 +224,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     // set to true after processed all items, because some other completer could help processing them in the meantime
   }
 
-  boolean isFinishedAll() {
+  private boolean isFinishedAll() {
     return finishedOrUnqueuedAllOwned.get() == hi - lo;
   }
 
@@ -249,12 +249,16 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   }
 
   static boolean completeTaskWhichFailToAcquireReadAction(@NotNull List<? extends ApplierCompleter<?>> tasks) {
+    if (tasks.isEmpty()) {
+      return true;
+    }
+    // do a defensive copy to avoid CME on SynchronizedList.iterator
+    ApplierCompleter<?>[] array = tasks.toArray(new ApplierCompleter[0]);
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
-    boolean inReadAction = ApplicationManager.getApplication()
-      .isReadAccessAllowed(); // we are going to reset thread context here, so the information about locks will be lost
+    boolean inReadAction = ApplicationManager.getApplication().isReadAccessAllowed(); // we are going to reset thread context here, so the information about locks will be lost
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      for (ApplierCompleter<?> task : tasks) {
+      for (ApplierCompleter<?> task : array) {
         ProgressManager.checkCanceled();
         Runnable r = () -> {
           task.wrapInReadActionAndIndicator(() -> {
