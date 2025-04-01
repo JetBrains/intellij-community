@@ -158,11 +158,6 @@ class PluginBuilder private constructor() {
     return this
   }
 
-  fun noDepends(): PluginBuilder {
-    dependsTags.clear()
-    return this
-  }
-
   fun resourceBundle(resourceBundle: String?): PluginBuilder {
     resourceBundleBaseName = resourceBundle
     return this
