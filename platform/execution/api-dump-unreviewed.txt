@@ -1406,8 +1406,8 @@ com.intellij.execution.target.TargetBasedSdkAdditionalData
 - a:getTargetEnvironmentConfiguration():com.intellij.execution.target.TargetEnvironmentConfiguration
 f:com.intellij.execution.target.TargetBasedSdks
 - sf:getTargetEnvironmentRequest(com.intellij.execution.target.TargetBasedSdkAdditionalData,com.intellij.openapi.project.Project):com.intellij.execution.target.TargetEnvironmentRequest
+- sf:hasTargetConfiguration(org.jdom.Element):Z
 - sf:isBasedOnTargetType(com.intellij.openapi.projectRoots.Sdk,java.lang.String):Z
-- sf:loadTargetBasedSdkAdditionalData(org.jdom.Element):kotlin.Pair
 - sf:loadTargetConfiguration(org.jdom.Element):com.intellij.execution.target.TargetEnvironmentConfiguration
 - sf:saveTargetBasedSdkAdditionalData(org.jdom.Element,com.intellij.execution.target.ContributedConfigurationsList$ContributedStateBase):V
 - sf:saveTargetConfiguration(org.jdom.Element,com.intellij.execution.target.TargetEnvironmentConfiguration):V
