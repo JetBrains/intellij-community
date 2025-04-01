@@ -25,7 +25,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.PluginId
@@ -399,7 +398,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     val pluginId = cluster.pluginId
     val plugin = cluster.plugin
     val info = StringBuilder()
-    if (t is RemoteSerializedThrowable || (t is RuntimeExceptionWithAttachments && t.cause is RemoteSerializedThrowable)) {
+    if (t is RemoteSerializedThrowable) {
       info.append("[backend] ")
     }
     if (pluginId != null && !t.isSpecialBackendException()) {
@@ -875,10 +874,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private inline fun <reified T : Throwable> Throwable.isBackendInstance() = this is RemoteSerializedThrowable
                                                                              && classFqn == T::class.qualifiedName
 
-  private inline fun <reified T : Throwable> Throwable.isInstance() = isInstanceWithoutCause<T>()
-                                                                      || (this is RuntimeExceptionWithAttachments && cause?.isInstanceWithoutCause<T>() == true)
-
-  private inline fun <reified T : Throwable> Throwable.isInstanceWithoutCause() = this is T || isBackendInstance<T>()
+  private inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()
 
   // Since we do not handle Freezes/Abstract Methods/JBR Crashes gracefully for now. TODO: IJPL-182368
   private fun Throwable.isSpecialBackendException() = this is RemoteSerializedThrowable

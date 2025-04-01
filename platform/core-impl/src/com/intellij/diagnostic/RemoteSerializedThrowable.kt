@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Field
@@ -23,8 +25,9 @@ class RemoteSerializedThrowable(
   val classFqn: String,
   stacktrace: Array<StackTraceElement>,
   cause: Throwable? = null,
-  private val headerPrefix: String? = null
-) : Throwable(message, cause) {
+  private val headerPrefix: String? = null,
+  private val attachments: Array<Attachment> = emptyArray(),
+) : Throwable(message, cause), ExceptionWithAttachments {
   companion object {
     private val BACKTRACE_FIELD: Field? = try {
       Throwable::class.java.getDeclaredField("backtrace").also {
@@ -60,6 +63,8 @@ class RemoteSerializedThrowable(
   override fun getLocalizedMessage(): String? {
     return localizedMessage
   }
+
+  override fun getAttachments(): Array<out Attachment?> = attachments
 
   override fun toString(): String {
     val typePrefix = if (headerPrefix != null) "[$headerPrefix] $classFqn" else classFqn
