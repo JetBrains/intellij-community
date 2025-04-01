@@ -162,7 +162,6 @@ internal sealed class AddMemberToSupertypeFix(
   private inner class AddSelectedMemberToSupertypeFix(
     element: KtCallableDeclaration,
     private val memberData: MemberData,
-    private val isActionChooser: Boolean,
   ) : PsiUpdateModCommandAction<KtCallableDeclaration>(element) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.member.supertype.family", kind)
@@ -170,10 +169,7 @@ internal sealed class AddMemberToSupertypeFix(
     override fun getPresentation(
       context: ActionContext,
       element: KtCallableDeclaration,
-    ): Presentation {
-      val (actionName, actionIcon) = if (isActionChooser) actionName(memberData) to icon else familyName to null
-      return Presentation.of(actionName).withIcon(actionIcon)
-    }
+    ): Presentation = Presentation.of(actionName(memberData)).withIcon(icon)
 
     override fun invoke(
       context: ActionContext,
@@ -197,7 +193,6 @@ internal sealed class AddMemberToSupertypeFix(
       AddSelectedMemberToSupertypeFix(
         element,
         candidateMember,
-        isActionChooser = candidateMembers.size == 1
       )
     },
   )
