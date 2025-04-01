@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.github" allow-bundled-update="false">
+<idea-plugin package="org.jetbrains.plugins.github" allow-bundled-update="true">
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
@@ -15,11 +15,18 @@
       ]]>
   </description>
 
-  <incompatible-with>com.intellij.modules.ultimate</incompatible-with>
-
   <content>
     <module name="intellij.vcs.github" loading="embedded"/>
     <module name="intellij.vcs.github.git"/>
     <module name="intellij.vcs.github.tracker"/>
+    <module name="intellij.vcs.github.json"/>
+    <module name="intellij.vcs.github.ultimate.features"/>
+    <module name="intellij.vcs.github.ultimate.docker"/>
+    <module name="intellij.vcs.github.ultimate.cron"/>
   </content>
+
+  <dependencies>
+    <plugin id="Git4Idea"/>
+    <module name="intellij.platform.collaborationTools"/>
+  </dependencies>
 </idea-plugin>
