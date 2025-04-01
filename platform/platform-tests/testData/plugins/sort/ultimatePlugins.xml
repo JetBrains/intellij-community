@@ -822,7 +822,7 @@
     <name>Mercurial</name>
     <depends>com.intellij.modules.vcs</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.vcs.github.community/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.vcs.github/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-github-</id>
     <name>GitHub</name>
     <depends>com.intellij.modules.lang</depends>
