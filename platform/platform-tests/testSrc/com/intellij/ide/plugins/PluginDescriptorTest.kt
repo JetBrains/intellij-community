@@ -21,7 +21,9 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Collections
+import java.util.Enumeration
+import java.util.Locale
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals
@@ -99,6 +101,12 @@ class PluginDescriptorTest {
   @Test
   fun `descriptor with cyclical optional depends config files fails to load`() {
     assertThatThrownBy { loadDescriptorFromTestDataDir("cyclicOptionalDeps") }
+      .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
+  }
+
+  @Test
+  fun `descriptor with cyclical optional depends config files fails to load - 2`() {
+    assertThatThrownBy { loadDescriptorFromTestDataDir("cyclicOptionalDeps2") }
       .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
