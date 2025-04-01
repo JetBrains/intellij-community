@@ -300,6 +300,8 @@ public class Maven3XProjectResolver {
   }
 
   protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if (VersionComparatorUtil.compare(mavenVersion, "3.3.1") < 0) return;
     if (myWorkspaceMap != null) {
       session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap, myEmbedder.getSystemProperties()));
     }
