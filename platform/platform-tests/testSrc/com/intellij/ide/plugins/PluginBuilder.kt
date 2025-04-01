@@ -135,9 +135,6 @@ class PluginBuilder private constructor() {
              moduleFile: String = "$moduleName.xml"): PluginBuilder {
     subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
     content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
-
-    // remove default dependency on lang
-    moduleDescriptor.noDepends()
     return this
   }
 

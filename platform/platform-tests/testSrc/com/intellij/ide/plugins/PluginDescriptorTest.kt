@@ -212,7 +212,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with a slash in its name loads if module descriptor file has a dot instead of a slash`() {
     PluginBuilder.empty().id("bar")
       .module(moduleName = "bar/module",
-              PluginBuilder.withModulesLang().packagePrefix("bar.module"),
+              PluginBuilder.empty().packagePrefix("bar.module"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar.module.xml")
       .build(pluginDirPath)
@@ -226,7 +226,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with a slash in its name does not load if module descriptor file is placed in a subdirectory`() {
     PluginBuilder.empty().id("bar")
       .module(moduleName = "bar/module",
-              PluginBuilder.withModulesLang().packagePrefix("bar.module"),
+              PluginBuilder.empty().packagePrefix("bar.module"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar/module.xml")
       .build(pluginDirPath)
@@ -242,7 +242,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with multiple slashes in its name does not load`() {
     PluginBuilder.empty().id("bar")
       .module(moduleName = "bar/module/sub",
-              PluginBuilder.withModulesLang().packagePrefix("bar.module.sub"),
+              PluginBuilder.empty().packagePrefix("bar.module.sub"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar.module.sub.xml")
       .build(pluginDirPath)
@@ -258,7 +258,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with multiple slashes in its name loads from a subdirectory`() { // FIXME
     PluginBuilder.empty().id("bar")
       .module(moduleName = "bar/module/sub",
-              PluginBuilder.withModulesLang().packagePrefix("bar.module.sub"),
+              PluginBuilder.empty().packagePrefix("bar.module.sub"),
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar/module.sub.xml")
       .build(pluginDirPath)

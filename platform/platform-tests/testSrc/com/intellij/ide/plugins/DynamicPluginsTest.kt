@@ -258,7 +258,7 @@ class DynamicPluginsTest {
         .packagePrefix("org.dependent")
         .module(
           "org.dependent",
-          PluginBuilder.withModulesLang().actions("""<group id="FooBarGroup"></group>""").packagePrefix("org.dependent.sub").pluginDependency(dependency.id)
+          PluginBuilder.empty().actions("""<group id="FooBarGroup"></group>""").packagePrefix("org.dependent.sub").pluginDependency(dependency.id)
         )
       loadPluginWithText(dependent).use {
         assertThat(actionManager.getAction("FooBarGroup")).isNull()
@@ -305,7 +305,7 @@ class DynamicPluginsTest {
         .packagePrefix("org.foo.one")
         .module(
           moduleName = "intellij.foo.one.module1",
-          moduleDescriptor = PluginBuilder.withModulesLang()
+          moduleDescriptor = PluginBuilder.empty()
             .extensions("""<barExtension key="foo" implementationClass="y"/>""", "bar")
             .dependency(pluginTwoBuilder.id)
             .packagePrefix("org.foo"),
@@ -423,7 +423,7 @@ class DynamicPluginsTest {
       .extensionPoints(
         """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
       .module("intellij.foo.bar",
-              PluginBuilder.withModulesLang()
+              PluginBuilder.empty()
                 .extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
                 .packagePrefix("foo.bar")
                 .pluginDependency(barBuilder.id)
@@ -459,7 +459,7 @@ class DynamicPluginsTest {
       .packagePrefix("com.intellij.bar")
       .module(
         "intellij.bar.foo",
-        PluginBuilder.withModulesLang()
+        PluginBuilder.empty()
           .packagePrefix("com.intellij.bar.foo")
           .pluginDependency(foo.id)
       )
@@ -469,7 +469,7 @@ class DynamicPluginsTest {
       .packagePrefix("com.intellij.baz")
       .module(
         "intellij.baz.foo",
-        PluginBuilder.withModulesLang()
+        PluginBuilder.empty()
           .packagePrefix("com.intellij.baz.foo")
           .pluginDependency(foo.id)
           .pluginDependency(bar.id)
@@ -508,7 +508,7 @@ class DynamicPluginsTest {
       .packagePrefix("com.intellij.bar")
       .module(
         "intellij.bar.foo",
-        PluginBuilder.withModulesLang()
+        PluginBuilder.empty()
           .packagePrefix("com.intellij.bar.foo")
           .pluginDependency(foo.id)
           .extensions("""<multiHostInjector implementation="com.intellij.bar.foo.InjectorImpl"/>"""),
@@ -519,12 +519,12 @@ class DynamicPluginsTest {
       .packagePrefix("com.intellij.baz")
       .module(
         "intellij.baz.bar",
-        PluginBuilder.withModulesLang()
+        PluginBuilder.empty()
           .packagePrefix("com.intellij.baz.bar")
           .pluginDependency(bar.id),
       ).module(
         "intellij.baz.bar.foo",
-        PluginBuilder.withModulesLang()
+        PluginBuilder.empty()
           .packagePrefix("com.intellij.baz.bar.foo")
           .pluginDependency(foo.id)
           .dependency("intellij.bar.foo")
@@ -598,7 +598,7 @@ class DynamicPluginsTest {
       .packagePrefix("org.foo.one")
       .module(
         "intellij.org.foo",
-        PluginBuilder.withModulesLang()
+        PluginBuilder.empty()
           .applicationListeners(
             """<listener class="${MyUISettingsListener2::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>""")
           .packagePrefix("org.foo")
