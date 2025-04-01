@@ -29,7 +29,6 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 @ApiStatus.Internal
 class GradleDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
   private val projects = ConcurrentHashMap<DependencyAnalyzerProject, GradleModuleData>()
-  private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
   private val dependencyMap = ConcurrentHashMap<Long, Dependency>()
 
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
@@ -39,7 +38,6 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         if (id.projectSystemId != GradleConstants.SYSTEM_ID) return
         projects.clear()
-        configurationNodesMap.clear()
         dependencyMap.clear()
         listener()
       }
@@ -67,21 +65,19 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   override fun getDependencyScopes(externalProject: DependencyAnalyzerProject): List<Dependency.Scope> {
     val gradleModuleData = projects[externalProject] ?: return emptyList()
-    return getOrRefreshData(gradleModuleData).map { it.toScope() }
+    return getOrCollectDependencyScopeNodes(gradleModuleData).map { it.toScope() }
   }
 
   override fun getDependencies(externalProject: DependencyAnalyzerProject): List<Dependency> {
     val gradleModuleData = projects[externalProject] ?: return emptyList()
-    val scopeNodes = getOrRefreshData(gradleModuleData)
+    val scopeNodes = getOrCollectDependencyScopeNodes(gradleModuleData)
     return getDependencies(gradleModuleData, scopeNodes)
   }
 
-  private fun getOrRefreshData(gradleModuleData: GradleModuleData): List<DependencyScopeNode> {
-    return configurationNodesMap.computeIfAbsent(gradleModuleData.gradleProjectDir) {
-      LOG.runAndLogException {
-        GradleDependencyNodeIndex.getOrCollectDependencies(project, gradleModuleData, emptyList()).get()
-      } ?: emptyList()
-    }
+  private fun getOrCollectDependencyScopeNodes(gradleModuleData: GradleModuleData): List<DependencyScopeNode> {
+    return LOG.runAndLogException {
+      GradleDependencyNodeIndex.getOrCollectDependencies(project, gradleModuleData).get()
+    } ?: emptyList()
   }
 
   private fun getDependencies(moduleData: GradleModuleData,

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dependencyAnalyzer
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
@@ -49,7 +50,7 @@ class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {
         val moduleData = getGradleModuleData(moduleName = project.name)
 
         val dependencyNodes = executionFixture.assertAnyGradleTaskExecutionAsync(numExec = 1) {
-          GradleDependencyNodeIndex.getOrCollectDependencies(project, moduleData, emptyList()).await()
+          GradleDependencyNodeIndex.getOrCollectDependencies(project, moduleData).await()
         }
 
         assertSyncViewTree {
@@ -59,6 +60,42 @@ class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {
         }
 
         assertNonEmptyDependencyScopeNodes(expectedDependencyNodes, dependencyNodes)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test collecting dependency nodes with IDE cache`(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      runBlocking {
+        writeText("build.gradle.kts", buildScript(gradleVersion, GradleDsl.KOTLIN) {
+          withJavaPlugin()
+          withMavenCentral()
+          addImplementationDependency(DEPENDENCY_COORDINATES)
+        })
+
+        val expectedDependencyNodes = buildList {
+          add("compileClasspath" to DEPENDENCY_COORDINATES)
+          add("runtimeClasspath" to DEPENDENCY_COORDINATES)
+          add("testCompileClasspath" to DEPENDENCY_COORDINATES)
+          add("testRuntimeClasspath" to DEPENDENCY_COORDINATES)
+          if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.0")) {
+            add("default" to DEPENDENCY_COORDINATES)
+          }
+        }
+
+        val moduleData = getGradleModuleData(moduleName = project.name)
+
+        val dependencyNodes1 = executionFixture.assertAnyGradleTaskExecutionAsync(numExec = 1) { // expected cache miss
+          GradleDependencyNodeIndex.getOrCollectDependencies(project, moduleData).await()
+        }
+        assertNonEmptyDependencyScopeNodes(expectedDependencyNodes, dependencyNodes1)
+
+        val dependencyNodes2 = executionFixture.assertAnyGradleTaskExecutionAsync(numExec = 0) { // expected cache hit
+          GradleDependencyNodeIndex.getOrCollectDependencies(project, moduleData).await()
+        }
+        assertNonEmptyDependencyScopeNodes(expectedDependencyNodes, dependencyNodes2)
       }
     }
   }
