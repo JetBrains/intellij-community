@@ -39,6 +39,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -89,7 +90,7 @@ public class HighlightInfo implements Segment {
     return ContainerUtil.concat(myIntentionActionDescriptors, ContainerUtil.flatMap(myLazyQuickFixes, desc-> {
       if (desc.future() != null && desc.future().isDone()) {
         try {
-          return desc.future().get();
+          return List.copyOf(desc.future().get());
         }
         catch (InterruptedException | ExecutionException e) {
           LOG.warn(e);
@@ -1344,8 +1345,8 @@ public class HighlightInfo implements Segment {
       Future<? extends List<IntentionActionDescriptor>> future = desc.future();
       if (future == null) {
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
-        future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(document, computer));
-        return new LazyFixDescription(computer, psiFile.getManager().getModificationTracker().getModificationCount(), future);
+        future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(document, psiFile.getProject(), desc.psiModificationStamp(), computer));
+        return new LazyFixDescription(computer, desc.psiModificationStamp(), future);
       }
       else {
         return desc;
@@ -1363,9 +1364,17 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   private List<IntentionActionDescriptor> doComputeLazyQuickFixes(@NotNull Document document,
+                                                                  @NotNull Project project,
+                                                                  long oldPsiModificationStamp,
                                                                   @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
+    if (project.isDisposed()
+        || PsiDocumentManager.getInstance(project).isUncommited(document)
+        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp
+    ) {
+      return List.of();
+    }
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors());
-    List<IntentionActionDescriptor> newDescriptors = new ArrayList<>();
+    List<IntentionActionDescriptor> newDescriptors = Collections.synchronizedList(new ArrayList<>());
     QuickFixActionRegistrar registrarDelegate = new QuickFixActionRegistrar() {
       @Override
       public void register(@NotNull IntentionAction action) {
@@ -1411,7 +1420,7 @@ public class HighlightInfo implements Segment {
         future = ReadAction.nonBlocking(()->{
           AtomicReference<List<IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
           ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
-            () -> result.set(doComputeLazyQuickFixes(document, computer)));
+            () -> result.set(doComputeLazyQuickFixes(document, project, description.psiModificationStamp, computer)));
           return result.get();
         }).submit(ForkJoinPool.commonPool());
         return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
