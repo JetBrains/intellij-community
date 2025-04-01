@@ -32,6 +32,7 @@ import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
+import com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
 import com.intellij.webSymbols.utils.hasOnlyExtensions
@@ -78,7 +79,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: W
     val (nameSegment, offset) = queue.removeFirst()
     val symbols = nameSegment.symbols
     val range = TextRange(nameSegment.start + offset, nameSegment.end + offset)
-    if (symbols.any { it.properties[IJ_IGNORE_REFS] == true }) continue
+    if (symbols.any { it.properties[IJ_IGNORE_REFS] == true } || symbols.all { isSymbolDeclaration(it, element, range) }) continue
     if (symbols.all { it.nameSegments.size == 1 }) {
       if (nameSegment.problem != null || symbols.let { it.isNotEmpty() && !it.hasOnlyExtensions() }) {
         result.putValue(range, nameSegment)
@@ -133,6 +134,9 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: W
     )
     .toList()
 }
+
+private fun isSymbolDeclaration(symbol: WebSymbol, element: PsiElement, range: TextRange): Boolean =
+  symbol is WebSymbolDeclaredInPsi && symbol.sourceElement == element && symbol.textRangeInSourceElement == range
 
 private open class NameSegmentReference(
   private val element: PsiElement,
