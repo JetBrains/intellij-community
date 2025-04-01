@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.ByteBuf
-import io.netty.buffer.ByteBufAllocator
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream.Companion.FLUSH_THRESHOLD
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream.Companion.INITIAL_BUFFER_CAPACITY
 import java.io.IOException
@@ -60,7 +59,7 @@ class ZipArchiveOutputStream(
   }
 
   private var finished = false
-  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(INITIAL_BUFFER_CAPACITY)
+  private val buffer = byteBufferAllocator.directBuffer(INITIAL_BUFFER_CAPACITY)
   private var channelPosition = 0L
 
   @Suppress("DuplicatedCode")
@@ -317,7 +316,7 @@ class ZipArchiveOutputStream(
 
       if (headerAndDataSize > INITIAL_BUFFER_CAPACITY) {
         // instead of resizing the current buffer, it's preferable to obtain a buffer of the required size from a pool
-        buffer = ByteBufAllocator.DEFAULT.directBuffer(headerAndDataSize)
+        buffer = byteBufferAllocator.directBuffer(headerAndDataSize)
         releaseBuffer = true
       }
 

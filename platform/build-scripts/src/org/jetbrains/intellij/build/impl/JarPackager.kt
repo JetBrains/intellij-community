@@ -32,6 +32,7 @@ import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
+import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.defaultLibrarySourcesNamesFilter
@@ -911,7 +912,7 @@ private suspend fun buildJars(
                     sources = sources,
                     nativeFileHandler = nativeFileHandler,
                     notify = false,
-                    addDirEntries = asset.includedModules.any { helper.isTestPluginModule(it.key.moduleName, null) },
+                    addDirEntries = asset.includedModules.any { helper.isTestPluginModule(moduleName = it.key.moduleName, module = null) },
                   )
                 }
               }
@@ -995,14 +996,16 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
     return
   }
 
-  buildJar(
-    targetFile = targetFile,
-    sources = moduleNames.mapNotNull { moduleName ->
-      val module = context.findRequiredModule(moduleName)
-      val output = context.getModuleOutputDir(module)
-      toSource(module = module, outputDir = output, excludes = commonModuleExcludes)
-    },
-  )
+  checkForNoDiskSpace(context) {
+    buildJar(
+      targetFile = targetFile,
+      sources = moduleNames.mapNotNull { moduleName ->
+        val module = context.findRequiredModule(moduleName)
+        val output = context.getModuleOutputDir(module)
+        toSource(module = module, outputDir = output, excludes = commonModuleExcludes)
+      },
+    )
+  }
 }
 
 private fun toSource(module: JpsModule, outputDir: Path, excludes: List<PathMatcher>): Source? {

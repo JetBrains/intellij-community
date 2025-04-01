@@ -131,7 +131,7 @@ internal class LocalDiskJarCacheManager(
 
     if (!producer.useCacheAsTargetFile) {
       Files.createDirectories(targetFile.parent)
-      Files.copy(cacheFile, targetFile)
+      Files.createLink(targetFile, cacheFile)
     }
 
     Files.write(cacheMetadataFile, ProtoBuf.encodeToByteArray(JarCacheItem(sources = sourceCacheItems)))

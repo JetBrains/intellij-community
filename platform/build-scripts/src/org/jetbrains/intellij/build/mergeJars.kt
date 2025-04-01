@@ -16,12 +16,12 @@ import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.jetbrains.intellij.build.io.zipWriter
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.util.zip.Deflater
-import kotlin.io.path.name
 
 private const val listOfEntitiesFileName = "META-INF/listOfEntities.txt"
 
@@ -159,6 +159,14 @@ private suspend fun writeSource(
           filesToMerge = filesToMerge,
         )
       }
+      catch (e: IOException) {
+        if (e.message?.contains("No space left on device") == true) {
+          throw NoDiskSpaceLeftException("No space left while including $sourceFile into $targetFile", e)
+        }
+        else {
+          throw IOException("Failed to include $sourceFile to $targetFile", e)
+        }
+      }
       finally {
         @Suppress("KotlinConstantConditions")
         if (sourceFile !== source.file) {
@@ -209,8 +217,6 @@ private suspend fun handleZipSource(
     }
   }
 
-  // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
-  // ability to read data without setting channel position, as setting channel position will require synchronization
   suspendAwareReadZipFile(sourceFile) { name, dataSupplier ->
     if (name == listOfEntitiesFileName) {
       filesToMerge.add(Charsets.UTF_8.decode(dataSupplier()))
@@ -289,12 +295,12 @@ private fun checkCoverageAgentManifest(
   }
 
   val coveragePlatformAgentModuleName = "intellij.platform.coverage.agent"
-  if (!targetFile.name.contains(coveragePlatformAgentModuleName)) {
+  if (!targetFile.fileName.toString().contains(coveragePlatformAgentModuleName)) {
     return false
   }
 
   val agentPrefix = "intellij-coverage-agent"
-  if (!sourceFile.name.startsWith(agentPrefix)) {
+  if (!sourceFile.fileName.toString().startsWith(agentPrefix)) {
     return false
   }
 

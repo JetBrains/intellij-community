@@ -7,14 +7,41 @@ import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_S
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.containers.with
-import com.intellij.util.text.SemVer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.*
-import org.jetbrains.intellij.build.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuiltinModulesFileData
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.ContentModuleFilter
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.Source
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.buildJar
+import org.jetbrains.intellij.build.checkForNoDiskSpace
+import org.jetbrains.intellij.build.computeAppInfoXml
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
@@ -420,7 +447,9 @@ class BuildContextImpl internal constructor(
         }
 
         override suspend fun produce(targetFile: Path) {
-          buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
+          checkForNoDiskSpace(this@BuildContextImpl) {
+            buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
+          }
         }
       },
     )

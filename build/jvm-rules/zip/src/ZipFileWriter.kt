@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.io
 
-import io.netty.buffer.ByteBufAllocator
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream.CompressedSizeAndCrc
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -131,7 +130,7 @@ private fun compressAndWriteFile(
 
 private fun doDeflate(chunkSize: Int, deflater: Deflater, writer: (ByteBuffer) -> Unit): Int {
   var compressedSize = 0
-  ByteBufAllocator.DEFAULT.directBuffer(chunkSize).use { nettyOutput ->
+  byteBufferAllocator.directBuffer(chunkSize).use { nettyOutput ->
     val output = nettyOutput.internalNioBuffer(nettyOutput.writerIndex(), chunkSize)!!
 
     val oldPosition = output.position()

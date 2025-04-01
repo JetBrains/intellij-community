@@ -696,7 +696,9 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
     sources.sort()
 
     val antTargetFile = antDir.resolve("ant.jar")
-    buildJar(targetFile = antTargetFile, sources = sources)
+    checkForNoDiskSpace(context) {
+      buildJar(targetFile = antTargetFile, sources = sources)
+    }
 
     sources.map { source ->
       ProjectLibraryEntry(

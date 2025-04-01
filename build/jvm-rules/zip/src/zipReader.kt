@@ -20,8 +20,13 @@ typealias EntryProcessor = (String, () -> ByteBuffer) -> Unit
 fun readZipFile(file: Path, entryProcessor: EntryProcessor) {
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
-  mapFileAndUse(file) { buffer, fileSize ->
-    readZipEntries(buffer = buffer, fileSize = fileSize, entryProcessor = entryProcessor)
+  try {
+    mapFileAndUse(file) { buffer, fileSize ->
+      readZipEntries(buffer = buffer, fileSize = fileSize, entryProcessor = entryProcessor)
+    }
+  }
+  catch (e: IOException) {
+    throw IOException("Cannot read $file", e)
   }
 }
 
@@ -59,9 +64,6 @@ private inline fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: In
 
   try {
     consumer(mappedBuffer, fileSize)
-  }
-  catch (e: IOException) {
-    throw IOException(file.toString(), e)
   }
   finally {
     if (mappedBuffer.isDirect) {
@@ -128,7 +130,7 @@ internal inline fun readCentralDirectory(
 private const val STORED: Byte = 0
 private const val DEFLATED: Byte = 8
 
-internal fun getByteBuffer(
+private fun getByteBuffer(
   buffer: ByteBuffer,
   compressedSize: Int,
   uncompressedSize: Int,
@@ -161,10 +163,18 @@ internal fun getByteBuffer(
       inflater.setInput(inputBuffer)
       try {
         val result = byteBufferAllocator.allocate(uncompressedSize)
+        val oldPosition = result.position()
         while (result.hasRemaining()) {
-          check(inflater.inflate(result) != 0) { "Inflater wants input, but input was already set" }
+          val inflatedByteCount = inflater.inflate(result)
+          check(inflatedByteCount != 0) {
+            "Inflater wants input, but input was already set"
+          }
+          check(inflatedByteCount == uncompressedSize) {
+            "Inflater returned unexpected result: $inflatedByteCount instead of $uncompressedSize"
+          }
         }
-        result.rewind()
+        result.limit(result.position())
+        result.position(oldPosition)
         return result
       }
       catch (e: DataFormatException) {

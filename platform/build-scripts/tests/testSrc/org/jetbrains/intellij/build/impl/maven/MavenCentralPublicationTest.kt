@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.testFramework.utils.io.createFile
@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.writeText
 
@@ -73,7 +73,7 @@ class MavenCentralPublicationTest {
       val files = createDistributionFiles().map { "${coordinates.directoryPath}/${it.name}" }
       publication.execute()
       val bundle = workDir.resolve("bundle.zip")
-      assert(bundle.exists())
+      assert(Files.exists(bundle)) {}
       val entries = buildList {
         suspendAwareReadZipFile(bundle) { entry, _ ->
           add(entry)

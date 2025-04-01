@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.io.toByteArray
 import com.intellij.util.io.write
 import com.intellij.util.lang.HashMapZipFile
@@ -21,11 +20,11 @@ import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.ZipIndexWriter
 import org.jetbrains.intellij.build.io.compressedData
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.io.zipWithPackageIndex
 import org.jetbrains.intellij.build.io.zipWriter
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
@@ -39,7 +38,6 @@ import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import kotlin.random.Random
-
 
 class ZipTest {
   @Test
@@ -67,18 +65,6 @@ class ZipTest {
         }))
       }
       ForkJoinTask.invokeAll(tasks)
-    }
-  }
-
-  @Test
-  fun `read zip file with more than 65K entries`(@TempDir tempDir: Path) = runBlocking {
-    assumeTrue(SystemInfoRt.isUnix)
-
-    val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, tempDir)
-    checkZip(archiveFile) { zipFile ->
-      for (name in list) {
-        assertThat(zipFile.getResource(name)).isNotNull()
-      }
     }
   }
 
@@ -488,6 +474,14 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zipWithCompression(archiveFile, mapOf(dir to ""))
 
+    readZipFile(archiveFile) { name, dataProvider ->
+      for (item in list) {
+        if (name == item.name) {
+          assertThat(dataProvider().remaining()).isEqualTo(item.size.toLong())
+        }
+      }
+    }
+
     java.util.zip.ZipFile(archiveFile.toFile()).use { jdkZipFile ->
       for (item in list) {
         val entry = jdkZipFile.getEntry(item.name)
@@ -600,6 +594,9 @@ class ZipTest {
 
 // check both IKV- and non-IKV variants of an immutable zip file
 internal fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
+  readZipFile(file) { name, dataProvider ->
+    dataProvider()
+  }
   HashMapZipFile.load(file).use { zipFile ->
     checker(zipFile)
   }
@@ -678,7 +675,7 @@ internal class TestEntryItem(
   @JvmField val name: String,
 )
 
-private suspend fun createLargeArchive(size: Int, tempDir: Path, minFileSize: Int = 0, maxFileSize: Int = 32): Pair<List<String>, Path> {
+internal suspend fun createLargeArchive(size: Int, tempDir: Path, minFileSize: Int = 0, maxFileSize: Int = 32): Pair<List<String>, Path> {
   val (dir, list) = createDirOnDisk(tempDir, size, minFileSize, maxFileSize)
   val archiveFile = tempDir.resolve("archive.zip")
   zipWithPackageIndex(archiveFile, dir)

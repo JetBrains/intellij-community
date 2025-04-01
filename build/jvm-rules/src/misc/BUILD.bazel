@@ -21,6 +21,9 @@ java_binary(
     jvm_flags = [
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
+        "-Dio.netty.allocator.useCachedMagazinesForNonEventLoopThreads=true",
+        # https://github.com/netty/netty/issues/11532
+        "-Dio.netty.tryReflectionSetAccessible=true",
     ],
     visibility = ["//visibility:public"],
 )
