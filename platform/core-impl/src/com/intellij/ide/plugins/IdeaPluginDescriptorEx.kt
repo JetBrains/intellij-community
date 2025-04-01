@@ -10,6 +10,9 @@ import org.jetbrains.annotations.ApiStatus
 interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val moduleLoadingRule: ModuleLoadingRule?
 
+  /**
+   * Ids of plugins which this plugin declares to be incompatible with.
+   */
   val incompatiblePlugins: List<PluginId>
 
   val pluginAliases: List<PluginId>
