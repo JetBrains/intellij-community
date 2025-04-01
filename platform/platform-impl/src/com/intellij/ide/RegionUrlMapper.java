@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
@@ -10,6 +10,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.io.HttpRequests;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,7 @@ public final class RegionUrlMapper {
 
   private static final AsyncLoadingCache<Region, RegionMapping> ourCache = Caffeine.newBuilder()
     .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
+    .executor(ExecutorsKt.asExecutor(Dispatchers.getIO()))
     .buildAsync(RegionUrlMapper::doLoadMappingOrThrow);
 
   private RegionUrlMapper() {
