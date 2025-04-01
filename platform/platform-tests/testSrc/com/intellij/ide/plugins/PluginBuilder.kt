@@ -2,7 +2,11 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.impl.*
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginXmlConst
+import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
@@ -73,9 +77,9 @@ class PluginBuilder private constructor() {
   private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
-  private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
-  private val pluginDependencies = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
-  private val incompatibleWith = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
+  private val dependencies = mutableListOf<ModuleDependencies.ModuleReference>()
+  private val pluginDependencies = mutableListOf<ModuleDependencies.PluginReference>()
+  private val incompatibleWith = mutableListOf<ModuleDependencies.PluginReference>()
 
   private data class SubDescriptor(val filename: String, val builder: PluginBuilder)
   private val subDescriptors = ArrayList<SubDescriptor>()
@@ -143,17 +147,17 @@ class PluginBuilder private constructor() {
   }
 
   fun dependency(moduleName: String): PluginBuilder {
-    dependencies.add(ModuleDependenciesDescriptor.ModuleReference(moduleName))
+    dependencies.add(ModuleDependencies.ModuleReference(moduleName))
     return this
   }
 
   fun pluginDependency(pluginId: String): PluginBuilder {
-    pluginDependencies.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
+    pluginDependencies.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
   fun incompatibleWith(pluginId: String): PluginBuilder {
-    incompatibleWith.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
+    incompatibleWith.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 

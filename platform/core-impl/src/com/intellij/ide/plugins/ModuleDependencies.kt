@@ -5,23 +5,26 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.Collections
 
-@ApiStatus.Internal
-class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleReference>, @JvmField val plugins: List<PluginReference>) {
+/**
+ * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of a plugin.
+ */
+@ApiStatus.Experimental
+class ModuleDependencies(@JvmField val modules: List<ModuleReference>, @JvmField val plugins: List<PluginReference>) {
   companion object {
-    @JvmField val EMPTY: ModuleDependenciesDescriptor = ModuleDependenciesDescriptor(Collections.emptyList(), Collections.emptyList())
+    @JvmField val EMPTY: ModuleDependencies = ModuleDependencies(Collections.emptyList(), Collections.emptyList())
   }
 
   class ModuleReference(@JvmField val name: String) {
-    override fun toString(): String = "ModuleItem(name=$name)"
+    override fun toString(): String = "Module(name=$name)"
   }
 
   class PluginReference(@JvmField val id: PluginId) {
-    override fun toString(): String = "PluginReference(id=$id)"
+    override fun toString(): String = "Plugin(id=$id)"
   }
 
-  override fun toString(): String = "ModuleDependenciesDescriptor(modules=$modules, plugins=$plugins)"
+  override fun toString(): String = "ModuleDependencies(modules=$modules, plugins=$plugins)"
 }
 
 @ApiStatus.Internal

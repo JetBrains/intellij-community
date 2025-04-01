@@ -14,7 +14,11 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.elements.*
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement
+import com.intellij.platform.plugins.parser.impl.elements.ContentElement
+import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
+import com.intellij.platform.plugins.parser.impl.elements.DependsElement
+import com.intellij.platform.plugins.parser.impl.elements.ExtensionElement
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -23,7 +27,8 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.time.ZoneOffset
-import java.util.*
+import java.util.Date
+import java.util.MissingResourceException
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -98,7 +103,7 @@ class IdeaPluginDescriptorImpl private constructor(
   val content: PluginContentDescriptor =
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
-  override val dependenciesV2: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
+  override val dependenciesV2: ModuleDependencies = raw.dependencies.let(::convertDependencies)
   val packagePrefix: String? = raw.`package`
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
@@ -563,20 +568,20 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
 
-    private fun convertDependencies(dependencies: List<DependenciesElement>): ModuleDependenciesDescriptor {
+    private fun convertDependencies(dependencies: List<DependenciesElement>): ModuleDependencies {
       if (dependencies.isEmpty()) {
-        return ModuleDependenciesDescriptor.EMPTY
+        return ModuleDependencies.EMPTY
       }
-      val moduleDeps = ArrayList<ModuleDependenciesDescriptor.ModuleReference>()
-      val pluginDeps = ArrayList<ModuleDependenciesDescriptor.PluginReference>()
+      val moduleDeps = ArrayList<ModuleDependencies.ModuleReference>()
+      val pluginDeps = ArrayList<ModuleDependencies.PluginReference>()
       for (dep in dependencies) {
         when (dep) {
-          is DependenciesElement.PluginDependency -> pluginDeps.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(dep.pluginId)))
-          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleDependenciesDescriptor.ModuleReference(dep.moduleName))
+          is DependenciesElement.PluginDependency -> pluginDeps.add(ModuleDependencies.PluginReference(PluginId.getId(dep.pluginId)))
+          is DependenciesElement.ModuleDependency -> moduleDeps.add(ModuleDependencies.ModuleReference(dep.moduleName))
           else -> LOG.error("Unknown dependency type: $dep")
         }
       }
-      return ModuleDependenciesDescriptor(moduleDeps, pluginDeps)
+      return ModuleDependencies(moduleDeps, pluginDeps)
     }
 
     private fun convertContentModules(contentElements: List<ContentElement>): List<PluginContentDescriptor.ModuleItem> {
