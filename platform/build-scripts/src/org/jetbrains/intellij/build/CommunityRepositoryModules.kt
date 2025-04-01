@@ -246,6 +246,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.preview-designer")
       spec.withModule("intellij.android.wear-designer")
       spec.withModule("intellij.android.motion-editor")
+      spec.withModule("intellij.android.visual-lint")
 
       // libs:
       spec.withProjectLibrary("layoutlib")
@@ -293,13 +294,12 @@ object CommunityRepositoryModules {
       }
 
       spec.excludeProjectLibrary("Gradle")
-      // android jar is already quite big - put into separate JAR
-      spec.withProjectLibrary("jewel-ide-laf-bridge", "jewel-ide-laf-bridge.jar")
 
       // modules:
       // adt-ui.jar
       spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
-      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-242", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-242.jar")
+      spec.withModuleLibrary("jewel-ide-laf-bridge-243", "intellij.android.adt.ui.compose", "jewel-ide-laf-bridge-243.jar")
+      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-243", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-243.jar")
       spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
 
@@ -348,7 +348,10 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.backup.api", "android.jar")
       spec.withModule("intellij.android.lint", "android.jar")
       spec.withModule("intellij.android.templates", "android.jar")
+      spec.withModule("intellij.android.testartifacts", "android.jar")
       spec.withModule("intellij.android.apkanalyzer", "android.jar")
+      spec.withModule("intellij.android.apkanalyzer.apk", "android.jar")
+      spec.withModule("intellij.android.apkanalyzer.gradle", "android.jar")
       spec.withModule("intellij.android.app-inspection.api", "android.jar")
       spec.withModule("intellij.android.app-inspection.ide", "android.jar")
       spec.withModule("intellij.android.app-inspection.ide.gradle", "android.jar")
@@ -383,6 +386,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.device-explorer-common", "android.jar")
       //spec.withModule("intellij.android.device-manager", "android.jar")
       spec.withModule("intellij.android.device-manager-v2", "android.jar")
+      spec.withModule("intellij.android.gmaven", "android.jar")
       spec.withModule("intellij.android.ml-api", "android.jar")
       // Packaged as a gradle-dsl plugin
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
@@ -420,6 +424,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.rendering", "android.jar")
       spec.withModule("intellij.android.room", "android.jar")
       //spec.withModule("intellij.android.samples-browser", "android.jar") AS Koala Merge
+      spec.withModule("intellij.android.screenshot-test", "android.jar")
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
@@ -475,7 +480,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.utp", "utp.jar")
 
       // libs:
-      spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
+      //spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
 
 

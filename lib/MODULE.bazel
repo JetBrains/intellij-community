@@ -301,13 +301,6 @@ http_file(
 )
 
 http_file(
-  name = "jb-r8-232_1_23_0_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/android/tools/base/jb-r8/232.1.23.0/jb-r8-232.1.23.0.jar",
-  sha256 = "2f0cb16c17ded3eaeeebbd3abd350651569d94f28bee887563de65f0e8b54153",
-  downloaded_file_path = "jb-r8-232.1.23.0.jar"
-)
-
-http_file(
   name = "libstudio_android-test-plugin-host-retention-proto-232_1_23_0_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/android/tools/base/libstudio.android-test-plugin-host-retention-proto/232.1.23.0/libstudio.android-test-plugin-host-retention-proto-232.1.23.0.jar",
   sha256 = "4b7f508bdaa694e8e4e8d7df88c934e159871fa5228a045f42666f6c59dd5541",
