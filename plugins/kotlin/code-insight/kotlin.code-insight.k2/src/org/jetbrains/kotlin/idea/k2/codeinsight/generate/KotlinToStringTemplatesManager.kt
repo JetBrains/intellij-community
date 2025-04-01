@@ -33,10 +33,10 @@ class KotlinToStringTemplatesManager : TemplatesManager() {
     }
 
     companion object {
-        const val DEFAULT_SINGLE = "singleExpr.vm"
-        const val DEFAULT_SINGLE_SUPER_CALL = "singleExprWithSuper.vm"
-        const val DEFAULT_MULTIPLE = "multipleExprs.vm"
-        const val DEFAULT_MULTIPLE_SUPER_CALL = "multipleExprsWithSuper.vm"
+        const val DEFAULT_SINGLE: String = "singleExpr.vm"
+        const val DEFAULT_SINGLE_SUPER_CALL: String = "singleExprWithSuper.vm"
+        const val DEFAULT_MULTIPLE: String = "multipleExprs.vm"
+        const val DEFAULT_MULTIPLE_SUPER_CALL: String = "multipleExprsWithSuper.vm"
 
         fun getInstance(): TemplatesManager {
             return ApplicationManager.getApplication().getService(KotlinToStringTemplatesManager::class.java)
