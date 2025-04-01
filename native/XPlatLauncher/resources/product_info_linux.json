@@ -22,6 +22,7 @@
       "additionalJvmArguments": [
         "-Didea.vendor.name=JetBrains",
         "-Didea.paths.selector=XPlatLauncherTest",
+        "-Duser.home.macro.test=$USER_HOME",
         "-Dide.home.macro.test=$IDE_HOME",
         "-Dcache.dir.macro.test=$IDE_CACHE_DIR"
       ],

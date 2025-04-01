@@ -128,6 +128,12 @@ mod tests {
 
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
+        let user_home_property = jvm_property!("user.home.macro.test", "");
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&user_home_property))
+            .unwrap_or_else(|| panic!("'{}' is not in {:?}", user_home_property, dump.vmOptions));
+        let path = vm_option.split_once('=').unwrap().1;
+        assert!(!path.contains("USER_HOME"), "unexpanded: {vm_option}");
+
         let ide_home_property = jvm_property!("ide.home.macro.test", "");
         let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&ide_home_property))
             .unwrap_or_else(|| panic!("'{}' is not in {:?}", ide_home_property, dump.vmOptions));
