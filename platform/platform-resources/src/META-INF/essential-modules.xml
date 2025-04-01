@@ -36,6 +36,8 @@
 
     <module name="intellij.platform.inline.completion"/>
 
+    <module name="intellij.platform.serviceView.frontend"/>
+
     <module name="intellij.platform.recentFiles"/>
     <module name="intellij.platform.recentFiles.frontend"/>
     <module name="intellij.platform.recentFiles.backend"/>
