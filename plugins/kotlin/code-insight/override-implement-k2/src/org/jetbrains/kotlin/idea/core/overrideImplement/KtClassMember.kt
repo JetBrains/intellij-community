@@ -14,12 +14,15 @@ import com.intellij.psi.PsiDocCommentOwner
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
+import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunctionLikeBodyRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
@@ -27,7 +30,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaContextParameterOwnerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
@@ -375,15 +380,52 @@ private fun createRenderer(
     return renderer
 }
 
-@OptIn(KaExperimentalApi::class)
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
 fun KaDeclarationRenderer.Builder.withoutLabel() {
     contextReceiversRenderer = contextReceiversRenderer.with {
-        contextReceiverLabelRenderer = WITHOUT_LABEL
+        contextReceiverListRenderer = ContextParametersListRenderer
     }
 
     typeRenderer = typeRenderer.with {
         contextReceiversRenderer = contextReceiversRenderer.with {
-            contextReceiverLabelRenderer = WITHOUT_LABEL
+            contextReceiverListRenderer = ContextParametersListRenderer
+        }
+    }
+}
+
+//todo rewrite after KT-66192 is implemented
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
+object ContextParametersListRenderer: KaContextReceiverListRenderer {
+    override fun renderContextReceivers(
+        analysisSession: KaSession,
+        owner: KaContextReceiversOwner,
+        contextReceiversRenderer: KaContextReceiversRenderer,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter
+    ) {
+        if (owner is KaContextParameterOwnerSymbol && owner.contextParameters.any { it.psi is KtParameter }) {
+            printer {
+                append("context(")
+                printCollection(owner.contextParameters) { contextParameter ->
+
+                    append(contextParameter.name.render())
+                    append(": ")
+
+                    typeRenderer.renderType(analysisSession, contextParameter.returnType, printer)
+                }
+                append(")")
+            }
+        } else {
+            val contextReceivers = owner.contextReceivers
+            if (contextReceivers.isEmpty()) return
+
+            printer {
+                append("context(")
+                printCollection(contextReceivers) { contextReceiver ->
+                    typeRenderer.renderType(analysisSession, contextReceiver.type, printer)
+                }
+                append(")")
+            }
         }
     }
 }

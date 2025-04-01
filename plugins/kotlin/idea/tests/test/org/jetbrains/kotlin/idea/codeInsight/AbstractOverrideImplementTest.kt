@@ -85,9 +85,11 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
     private fun doFileTest(handler: AbstractGenerateMembersHandler<T>, memberToOverride: String? = null) {
         myFixture.configureByFile(getTestName(true) + ".kt")
 
-        val fileNameWithoutExtension = getTestName(true)
-        doOverrideImplement(handler, memberToOverride, fileNameWithoutExtension)
-        checkResultByFile(fileNameWithoutExtension)
+        withCustomCompilerOptions(file.text, project, module) {
+            val fileNameWithoutExtension = getTestName(true)
+            doOverrideImplement(handler, memberToOverride, fileNameWithoutExtension)
+            checkResultByFile(fileNameWithoutExtension)
+        }
     }
 
     private fun doMultiFileTest(handler: AbstractGenerateMembersHandler<T>) {
@@ -253,7 +255,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
 
         val frontendDependentDirective = if (isFirPlugin) MEMBER_K2_DIRECTIVE_PREFIX else MEMBER_K1_DIRECTIVE_PREFIX
         val actualMemberTexts = chooserObjects.map { it.text }.toLinkedSet()
-        val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).toLinkedSet() +
+        val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).map { it.replace("\\n", "\n") }.toLinkedSet() +
                                   InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), frontendDependentDirective)
 
         if (addMissingDirectives) {
