@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.Id
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -76,7 +75,7 @@ data class XStackFramePresentation(
 @Serializable
 data class XStackFramePresentationFragment(
   val text: String,
-  @Transient val textAttributes: SimpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES,
+  @Serializable(with = SimpleTextAttributesSerializer::class) val textAttributes: SimpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES,
 )
 
 @ApiStatus.Internal
