@@ -180,7 +180,7 @@ class SwitcherVirtualFile : SwitcherListItem, BackgroundSupplier {
       val width = component.width - mainTextWidth - shortcutTextWidth - component.iconTextGap - iconWidth -
                   component.insets.left - component.insets.right
       if (width <= 0) return@let null
-      PaintUtil.cutContainerText(" ${pathText}", width, fontMetrics)?.let { fragment ->
+      PaintUtil.cutContainerText(" ${pathText}", width, component)?.let { fragment ->
         @Suppress("HardCodedStringLiteral")
         component.append(fragment, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }

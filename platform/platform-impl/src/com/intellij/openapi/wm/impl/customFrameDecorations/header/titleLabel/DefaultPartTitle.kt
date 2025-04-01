@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
-import sun.swing.SwingUtilities2
+import com.intellij.util.ui.UIUtil
 import java.awt.FontMetrics
 import javax.swing.JComponent
 
@@ -40,7 +40,7 @@ internal open class DefaultPartTitle(open var prefix: String = " ", open var suf
     get() = if (longText.isEmpty()) "" else "$prefix$longText$suffix"
 
   override fun refresh(label: JComponent, fm: FontMetrics) {
-    longTextWidth = if (longText.isEmpty() || !active) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$longText$suffix")
-    shortTextWidth = if (shortText.isEmpty() || !active) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$shortText$suffix")
+    longTextWidth = if (longText.isEmpty() || !active) 0 else UIUtil.computeStringWidth(label, fm, "$prefix$longText$suffix")
+    shortTextWidth = if (shortText.isEmpty() || !active) 0 else UIUtil.computeStringWidth(label, fm, "$prefix$shortText$suffix")
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -430,7 +431,7 @@ public final class PaintUtil {
   
   @ApiStatus.Internal
   @Contract("!null, _, _ -> !null")
-  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
+  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, @NotNull JComponent component) {
     if (text == null) return null;
 
     if (text.startsWith("(") && text.endsWith(")")) {
@@ -439,12 +440,13 @@ public final class PaintUtil {
 
     if (maxWidth < 0) return text;
 
+    FontMetrics fontMetrics = component.getFontMetrics(component.getFont());
     boolean in = text.startsWith("in ");
     if (in) text = text.substring(3);
     String left = in ? "in " : "";
     String adjustedText = left + text;
 
-    int fullWidth = fm.stringWidth(adjustedText);
+    int fullWidth = UIUtil.computeStringWidth(component, fontMetrics, adjustedText);
     if (fullWidth < maxWidth) return adjustedText;
 
     String separator = text.contains("/") ? "/" :
@@ -456,7 +458,7 @@ public final class PaintUtil {
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;
       parts.remove(index);
-      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
+      if (UIUtil.computeStringWidth(component, fontMetrics, left + StringUtil.join(parts, separator) + "...") < maxWidth) {
         parts.add(index, "...");
         return left + StringUtil.join(parts, separator);
       }

@@ -17,7 +17,11 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Insets
-import javax.swing.*
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
+import javax.swing.SwingConstants
 
 @ApiStatus.Internal
 class PSIPresentation(val targetPresentation: TargetPresentation) : RemoteSearchEverywherePresentation {
@@ -62,7 +66,7 @@ private class PSIPresentationRenderer : JPanel(SELayout()), ListCellRenderer<PSI
                                - rendererInsets.left - rendererInsets.right
                                - leftComponent.preferredSize.width)
       if (rightComponent != null) containerMaxWidth -= rightComponent.preferredSize.width
-      val containerText: @NlsSafe String? = PaintUtil.cutContainerText(presentation.containerText, containerMaxWidth, fm)
+      val containerText: @NlsSafe String? = PaintUtil.cutContainerText(presentation.containerText, containerMaxWidth, this)
       val containerAttributes = if (presentation.containerTextAttributes != null) SimpleTextAttributes.fromTextAttributes(
         presentation.containerTextAttributes)
       else SimpleTextAttributes.GRAYED_ATTRIBUTES

@@ -884,7 +884,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         if (myText != null) {
           FontMetrics fontMetrics = getFontMetrics(getFont());
 
-          int textWidth = SwingUtilities2.stringWidth(this, fontMetrics, myText);
+          int textWidth = UIUtil.computeStringWidth(this, fontMetrics, myText);
           return new JBDimension(width + gap * 2 + textWidth,
                                  Math.max(fontMetrics.getHeight(), height), true);
         }

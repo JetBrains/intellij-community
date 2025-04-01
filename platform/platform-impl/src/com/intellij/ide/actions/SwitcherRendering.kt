@@ -171,7 +171,7 @@ class SwitcherVirtualFile(
       val width = component.width - mainTextWidth - shortcutTextWidth - component.iconTextGap - component.icon.iconWidth -
                   component.insets.left - component.insets.right
       if (width <= 0) return@let null
-      PaintUtil.cutContainerText(" $pathText", width, fontMetrics)?.let {
+      PaintUtil.cutContainerText(" $pathText", width, component)?.let {
         @Suppress("HardCodedStringLiteral")
         component.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
