@@ -34,11 +34,11 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static java.util.Objects.requireNonNull;
 
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
@@ -125,11 +125,11 @@ public class LanguageMismatch extends LocalInspectionTool {
               }
               // context implies language, but declaration isn't annotated
               final PsiAnnotation annotation = annotations[annotations.length - 1];
-              String fqn = Objects.requireNonNull(annotation.getQualifiedName());
+              String fqn = requireNonNull(annotation.getQualifiedName());
               ModCommandAction fix = null;
               PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
               if (owner != null && AddAnnotationPsiFix.isAvailable(owner, fqn)) {
-                fix = new AddAnnotationModCommandAction(fqn, owner, annotation.getParameterList().getAttributes());
+                fix = new AddAnnotationModCommandAction(fqn, owner, ((PsiAnnotation)annotation.copy()).getParameterList().getAttributes());
               }
               holder.problem(expression, IntelliLangBundle.message("inspection.language.problem.description", expected))
                 .maybeFix(fix).register();

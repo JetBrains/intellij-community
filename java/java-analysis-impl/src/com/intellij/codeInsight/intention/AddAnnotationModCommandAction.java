@@ -25,11 +25,11 @@ import java.util.List;
  * A common action to add an annotation into Java code (either in code or externally)
  */
 public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiModifierListOwner> {
-  private final String myAnnotation;
-  private final String[] myAnnotationsToRemove;
-  private final PsiNameValuePair[] myPairs;
+  private final @NotNull String myAnnotation;
+  private final @NotNull String @NotNull [] myAnnotationsToRemove;
+  private final @NotNull PsiNameValuePair @NotNull [] myPairs;
   private final @IntentionName String myText;
-  private final AnnotationPlace myAnnotationPlace;
+  private final @NotNull AnnotationPlace myAnnotationPlace;
   private final boolean myExistsTypeUseTarget;
   private final boolean myHasApplicableAnnotations;
 
@@ -47,7 +47,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
   /**
    * @param fqn                 annotation fully qualified name
    * @param modifierListOwner   annotation owner to add an annotation to
-   * @param values              annotation attributes
+   * @param values              annotation attributes; must be non-physical PSI
    * @param annotationsToRemove fully qualified names of annotations to remove
    */
   public AddAnnotationModCommandAction(@NotNull String fqn,
@@ -60,7 +60,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
   /**
    * @param fqn                 annotation fully qualified name
    * @param modifierListOwner   annotation owner to add an annotation to
-   * @param values              annotation attributes
+   * @param values              annotation attributes; must be non-physical PSI
    * @param place               place where to add an annotation
    * @param annotationsToRemove fully qualified names of annotations to remove
    */
@@ -89,7 +89,11 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
     super(modifierListOwner);
     myText = text;
     myAnnotation = fqn;
-    ObjectUtils.assertAllElementsNotNull(values);
+    for (PsiNameValuePair value : values) {
+      if (value.isPhysical()) {
+        throw new IllegalArgumentException("Annotation attributes must be non-physical PSI");
+      }
+    }
     myPairs = values;
     ObjectUtils.assertAllElementsNotNull(annotationsToRemove);
     myAnnotationsToRemove = annotationsToRemove;
@@ -161,7 +165,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
   }
 
   /**
-   * Postprocess inserted (non-physical) annotation
+   * Postprocess inserted (non-physical) annotation in the background read-action.
    * 
    * @param annotation annotation
    * @param updater updater that could be used
@@ -175,7 +179,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
   }
 
   /**
-   * Creates a fix which will add default "Nullable" annotation to the given element.
+   * Creates a fix which will add the default "Nullable" annotation to the given element.
    *
    * @param owner an element to add the annotation
    * @return newly created fix or null if adding nullability annotation is impossible for the specified element.
@@ -186,7 +190,7 @@ public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiM
   }
 
   /**
-   * Creates a fix which will add default "NotNull" annotation to the given element.
+   * Creates a fix which will add the default "NotNull" annotation to the given element.
    *
    * @param owner an element to add the annotation
    * @return newly created fix or null if adding nullability annotation is impossible for the specified element.
