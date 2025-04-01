@@ -231,7 +231,7 @@ final class LookupUi {
       lookup.pack();
       rectangle = calculatePosition();
     }
-    HintManagerImpl.updateLocation(lookup, editor, rectangle.getLocation());
+    lookup.updateLocation(rectangle.getLocation());
 
     if (reused || selectionVisible || onExplicitAction) {
       lookup.ensureSelectionVisible(false);
@@ -384,7 +384,7 @@ final class LookupUi {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
-      mainPanel.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+      mainPanel.setBackground(lookup.getBackgroundColor());
       add(mainPanel, 0, 0);
 
       setLayout(new AbstractLayoutManager() {
