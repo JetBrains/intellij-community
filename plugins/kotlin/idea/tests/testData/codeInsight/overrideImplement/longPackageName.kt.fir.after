@@ -7,5 +7,10 @@ abstract class Some {
 }
 
 class Other : Some() {
-    <caret>
+    override fun foo(
+        x: A,
+        y: A
+    ): A {
+        TODO("Not yet implemented")
+    }
 }
