@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vsmac.parsers
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.parsers
 
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
@@ -7,7 +7,6 @@ import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
-import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -21,7 +20,7 @@ class RecentProjectsParser(private val settings: Settings) {
     private const val URI_FIELD = "URI"
   }
 
-  fun process(file: File): Unit = try {
+  fun process(file: Path): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = JDOMUtil.load(file)
