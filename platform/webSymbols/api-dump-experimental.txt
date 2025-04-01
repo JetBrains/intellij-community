@@ -1066,6 +1066,7 @@
 - com.intellij.webSymbols.query.WebSymbolsCompoundScope
 - <init>(com.intellij.psi.PsiElement):V
 - p:build(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,kotlin.jvm.functions.Function1):V
+- a:createPointer():com.intellij.model.Pointer
 - equals(java.lang.Object):Z
 - p:findBestMatchingScope(com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope):com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
 - pf:getCurrentScope():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
