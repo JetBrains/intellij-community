@@ -33,12 +33,34 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XDebugSessionState
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabDto
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoCallback
+import com.intellij.xdebugger.impl.rpc.XValueMarkerId
+import com.intellij.xdebugger.impl.rpc.consoleView
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import javax.swing.event.HyperlinkListener
 
 internal class FrontendXDebuggerSession private constructor(
@@ -247,8 +269,10 @@ internal class FrontendXDebuggerSession private constructor(
 
   override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
     cs.launch {
-      XDebugSessionApi.getInstance().setCurrentStackFrame(id, (executionStack as FrontendXExecutionStack).id,
-                                                          (frame as FrontendXStackFrame).id, isTopFrame)
+      currentExecutionStack.value = executionStack as FrontendXExecutionStack
+      currentStackFrame.value = frame as FrontendXStackFrame
+      XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,
+                                                          frame.id, isTopFrame)
     }
   }
 
