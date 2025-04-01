@@ -1203,12 +1203,12 @@ private fun processDependenciesOnPlugin(
         }
       }
 
-      for (item in module.dependenciesV2.modules) {
+      for (item in module.moduleDependencies.modules) {
         if (wantedIds.contains(item.name) && !processor(plugin, module)) {
           return
         }
       }
-      for (item in module.dependenciesV2.plugins) {
+      for (item in module.moduleDependencies.plugins) {
         if (dependencyPlugin.pluginId == item.id && !processor(plugin, module)) {
           return
         }
@@ -1383,13 +1383,13 @@ private fun findLoadedPluginExtensionPointRecursive(pluginDescriptor: IdeaPlugin
 private inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
                                              pluginSet: PluginSet,
                                              processor: (IdeaPluginDescriptorImpl) -> Unit) {
-   for (item in module.dependenciesV2.modules) {
+   for (item in module.moduleDependencies.modules) {
      val descriptor = pluginSet.findEnabledModule(item.name)
      if (descriptor != null) {
        processor(descriptor)
     }
   }
-  for (item in module.dependenciesV2.plugins) {
+  for (item in module.moduleDependencies.plugins) {
     val descriptor = pluginSet.findEnabledPlugin(item.id)
     if (descriptor != null) {
       processor(descriptor)

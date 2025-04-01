@@ -103,7 +103,7 @@ class IdeaPluginDescriptorImpl private constructor(
   val content: PluginContentDescriptor =
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
-  override val dependenciesV2: ModuleDependencies = raw.dependencies.let(::convertDependencies)
+  override val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
   val packagePrefix: String? = raw.`package`
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
@@ -196,7 +196,7 @@ class IdeaPluginDescriptorImpl private constructor(
   /**
    * aka `<depends>` elements from the plugin.xml
    *
-   * Note that it's different from [dependenciesV2]
+   * Note that it's different from [moduleDependencies]
    */
   override fun getDependencies(): List<PluginDependency> = dependenciesV1
 
@@ -276,7 +276,7 @@ class IdeaPluginDescriptorImpl private constructor(
         return
       }
 
-      for (pluginDependency in dependenciesV2.plugins) {
+      for (pluginDependency in moduleDependencies.plugins) {
         if (context.isPluginDisabled(pluginDependency.id)) {
           markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
         }

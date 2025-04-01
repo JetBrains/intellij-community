@@ -14,5 +14,5 @@ interface IdeaPluginDescriptorImplPublic : IdeaPluginDescriptor {
    *
    * Note that it's different from [getDependencies] (which is for `<depends>`)
    */
-  val dependenciesV2: ModuleDependencies
+  val moduleDependencies: ModuleDependencies
 }

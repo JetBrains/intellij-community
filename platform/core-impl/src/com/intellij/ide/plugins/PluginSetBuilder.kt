@@ -127,7 +127,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         continue
       }
 
-      for (ref in module.dependenciesV2.modules) {
+      for (ref in module.moduleDependencies.modules) {
         if (!enabledModuleV2Ids.containsKey(ref.name) && !enabledRequiredContentModules.containsKey(ref.name)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           if (module.moduleName != null) {
@@ -136,7 +136,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
           continue@m
         }
       }
-      for (ref in module.dependenciesV2.plugins) {
+      for (ref in module.moduleDependencies.plugins) {
         if (!enabledPluginIds.containsKey(ref.id)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.id} is not available")
           if (module.moduleName != null) {
@@ -320,7 +320,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
       }
 
-    return descriptor.dependenciesV2.modules.asSequence().map { it.name }
+    return descriptor.moduleDependencies.modules.asSequence().map { it.name }
       .firstOrNull { it !in enabledModuleV2Ids }
       ?.let {
         PluginLoadingError(
@@ -389,6 +389,6 @@ private fun getAllPluginDependencies(ideaPluginDescriptorImpl: IdeaPluginDescrip
   return ideaPluginDescriptorImpl.dependencies.asSequence()
            .filterNot { it.isOptional }
            .map { it.pluginId } +
-         ideaPluginDescriptorImpl.dependenciesV2.plugins.asSequence()
+         ideaPluginDescriptorImpl.moduleDependencies.plugins.asSequence()
            .map { it.id }
 }
