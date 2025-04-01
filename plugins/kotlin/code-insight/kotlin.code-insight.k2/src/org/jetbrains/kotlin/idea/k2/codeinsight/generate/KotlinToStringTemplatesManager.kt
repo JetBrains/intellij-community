@@ -43,7 +43,7 @@ class KotlinToStringTemplatesManager : TemplatesManager() {
         }
 
         @Throws(IOException::class)
-        private fun readFile(resource: String?): String {
+        fun readFile(resource: String?): String {
             return readFile(resource, KotlinToStringTemplatesManager::class.java)
         }
     }

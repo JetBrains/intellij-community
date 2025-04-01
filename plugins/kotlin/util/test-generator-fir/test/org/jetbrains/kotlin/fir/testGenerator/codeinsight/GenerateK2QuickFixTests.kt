@@ -200,7 +200,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/specifyAllRemainingArgumentsByName", pattern = pattern)
             model("$idea/quickfix/specifyOverrideExplicitly", pattern = pattern)
             model("$idea/quickfix/specifyRemainingRequiredArgumentsByName", pattern = pattern)
-            model("$idea/quickfix/specifySuperExplicitly", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/specifySuperExplicitly", pattern = pattern)
             model("$idea/quickfix/specifyTypeExplicitly", pattern = pattern)
             model("$idea/quickfix/superTypeIsExtensionType", pattern = pattern)
             model("$idea/quickfix/surroundWithNullCheck", pattern = pattern)

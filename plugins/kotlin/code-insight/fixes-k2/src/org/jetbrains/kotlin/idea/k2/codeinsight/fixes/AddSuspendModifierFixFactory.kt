@@ -51,7 +51,7 @@ internal object AddSuspendModifierFixFactory {
 }
 
 context(KaSession)
-private fun KtElement.containingFunction(): KtNamedFunction? {
+internal fun KtElement.containingFunction(): KtNamedFunction? {
     return when (val containingFunction = getParentOfTypes2<KtFunctionLiteral, KtNamedFunction>()) {
         is KtFunctionLiteral -> {
             val call = containingFunction.getStrictParentOfType<KtCallExpression>()
