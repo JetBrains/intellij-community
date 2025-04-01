@@ -344,12 +344,15 @@ class IdeaPluginDescriptorImpl private constructor(
       checkCycle(configFile, visitedFiles)
 
       visitedFiles.add(configFile)
-      val subDescriptor = createSub(raw, configFile, context, module = null)
-      if (subDescriptor.isIncomplete == null) {
-        subDescriptor.initializeV1Dependencies(context, pathResolver, dataLoader)
+      try {
+        val subDescriptor = createSub(raw, configFile, context, module = null)
+        if (subDescriptor.isIncomplete == null) {
+          subDescriptor.initializeV1Dependencies(context, pathResolver, dataLoader)
+        }
+        dependency.setSubDescriptor(subDescriptor)
+      } finally {
+        visitedFiles.removeLast()
       }
-      dependency.setSubDescriptor(subDescriptor)
-      visitedFiles.clear() // TODO: shouldn't it be removeLast instead?
     }
   }
 
