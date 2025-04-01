@@ -49,8 +49,8 @@ internal class CommitOptionsPanel(
       border = contentBorder
     }
     component = ScrollPaneFactory.createScrollPane(panel,
-                                                   ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER,
+                                                   ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED,
                                                    true)
   }
 
