@@ -22,5 +22,5 @@ class ModuleDependencies(@JvmField val modules: List<ModuleReference>, @JvmField
     override fun toString(): String = "Plugin(id=$id)"
   }
 
-  override fun toString(): String = "ModuleDependencies(modules=$modules, plugins=$plugins)"
+  override fun toString(): String = "ModuleDependencies(modules=${modules.joinToString()}, plugins=${plugins.joinToString()})"
 }
