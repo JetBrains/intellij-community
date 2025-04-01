@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
@@ -106,11 +107,15 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final EventId1<Boolean> PREVIEW_SWITCHED = GROUP.registerEvent("previewSwitched", EventFields.Boolean("previewState"));
   public static final EventId1<Boolean> PREVIEW_CLOSED = GROUP.registerEvent("previewClosed", EventFields.Boolean("previewClosed"));
 
-  public static final EventId FUZZY_SEARCH_STARTED = GROUP.registerEvent("fuzzySearchStarted");
-  public static final LongEventField FUZZY_SEARCH_DURATION_MS = EventFields.Long("fuzzySearchDurationMs");
-  public static final IntEventField FUZZY_SEARCH_RESULTS_COUNT = EventFields.Int("fuzzySearchResultsCount");
-  public static final VarargEventId FUZZY_SEARCH_FINISHED =
-    GROUP.registerVarargEvent("fuzzySearchFinished", FUZZY_SEARCH_DURATION_MS, FUZZY_SEARCH_RESULTS_COUNT);
+  public enum FuzzySearchResult {
+    PROCESS_COMPLETE, PROCESS_STOPPED, EMPTY_PATTERN
+  }
+
+  public static final IntEventField FUZZY_SEARCH_TOTAL_RESULTS = EventFields.Int("fuzzySearchTotalResults");
+  public static final EnumEventField<FuzzySearchResult> FUZZY_SEARCH_RESULT =
+    EventFields.Enum("fuzzySearchResult", FuzzySearchResult.class);
+  public static final IdeActivityDefinition FUZZY_SEARCH_ACTIVITY =
+    GROUP.registerIdeActivity("fuzzySearch", new EventField[0], new EventField[]{FUZZY_SEARCH_TOTAL_RESULTS, FUZZY_SEARCH_RESULT});
 
   @Override
   public EventLogGroup getGroup() {

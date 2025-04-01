@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -124,10 +125,15 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                                         @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                                         @NotNull ProgressIndicator indicator) {
     long start = System.currentTimeMillis();
-    FUZZY_SEARCH_STARTED.log(myProject);
+    final StructuredIdeActivity fuzzySearchActivity = FUZZY_SEARCH_ACTIVITY.started(myProject);
 
     List<String> patternComponents = LevenshteinCalculator.normalizeString(parameters.getCompletePattern());
     if (patternComponents.isEmpty()) {
+      fuzzySearchActivity.finished(() -> List.of(
+                                     FUZZY_SEARCH_TOTAL_RESULTS.with(0),
+                                     FUZZY_SEARCH_RESULT.with(FuzzySearchResult.EMPTY_PATTERN)
+                                   )
+      );
       return true;
     }
 
@@ -149,19 +155,23 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return consumer.process(res);
     };
     if (!ContainerUtil.process(matchingItems, trackingProcessor)) {
+      fuzzySearchActivity.finished(() -> List.of(
+                                     FUZZY_SEARCH_TOTAL_RESULTS.with(matchingItems.size()),
+                                     FUZZY_SEARCH_RESULT.with(FuzzySearchResult.PROCESS_STOPPED)
+                                   )
+      );
       return false;
     }
 
-    long duration = System.currentTimeMillis() - start;
-    FUZZY_SEARCH_FINISHED.log(myProject, pairs -> {
-                                pairs.add(FUZZY_SEARCH_DURATION_MS.with(duration));
-                                pairs.add(FUZZY_SEARCH_RESULTS_COUNT.with(matchingItems.size()));
-                              }
+    fuzzySearchActivity.finished(() -> List.of(
+                                   FUZZY_SEARCH_TOTAL_RESULTS.with(matchingItems.size()),
+                                   FUZZY_SEARCH_RESULT.with(FuzzySearchResult.PROCESS_COMPLETE)
+                                 )
     );
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(
-        "Process items with levenshtein \"" + parameters.getCompletePattern() + "\" took " + duration + " ms");
+        "Process items with levenshtein \"" + parameters.getCompletePattern() + "\" took " + (System.currentTimeMillis() - start) + " ms");
     }
 
     return true;
