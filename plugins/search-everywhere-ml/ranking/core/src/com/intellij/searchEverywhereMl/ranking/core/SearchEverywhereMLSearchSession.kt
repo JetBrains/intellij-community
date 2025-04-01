@@ -32,7 +32,6 @@ internal class SearchEverywhereMLSearchSession(
   project: Project?,
   val mixedListInfo: SearchEverywhereMixedListInfo,
   private val sessionId: Int,
-  private val loggingRandomisation: FeaturesLoggingRandomisation,
 ) {
   val itemIdProvider = SearchEverywhereMlOrderedItemIdProvider { MissingKeyProviderCollector.addMissingProviderForClass(it::class.java) }
 
@@ -44,6 +43,8 @@ internal class SearchEverywhereMLSearchSession(
 
   // context features are calculated once per Search Everywhere session
   val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
+
+  private val loggingRandomisation = FeaturesLoggingRandomisation()
 
   // search state is updated on each typing, tab or setting change
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
