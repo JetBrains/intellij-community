@@ -49,7 +49,6 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.python" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.vcs.github.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.ml.features" scope="RUNTIME" />
   </component>
 </module>

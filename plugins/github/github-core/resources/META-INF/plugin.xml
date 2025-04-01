@@ -18,6 +18,7 @@
   <content>
     <module name="intellij.vcs.github" loading="embedded"/>
     <module name="intellij.vcs.github.git"/>
+    <module name="intellij.vcs.github.ultimatePromo"/>
     <module name="intellij.vcs.github.tracker"/>
     <module name="intellij.vcs.github.json"/>
     <module name="intellij.vcs.github.ultimate.features"/>
