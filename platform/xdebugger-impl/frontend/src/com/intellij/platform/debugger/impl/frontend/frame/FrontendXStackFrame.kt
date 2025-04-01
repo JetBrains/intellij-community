@@ -3,25 +3,18 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
-import com.intellij.ui.ColoredText
 import com.intellij.ui.ColoredTextContainer
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
-import com.intellij.xdebugger.impl.rpc.XStackFrameApi
 import com.intellij.xdebugger.impl.rpc.XStackFrameDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
-import com.intellij.xdebugger.impl.rpc.XStackFramePresentationEvent
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import javax.swing.Icon
 
 internal class FrontendXStackFrame(
   private val frameDto: XStackFrameDto,
@@ -37,29 +30,6 @@ internal class FrontendXStackFrame(
   }
 
   val id: XStackFrameId get() = frameDto.stackFrameId
-
-  private val presentationEvents = mutableListOf<XStackFramePresentationEvent>()
-
-  private var icon: Icon? = null
-  private var tooltipText: @NlsSafe String? = null
-
-  init {
-    cs.launch {
-      XStackFrameApi.getInstance().customizePresentation(id).collect {
-        when (it) {
-          is XStackFramePresentationEvent.AppendColoredText, is XStackFramePresentationEvent.AppendTextWithAttributes -> {
-            presentationEvents.add(it)
-          }
-          is XStackFramePresentationEvent.SetIcon -> {
-            icon = it.iconId?.icon()
-          }
-          is XStackFramePresentationEvent.SetTooltip -> {
-            tooltipText = it.text
-          }
-        }
-      }
-    }
-  }
 
   override fun getSourcePosition(): XSourcePosition? {
     return frameDto.sourcePosition?.sourcePosition()
@@ -78,27 +48,19 @@ internal class FrontendXStackFrame(
   override fun getEvaluator(): XDebuggerEvaluator? = evaluator
 
   override fun customizePresentation(component: ColoredTextContainer) {
-    component.setIcon(icon)
+    // TODO[IJPL-177087]: what if presentation changes over time for the same backend stack frame?
+    //  Probably we should go for a different approach: store something that can trigger XDebuggerFramesList to repaint,
+    //  repurpose this method implementation to send a request to backend to customize presentation there
+    //  (probably via smth like BackendXStackFrameApi.customizePresentation which I removed in this commit),
+    //  collect changes here (like it was for BackendXStackFrameApi.customizePresentation),
+    //  and in this collection trigger XDebuggerFramesList.repaint.
+    //  ...
+    //  But maybe there are easier solutions
+    val (fragments, iconId, tooltipText) = frameDto.initialPresentation
+    component.setIcon(iconId?.icon())
     component.setToolTipText(tooltipText)
-    for (event in presentationEvents) {
-      when (event) {
-        is XStackFramePresentationEvent.AppendTextWithAttributes -> {
-          component.append(event.fragment, event.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES)
-        }
-        is XStackFramePresentationEvent.AppendColoredText -> {
-          val builder = ColoredText.builder()
-          for (fragment in event.fragments) {
-            builder.append(fragment.text, fragment.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES)
-          }
-          component.append(builder.build())
-        }
-        is XStackFramePresentationEvent.SetIcon -> {
-          // ignore this events, they are handled by `icon`
-        }
-        is XStackFramePresentationEvent.SetTooltip -> {
-          // ignore this events, they are handled by `tooltipText`
-        }
-      }
+    for ((text, attributes) in fragments) {
+      component.append(text, attributes)
     }
   }
 

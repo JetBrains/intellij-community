@@ -4,9 +4,12 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
+import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.ColoredTextContainer
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
@@ -24,6 +27,8 @@ import com.intellij.xdebugger.impl.rpc.XExpressionDto
 import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.XStackFramePresentation
+import com.intellij.xdebugger.impl.rpc.XStackFramePresentationFragment
 import com.intellij.xdebugger.impl.rpc.XStackFrameStringEqualityObject
 import com.intellij.xdebugger.impl.rpc.XSuspendContextId
 import com.intellij.xdebugger.impl.rpc.models.findValue
@@ -42,6 +47,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import javax.swing.Icon
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
@@ -164,5 +170,26 @@ internal fun createXStackFrameDto(frame: XStackFrame, id: XStackFrameId): XStack
   }
   val canEvaluateInDocument = frame.isDocumentEvaluator
   val evaluatorDto = XDebuggerEvaluatorDto(canEvaluateInDocument)
-  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto)
+  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.initialPresentation())
 }
+
+private fun XStackFrame.initialPresentation(): XStackFramePresentation {
+  val parts = mutableListOf<XStackFramePresentationFragment>()
+  var iconId: IconId? = null
+  var tooltip: String? = null
+  customizePresentation(object : ColoredTextContainer {
+    override fun append(fragment: @NlsContexts.Label String, attributes: SimpleTextAttributes) {
+      parts += XStackFramePresentationFragment(fragment, attributes)
+    }
+
+    override fun setIcon(icon: Icon?) {
+      iconId = icon?.rpcId()
+    }
+
+    override fun setToolTipText(text: @NlsContexts.Tooltip String?) {
+      tooltip = text
+    }
+  })
+  return XStackFramePresentation(parts, iconId, tooltip)
+}
+

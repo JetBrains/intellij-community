@@ -4,7 +4,9 @@ package com.intellij.xdebugger.impl.rpc
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.Id
+import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -59,6 +61,22 @@ data class XStackFrameDto(
   val sourcePosition: XSourcePositionDto?,
   val equalityObject: XStackFrameEqualityObject?,
   val evaluator: XDebuggerEvaluatorDto,
+  val initialPresentation: XStackFramePresentation
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XStackFramePresentation(
+  val fragments: List<XStackFramePresentationFragment>,
+  val iconId: IconId?,
+  val tooltipText: @NlsContexts.Label String?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XStackFramePresentationFragment(
+  val text: String,
+  @Transient val textAttributes: SimpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES,
 )
 
 @ApiStatus.Internal
