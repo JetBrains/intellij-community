@@ -269,17 +269,16 @@ class IdeaPluginDescriptorImpl private constructor(
   internal fun initialize(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
     if (context.isPluginDisabled(id)) {
       markAsIncomplete(disabledDependency = null, shortMessage = null)
+      return
     }
-    else {
-      checkCompatibility(context)
-      if (isIncomplete != null) {
+    checkCompatibility(context)
+    if (isIncomplete != null) {
+      return
+    }
+    for (pluginDependency in moduleDependencies.plugins) {
+      if (context.isPluginDisabled(pluginDependency.id)) {
+        markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
         return
-      }
-
-      for (pluginDependency in moduleDependencies.plugins) {
-        if (context.isPluginDisabled(pluginDependency.id)) {
-          markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
-        }
       }
     }
 
