@@ -1,35 +1,14 @@
+- name: lib/clikt.jar
+  library: clikt
+  files:
+  - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3/clikt-jvm-3.jar
+  reason: <- intellij.evaluationPlugin
+- name: lib/commons-text.jar
+  library: commons-text
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
+  reason: <- intellij.evaluationPlugin.core
 - name: lib/evaluationPlugin.jar
-  projectLibraries:
-  - name: clikt
-    files:
-    - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3/clikt-jvm-3.jar
-    reason: <- intellij.evaluationPlugin
-  - name: commons-text
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
-    reason: <- intellij.evaluationPlugin.core
-  - name: jerolba.carpet.record
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jerolba/carpet-record/0/carpet-record-0.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-common/1/parquet-common-1.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-format-structures/1/parquet-format-structures-1.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-column/1/parquet-column-1.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-encoding/1/parquet-encoding-1.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-hadoop/1/parquet-hadoop-1.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-jackson/1/parquet-jackson-1.jar
-    - name: $MAVEN_REPOSITORY$/commons-pool/commons-pool/1/commons-pool-1.jar
-    - name: $MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1/zstd-jni-1.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-common/3/hadoop-common-3.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/hadoop/thirdparty/hadoop-shaded-guava/1/hadoop-shaded-guava-1.jar
-    - name: $MAVEN_REPOSITORY$/commons-collections/commons-collections/3/commons-collections-3.jar
-    - name: $MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4/stax2-api-4.jar
-    - name: $MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/5/woodstox-core-5.jar
-    - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-mapreduce-client-core/3/hadoop-mapreduce-client-core-3.jar
-    reason: <- intellij.evaluationPlugin.llm
-  - name: xerial.snappy.java
-    files:
-    - name: $MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1/snappy-java-1.jar
-    reason: <- intellij.evaluationPlugin.llm
   modules:
   - name: intellij.evaluationPlugin
   - name: intellij.evaluationPlugin.languages.cpp
@@ -59,3 +38,27 @@
   - name: intellij.evaluationPlugin.languages.java
   - name: intellij.evaluationPlugin.languages.python
   - name: intellij.evaluationPlugin.languages.kotlin
+- name: lib/jerolba.carpet.record.jar
+  library: jerolba.carpet.record
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jerolba/carpet-record/0/carpet-record-0.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-common/1/parquet-common-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-format-structures/1/parquet-format-structures-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-column/1/parquet-column-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-encoding/1/parquet-encoding-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-hadoop/1/parquet-hadoop-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/parquet/parquet-jackson/1/parquet-jackson-1.jar
+  - name: $MAVEN_REPOSITORY$/commons-pool/commons-pool/1/commons-pool-1.jar
+  - name: $MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1/zstd-jni-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-common/3/hadoop-common-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/hadoop/thirdparty/hadoop-shaded-guava/1/hadoop-shaded-guava-1.jar
+  - name: $MAVEN_REPOSITORY$/commons-collections/commons-collections/3/commons-collections-3.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4/stax2-api-4.jar
+  - name: $MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/5/woodstox-core-5.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-mapreduce-client-core/3/hadoop-mapreduce-client-core-3.jar
+  reason: <- intellij.evaluationPlugin.llm
+- name: lib/xerial.snappy.java.jar
+  library: xerial.snappy.java
+  files:
+  - name: $MAVEN_REPOSITORY$/org/xerial/snappy/snappy-java/1/snappy-java-1.jar
+  reason: <- intellij.evaluationPlugin.llm

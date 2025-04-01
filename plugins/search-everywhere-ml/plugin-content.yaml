@@ -1,3 +1,11 @@
+- name: lib/ai.grazie.emb.jar
+  library: ai.grazie.emb
+  module: intellij.searchEverywhereMl
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
 - name: lib/modules/intellij.searchEverywhereMl.ranking.core.jar
   contentModules:
   - name: intellij.searchEverywhereMl.ranking.core
@@ -21,12 +29,6 @@
 - name: lib/searchEverywhereMl.jar
   modules:
   - name: intellij.searchEverywhereMl
-    libraries:
-      ai.grazie.emb:
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
   contentModules:
   - name: intellij.searchEverywhereMl.typos
   - name: intellij.searchEverywhereMl.ranking.ext

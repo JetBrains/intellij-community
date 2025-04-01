@@ -1,22 +1,25 @@
+- name: lib/assertj-swing.jar
+  library: assertj-swing
+  files:
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-swing/3/assertj-swing-3.jar
+  reason: <- intellij.performanceTesting.remoteDriver
+- name: lib/assertj.jar
+  library: assertJ
+  files:
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/3/assertj-core-3.jar
+  - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1/byte-buddy-1.jar
+  reason: <- intellij.performanceTesting.remoteDriver
+- name: lib/github.oshi.core.jar
+  library: github.oshi.core
+  module: intellij.performanceTesting
+  files:
+  - name: $MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6/oshi-core-6.jar
 - name: lib/modules/intellij.performanceTesting.frontend.jar
   contentModules:
   - name: intellij.performanceTesting.frontend
 - name: lib/performanceTesting.jar
-  projectLibraries:
-  - name: assertJ
-    files:
-    - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/3/assertj-core-3.jar
-    - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1/byte-buddy-1.jar
-    reason: <- intellij.performanceTesting.remoteDriver
-  - name: assertj-swing
-    files:
-    - name: $MAVEN_REPOSITORY$/org/assertj/assertj-swing/3/assertj-swing-3.jar
-    reason: <- intellij.performanceTesting.remoteDriver
   modules:
   - name: intellij.performanceTesting
-    libraries:
-      github.oshi.core:
-      - name: $MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6/oshi-core-6.jar
   contentModules:
   - name: intellij.performanceTesting.remoteDriver
   - name: intellij.performanceTesting.vcs
