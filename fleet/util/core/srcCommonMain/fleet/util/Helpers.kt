@@ -32,3 +32,16 @@ fun <T> List<T>.indexOfOrNull(element: T): Int? {
     index
   }
 }
+
+fun <A, B> Iterable<A>.zipWithNulls(other: Iterable<B>): Iterable<Pair<A?, B?>> {
+  val iter1 = this.iterator()
+  val iter2 = other.iterator()
+
+  val list = ArrayList<Pair<A?, B?>>()
+  while (iter1.hasNext() || iter2.hasNext()) {
+    val v1 = if (iter1.hasNext()) iter1.next() else null
+    val v2 = if (iter2.hasNext()) iter2.next() else null
+    list.add(Pair(v1, v2))
+  }
+  return list
+}
