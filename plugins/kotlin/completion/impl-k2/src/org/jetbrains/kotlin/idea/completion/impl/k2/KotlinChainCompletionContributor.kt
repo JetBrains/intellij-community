@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
@@ -37,10 +36,11 @@ internal class KotlinChainCompletionContributor : CompletionContributor() {
                     val parameters = KotlinFirCompletionParameters.Original.create(parameters)
                         ?: return
 
-                    val nameExpression = parameters.delegate
-                        .originalPosition
-                        ?.parentOfType<KtDotQualifiedExpression>()
-                        ?.receiverExpression as? KtNameReferenceExpression
+                    val qualifiedExpression = parameters.position
+                        .parent
+                        ?.parent as? KtDotQualifiedExpression
+
+                    val nameExpression = qualifiedExpression?.receiverExpression as? KtNameReferenceExpression
                         ?: return
 
                     if (nameExpression.reference?.resolve() != null) return
