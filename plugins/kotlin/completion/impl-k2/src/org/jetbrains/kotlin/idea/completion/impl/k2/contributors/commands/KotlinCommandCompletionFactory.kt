@@ -6,22 +6,26 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.psi.KtContainerNode
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtForExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 
 class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
     override fun isApplicable(psiFile: PsiFile, offset: Int): Boolean {
+        if (offset < 1) return false
         if (psiFile !is KtFile) return false
-        var element = psiFile.findElementAt(offset)
+        var element = psiFile.findElementAt(offset - 1)
         val parent = element?.parent
-        if (parent !is KtForExpression) return true
-        element = element.prevSibling?.let {
-            if (it is KtContainerNode) it.firstChild else it
-        } ?: return true
-        return !parent.loopRange.isAncestor(element)
+        if (parent !is KtForExpression && parent !is KtNamedFunction) return true
+        if (parent is KtForExpression) {
+            element = element.prevSibling?.let {
+                if (it is KtContainerNode) it.firstChild else it
+            } ?: return true
+            return !parent.loopRange.isAncestor(element)
+        }
+        if (parent is KtNamedFunction) {
+            if (parent.nameIdentifier == element) return false
+        }
+        return true
     }
 
     override fun createFile(originalFile: PsiFile, text: String): PsiFile? {
