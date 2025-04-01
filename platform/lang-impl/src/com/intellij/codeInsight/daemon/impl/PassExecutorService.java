@@ -355,9 +355,6 @@ public final class PassExecutorService implements Disposable {
           }
         }
       });
-      if (pass.myPass instanceof ProgressableTextEditorHighlightingPass prog) {
-        prog.saveJob(job);
-      }
       mySubmittedPasses.get().put(pass, job);
     }
   }

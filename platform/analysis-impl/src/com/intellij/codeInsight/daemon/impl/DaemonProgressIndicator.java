@@ -166,7 +166,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public String toString() {
-    return System.identityHashCode(this) + (debug.get()>0 ? "; " + myTraceableDisposable.getStackTrace() + "\n;" : "") + (isCanceled() ? "X" : "V");
+    return System.identityHashCode(this) + (isCanceled() ? (isRunning() ? "X" : "S") : "V") + (debug.get()>0 ? "; " + myTraceableDisposable.getStackTrace() + "\n;" : "");
   }
 
   @Override
