@@ -425,7 +425,7 @@ class BackgroundWriteActionTest {
       runBlockingCancellable {
         assertRead()
         assertWrite() // since it is invoked on a thread with permission to write
-        assertNoWil()
+        assertWil()
       }
     }
   }
