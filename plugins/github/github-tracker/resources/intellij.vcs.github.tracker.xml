@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.github.tasks">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.tasks"/>
   </dependencies>
