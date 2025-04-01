@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.model;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -84,5 +85,13 @@ public class MavenWorkspaceMapWrapper {
     }
     matcher.appendTail(sb);
     return sb.toString();
+  }
+
+  public void register(MavenId id, File file) {
+    myWorkspaceMap.register(id, file);
+    Set<MavenId> mavenIds = myArtifactToIdToMavenIdMapping.get(id.getArtifactId());
+    if (null != mavenIds) {
+      mavenIds.add(id);
+    }
   }
 }
