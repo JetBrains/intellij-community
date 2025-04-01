@@ -56,5 +56,6 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
     const val BLOCK_TERMINAL_POWERSHELL_UNIX_REGISTRY: String = "terminal.new.ui.powershell.unix"
     const val BLOCK_TERMINAL_AUTOCOMPLETION: String = "terminal.new.ui.autocompletion"
     private const val BLOCK_TERMINAL_SHOW_PROMOTION: String = "terminal.new.ui.show.promotion"
+    const val REWORKED_TERMINAL_COMPLETION_POPUP: String = "terminal.new.ui.completion.popup"
   }
 }

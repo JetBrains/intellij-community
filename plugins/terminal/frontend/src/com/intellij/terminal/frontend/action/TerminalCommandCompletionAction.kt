@@ -4,8 +4,10 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.frontend.TerminalCommandCompletion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.REWORKED_TERMINAL_COMPLETION_POPUP
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
@@ -30,9 +32,8 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = e.editor?.isPromptEditor == true
-    if (e.editor?.isReworkedTerminalEditor == true) {
+    if (e.editor?.isReworkedTerminalEditor == true && Registry.`is`(REWORKED_TERMINAL_COMPLETION_POPUP)) {
       e.presentation.isEnabledAndVisible = true
-      //TODO("Check borders in last block")
     }
   }
 
