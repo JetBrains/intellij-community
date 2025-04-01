@@ -20,8 +20,8 @@ import com.intellij.util.LocalFileUrl
 import com.intellij.util.Urls
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.jetbrains.annotations.Nls
@@ -46,7 +46,7 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   override fun isSelected(event: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findMarkdownEditor(event)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    if (editor == null || file == null || !file.language.supportsMarkdown()) {
+    if (editor == null || file == null || !file.language.isMarkdownLanguage()) {
       event.presentation.isEnabledAndVisible = false
       return false
     }
