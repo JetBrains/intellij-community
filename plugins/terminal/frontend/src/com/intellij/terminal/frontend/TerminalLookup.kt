@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend
 
 
 import com.google.common.base.Ascii
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupArranger
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
@@ -10,7 +11,7 @@ import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.editor.Editor
 
 
-class TerminalLookup(session: ClientProjectSession, editor: Editor, myArranger: LookupArranger, val terminalInput: TerminalInput) : LookupImpl(session, editor, myArranger) {
+internal class TerminalLookup(session: ClientProjectSession, editor: Editor, myArranger: LookupArranger, val terminalInput: TerminalInput) : LookupImpl(session, editor, myArranger) {
 
   override fun isCompletion(): Boolean {
     return true

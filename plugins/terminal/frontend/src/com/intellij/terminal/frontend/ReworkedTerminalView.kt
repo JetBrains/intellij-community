@@ -101,6 +101,7 @@ internal class ReworkedTerminalView(
     )
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
+    outputEditor.putUserData(TerminalInput.KEY, terminalInput)
     outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
     updatePsiOnOutputModelChange(project, outputModel, coroutineScope.childScope("TerminalOutputPsiUpdater"))
 
@@ -398,7 +399,7 @@ internal class ReworkedTerminalView(
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
-      sink[TerminalInput.KEY] = terminalInput
+      sink[TerminalInput.DATA_KEY] = terminalInput
       sink[TerminalOutputModel.KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
     }

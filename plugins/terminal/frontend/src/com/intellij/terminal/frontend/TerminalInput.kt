@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
@@ -22,7 +23,8 @@ class TerminalInput(
   coroutineScope: CoroutineScope,
 ) {
   companion object {
-    val KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
+    val DATA_KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
+    val KEY: Key<TerminalInput> = Key<TerminalInput>("TerminalInput")
   }
 
   /**

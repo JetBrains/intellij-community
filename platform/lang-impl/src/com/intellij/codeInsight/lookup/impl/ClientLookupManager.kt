@@ -71,8 +71,10 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession) : Clie
     arranger: LookupArranger,
   ): LookupImpl {
     hideActiveLookup()
-
-    val lookup = createLookup(editor, arranger, session)
+    var lookup = LOOKUP_PROVIDER_EP.extensionList.firstNotNullOfOrNull { it.createLookup(editor, arranger, session) }
+    if (lookup == null) {
+      lookup = createLookup(editor, arranger, session)
+    }
     LOOKUP_CUSTOMIZATION_EP.extensionList.forEach { ex ->
       ex.customizeLookup(lookup)
     }
@@ -98,22 +100,16 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession) : Clie
     myActiveLookup?.hide()
     myActiveLookup = null
   }
-
-  @ApiStatus.Internal
-  fun putLookup(lookup: LookupImpl) {
-    Disposer.register(lookup) {
-      myActiveLookup = null
-      (LookupManagerImpl.getInstance(session.project) as LookupManagerImpl).fireActiveLookupChanged(lookup, null)
-    }
-    myActiveLookup = lookup
-  }
-
   protected abstract fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl
 }
 
 @ApiStatus.Experimental
 @Internal
 val LOOKUP_CUSTOMIZATION_EP: ExtensionPointName<LookupCustomizer> = ExtensionPointName("com.intellij.lookup.customizer")
+
+@ApiStatus.Experimental
+@Internal
+val LOOKUP_PROVIDER_EP: ExtensionPointName<LookupProvider> = ExtensionPointName.create("com.intellij.lookup.provider")
 
 /**
  * Represents a customization mechanism for a lookup interface. Classes implementing this
@@ -126,6 +122,12 @@ val LOOKUP_CUSTOMIZATION_EP: ExtensionPointName<LookupCustomizer> = ExtensionPoi
 @Internal
 interface LookupCustomizer {
   fun customizeLookup(lookupImpl: LookupImpl)
+}
+
+@ApiStatus.Experimental
+@Internal
+interface LookupProvider {
+  fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl?
 }
 
 @Internal

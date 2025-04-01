@@ -3,14 +3,8 @@ package com.intellij.terminal.frontend
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
-import com.intellij.codeInsight.lookup.LookupArranger.DefaultArranger
-import com.intellij.codeInsight.lookup.LookupFocusDegree
-import com.intellij.codeInsight.lookup.impl.ClientLookupManager
-import com.intellij.codeInsight.lookup.impl.ClientLookupManagerBase
-import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -24,7 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.withTimeout
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
-import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 
 internal class TerminalCommandCompletion(
@@ -44,14 +37,11 @@ internal class TerminalCommandCompletion(
     val project = commonEditor.project
                   ?: throw AssertionError("Project is null during completion")
 
-    val terminalInput = e.terminalInput
-                        ?: throw AssertionError("Terminal input is null during completion")
-
     val inputEvent = e.inputEvent
     val caret = prepareCaret(commonEditor, outputModel)
 
     invokeCompletion(project, commonEditor, time, inputEvent != null && inputEvent.modifiersEx != 0,
-                     caret, terminalInput)
+                     caret)
   }
 
   private fun invokeCompletion(
@@ -59,8 +49,7 @@ internal class TerminalCommandCompletion(
     editor: Editor,
     time: Int,
     hasModifiers: Boolean,
-    caret: Caret,
-    terminalInput: TerminalInput,
+    caret: Caret
   ) {
     var time = time
 
@@ -89,10 +78,6 @@ internal class TerminalCommandCompletion(
         context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
       }
 
-      val terminalLookup = obtainLookup(editor, project, autopopup, terminalInput)
-      val clientLookupManager = ClientLookupManager.getInstance(project.currentSession) as? ClientLookupManagerBase
-      clientLookupManager?.putLookup(terminalLookup)
-
       doComplete(context, hasModifiers, hasValidContext, startingTime)
     }
     try {
@@ -114,18 +99,4 @@ internal class TerminalCommandCompletion(
     markCaretAsProcessed(primaryCaret)
     return primaryCaret
   }
-
-  private fun obtainLookup(editor: Editor, project: Project, autopopup: Boolean, terminalInput: TerminalInput): LookupImpl {
-    val session = project.currentSession
-    val lookup = TerminalLookup(session, editor, DefaultArranger(), terminalInput) as LookupImpl
-
-    if (editor.isOneLineMode()) {
-      lookup.setCancelOnClickOutside(true)
-      lookup.setCancelOnOtherWindowOpen(true)
-    }
-    lookup.setLookupFocusDegree(if (autopopup) LookupFocusDegree.UNFOCUSED else LookupFocusDegree.FOCUSED)
-
-    return lookup
-  }
-
 }

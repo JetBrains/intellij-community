@@ -8,7 +8,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 
 internal object TerminalFrontendDataContextUtils {
   val AnActionEvent.terminalInput: TerminalInput?
-    get() = getData(TerminalInput.KEY)
+    get() = getData(TerminalInput.DATA_KEY)
 
   val AnActionEvent.terminalOutputModel: TerminalOutputModel?
     get() = getData(TerminalOutputModel.KEY)
