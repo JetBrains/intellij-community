@@ -30,3 +30,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar
   reason: <- intellij.devkit.workspaceModel
+- name: lib/modules/intellij.devkit.scaffolding.jar
+  contentModules:
+  - name: intellij.devkit.scaffolding

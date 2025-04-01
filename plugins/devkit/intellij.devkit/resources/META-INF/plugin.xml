@@ -35,6 +35,7 @@
     <module name="intellij.devkit.stacktrace"/>
     <module name="intellij.devkit.apiDump"/>
     <module name="intellij.devkit.apiDump.lang"/>
+    <module name="intellij.devkit.scaffolding"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
