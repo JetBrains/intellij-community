@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -31,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import junit.framework.AssertionFailedError;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +41,7 @@ import org.jetbrains.idea.eclipse.util.PathUtil;
 import javax.xml.bind.annotation.XmlElement;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
@@ -185,15 +186,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   }
 
   private static @NotNull PsiType getType(@NotNull PsiModifierListOwner listOwner) {
-    if (listOwner instanceof PsiMethod m) {
-      return m.getReturnType();
-    }
-    else if (listOwner instanceof PsiVariable f) {
-      return f.getType();
-    }
-    else {
-      throw new AssertionFailedError("" + listOwner);
-    }
+    return Objects.requireNonNull(PsiUtil.getTypeByPsiElement(listOwner), () -> String.valueOf(listOwner));
   }
 
   private static String validatePath(String pathString, PsiType type) {
