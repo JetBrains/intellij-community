@@ -31,16 +31,6 @@
                     relative-to-action="Debugger.AddToWatch.Frontend"/>
     </action>
 
-    <action id="XDebugger.JumpToSource.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToSourceAction"
-            use-shortcut-of="XDebugger.JumpToSource">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="first"/>
-    </action>
-
-    <action id="XDebugger.JumpToTypeSource.Frontend"
-            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToTypeSourceAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="after" relative-to-action="XDebugger.JumpToSource.Frontend"/>
-    </action>
-
     <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
@@ -53,6 +43,8 @@
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.currentSessionProxyProvider implementation="com.intellij.platform.debugger.impl.frontend.FrontendCurrentSessionProxyProvider"
                                            order="last"/>
+    <xdebugger.entityIdProvider implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerEntityIdProvider"
+                                order="last"/>
 
     <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
                  description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
