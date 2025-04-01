@@ -267,6 +267,7 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   internal fun initialize(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
+    assert(moduleName == null) // initialize is only called on main descriptors
     if (context.isPluginDisabled(id)) {
       markAsIncomplete(disabledDependency = null, shortMessage = null)
       return
