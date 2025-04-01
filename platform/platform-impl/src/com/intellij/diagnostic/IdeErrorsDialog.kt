@@ -25,6 +25,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.PluginId
@@ -398,7 +399,10 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     val pluginId = cluster.pluginId
     val plugin = cluster.plugin
     val info = StringBuilder()
-    if (pluginId != null) {
+    if (t is RemoteSerializedThrowable || (t is RuntimeExceptionWithAttachments && t.cause is RemoteSerializedThrowable)) {
+      info.append("[backend] ")
+    }
+    if (pluginId != null && !t.isSpecialBackendException()) {
       val name = if (plugin != null) plugin.name else pluginId.toString()
       if (plugin != null && (!plugin.isBundled || plugin.allowBundledUpdate())) {
         info.append(DiagnosticBundle.message("error.list.message.blame.plugin.version", name, plugin.version))
@@ -407,17 +411,17 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
         info.append(DiagnosticBundle.message("error.list.message.blame.plugin", name))
       }
     }
-    else if (t is AbstractMethodError) {
+    else if (t.isInstance<AbstractMethodError>()) {
       info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"))
     }
-    else if (t is Freeze) {
+    else if (t.isInstance<Freeze>()) {
       info.append(DiagnosticBundle.message("error.list.message.blame.freeze"))
     }
-    else if (t is JBRCrash) {
+    else if (t.isInstance<JBRCrash>()) {
       info.append(DiagnosticBundle.message("error.list.message.blame.jbr.crash"))
     }
-    else if (t is KotlinCompilerCrash) {
-      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash")).append(' ').append(t.version)
+    else if (t.isInstance<KotlinCompilerCrash>()) {
+      info.append(DiagnosticBundle.message("error.list.message.blame.kotlin.crash")).append(' ').append(t.kotlinVersionOrEmpty)
     }
     else {
       info.append(DiagnosticBundle.message("error.list.message.blame.core", ApplicationNamesInfo.getInstance().productName))
@@ -867,6 +871,24 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
         get() = if (ApplicationManager.getApplication().isInternal) DEFAULT else REPORT_AND_CLEAR_ALL
     }
   }
+
+  private inline fun <reified T : Throwable> Throwable.isBackendInstance() = this is RemoteSerializedThrowable
+                                                                             && classFqn == T::class.qualifiedName
+
+  private inline fun <reified T : Throwable> Throwable.isInstance() = isInstanceWithoutCause<T>()
+                                                                      || (this is RuntimeExceptionWithAttachments && cause?.isInstanceWithoutCause<T>() == true)
+
+  private inline fun <reified T : Throwable> Throwable.isInstanceWithoutCause() = this is T || isBackendInstance<T>()
+
+  // Since we do not handle Freezes/Abstract Methods/JBR Crashes gracefully for now. TODO: IJPL-182368
+  private fun Throwable.isSpecialBackendException() = this is RemoteSerializedThrowable
+                                                      && (isInstance<AbstractMethodError>() || isInstance<Freeze>() ||
+                                                          isInstance<JBRCrash>() || isInstance<KotlinCompilerCrash>())
+
+
+  // This is a very hacky method, since no actual cast is done for `RemoteSerializedThrowable``
+  private val Throwable.kotlinVersionOrEmpty: String
+    get() = (this as? KotlinCompilerCrash)?.version.orEmpty()
 
   @ApiStatus.Internal
   companion object {
