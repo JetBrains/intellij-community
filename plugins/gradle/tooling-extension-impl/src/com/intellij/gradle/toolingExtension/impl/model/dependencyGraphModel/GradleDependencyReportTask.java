@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 
 import com.google.gson.GsonBuilder;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.Configuration;
@@ -43,7 +44,9 @@ public class GradleDependencyReportTask extends DefaultTask {
   }
 
   public GradleDependencyReportTask() {
-    notCompatibleWithConfigurationCache("IDEA-347310 GradleDependencyReportTask not compatible with configuration cache");
+    if (GradleVersionUtil.isCurrentGradleAtLeast("7.4")) {
+      notCompatibleWithConfigurationCache("IDEA-347310 GradleDependencyReportTask not compatible with configuration cache");
+    }
   }
 
   @TaskAction
