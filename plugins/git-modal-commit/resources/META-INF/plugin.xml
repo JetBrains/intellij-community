@@ -23,7 +23,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <advancedSetting id="git.non.modal.commit" default="false" groupKey="advanced.settings.git"/>
-    <backgroundPostStartupActivity implementation="com.intellij.vcs.git.commit.modal.GitModalCommitToggler"/>
+    <vcsStartupActivity implementation="com.intellij.vcs.git.commit.modal.GitModalCommitToggler"/>
   </extensions>
 
   <applicationListeners>
