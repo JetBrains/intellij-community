@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
@@ -12,7 +11,6 @@ import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
@@ -40,13 +38,11 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarati
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -54,7 +50,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.types.Variance
 
@@ -340,47 +335,28 @@ internal open class FirCallableCompletionContributor(
                 }
 
                 if (showReceiver) return@sequence
-                if (!RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) return@sequence
-                sink.runRemainingContributors(parameters.delegate) { completionResult ->
-                    val lookupElement = completionResult.lookupElement
-                    val (_, importStrategy) = lookupElement.`object` as? ClassifierLookupObject
-                        ?: return@runRemainingContributors
+                runChainCompletion(positionContext, explicitReceiver) { receiverExpression,
+                                                                        positionContext,
+                                                                        importingStrategy ->
+                    val weighingContext = WeighingContext.create(parameters, positionContext)
 
-                    val nameToImport = when (importStrategy) {
-                        is ImportStrategy.AddImport -> importStrategy.nameToImport
-                        is ImportStrategy.InsertFqNameAndShorten -> importStrategy.fqName
-                        ImportStrategy.DoNothing -> null
-                    } ?: return@runRemainingContributors
+                    collectDotCompletion(
+                        positionContext = positionContext,
+                        scopeContext = weighingContext.scopeContext!!,
+                        explicitReceiver = receiverExpression,
+                        extensionChecker = null,
+                        showReceiver = true,
+                    ).flatMap { callableWithMetadata ->
+                        val signature = callableWithMetadata.signature
 
-                    val expression = KtPsiFactory.contextual(explicitReceiver)
-                        .createExpression(nameToImport.render() + "." + positionContext.nameExpression.text) as KtDotQualifiedExpression
-
-                    val nameExpression = expression.selectorExpression as? KtNameReferenceExpression ?: return@runRemainingContributors
-
-                    analyze(nameExpression) {
-                        val receiverExpression = expression.receiverExpression
-
-                        val positionContext = KotlinExpressionNameReferencePositionContext(nameExpression)
-                        val weighingContext = WeighingContext.create(parameters, positionContext)
-
-                        collectDotCompletion(
-                            positionContext = positionContext,
-                            scopeContext = weighingContext.scopeContext!!,
-                            explicitReceiver = receiverExpression,
-                            extensionChecker = null,
-                            showReceiver = true,
-                        ).flatMap { callableWithMetadata ->
-                            val signature = callableWithMetadata.signature
-
-                            createCallableLookupElements(
-                                context = weighingContext,
-                                signature = signature,
-                                options = callableWithMetadata.options.copy(importingStrategy = ImportStrategy.AddImport(nameToImport)),
-                                symbolOrigin = callableWithMetadata.symbolOrigin,
-                                presentableText = callableWithMetadata.itemText,
-                                withTrailingLambda = true,
-                            )
-                        }.forEach(sink::addElement)
+                        createCallableLookupElements(
+                            context = weighingContext,
+                            signature = signature,
+                            options = callableWithMetadata.options.copy(importingStrategy),
+                            symbolOrigin = callableWithMetadata.symbolOrigin,
+                            presentableText = callableWithMetadata.itemText,
+                            withTrailingLambda = true,
+                        )
                     }
                 }
             }
