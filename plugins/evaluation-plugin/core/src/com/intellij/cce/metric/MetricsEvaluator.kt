@@ -2,6 +2,8 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 
 class MetricsEvaluator private constructor(private val evaluationType: String) {
   companion object {
@@ -16,6 +18,8 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
       evaluator.registerMetrics(metrics)
       return evaluator
     }
+
+    val LOG: Logger = thisLogger()
   }
 
   private val metrics = mutableListOf<Metric>()
@@ -36,6 +40,9 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
 
   fun evaluate(sessions: List<Session>, numberOfSessions: Int): List<MetricInfo> {
     return metrics.map { metric ->
+      if(numberOfSessions > metric.maximumSessions)
+        LOG.warn("Confidence Interval not calculated for metric ${metric.name} because number of sessions $numberOfSessions exceeds maximum threshold of ${metric.maximumSessions} maximumSessions")
+
       val (overallScore, individualScores) = if (metric.supportsIndividualScores) {
         val evaluationResult = metric.evaluateWithIndividualScores(sessions)
         evaluationResult.overallScore.toDouble() to evaluationResult.sessionIndividualScores
