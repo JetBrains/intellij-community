@@ -19,6 +19,7 @@ import com.intellij.pom.Navigatable
 open class OpenInEditorAction : EditSourceAction(), DumbAware, ActionPromoter {
   init {
     copyFrom(this, "EditSource")
+    isEnabledInModalContext = true
   }
 
   override fun update(e: AnActionEvent) {
