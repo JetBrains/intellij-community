@@ -29,15 +29,23 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
     override fun getDirectDependents(module: KaModule): Set<KaModule> {
         return when (module) {
             is KaSourceModule -> getDirectDependentsForSourceModule(module)
+
             is KaLibraryModule -> {
                 if (module.isSdk) {
-                    // No dependents need to be provided for SDK modules and `KaBuiltinsModule` (see `KotlinModuleDependentsProvider`).
+                    // No dependents need to be provided for SDK modules (see `KotlinModuleDependentsProvider`).
                     return emptySet()
                 }
                 getDirectDependentsForLibraryNonSdkModule(module)
             }
+
             is KaLibrarySourceModule -> getDirectDependents(module.binaryLibrary)
 
+            is KaLibraryFallbackDependenciesModule -> buildSet {
+                add(module.dependentLibrary)
+                addIfNotNull(module.dependentLibrary.librarySources)
+            }
+
+            // No dependents need to be provided for builtins modules (see `KotlinModuleDependentsProvider`).
             is KaBuiltinsModule -> emptySet()
 
             // There is no way to find dependents of danging file modules, as such modules are created on-site.
