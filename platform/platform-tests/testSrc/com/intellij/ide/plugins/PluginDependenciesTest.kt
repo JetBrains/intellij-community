@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -124,7 +125,7 @@ internal class PluginDependenciesTest {
     PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
     PluginBuilder.empty()
       .id("sample.plugin")
-      .module("required.module", PluginBuilder.withModulesLang().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath.resolve("sample-plugin"))
     val result = buildPluginSet()
     assertThat(result).doesNotHaveEnabledPlugins()
@@ -568,9 +569,12 @@ internal class PluginDependenciesTest {
               PluginBuilder.empty().depends("foo").separateJar(true),
               loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath.resolve("bar"))
-    assertThatThrownBy {
-      buildPluginSet()
-    }.hasMessageContainingAll("content.module", "shouldn't have plugin dependencies", "foo")
+    val msg = LoggedErrorProcessor.executeAndReturnLoggedError {
+      assertThatThrownBy {
+        buildPluginSet()
+      }.hasMessageContainingAll("content.module", "shouldn't have plugin dependencies", "foo")
+    }
+    assertThat(msg).hasMessageContainingAll("Unexpected `depends` dependencies in a content module")
   }
 
   @Test
@@ -581,7 +585,7 @@ internal class PluginDependenciesTest {
       .id("bar")
       .depends("foo", PluginBuilder.empty().dependency("baz.module").packagePrefix("foo.baz"))
       .build(pluginDirPath.resolve("bar"))
-    val pluginSet = buildPluginSet()
+    val (pluginSet, err) = runAndReturnWithLoggedError { buildPluginSet() }
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo", "baz")
     val (bar, foo, baz) = pluginSet.getEnabledPlugins("bar", "foo", "baz")
     val bazModule = pluginSet.getEnabledModule("baz.module")
@@ -591,6 +595,7 @@ internal class PluginDependenciesTest {
       .hasDirectParentClassloaders(foo)
       .doesNotHaveTransitiveParentClassloaders(baz, bazModule)
     assertThat(barSub.moduleDependencies.modules).hasSize(1)
+    assertThat(err).hasMessageContainingAll("Unexpected `module` dependencies in a `depends` sub-descriptor")
   }
 
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
