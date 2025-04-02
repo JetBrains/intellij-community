@@ -56,7 +56,7 @@ private class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
 }
 
 @ApiStatus.Internal
-class ProjectLibraryTableBridgeImpl(
+open class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
