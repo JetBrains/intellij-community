@@ -377,8 +377,11 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
           return new IntentionPreviewInfo.Html(text(AnalysisBundle.message("preview.create.directory", createdDirs.get(0))));
         }
         return new IntentionPreviewInfo.Html(
-          tag("p").addText(AnalysisBundle.message("preview.create.directories"))
-            .child(tag("ul").children(ContainerUtil.map(createdDirs, text -> tag("li").addText(text))))
+          tag("p").addText(AnalysisBundle.message("preview.create.directories")).children(
+            ContainerUtil.map(createdDirs, text -> new HtmlBuilder().br()
+              .appendRaw("&bull; ") //NON-NLS
+              .append(text)
+              .toFragment()))
         );
       }
       return navigateInfo;
@@ -462,6 +465,9 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       List<?> oldList = (List<?>)option.oldValue();
       //noinspection unchecked
       return IntentionPreviewInfo.addListOption((List<String>)list, optList.label().label(), value -> !oldList.contains(value)).content();
+    }
+    if (newValue == null) {
+      throw new IllegalStateException("Null value is not supported");
     }
     throw new IllegalStateException("Value of type " + newValue.getClass() + " is not supported");
   }

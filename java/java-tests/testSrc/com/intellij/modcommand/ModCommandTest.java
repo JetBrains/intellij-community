@@ -81,6 +81,6 @@ public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
     IntentionPreviewInfo preview = ModCommandExecutor.getInstance().getPreview(command, ActionContext.from(null, getFile()));
     IntentionPreviewInfo.Html html = assertInstanceOf(preview, IntentionPreviewInfo.Html.class);
     String actual = html.content().toString();
-    assertEquals("<p>Create directories:<ul><li>a</li><li>a/b</li><li>a/c</li></ul></p>", actual);
+    assertEquals("<p>Create directories:<br/>&bull; a<br/>&bull; a/b<br/>&bull; a/c</p>", actual);
   }
 }
