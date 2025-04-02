@@ -401,6 +401,30 @@ class PluginDescriptorTest {
       .containsAll(productAliases)
   }
 
+  @Test
+  fun `content module may have content modules but they are disregarded`() {
+    PluginBuilder.empty().id("bar")
+      .module(moduleName = "bar.module",
+              PluginBuilder.empty()
+                .packagePrefix("bar.module")
+                .module("bar.module.inner",
+                        PluginBuilder.empty().packagePrefix("bar.module.inner"),
+                        loadingRule = ModuleLoadingRule.REQUIRED),
+              loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginDirPath)
+    val (bar, err) = runAndReturnWithLoggedError { loadDescriptorInTest(pluginDirPath) }
+    assertThat(err).hasMessageContainingAll("Unexpected `content` elements in a content module")
+    assertThat(bar).isNotNull
+      .isMarkedEnabled()
+      .hasExactlyEnabledContentModules("bar.module")
+    val barModule = bar.content.modules[0].requireDescriptor()
+    assertThat(barModule).isNotNull
+      .isMarkedEnabled()
+      .doesNotHaveEnabledContentModules()
+    assertThat(barModule.content.modules).hasSize(1)
+    assertThat(barModule.content.modules[0].getDescriptorOrNull()).isNull()
+  }
+
   // todo this is rather about plugin set loading, probably needs to be moved out
   @Test
   fun `only one instance of a plugin is loaded if it's duplicated`() {
