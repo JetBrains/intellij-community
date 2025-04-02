@@ -779,6 +779,16 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         public void testValRemoveCustomAccessor() throws Exception {
             runTest("pureKotlin/valRemoveCustomAccessor/");
         }
+
+        @TestMetadata("wrapJvmFieldInJvmNameWithObject")
+        public void testWrapJvmFieldInJvmNameWithObject() throws Exception {
+            runTest("pureKotlin/wrapJvmFieldInJvmNameWithObject/");
+        }
+
+        @TestMetadata("unwrapJvmFieldInJvmNameFromObject")
+        public void testUnwrapJvmFieldInJvmNameFromObject() throws Exception {
+            runTest("pureKotlin/unwrapJvmFieldInJvmNameFromObject/");
+        }
     }
 
     @TestMetadata("classHierarchyAffected")
