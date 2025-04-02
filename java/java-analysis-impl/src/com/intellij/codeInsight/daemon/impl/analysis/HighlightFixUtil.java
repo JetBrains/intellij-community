@@ -543,6 +543,10 @@ public final class HighlightFixUtil {
       PsiClass expressionClass = PsiUtil.resolveClassInType(expressionType);
       if (parameterClass == null || expressionClass == null) continue;
       if (expressionClass instanceof PsiAnonymousClass) continue;
+      if (expressionClass.equals(parameterClass)) {
+        // The class might be the same, but type arguments are incompatible
+        continue;
+      }
       if (expressionClass.isInheritor(parameterClass, true)) continue;
       IntentionAction action = QuickFixFactory.getInstance().createChangeParameterClassFix(expressionClass, (PsiClassType)parameterType);
       info.accept(action);
