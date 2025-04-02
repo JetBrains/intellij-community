@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.psi.types.PyTypeVarType.Variance
 
 class PyTypeHintsInspection : PyInspection() {
 
@@ -357,6 +358,7 @@ class PyTypeHintsInspection : PyInspection() {
 
 
       checkTypeCommentAndParameters(node)
+      checkTypeVarsInFunctionAnnotations(node)
     }
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
@@ -1336,6 +1338,29 @@ class PyTypeHintsInspection : PyInspection() {
 
           registerProblem(node.typeComment, PyPsiBundle.message("INSP.type.hints.type.self.not.supertype.its.class",
                                                                 commentSelfTypeDescription, actualSelfTypeDescription))
+        }
+      }
+    }
+
+    private fun checkTypeVarsInFunctionAnnotations(function: PyFunction) {
+      if (PyUtil.isInitOrNewMethod(function)) return
+      val parameterList = function.parameterList
+      val parameters = parameterList.parameters
+      parameters
+        .filterIsInstance<PyNamedParameter>()
+        .mapNotNull { parameter -> parameter.annotation?.value }
+        .forEach { annotationValue ->
+          val type = Ref.deref(PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext))
+          if (type is PyTypeVarType && type.variance == Variance.COVARIANT) {
+            registerProblem(annotationValue, PyPsiBundle.message("INSP.type.hints.cannot.use.covariant.in.function.param"))
+          }
+        }
+
+      val returnAnnotation = function.annotation?.value
+      if (returnAnnotation != null) {
+        val type = Ref.deref(PyTypingTypeProvider.getType(returnAnnotation, myTypeEvalContext))
+        if (type is PyTypeVarType && type.variance == Variance.CONTRAVARIANT) {
+          registerProblem(returnAnnotation, PyPsiBundle.message("INSP.type.hints.cannot.use.contravariant.in.return.type"))
         }
       }
     }

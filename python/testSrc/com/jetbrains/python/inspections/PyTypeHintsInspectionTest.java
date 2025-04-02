@@ -2832,6 +2832,38 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                """);
   }
 
+  // PY-80166
+  public void testCovariantTypeVarsCannotBeUsedInFunctionParameterTypes() {
+    doTestByText("""
+                   from typing import TypeVar, Generic
+                   
+                   T_co = TypeVar('T_co', covariant=True)
+                   T_contra = TypeVar('T_contra', contravariant=True)
+                   
+                   def foo(x: <warning descr="Covariant type variable cannot be used in parameter type">T_co</warning>) -> None: ...
+                   
+                   class Foo(Generic[T_co]):
+                      def __init__(self, x: T_co) -> None: ... # allowed in __init__
+                      def dosmth(self, x: <warning descr="Covariant type variable cannot be used in parameter type">T_co</warning>) -> None: ...
+                   """);
+  }
+
+  // PY-80167
+  public void testContravariantTypeVarsCannotBeUsedInFunctionReturnType() {
+    doTestByText("""
+                   from typing import TypeVar, Generic
+                   
+                   T_co = TypeVar('T_co', covariant=True)
+                   T_contra = TypeVar('T_contra', contravariant=True)
+                   
+                   def foo(x: T_contra) -> <warning descr="Contravariant type variable cannot be used in function return type">T_contra</warning>: ...
+                   
+                   class Foo(Generic[T_co]):
+                      def dosmth(self, x: T_contra) -> <warning descr="Contravariant type variable cannot be used in function return type">T_contra</warning>: ...
+                   """);
+  }
+
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
