@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -150,7 +150,10 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
           }
         }
         else {
-          while (context != null && !(context instanceof PsiStatement) && !(context instanceof PsiClass)) {
+          while (context != null &&
+                 !(context instanceof PsiStatement) &&
+                 !(context instanceof PsiClass) &&
+                 !(context instanceof PsiParameterListOwner)) {
             context = context.getParent();
           }
         }
