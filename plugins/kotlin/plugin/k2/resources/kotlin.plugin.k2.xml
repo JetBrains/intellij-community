@@ -121,7 +121,7 @@
 
     <registryKey key="kotlin.k2.chain.completion.enabled"
                  description="Allow chained completion items in Kotlin"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="true"/>
 
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
