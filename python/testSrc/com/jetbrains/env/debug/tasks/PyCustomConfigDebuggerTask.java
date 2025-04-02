@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tasks;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.*;
+import com.jetbrains.env.LockSafeSemaphore;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebugValueExecutionService;
@@ -138,7 +139,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
           });
       });
 
-      myPausedSemaphore = new Semaphore(0);
+      myPausedSemaphore = new LockSafeSemaphore(0);
 
       mySession.addSessionListener(new XDebugSessionListener() {
         @Override
@@ -230,7 +231,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
         });
     });
 
-    myPausedSemaphore = new Semaphore(0);
+    myPausedSemaphore = new LockSafeSemaphore(0);
 
     mySession.addSessionListener(new XDebugSessionListener() {
       @Override

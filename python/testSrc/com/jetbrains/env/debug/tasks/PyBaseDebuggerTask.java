@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tasks;
 
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
 
 public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected PyDebugProcess myDebugProcess;
@@ -131,7 +132,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
     getSmartStepIntoVariantsAsync().onSuccess(smartStepIntoVariants -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
           for (Object o : smartStepIntoVariants) {
             PySmartStepIntoVariant variant = (PySmartStepIntoVariant)o;
             if (variant.getFunctionName().equals(funcName) && variant.getCallOrder() == callOrder)
@@ -343,7 +344,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  protected static XBreakpoint addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
+  public static XBreakpoint addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
     return XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
   }
 
@@ -545,6 +546,11 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   public @NotNull Promise<? extends List<?>> getSmartStepIntoVariantsAsync() {
       XSourcePosition position = XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition();
       return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariantsAsync(position);
+  }
+
+  public List<?> getSmartStepIntoVariants() {
+    XSourcePosition position = XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition();
+    return myDebugProcess.getSmartStepIntoHandler().computeSmartStepVariants(position);
   }
 
   @Override
