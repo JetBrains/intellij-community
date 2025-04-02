@@ -9,7 +9,7 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.providers.actions.SeActionsProvider
+import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsProvider
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking

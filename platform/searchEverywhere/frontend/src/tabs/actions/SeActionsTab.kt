@@ -9,8 +9,8 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsFilterData
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import com.intellij.platform.searchEverywhere.providers.actions.SeActionsFilterData
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

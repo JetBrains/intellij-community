@@ -19,7 +19,7 @@ class SeActionsTabFactory : SeTabFactory {
                                         "Actions",
                                         listOf(SeProviderId("com.intellij.ActionsItemsProvider")),
                                         dataContext,
-                                        true)
+                                        false)
     return SeActionsTab(delegate)
   }
 }
