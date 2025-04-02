@@ -50,10 +50,10 @@ internal class KaLibrarySdkModuleImpl @InternalKaModuleConstructor constructor(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         return other is KaLibrarySdkModuleImpl
-                && other.sdk == sdk
+                && other.entity == entityId
     }
 
     override fun hashCode(): Int {
-        return sdk.hashCode()
+        return entityId.hashCode()
     }
 }
