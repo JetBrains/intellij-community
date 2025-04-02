@@ -3,19 +3,19 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiNavigator
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertToStringLiteral
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertToRawStringLiteral
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-fun convertToStringLiteral(element: KtStringTemplateExpression, context: ActionContext, updater: ModPsiNavigator) {
+fun convertToRawStringLiteral(element: KtStringTemplateExpression, context: ActionContext, updater: ModPsiNavigator) {
     // Note that we must get the offset before replace element to a string literal
     // because after the conversion, element will be a dangling KtExpression.
     val startOffset = element.startOffset
     val endOffset = element.endOffset
     val currentOffset = context.offset
 
-    val replaced = element.convertToStringLiteral()
+    val replaced = element.convertToRawStringLiteral()
 
     val offset = when {
         startOffset == currentOffset -> startOffset

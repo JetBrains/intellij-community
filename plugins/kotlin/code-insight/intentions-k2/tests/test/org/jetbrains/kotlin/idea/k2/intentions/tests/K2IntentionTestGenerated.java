@@ -3716,16 +3716,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/invalidChar.kt");
         }
 
-        @TestMetadata("KTIJ-30491.kt")
-        public void testKTIJ_30491() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/KTIJ-30491.kt");
-        }
-
-        @TestMetadata("KTIJ-30491-2.kt")
-        public void testKTIJ_30491_2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/KTIJ-30491-2.kt");
-        }
-
         @TestMetadata("KT-11295.kt")
         public void testKT_11295() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/KT-11295.kt");
@@ -3874,6 +3864,55 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("unescapeSingleQuote.kt")
         public void testUnescapeSingleQuote() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToStringTemplate/unescapeSingleQuote.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix")
+    public static class ConvertToStringTemplateInterpolationPrefix extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("interpolationPrefixDangerousPlainText.kt")
+        public void testInterpolationPrefixDangerousPlainText() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix/interpolationPrefixDangerousPlainText.kt");
+        }
+
+        @TestMetadata("interpolationPrefixLengthOnePlainText.kt")
+        public void testInterpolationPrefixLengthOnePlainText() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix/interpolationPrefixLengthOnePlainText.kt");
+        }
+
+        @TestMetadata("interpolationPrefixNewLine.kt")
+        public void testInterpolationPrefixNewLine() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix/interpolationPrefixNewLine.kt");
+        }
+
+        @TestMetadata("interpolationPrefixPlainText.kt")
+        public void testInterpolationPrefixPlainText() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix/interpolationPrefixPlainText.kt");
+        }
+
+        @TestMetadata("interpolationPrefixTrailingDollars.kt")
+        public void testInterpolationPrefixTrailingDollars() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix/interpolationPrefixTrailingDollars.kt");
+        }
+
+        @TestMetadata("interpolationPrefixTrailingSimpleNameEntries.kt")
+        public void testInterpolationPrefixTrailingSimpleNameEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix/interpolationPrefixTrailingSimpleNameEntries.kt");
+        }
+
+        @TestMetadata("interpolationPrefixWithEntries.kt")
+        public void testInterpolationPrefixWithEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToStringTemplateInterpolationPrefix/interpolationPrefixWithEntries.kt");
         }
     }
 
@@ -5706,14 +5745,34 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/consecutiveBreaks.kt");
         }
 
-        @TestMetadata("KTIJ-30275.kt")
-        public void testKTIJ_30275() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/KTIJ-30275.kt");
-        }
-
         @TestMetadata("multiDollar.kt")
         public void testMultiDollar() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/multiDollar.kt");
+        }
+
+        @TestMetadata("multiDollarEscapedChars.kt")
+        public void testMultiDollarEscapedChars() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/multiDollarEscapedChars.kt");
+        }
+
+        @TestMetadata("multiDollarEscapedNewLine.kt")
+        public void testMultiDollarEscapedNewLine() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/multiDollarEscapedNewLine.kt");
+        }
+
+        @TestMetadata("multiDollarSimpleNameEntriesNeedEscaping.kt")
+        public void testMultiDollarSimpleNameEntriesNeedEscaping() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/multiDollarSimpleNameEntriesNeedEscaping.kt");
+        }
+
+        @TestMetadata("multiDollarSimpleNameEntryLast.kt")
+        public void testMultiDollarSimpleNameEntryLast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/multiDollarSimpleNameEntryLast.kt");
+        }
+
+        @TestMetadata("multiDollarTrailingDollars.kt")
+        public void testMultiDollarTrailingDollars() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToRawStringTemplate/multiDollarTrailingDollars.kt");
         }
 
         @TestMetadata("octalEscape.kt")

@@ -2,5 +2,5 @@
 // IGNORE_K1
 
 fun test(n: Int) {
-    <caret>$$"Bar" + n + "!"
+    """Bar$n!"""
 }

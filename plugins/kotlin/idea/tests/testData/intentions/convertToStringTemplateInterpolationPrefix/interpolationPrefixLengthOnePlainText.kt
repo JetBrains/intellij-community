@@ -1,6 +1,6 @@
-// IS_APPLICABLE: false
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
-// SKIP_ERRORS_BEFORE
+// ISSUE: KTIJ-30491
+
 fun main(args: Array<String>) {
     val name = "Alice"
     val welcomeMessage = <caret>$"Hi, " + name + "!"

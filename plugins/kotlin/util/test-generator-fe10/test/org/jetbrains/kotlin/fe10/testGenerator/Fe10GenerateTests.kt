@@ -585,6 +585,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "concatenationToBuildCollection", // K2-only
                     "convertStringTemplateToBuildStringMultiDollarPrefix", // K2-only
                     "convertToConcatenatedStringMultiDollarPrefix", // K2-only
+                    "convertToStringTemplateInterpolationPrefix", // K2-only
                 )
             )
         }

@@ -16,9 +16,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isToString
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getContentRange
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
-
-private const val TRIPLE_DOUBLE_QUOTE = "\"\"\""
 
 /**
  * Recursively visits all operands of binary expression with plus and,
@@ -102,7 +101,7 @@ private fun KtExpression.dropToStringAndParenthesis(): KtExpression =
  *
  * Usage Example:
  *   When we convert
- *     "a" + 1 + 'b' + foo + 2.3f + bar -> "a1b${foo}2.3f{bar}"
+ *     "a" + 1 + 'b' + foo + 2.3f + bar -> "a1b${foo}2.3f${bar}"
  *   this function can convert `bar` to "${bar}", `2.3f` to "2.3f", ...
  */
 context(KaSession)
@@ -141,33 +140,33 @@ private fun KtConstantExpression.buildStringTemplateForExpression(forceBraces: B
 }
 
 private fun KtStringTemplateExpression.buildStringTemplateForExpression(forceBraces: Boolean, nextText: String?): String {
-    val base = if (text.startsWith(TRIPLE_DOUBLE_QUOTE) && text.endsWith(TRIPLE_DOUBLE_QUOTE)) {
-        val unquoted =
-            text.substring(TRIPLE_DOUBLE_QUOTE.length, text.length - TRIPLE_DOUBLE_QUOTE.length)
-        StringUtil.escapeStringCharacters(unquoted)
-    } else {
-        StringUtil.unquoteString(text)
+    val stringWithoutPrefix = convertToStringWithoutPrefix(copy() as KtStringTemplateExpression)
+
+    val stringContent = stringWithoutPrefix.getContentRange().substring(stringWithoutPrefix.text).let { content ->
+        if (!isSingleQuoted()) StringUtil.escapeStringCharacters(content) else content
     }
 
-    val endsWithUnescapedDollar = base.endsWith('$') && !base.endsWith("\\$")
+    val endsWithUnescapedDollar = stringContent.endsWith('$') && !stringContent.endsWith("\\$")
     val escapeTailDollar = endsWithUnescapedDollar && nextText?.startsWith('{') == true
 
     if (forceBraces || escapeTailDollar) {
         if (endsWithUnescapedDollar) {
-            return base.dropLast(n = 1) + "\\$"
+            return stringContent.dropLast(n = 1) + "\\$"
         } else {
-            val lastPart = children.lastOrNull()
+            val lastPart = stringWithoutPrefix.entries.lastOrNull()
             if (lastPart is KtSimpleNameStringTemplateEntry) {
-                return base.dropLast(lastPart.textLength) + "\${" + lastPart.text.drop(n = 1) + "}"
+                return stringContent.dropLast(lastPart.textLength) + "\${" + lastPart.text.drop(n = 1) + "}"
             }
         }
     }
-    return base
+    return stringContent
 }
 
 context(KaSession)
 private fun foldOperandsOfBinaryExpression(left: KtExpression?, right: String, factory: KtPsiFactory): KtStringTemplateExpression {
-    val forceBraces = right.isNotEmpty() && right.first() != '$' && right.first().isJavaIdentifierPart()
+    val forceBraces = right.isNotEmpty()
+            && right.first() != '$'
+            && right.first().let { it.isJavaIdentifierPart() || it.canBeStartOfIdentifierOrBlock() }
 
     return if (left is KtBinaryExpression && isStringPlusExpressionWithoutNewLineInOperands(left)) {
         val leftRight = buildStringTemplateForExpression(left.right, forceBraces, right)
@@ -187,7 +186,6 @@ fun buildStringTemplateForBinaryExpression(expression: KtBinaryExpression): KtSt
 context(KaSession)
 fun canConvertToStringTemplate(expression: KtBinaryExpression): Boolean {
     if (expression.textContains('\n')) return false
-    if (expression.containsPrefixedStringOperands()) return false
 
     val entries = buildStringTemplateForBinaryExpression(expression).entries
     return entries.none { it is KtBlockStringTemplateEntry }
@@ -215,7 +213,7 @@ fun convertContentForRawString(element: KtStringTemplateExpression): String {
 
             if (value.endsWith("$") && index < entries.lastIndex) {
                 val nextChar = entries[index + 1].value().first()
-                if (nextChar.isJavaIdentifierStart() || nextChar == '{') {
+                if (nextChar.canBeStartOfIdentifierOrBlock()) {
                     append(value.substring(0, value.length - 1))
                     append(escapedDollarReplacementText)
                     continue
@@ -249,7 +247,7 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
     return !converted.contains("\"\"\"")
 }
 
-fun KtStringTemplateExpression.convertToStringLiteral(): KtExpression {
+fun KtStringTemplateExpression.convertToRawStringLiteral(): KtExpression {
     val text = convertContentForRawString(this)
     val prefixLength = templatePrefixLength
     val factory = KtPsiFactory(project)
