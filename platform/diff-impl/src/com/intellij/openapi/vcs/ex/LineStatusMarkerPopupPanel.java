@@ -122,6 +122,10 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
+    if (myEditorComponent == null) {
+      return super.getPreferredSize();
+    }
+
     Window window = UIUtil.getWindow(myEditor.getComponent());
     Dimension windowSize;
     if (window != null) {
