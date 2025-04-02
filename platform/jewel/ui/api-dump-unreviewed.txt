@@ -230,10 +230,14 @@ f:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - <init>():V
-- f:getLambda$-745244970$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda$1517724418$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda$319830002$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
-- f:getLambda$505847611$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-1555647357$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-516555399$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-812795800$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$-964818995$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$1503990447$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$152227743$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$1892680925$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
+- f:getLambda$423463284$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$MenuKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$MenuKt
 - <init>():V
@@ -347,10 +351,14 @@ f:org.jetbrains.jewel.ui.component.IconKt
 - sf:Icon-ww6aTOc(androidx.compose.ui.graphics.vector.ImageVector,java.lang.String,androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I,I):V
 - sf:painterResource(java.lang.String,androidx.compose.runtime.Composer,I):androidx.compose.ui.graphics.painter.Painter
 f:org.jetbrains.jewel.ui.component.InlineBannerKt
-- sf:ErrorInlineBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:InformationInlineBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:SuccessInlineBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
-- sf:WarningInlineBanner(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:ErrorInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:ErrorInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:InformationInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:InformationInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:SuccessInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:SuccessInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:WarningInlineBanner(androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:WarningInlineBanner(java.lang.String,androidx.compose.ui.Modifier,java.lang.String,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function3,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.InputFieldState
 - org.jetbrains.jewel.foundation.state.FocusableComponentState
 - sf:Companion:org.jetbrains.jewel.ui.component.InputFieldState$Companion
