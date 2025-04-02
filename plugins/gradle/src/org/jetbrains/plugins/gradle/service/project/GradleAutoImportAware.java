@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
@@ -103,15 +102,17 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
 
   @Override
   public @NotNull List<File> getAffectedExternalProjectFiles(@NotNull String externalProjectPath, @NotNull Project project) {
-    GradleSettings settings = GradleSettings.getInstance(project);
-    GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+    var settings = GradleSettings.getInstance(project);
+    var projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
     if (projectSettings == null) {
       return Collections.emptyList();
     }
-    return GradleAutoReloadSettingsCollector.EP_NAME.getExtensionList().stream()
-      .flatMap(it -> it.collectSettingsFiles(project, projectSettings).stream())
-      .map(it -> it.toFile())
-      .collect(Collectors.toList());
+    var result = new SmartList<File>();
+    GradleAutoReloadSettingsCollector.EP_NAME.forEachExtensionSafe(extension -> {
+      var settingsFiles = extension.collectSettingsFiles(project, projectSettings);
+      result.addAll(ContainerUtil.map(settingsFiles, it -> it.toFile()));
+    });
+    return result;
   }
 
   public static final class GradlePropertiesCollector implements GradleAutoReloadSettingsCollector {

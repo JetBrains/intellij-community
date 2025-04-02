@@ -26,7 +26,8 @@ interface GradleAutoReloadSettingsCollector {
   fun collectSettingsFiles(project: Project, projectSettings: GradleProjectSettings): List<Path>
 
   companion object {
+
     @JvmField
-    val EP_NAME = ExtensionPointName.create<GradleAutoReloadSettingsCollector>("org.jetbrains.plugins.gradle.autoReloadSettingsCollector")
+    val EP_NAME: ExtensionPointName<GradleAutoReloadSettingsCollector> = ExtensionPointName.create("org.jetbrains.plugins.gradle.autoReloadSettingsCollector")
   }
 }
