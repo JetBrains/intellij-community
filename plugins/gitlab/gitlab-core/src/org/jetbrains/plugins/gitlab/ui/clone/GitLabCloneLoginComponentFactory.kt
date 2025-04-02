@@ -12,7 +12,6 @@ import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.components.service
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.dsl.builder.AlignX
@@ -72,7 +71,9 @@ internal object GitLabCloneLoginComponentFactory {
 
     loginButton.addActionListener {
       cs.launch {
-        validateAndApplyAction(loginInputPanel, loginModel::login)
+        CollaborationToolsUIUtil.validateAndApplyAction(loginInputPanel) {
+          loginModel.login()
+        }
       }
     }
 
@@ -80,19 +81,6 @@ internal object GitLabCloneLoginComponentFactory {
       border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
       add(titlePanel)
       add(loginInputPanel)
-    }
-  }
-
-  private suspend fun validateAndApplyAction(panel: DialogPanel, action: suspend () -> Unit) {
-    panel.apply()
-    val errors = panel.validateAll()
-    if (errors.isEmpty()) {
-      action()
-      panel.reset()
-    }
-    else {
-      val componentWithError = errors.first().component ?: return
-      CollaborationToolsUIUtil.focusPanel(componentWithError)
     }
   }
 }
