@@ -11,7 +11,6 @@ kt_jvm_library(
         "@lib//:kotlin-stdlib",
         "@lib//:kotlinx-collections-immutable",
         "//:collection",
-        "@lib//:fastutil-min",
         "//zip",
         "//:opentelemetry-api",
         "//src/worker-util",

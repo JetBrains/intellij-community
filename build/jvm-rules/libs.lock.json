@@ -99,6 +99,10 @@
     "29fe15fac68e30fdd59364bcd8b5058490cc85269fd47fb460abaff1fb61243d",
     "90709044e442c5998d68ce146e487ba89d1eb859c4ddf67defa2d8131390e10e"
   ],
+  "org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.15-jb1": [
+    "5a0d7557d494732a6165e4188eb11f10faca196350cad04d9950abd83e6dd148",
+    "57d0e59cd6f6bd931d893ab0089bdcb13aee0ed78f1f8e85d88bc55b89815211"
+  ],
   "org.jetbrains.kotlin:kotlin-build-tools-api:2.1.20-RC3": [
     "6a68444b624432e23268df01450895fc67c042ef6da3ee0eda343fbd1f8eecea",
     "fe86558db8dc6b7712ef376b92de40f3573dd844f2529424fb8162309b97d7f6"

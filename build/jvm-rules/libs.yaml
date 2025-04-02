@@ -105,3 +105,5 @@
   libs:
     - id: jetbrains.fleet:expects-compiler-plugin
       version: 2.1.20-RC2-0.3
+    - id: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil
+      version: 8.5.15-jb1

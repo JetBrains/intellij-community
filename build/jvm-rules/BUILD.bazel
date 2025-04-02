@@ -353,4 +353,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "intellij-deps-fastutil",
+    jar = "@intellij-deps-fastutil//file",
+    source_jar = "@intellij-deps-fastutil-sources//file",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `libraries` end
