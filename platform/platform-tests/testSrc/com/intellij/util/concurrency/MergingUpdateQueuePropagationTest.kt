@@ -10,15 +10,24 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.Alarm
 import com.intellij.util.MergingUpdateQueueActivityTracker
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.util.ui.update.queueTracked
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("UsagesOfObsoleteApi")
 @TestApplication
@@ -87,5 +96,42 @@ class MergingUpdateQueuePropagationTest {
 
       assertThat(dumpObservedComputations()).hasSize(0)
     }
+  }
+
+  @Test
+  fun `cancellation of scope during processing of updates`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val queueProcessingJob = Job()
+    val queue = MergingUpdateQueue("test queue", 200, true, null, null, null, Alarm.ThreadToUse.POOLED_THREAD, coroutineScope = CoroutineScope(queueProcessingJob))
+    val firstUpdateJob = Job()
+    val firstUpdateStarted = Job()
+    val update1 = Update.create(1) {
+      firstUpdateStarted.complete()
+      firstUpdateJob.asCompletableFuture().get()
+    }
+    queue.queue(update1)
+    val update2 = Update.create(2) {
+      fail("Update 2 should not be executed")
+    }
+    queue.queue(update2)
+    firstUpdateStarted.join()
+    queueProcessingJob.cancel()
+    firstUpdateJob.complete()
+    delay(100.milliseconds)
+    assertTrue(queue.isEmpty)
+    assertTrue(update2.isRejected)
+  }
+
+  @Test
+  fun `cancellation of scope before processing of updates`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val queueProcessingJob = Job()
+    val queue = MergingUpdateQueue("test queue", 200, true, null, null, null, Alarm.ThreadToUse.POOLED_THREAD, coroutineScope = CoroutineScope(queueProcessingJob))
+    val update = Update.create(2) {
+      fail("Update should not be executed")
+    }
+    queue.queue(update)
+    queueProcessingJob.cancel()
+    assertFalse(update.isRejected)
+    delay(400.milliseconds)
+    assertTrue(update.isRejected)
   }
 }
