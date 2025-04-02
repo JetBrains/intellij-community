@@ -5314,6 +5314,125 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertArgumentToSet")
+    public static class ConvertArgumentToSet extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("infixIntersect.kt")
+        public void testInfixIntersect() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/infixIntersect.kt");
+        }
+
+        @TestMetadata("infixSubtract.kt")
+        public void testInfixSubtract() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/infixSubtract.kt");
+        }
+
+        @TestMetadata("iterableMinusArrayListOf.kt")
+        public void testIterableMinusArrayListOf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusArrayListOf.kt");
+        }
+
+        @TestMetadata("iterableMinusArrayOfIndirect.kt")
+        public void testIterableMinusArrayOfIndirect() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusArrayOfIndirect.kt");
+        }
+
+        @TestMetadata("iterableMinusArrayOfQualified.kt")
+        public void testIterableMinusArrayOfQualified() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusArrayOfQualified.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfImportAlias.kt")
+        public void testIterableMinusListOfImportAlias() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusListOfImportAlias.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfIndirect.kt")
+        public void testIterableMinusListOfIndirect() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusListOfIndirect.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfQualified.kt")
+        public void testIterableMinusListOfQualified() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusListOfQualified.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfShadowed.kt")
+        public void testIterableMinusListOfShadowed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusListOfShadowed.kt");
+        }
+
+        @TestMetadata("iterableMinusMutableListOf.kt")
+        public void testIterableMinusMutableListOf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusMutableListOf.kt");
+        }
+
+        @TestMetadata("iterableMinusSequenceOfIndirect.kt")
+        public void testIterableMinusSequenceOfIndirect() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusSequenceOfIndirect.kt");
+        }
+
+        @TestMetadata("iterableMinusSequenceOfIndirectQualified.kt")
+        public void testIterableMinusSequenceOfIndirectQualified() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/iterableMinusSequenceOfIndirectQualified.kt");
+        }
+
+        @TestMetadata("listOfInferredConstant.kt")
+        public void testListOfInferredConstant() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/listOfInferredConstant.kt");
+        }
+
+        @TestMetadata("listOfLargeArgumentCount.kt")
+        public void testListOfLargeArgumentCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/listOfLargeArgumentCount.kt");
+        }
+
+        @TestMetadata("listOfThresholdArgumentCount.kt")
+        public void testListOfThresholdArgumentCount() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/listOfThresholdArgumentCount.kt");
+        }
+
+        @TestMetadata("listOfWithSomeNonConstantArguments.kt")
+        public void testListOfWithSomeNonConstantArguments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/listOfWithSomeNonConstantArguments.kt");
+        }
+
+        @TestMetadata("outerScopeArgumentValue.kt")
+        public void testOuterScopeArgumentValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/outerScopeArgumentValue.kt");
+        }
+
+        @TestMetadata("outerScopeListOf.kt")
+        public void testOuterScopeListOf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/outerScopeListOf.kt");
+        }
+
+        @TestMetadata("outerScopeMutableListOf.kt")
+        public void testOuterScopeMutableListOf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/outerScopeMutableListOf.kt");
+        }
+
+        @TestMetadata("outerScopeMutableListOfCall.kt")
+        public void testOuterScopeMutableListOfCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/outerScopeMutableListOfCall.kt");
+        }
+
+        @TestMetadata("shadowedFunctionName.kt")
+        public void testShadowedFunctionName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/shadowedFunctionName.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/coroutines/redundantRunCatching")
     public static class RedundantRunCatching extends AbstractK2LocalInspectionTest {
         @java.lang.Override

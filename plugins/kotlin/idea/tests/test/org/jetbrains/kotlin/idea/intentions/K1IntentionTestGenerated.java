@@ -4684,6 +4684,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertArgumentToSet/outerScopeMutableListOf.kt");
         }
 
+        @TestMetadata("outerScopeMutableListOfCall.kt")
+        public void testOuterScopeMutableListOfCall() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/outerScopeMutableListOfCall.kt");
+        }
+
         @TestMetadata("shadowedFunctionName.kt")
         public void testShadowedFunctionName() throws Exception {
             runTest("testData/intentions/convertArgumentToSet/shadowedFunctionName.kt");
