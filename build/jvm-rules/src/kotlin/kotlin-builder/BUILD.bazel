@@ -26,7 +26,7 @@ kt_jvm_library(
         "//:arrow-memory-netty",
         "//:arrow-memory-core",
         "@lib//:jps-javac-extension",
-        "@lib//:caffeine",
+        "//:caffeine",
     ],
     runtime_deps = [
         "//:kotlin-build-tools-api",

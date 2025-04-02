@@ -168,6 +168,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "caffeine",
+    jar = "@caffeine//file",
+    source_jar = "@caffeine-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "flatbuffers-java",
     jar = "@flatbuffers-java//file",
     source_jar = "@flatbuffers-java-sources//file",
