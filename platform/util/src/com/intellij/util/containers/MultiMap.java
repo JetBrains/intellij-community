@@ -14,7 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Pass custom map using {@link #MultiMap(Map)} if needed.
+ * A map where each key can be associated with multiple values.
+ * <p>
+ * Uses {@link java.util.HashMap} by defaults. A different map implementation can be passed using the {@link #MultiMap(Map)} constructor.
  * @see BidirectionalMultiMap
  */
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
