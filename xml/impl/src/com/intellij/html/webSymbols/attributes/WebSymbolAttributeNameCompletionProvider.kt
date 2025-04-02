@@ -74,9 +74,9 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
                                                                       queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
 
             val fullName = name.substring(0, item.offset) + item.name
-            val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
-                          .asSingleSymbol() ?: return@withInsertHandlerAdded
             val info = XmlTagInsertHandler.runWithTimeoutOrNull {
+              val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
+                            .asSingleSymbol() ?: return@runWithTimeoutOrNull null
               WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
             }
             if (info != null && info.acceptsValue && !info.acceptsNoValue) {
