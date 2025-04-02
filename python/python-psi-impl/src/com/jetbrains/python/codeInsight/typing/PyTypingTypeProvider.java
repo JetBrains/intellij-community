@@ -2050,6 +2050,7 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
       if (classType == null) return null;
 
       final String qName = classType.getClassQName();
+      if (qName == null) return null;
       if (!SYNC_TYPES.contains(qName) && !ASYNC_TYPES.contains(qName)) return null;
       
       PyType yieldType = null;
