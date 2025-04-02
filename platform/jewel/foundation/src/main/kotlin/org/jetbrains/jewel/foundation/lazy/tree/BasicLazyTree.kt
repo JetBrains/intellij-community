@@ -44,7 +44,6 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
-import org.jetbrains.jewel.foundation.util.JewelLogger
 
 /**
  * Renders a lazy tree view based on the provided tree data structure.
