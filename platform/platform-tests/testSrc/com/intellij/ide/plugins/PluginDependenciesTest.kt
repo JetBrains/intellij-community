@@ -573,6 +573,26 @@ internal class PluginDependenciesTest {
     }.hasMessageContainingAll("content.module", "shouldn't have plugin dependencies", "foo")
   }
 
+  @Test
+  fun `optional depends descriptor may have module dependency, but it's disregarded`() {
+    foo()
+    `baz with an optional module which has a package prefix`()
+    PluginBuilder.empty()
+      .id("bar")
+      .depends("foo", PluginBuilder.empty().dependency("baz.module").packagePrefix("foo.baz"))
+      .build(pluginDirPath.resolve("bar"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo", "baz")
+    val (bar, foo, baz) = pluginSet.getEnabledPlugins("bar", "foo", "baz")
+    val bazModule = pluginSet.getEnabledModule("baz.module")
+    val barSub = bar.dependencies[0].subDescriptor!!
+    assertThat(barSub.pluginClassLoader).isEqualTo(bar.pluginClassLoader)
+    assertThat(barSub)
+      .hasDirectParentClassloaders(foo)
+      .doesNotHaveTransitiveParentClassloaders(baz, bazModule)
+    assertThat(barSub.moduleDependencies.modules).hasSize(1)
+  }
+
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
   private fun `foo depends bar`() = PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
   private fun `foo depends-optional bar`() = PluginBuilder.empty().id("foo")
