@@ -18,7 +18,5 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin.core" />
     <orderEntry type="module" module-name="intellij.gradle.common" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.fullLine.java" />
-    <orderEntry type="module" module-name="intellij.fullLine.core.completion" />
   </component>
 </module>

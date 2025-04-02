@@ -11,25 +11,18 @@ import com.intellij.cce.visitor.LineCompletionVisitorHelper
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
-import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-
 
 
 class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.KOTLIN
   override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor =
-    when (featureName) {
-      "text-completion" -> CommentsTokensVisitor(featureName)
-      else -> when (mode) {
-        CompletionGolfMode.ALL -> AllVisitor(featureName)
-        CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
-      }
+    when (mode) {
+      CompletionGolfMode.ALL -> AllVisitor(featureName)
+      CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
     }
 
   class AllVisitor(override val feature: String) : LineCompletionAllEvaluationVisitor, KtTreeVisitorVoid() {
@@ -92,32 +85,5 @@ class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
     override fun visitImportList(importList: KtImportList) = Unit
 
     override fun visitPackageDirective(directive: KtPackageDirective) = Unit
-  }
-
-  class CommentsTokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, KtTreeVisitorVoid() {
-    private val visitorHelper = LineCompletionVisitorHelper()
-
-    override val language: Language = Language.KOTLIN
-
-    override fun getFile(): CodeFragment = visitorHelper.getFile()
-
-    override fun visitKtFile(file: KtFile) {
-      visitorHelper.visitFile(file)
-      super.visitKtFile(file)
-    }
-
-    private fun isCommentElement(element: PsiElement): Boolean = element is PsiComment
-
-    private fun isKDocComment(element: PsiElement): Boolean =
-      (element is LeafPsiElement && element.parentOfType<KDoc>(withSelf = true) != null) ||
-      element.elementType == KtTokens.BLOCK_COMMENT
-
-    override fun visitElement(element: PsiElement) {
-      if (isCommentElement(element) || isKDocComment(element)) {
-        visitorHelper.addElement(element.node)
-      }
-
-      super.visitElement(element)
-    }
   }
 }

@@ -20,12 +20,9 @@ import com.jetbrains.python.psi.*
 class PythonLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.PYTHON
   override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor =
-    when (featureName) {
-      "text-completion" -> CommentsTokensVisitor(featureName)
-      else -> when (mode) {
-        CompletionGolfMode.ALL -> AllVisitor(featureName)
-        CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
-      }
+    when (mode) {
+      CompletionGolfMode.ALL -> AllVisitor(featureName)
+      CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
     }
 
   class AllVisitor(override val feature: String) : LineCompletionAllEvaluationVisitor, PyRecursiveElementVisitor() {
@@ -100,24 +97,6 @@ class PythonLineCompletionVisitorFactory : LineCompletionVisitorFactory {
       else {
         super.visitPyStringLiteralExpression(node)
       }
-    }
-  }
-
-  class CommentsTokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, PyRecursiveElementVisitor() {
-    private val visitorHelper = LineCompletionVisitorHelper()
-
-    override val language: Language = Language.PYTHON
-
-    override fun getFile(): CodeFragment = visitorHelper.getFile()
-
-    override fun visitPyFile(file: PyFile) {
-      visitorHelper.visitFile(file)
-      super.visitFile(file)
-    }
-
-    override fun visitComment(comment: PsiComment) {
-      visitorHelper.addElement(comment.node)
-      super.visitComment(comment)
     }
   }
 }
