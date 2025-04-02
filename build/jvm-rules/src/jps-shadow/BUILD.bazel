@@ -14,7 +14,7 @@ kt_jvm_library(
         "//:hash4j",
         "//:netty-buffer",
         "//:netty-common",
-        "@lib//:mvstore",
+        "//:h2-mvstore",
         "//:jps",
         "//:kotlin-metadata",
     ],

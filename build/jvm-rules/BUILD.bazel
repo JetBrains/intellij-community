@@ -182,6 +182,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "h2-mvstore",
+    jar = "@h2-mvstore//file",
+    source_jar = "@h2-mvstore-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "arrow-format",
     jar = "@arrow-format//file",
     source_jar = "@arrow-format-sources//file",
