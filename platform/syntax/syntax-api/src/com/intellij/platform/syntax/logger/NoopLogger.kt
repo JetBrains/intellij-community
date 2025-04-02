@@ -11,7 +11,24 @@ import org.jetbrains.annotations.ApiStatus
 fun noopLogger(): Logger = _NoopLogger
 
 private object _NoopLogger : Logger {
-  override fun error(string: String) {}
-  override fun error(string: String, vararg attachment: Logger.Attachment) {}
-  override fun warn(string: String, exception: RuntimeException?) {}
+  override fun error(string: String) {
+  }
+
+  override fun error(string: String, vararg attachment: Logger.Attachment) {
+  }
+
+  override fun warn(string: String, exception: Throwable?) {
+  }
+
+  override fun info(string: String, exception: Throwable?) {
+  }
+
+  override fun debug(string: String, exception: Throwable?) {
+  }
+
+  override fun trace(exception: Throwable) {
+  }
+
+  override fun trace(string: String) {
+  }
 }

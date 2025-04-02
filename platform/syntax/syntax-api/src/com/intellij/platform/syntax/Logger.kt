@@ -6,8 +6,18 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface Logger {
   fun error(string: String)
+
   fun error(string: String, vararg attachment: Attachment)
-  fun warn(string: String, exception: RuntimeException? = null)
+
+  fun warn(string: String, exception: Throwable? = null)
+
+  fun info(string: String, exception: Throwable? = null)
+
+  fun debug(string: String, exception: Throwable? = null)
+
+  fun trace(exception: Throwable)
+
+  fun trace(string: String)
 
   class Attachment(val name: String, val content: String)
 }
