@@ -12,8 +12,11 @@ import com.intellij.xdebugger.impl.rpc.XDebuggerEntityIdProvider
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 private class MonolithCurrentSessionProxyProvider : CurrentXDebugSessionProxyProvider {
   override fun provideCurrentSessionProxy(project: Project): XDebugSessionProxy? {
@@ -33,12 +36,23 @@ private class MonolithXDebuggerEntityIdProvider : XDebuggerEntityIdProvider {
 }
 
 private suspend fun <ID, T> withCoroutineScopeForId(block: suspend (ID) -> T, idProvider: (CoroutineScope) -> ID): T {
-  var result: T? = null
-  supervisorScope {
-    val id = idProvider(this)
-    result = block(id)
-    cancel()
+  return coroutineScope {
+    val channel = Channel<Deferred<T>>()
+    val job = launch {
+      // This scope should be canceled, as idProvider can use awaitCancellation
+      val resultCalculation = async {
+        val id = idProvider(this@launch)
+        block(id)
+      }
+      channel.send(resultCalculation)
+    }
+
+    val deferred = channel.receive()
+    try {
+      deferred.await()
+    }
+    finally {
+      job.cancel()
+    }
   }
-  @Suppress("UNCHECKED_CAST")
-  return result as T
 }
