@@ -520,6 +520,9 @@ class IdeaPluginDescriptorImpl private constructor(
         if (pluginDependencies.isNotEmpty()) {
           LOG.error("Unexpected `depends` dependencies in a content module: ${pluginDependencies.joinToString()}\n in $this")
         }
+        if (content.modules.isNotEmpty()) {
+          LOG.error("Unexpected `content` elements in a content module: ${content.modules.joinToString()}\n in $this")
+        }
       }
       Type.DependsSubDescriptor -> {
         assert(moduleName == null && moduleLoadingRule == null && descriptorPath != null) { this }
