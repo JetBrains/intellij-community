@@ -677,3 +677,13 @@ internal fun IdeaPluginDescriptorImpl.createSub(
   },
   module
 )
+
+@ApiStatus.Internal
+@TestOnly
+fun IdeaPluginDescriptorImpl.createSubInTest(
+  subBuilder: PluginDescriptorBuilder,
+  descriptorPath: String,
+  getDefaultVersion: () -> String?,
+  recordDescriptorPath: ((IdeaPluginDescriptorImpl, RawPluginDescriptor, String) -> Unit)?,
+  module: PluginContentDescriptor.ModuleItem?,
+): IdeaPluginDescriptorImpl = createSub(subBuilder, descriptorPath, getDefaultVersion, recordDescriptorPath, module)
