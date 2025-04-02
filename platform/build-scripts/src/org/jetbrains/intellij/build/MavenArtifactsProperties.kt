@@ -47,4 +47,7 @@ class MavenArtifactsProperties {
   var publishSourcesFilter: (JpsModule, BuildContext) -> Boolean = { module, context ->
     module.contentRootsList.urls.all { Path.of(JpsPathUtil.urlToPath(it)).startsWith(context.paths.communityHomeDir) }
   }
+
+  @ApiStatus.Internal
+  var isJavadocJarRequired: (JpsModule) -> Boolean = { false }
 }

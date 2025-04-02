@@ -439,6 +439,17 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
             compress = true,
           )
         }
+        if (context.productProperties.mavenArtifacts.isJavadocJarRequired(artifactData.module)) {
+          check(modulesWithSources.any()) {
+            "No modules with sources found in $modules, a documentation cannot be generated"
+          }
+          val docsFolder = Dokka(context).generateDocumentation(modules = modulesWithSources)
+          buildJar(
+            targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("javadoc", "jar")),
+            sources = listOf(DirSource(docsFolder)),
+            compress = true,
+          )
+        }
       }
     }
   }
