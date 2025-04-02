@@ -20,9 +20,12 @@
       <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
+      <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
+      </action>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark">
         <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                      relative-to-action="XDebugger.Inspect.Frontend"/>
+                      relative-to-action="XDebugger.Inspect"/>
       </action>
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
         <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
@@ -40,7 +43,6 @@
         <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
                       relative-to-action="XDebugger.CompareValueWithClipboard"/>
       </action>
-      <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
               use-shortcut-of="EditSource">
         <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="first"/>
@@ -84,7 +86,10 @@
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
       <action id="Debugger.FocusOnFinish" class="com.intellij.xdebugger.impl.actions.FocusOnFinishAction"/>
-      <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
+      <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
+                      relative-to-action="Debugger.AddToWatch.Frontend"/>
+      </action>
       <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
       <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
       <action id="Debugger.FreezeActiveThreadAction" class="com.intellij.xdebugger.impl.actions.FreezeActiveThreadAction" icon="AllIcons.Debugger.Freeze">
