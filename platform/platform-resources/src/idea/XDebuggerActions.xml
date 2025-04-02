@@ -16,7 +16,10 @@
       <reference ref="XDebugger.Inspect.Tree.Popup.Frontend"/>
     </group>
     <group id="XDebugger.Actions">
-      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch">
+        <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
+                      relative-to-action="EvaluateExpression"/>
+      </action>
       <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
@@ -88,7 +91,7 @@
       <action id="Debugger.FocusOnFinish" class="com.intellij.xdebugger.impl.actions.FocusOnFinishAction"/>
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction">
         <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                      relative-to-action="Debugger.AddToWatch.Frontend"/>
+                      relative-to-action="Debugger.AddToWatch"/>
       </action>
       <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
       <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>

@@ -21,6 +21,8 @@ interface XValueApi : RemoteApi<Unit> {
 
   suspend fun evaluateFullValue(xValueId: XValueId): Deferred<XFullValueEvaluatorResult>
 
+  suspend fun computeExpression(xValueId: XValueId): XExpressionDto?
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XValueApi {

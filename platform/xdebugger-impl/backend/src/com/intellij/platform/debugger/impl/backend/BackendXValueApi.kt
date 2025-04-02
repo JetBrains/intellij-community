@@ -9,23 +9,45 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
+import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueContainer
+import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XExpressionDto
+import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
+import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorResult
+import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
+import com.intellij.xdebugger.impl.rpc.XValueApi
+import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.asCompletableFuture
 import java.awt.Font
 import javax.swing.Icon
 
@@ -144,6 +166,12 @@ internal class BackendXValueApi : XValueApi {
     xFullValueEvaluator.startEvaluation(callback)
 
     return result
+  }
+
+  override suspend fun computeExpression(xValueId: XValueId): XExpressionDto? {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
+    val xExpression = xValueModel.xValue.calculateEvaluationExpression().asCompletableFuture().await() ?: return null
+    return xExpression.toRpc()
   }
 
 

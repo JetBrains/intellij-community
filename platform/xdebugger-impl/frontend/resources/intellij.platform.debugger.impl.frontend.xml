@@ -10,12 +10,6 @@
   <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
 
-    <action id="Debugger.AddToWatch.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction"
-            icon="AllIcons.Debugger.AddToWatch">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                    relative-to-action="EvaluateExpression"/>
-    </action>
-
     <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>

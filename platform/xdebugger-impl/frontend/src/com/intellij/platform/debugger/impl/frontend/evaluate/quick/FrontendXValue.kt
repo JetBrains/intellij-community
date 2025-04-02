@@ -10,12 +10,34 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValueDescriptor
+import com.intellij.xdebugger.frame.XValueModifier
+import com.intellij.xdebugger.frame.XValueNode
+import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
+import com.intellij.xdebugger.impl.rpc.XValueApi
+import com.intellij.xdebugger.impl.rpc.XValueDto
+import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
+import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
+import com.intellij.xdebugger.impl.rpc.xExpression
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asCompletableFuture
@@ -129,6 +151,13 @@ class FrontendXValue(
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun getModifier(): XValueModifier? {
     return modifier
+  }
+
+  override fun calculateEvaluationExpression(): Promise<XExpression?> {
+    val deferred = cs.async {
+      XValueApi.getInstance().computeExpression(xValueDto.id)?.xExpression()
+    }
+    return deferred.asCompletableFuture().asPromise()
   }
 
   private class FrontendXValuePresentation(private val advancedPresentation: XValuePresentationEvent.SetAdvancedPresentation) : XValuePresentation() {
