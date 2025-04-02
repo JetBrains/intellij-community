@@ -322,7 +322,7 @@ internal class ParsingTreeBuilder(
     }
   }
 
-  override fun error(messageText: String) {
+  override fun error(messageText: @Nls String) {
     val lastMarker = myProduction.getStartMarkerAt(myProduction.size - 1)
     if (lastMarker is ErrorMarker && lastMarker.getStartTokenIndex() == myCurrentLexeme) {
       return
