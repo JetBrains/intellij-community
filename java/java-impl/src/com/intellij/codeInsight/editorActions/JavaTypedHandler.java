@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContribut
 import com.intellij.codeInsight.completion.command.CommandCompletionFactoryKt;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -264,11 +265,11 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
 
     int offset = editor.getCaretModel().getOffset();
     if (charTyped == ' ' &&
-        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeyword.NEW)) {
+        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeywords.NEW)) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, f -> {
-        PsiElement leaf = f.findElementAt(offset - PsiKeyword.NEW.length());
+        PsiElement leaf = f.findElementAt(offset - PsiKeywords.NEW.length());
         return leaf instanceof PsiKeyword &&
-               leaf.textMatches(PsiKeyword.NEW) &&
+               leaf.textMatches(PsiKeywords.NEW) &&
                !PsiJavaPatterns.psiElement().insideStarting(PsiJavaPatterns.psiExpressionStatement()).accepts(leaf);
       });
       return Result.STOP;

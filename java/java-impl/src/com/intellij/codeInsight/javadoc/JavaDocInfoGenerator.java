@@ -10,6 +10,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.codeInsight.javadoc.markdown.JavaDocMarkdownFlavourDescriptor;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -873,9 +874,9 @@ public class JavaDocInfoGenerator {
   private boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
     boolean generateLink = place == SignaturePlace.Javadoc;
     String classKeyword =
-      aClass.isInterface() ? PsiKeyword.INTERFACE :
-      aClass.isEnum() ? PsiKeyword.ENUM :
-      aClass.isRecord() ? PsiKeyword.RECORD : PsiKeyword.CLASS;
+      aClass.isInterface() ? PsiKeywords.INTERFACE :
+      aClass.isEnum() ? PsiKeywords.ENUM :
+      aClass.isRecord() ? PsiKeywords.RECORD : PsiKeywords.CLASS;
 
     generateAnnotations(buffer, aClass, place, true, false, true);
     generateModifiers(buffer, aClass, false);

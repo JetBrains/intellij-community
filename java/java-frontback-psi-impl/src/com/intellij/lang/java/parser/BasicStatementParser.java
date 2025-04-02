@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.IElementType;
@@ -248,10 +248,10 @@ public class BasicStatementParser {
       pos.rollbackTo();
       if (singleToken && builder.getTokenType() == JavaTokenType.IDENTIFIER) {
         String text = builder.getTokenText();
-        if (PsiKeyword.RECORD.equals(text) && JavaFeature.RECORDS.isSufficient(getLanguageLevel(builder))) {
+        if (PsiKeywords.RECORD.equals(text) && JavaFeature.RECORDS.isSufficient(getLanguageLevel(builder))) {
           incompleteDeclarationRestrictedTokenType = JavaTokenType.RECORD_KEYWORD;
         }
-        if (PsiKeyword.VAR.equals(text) && JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
+        if (PsiKeywords.VAR.equals(text) && JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
           incompleteDeclarationRestrictedTokenType = JavaTokenType.VAR_KEYWORD;
         }
       }
@@ -297,7 +297,7 @@ public class BasicStatementParser {
 
   private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
     if (!(tokenType == JavaTokenType.IDENTIFIER &&
-          PsiKeyword.YIELD.equals(builder.getTokenText()) &&
+          PsiKeywords.YIELD.equals(builder.getTokenText()) &&
           JavaFeature.SWITCH_EXPRESSION.isSufficient(getLanguageLevel(builder)))) {
       return false;
     }
@@ -641,7 +641,7 @@ public class BasicStatementParser {
   }
 
   private void parseGuard(PsiBuilder builder) {
-    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.WHEN.equals(builder.getTokenText())) {
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeywords.WHEN.equals(builder.getTokenText())) {
       builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
       builder.advanceLexer();
       PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder);

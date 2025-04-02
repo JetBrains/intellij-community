@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static com.intellij.psi.PsiKeyword.*;
+import static com.intellij.java.syntax.parser.PsiKeywords.*;
 
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);

@@ -72,7 +72,7 @@ class ReferenceParser(private val myParser: JavaParser) {
         isSet(flags, VAR_TYPE) &&
         builder.lookAhead(1) !== JavaSyntaxTokenType.DOT &&
         builder.lookAhead(1) !== JavaSyntaxTokenType.COLON &&
-        PsiKeyword.VAR == builder.tokenText &&
+        PsiKeywords.VAR == builder.tokenText &&
         JavaFeature.LVTI.isSufficient(myParser.languageLevel)
     ) {
       builder.remapCurrentToken(JavaSyntaxTokenType.VAR_KEYWORD.also { tokenType = it })

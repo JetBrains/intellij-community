@@ -19,6 +19,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -83,7 +84,7 @@ public final class AssignmentToNullInspection extends BaseInspection {
       @NotNull PsiLiteralExpression value) {
       super.visitLiteralExpression(value);
       final String text = value.getText();
-      if (!PsiKeyword.NULL.equals(text)) {
+      if (!PsiKeywords.NULL.equals(text)) {
         return;
       }
       PsiElement parent = value.getParent();

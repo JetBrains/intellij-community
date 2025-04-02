@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -124,7 +125,8 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(containingClass, usageInfo.getElement(), false)) {
               conflicts.putValue(expression, JavaRefactoringBundle
-                .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class", CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER)));
+                .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class", CommonRefactoringUtil.htmlEmphasize(
+                  PsiKeywords.SUPER)));
               break;
             }
           }

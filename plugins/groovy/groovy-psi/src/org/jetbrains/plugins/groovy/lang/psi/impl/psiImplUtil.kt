@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
+import com.intellij.java.syntax.parser.PsiKeywords
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.stubs.StubElement
@@ -174,5 +175,5 @@ fun GrVariable.isDeclaredIn(block: GrControlFlowOwner): Boolean {
 fun isThisRef(expression: GrExpression?): Boolean {
   return expression is GrReferenceExpression &&
          expression.qualifier == null &&
-         PsiKeyword.THIS == expression.referenceName
+         PsiKeywords.THIS == expression.referenceName
 }

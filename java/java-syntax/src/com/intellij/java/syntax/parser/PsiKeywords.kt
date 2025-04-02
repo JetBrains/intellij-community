@@ -4,9 +4,9 @@ package com.intellij.java.syntax.parser
 import com.intellij.openapi.util.NlsSafe
 
 /**
- * Represents a Java keyword. Constants defined in this interface represent all keywords and literals of the Java language.
+ * Constants defined in this interface represent all keywords and literals of the Java language.
  */
-object PsiKeyword {
+object PsiKeywords {
   const val ABSTRACT: @NlsSafe String = "abstract"
   const val ASSERT: @NlsSafe String = "assert"
   const val BOOLEAN: @NlsSafe String = "boolean"

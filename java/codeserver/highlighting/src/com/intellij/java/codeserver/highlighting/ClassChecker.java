@@ -7,6 +7,7 @@ import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -762,7 +763,7 @@ final class ClassChecker {
   void checkEnumSuperConstructorCall(@NotNull PsiMethodCallExpression expr) {
     PsiReferenceExpression methodExpression = expr.getMethodExpression();
     PsiElement refNameElement = methodExpression.getReferenceNameElement();
-    if (refNameElement != null && PsiKeyword.SUPER.equals(refNameElement.getText())) {
+    if (refNameElement != null && PsiKeywords.SUPER.equals(refNameElement.getText())) {
       PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(expr);
       if (constructor instanceof PsiMethod) {
         PsiClass aClass = constructor.getContainingClass();

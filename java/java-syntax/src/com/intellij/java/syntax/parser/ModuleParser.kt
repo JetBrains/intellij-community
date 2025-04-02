@@ -19,19 +19,19 @@ class ModuleParser(private val myParser: JavaParser) {
 
     val type = builder.tokenType
     var text = if (type === JavaSyntaxTokenType.IDENTIFIER) builder.tokenText else null
-    if (!(PsiKeyword.OPEN == text || PsiKeyword.MODULE == text)) {
+    if (!(PsiKeywords.OPEN == text || PsiKeywords.MODULE == text)) {
       module.rollbackTo()
       return null
     }
 
     val modifierList = firstAnnotation?.precede() ?: builder.mark()
-    if (PsiKeyword.OPEN == text) {
+    if (PsiKeywords.OPEN == text) {
       mapAndAdvance(builder, JavaSyntaxTokenType.OPEN_KEYWORD)
       text = builder.tokenText
     }
     JavaParserUtil.done(modifierList, JavaSyntaxElementType.MODIFIER_LIST, myParser.languageLevel, WhiteSpaceAndCommentSetHolder)
 
-    if (PsiKeyword.MODULE == text) {
+    if (PsiKeywords.MODULE == text) {
       mapAndAdvance(builder, JavaSyntaxTokenType.MODULE_KEYWORD)
     }
     else {
@@ -141,11 +141,11 @@ class ModuleParser(private val myParser: JavaParser) {
 
   private fun parseStatement(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
     val kw = builder.tokenText
-    if (PsiKeyword.REQUIRES == kw) return parseRequiresStatement(builder)
-    if (PsiKeyword.EXPORTS == kw) return parseExportsStatement(builder)
-    if (PsiKeyword.OPENS == kw) return parseOpensStatement(builder)
-    if (PsiKeyword.USES == kw) return parseUsesStatement(builder)
-    if (PsiKeyword.PROVIDES == kw) return parseProvidesStatement(builder)
+    if (PsiKeywords.REQUIRES == kw) return parseRequiresStatement(builder)
+    if (PsiKeywords.EXPORTS == kw) return parseExportsStatement(builder)
+    if (PsiKeywords.OPENS == kw) return parseOpensStatement(builder)
+    if (PsiKeywords.USES == kw) return parseUsesStatement(builder)
+    if (PsiKeywords.PROVIDES == kw) return parseProvidesStatement(builder)
     return null
   }
 
@@ -156,7 +156,7 @@ class ModuleParser(private val myParser: JavaParser) {
     val modifierList = builder.mark()
     while (true) {
       if (builder.expect(SyntaxElementTypes.MODIFIER_BIT_SET)) continue
-      if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER && PsiKeyword.TRANSITIVE == builder.tokenText) {
+      if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER && PsiKeywords.TRANSITIVE == builder.tokenText) {
         mapAndAdvance(builder, JavaSyntaxTokenType.TRANSITIVE_KEYWORD)
         continue
       }
@@ -195,7 +195,7 @@ class ModuleParser(private val myParser: JavaParser) {
     var hasError = false
 
     if (parseClassOrPackageRef(builder) != null) {
-      if (PsiKeyword.TO == builder.tokenText) {
+      if (PsiKeywords.TO == builder.tokenText) {
         mapAndAdvance(builder, JavaSyntaxTokenType.TO_KEYWORD)
 
         while (true) {
@@ -249,7 +249,7 @@ class ModuleParser(private val myParser: JavaParser) {
       hasError = true
     }
 
-    if (PsiKeyword.WITH == builder.tokenText) {
+    if (PsiKeywords.WITH == builder.tokenText) {
       builder.remapCurrentToken(JavaSyntaxTokenType.WITH_KEYWORD)
       hasError = myParser.referenceParser.parseReferenceList(builder, JavaSyntaxTokenType.WITH_KEYWORD,
                                                              JavaSyntaxElementType.PROVIDES_WITH_LIST, JavaSyntaxTokenType.COMMA)
@@ -302,4 +302,4 @@ class ModuleParser(private val myParser: JavaParser) {
   }
 }
 
-private val STATEMENT_KEYWORDS: Set<String> = hashSetOf(PsiKeyword.REQUIRES, PsiKeyword.EXPORTS, PsiKeyword.USES, PsiKeyword.PROVIDES)
+private val STATEMENT_KEYWORDS: Set<String> = hashSetOf(PsiKeywords.REQUIRES, PsiKeywords.EXPORTS, PsiKeywords.USES, PsiKeywords.PROVIDES)

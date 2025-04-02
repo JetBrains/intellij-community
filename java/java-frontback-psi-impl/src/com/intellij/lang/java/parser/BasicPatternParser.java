@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.TokenSet;
@@ -147,7 +147,7 @@ public class BasicPatternParser {
 
     final boolean hasIdentifier;
     if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
-        (!PsiKeyword.WHEN.equals(builder.getTokenText()) || isWhenAsIdentifier(isRecord))) {
+        (!PsiKeywords.WHEN.equals(builder.getTokenText()) || isWhenAsIdentifier(isRecord))) {
       // pattern variable after the record structure pattern
       if (isRecord) {
         PsiBuilder.Marker variable = builder.mark();

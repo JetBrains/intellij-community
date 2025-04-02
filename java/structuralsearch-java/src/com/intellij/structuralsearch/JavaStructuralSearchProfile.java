@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -57,10 +58,10 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final List<PatternContext> PATTERN_CONTEXTS = List.of(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
   private static final Set<String> PRIMITIVE_TYPES = Set.of(
-    PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
-    PsiKeyword.DOUBLE, PsiKeyword.LONG,
-    PsiKeyword.INT, PsiKeyword.FLOAT,
-    PsiKeyword.CHAR, PsiKeyword.BYTE
+    PsiKeywords.SHORT, PsiKeywords.BOOLEAN,
+    PsiKeywords.DOUBLE, PsiKeywords.LONG,
+    PsiKeywords.INT, PsiKeywords.FLOAT,
+    PsiKeywords.CHAR, PsiKeywords.BYTE
   );
 
   private static final Set<String> RESERVED_WORDS =

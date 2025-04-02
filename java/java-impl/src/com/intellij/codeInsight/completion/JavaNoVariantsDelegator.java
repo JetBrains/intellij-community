@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -76,7 +77,7 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
       ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
       for (ExpectedTypeInfo info : infos) {
         if (!(info.getType() instanceof PsiPrimitiveType)) {
-          LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
+          LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeywords.NULL);
           result.addElement(JavaSmartCompletionContributor.decorate(item, ContainerUtil.newHashSet(infos)));
           return;
         }

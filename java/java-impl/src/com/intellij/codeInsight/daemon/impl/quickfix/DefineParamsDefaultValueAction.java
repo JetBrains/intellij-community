@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -150,7 +151,7 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
         if (ArrayUtil.find(parameters, psiParameter) > -1) {
           PsiType type = GenericsUtil.getVariableTypeByExpressionType(psiParameter.getType());
           String defaultValue = TypeUtils.getDefaultValue(type);
-          return defaultValue.equals(PsiKeyword.NULL) ? "(" + type.getCanonicalText() + ")null" : defaultValue;
+          return defaultValue.equals(PsiKeywords.NULL) ? "(" + type.getCanonicalText() + ")null" : defaultValue;
         }
         return psiParameter.getName();
       }, ",") + ");";

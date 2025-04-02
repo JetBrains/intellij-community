@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion.weighers;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -20,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionLocation;
 import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
@@ -47,9 +34,9 @@ import java.util.Set;
 public final class GrKindWeigher extends CompletionWeigher {
   private static final Set<String> TRASH_CLASSES = new HashSet<>(10);
   private static final Set<String> PRIORITY_KEYWORDS = ContainerUtil.newHashSet(
-    PsiKeyword.RETURN, PsiKeyword.INSTANCEOF, "in",
-    PsiKeyword.PRIVATE, PsiKeyword.PROTECTED, PsiKeyword.PUBLIC, PsiKeyword.STATIC, "def",
-    PsiKeyword.TRUE,  PsiKeyword.FALSE, PsiKeyword.NULL);
+    PsiKeywords.RETURN, PsiKeywords.INSTANCEOF, "in",
+    PsiKeywords.PRIVATE, PsiKeywords.PROTECTED, PsiKeywords.PUBLIC, PsiKeywords.STATIC, "def",
+    PsiKeywords.TRUE, PsiKeywords.FALSE, PsiKeywords.NULL);
 
   static {
     TRASH_CLASSES.add(CommonClassNames.JAVA_LANG_CLASS);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -45,7 +46,7 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
     boolean useVar = Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
                      PsiUtil.isAvailable(JavaFeature.LVTI, file);
 
-    return (isFinal ? "final " : "") + (useVar ? PsiKeyword.VAR : "$" + TYPE_VAR + "$")+
+    return (isFinal ? "final " : "") + (useVar ? PsiKeywords.VAR : "$" + TYPE_VAR + "$") +
            " $" + VAR_NAME + "$ = ($" + TYPE_VAR + "$)$expr$;$END$";
   }
 

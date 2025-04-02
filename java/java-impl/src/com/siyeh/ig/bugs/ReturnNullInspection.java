@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -13,6 +13,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -137,7 +138,7 @@ public final class ReturnNullInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
       super.visitLiteralExpression(value);
       final String text = value.getText();
-      if (!PsiKeyword.NULL.equals(text)) {
+      if (!PsiKeywords.NULL.equals(text)) {
         return;
       }
       final PsiElement parent = ExpressionUtils.getPassThroughParent(value);
