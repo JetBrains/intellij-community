@@ -694,6 +694,16 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AnnotationLiteralFirst.kt")
+            public void testAnnotationLiteralFirst() throws Exception {
+                runTest("../../completion/testData/basic/common/enums/AnnotationLiteralFirst.kt");
+            }
+
+            @TestMetadata("AnnotationLiteralSecond.kt")
+            public void testAnnotationLiteralSecond() throws Exception {
+                runTest("../../completion/testData/basic/common/enums/AnnotationLiteralSecond.kt");
+            }
+
             @TestMetadata("EnumEntryCompletion.kt")
             public void testEnumEntryCompletion() throws Exception {
                 runTest("../../completion/testData/basic/common/enums/EnumEntryCompletion.kt");

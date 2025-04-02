@@ -12,12 +12,15 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImportPaths
 import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
@@ -136,15 +139,17 @@ internal class WeighingContext private constructor(
             positionContext: KotlinNameReferencePositionContext,
         ): WeighingContext {
             val nameExpression = positionContext.nameExpression
-            val expectedType = when (positionContext) {
+            val expectedType = when {
                 // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
                 // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
                 // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
                 // about expected type at all
                 // TODO: calculate actual types for callable references correctly and use information about expected type
-                is KotlinCallableReferencePositionContext -> null
-                else -> nameExpression.expectedType
-                    ?: getEqualityExpectedType(nameExpression)
+                positionContext is KotlinCallableReferencePositionContext -> null
+                nameExpression.expectedType != null -> nameExpression.expectedType
+                nameExpression.parent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
+                nameExpression.parent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                else -> null
             }
 
             val symbolToSkip = when (positionContext) {
@@ -175,6 +180,24 @@ internal class WeighingContext private constructor(
                 ),
                 symbolsToSkip = setOfNotNull(symbolToSkip),
             )
+        }
+
+        /**
+         * Returns the expected type for elements within the collection literal
+         * if [nameExpression] is within a collection literal.
+         *
+         * TODO: It seems like a bug in the analysis API that this is required: KT-76480
+         */
+        context(KaSession)
+        private fun getAnnotationLiteralExpectedType(
+            nameExpression: KtElement,
+        ): KaType? {
+            val collectionLiteralEntry = nameExpression.parent as? KtCollectionLiteralExpression ?: return null
+            val annotationArgument = collectionLiteralEntry.parent as? KtValueArgument ?: return null
+            val annotationEntry = annotationArgument.parentOfType<KtAnnotationEntry>() ?: return null
+            val annotationCall = annotationEntry.resolveToCall()?.successfulCallOrNull<KaAnnotationCall>() ?: return null
+            val callArgument = annotationCall.argumentMapping[collectionLiteralEntry] ?: return null
+            return callArgument.symbol.returnType
         }
 
         context(KaSession)
