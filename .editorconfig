@@ -16,7 +16,3 @@ ij_any_line_comment_at_first_column = false
 ij_javascript_force_semicolon_style = true
 ij_javascript_use_semicolon_after_statement = false
 ij_kotlin_code_style_defaults = KOTLIN_OLD_DEFAULTS
-
-ij_kotlin_packages_to_use_import_on_demand = unset
-ij_java_packages_to_use_import_on_demand = unset
-ij_kotlin_name_count_to_use_star_import = 999
