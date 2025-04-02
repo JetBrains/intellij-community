@@ -161,6 +161,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "hash4j",
+    jar = "@hash4j//file",
+    source_jar = "@hash4j-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "flatbuffers-java",
     jar = "@flatbuffers-java//file",
     source_jar = "@flatbuffers-java-sources//file",

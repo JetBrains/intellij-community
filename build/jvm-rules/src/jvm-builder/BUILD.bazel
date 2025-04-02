@@ -18,7 +18,6 @@ kt_jvm_library(
         "//src/jvm-builder-core",
         "//src/kotlin/kotlin-builder",
         "//src/worker-framework",
-        "@lib//:hash4j",
         "@lib//:mvstore",
         "//:arrow-vector",
         "//:arrow-memory-netty",

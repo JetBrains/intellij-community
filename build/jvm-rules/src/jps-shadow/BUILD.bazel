@@ -11,7 +11,7 @@ kt_jvm_library(
         "@lib//:asm",
         "//src/worker-util",
         "//:collection",
-        "@lib//:hash4j",
+        "//:hash4j",
         "//:netty-buffer",
         "//:netty-common",
         "@lib//:mvstore",

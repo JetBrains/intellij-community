@@ -21,7 +21,6 @@ kt_jvm_library(
         # before kotlin-jps-plugin
         "//:kotlin-compiler",
         "//:kotlin-jps-plugin",
-        "@lib//:hash4j",
         "@lib//:mvstore",
         "//:arrow-vector",
         "//:arrow-memory-netty",

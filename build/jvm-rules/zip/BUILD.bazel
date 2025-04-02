@@ -10,7 +10,7 @@ kt_jvm_library(
     "//:netty-buffer",
     "//:netty-common",
     "//:intellij-deps-fastutil",
-    "@lib//:hash4j",
+    "//:hash4j",
   ]
 )
 
