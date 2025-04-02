@@ -135,13 +135,13 @@ data class RunConfigArgs(val configName: String)
 class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>() {
     override val name: String = "run_configuration"
     override val description: String =
-        "Run a specific run configuration in the current project and wait up to 30 seconds for it to finish. " +
+        "Run a specific run configuration in the current project and wait up to 120 seconds for it to finish. " +
                 "Use this tool to run a run configuration that you have found from the \"get_run_configurations\" tool. " +
                 "Returns the output (stdout/stderr) of the execution, prefixed with 'ok\\n' on success (exit code 0). " +
                 "Returns '<error message>' if the configuration is not found, times out, fails to start, or finishes with a non-zero exit code."
 
     // Timeout in seconds
-    private val executionTimeoutSeconds = 30L
+    private val executionTimeoutSeconds = 120L
 
     override fun handle(project: Project, args: RunConfigArgs): Response {
         val runManager = RunManager.getInstance(project)
