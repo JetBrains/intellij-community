@@ -438,7 +438,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
     NonBlockingReadAction<JavaOverrideImplementMemberChooserContainer> prepareChooserTask = ReadAction.nonBlocking(() -> {
-        return prepareChooser(aClass, toImplement);
+        return DumbService.getInstance(project).withAlternativeResolveEnabled(() -> prepareChooser(aClass, toImplement));
       })
       .expireWhen(() -> !aClass.isValid());
 

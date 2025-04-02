@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -51,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class CreateSubclassAction extends BaseIntentionAction {
+public class CreateSubclassAction extends BaseIntentionAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
   private @IntentionName String myText = decapitalize(JavaBundle.message("intention.implement.abstract.class.default.text"));
 
