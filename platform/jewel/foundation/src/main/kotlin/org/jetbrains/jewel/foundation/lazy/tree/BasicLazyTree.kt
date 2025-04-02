@@ -184,7 +184,6 @@ public fun <T> BasicLazyTree(
                         }
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
                             val item = flattenedTree[index] as Tree.Element<T>
-                            JewelLogger.getInstance("BasicLazyTree").warn("Clicky clicky: ${item.data}")
                             (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)?.notifyItemClicked(
                                 item = item,
                                 scope = scope,
