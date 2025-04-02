@@ -11,7 +11,7 @@ import com.intellij.util.ui.EDT
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 
 internal class KotlinChangeSignatureCompletionCommand : AbstractChangeSignatureCompletionCommandProvider() {
@@ -37,7 +37,7 @@ internal class KotlinChangeSignatureCompletionCommand : AbstractChangeSignatureC
                 return currentOffset
             }
         }
-        val method = element.parentOfType<KtNamedFunction>()
+        val method = element.parentOfType<KtFunction>()
         if (method == null) return null
         if ((method.valueParameterList?.textRange?.endOffset ?: 0) >= currentOffset ||
             method.textRange?.endOffset == currentOffset

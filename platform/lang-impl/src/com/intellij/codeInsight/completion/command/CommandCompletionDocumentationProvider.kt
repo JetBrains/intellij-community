@@ -95,19 +95,29 @@ private class CommandCompletionDocumentationTarget(
 
   private fun createContext(content: HtmlChunk): DocumentationContent {
     val html = content.toString()
-    val regex = """<icon src="(.*?)"/>""".toRegex()
+    val regexIcons = """<icon src="(.*?)"/>""".toRegex()
     var updatedContent = html
 
-    regex.findAll(html).forEach {
+    regexIcons.findAll(html).forEach {
       val iconTag = it.value.substring(11, it.value.length - 3)
       val iconPath = findIconPath(iconTag, content)
       val newValue = if (iconPath != null) """<icon src="$iconPath"/>""" else iconTag
-      @Suppress("HardCodedStringLiteral")
       updatedContent = updatedContent.replace(it.value, newValue)
     }
 
+    var updatedClearedContent = updatedContent
+    val regexSettings = """<a href="settings:(.*?)</a>""".toRegex()
+    regexSettings.findAll(updatedContent).forEach {
+      val path = it.value.substring(9, it.value.length - 4)
+      val openClosed = path.indexOf(">")
+      if (openClosed != -1 && openClosed + 1 < path.length) {
+        val newValue = path.substring(openClosed + 1)
+        @Suppress("HardCodedStringLiteral")
+        updatedClearedContent = updatedClearedContent.replace(it.value, "<b>$newValue</b>")
+      }
+    }
 
-    return DocumentationContent.content(updatedContent)
+    return DocumentationContent.content(updatedClearedContent)
   }
 
   private fun findIconPath(iconId: String, content: HtmlChunk): String? {

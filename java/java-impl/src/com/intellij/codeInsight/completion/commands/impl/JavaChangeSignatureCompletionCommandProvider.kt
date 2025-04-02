@@ -32,6 +32,7 @@ internal class JavaChangeSignatureCompletionCommandProvider : AbstractChangeSign
     if (method == null) return null
     if ((method.body?.lBrace?.textRange?.startOffset ?: 0) >= currentOffset ||
         method.body?.rBrace?.textRange?.endOffset == currentOffset) return method.parameterList.textRange?.startOffset
+    if (method.body == null && method.parameterList.textRange.endOffset >= currentOffset) return method.parameterList.textRange?.startOffset
     return null
   }
 }

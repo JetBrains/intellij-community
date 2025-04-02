@@ -386,16 +386,32 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testChangeSignature() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-    myFixture.configureByText(JavaFileType.INSTANCE, """
-      class A { 
+    var text = """
+      abstract class A { 
         void foo() <caret>{
-        } 
+        }<caret>
+        abstract void bar<caret>()<caret>;
       }
-      """.trimIndent())
-    myFixture.doHighlighting()
-    myFixture.type(".")
-    val elements = myFixture.completeBasic()
-    assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("Change Sign", ignoreCase = true) })
+      """.trimIndent()
+    val indexes = mutableListOf<Int>()
+    var index = -1
+    while (true) {
+      index = text.indexOf("<caret>", index + 1)
+      if (index == -1) {
+        break
+      }
+      text = text.replaceFirst("<caret>", "")
+      indexes.add(index)
+    }
+    myFixture.configureByText(JavaFileType.INSTANCE, text.replace("<caret>", ""))
+    for (index in indexes) {
+      myFixture.editor.caretModel.moveToOffset(index)
+      myFixture.doHighlighting()
+      myFixture.type(".")
+      val elements = myFixture.completeBasic()
+      assertNotNull(elements.firstOrNull() { element -> element.lookupString.contains("Change Sign", ignoreCase = true) })
+      myFixture.performEditorAction("EditorBackSpace")
+    }
   }
 
   fun testComment() {
