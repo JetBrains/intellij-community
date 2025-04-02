@@ -6,7 +6,7 @@ kt_jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/*.kt"]),
   deps = [
-    "@lib//:kotlin-stdlib",
+    "//:kotlin-stdlib",
     "//:netty-buffer",
     "//:netty-common",
     "//:intellij-deps-fastutil",

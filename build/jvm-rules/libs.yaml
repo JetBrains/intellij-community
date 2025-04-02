@@ -45,6 +45,8 @@
         - ":arrow-memory-netty-buffer-patch"
     - id: org.apache.arrow:arrow-memory-netty-buffer-patch
       version: 18.2.0
+    - id: org.jetbrains.kotlin:kotlin-stdlib
+      version: 2.1.20
     # OpenTelemetry
     - id: io.opentelemetry:opentelemetry-api
       version: 1.48.0

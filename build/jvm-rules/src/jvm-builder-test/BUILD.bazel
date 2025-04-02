@@ -8,7 +8,6 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
-        "@lib//:kotlin-stdlib",
         "@lib//:assert_j",
         "//src/worker-util",
         "//src/jvm-builder:jvm-builder-lib",

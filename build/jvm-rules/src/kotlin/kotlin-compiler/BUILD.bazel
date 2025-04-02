@@ -5,7 +5,6 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
-      "@lib//:kotlin-stdlib",
       "//src/worker-util",
       "//:kotlin-compiler",
       "//src/kotlin/kotlin-plugins/abi",

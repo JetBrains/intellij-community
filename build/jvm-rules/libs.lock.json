@@ -127,6 +127,10 @@
     "9003ae6a622526eb5db18f7c7c8b2a6e37af52cd8a7475377051f0f68e663601",
     "941b3bf2b6b366f6b6d066b8d17daf4ec974ec9a419888aa3448716b15fde8e9"
   ],
+  "org.jetbrains.kotlin:kotlin-stdlib:2.1.20": [
+    "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a",
+    "6f0c26b17398e3e4be3b82d9ef1e92d941a755d16faf9703109f208f9aac7480"
+  ],
   "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.1.20-RC3": [
     "2946fcea4c435df7172c3738dc3640ae27e4075a5f683f9350cfff152c678cad",
     "8c09123a01414e2e8b7b691aecb3e96b36d993f0101de8566f62f5ff6a1e8d3f"
