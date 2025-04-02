@@ -164,14 +164,15 @@ fun <T> Resource<T>.catch(): Resource<Result<T>> =
     }
   }
 
-fun <T> Resource<T>.async(cancellable: Boolean = false): Resource<Deferred<T>> =
+fun <T> Resource<T>.async(lazy: Boolean = false): Resource<Deferred<T>> =
   let { source ->
     object : Resource<Deferred<T>> {
       override suspend fun <U> use(body: suspend CoroutineScope.(Deferred<T>) -> U): U =
         coroutineScope {
           val d = CompletableDeferred<T>()
           val shutdown = Job()
-          val job = launch {
+          val coroutineStart = if (lazy) CoroutineStart.LAZY else CoroutineStart.DEFAULT
+          val job = launch(start = coroutineStart) {
             source.use { t ->
               d.complete(t)
               shutdown.join()
@@ -181,7 +182,19 @@ fun <T> Resource<T>.async(cancellable: Boolean = false): Resource<Deferred<T>> =
               d.completeExceptionally(cause ?: RuntimeException("resource didn't emit"))
             }
           }
-          coroutineScope { body(d) }.also { if (cancellable) job.cancel() else shutdown.complete() }
+          val async = async(Dispatchers.Unconfined, start = coroutineStart) {
+            job.start()
+            d.await()
+          }
+          coroutineScope { body(async) }.also {
+            async.cancel()
+            if (!job.isActive) {
+              job.cancel()
+            }
+            else {
+              shutdown.complete()
+            }
+          }
         }
     }
   }
