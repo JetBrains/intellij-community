@@ -5,6 +5,7 @@ import com.intellij.platform.syntax.*
 import com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
+import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
 import org.jetbrains.annotations.ApiStatus
 
@@ -148,7 +149,7 @@ private class BuilderImpl(
       myDebugMode = debugMode,
       language = language,
       cancellationProvider = null,
-      logger = logger ?: NoopLogger,
+      logger = logger ?: noopLogger(),
       whitespaceOrCommentBindingPolicy = whitespaceOrCommentBindingPolicy ?: WhitespaceOrCommentBindingPolicy { false },
       opaquePolicy = opaquePolicy ?: OpaqueElementPolicy { null },
     )

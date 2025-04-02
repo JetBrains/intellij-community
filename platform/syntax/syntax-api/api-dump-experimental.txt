@@ -87,6 +87,8 @@
 - sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
 - bs:performLexing$default(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,I,java.lang.Object):com.intellij.platform.syntax.lexer.TokenList
 - sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.lexer.Lexer
+*f:com.intellij.platform.syntax.logger.NoopLogger
+- *sf:noopLogger():com.intellij.platform.syntax.Logger
 *:com.intellij.platform.syntax.parser.OpaqueElementPolicy
 - a:getTextOfOpaqueElement(com.intellij.platform.syntax.SyntaxElementType):java.lang.String
 *:com.intellij.platform.syntax.parser.ProductionMarkerList

@@ -9,11 +9,5 @@ interface Logger {
   fun error(string: String, vararg attachment: Attachment)
   fun warn(string: String, exception: RuntimeException? = null)
 
-  class Attachment(val name: String?, val content: String)
-}
-
-internal object NoopLogger : Logger {
-  override fun error(string: String) {}
-  override fun error(string: String, vararg attachment: Logger.Attachment) {}
-  override fun warn(string: String, exception: RuntimeException?) {}
+  class Attachment(val name: String, val content: String)
 }
