@@ -1,4 +1,14 @@
 - name: lib/jacoco.jar
+  library: JaCoCo
+  module: intellij.java.coverage
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0/org.jacoco.ant-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0/org.jacoco.core-0.jar
+  - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm/9/asm-9.jar
+  - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9/asm-commons-9.jar
+  - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9/asm-tree-9.jar
+  - name: $MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0/org.jacoco.report-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0/org.jacoco.agent-0.jar
 - name: lib/java-coverage-rt.jar
   modules:
   - name: intellij.java.coverage.rt

@@ -1,9 +1,8 @@
 - name: lib/libthrift.jar
-  projectLibraries:
-  - name: libthrift
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
-    reason: withProjectLibrary
+  library: libthrift
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
+  reason: withProjectLibrary
 - name: lib/python-ce.jar
   projectLibraries:
   - name: io.github.z4kn4fein.semver.jvm
@@ -68,8 +67,7 @@
   - name: intellij.python.syntax
   - name: intellij.python.syntax.core
 - name: lib/xmlrpc.jar
-  projectLibraries:
-  - name: XmlRPC
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
-    reason: withProjectLibrary
+  library: XmlRPC
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
+  reason: withProjectLibrary

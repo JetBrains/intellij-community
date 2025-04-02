@@ -1,8 +1,7 @@
 - name: lib/vcs-svn.jar
-  projectLibraries:
-  - name: sqlite
-    files:
-    - name: $MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar
-    reason: <- intellij.vcs.svn
   modules:
   - name: intellij.vcs.svn
+  library: sqlite
+  files:
+  - name: $MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar
+  reason: <- intellij.vcs.svn
