@@ -522,7 +522,7 @@ class IdeaPluginDescriptorImpl private constructor(
         }
       }
       Type.DependsSubDescriptor -> {
-        assert(descriptorPath != null && moduleName == null && moduleLoadingRule == null) { this }
+        assert(moduleName == null && moduleLoadingRule == null && descriptorPath != null) { this }
         if (content.modules.isNotEmpty()) {
           LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
         }
