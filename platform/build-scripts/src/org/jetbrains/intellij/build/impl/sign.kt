@@ -17,32 +17,19 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.io.AddDirEntriesMode
-import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
-import org.jetbrains.intellij.build.io.writeZipUsingTempFile
+import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.PathMatcher
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
-import java.util.EnumSet
+import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.extension
@@ -211,8 +198,12 @@ internal suspend fun signData(data: ByteBuffer, context: BuildContext): Path {
   val options = signingOptions("application/x-mac-app-bin", context)
 
   val file = Files.createTempFile(context.paths.tempDir, "", "")
-  FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE)).use {
-    it.write(data)
+  FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE)).use { fileChannel ->
+    var currentPosition = 0L
+    do {
+      currentPosition += fileChannel.write(data, currentPosition)
+    }
+    while (data.hasRemaining())
   }
   context.proprietaryBuildTools.signTool.signFiles(files = listOf(file), context = context, options = options)
   check(isSigned(file)) { "Missing signature for $file" }
