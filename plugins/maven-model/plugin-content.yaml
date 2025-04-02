@@ -1,8 +1,8 @@
-- name: lib/jetbrains-annotations-java5.jar
-  library: jetbrains-annotations-java5
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/annotations-java5/24/annotations-java5-24.jar
-  reason: <- intellij.maven.model
 - name: lib/maven-model.jar
+  projectLibraries:
+  - name: jetbrains-annotations-java5
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/annotations-java5/24/annotations-java5-24.jar
+    reason: <- intellij.maven.model
   modules:
   - name: intellij.maven.model

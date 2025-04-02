@@ -10,12 +10,14 @@
   - name: kotlin.jsr223
   - name: kotlin.scripting-plugin
 - name: lib/kotlinc.kotlin-compiler-common.jar
-  library: kotlinc.kotlin-compiler-common
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
-  reason: withProjectLibrary
+  projectLibraries:
+  - name: kotlinc.kotlin-compiler-common
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+    reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-fe10.jar
-  library: kotlinc.kotlin-compiler-fe10
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
-  reason: withProjectLibrary
+  projectLibraries:
+  - name: kotlinc.kotlin-compiler-fe10
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
+    reason: withProjectLibrary
