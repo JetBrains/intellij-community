@@ -555,11 +555,20 @@ c:com.intellij.find.actions.FindUsagesAction
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon
+com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
+- *a:getCurrentlyShownPopupInstance():com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
+*:com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
+- a:addSearchListener(com.intellij.ide.actions.searcheverywhere.SearchListener):V
+- a:closePopup():V
+- a:getSearchFieldDocument():javax.swing.text.Document
+- a:getSearchText():java.lang.String
+- a:setSearchText(java.lang.String):V
 f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.ide.actions.BigPopupUI
+- com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
-- *:selectFirst():V
+- *:selectFirstItem():V
 com.intellij.ide.actions.searcheverywhere.SearchListener
 - *:standardSearchFoundNoResults(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):V
 *a:com.intellij.ide.fileTemplates.actions.CustomCreateFromTemplateAction

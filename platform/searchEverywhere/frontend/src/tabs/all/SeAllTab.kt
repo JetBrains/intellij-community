@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.all
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
@@ -21,6 +22,8 @@ class SeAllTab(private val delegate: SeTabDelegate): SeTab {
   override val shortName: String
     get() = name
 
+  override val id: String get() = ID
+
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterState>? = null
 
@@ -30,6 +33,11 @@ class SeAllTab(private val delegate: SeTabDelegate): SeTab {
 
   override fun dispose() {
     Disposer.dispose(delegate)
+  }
+
+  companion object {
+    @ApiStatus.Internal
+    const val ID: String = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
   }
 }
 

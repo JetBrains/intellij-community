@@ -17,6 +17,7 @@ class SeTabMock(override val name: String,
                 private val delegate: SeTabDelegate
 ): SeTab {
   override val shortName: String = name
+  override val id: String = name
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)

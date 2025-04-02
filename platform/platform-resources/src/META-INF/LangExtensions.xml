@@ -1476,6 +1476,7 @@
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
+    <searchEverywhere.manager implementation="com.intellij.ide.actions.searcheverywhere.MonolithSearchEverywhereManagerFactory"/>
 
     <advancedSetting id="se.text.search" default="true" groupKey="group.advanced.settings.se"/>
     <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>

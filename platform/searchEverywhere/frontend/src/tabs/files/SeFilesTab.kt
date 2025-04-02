@@ -24,6 +24,7 @@ import javax.swing.JComponent
 class SeFilesTab(private val delegate: SeTabDelegate): SeTab {
   override val name: String get() = IdeBundle.message("search.everywhere.group.name.files")
   override val shortName: String get() = name
+  override val id: String get() = "FileSearchEverywhereContributor"
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)

@@ -20,6 +20,7 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -30,7 +31,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -93,13 +93,13 @@ public final class SearchEverywhereHeader {
   }
 
   @ApiStatus.Internal
-  public void changeScope(@NotNull BiFunction<? super ScopeDescriptor, ? super List<ScopeDescriptor>, @Nullable ScopeDescriptor> processor) {
+  public void changeScope(@NotNull Function2<? super @NotNull ScopeDescriptor, ? super @NotNull List<? extends @NotNull ScopeDescriptor>, ? extends @Nullable ScopeDescriptor> processor) {
     if (mySelectedTab.everywhereAction == null) return;
     if (mySelectedTab.everywhereAction instanceof ScopeChooserAction sca) {
       List<ScopeDescriptor> scopes = new ArrayList<>();
       sca.processScopes(scopes::add);
       ScopeDescriptor currentScope = sca.getSelectedScope();
-      ScopeDescriptor newScope = processor.apply(currentScope, scopes);
+      ScopeDescriptor newScope = processor.invoke(currentScope, scopes);
       if (newScope != null && newScope != currentScope) {
         sca.onScopeSelected(newScope);
         myToolbar.updateActionsImmediately();

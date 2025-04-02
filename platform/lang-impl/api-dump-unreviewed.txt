@@ -9183,6 +9183,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 - sf:LOCATION_SETTINGS_KEY:java.lang.String
 - <init>():V
 - <init>(com.intellij.openapi.project.Project):V
+- getCurrentlyShownPopupInstance():com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 - getCurrentlyShownUI():com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - getPrevSelection(java.lang.String):java.lang.Object
 - getSelectedTabID():java.lang.String
@@ -9199,6 +9200,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.ide.actions.BigPopupUI
+- com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
 - sf:MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT:I
@@ -9216,11 +9218,14 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - findElementsForPattern(java.lang.String):java.util.concurrent.Future
 - findPsiElementsForPattern(java.lang.String):java.util.concurrent.Future
 - getFoundElementsInfo():java.util.List
+- getSearchFieldDocument():javax.swing.text.Document
+- getSearchText():java.lang.String
 - getSelectedTabID():java.lang.String
 - getSelectionIdentity():java.lang.Object
 - registerHint(com.intellij.openapi.ui.popup.JBPopup):V
 - removeSearchListener(com.intellij.ide.actions.searcheverywhere.SearchListener):V
 - sendStatisticsAndClose():V
+- setSearchText(java.lang.String):V
 - switchToTab(java.lang.String):V
 - toggleEverywhereFilter():V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V

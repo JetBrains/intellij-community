@@ -194,6 +194,6 @@ private class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataCo
     val event = AnActionEvent.createEvent(split, dataContext, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
     ActionUtil.invokeAction(split, event, null)
     val seManager = SearchEverywhereManager.getInstance(dataContext.getData(CommonDataKeys.PROJECT))
-    if (seManager.isShown) seManager.currentlyShownUI.closePopup()
+    if (seManager.isShown) seManager.currentlyShownPopupInstance?.closePopup()
   }
 }

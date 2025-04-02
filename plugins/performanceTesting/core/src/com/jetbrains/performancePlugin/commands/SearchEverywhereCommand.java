@@ -112,7 +112,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
             AnActionEvent event = AnActionEvent.createEvent(
               wrappedDataContext, null, ActionPlaces.EDITOR_POPUP, ActionUiKind.POPUP, null);
             manager.show(tabId.get(), "", event);
-            attachSearchListeners(manager.getCurrentlyShownUI());
+            SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+            assert (popupInstance != null);
+            attachSearchListeners(popupInstance);
             return null;
           });
           typeOrInsertText(context, insertText, typingSemaphore, warmup);
@@ -123,13 +125,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
       }));
       try {
         typingSemaphore.acquire();
-        SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
+        SearchEverywherePopupInstance popupInstance = SearchEverywhereManager.getInstance(project).getCurrentlyShownPopupInstance();
+        assert popupInstance != null;
+
         if (myOptions.close) {
-          ApplicationManager.getApplication().invokeAndWait(() -> ui.closePopup());
+          ApplicationManager.getApplication().invokeAndWait(() -> popupInstance.closePopup());
         }
         if (myOptions.selectFirst) {
           WriteAction.runAndWait(() -> {
-            ApplicationManager.getApplication().invokeAndWait(() -> ui.selectFirst());
+            ApplicationManager.getApplication().invokeAndWait(() -> popupInstance.selectFirstItem());
           });
         }
       }
@@ -181,15 +185,16 @@ public class SearchEverywhereCommand extends AbstractCommand {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
           am.tryToExecute(targetAction, input, null, null, false).doWhenProcessed(() -> {//AWT
-            SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
-            attachSearchListeners(ui);
+            SearchEverywherePopupInstance popupInstance = SearchEverywhereManager.getInstance(project).getCurrentlyShownPopupInstance();
+            assert popupInstance != null;
+            attachSearchListeners(popupInstance);
 
             ApplicationManager.getApplication().invokeAndWait(() -> {
               typeOrInsertText(context, insertText, typingSemaphore, warmup);
             });
 
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
-              closePopupOrSelectFirst(typingSemaphore, ui, actionCallback);
+              closePopupOrSelectFirst(typingSemaphore, popupInstance, actionCallback);
             });
           });
         }
@@ -203,15 +208,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  private void closePopupOrSelectFirst(Semaphore typingSemaphore, SearchEverywhereUI ui, ActionCallback actionCallback) {
+  private void closePopupOrSelectFirst(Semaphore typingSemaphore, SearchEverywherePopupInstance popupInstance, ActionCallback actionCallback) {
     try {
       typingSemaphore.acquire();
       if (myOptions.close) {
-        ApplicationManager.getApplication().invokeAndWait(() -> ui.closePopup());
+        ApplicationManager.getApplication().invokeAndWait(() -> popupInstance.closePopup());
       }
       if (myOptions.selectFirst) {
         WriteAction.runAndWait(() -> {
-          ApplicationManager.getApplication().invokeAndWait(() -> ui.selectFirst());
+          ApplicationManager.getApplication().invokeAndWait(() -> popupInstance.selectFirstItem());
         });
       }
     }
@@ -273,10 +278,11 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
   private void insertText(Project project, String insertText, Semaphore typingSemaphore, boolean warmup) {
-    SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
+    SearchEverywherePopupInstance popupInstance = SearchEverywhereManager.getInstance(project).getCurrentlyShownPopupInstance();
+    assert popupInstance != null;
     Span insertSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan();
     Span firstBatchAddedSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan();
-    ui.addSearchListener(new SearchAdapter() {
+    popupInstance.addSearchListener(new SearchAdapter() {
       @Override
       public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
         super.elementsAdded(list);
@@ -285,7 +291,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       }
     });
     //noinspection TestOnlyProblems
-    Future<List<Object>> elements = ui.findElementsForPattern(insertText);
+    Future<List<Object>> elements = popupInstance.findElementsForPattern(insertText);
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap((Callable<Object>)() -> {
       insertSpan.setAttribute("text", insertText);
       List<Object> result = elements.get();
@@ -298,14 +304,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
   private void typeText(Project project, String typingText, Semaphore typingSemaphore, boolean warmup) {
-    SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
-    Document document = ui.getSearchField().getDocument();
+    SearchEverywherePopupInstance popupInstance = SearchEverywhereManager.getInstance(project).getCurrentlyShownPopupInstance();
+    assert popupInstance != null;
+    Document document = popupInstance.getSearchFieldDocument();
     Semaphore oneLetterLock = new Semaphore(1);
     ThreadPoolExecutor typing = ConcurrencyUtil.newSingleThreadExecutor("Performance plugin delayed type");
     Ref<Boolean> isTypingFinished = new Ref<>(false);
     Ref<Span> oneLetterSpan = new Ref<>();
     Ref<Span> firstBatchAddedSpan = new Ref<>();
-    ui.addSearchListener(new SearchAdapter() {
+    popupInstance.addSearchListener(new SearchAdapter() {
       @Override
       public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
         firstBatchAddedSpan.get().setAttribute("number", list.size());
@@ -355,7 +362,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     }
   }
 
-  protected void attachSearchListeners(@NotNull SearchEverywhereUI ui) { }
+  protected void attachSearchListeners(@NotNull SearchEverywherePopupInstance popupInstance) { }
 
   static class Options {
     @Argument

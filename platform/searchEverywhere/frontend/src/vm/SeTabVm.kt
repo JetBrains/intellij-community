@@ -26,6 +26,7 @@ class SeTabVm(
   val searchResults: StateFlow<Flow<SeResultListEvent>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: ObservableOptionEditor<SeFilterState>? = tab.getFilterEditor()
+  val tabId: String get() = tab.id
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean

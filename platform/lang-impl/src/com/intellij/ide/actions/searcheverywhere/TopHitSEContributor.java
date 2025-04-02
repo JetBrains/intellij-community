@@ -291,7 +291,10 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
       Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       Consumer<? super String> setter = str -> {
         SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
-        if (manager.isShown()) manager.getCurrentlyShownUI().getSearchField().setText(str);
+        if (manager.isShown()) {
+          SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+          if (popupInstance != null) popupInstance.setSearchText(str);
+        }
       };
       return new TopHitSEContributor(project, contextComponent, setter);
     }

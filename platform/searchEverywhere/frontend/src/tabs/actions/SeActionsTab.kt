@@ -21,11 +21,9 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
-  override val name: String
-    get() = IdeBundle.message("search.everywhere.group.name.actions")
-
-  override val shortName: String
-    get() = name
+  override val name: String get() = IdeBundle.message("search.everywhere.group.name.actions")
+  override val shortName: String get() = name
+  override val id: String get() = "ActionSearchEverywhereContributor"
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterState> = SeActionsFilterEditor()

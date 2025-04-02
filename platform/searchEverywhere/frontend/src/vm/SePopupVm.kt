@@ -70,6 +70,12 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     usageLogger.tabSwitched()
   }
 
+  fun showTab(tabId: String) {
+    tabVms.indexOfFirst { it.tabId == tabId }.takeIf { it >= 0 }?.let {
+      currentTabIndex.value = it
+    }
+  }
+
   private fun logItemSelected() {
     val searchText = searchPattern.value
     if (searchText.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && searchText.contains(" ")) {

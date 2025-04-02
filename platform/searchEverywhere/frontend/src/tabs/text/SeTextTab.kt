@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.FindBundle
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = FindBundle.message("search.everywhere.group.name")
   override val shortName: String get() = name
+  override val id: String get() = "TextSearchContributor"
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)

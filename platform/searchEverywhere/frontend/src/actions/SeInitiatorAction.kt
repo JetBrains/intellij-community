@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
+import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -20,6 +21,6 @@ class SeInitiatorAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    SeFrontendService.getInstance(project).showPopup(null, e)
+    SeFrontendService.getInstance(project).show(SeAllTab.ID, null, e)
   }
 }

@@ -32,8 +32,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import java.awt.Dimension;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -117,25 +117,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
       }
     }
 
-    if (!tryToOpenExternalEntryPoint(e)) {
-      ReadAction.run(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
-    }
-  }
-
-  private static boolean tryToOpenExternalEntryPoint(@NotNull AnActionEvent e) {
-    try {
-      for (SearchEverywhereEntryPoint entryPoint: SearchEverywhereEntryPoint.EP_NAME.getExtensionList()) {
-        if (entryPoint.isAvailable(e)) {
-          entryPoint.initiateSearchPopup(e);
-          return true;
-        }
-      }
-    }
-    catch (Throwable t) {
-      LOG.warn(t);
-    }
-
-    return false;
+    ReadAction.run(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
   }
 }
 

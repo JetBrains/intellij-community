@@ -40,7 +40,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
   fun `search finished event is reported`() {
     val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       type("reg")
-      selectFirst()
+      selectFirstItem()
     }
 
     assertNotNull(events.find { it.event.id == SESSION_FINISHED.eventId })
@@ -50,7 +50,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
   fun `the number of events is correct`() {
     val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       type("reg")
-      selectFirst()
+      selectFirstItem()
     }
 
     assertEquals(4, events.size)

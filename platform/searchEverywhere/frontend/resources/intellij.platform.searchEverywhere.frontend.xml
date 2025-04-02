@@ -17,7 +17,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.entryPoint implementation="com.intellij.platform.searchEverywhere.frontend.SeEntryPoint"/>
+    <searchEverywhere.manager implementation="com.intellij.platform.searchEverywhere.frontend.RemDevFriendlySearchEverywhereManager"/>
 
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsProviderFactory"/>
 

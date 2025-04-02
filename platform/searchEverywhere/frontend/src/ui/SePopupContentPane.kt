@@ -3,15 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.CustomShortcutSet
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.actionSystem.Shortcut
-import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
@@ -46,22 +38,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.InputEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.util.function.Supplier
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.KeyStroke
-import javax.swing.ListCellRenderer
-import javax.swing.ScrollPaneConstants
+import javax.swing.*
+import javax.swing.text.Document
 
 @Internal
 class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
+  val searchFieldDocument: Document get() = textField.document
 
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
   private val textField: SeTextField = SeTextField()
