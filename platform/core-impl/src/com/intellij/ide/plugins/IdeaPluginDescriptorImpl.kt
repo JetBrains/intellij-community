@@ -23,6 +23,7 @@ import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
@@ -60,6 +61,7 @@ class IdeaPluginDescriptorImpl private constructor(
     isIndependentFromCoreClassLoader = false,
     descriptorPath = null)
 
+  @TestOnly
   constructor(
     raw: RawPluginDescriptor,
     pluginPath: Path,

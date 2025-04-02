@@ -28,8 +28,8 @@ internal class ClassLoaderConfiguratorTest {
     val pluginId = PluginId.getId("org.jetbrains.kotlin")
     val emptyPath = Path.of("")
     val plugins = arrayOf(
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = pluginId.idString }.build(), emptyPath, isBundled = false, moduleName = null),
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.plugins.gradle" }.build(), emptyPath, isBundled = false, moduleName = null),
+      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = pluginId.idString }.build(), emptyPath, isBundled = false),
+      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.plugins.gradle" }.build(), emptyPath, isBundled = false),
       IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = pluginId.idString }.build(), emptyPath, isBundled = false, moduleName = "kotlin.gradle.gradle-java", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
       IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = pluginId.idString }.build(), emptyPath, isBundled = false, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
     )
