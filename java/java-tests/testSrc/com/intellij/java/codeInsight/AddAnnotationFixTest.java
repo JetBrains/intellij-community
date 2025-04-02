@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
@@ -289,10 +288,10 @@ public class AddAnnotationFixTest extends UsefulTestCase {
         (ThrowableComputable<VirtualFile, IOException>)() -> parentDir.createChildDirectory(this, "anno"));
     ModCommand withPath = ((ModEditOptions<?>)command).applyOptions(Map.of("myExternalAnnotationsRoot", annoDir.getPath()));
 
-    assertFalse(NullableNotNullManager.isNotNull(method));
+    assertNull(manager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL));
     ModCommandExecutor.executeInteractively(ActionContext.from(null, myFixture.getFile()), "", null, () -> withPath);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    assertTrue(NullableNotNullManager.isNotNull(method));
+    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL));
   }
 
   public void testListenerNotifiedOnExternalChanges() throws IOException {
