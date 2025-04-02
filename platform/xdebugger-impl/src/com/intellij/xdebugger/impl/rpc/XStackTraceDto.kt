@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.Id
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.impl.rpc.serializers.SimpleTextAttributesSerializer
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
