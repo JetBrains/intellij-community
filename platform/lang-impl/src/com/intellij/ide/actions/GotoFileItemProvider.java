@@ -125,15 +125,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                                         @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                                         @NotNull ProgressIndicator indicator) {
     long start = System.currentTimeMillis();
-    final StructuredIdeActivity fuzzySearchActivity = FUZZY_SEARCH_ACTIVITY.started(myProject);
+    final StructuredIdeActivity fuzzySearchActivity = FUZZY_FILE_SEARCH_ACTIVITY.started(myProject);
 
     List<String> patternComponents = LevenshteinCalculator.normalizeString(parameters.getCompletePattern());
     if (patternComponents.isEmpty()) {
-      fuzzySearchActivity.finished(() -> List.of(
-                                     FUZZY_SEARCH_TOTAL_RESULTS.with(0),
-                                     FUZZY_SEARCH_RESULT.with(FuzzySearchResult.EMPTY_PATTERN)
-                                   )
-      );
+      fuzzySearchActivity.finished(() -> List.of(FUZZY_SEARCH_RESULT.with(FuzzySearchResult.EMPTY_PATTERN)));
       return true;
     }
 
