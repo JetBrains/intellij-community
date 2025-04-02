@@ -257,7 +257,7 @@ class IdeaPluginDescriptorImpl private constructor(
   override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
 
   override fun toString(): String =
-    "PluginDescriptor(name=$name, id=$id, " +
+    "$type(name=$name, id=$id, " +
     (if (moduleName == null) "" else "moduleName=$moduleName, ") +
     "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
     "path=${PluginUtils.pluginPathToUserString(pluginPath)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
