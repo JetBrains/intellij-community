@@ -61,7 +61,7 @@ class IdeaPluginDescriptorImpl private constructor(
     isIndependentFromCoreClassLoader = false,
     descriptorPath = null)
 
-  /** see [type] */
+  /** see [type], [checkTypeInvariants] */
   @ApiStatus.Internal
   enum class Type {
     /**
@@ -173,6 +173,10 @@ class IdeaPluginDescriptorImpl private constructor(
       descriptorPath != null -> Type.DependsSubDescriptor
       else -> Type.MainDescriptor
     }
+  }
+
+  init {
+    checkTypeInvariants()
   }
 
   override fun getPluginId(): PluginId = id
@@ -503,6 +507,32 @@ class IdeaPluginDescriptorImpl private constructor(
                " included into the platform part of the IDE but the platform part uses predefined bundles " +
                "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
                "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
+    }
+  }
+
+  private fun checkTypeInvariants() {
+    when (type) {
+      Type.MainDescriptor -> {
+        assert(moduleName == null && moduleLoadingRule == null && descriptorPath == null) { this }
+      }
+      Type.ContentModuleDescriptor -> {
+        assert(moduleName != null && moduleLoadingRule != null && descriptorPath != null) { this }
+        if (pluginDependencies.isNotEmpty()) {
+          LOG.error("Unexpected `depends` dependencies in a content module: ${pluginDependencies.joinToString()}\n in $this")
+        }
+      }
+      Type.DependsSubDescriptor -> {
+        assert(descriptorPath != null && moduleName == null && moduleLoadingRule == null) { this }
+        if (content.modules.isNotEmpty()) {
+          LOG.error("Unexpected `content` elements in a `depends` sub-descriptor: ${content.modules.joinToString()}\n in $this")
+        }
+        if (moduleDependencies.modules.isNotEmpty()) {
+          LOG.error("Unexpected `module` dependencies in a `depends` sub-descriptor: ${moduleDependencies.modules.joinToString()}\n in $this")
+        }
+        if (moduleDependencies.plugins.isNotEmpty()) {
+          LOG.error("Unexpected `plugin` dependencies in a `depends` sub-descriptor: ${moduleDependencies.plugins.joinToString()}\n in $this")
+        }
+      }
     }
   }
 
