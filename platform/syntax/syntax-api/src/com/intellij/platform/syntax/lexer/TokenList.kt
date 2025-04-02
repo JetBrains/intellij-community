@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 @file:JvmName("TokenListUtil")
+
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.CancellationProvider
@@ -53,10 +54,12 @@ fun performLexing(text: CharSequence, lexer: Lexer, cancellationProvider: Cancel
     val existing = lexer.tokens
     if (existing is TokenSequence && equal(text, existing.tokenizedText)) {
       // prevent clients like PsiBuilder from modifying shared token types
-      return TokenSequence(existing.lexStarts,
-                           existing.lexTypes.clone(),
-                           existing.tokenCount,
-                           text) as TokenList
+      return TokenSequence(
+        lexStarts = existing.lexStarts,
+        lexTypes = existing.lexTypes.clone(),
+        tokenCount = existing.tokenCount,
+        tokenizedText = text
+      ) as TokenList
     }
   }
   val sequence = Builder(text, lexer, cancellationProvider).performLexing()
