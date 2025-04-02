@@ -820,22 +820,22 @@ java_import(
 java_library(
   name = "assert_j",
   exports = [
-    ":assertj-core-3_26_3_http_import",
-    ":byte-buddy-1_14_18_http_import",
+    ":assertj-core-3_27_3_http_import",
+    ":byte-buddy-1_15_11_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "assertj-core-3_26_3_http_import",
-  jars = ["@assertj-core-3_26_3_http//file"],
-  srcjar = "@assertj-core-3_26_3-sources_http//file"
+  name = "assertj-core-3_27_3_http_import",
+  jars = ["@assertj-core-3_27_3_http//file"],
+  srcjar = "@assertj-core-3_27_3-sources_http//file"
 )
 
 java_import(
-  name = "byte-buddy-1_14_18_http_import",
-  jars = ["@byte-buddy-1_14_18_http//file"],
-  srcjar = "@byte-buddy-1_14_18-sources_http//file"
+  name = "byte-buddy-1_15_11_http_import",
+  jars = ["@byte-buddy-1_15_11_http//file"],
+  srcjar = "@byte-buddy-1_15_11-sources_http//file"
 )
 
 java_import(
@@ -1523,8 +1523,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "expects-compiler-plugin",
-  jar = "@expects-compiler-plugin-2_1_20-RC2-0_3_http//file",
-  srcjar = "@expects-compiler-plugin-2_1_20-RC2-0_3-sources_http//file",
+  jar = "@expects-compiler-plugin-2_1_20-0_1_http//file",
+  srcjar = "@expects-compiler-plugin-2_1_20-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1872,26 +1872,26 @@ java_library(
 java_library(
   name = "grpc-core",
   exports = [
-    ":grpc-core-1_66_0_http_import",
-    ":grpc-api-1_66_0_http_import",
+    ":grpc-core-1_71_0_http_import",
+    ":grpc-api-1_71_0_http_import",
     ":annotations-4_1_1_4_http_import",
     ":animal-sniffer-annotations-1_24_http_import",
     ":perfmark-api-0_27_0_http_import",
-    ":grpc-context-1_66_0_http_import",
+    ":grpc-context-1_71_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "grpc-core-1_66_0_http_import",
-  jars = ["@grpc-core-1_66_0_http//file"],
-  srcjar = "@grpc-core-1_66_0-sources_http//file"
+  name = "grpc-core-1_71_0_http_import",
+  jars = ["@grpc-core-1_71_0_http//file"],
+  srcjar = "@grpc-core-1_71_0-sources_http//file"
 )
 
 java_import(
-  name = "grpc-api-1_66_0_http_import",
-  jars = ["@grpc-api-1_66_0_http//file"],
-  srcjar = "@grpc-api-1_66_0-sources_http//file"
+  name = "grpc-api-1_71_0_http_import",
+  jars = ["@grpc-api-1_71_0_http//file"],
+  srcjar = "@grpc-api-1_71_0-sources_http//file"
 )
 
 java_import(
@@ -1913,9 +1913,9 @@ java_import(
 )
 
 java_import(
-  name = "grpc-context-1_66_0_http_import",
-  jars = ["@grpc-context-1_66_0_http//file"],
-  srcjar = "@grpc-context-1_66_0-sources_http//file"
+  name = "grpc-context-1_71_0_http_import",
+  jars = ["@grpc-context-1_71_0_http//file"],
+  srcjar = "@grpc-context-1_71_0-sources_http//file"
 )
 
 kt_jvm_import(
@@ -1928,56 +1928,56 @@ kt_jvm_import(
 java_library(
   name = "grpc-netty-shaded",
   exports = [
-    ":grpc-netty-shaded-1_66_0_http_import",
-    ":grpc-util-1_66_0_http_import",
+    ":grpc-netty-shaded-1_71_0_http_import",
+    ":grpc-util-1_71_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "grpc-netty-shaded-1_66_0_http_import",
-  jars = ["@grpc-netty-shaded-1_66_0_http//file"],
-  srcjar = "@grpc-netty-shaded-1_66_0-sources_http//file"
+  name = "grpc-netty-shaded-1_71_0_http_import",
+  jars = ["@grpc-netty-shaded-1_71_0_http//file"],
+  srcjar = "@grpc-netty-shaded-1_71_0-sources_http//file"
 )
 
 java_import(
-  name = "grpc-util-1_66_0_http_import",
-  jars = ["@grpc-util-1_66_0_http//file"],
-  srcjar = "@grpc-util-1_66_0-sources_http//file"
+  name = "grpc-util-1_71_0_http_import",
+  jars = ["@grpc-util-1_71_0_http//file"],
+  srcjar = "@grpc-util-1_71_0-sources_http//file"
 )
 
 java_library(
   name = "grpc-protobuf",
   exports = [
-    ":grpc-protobuf-1_66_0_http_import",
-    ":proto-google-common-protos-2_41_0_http_import",
-    ":grpc-protobuf-lite-1_66_0_http_import",
+    ":grpc-protobuf-1_71_0_http_import",
+    ":proto-google-common-protos-2_51_0_http_import",
+    ":grpc-protobuf-lite-1_71_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "grpc-protobuf-1_66_0_http_import",
-  jars = ["@grpc-protobuf-1_66_0_http//file"],
-  srcjar = "@grpc-protobuf-1_66_0-sources_http//file"
+  name = "grpc-protobuf-1_71_0_http_import",
+  jars = ["@grpc-protobuf-1_71_0_http//file"],
+  srcjar = "@grpc-protobuf-1_71_0-sources_http//file"
 )
 
 java_import(
-  name = "proto-google-common-protos-2_41_0_http_import",
-  jars = ["@proto-google-common-protos-2_41_0_http//file"],
-  srcjar = "@proto-google-common-protos-2_41_0-sources_http//file"
+  name = "proto-google-common-protos-2_51_0_http_import",
+  jars = ["@proto-google-common-protos-2_51_0_http//file"],
+  srcjar = "@proto-google-common-protos-2_51_0-sources_http//file"
 )
 
 java_import(
-  name = "grpc-protobuf-lite-1_66_0_http_import",
-  jars = ["@grpc-protobuf-lite-1_66_0_http//file"],
-  srcjar = "@grpc-protobuf-lite-1_66_0-sources_http//file"
+  name = "grpc-protobuf-lite-1_71_0_http_import",
+  jars = ["@grpc-protobuf-lite-1_71_0_http//file"],
+  srcjar = "@grpc-protobuf-lite-1_71_0-sources_http//file"
 )
 
 java_import(
   name = "grpc-stub",
-  jars = ["@grpc-stub-1_66_0_http//file"],
-  srcjar = "@grpc-stub-1_66_0-sources_http//file",
+  jars = ["@grpc-stub-1_71_0_http//file"],
+  srcjar = "@grpc-stub-1_71_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2709,8 +2709,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "jetbrains-kotlin-compose-compiler-plugin",
-  jar = "@kotlin-compose-compiler-plugin-2_1_20-RC2_http//file",
-  srcjar = "@kotlin-compose-compiler-plugin-2_1_20-RC2-sources_http//file",
+  jar = "@kotlin-compose-compiler-plugin-2_1_20_http//file",
+  srcjar = "@kotlin-compose-compiler-plugin-2_1_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3408,8 +3408,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlin-reflect",
-  jar = "@kotlin-reflect-2_1_20-RC2_http//file",
-  srcjar = "@kotlin-reflect-2_1_20-RC2-sources_http//file",
+  jar = "@kotlin-reflect-2_1_20_http//file",
+  srcjar = "@kotlin-reflect-2_1_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3422,15 +3422,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlin-script-runtime",
-  jar = "@kotlin-script-runtime-2_1_20-RC2_http//file",
-  srcjar = "@kotlin-script-runtime-2_1_20-RC2-sources_http//file",
+  jar = "@kotlin-script-runtime-2_1_20_http//file",
+  srcjar = "@kotlin-script-runtime-2_1_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlin-stdlib",
-  jar = "@kotlin-stdlib-2_1_20-RC2_http//file",
-  srcjar = "@kotlin-stdlib-2_1_20-RC2-sources_http//file",
+  jar = "@kotlin-stdlib-2_1_20_http//file",
+  srcjar = "@kotlin-stdlib-2_1_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3443,8 +3443,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlin-test",
-  jar = "@kotlin-test-2_1_20-RC2_http//file",
-  srcjar = "@kotlin-test-2_1_20-RC2-sources_http//file",
+  jar = "@kotlin-test-2_1_20_http//file",
+  srcjar = "@kotlin-test-2_1_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3486,8 +3486,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlin-test-junit",
-  jar = "@kotlin-test-junit-2_1_20-RC2_http//file",
-  srcjar = "@kotlin-test-junit-2_1_20-RC2-sources_http//file",
+  jar = "@kotlin-test-junit-2_1_20_http//file",
+  srcjar = "@kotlin-test-junit-2_1_20-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3955,8 +3955,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-core",
-  jar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-3_http//file",
-  srcjar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-3-sources_http//file",
+  jar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-4_http//file",
+  srcjar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3969,36 +3969,29 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-debug",
-  jar = "@kotlinx-coroutines-debug-1_10_1-intellij-3_http//file",
-  srcjar = "@kotlinx-coroutines-debug-1_10_1-intellij-3-sources_http//file",
+  jar = "@kotlinx-coroutines-debug-1_10_1-intellij-4_http//file",
+  srcjar = "@kotlinx-coroutines-debug-1_10_1-intellij-4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinx-coroutines-guava",
-  jar = "@kotlinx-coroutines-guava-1_10_1-intellij-3_http//file",
-  srcjar = "@kotlinx-coroutines-guava-1_10_1-intellij-3-sources_http//file",
+  jar = "@kotlinx-coroutines-guava-1_10_1-intellij-4_http//file",
+  srcjar = "@kotlinx-coroutines-guava-1_10_1-intellij-4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinx-coroutines-slf4j",
-  jar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-3_http//file",
-  srcjar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinx-coroutines-slf4j-provided",
-  exports = [":kotlinx-coroutines-slf4j"],
-  neverlink = True,
+  jar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-4_http//file",
+  srcjar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinx-coroutines-test",
-  jar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-3_http//file",
-  srcjar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-3-sources_http//file",
+  jar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-4_http//file",
+  srcjar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7363,8 +7356,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "noria-compiler-plugin",
-  jar = "@noria-compiler-plugin-2_1_20-RC2-0_3_http//file",
-  srcjar = "@noria-compiler-plugin-2_1_20-RC2-0_3-sources_http//file",
+  jar = "@noria-compiler-plugin-2_1_20-0_1_http//file",
+  srcjar = "@noria-compiler-plugin-2_1_20-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8455,16 +8448,16 @@ java_import(
 
 kt_jvm_import(
   name = "rhizomedb-compiler-plugin",
-  jar = "@rhizomedb-compiler-plugin-2_1_20-RC2-0_3_http//file",
-  srcjar = "@rhizomedb-compiler-plugin-2_1_20-RC2-0_3-sources_http//file",
+  jar = "@rhizomedb-compiler-plugin-2_1_20-0_1_http//file",
+  srcjar = "@rhizomedb-compiler-plugin-2_1_20-0_1-sources_http//file",
   exported_compiler_plugins = ["@lib//:rhizomedb-plugin"],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "rpc-compiler-plugin",
-  jar = "@rpc-compiler-plugin-2_1_20-RC2-0_3_http//file",
-  srcjar = "@rpc-compiler-plugin-2_1_20-RC2-0_3-sources_http//file",
+  jar = "@rpc-compiler-plugin-2_1_20-0_1_http//file",
+  srcjar = "@rpc-compiler-plugin-2_1_20-0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
