@@ -62,8 +62,7 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.vcs.changeReminder",
             "intellij.markdown",
             "intellij.grazie",
-            "intellij.laf.macos",
-            "intellij.laf.win10"
+            "intellij.laf.macos"
         )
 
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
