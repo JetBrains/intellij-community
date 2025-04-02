@@ -122,7 +122,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: W
           ?.firstOrNull()
       }.takeIf { it.size == segments.size }?.firstOrNull()
       if (showProblems && (deprecation != null || problemOnly || segments.any { it.problem != null })) {
-        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, deprecation, problemOnly)
+        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, symbolNameOffset,deprecation, problemOnly)
       }
       else if (!range.isEmpty && !problemOnly) {
         NameSegmentReference(element, range.shiftRight(symbolNameOffset), segments)
@@ -168,6 +168,7 @@ private class NameSegmentReferenceWithProblem(
   private val symbol: WebSymbol,
   rangeInElement: TextRange,
   nameSegments: Collection<WebSymbolNameSegment>,
+  private val segmentsOffset: Int,
   private val apiStatus: WebSymbolApiStatus?,
   private val problemOnly: Boolean,
 ) : NameSegmentReference(element, rangeInElement, nameSegments) {
@@ -188,7 +189,7 @@ private class NameSegmentReferenceWithProblem(
           segment.symbolKinds,
           problemKind,
           inspectionManager.createProblemDescriptor(
-            element, TextRange(segment.start, segment.end),
+            element, TextRange(segment.start + segmentsOffset, segment.end + segmentsOffset),
             toolMapping?.getProblemMessage(segment.displayName)
             ?: getDefaultProblemMessage(problemKind, segment.displayName),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
