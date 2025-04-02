@@ -110,7 +110,7 @@ internal class ZstdDecompressingFileDownloadHandler(
       val chunkSize = ((zstdBufferedSize + sourceRemaining) * 4).coerceAtMost(MAX_BUFFER_SIZE)
       val target = allocator.directBuffer(chunkSize)
       try {
-        val targetNio = target.internalNioBuffer(0, chunkSize)
+        val targetNio = target.internalNioBuffer(target.writerIndex(), chunkSize)
         targetNio.mark()
         zstdDecompressContext.decompressDirectByteBufferStream(targetNio, sourceNio)
         // `flip` is not suitable because it sets the position to 0, whereas the NIO buffer from the allocator may have a non-zero initial position
