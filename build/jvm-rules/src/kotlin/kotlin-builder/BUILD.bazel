@@ -24,7 +24,7 @@ kt_jvm_library(
         "//:arrow-vector",
         "//:arrow-memory-netty",
         "//:arrow-memory-core",
-        "@lib//:jps-javac-extension",
+        "//:jps-javac-extension",
         "//:caffeine",
     ],
     runtime_deps = [

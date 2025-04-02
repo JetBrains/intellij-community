@@ -63,6 +63,12 @@ jvm_import(
     ],
 )
 
+jvm_import(
+    name = "jps-javac-extension",
+    jar = "@jps-javac-extension//file",
+    visibility = ["//visibility:public"],
+)
+
 # jvm_import(
 #     name = "kotlin-compiler",
 #     jar = "@kotlin-compiler//file",

@@ -58,6 +58,13 @@ archive_override(
 )
 
 http_file(
+    name = "jps-javac-extension",
+    url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar",
+    downloaded_file_path = "jps-javac-extension-10.jar",
+    integrity = "sha256-hrnSojeM/5UfO9B1DVb/TO9k9427M+n3q9nH5uFNmd4=",
+)
+
+http_file(
     name = "jps-standalone_http",
     url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-19.03.25.jar",
     downloaded_file_path = "jps-19.03.25.jar",

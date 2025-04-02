@@ -21,7 +21,6 @@ kt_jvm_library(
         "//:arrow-vector",
         "//:arrow-memory-netty",
         "//:arrow-memory-core",
-        "@lib//:jps-javac-extension",
     ],
     runtime_deps = [
         # arrow wants slf4j
