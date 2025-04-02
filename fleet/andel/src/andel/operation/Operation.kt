@@ -52,6 +52,18 @@ class OpsIterator(
     data class LenAfter(val offset: Int): Pos
   }
 
+  fun location(): Pair<Long, Long> {
+    var lenBefore = cursor!!.location(OperationMonoid.LenBefore).toLong()
+    var lenAfter = cursor!!.location(OperationMonoid.LenAfter).toLong()
+    val opsBatch = cursor!!.element
+    for (i in 0 until elementIndex) {
+      lenBefore += opsBatch[i].lenBefore
+      lenAfter += opsBatch[i].lenAfter
+    }
+
+    return Pair(lenBefore, lenAfter)
+  }
+
   override fun next(): Op {
     require(hasNext())
 
@@ -95,27 +107,33 @@ class OpsIterator(
       Pos.End -> {
         cursor = cursor!!.scan(owner, OperationMonoid.Count, size)
         index = size
-        elementIndex = MAX_LEAF_SIZE
+        elementIndex = cursor!!.element.size
       }
       is Pos.LenBefore -> {
-        val c = cursor!!
-        cursor = c.scan(owner, OperationMonoid.LenBefore, pos.offset)
+        var c = cursor!!
+        c = c.scan(owner, OperationMonoid.LenBefore, pos.offset)
         elementIndex = 0
-        index = c.size(OperationMonoid.Count)
-        while (elementIndex < c.element.size && c.element[elementIndex].lenBefore <= pos.offset) {
+        index = c.location(OperationMonoid.Count)
+        var lenBefore = c.location(OperationMonoid.LenBefore).toLong()
+        while (elementIndex < c.element.size && lenBefore + c.element[elementIndex].lenBefore < pos.offset) {
+          lenBefore += c.element[elementIndex].lenBefore
           ++elementIndex
           ++index
         }
+        cursor = c
       }
       is Pos.LenAfter -> {
-        val c = cursor!!
-        cursor = c.scan(owner, OperationMonoid.LenAfter, pos.offset)
+        var c = cursor!!
+        c = c.scan(owner, OperationMonoid.LenAfter, pos.offset)
         elementIndex = 0
-        index = c.size(OperationMonoid.Count)
-        while (elementIndex < c.element.size && c.element[elementIndex].lenAfter <= pos.offset) {
+        index = c.location(OperationMonoid.Count)
+        var lenAfter = c.location(OperationMonoid.LenAfter).toLong()
+        while (elementIndex < c.element.size && lenAfter + c.element[elementIndex].lenAfter < pos.offset) {
+          lenAfter += c.element[elementIndex].lenAfter
           ++elementIndex
           ++index
         }
+        cursor = c
       }
     }
   }
