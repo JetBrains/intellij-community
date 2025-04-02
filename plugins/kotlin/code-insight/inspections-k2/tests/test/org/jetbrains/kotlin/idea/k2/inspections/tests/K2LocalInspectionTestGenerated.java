@@ -13368,6 +13368,130 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString")
+    public static class ConvertFromMultiDollarToRegularString extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inapplicableNotPrefixed.kt")
+        public void testInapplicableNotPrefixed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/inapplicableNotPrefixed.kt");
+        }
+
+        @TestMetadata("singleQuotedEscapeSequences.kt")
+        public void testSingleQuotedEscapeSequences() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedEscapeSequences.kt");
+        }
+
+        @TestMetadata("singleQuotedNoInterpolation.kt")
+        public void testSingleQuotedNoInterpolation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedNoInterpolation.kt");
+        }
+
+        @TestMetadata("singleQuotedSafeDollarSequence.kt")
+        public void testSingleQuotedSafeDollarSequence() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedSafeDollarSequence.kt");
+        }
+
+        @TestMetadata("singleQuotedSimpleNameEntry.kt")
+        public void testSingleQuotedSimpleNameEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedSimpleNameEntry.kt");
+        }
+
+        @TestMetadata("singleQuotedTripleDollarAndUnsafe.kt")
+        public void testSingleQuotedTripleDollarAndUnsafe() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedTripleDollarAndUnsafe.kt");
+        }
+
+        @TestMetadata("singleQuotedUnsafeDollarSequence1.kt")
+        public void testSingleQuotedUnsafeDollarSequence1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedUnsafeDollarSequence1.kt");
+        }
+
+        @TestMetadata("singleQuotedUnsafeDollarSequence2.kt")
+        public void testSingleQuotedUnsafeDollarSequence2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedUnsafeDollarSequence2.kt");
+        }
+
+        @TestMetadata("singleQuotedUnsafeDollarSequence3.kt")
+        public void testSingleQuotedUnsafeDollarSequence3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedUnsafeDollarSequence3.kt");
+        }
+
+        @TestMetadata("singleQuotedUnsafeDollarSequence4.kt")
+        public void testSingleQuotedUnsafeDollarSequence4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedUnsafeDollarSequence4.kt");
+        }
+
+        @TestMetadata("singleQuotedUnsafeDollarSequence5.kt")
+        public void testSingleQuotedUnsafeDollarSequence5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/singleQuotedUnsafeDollarSequence5.kt");
+        }
+
+        @TestMetadata("tripleQuotedBlockEntry.kt")
+        public void testTripleQuotedBlockEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedBlockEntry.kt");
+        }
+
+        @TestMetadata("tripleQuotedEscapeSequences.kt")
+        public void testTripleQuotedEscapeSequences() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedEscapeSequences.kt");
+        }
+
+        @TestMetadata("tripleQuotedNoInterpolation.kt")
+        public void testTripleQuotedNoInterpolation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedNoInterpolation.kt");
+        }
+
+        @TestMetadata("tripleQuotedSafeDollarSequence.kt")
+        public void testTripleQuotedSafeDollarSequence() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedSafeDollarSequence.kt");
+        }
+
+        @TestMetadata("tripleQuotedSimpleNameEntry.kt")
+        public void testTripleQuotedSimpleNameEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedSimpleNameEntry.kt");
+        }
+
+        @TestMetadata("tripleQuotedTripleDollarAndUnsafe.kt")
+        public void testTripleQuotedTripleDollarAndUnsafe() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedTripleDollarAndUnsafe.kt");
+        }
+
+        @TestMetadata("tripleQuotedUnsafeDollarSequence1.kt")
+        public void testTripleQuotedUnsafeDollarSequence1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedUnsafeDollarSequence1.kt");
+        }
+
+        @TestMetadata("tripleQuotedUnsafeDollarSequence2.kt")
+        public void testTripleQuotedUnsafeDollarSequence2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedUnsafeDollarSequence2.kt");
+        }
+
+        @TestMetadata("tripleQuotedUnsafeDollarSequence3.kt")
+        public void testTripleQuotedUnsafeDollarSequence3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedUnsafeDollarSequence3.kt");
+        }
+
+        @TestMetadata("tripleQuotedUnsafeDollarSequence4.kt")
+        public void testTripleQuotedUnsafeDollarSequence4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedUnsafeDollarSequence4.kt");
+        }
+
+        @TestMetadata("tripleQuotedUnsafeDollarSequence5.kt")
+        public void testTripleQuotedUnsafeDollarSequence5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/convertFromMultiDollarToRegularString/tripleQuotedUnsafeDollarSequence5.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
