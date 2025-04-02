@@ -15,7 +15,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
@@ -100,9 +100,6 @@ class DescriptorListLoadingContext(
     }
   }
 
-  val visitedFiles: MutableList<String>
-    get() = threadLocalXmlFactory.get()[0]!!.visitedFiles
-
   fun checkOptionalConfigShortName(configFile: String, descriptor: IdeaPluginDescriptor): Boolean {
     val configNames = optionalConfigNames
     if (configNames == null || configFile.startsWith("intellij.")) {
@@ -156,8 +153,6 @@ private val EXTRA_STRINGS = Arrays.asList(
 private class MyXmlInterner : XmlInterner {
   @Suppress("SSBasedInspection")
   private val strings = ObjectOpenHashSet<String>(256)
-
-  @JvmField val visitedFiles = ArrayList<String>(3)
 
   init {
     strings.addAll(CLASS_NAMES)
