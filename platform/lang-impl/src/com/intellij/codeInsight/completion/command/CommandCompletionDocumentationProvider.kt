@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.DeferredIcon
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.util.ui.UIUtil
@@ -101,7 +102,7 @@ private class CommandCompletionDocumentationTarget(
     regexIcons.findAll(html).forEach {
       val iconTag = it.value.substring(11, it.value.length - 3)
       val iconPath = findIconPath(iconTag, content)
-      val newValue = if (iconPath != null) """<icon src="$iconPath"/>""" else iconTag
+      val newValue = if (iconPath != null) """<icon src="$iconPath"/>""" else ""
       updatedContent = updatedContent.replace(it.value, newValue)
     }
 
@@ -122,11 +123,22 @@ private class CommandCompletionDocumentationTarget(
 
   private fun findIconPath(iconId: String, content: HtmlChunk): String? {
     var icon = content.findIcon(iconId) ?: return null
-    if (icon is RowIcon) {
-      icon = icon.allIcons.firstOrNull() ?: return null
-    }
-    if (icon is DeferredIcon) {
-      icon = icon.baseIcon
+    var changed = true
+    var i = 1
+    while (i < 10 && changed) {
+      i++
+      changed = false
+      if (icon is RowIcon) {
+        changed = true
+        icon = icon.allIcons.firstOrNull() ?: return null
+      }
+      if (icon is DeferredIcon) {
+        changed = true
+        icon = icon.baseIcon
+      }
+      if (icon is LayeredIcon) {
+        return null
+      }
     }
     if (icon is CachedImageIcon) {
       val coords = icon.getCoords() ?: return null
