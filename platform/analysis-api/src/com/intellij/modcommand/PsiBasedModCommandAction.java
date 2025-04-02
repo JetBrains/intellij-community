@@ -62,9 +62,11 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   private @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
       E element = myPointer.getElement();
-      return element != null && !isFileAllowed(element.getContainingFile()) ?
-             null :
-             element;
+      if (element == null) return null;
+      PsiFile file = element.getContainingFile();
+      // File could be null e.g., for PsiPackage element
+      if (file != null && !isFileAllowed(file)) return null;
+      return element;
     }
     int offset = context.offset();
     PsiFile file = context.file();
