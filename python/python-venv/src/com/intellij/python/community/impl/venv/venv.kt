@@ -3,6 +3,7 @@ package com.intellij.python.community.impl.venv
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.HelperName
 import com.intellij.python.community.execService.WhatToExec
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.file.Path
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Create virtual env in [venvDir] using [python].
@@ -45,7 +47,7 @@ suspend fun createVenv(
   }
   val version = python.validatePythonAndGetVersion().getOr { return failure(it.error) }
   val helper = if (version.isPy3K) VIRTUALENV_ZIPAPP_NAME else PY_2_VIRTUALENV_ZIPAPP_NAME
-  execService.execGetStdout(WhatToExec.Helper(python, helper = helper), args).getOr { return it }
+  execService.execGetStdout(WhatToExec.Helper(python, helper = helper), args, ExecOptions(timeout = 3.minutes)).getOr { return it }
 
 
   val venvPython = withContext(Dispatchers.IO) {
