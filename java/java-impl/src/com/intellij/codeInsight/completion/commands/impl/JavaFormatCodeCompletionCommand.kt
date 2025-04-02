@@ -13,12 +13,13 @@ import com.intellij.psi.util.parents
 
 internal class JavaFormatCodeCompletionCommandProvider : AbstractFormatCodeCompletionCommandProvider() {
   override fun createCommand(context: CommandCompletionProviderContext): CompletionCommand {
-   return JavaFormatCodeCompletionCommand()
+    return JavaFormatCodeCompletionCommand()
   }
 }
 
 internal class JavaFormatCodeCompletionCommand : AbstractFormatCodeCompletionCommand() {
   override fun findTargetToRefactor(element: PsiElement): PsiElement {
-    return element.parents(true).first { it is PsiMember || it is PsiCodeBlock || it is PsiStatement }
+    return element.parents(true).firstOrNull { it is PsiMember || it is PsiCodeBlock || it is PsiStatement } ?: element.containingFile
+           ?: element
   }
 }

@@ -10,17 +10,17 @@ import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 
-internal class KotlinFormatCodeCompletionCommandProvider : AbstractFormatCodeCompletionCommandProvider(){
+internal class KotlinFormatCodeCompletionCommandProvider : AbstractFormatCodeCompletionCommandProvider() {
     override fun createCommand(context: CommandCompletionProviderContext): CompletionCommand {
-       return KotlinFormatCodeCompletionCommand()
+        return KotlinFormatCodeCompletionCommand()
     }
 
 }
 
 internal class KotlinFormatCodeCompletionCommand : AbstractFormatCodeCompletionCommand() {
     override fun findTargetToRefactor(element: PsiElement): PsiElement {
-        return element.parents(true).first {
+        return element.parents(true).firstOrNull {
             (it is KtDeclaration || it is KtExpression)
-        }
+        } ?: element.containingFile ?: element
     }
 }
