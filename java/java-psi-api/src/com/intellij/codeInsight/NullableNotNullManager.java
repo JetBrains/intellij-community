@@ -208,11 +208,11 @@ public abstract class NullableNotNullManager {
   }
 
   /**
-   * @return an annotation (if any) with the given nullability semantics on the given declaration or its type. In case of conflicts,
+   * @return the annotation info (if any) with the given nullability semantics on the given declaration or its type. In case of conflicts,
    * type annotations are preferred.
    */
-  public @Nullable PsiAnnotation findExplicitNullabilityAnnotation(@NotNull PsiModifierListOwner owner,
-                                                                   @NotNull Collection<Nullability> nullabilities) {
+  public @Nullable NullabilityAnnotationInfo findNullabilityAnnotationInfo(@NotNull PsiModifierListOwner owner,
+                                                                           @NotNull Collection<Nullability> nullabilities) {
     NullabilityAnnotationDataHolder holder = getAllNullabilityAnnotationsWithNickNames();
     Set<String> filteredSet =
       holder.qualifiedNames().stream().filter(qName -> nullabilities.contains(holder.getNullability(qName))).collect(Collectors.toSet());
@@ -229,7 +229,7 @@ public abstract class NullableNotNullManager {
       }
     };
     NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, filtered);
-    return result == null || !nullabilities.contains(result.getNullability()) ? null : result.getAnnotation();
+    return result == null || !nullabilities.contains(result.getNullability()) ? null : result;
   }
 
   private @Nullable NullabilityAnnotationInfo findPlainAnnotation(
