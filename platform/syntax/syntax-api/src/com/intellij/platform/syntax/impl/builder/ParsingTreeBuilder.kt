@@ -535,7 +535,7 @@ private fun performLexing(
   // todo do we need to cover a raw TokenList?
 
   val startTime = System.nanoTime()
-  val sequence = performLexing(text, lexer) as TokenSequence
+  val sequence = performLexing(text, lexer, cancellationProvider) as TokenSequence
   val endTime = System.nanoTime()
   return LexingResult(sequence, endTime - startTime)
 }
