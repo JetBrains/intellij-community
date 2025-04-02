@@ -23,81 +23,59 @@ import static org.jetbrains.jps.javac.Iterators.*;
  */
 public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
   private static final TypeRepr.ClassType JVM_OVERLOADS_ANNOTATION = new TypeRepr.ClassType("kotlin/jvm/JvmOverloads");
-  private static final Set<TypeRepr.ClassType> ourDeprecationAnnotations = Set.of(
-    new TypeRepr.ClassType("kotlin/Deprecated"),
-    new TypeRepr.ClassType("kotlin/DeprecatedSinceKotlin")
+
+  private static final List<AnnotationGroup> ourTrackedAnnotations = List.of(
+    AnnotationGroup.of(
+      "Nullability annotations",
+      EnumSet.of(AnnotationGroup.AnnTarget.field, AnnotationGroup.AnnTarget.method, AnnotationGroup.AnnTarget.method_parameter),
+      EnumSet.of(AnnotationGroup.AffectionKind.added, AnnotationGroup.AffectionKind.removed),
+      EnumSet.of(AnnotationGroup.AffectionScope.usages),
+      Set.of(
+        new TypeRepr.ClassType("org/jetbrains/annotations/Nullable"),
+        new TypeRepr.ClassType("androidx/annotation/Nullable"),
+        new TypeRepr.ClassType("android/support/annotation/Nullable"),
+        new TypeRepr.ClassType("android/annotation/Nullable"),
+        new TypeRepr.ClassType("com/android/annotations/Nullable"),
+        new TypeRepr.ClassType("org/eclipse/jdt/annotation/Nullable"),
+        new TypeRepr.ClassType("org/checkerframework/checker/nullness/qual/Nullable"),
+        new TypeRepr.ClassType("javax/annotation/Nullable"),
+        new TypeRepr.ClassType("javax/annotation/CheckForNull"),
+        new TypeRepr.ClassType("edu/umd/cs/findbugs/annotations/CheckForNull"),
+        new TypeRepr.ClassType("edu/umd/cs/findbugs/annotations/Nullable"),
+        new TypeRepr.ClassType("edu/umd/cs/findbugs/annotations/PossiblyNull"),
+        new TypeRepr.ClassType("io/reactivex/annotations/Nullable"),
+        new TypeRepr.ClassType("io/reactivex/rxjava3/annotations/Nullable"),
+
+        new TypeRepr.ClassType("javax/annotation/Nonnull"),
+        new TypeRepr.ClassType("org/jetbrains/annotations/NotNull"),
+        new TypeRepr.ClassType("edu/umd/cs/findbugs/annotations/NonNull"),
+        new TypeRepr.ClassType("androidx/annotation/NonNull"),
+        new TypeRepr.ClassType("android/support/annotation/NonNull"),
+        new TypeRepr.ClassType("android/annotation/NonNull"),
+        new TypeRepr.ClassType("com/android/annotations/NonNull"),
+        new TypeRepr.ClassType("org/eclipse/jdt/annotation/NonNull"),
+        new TypeRepr.ClassType("org/checkerframework/checker/nullness/qual/NonNull"),
+        new TypeRepr.ClassType("lombok/NonNull"),
+        new TypeRepr.ClassType("io/reactivex/annotations/NonNull"),
+        new TypeRepr.ClassType("io/reactivex/rxjava3/annotations/NonNull")
+      )
+    ),
+
+    AnnotationGroup.of(
+      "Deprecation annotations",
+      EnumSet.of(AnnotationGroup.AnnTarget.type, AnnotationGroup.AnnTarget.field, AnnotationGroup.AnnTarget.method),
+      EnumSet.of(AnnotationGroup.AffectionKind.added, AnnotationGroup.AffectionKind.changed),
+      EnumSet.of(AnnotationGroup.AffectionScope.usages),
+      Set.of(
+        new TypeRepr.ClassType("kotlin/Deprecated"),
+        new TypeRepr.ClassType("kotlin/DeprecatedSinceKotlin")
+      )
+    )
   );
-  private static final Set<String> ourNullabilityAnnotations = Set.of(
-    "org/jetbrains/annotations/Nullable",
-    "androidx/annotation/Nullable",
-    "android/support/annotation/Nullable",
-    "android/annotation/Nullable",
-    "com/android/annotations/Nullable",
-    "org/eclipse/jdt/annotation/Nullable",
-    "org/checkerframework/checker/nullness/qual/Nullable",
-    "javax/annotation/Nullable",
-    "javax/annotation/CheckForNull",
-    "edu/umd/cs/findbugs/annotations/CheckForNull",
-    "edu/umd/cs/findbugs/annotations/Nullable",
-    "edu/umd/cs/findbugs/annotations/PossiblyNull",
-    "io/reactivex/annotations/Nullable",
-    "io/reactivex/rxjava3/annotations/Nullable",
-
-    "javax/annotation/Nonnull",
-    "org/jetbrains/annotations/NotNull",
-    "edu/umd/cs/findbugs/annotations/NonNull",
-    "androidx/annotation/NonNull",
-    "android/support/annotation/NonNull",
-    "android/annotation/NonNull",
-    "com/android/annotations/NonNull",
-    "org/eclipse/jdt/annotation/NonNull",
-    "org/checkerframework/checker/nullness/qual/NonNull",
-    "lombok/NonNull",
-    "io/reactivex/annotations/NonNull",
-    "io/reactivex/rxjava3/annotations/NonNull"
-  );
 
   @Override
-  public boolean isAnnotationTracked(TypeRepr.@NotNull ClassType annotationType) {
-    return ourNullabilityAnnotations.contains(annotationType.getJvmName()) || ourDeprecationAnnotations.contains(annotationType);
-  }
-
-  @Override
-  public boolean processClassAnnotations(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationDiff, Utils future, Utils present) {
-    JvmClass changedClass = change.getPast();
-    if (isAffectedByAnnotations(changedClass, annotationDiff, EnumSet.of(AnnotationAffectionKind.added, AnnotationAffectionKind.changed), ourDeprecationAnnotations::contains)) {
-      debug("Deprecation annotations changed for ", changedClass.getName(), " --- affecting class usages");
-      affectClassAnnotationUsages(context, EnumSet.of(AnnotationAffectionScope.usages), change, future, present);
-    }
-    return super.processClassAnnotations(context, change, annotationDiff, future, present);
-  }
-
-  @Override
-  public boolean processFieldAnnotations(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmField, JvmField.Diff> fieldChange, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationDiff, Utils future, Utils present) {
-    JvmField changedField = fieldChange.getPast();
-    if (
-      isAffectedByAnnotations(changedField, annotationDiff, EnumSet.of(AnnotationAffectionKind.added, AnnotationAffectionKind.removed), t -> ourNullabilityAnnotations.contains(t.getJvmName())) ||
-      isAffectedByAnnotations(changedField, annotationDiff, EnumSet.of(AnnotationAffectionKind.added, AnnotationAffectionKind.changed), ourDeprecationAnnotations::contains)
-    ) {
-      debug("Nullability or Deprecation annotations changed for field ", changedField, " --- affecting field usages");
-      affectFieldAnnotationUsages(context, EnumSet.of(AnnotationAffectionScope.usages), clsChange, changedField, future, present);
-    }
-    return super.processFieldAnnotations(context, clsChange, fieldChange, annotationDiff, future, present);
-  }
-
-  @Override
-  public boolean processMethodAnnotations(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmMethod, JvmMethod.Diff> methodChange, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff, Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff, Utils future, Utils present) {
-    JvmMethod changedMethod = methodChange.getPast();
-    if (
-      isAffectedByAnnotations(changedMethod, annotationsDiff, EnumSet.of(AnnotationAffectionKind.added, AnnotationAffectionKind.removed), t -> ourNullabilityAnnotations.contains(t.getJvmName()))      ||
-      isAffectedByAnnotations(changedMethod, paramAnnotationsDiff, EnumSet.of(AnnotationAffectionKind.added, AnnotationAffectionKind.removed), t -> ourNullabilityAnnotations.contains(t.getJvmName())) ||
-      isAffectedByAnnotations(changedMethod, annotationsDiff, EnumSet.of(AnnotationAffectionKind.added, AnnotationAffectionKind.changed), ourDeprecationAnnotations::contains)
-    ) {
-      debug("Nullability annotations/parameter annotations or Deprecation annotations changed for method ", changedMethod, " --- affecting method usages");
-      EnumSet<AnnotationAffectionScope> affection = changedMethod.isFinal()? EnumSet.of(AnnotationAffectionScope.usages) : EnumSet.of(AnnotationAffectionScope.usages, AnnotationAffectionScope.subclasses);
-      affectMethodAnnotationUsages(context, affection, clsChange, changedMethod, future, present);
-    }
-    return super.processMethodAnnotations(context, clsChange, methodChange, annotationsDiff, paramAnnotationsDiff, future, present);
+  protected Iterable<AnnotationGroup> getTrackedAnnotations() {
+    return ourTrackedAnnotations;
   }
 
   @Override
@@ -555,18 +533,18 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   }
 
   @Override
-  protected void affectMethodAnnotationUsages(DifferentiateContext context, Set<AnnotationAffectionScope> toRecompile, Difference.Change<JvmClass, JvmClass.Diff> clsChange, JvmMethod changedMethod, Utils future, Utils present) {
+  protected void affectMethodAnnotationUsages(DifferentiateContext context, Set<AnnotationGroup.AffectionScope> toRecompile, Difference.Change<JvmClass, JvmClass.Diff> clsChange, JvmMethod changedMethod, Utils future, Utils present) {
     super.affectMethodAnnotationUsages(context, toRecompile, clsChange, changedMethod, future, present);
-    if (toRecompile.contains(AnnotationAffectionScope.usages)) {
+    if (toRecompile.contains(AnnotationGroup.AffectionScope.usages)) {
       JvmClass changedClass = clsChange.getPast();
       affectMemberLookupUsages(context, changedClass, KJvmUtils.getMethodKotlinName(changedClass, changedMethod), present);
     }
   }
 
   @Override
-  protected void affectClassAnnotationUsages(DifferentiateContext context, Set<AnnotationAffectionScope> toRecompile, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
+  protected void affectClassAnnotationUsages(DifferentiateContext context, Set<AnnotationGroup.AffectionScope> toRecompile, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
     super.affectClassAnnotationUsages(context, toRecompile, change, future, present);
-    if (toRecompile.contains(AnnotationAffectionScope.usages)) {
+    if (toRecompile.contains(AnnotationGroup.AffectionScope.usages)) {
       affectClassLookupUsages(context, change.getPast());
     }
   }
