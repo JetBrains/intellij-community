@@ -20,8 +20,14 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.plus
 import com.intellij.ui.util.width
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -30,7 +36,13 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.nio.file.Path
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.text.View
 import kotlin.io.path.name
@@ -191,7 +203,7 @@ internal class TrustedProjectsStartupDialog(
 
       val text = htmlDocument?.getText(0, htmlDocument.length)?.replace("\n", "") ?: textWithMarkedElements
       val fontMetrics = checkBox.getFontMetrics(checkBox.font)
-      val bounds = fontMetrics.getStringBounds(text, checkBox.graphics)
+      val bounds = fontMetrics.getStringBounds(text, GraphicsUtil.safelyGetGraphics(checkBox))
       val x = checkBox.width - bounds.width - checkBox.insets.width
       bounds.setRect(x + bounds.x, bounds.y, bounds.width, bounds.height)
       val mousePosition = position.x - x

@@ -16,13 +16,33 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.animation.FloatConsumer
-import com.intellij.util.ui.*
-import kotlinx.coroutines.*
+import com.intellij.util.ui.AnimatedIcon
+import com.intellij.util.ui.Animator
+import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.GridBagLayout
 import java.awt.image.BufferedImage
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JLayeredPane
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 open class LoadingDecorator @JvmOverloads constructor(
   content: JComponent?,
@@ -193,7 +213,7 @@ open class LoadingDecorator @JvmOverloads constructor(
         isVisible = true
         currentAlpha = -1f
         if (takeSnapshot && width > 0 && height > 0) {
-          snapshot = ImageUtil.createImage(graphics, width, height, BufferedImage.TYPE_INT_RGB)
+          snapshot = ImageUtil.createImage(GraphicsUtil.safelyGetGraphics(this), width, height, BufferedImage.TYPE_INT_RGB)
           val g = snapshot!!.createGraphics()
           pane.paint(g)
           val opaque = UIUtil.findNearestOpaque(this)

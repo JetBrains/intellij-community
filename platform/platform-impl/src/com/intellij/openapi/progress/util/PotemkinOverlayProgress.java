@@ -24,8 +24,13 @@ import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JRootPane;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -144,7 +149,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     String text = KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " +
                   KeymapUtil.getShortcutText(DUMP_SHORTCUT) + " to dump threads (" +
                   NlsMessages.formatDurationApproximateNarrow(roundedDuration) + ")";
-    Graphics graphics = rootPane.getGraphics();
+    Graphics graphics = GraphicsUtil.safelyGetGraphics(rootPane);
     GraphicsUtil.setupAAPainting(graphics);
     Rectangle viewR = rootPane.getBounds(), iconR = new Rectangle(), textR = new Rectangle();
     FontMetrics fm = graphics.getFontMetrics();

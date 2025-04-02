@@ -13,7 +13,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -424,11 +425,14 @@ public final class PaintUtil {
    * @param g       The Graphics context used for rendering the text.
    * @param metrics The FontMetrics object associated with the font used for rendering the text.
    * @return The width of the text string in pixels when drawn using the specified Graphics context and FontMetrics.
+
+   * @deprecated Prefer using {@link UIUtil#computeStringWidth(JComponent, String)} instead
    */
+  @Deprecated(forRemoval = true)
   public static int getStringWidth(String text, Graphics g, FontMetrics metrics) {
     return metrics.getStringBounds(text, g).getBounds().width;
   }
-  
+
   @ApiStatus.Internal
   @Contract("!null, _, _ -> !null")
   public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, @NotNull JComponent component) {

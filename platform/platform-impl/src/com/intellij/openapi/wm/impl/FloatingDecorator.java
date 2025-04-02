@@ -19,6 +19,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SingleEdtTaskScheduler;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -156,7 +157,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     }
 
     // this prevents annoying flick
-    paint(getGraphics());
+    // todo: do we really need this?
+    paint(GraphicsUtil.safelyGetGraphics(this));
 
     ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(UISettingsListener.TOPIC, uiSettingsListener);
   }

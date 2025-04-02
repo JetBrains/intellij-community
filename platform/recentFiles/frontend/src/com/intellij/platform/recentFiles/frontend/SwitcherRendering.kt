@@ -17,13 +17,19 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
-import com.intellij.ui.*
+import com.intellij.ui.BackgroundSupplier
+import com.intellij.ui.CellRendererPanel
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Color
@@ -174,8 +180,8 @@ class SwitcherVirtualFile : SwitcherListItem, BackgroundSupplier {
     component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
     component.font?.let {
       val fontMetrics = component.getFontMetrics(it)
-      val mainTextWidth = PaintUtil.getStringWidth(mainText, component.graphics, fontMetrics)
-      val shortcutTextWidth = shortcutText?.let { shortcut -> PaintUtil.getStringWidth(shortcut, component.graphics, fontMetrics) } ?: 0
+      val mainTextWidth = UIUtil.computeStringWidth(component, fontMetrics, mainText)
+      val shortcutTextWidth = shortcutText?.let { shortcut -> UIUtil.computeStringWidth(component, fontMetrics, shortcut) } ?: 0
       val iconWidth = component.icon?.iconWidth ?: AllIcons.FileTypes.Text.iconWidth
       val width = component.width - mainTextWidth - shortcutTextWidth - component.iconTextGap - iconWidth -
                   component.insets.left - component.insets.right
