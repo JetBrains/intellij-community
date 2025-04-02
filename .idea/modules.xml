@@ -317,6 +317,8 @@
       <module fileurl="file://$PROJECT_DIR$/commandInterface/intellij.commandInterface.iml" filepath="$PROJECT_DIR$/commandInterface/intellij.commandInterface.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/intellij.commander.iml" filepath="$PROJECT_DIR$/plugins/commander/intellij.commander.iml" />
       <module fileurl="file://$PROJECT_DIR$/wintools/intellij.community.wintools.iml" filepath="$PROJECT_DIR$/wintools/intellij.community.wintools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/compilation-charts/intellij.compilation.charts.iml" filepath="$PROJECT_DIR$/plugins/compilation-charts/intellij.compilation.charts.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/compilation-charts/jps-plugin/intellij.compilation.charts.jps.iml" filepath="$PROJECT_DIR$/plugins/compilation-charts/jps-plugin/intellij.compilation.charts.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.iml" filepath="$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.tests.iml" filepath="$PROJECT_DIR$/plugins/completion-ml-ranking/intellij.completionMlRanking.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/completion-ml-ranking-models/intellij.completionMlRankingModels.iml" filepath="$PROJECT_DIR$/plugins/completion-ml-ranking-models/intellij.completionMlRankingModels.iml" />

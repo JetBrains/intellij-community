@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.compilation.charts` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "compilation-charts_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compilation-charts",
+  module_name = "intellij.compilation.charts",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@community//java/compiler/impl:java-compiler-impl",
+    "@community//jps/jps-builders:build",
+    "@community//platform/extensions",
+    "@community//platform/ide-core-impl",
+    "@community//platform/core-api:core",
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:rd-core",
+    "@lib//:rd-swing",
+    "@lib//:kotlinx-coroutines-core",
+    "@community//platform/rd-platform-community:rd-community",
+    "@lib//:kotlinx-collections-immutable",
+    "@community//platform/core-ui",
+    "@community//platform/platform-api:ide",
+    "@community//platform/util/concurrency",
+    "@community//java/idea-ui:ui",
+    "@community//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [":compilation-charts_resources"]
+)
+### auto-generated section `build intellij.compilation.charts` end
