@@ -138,5 +138,9 @@
   "org.jetbrains.kotlin:kotlin-util-klib:2.1.20-RC3": [
     "10f3ede931aaf79358543f744852869614542cdd7ecaa87931a7613d9b1dab11",
     "4aa4da6df01507c0fe9b48ff4f3d2a5eb5edf5f894850169c90efc89330a9d8b"
+  ],
+  "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.8": [
+    "72e9a9b0003ec5254b638186f7ca1675b08006bdde4c9c4c589970342ccd2e77",
+    "80219b91c78709f696305970895d27481c78bda7cae0c180c7c8202240f47d34"
   ]
 }

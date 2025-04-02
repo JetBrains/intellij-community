@@ -217,6 +217,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "kotlinx-collections-immutable",
+    jar = "@kotlinx-collections-immutable-jvm//file",
+    source_jar = "@kotlinx-collections-immutable-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "opentelemetry-api",
     jar = "@opentelemetry-api//file",
     source_jar = "@opentelemetry-api-sources//file",
