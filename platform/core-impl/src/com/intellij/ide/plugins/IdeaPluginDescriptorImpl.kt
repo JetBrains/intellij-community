@@ -250,16 +250,17 @@ class IdeaPluginDescriptorImpl private constructor(
   internal fun createSub(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
-    context: DescriptorListLoadingContext,
+    getDefaultVersion: () -> String?,
+    recordDescriptorPath: ((IdeaPluginDescriptorImpl, RawPluginDescriptor, String) -> Unit)?,
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
     subBuilder.id = id.idString
     subBuilder.name = name
     subBuilder.vendor = vendor
     if (subBuilder.version != null && subBuilder.version != version) {
-      LOG.warn("Sub descriptor version redefinition for plugin $id. Original value: ${subBuilder.version}, inherited value: ${version ?: context.defaultVersion}")
+      LOG.warn("Sub descriptor version redefinition for plugin $id. Original value: ${subBuilder.version}, inherited value: ${version ?: getDefaultVersion()}")
     }
-    subBuilder.version = version ?: context.defaultVersion
+    subBuilder.version = version ?: getDefaultVersion()
     if (module == null) { // resource bundle is inherited for v1 sub-descriptors only
       if (subBuilder.resourceBundleBaseName == null) {
         subBuilder.resourceBundleBaseName = resourceBundleBaseName
@@ -279,7 +280,7 @@ class IdeaPluginDescriptorImpl private constructor(
       useCoreClassLoader = useCoreClassLoader,
       isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
       descriptorPath = descriptorPath)
-    context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
+    recordDescriptorPath?.invoke(result, raw, descriptorPath)
     return result
   }
 
@@ -661,3 +662,18 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 }
+
+internal fun IdeaPluginDescriptorImpl.createSub(
+  subBuilder: PluginDescriptorBuilder,
+  descriptorPath: String,
+  context: DescriptorListLoadingContext,
+  module: PluginContentDescriptor.ModuleItem?,
+): IdeaPluginDescriptorImpl = createSub(
+  subBuilder,
+  descriptorPath,
+  context::defaultVersion,
+  context.debugData?.let {
+    { desc, raw, path -> it.recordDescriptorPath(desc, raw, path) }
+  },
+  module
+)
