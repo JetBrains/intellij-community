@@ -25,7 +25,7 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.statistics.modules
 import training.dsl.LessonContext
@@ -94,7 +94,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
                            existingSdks: List<Sdk>,
                            module: Module?): Sdk? {
     val venvRoot = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(project.basePath))
-    val venvSdk = createVirtualEnvSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project)
+    val venvSdk = createVirtualEnvAndSdkSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project)
     return venvSdk.also {
       SdkConfigurationUtil.addSdk(it)
     }

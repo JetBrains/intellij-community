@@ -40,7 +40,7 @@ import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvFromFilePanel
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.nio.file.Paths
@@ -75,7 +75,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       val sdk = invokeAndWaitIfNeeded {
         Disposer.newDisposable("Creating virtual environment").use {
           PyTemporarilyIgnoredFileProvider.ignoreRoot(systemIndependentLocation, it)
-          createVirtualEnvSynchronously(chosenBaseSdk!!, existingSdks, location, projectPath, module.project, module)
+          createVirtualEnvAndSdkSynchronously(chosenBaseSdk!!, existingSdks, location, projectPath, module.project, module)
         }
       }
 
