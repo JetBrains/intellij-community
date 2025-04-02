@@ -47,11 +47,18 @@ internal class KotlinChainCompletionContributor : CompletionContributor() {
                     Completions.complete(
                         parameters = parameters,
                         positionContext = KotlinExpressionNameReferencePositionContext(nameExpression),
-                        resultSet = result.withPrefixMatcher(nameExpression.text),
+                        resultSet = result.withPrefixMatcher(ExactPrefixMatcher(nameExpression.text)),
                         before = { nameExpression.mainReference.resolveToSymbols().isEmpty() },
                     )
                 }
             }
         )
+    }
+
+    private class ExactPrefixMatcher(prefix: String) : PrefixMatcher(prefix) {
+
+        override fun prefixMatches(name: String): Boolean = name == prefix
+
+        override fun cloneWithPrefix(prefix: String): PrefixMatcher = this
     }
 }

@@ -86,7 +86,7 @@ internal open class FirClassifierCompletionContributor(
                         val reference = receiverExpression.reference()
                             ?: return@runChainCompletion emptySequence()
 
-                        // TODO val weighingContext = WeighingContext.create(parameters, positionContext)
+                        val weighingContext = WeighingContext.create(parameters, positionContext)
                         reference.resolveToSymbols()
                             .asSequence()
                             .mapNotNull { it.staticScope }

@@ -21,6 +21,45 @@ import org.junit.runner.RunWith;
 @TestMetadata("../../completion/testData/basic/fullJdk")
 public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK2JvmBasicCompletionFullJdkTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/fullJdk/chain")
+    public static class Chain extends AbstractK2JvmBasicCompletionFullJdkTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ChainedCallableCompletion.kt")
+        public void testChainedCallableCompletion() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/chain/ChainedCallableCompletion.kt");
+        }
+
+        @TestMetadata("ChainedClassifierCompletion.kt")
+        public void testChainedClassifierCompletion() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/chain/ChainedClassifierCompletion.kt");
+        }
+
+        @TestMetadata("ExactMatch.kt")
+        public void testExactMatch() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/chain/ExactMatch.kt");
+        }
+
+        @TestMetadata("NoChainedCallableCompletion.kt")
+        public void testNoChainedCallableCompletion() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/chain/NoChainedCallableCompletion.kt");
+        }
+
+        @TestMetadata("NoChainedClassifierCompletion.kt")
+        public void testNoChainedClassifierCompletion() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/chain/NoChainedClassifierCompletion.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/fullJdk/lambdaSignature")
     public static class LambdaSignature extends AbstractK2JvmBasicCompletionFullJdkTest {
         @java.lang.Override
