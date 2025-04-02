@@ -38,7 +38,7 @@ abstract class KaEntityBasedModule<E : WorkspaceEntityWithSymbolicId, EID : Symb
 
     internal val entity: E
         get() = entityId.resolve(currentSnapshot)
-            ?: error("Could not resolve $entityId")
+            ?: couldNotResolveEntityError(this)
 
     /**
      * Should be directly overridden by the final inheritor.

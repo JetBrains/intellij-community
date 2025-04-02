@@ -5,11 +5,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaEntityBasedModuleCreationData
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaModuleWithDebugData
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.librarySource.KaLibrarySdkSourceModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.InternalKaModuleConstructor
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
@@ -21,7 +25,8 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 internal class KaLibrarySdkModuleImpl @InternalKaModuleConstructor constructor(
     override val project: Project,
     override val entityId: SdkId,
-) : KaLibraryModuleBase<SdkEntity, SdkId>() {
+    override val creationData: KaEntityBasedModuleCreationData
+) : KaLibraryModuleBase<SdkEntity, SdkId>(), KaModuleWithDebugData {
 
     val sdk: Sdk
         get() = entity.findSdkBridge(currentSnapshot)
@@ -46,6 +51,8 @@ internal class KaLibrarySdkModuleImpl @InternalKaModuleConstructor constructor(
             is KotlinSdkType -> CommonPlatforms.defaultCommonPlatform
             else -> JvmPlatforms.unspecifiedJvmPlatform
         }
+
+    override val entityInterface: Class<out WorkspaceEntity> get() = SdkEntity::class.java
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

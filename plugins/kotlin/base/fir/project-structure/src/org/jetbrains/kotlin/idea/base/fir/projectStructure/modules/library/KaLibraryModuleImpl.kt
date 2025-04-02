@@ -3,9 +3,13 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaEntityBasedModuleCreationData
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaModuleWithDebugData
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.librarySource.KaLibrarySourceModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.InternalKaModuleConstructor
 import org.jetbrains.kotlin.idea.base.platforms.*
@@ -30,7 +34,9 @@ import org.jetbrains.kotlin.konan.file.File as KonanFile
 internal class KaLibraryModuleImpl @InternalKaModuleConstructor constructor(
     override val entityId: LibraryId,
     override val project: Project,
-) : KaLibraryEntityBasedLibraryModuleBase() {
+    override val creationData: KaEntityBasedModuleCreationData,
+) : KaLibraryEntityBasedLibraryModuleBase(), KaModuleWithDebugData {
+
 
     override val librarySources: KaLibrarySourceModule? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         KaLibrarySourceModuleImpl(this)
@@ -75,6 +81,8 @@ internal class KaLibraryModuleImpl @InternalKaModuleConstructor constructor(
             )
         }
     }
+
+    override val entityInterface: Class<out WorkspaceEntity> get() = LibraryEntity::class.java
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
