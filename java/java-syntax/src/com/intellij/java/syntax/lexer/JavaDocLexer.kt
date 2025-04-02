@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.lexer
 
 import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
@@ -130,7 +130,7 @@ private class AsteriskStripperLexer(
 
       val state = myFlex.yystate()
       if (state == _JavaDocLexer.COMMENT_DATA ||
-          state != _JavaDocLexer.SNIPPET_TAG_BODY_DATA && myTokenEndOffset < myBufferEndOffset && (myBuffer[myTokenEndOffset] == '@' || myBuffer[myTokenEndOffset] == '{' || myBuffer[myTokenEndOffset] == '\"' || myBuffer[myTokenEndOffset] == '<')
+          state != _JavaDocLexer.SNIPPET_TAG_BODY_DATA && myTokenEndOffset < myBufferEndOffset && myBuffer[myTokenEndOffset].let { it == '@' || it == '{' || it == '\"' || it == '<' }
       ) {
         myFlex.yybegin(_JavaDocLexer.COMMENT_DATA_START)
       }
