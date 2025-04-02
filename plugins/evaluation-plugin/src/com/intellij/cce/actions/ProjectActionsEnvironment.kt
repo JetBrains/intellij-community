@@ -83,7 +83,7 @@ open class ProjectActionsEnvironment(
     if (!datasetRefIsHandled) {
       if (datasetRef != null) {
         datasetRef.prepare(datasetContext)
-        val path = datasetContext.path(datasetRef.name)
+        val path = datasetContext.path(datasetRef)
         val finalPath = DatasetRefConverter().convert(datasetRef, datasetContext, project) ?: path
         datasetContext.replaceActionsStorage(ActionsSingleFileStorage(finalPath))
      }
