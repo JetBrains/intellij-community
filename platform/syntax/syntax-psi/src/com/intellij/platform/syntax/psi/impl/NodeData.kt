@@ -30,10 +30,8 @@ internal class NodeData(
 ) {
   val chameleonCache = Int2ObjectOpenHashMap<LazyParseableToken>()
 
-  // todo inline?
   fun getLexemeType(index: Int): IElementType = convertedLexTypes[index]
 
-  // todo inline?
   fun getLexemeStart(index: Int): Int = lexStarts[index]
 
   fun createLeaf(type: IElementType, start: Int, end: Int): TreeElement {
