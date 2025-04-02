@@ -25,13 +25,12 @@ val byteBufferAllocator: ByteBufAllocator = run {
 // not thread-safe, intended only for single thread for one time use
 internal class ByteBufferAllocator() : AutoCloseable {
   private var byteBuf: ByteBuf? = null
-  private var nioByteBuffer: ByteBuffer? = null
 
   @Synchronized
   fun allocate(size: Int): ByteBuffer {
     var result = byteBuf
     if (result != null && result.capacity() < size) {
-      doRelease()
+      result.release()
       result = null
     }
 
@@ -39,19 +38,15 @@ internal class ByteBufferAllocator() : AutoCloseable {
       result = byteBufferAllocator.directBuffer(roundUpInt(size, 65_536))
       byteBuf = result
     }
-    return result.internalNioBuffer(result.writerIndex(), size).order(ByteOrder.LITTLE_ENDIAN).also { nioByteBuffer = it }
+    return result.nioBuffer(0, size).order(ByteOrder.LITTLE_ENDIAN)
   }
 
   @Synchronized
   override fun close() {
-    doRelease()
-  }
-
-  private fun doRelease() {
-    nioByteBuffer?.order(ByteOrder.BIG_ENDIAN)
-    nioByteBuffer = null
-    byteBuf?.release()
-    byteBuf = null
+    byteBuf?.let {
+      byteBuf = null
+      it.release()
+    }
   }
 }
 
