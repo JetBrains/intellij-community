@@ -237,6 +237,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/KotlinClassUsedFromJava.java");
         }
 
+        @TestMetadata("KotlinEnumEntriesUsedFromJava.java")
+        public void testKotlinEnumEntriesUsedFromJava() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/KotlinEnumEntriesUsedFromJava.java");
+        }
+
         @TestMetadata("KotlinPackageClassUsedFromJava.java")
         public void testKotlinPackageClassUsedFromJava() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/KotlinPackageClassUsedFromJava.java");

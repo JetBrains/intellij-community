@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -20,7 +21,8 @@ class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
         return if (element.language.`is`(KotlinLanguage.INSTANCE)) {
             KotlinDocumentationTarget(element, originalElement).takeUnless {
                 // show documentation based on java presentation
-                element.navigationElement is KtFile && originalElement?.containingFile is PsiJavaFile
+                val navigationElement = element.navigationElement
+                navigationElement is KtFile && originalElement?.containingFile is PsiJavaFile || navigationElement is KtLightDeclaration<*, *> && navigationElement.kotlinOrigin == null
             }
         } else {
             null
