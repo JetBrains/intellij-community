@@ -9,14 +9,18 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.VmProperties
+import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.jsonEncoder
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.readLines
@@ -123,13 +127,15 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Co
   return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
 }
 
-internal fun getProductPropertiesPath(homePath: Path): Path =
+internal fun getProductPropertiesPath(homePath: Path): Path {
   // handle a custom product properties path
-  System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
-  ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+  return System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
+         ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+}
 
-private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration =
-  configuration.products[platformPrefix]
-  ?: throw ConfigurationException("No production configuration for platform prefix `${platformPrefix}`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
+private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {
+  return configuration.products[platformPrefix]
+         ?: throw ConfigurationException("No production configuration for platform prefix `${platformPrefix}`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
+}
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

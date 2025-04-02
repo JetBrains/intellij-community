@@ -51,13 +51,14 @@ private class DevModeProductRunner(
   private val classPath: Collection<String>,
 ) : IntellijProductRunner {
   override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, timeout: Duration) {
-    val multiRoutingFsBootClassPath: List<String> =
-      if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix))
-        listOf(
-          "-Xbootclasspath/a:${homePath}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE"
-        )
-      else
-        listOf()
+    val multiRoutingFsBootClassPath: List<String> = if (isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)) {
+      listOf(
+        "-Xbootclasspath/a:${homePath}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE"
+      )
+    }
+    else {
+      listOf()
+    }
     runApplicationStarter(
       context = context,
       classpath = classPath,

@@ -378,13 +378,12 @@ private suspend fun createDistributionState(context: BuildContext): Distribution
 
   return spanBuilder("collecting compatible plugins").use {
     val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-    val platform = createPlatformLayout(context)
     val builtinModuleData = spanBuilder("build provided module list").use {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
       context.createProductRunner().runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
 
-      context.productProperties.customizeBuiltinModules(context, builtinModulesFile = providedModuleFile)
+      context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
       try {
         val builtinModuleData = readBuiltinModulesFile(providedModuleFile)
         context.builtinModule = builtinModuleData
@@ -394,7 +393,9 @@ private suspend fun createDistributionState(context: BuildContext): Distribution
         throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn't exist")
       }
     }
+
     context.notifyArtifactBuilt(providedModuleFile)
+
     if (productLayout.buildAllCompatiblePlugins) {
       collectCompatiblePluginsToPublish(builtinModuleData, pluginsToPublish, context)
       filterPluginsToPublish(pluginsToPublish, context)
@@ -403,6 +404,7 @@ private suspend fun createDistributionState(context: BuildContext): Distribution
       distributionState(pluginsToPublish, projectLibrariesUsedByPlugins, getEnabledPluginModules(pluginsToPublish, context), context)
     }
     else {
+      val platform = createPlatformLayout(context)
       buildProjectArtifacts(platform, enabledPluginModules, context)
       DistributionBuilderState(platform, pluginsToPublish, context)
     }

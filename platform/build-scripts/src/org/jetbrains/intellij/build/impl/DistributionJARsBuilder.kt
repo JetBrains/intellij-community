@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -197,22 +199,46 @@ private suspend fun buildBundledPluginsForAllPlatforms(
   context: BuildContext,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> = coroutineScope {
   val commonDeferred = async(CoroutineName("build bundled plugins")) {
-    doBuildBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, searchableOptionSetDescriptor, moduleOutputPatcher, context)
+    doBuildBundledPlugins(
+      state = state,
+      plugins = pluginLayouts,
+      isUpdateFromSources = isUpdateFromSources,
+      buildPlatformJob = buildPlatformJob,
+      searchableOptionSet = searchableOptionSetDescriptor,
+      moduleOutputPatcher = moduleOutputPatcher,
+      context = context,
+    )
   }
 
   val additionalDeferred = async(CoroutineName("build additional plugins")) {
-    copyAdditionalPlugins(context, pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+    copyAdditionalPlugins(context = context, pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
   }
 
   val pluginDirs = getPluginDirs(context, isUpdateFromSources)
   val specificDeferred = async(CoroutineName("build OS-specific bundled plugins")) {
-    buildOsSpecificBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context, searchableOptionSetDescriptor, pluginDirs, moduleOutputPatcher)
+    buildOsSpecificBundledPlugins(
+      state = state,
+      plugins = pluginLayouts,
+      isUpdateFromSources = isUpdateFromSources,
+      buildPlatformJob = buildPlatformJob,
+      context = context,
+      searchableOptionSet = searchableOptionSetDescriptor,
+      pluginDirs = pluginDirs,
+      moduleOutputPatcher = moduleOutputPatcher,
+    )
   }
 
   val common = commonDeferred.await()
   val specific = specificDeferred.await()
   buildPlatformJob.join()
-  writePluginInfo(moduleOutputPatcher, pluginDirs, common, specific, additionalDeferred.await(), context)
+  writePluginInfo(
+    moduleOutputPatcher = moduleOutputPatcher,
+    pluginDirs = pluginDirs,
+    common = common,
+    specific = specific,
+    additional = additionalDeferred.await(),
+    context = context,
+  )
   common + specific.values.flatten()
 }
 
@@ -224,23 +250,23 @@ private fun writePluginInfo(
   additional: List<Pair<Path, List<Path>>>?,
   context: BuildContext,
 ) {
-  val commonClassPath = generatePluginClassPath(pluginEntries = common, moduleOutputPatcher)
+  val commonClassPath = generatePluginClassPath(pluginEntries = common, moduleOutputPatcher = moduleOutputPatcher)
   val additionalClassPath = additional?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
   for ((supportedDist) in pluginDirs) {
-    val specificList = specific[supportedDist]
-    val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, moduleOutputPatcher) }
+    val specificList = specific.get(supportedDist)
+    val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, moduleOutputPatcher = moduleOutputPatcher) }
 
     val byteOut = ByteArrayOutputStream()
     val out = DataOutputStream(byteOut)
     val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
-    writePluginClassPathHeader(out, isJarOnly = true, pluginCount, moduleOutputPatcher, context)
+    writePluginClassPathHeader(out = out, isJarOnly = true, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
     out.write(commonClassPath)
     additionalClassPath?.let { out.write(it) }
     specificClasspath?.let { out.write(it) }
     out.close()
 
-    context.addDistFile(DistFile(InMemoryDistFileContent(byteOut.toByteArray()), PLUGIN_CLASSPATH, supportedDist.os, supportedDist.arch))
+    context.addDistFile(DistFile(content = InMemoryDistFileContent(byteOut.toByteArray()), relativePath = PLUGIN_CLASSPATH, os = supportedDist.os, arch = supportedDist.arch))
   }
 }
 
@@ -253,15 +279,16 @@ fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> =
+private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> {
   if (isUpdateFromSources) {
-    listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+    return listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
   }
   else {
-    SUPPORTED_DISTRIBUTIONS.map {
+    return SUPPORTED_DISTRIBUTIONS.map {
       it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context).resolve(PLUGINS_DIRECTORY)
     }
   }
+}
 
 suspend fun buildBundledPlugins(
   state: DistributionBuilderState,
@@ -272,7 +299,15 @@ suspend fun buildBundledPlugins(
   moduleOutputPatcher: ModuleOutputPatcher,
   context: BuildContext,
 ) {
-  doBuildBundledPlugins(state, plugins, isUpdateFromSources, buildPlatformJob, searchableOptionSetDescriptor, moduleOutputPatcher, context)
+  doBuildBundledPlugins(
+    state = state,
+    plugins = plugins,
+    isUpdateFromSources = isUpdateFromSources,
+    buildPlatformJob = buildPlatformJob,
+    searchableOptionSet = searchableOptionSetDescriptor,
+    moduleOutputPatcher = moduleOutputPatcher,
+    context = context,
+  )
 }
 
 private suspend fun doBuildBundledPlugins(
@@ -290,13 +325,22 @@ private suspend fun doBuildBundledPlugins(
     .setAttribute("count", plugins.size.toLong())
     .block { span ->
       val pluginsToBundle = ArrayList<PluginLayout>(plugins.size)
-      plugins.filterTo(pluginsToBundle) { satisfiesBundlingRequirements(it, osFamily = null, arch = null, context) }
+      plugins.filterTo(pluginsToBundle) { satisfiesBundlingRequirements(plugin = it, osFamily = null, arch = null, context = context) }
       span.setAttribute("satisfiableCount", pluginsToBundle.size.toLong())
 
       // doesn't make sense to require passing here a list with a stable order (unnecessary complication, sorting by main module is enough)
       pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-      val entries = buildPlugins(moduleOutputPatcher, pluginsToBundle, os = null, targetDir, state, context, buildPlatformJob, searchableOptionSet)
+      val entries = buildPlugins(
+        moduleOutputPatcher = moduleOutputPatcher,
+        plugins = pluginsToBundle,
+        os = null,
+        targetDir = targetDir,
+        state = state,
+        context = context,
+        buildPlatformJob = buildPlatformJob,
+        searchableOptionSet = searchableOptionSet,
+      )
 
       buildPlatformSpecificPluginResources(
         plugins = pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
@@ -331,7 +375,7 @@ private suspend fun buildOsSpecificBundledPlugins(
         }
 
         val osSpecificPlugins = plugins.filter {
-          satisfiesBundlingRequirements(plugin = it, os, arch, context)
+          satisfiesBundlingRequirements(plugin = it, osFamily = os, arch = arch, context = context)
         }
         if (osSpecificPlugins.isEmpty()) {
           return@mapNotNull null
@@ -344,7 +388,16 @@ private suspend fun buildOsSpecificBundledPlugins(
             .setAttribute("count", osSpecificPlugins.size.toLong())
             .setAttribute("outDir", targetDir.toString())
             .use {
-              buildPlugins(moduleOutputPatcher, osSpecificPlugins, os, targetDir, state, context, buildPlatformJob, searchableOptionSet)
+              buildPlugins(
+                moduleOutputPatcher = moduleOutputPatcher,
+                plugins = osSpecificPlugins,
+                os = os,
+                targetDir = targetDir,
+                state = state,
+                context = context,
+                buildPlatformJob = buildPlatformJob,
+                searchableOptionSet = searchableOptionSet,
+              )
             }
         }
       }
@@ -705,7 +758,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   val layoutsByMainModule = productLayout.pluginLayouts.groupByTo(HashMap()) { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
-    val layouts = layoutsByMainModule[moduleName] ?: mutableListOf(PluginLayout.pluginAuto(listOf(moduleName)))
+    val layouts = layoutsByMainModule.get(moduleName) ?: mutableListOf(PluginLayout.pluginAuto(listOf(moduleName)))
     if (toPublish && layouts.size == 2 && layouts[0].bundlingRestrictions != layouts[1].bundlingRestrictions) {
       layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
     }
@@ -718,8 +771,9 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   return result
 }
 
-private fun basePath(buildContext: BuildContext, moduleName: String): Path =
-  Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
+private fun basePath(buildContext: BuildContext, moduleName: String): Path {
+  return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
+}
 
 suspend fun buildLib(
   moduleOutputPatcher: ModuleOutputPatcher,
@@ -790,8 +844,9 @@ private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutp
   moduleOutputPatcher.patchModuleOutput(moduleName, relativePath, text)
 }
 
-fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path =
-  context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
+fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
+  return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
+}
 
 private suspend fun checkOutputOfPluginModules(
   mainPluginModule: String,
