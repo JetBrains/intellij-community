@@ -208,7 +208,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   }
 
-  fun testCommentElement() {
+  fun testCommentElementByLine() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A {
@@ -217,13 +217,53 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }.<caret>""".trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment element", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Comment by line comment", ignoreCase = true) })
     myFixture.checkResult("""
       //class A {
       //    public String getY() {
       //        return "y";
       //    }
       //}""".trimIndent())
+  }
+
+  fun testCommentLine() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          public String getY() {
+              return "y";.<caret>
+          }
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Comment line", ignoreCase = true) })
+    myFixture.checkResult("""
+      class A {
+          public String getY() {
+      //        return "y";
+          }
+      }""".trimIndent())
+  }
+
+
+  fun testCommentElementByBlock() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          public String getY() {
+              return "y";
+          }
+      }.<caret>""".trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Comment by block", ignoreCase = true) })
+    myFixture.checkResult("""
+      /*
+      class A {
+          public String getY() {
+              return "y";
+          }
+      }*/
+      
+      """.trimIndent())
   }
 
   fun testRename() {
@@ -313,12 +353,11 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testRedCode() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-
     runBlocking {
       val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
-          int y = 10L<caret>
+          int y = 10L<caret>;
         } 
       }
       """.trimIndent())
@@ -332,13 +371,13 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       assertNotNull(documentation)
       val resultDocumentation = documentation?.supplier?.invoke() as? DocumentationData
       assertNotNull(resultDocumentation)
-      val expected = "<div style=\"min-width: 150px; max-width: 250px;\"> <div style=\"width: 95%; background-color:#ffffff; line-height: 1.3200000524520874\"><div style=\"background-color:#ffffff;color:#000000\"><pre style=\"font-family:'JetBrains Mono',monospace;\"><span style=\"font-size: 90%; color:#999999;\">  2  </span><span style=\"color:#000080;font-weight:bold;\">int&#32;</span>y&#32;=&#32;<span style=\"color:#0000ff;background-color:#cad9fa;\">10</span><span style=\"color:#0000ff;\">&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;</span></pre></div><br/></div></div>"
+      val expected = "<div style=\"min-width: 150px; max-width: 250px;\"> <div style=\"width: 95%; background-color:##ffffff; line-height: 1.3200000524520874\"><div style=\"background-color:#ffffff;color:#000000\"><pre style=\"font-family:'JetBrains Mono',monospace;\"><span style=\"font-size: 90%; color:#999999;\">  2  </span><span style=\"color:#000080;font-weight:bold;\">int&#32;</span>y&#32;=&#32;<span style=\"color:#0000ff;background-color:#cad9fa;\">10</span>;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;</pre></div><br/></div></div>"
       assertEquals(expected, resultDocumentation?.html ?: "")
       selectItem(item)
       myFixture.checkResult("""
       class A { 
         void foo() {
-          int y = 10
+          int y = 10;
         } 
       }
     """.trimIndent())
@@ -371,7 +410,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.doHighlighting()
     myFixture.type(".")
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("comment", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("comment line", ignoreCase = true) })
     myFixture.checkResult("""
       class A { 
         void foo() {

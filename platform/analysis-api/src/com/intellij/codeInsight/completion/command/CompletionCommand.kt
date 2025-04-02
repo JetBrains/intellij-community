@@ -59,18 +59,6 @@ abstract class CompletionCommand {
   @RequiresEdt
   abstract fun execute(offset: Int, psiFile: PsiFile, editor: Editor?)
 
-  /**
-   * Retrieves the PSI (Program Structure Interface) element at the specified offset within the given PSI file.
-   * This method finds the appropriate context element, which can be used for further analysis or execution.
-   *
-   * @param offset the position within the file at which to locate the PSI element.
-   * @param psiFile the PSI file object in which the offset is located.
-   * @return the PSI element at the specified offset, or null if no element is found.
-   */
-  open fun getContext(offset: Int, psiFile: PsiFile): PsiElement? {
-    return (if (offset == 0) psiFile.findElementAt(offset) else psiFile.findElementAt(offset - 1))
-  }
-
   override fun toString(): String {
     return "CompletionCommand(name='$name', class='${this::class.simpleName}')"
   }
@@ -83,14 +71,18 @@ abstract class CompletionCommand {
    * @return the custom PrefixMatcher for completion command or null if not available.
    */
   open fun customPrefixMatcher(prefix: String): PrefixMatcher? = null
+}
 
-  /**
-   * Indicates whether the implementation supports non-written files.
-   * (For example, a command can navigate to another file)
-   *
-   * @return true if non-written files are supported; false otherwise.
-   */
-  open fun supportsReadOnly(): Boolean = false
+/**
+ * Retrieves the PSI (Program Structure Interface) element at the specified offset within the given PSI file.
+ * This method finds the appropriate context element, which can be used for further analysis or execution.
+ *
+ * @param offset the position within the file at which to locate the PSI element.
+ * @param psiFile the PSI file object in which the offset is located.
+ * @return the PSI element at the specified offset, or null if no element is found.
+ */
+fun getCommandContext(offset: Int, psiFile: PsiFile): PsiElement? {
+  return (if (offset == 0) psiFile.findElementAt(offset) else psiFile.findElementAt(offset - 1))
 }
 
 /**
@@ -101,7 +93,17 @@ abstract class CompletionCommand {
  * Should be stateless and can be applied either to physical and non-physical classes
  * Should implement DumbAware to support DumbMode
  */
+@Deprecated("Use providers instead")
 abstract class ApplicableCompletionCommand : CompletionCommand(), PossiblyDumbAware {
+
+  /**
+   * Indicates whether the implementation supports non-written files.
+   * (For example, a command can navigate to another file)
+   *
+   * @return true if non-written files are supported; false otherwise.
+   */
+  @Deprecated("Use providers instead")
+  open fun supportsReadOnly(): Boolean = false
 
   /**
    * Determines whether the command is applicable based on the given context.

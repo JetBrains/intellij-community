@@ -1507,26 +1507,28 @@
                                               implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandSkipper"/>
     <codeInsight.completion.intention.offset.provider language="JAVA"
                                                       implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandOffsetProvider"/>
-    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider" />
+    <!--<codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider" />-->
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGenerateCommandCompletion" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaInlineVariableCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToDeclarationCommandCompletion" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.RenameActionCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.OptimizeImportCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaFormatCodeCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.RecentFilesCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.ProjectViewCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentCompletionCommand" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToDeclarationCommandCompletionProvider" />
+    <codeInsight.completion.command.provider language="JAVA"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.RenameActionCommandProvider"/>
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.OptimizeImportCompletionCommandProvider" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaFormatCodeCompletionCommandProvider" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommandProvider" />
+    <codeInsight.completion.command.provider language="JAVA"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="JAVA"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaIntroduceVariableCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaShowUsagesActionCompletionCommand" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaShowUsagesActionCompletionCommandProvider" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.GenerateGetterSetterHandleCompletionCommand" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.GenerateSetterHandleCompletionCommand" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.GenerateGetterHandleCompletionCommand" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaDeleteCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCopyFQNCompletionCommand" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToImplementationCommandCompletion" />
-    <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaChangeSignatureCompletionCommand" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCopyFQNCompletionCommandProvider" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToImplementationCommandCompletionProvider" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaChangeSignatureCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCreateFromUsagesCommandProvider" order="last"/>
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>

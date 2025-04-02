@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
@@ -36,7 +37,7 @@ abstract class BaseGenerateGetterSetterHandleCompletionCommand(
   override val icon: Icon? = null
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    val element = getContext(offset, psiFile) ?: return false
+    val element = getCommandContext(offset, psiFile) ?: return false
     if (element !is PsiIdentifier) return false
     val field = PsiTreeUtil.getParentOfType(element, PsiField::class.java) ?: return false
     val action = QuickFixFactory.getInstance().createCreateGetterOrSetterFix(generateGetter, generateSetter, field)
@@ -45,7 +46,7 @@ abstract class BaseGenerateGetterSetterHandleCompletionCommand(
   }
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    val element = getContext(offset, psiFile) ?: return
+    val element = getCommandContext(offset, psiFile) ?: return
     val field = PsiTreeUtil.getParentOfType(element, PsiField::class.java) ?: return
     val action = QuickFixFactory.getInstance().createCreateGetterOrSetterFix(generateGetter, generateSetter, field)
     if (editor == null) return

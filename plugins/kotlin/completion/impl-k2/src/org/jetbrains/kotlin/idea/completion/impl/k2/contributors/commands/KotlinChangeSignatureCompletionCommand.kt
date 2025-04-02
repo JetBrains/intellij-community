@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
-import com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommand
+import com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommandProvider
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
@@ -13,11 +14,11 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 
-internal class KotlinChangeSignatureCompletionCommand : AbstractChangeSignatureCompletionCommand() {
+internal class KotlinChangeSignatureCompletionCommand : AbstractChangeSignatureCompletionCommandProvider() {
     override fun findChangeSignatureOffset(offset: Int, file: PsiFile): Int? {
         var currentOffset = offset
         if (currentOffset == 0) return null
-        var element = getContext(currentOffset, file) ?: return null
+        var element = getCommandContext(currentOffset, file) ?: return null
         if (element is PsiWhiteSpace) {
             element = PsiTreeUtil.prevVisibleLeaf(element) ?: return null
             currentOffset = element.textRange.startOffset

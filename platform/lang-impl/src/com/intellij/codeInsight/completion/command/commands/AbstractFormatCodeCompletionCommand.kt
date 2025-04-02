@@ -2,7 +2,12 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
+import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -17,23 +22,33 @@ import javax.swing.Icon
  * This class handles the completion logic for reformatting code based on the PSI (Program Structure Interface)
  * context and specific applicability conditions.
  */
-abstract class AbstractFormatCodeCompletionCommand : ApplicableCompletionCommand() {
+abstract class AbstractFormatCodeCompletionCommandProvider :
+  CommandProvider {
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
+    val psiFile = context.psiFile
+    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
+    return listOf(createCommand(context))
+  }
+
+  abstract fun createCommand(context: CommandCompletionProviderContext): CompletionCommand
+}
+
+abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), CompletionCommandWithPreview {
   final override val name: String
     get() = "Format"
 
   final override val i18nName: @Nls String
     get() = ActionsBundle.message("action.ReformatCode.text")
 
-  final  override val icon: Icon
+  final override val icon: Icon
     get() = AllIcons.Actions.ReformatCode // Use the reformat icon
 
-  final override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return false
-    return true
+  override fun getPreview(): IntentionPreviewInfo? {
+    return IntentionPreviewInfo.Html(ActionsBundle.message("action.ReformatCode.description"))
   }
 
   final override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    val element = getContext(offset, psiFile) ?: return
+    val element = getCommandContext(offset, psiFile) ?: return
     val target = findTargetToRefactor(element)
     ReformatCodeProcessor(element.containingFile, arrayOf(target.textRange)).run()
   }

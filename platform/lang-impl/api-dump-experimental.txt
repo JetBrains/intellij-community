@@ -164,28 +164,34 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - pf:isApplicableToProject(I,com.intellij.psi.PsiFile):Z
 - f:setActionId(java.lang.String):V
-*a:com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommand
-- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+*a:com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
-- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - a:findChangeSignatureOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
-- isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
-- f:supportsReadOnly():Z
-*a:com.intellij.codeInsight.completion.command.commands.AbstractCopyFQNCompletionCommand
-- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractCopyFQNCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
-- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- pf:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - a:placeIsApplicable(com.intellij.psi.PsiElement,I):Z
 - f:supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommand
-- com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 - <init>():V
 - f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - f:getI18nName():java.lang.String
 - f:getIcon():javax.swing.Icon
 - f:getName():java.lang.String
-- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+*a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.CommandProvider
+- <init>():V
+- a:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.CompletionCommand
+- getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 *a:com.intellij.codeInsight.completion.command.commands.AbstractGenerateCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - com.intellij.openapi.project.DumbAware
@@ -206,24 +212,59 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - getName():java.lang.String
 - f:setCustomI18nName(java.lang.String):V
 - f:setCustomName(java.lang.String):V
-*a:com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommand
-- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+*a:com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
 - a:canNavigateToDeclaration(com.intellij.psi.PsiElement):Z
-- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- pf:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - f:supportsReadOnly():Z
-*a:com.intellij.codeInsight.completion.command.commands.AbstractGoToImplementationCompletionCommand
-- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+*a:com.intellij.codeInsight.completion.command.commands.AbstractGoToImplementationCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
 - a:canGoToImplementation(com.intellij.psi.PsiElement,I):Z
-- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
-- f:supportsReadOnly():Z
-*a:com.intellij.codeInsight.completion.command.commands.AbstractShowUsagesActionCompletionCommand
-- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractShowUsagesActionCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - a:hasToShow(com.intellij.psi.PsiElement):Z
-- f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- pf:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - f:supportsReadOnly():Z
+*c:com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- com.intellij.codeInsight.completion.command.CommandProvider
+- com.intellij.openapi.project.DumbAware
+- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- f:getActionId():java.lang.String
+- getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- f:getI18nName():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getName():java.lang.String
+- f:getPreviewText():java.lang.String
+- f:getPriority():java.lang.Integer
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- pf:isApplicableToProject(I,com.intellij.psi.PsiFile):Z
+- f:setActionId(java.lang.String):V
+*c:com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
+- com.intellij.openapi.project.DumbAware
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- f:getActionId():java.lang.String
+- getAdditionalInfo():java.lang.String
+- getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- getI18nName():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- getPriority():java.lang.Integer
+- f:setActionId(java.lang.String):V
 *:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
 - findOffsets(com.intellij.psi.PsiFile,I):java.util.List

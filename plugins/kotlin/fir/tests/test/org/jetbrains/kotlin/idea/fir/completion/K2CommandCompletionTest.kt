@@ -86,7 +86,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Comment", ignoreCase = true) })
+        selectItem(elements.first { element -> element.lookupString.contains("Comment line", ignoreCase = true) })
         myFixture.checkResult(
             """
             fun main() {
@@ -96,7 +96,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun testCommentPsiElement() {
+    fun testCommentPsiElementByLine() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
@@ -106,12 +106,34 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         )
         val elements = myFixture.completeBasic()
-        selectItem(elements.first { element -> element.lookupString.contains("Comment element", ignoreCase = true) })
+        selectItem(elements.first { element -> element.lookupString.contains("Comment by line", ignoreCase = true) })
         myFixture.checkResult(
             """
             //fun main() {
             //  val a: String = "1"
             //}
+        """.trimIndent()
+        )
+    }
+
+    fun testCommentPsiElementByBlock() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun main() {
+              val a: String = "1"
+            }.<caret>
+        """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Comment by block", ignoreCase = true) })
+        myFixture.checkResult(
+            """
+            /*
+            fun main() {
+              val a: String = "1"
+            }*/
+            
         """.trimIndent()
         )
     }
@@ -150,19 +172,6 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             }
             """.trimIndent()
         )
-    }
-
-    fun testLastIndex() {
-        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(
-            "x.kt", """
-            package pack
-
-            c<caret>
-            """.trimIndent()
-        )
-        val elements = myFixture.completeBasic()
-        assertTrue(elements.find { element -> element.lookupString.contains("Recent", ignoreCase = true) } != null)
     }
 
     fun testEmptyFile() {

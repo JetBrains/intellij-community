@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
 import com.intellij.lang.refactoring.InlineActionHandler
@@ -25,7 +26,7 @@ internal class JavaInlineVariableCompletionCommand : ApplicableCompletionCommand
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (editor == null) return false
-    val context = getContext(offset, psiFile)
+    val context = getCommandContext(offset, psiFile)
     if (context !is PsiIdentifier) {
       return false
     }
@@ -47,7 +48,7 @@ internal class JavaInlineVariableCompletionCommand : ApplicableCompletionCommand
   }
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    val context = getContext(offset, psiFile)
+    val context = getCommandContext(offset, psiFile)
     if (context !is PsiIdentifier) {
       return
     }

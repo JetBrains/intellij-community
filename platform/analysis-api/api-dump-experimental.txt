@@ -3,6 +3,7 @@
 - com.intellij.openapi.project.PossiblyDumbAware
 - <init>():V
 - a:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- supportsReadOnly():Z
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
 - com.intellij.openapi.project.PossiblyDumbAware
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
@@ -44,13 +45,13 @@
 - customPrefixMatcher(java.lang.String):com.intellij.codeInsight.completion.PrefixMatcher
 - a:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - getAdditionalInfo():java.lang.String
-- getContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 - getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - a:getI18nName():java.lang.String
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
 - getPriority():java.lang.Integer
-- supportsReadOnly():Z
+*f:com.intellij.codeInsight.completion.command.CompletionCommandKt
+- sf:getCommandContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *:com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 - a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 *f:com.intellij.codeInsight.completion.command.HighlightInfoLookup

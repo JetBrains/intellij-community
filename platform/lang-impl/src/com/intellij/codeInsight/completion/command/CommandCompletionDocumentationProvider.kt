@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.lang.Language
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diff.DiffColors
@@ -17,6 +18,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.DocumentationContent
@@ -47,11 +49,14 @@ class CommandCompletionDocumentationProvider : LookupElementDocumentationTargetP
 }
 
 private class CommandCompletionDocumentationTarget(
-  val psiElement: PsiElement,
+  psiElement: PsiElement,
   val completionLookupElement: CommandCompletionLookupElement,
 ) : DocumentationTarget {
+  private val myProject: Project = psiElement.project
+  private val myLanguage: Language = psiElement.language
+  private val elementPtr = psiElement.createSmartPointer()
+
   override fun createPointer(): Pointer<out DocumentationTarget> {
-    val elementPtr = psiElement.createSmartPointer()
     return Pointer {
       val element = elementPtr.dereference() ?: return@Pointer null
       CommandCompletionDocumentationTarget(element, completionLookupElement)
@@ -144,7 +149,7 @@ private class CommandCompletionDocumentationTarget(
       if (textHandler != null) {
         properties = properties.textHandler(textHandler)
       }
-      HtmlSyntaxInfoUtil.HtmlCodeSnippetBuilder(builder, psiElement.project, psiElement.language)
+      HtmlSyntaxInfoUtil.HtmlCodeSnippetBuilder(builder, myProject, myLanguage)
         .additionalIterator(additionalHighlighting)
         .codeSnippet(codeSnippet)
         .properties(properties)

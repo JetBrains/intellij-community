@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommand
+import com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommandProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
 
-internal class JavaGoToDeclarationCommandCompletion : AbstractGoToDeclarationCompletionCommand() {
+internal class JavaGoToDeclarationCommandCompletionProvider : AbstractGoToDeclarationCompletionCommandProvider() {
   override fun canNavigateToDeclaration(context: PsiElement): Boolean {
     if (context !is PsiIdentifier) {
       return false

@@ -4,12 +4,19 @@ package com.intellij.codeInsight.completion.commands.impl
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.DumbAware
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -27,7 +34,7 @@ internal class JavaDeleteCompletionCommand : ApplicableCompletionCommand(), Dumb
 
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    val element = getContext(offset, psiFile) ?: return false
+    val element = getCommandContext(offset, psiFile) ?: return false
     var psiElement = PsiTreeUtil.getParentOfType(element, PsiStatement::class.java, PsiMember::class.java) ?: return false
     val hasTheSameOffset = psiElement.textRange.endOffset == offset
     if (!hasTheSameOffset) return false
@@ -37,7 +44,7 @@ internal class JavaDeleteCompletionCommand : ApplicableCompletionCommand(), Dumb
   }
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    val element = getContext(offset, psiFile) ?: return
+    val element = getCommandContext(offset, psiFile) ?: return
     var psiElement = PsiTreeUtil.getParentOfType(element, PsiStatement::class.java, PsiMember::class.java) ?: return
     psiElement = getTopWithTheSameOffset(psiElement, offset)
     WriteCommandAction.runWriteCommandAction(psiFile.project, null, null, {

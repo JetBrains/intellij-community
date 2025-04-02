@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -28,7 +29,7 @@ class KotlinDeleteCompletionCommand : ApplicableCompletionCommand(), DumbAware {
         get() = _highlightInfo
 
     override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-        val element = getContext(offset, psiFile) ?: return false
+        val element = getCommandContext(offset, psiFile) ?: return false
         var psiElement = PsiTreeUtil.getParentOfType(element, KtExpression::class.java, KtNamedDeclaration::class.java) ?: return false
         val hasTheSameOffset = psiElement.textRange.endOffset == offset
         if (!hasTheSameOffset) return false
@@ -38,7 +39,7 @@ class KotlinDeleteCompletionCommand : ApplicableCompletionCommand(), DumbAware {
     }
 
     override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-        val element = getContext(offset, psiFile) ?: return
+        val element = getCommandContext(offset, psiFile) ?: return
         var psiElement = PsiTreeUtil.getParentOfType(element, KtExpression::class.java, KtNamedDeclaration::class.java) ?: return
         psiElement = getTopWithTheSameOffset(psiElement, offset)
         WriteCommandAction.runWriteCommandAction(psiFile.project, null, null, {
