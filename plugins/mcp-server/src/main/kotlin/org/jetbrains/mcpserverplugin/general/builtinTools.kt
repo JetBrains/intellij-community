@@ -1,8 +1,13 @@
 package org.jetbrains.mcpserverplugin.general
 
-import com.intellij.execution.ProgramRunnerUtil.executeConfiguration
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunManager
-import com.intellij.execution.executors.DefaultRunExecutor.getRunExecutorInstance
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.ide.DataManager
@@ -20,6 +25,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
@@ -28,8 +34,11 @@ import com.intellij.util.Processor
 import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
+import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.pathString
@@ -123,24 +132,114 @@ class GetRunConfigurationsTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<N
 @Serializable
 data class RunConfigArgs(val configName: String)
 
-class RunConfigurationTool : org.jetbrains.mcpserverplugin.AbstractMcpTool<RunConfigArgs>() {
+class RunConfigurationTool : AbstractMcpTool<RunConfigArgs>() {
     override val name: String = "run_configuration"
-    override val description: String = "Run a specific run configuration in the current project. " +
-            "Use this tool to run a run configuration that you have found from \"get_run_configurations\" tool." +
-            "Returns one of two possible responses: " +
-            " - \"ok\" if the run configuration was successfully executed " +
-            " - \"error <error message>\" if the run configuration was not found or failed to execute"
+    override val description: String =
+        "Run a specific run configuration in the current project and wait up to 30 seconds for it to finish. " +
+                "Use this tool to run a run configuration that you have found from the \"get_run_configurations\" tool. " +
+                "Returns the output (stdout/stderr) of the execution, prefixed with 'ok\\n' on success (exit code 0). " +
+                "Returns '<error message>' if the configuration is not found, times out, fails to start, or finishes with a non-zero exit code."
+
+    // Timeout in seconds
+    private val executionTimeoutSeconds = 30L
 
     override fun handle(project: Project, args: RunConfigArgs): Response {
         val runManager = RunManager.getInstance(project)
         val settings = runManager.allSettings.find { it.name == args.configName }
-        val executor = getRunExecutorInstance()
-        if (settings != null) {
-            executeConfiguration(settings, executor)
-        } else {
-            println("Run configuration with name '${args.configName}' not found.")
+            ?: return Response(error = "Run configuration with name '${args.configName}' not found.")
+
+        val executor =
+            DefaultRunExecutor.getRunExecutorInstance() ?: return Response(error = "Default 'Run' executor not found.")
+
+        val future = CompletableFuture<Pair<Int, String>>() // Pair<ExitCode, Output>
+        val outputBuilder = StringBuilder()
+
+        ApplicationManager.getApplication().invokeLater {
+            try {
+                val runner: ProgramRunner<*>? = ProgramRunner.getRunner(executor.id, settings.configuration)
+                if (runner == null) {
+                    future.completeExceptionally(
+                        ExecutionException("No suitable runner found for configuration '${settings.name}' and executor '${executor.id}'")
+                    )
+                    return@invokeLater
+                }
+
+                val environment = ExecutionEnvironmentBuilder.create(project, executor, settings.configuration).build()
+
+                val callback = object : ProgramRunner.Callback {
+                    override fun processStarted(descriptor: RunContentDescriptor?) {
+                        if (descriptor == null) {
+                            if (!future.isDone) {
+                                future.completeExceptionally(
+                                    ExecutionException("Run configuration doesn't support catching output")
+                                )
+                            }
+                            return
+                        }
+
+                        val processHandler = descriptor.processHandler
+                        if (processHandler == null) {
+                            if (!future.isDone) {
+                                future.completeExceptionally(
+                                    IllegalStateException("Process handler is null even though RunContentDescriptor exists.")
+                                )
+                            }
+                            return
+                        }
+
+                        processHandler.addProcessListener(object : ProcessAdapter() {
+                            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                                synchronized(outputBuilder) {
+                                    outputBuilder.append(event.text)
+                                }
+                            }
+
+                            override fun processTerminated(event: ProcessEvent) {
+                                val finalOutput = synchronized(outputBuilder) { outputBuilder.toString() }
+                                future.complete(Pair(event.exitCode, finalOutput))
+                            }
+
+                            override fun processNotStarted() {
+                                if (!future.isDone) {
+                                    future.completeExceptionally(RuntimeException("Process explicitly reported as not started."))
+                                }
+                            }
+                        })
+                        processHandler.startNotify()
+                    }
+                }
+                runner.execute(environment, callback)
+
+            } catch (e: Throwable) {
+                if (!future.isDone) {
+                    future.completeExceptionally(
+                        ExecutionException("Failed to prepare or start run configuration: ${e.message}", e)
+                    )
+                }
+            }
         }
-        return Response("ok")
+
+        try {
+            val result = future.get(executionTimeoutSeconds, TimeUnit.SECONDS)
+            val exitCode = result.first
+            val output = result.second
+
+            return if (exitCode == 0) {
+                Response("ok\n$output")
+            } else {
+                Response(error = "Execution failed with exit code $exitCode.\nOutput:\n$output")
+            }
+        } catch (e: TimeoutException) {
+            return Response(error = "Execution timed out after $executionTimeoutSeconds seconds.")
+        } catch (e: ExecutionException) {
+            val causeMessage = e.cause?.message ?: e.message
+            return Response(error = "Failed to execute run configuration: $causeMessage")
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            return Response(error = "Execution was interrupted.")
+        } catch (e: Throwable) {
+            return Response(error = "An unexpected error occurred during execution wait: ${e.message}")
+        }
     }
 }
 
