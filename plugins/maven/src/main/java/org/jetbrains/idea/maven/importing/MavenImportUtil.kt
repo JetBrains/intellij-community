@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.build.events.MessageEvent
@@ -310,14 +310,14 @@ object MavenImportUtil {
   private fun adjustPreviewLanguageLevel(mavenProject: MavenProject, level: LanguageLevel): LanguageLevel {
     val enablePreviewProperty = mavenProject.properties.getProperty("maven.compiler.enablePreview")
     if (enablePreviewProperty.toBoolean()) {
-      return level.previewLevel ?: level
+      return level.getPreviewLevel() ?: level
     }
 
     val compilerConfiguration = mavenProject.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     if (compilerConfiguration != null) {
       val enablePreviewParameter = compilerConfiguration.getChildTextTrim("enablePreview")
       if (enablePreviewParameter.toBoolean()) {
-        return level.previewLevel ?: level
+        return level.getPreviewLevel() ?: level
       }
 
       val compilerArgs = compilerConfiguration.getChild("compilerArgs")
@@ -326,7 +326,7 @@ object MavenImportUtil {
             compilerArgs.getChildren("arg").any { isPreviewText(it) } ||
             compilerArgs.getChildren("compilerArg").any{ isPreviewText(it) }
         ) {
-          return level.previewLevel ?: level
+          return level.getPreviewLevel() ?: level
         }
       }
     }

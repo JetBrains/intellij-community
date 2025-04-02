@@ -106,25 +106,23 @@ enum class LanguageLevel {
   /**
    * @return corresponding preview level, or `null` if level has no paired preview level
    */
-  val previewLevel: LanguageLevel?
-    get() {
-      if (this.isPreview) return this
-      try {
-        return valueOf(name + "_PREVIEW")
-      }
-      catch (_: IllegalArgumentException) {
-        return null
-      }
+  fun getPreviewLevel(): LanguageLevel? {
+    if (isPreview) return this
+    try {
+      return valueOf(name + "_PREVIEW")
     }
+    catch (_: IllegalArgumentException) {
+      return null
+    }
+  }
 
   /**
    * @return corresponding non-preview level; this if this level is non-preview already
    */
-  val nonPreviewLevel: LanguageLevel
-    get() {
-      if (!this.isPreview) return this
-      return requireNotNull(ourStandardVersions[myVersion.feature])
-    }
+  fun getNonPreviewLevel(): LanguageLevel {
+    if (!isPreview) return this
+    return requireNotNull(ourStandardVersions[myVersion.feature])
+  }
 
   val presentableText: @Nls String
     get() = myPresentableText()
