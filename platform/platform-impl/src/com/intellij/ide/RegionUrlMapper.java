@@ -27,7 +27,6 @@ import java.util.concurrent.*;
  * @see Region
  * @see RegionSettings
  */
-@ApiStatus.Experimental
 @ApiStatus.Internal
 public final class RegionUrlMapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.RegionUrlMapper");
@@ -184,6 +183,7 @@ public final class RegionUrlMapper {
    * Represents the contents of the JSON configuration loaded for a particular region
    * and provides the methods for applying the mapping rules found in that configuration.
    */
+  @ApiStatus.Internal
   public static final class RegionMapping {
     private final @NotNull List<PatternReplacement> myPatternReplacements;
 
