@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
@@ -14,8 +14,8 @@ import com.intellij.util.lang.UrlClassLoader
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
@@ -33,9 +33,9 @@ class PluginDescriptorTest {
   @TestDataPath("\$CONTENT_ROOT/testData/plugins/pluginDescriptor") @Suppress("unused")
   private class TestDataRef // for easy navigation
 
-  @Rule
+  @RegisterExtension
   @JvmField
-  val inMemoryFs = InMemoryFsRule()
+  val inMemoryFs = InMemoryFsExtension()
 
   private val rootPath get() = inMemoryFs.fs.getPath("/")
   private val pluginDirPath get() = rootPath.resolve("plugin")
