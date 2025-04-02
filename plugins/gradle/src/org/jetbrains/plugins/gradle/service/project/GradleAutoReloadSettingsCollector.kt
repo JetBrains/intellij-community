@@ -6,8 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import java.io.File
-
+import java.nio.file.Path
 
 /**
  * Allows providing Gradle scripts for auto-reload tracking.
@@ -24,7 +23,7 @@ interface GradleAutoReloadSettingsCollector {
    * @see ExternalSystemProjectAware.settingsFiles
    * @see GradleAutoImportAware.getAffectedExternalProjectFiles
    */
-  fun collectSettingsFiles(project: Project, projectSettings: GradleProjectSettings): List<File>
+  fun collectSettingsFiles(project: Project, projectSettings: GradleProjectSettings): List<Path>
 
   companion object {
     @JvmField
