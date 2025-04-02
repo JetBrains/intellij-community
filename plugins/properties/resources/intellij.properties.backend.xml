@@ -69,7 +69,6 @@
     <colorSettingsPage implementation="com.intellij.lang.properties.PropertiesColorsPage"/>
     <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
     <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDescriptionProvider"/>
-    <fileType name="Properties" language="Properties" extensions="properties" fieldName="INSTANCE" implementationClass="com.intellij.lang.properties.PropertiesFileType"/>
     <fileType name="ResourceBundle" fieldName="INSTANCE" implementationClass="com.intellij.lang.properties.editor.ResourceBundleFileType"/>
 
     <favoriteNodeProvider implementation="com.intellij.lang.properties.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
