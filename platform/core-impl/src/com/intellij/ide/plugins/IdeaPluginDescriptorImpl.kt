@@ -49,6 +49,21 @@ class IdeaPluginDescriptorImpl private constructor(
     raw: RawPluginDescriptor,
     pluginPath: Path,
     isBundled: Boolean,
+    useCoreClassLoader: Boolean = false
+  ): this(
+    raw = raw,
+    pluginPath = pluginPath,
+    isBundled = isBundled,
+    moduleName = null,
+    moduleLoadingRule = null,
+    useCoreClassLoader = useCoreClassLoader,
+    isIndependentFromCoreClassLoader = false,
+    descriptorPath = null)
+
+  constructor(
+    raw: RawPluginDescriptor,
+    pluginPath: Path,
+    isBundled: Boolean,
     moduleName: String?,
     moduleLoadingRule: ModuleLoadingRule? = null,
     useCoreClassLoader: Boolean = false,
