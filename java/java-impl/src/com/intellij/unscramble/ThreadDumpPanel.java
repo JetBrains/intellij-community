@@ -66,6 +66,14 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     return new ThreadDumpPanel(project, consoleView, toolbarActions, dumpItems, true);
   }
 
+  @ApiStatus.Internal
+  public void addDumpItems(List<DumpItem> threads) {
+    myThreadDump.addAll(threads);
+    myMergedThreadDump.addAll(CompoundDumpItem.Companion.mergeThreadDumpItems(threads));
+    myMergedThreadDump.sort(DumpItem.BY_INTEREST);
+    updateThreadDumpItemList();
+  }
+
   private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems, boolean fromDumpItems) {
     super(new BorderLayout());
     myThreadDump = new ArrayList<>(dumpItems);
