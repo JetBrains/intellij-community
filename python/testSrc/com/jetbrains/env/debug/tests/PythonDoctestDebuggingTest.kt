@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.env.debug
+package com.jetbrains.env.debug.tests
 
 import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.UsefulTestCase
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyTestTask
+import com.jetbrains.env.debug.tasks.PyCustomConfigDebuggerTask
 import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher

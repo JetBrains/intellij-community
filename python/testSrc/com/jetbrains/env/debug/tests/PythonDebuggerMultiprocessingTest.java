@@ -1,14 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tests;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.debug.tasks.PyDebuggerTask;
+import com.jetbrains.env.debug.tasks.PythonDebuggerLanguageLevelTask;
+import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 import static org.junit.Assert.assertFalse;
@@ -25,6 +31,11 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     @Override
     protected void init() {
       setMultiprocessDebug(true);
+    }
+
+    @Override
+    public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+      return level.compareTo(LanguageLevel.PYTHON27) > 0;
     }
   }
 
@@ -68,10 +79,14 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
         resume();
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON38) > 0;
+      }
     });
   }
 
-  @EnvTestTagsRequired(tags = "-iron")
   @Test
   public void testMultiprocessPool() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_pool.py") {
@@ -99,7 +114,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForOutput("Hello!");
       }
-
     });
   }
 
@@ -228,6 +242,11 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         waitForTerminate();
         outputContains("Python");
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
     });
   }
 
@@ -309,6 +328,76 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForTerminate();
         assertFalse(output().contains("Traceback"));
+      }
+    });
+  }
+
+  @Test
+  public void testExecAndSpawnWithBytesArgs() {
+
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    final class ExecAndSpawnWithBytesArgsTask extends PythonDebuggerTest.PyDebuggerTaskTagAware {
+
+      private final static String BYTES_ARGS_WARNING =
+        "pydev debugger: bytes arguments were passed to a new process creation function. " + "Breakpoints may not work correctly.\n";
+
+      private ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
+        super(relativeTestDataPath, scriptName);
+      }
+
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 4);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        setProcessCanTerminate(true);
+        resume();
+        waitForOutput(BYTES_ARGS_WARNING);
+      }
+
+    }
+
+    Arrays.asList("test_call_exec_with_bytes_args.py", "test_call_spawn_with_bytes_args.py")
+      .forEach((script) -> runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", script)));
+  }
+
+  @Test
+  @TestFor(issues = "PY-79437")
+  public void testExecutableScriptDebug() {
+
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+    // TODO: remove lvl.compareTo(LanguageLevel.PYTHON27) < 0 after PY-79437
+    runPythonTest(new PythonDebuggerLanguageLevelTask(lvl -> lvl.compareTo(LanguageLevel.PYTHON27) < 0, "/debug", "test_executable_script_debug.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_executable_script_debug_helper.py"), 4);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Subprocess exited with return code: 0");
       }
     });
   }
