@@ -17,7 +17,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
-import com.intellij.grazie.ide.notification.advertiseGrazieProfessional
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextContent
@@ -100,13 +99,10 @@ object GrazieReplaceTypoQuickFix {
     }
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-      if (detectedLanguage == Language.ENGLISH) {
-        advertiseGrazieProfessional(project)
-      }
-      performFix(project, file, editor)
+      performFix(project, file)
     }
 
-    protected fun performFix(project: Project, file: PsiFile, editor: Editor?) {
+    protected fun performFix(project: Project, file: PsiFile) {
       GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
       val document = file.viewProvider.document ?: return
       underlineRanges.forEach { underline ->
@@ -141,7 +137,7 @@ object GrazieReplaceTypoQuickFix {
       detectedLanguage: Language?
     ): ChangeToVariantAction(rule, index, family, suggestion, replacements, underlineRanges, toHighlight, detectedLanguage, null) {
       override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-        performFix(project, file, editor)
+        performFix(project, file)
       }
     }
   }
@@ -235,6 +231,7 @@ object GrazieReplaceTypoQuickFix {
   }
 
   private fun charsMatch(c1: Char, c2: Char) = c1 == c2 || c1 == ' ' && c2 == '\n'
+
   /**
    * Remove all highlighters with exactly the given range from [DocumentMarkupModel].
    * This might be useful in quick fixes and intention actions to provide immediate feedback.
