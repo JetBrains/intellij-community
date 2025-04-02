@@ -61,24 +61,6 @@ class IdeaPluginDescriptorImpl private constructor(
     isIndependentFromCoreClassLoader = false,
     descriptorPath = null)
 
-  @TestOnly
-  constructor(
-    raw: RawPluginDescriptor,
-    pluginPath: Path,
-    isBundled: Boolean,
-    moduleName: String?,
-    moduleLoadingRule: ModuleLoadingRule? = null,
-    useCoreClassLoader: Boolean = false,
-  ) : this(
-    raw = raw,
-    pluginPath = pluginPath,
-    isBundled = isBundled,
-    moduleName = moduleName,
-    moduleLoadingRule = moduleLoadingRule,
-    useCoreClassLoader = useCoreClassLoader,
-    isIndependentFromCoreClassLoader = false,
-    descriptorPath = null)
-
   init {
     if (moduleName != null) {
       require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
