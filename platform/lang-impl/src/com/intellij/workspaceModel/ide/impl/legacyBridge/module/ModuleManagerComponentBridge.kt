@@ -103,7 +103,12 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     // Theoretically, the module initialization can be parallelized using fork-join approach, see IJPL-149482
     //   This approach is used in ModuleManagerBridgeImpl.loadModules
     // However, simple use of Dispatchers.Default while being inside write action, may cause threading issues, see IDEA-355596
-    val precomputedModel = precomputeModuleLevelExtensionModel()
+    val precomputedModel = if (moduleChanges.isNotEmpty()) {
+      precomputeModuleLevelExtensionModel()
+    }
+    else {
+      null
+    }
     for (change in moduleChanges) {
       if (change !is EntityChange.Added<ModuleEntity>) {
         continue
@@ -119,7 +124,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
         versionedStorage = entityStore,
         diff = builder,
         isNew = true,
-        precomputedExtensionModel = precomputedModel,
+        precomputedExtensionModel = precomputedModel!!,
         plugins = plugins,
       )
       LOG.debug { "Creating components ${change.newEntity.name}" }
@@ -188,7 +193,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
-    init: (ModuleBridge) -> Unit
+    init: (ModuleBridge) -> Unit,
   ): ModuleBridge {
     val componentManager = ModuleComponentManager(project.getComponentManagerImpl())
     return ModuleBridgeImpl(
