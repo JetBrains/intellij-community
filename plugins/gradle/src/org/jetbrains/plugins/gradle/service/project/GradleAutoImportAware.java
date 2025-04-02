@@ -14,13 +14,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
-import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFileKt;
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile;
+import org.jetbrains.plugins.gradle.properties.GradleLocalPropertiesFile;
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -119,18 +120,13 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
 
     @Override
     public @NotNull List<Path> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
-      String gradleUserHome = ObjectUtils.chooseNotNull(
-        GradleSettings.getInstance(project).getServiceDirectoryPath(),
-        GradleUserHomeUtil.gradleUserHomeDir().getPath()
-      );
       Path projectPath = Path.of(projectSettings.getExternalProjectPath());
-
-      List<Path> files = new SmartList<>();
-      files.add(Path.of(gradleUserHome, "gradle.properties"));
-      files.add(Path.of(gradleUserHome, "init.gradle"));
-      files.add(projectPath.resolve("gradle.properties"));
-      files.add(projectPath.resolve(Path.of(".gradle", "config.properties")));
-      return files;
+      List<Path> paths = new SmartList<>();
+      paths.addAll(GradlePropertiesFile.getPropertyPaths(project, projectPath));
+      paths.add(GradleLocalPropertiesFile.getPropertyPath(projectPath));
+      paths.add(GradleDaemonJvmPropertiesFile.getPropertyPath(projectPath));
+      paths.add(GradleUserHomeUtil.gradleUserHomeDir().toPath().resolve("init.gradle"));
+      return paths;
     }
   }
 
@@ -160,15 +156,6 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
         return Collections.singletonList(projectPath.resolve("gradle/wrapper/gradle-wrapper.properties"));
       }
       return Collections.emptyList();
-    }
-  }
-
-  public static final class GradleDaemonJvmPropertiesCollector implements GradleAutoReloadSettingsCollector {
-    @NotNull
-    @Override
-    public List<Path> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
-      Path projectPath = Path.of(projectSettings.getExternalProjectPath());
-      return List.of(projectPath.resolve("gradle/" + GradleDaemonJvmPropertiesFileKt.GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME));
     }
   }
 

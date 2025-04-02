@@ -12,9 +12,17 @@ const val GRADLE_DAEMON_JVM_VENDOR_PROPERTY = "toolchainVendor"
 const val GRADLE_FOLDER = "gradle"
 
 object GradleDaemonJvmPropertiesFile {
+
+  @JvmStatic
   fun getProperties(externalProjectPath: Path): GradleDaemonJvmProperties? {
-    val propertiesPath = getGradleDaemonJvmPropertiesPath(externalProjectPath)
+    val propertiesPath = getPropertyPath(externalProjectPath)
     return loadGradleDaemonJvmProperties(propertiesPath)
+  }
+
+  @JvmStatic
+  fun getPropertyPath(externalProjectPath: Path): Path {
+    return externalProjectPath.resolve(Paths.get(GRADLE_FOLDER, GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME))
+      .toAbsolutePath().normalize()
   }
 
   private fun loadGradleDaemonJvmProperties(propertiesPath: Path): GradleDaemonJvmProperties? {
@@ -23,9 +31,5 @@ object GradleDaemonJvmPropertiesFile {
       version = properties.getStringProperty(GRADLE_DAEMON_JVM_VERSION_PROPERTY, propertiesPath),
       vendor = properties.getStringProperty(GRADLE_DAEMON_JVM_VENDOR_PROPERTY, propertiesPath)
     )
-  }
-
-  private fun getGradleDaemonJvmPropertiesPath(externalProjectPath: Path): Path {
-    return externalProjectPath.resolve(Paths.get(GRADLE_FOLDER, GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME)).toAbsolutePath().normalize()
   }
 }

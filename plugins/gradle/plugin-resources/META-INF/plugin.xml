@@ -84,8 +84,6 @@
     <autoReloadSettingsCollector
       implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$GradlePropertiesCollector"/>
     <autoReloadSettingsCollector
-      implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$GradleDaemonJvmPropertiesCollector"/>
-    <autoReloadSettingsCollector
       implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$VersionCatalogCollector"/>
     <autoReloadSettingsCollector
       implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$WrapperConfigCollector"/>

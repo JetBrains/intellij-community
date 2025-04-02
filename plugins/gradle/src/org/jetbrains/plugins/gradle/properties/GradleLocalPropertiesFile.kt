@@ -11,14 +11,16 @@ const val GRADLE_LOCAL_PROPERTIES_FILE_NAME = "config.properties"
 
 object GradleLocalPropertiesFile {
 
+  @JvmStatic
   fun getProperties(externalProjectPath: Path): GradleLocalProperties {
-    val propertiesPath = getGradleLocalPropertiesPath(externalProjectPath)
+    val propertiesPath = getPropertyPath(externalProjectPath)
     return loadGradleLocalProperties(propertiesPath)
   }
 
-  private fun getGradleLocalPropertiesPath(externalProjectPath: Path): Path {
-    val gradleLocalPath = externalProjectPath.resolve(Paths.get(GRADLE_CACHE_DIR_NAME, GRADLE_LOCAL_PROPERTIES_FILE_NAME))
-    return gradleLocalPath.toAbsolutePath().normalize()
+  @JvmStatic
+  fun getPropertyPath(externalProjectPath: Path): Path {
+    return externalProjectPath.resolve(Paths.get(GRADLE_CACHE_DIR_NAME, GRADLE_LOCAL_PROPERTIES_FILE_NAME))
+      .toAbsolutePath().normalize()
   }
 
   private fun loadGradleLocalProperties(propertiesPath: Path): GradleLocalProperties {
