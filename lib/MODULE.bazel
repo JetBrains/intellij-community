@@ -5187,6 +5187,20 @@ http_file(
 )
 
 http_file(
+  name = "kotlin-dataframe-compiler-plugin-for-ide-2_2_0-dev-12359_http",
+  url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.0-dev-12359/kotlin-dataframe-compiler-plugin-for-ide-2.2.0-dev-12359.jar",
+  sha256 = "164e017e8f5cdc88a369c65aa71679a4b5dd5cf03f36a592044a6fe8bc6cc4c2",
+  downloaded_file_path = "kotlin-dataframe-compiler-plugin-for-ide-2.2.0-dev-12359.jar"
+)
+
+http_file(
+  name = "kotlin-dataframe-compiler-plugin-for-ide-2_2_0-dev-12359-sources_http",
+  url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2.2.0-dev-12359/kotlin-dataframe-compiler-plugin-for-ide-2.2.0-dev-12359-sources.jar",
+  sha256 = "9aa7a50bf1cf375f260bb4a9fa764776478304bd25ad21daa1185fd05ac5670e",
+  downloaded_file_path = "kotlin-dataframe-compiler-plugin-for-ide-2.2.0-dev-12359-sources.jar"
+)
+
+http_file(
   name = "kotlin-dist-for-ide-2_1_10-release-473_http",
   url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/org/jetbrains/kotlin/kotlin-dist-for-ide/2.1.10-release-473/kotlin-dist-for-ide-2.1.10-release-473.jar",
   sha256 = "6dd76c8210c222475afcfe6d9aedcf4bbd22bda094be28cc8c262fd3025021a3",
@@ -12474,31 +12488,31 @@ http_file(
 )
 
 http_file(
-  name = "studio-platform-2024_3_2-alpha05-220_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-220/studio-platform-2024.3.2-alpha05-220.jar",
-  sha256 = "8149e6baeff8bfdb3453a68097c431929ecbcb493967c978dc0b6e7be9b4bbd9",
-  downloaded_file_path = "studio-platform-2024.3.2-alpha05-220.jar"
+  name = "studio-platform-2024_3_2-alpha05-222_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-222/studio-platform-2024.3.2-alpha05-222.jar",
+  sha256 = "29254aa865510979045ee3812c652bdba0bbee01d5ac95bb829ce686fff0dd1b",
+  downloaded_file_path = "studio-platform-2024.3.2-alpha05-222.jar"
 )
 
 http_file(
-  name = "studio-platform-2024_3_2-alpha05-220-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-220/studio-platform-2024.3.2-alpha05-220-sources.jar",
-  sha256 = "73a2e5fc0b3c080202f6371f4340cff58a6f603791958c4e8e96162bd95ce3f0",
-  downloaded_file_path = "studio-platform-2024.3.2-alpha05-220-sources.jar"
+  name = "studio-platform-2024_3_2-alpha05-222-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-222/studio-platform-2024.3.2-alpha05-222-sources.jar",
+  sha256 = "767bd9ced53c85f5d07185e76efe15a064e304c8d226eca530e2b531397963a5",
+  downloaded_file_path = "studio-platform-2024.3.2-alpha05-222-sources.jar"
 )
 
 http_file(
-  name = "studio-test-platform-2024_3_2-alpha05-220_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-220/studio-test-platform-2024.3.2-alpha05-220.jar",
-  sha256 = "61833837ad7ea4d5ebba510401fda23da7f3982d7947d806195a9aabfe0b65de",
-  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-220.jar"
+  name = "studio-test-platform-2024_3_2-alpha05-222_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-222/studio-test-platform-2024.3.2-alpha05-222.jar",
+  sha256 = "9c1322c7186947c8b78af455c4430abf9ca275c83b800e7189a8f0ca44a00fea",
+  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-222.jar"
 )
 
 http_file(
-  name = "studio-test-platform-2024_3_2-alpha05-220-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-220/studio-test-platform-2024.3.2-alpha05-220-sources.jar",
-  sha256 = "e5476fadd3212f991745e00f973d746994fd9293e359bed6b5a83873f0e58325",
-  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-220-sources.jar"
+  name = "studio-test-platform-2024_3_2-alpha05-222-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-222/studio-test-platform-2024.3.2-alpha05-222-sources.jar",
+  sha256 = "e5a9bec493cd5367e56361e62a499135871fd2c8d46669562d0e3e9a3c86aef0",
+  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-222-sources.jar"
 )
 
 http_file(

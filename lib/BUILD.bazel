@@ -3736,6 +3736,13 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+kt_jvm_import(
+  name = "kotlinc-kotlin-dataframe-compiler-plugin",
+  jar = "@kotlin-dataframe-compiler-plugin-for-ide-2_2_0-dev-12359_http//file",
+  srcjar = "@kotlin-dataframe-compiler-plugin-for-ide-2_2_0-dev-12359-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_import(
   name = "kotlinc-kotlin-dist",
   jars = ["@kotlin-dist-for-ide-2_1_10-release-473_http//file"],
@@ -8648,8 +8655,8 @@ java_import(
 
 kt_jvm_import(
   name = "studio-platform",
-  jar = "@studio-platform-2024_3_2-alpha05-220_http//file",
-  srcjar = "@studio-platform-2024_3_2-alpha05-220-sources_http//file",
+  jar = "@studio-platform-2024_3_2-alpha05-222_http//file",
+  srcjar = "@studio-platform-2024_3_2-alpha05-222-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8662,8 +8669,8 @@ java_library(
 
 kt_jvm_import(
   name = "studio-test-platform",
-  jar = "@studio-test-platform-2024_3_2-alpha05-220_http//file",
-  srcjar = "@studio-test-platform-2024_3_2-alpha05-220-sources_http//file",
+  jar = "@studio-test-platform-2024_3_2-alpha05-222_http//file",
+  srcjar = "@studio-test-platform-2024_3_2-alpha05-222-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

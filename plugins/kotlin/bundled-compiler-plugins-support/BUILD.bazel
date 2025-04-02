@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:kotlinc-js-plain-objects-compiler-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
   ]
 )
 ### auto-generated section `build kotlin.bundled-compiler-plugins-support` end
