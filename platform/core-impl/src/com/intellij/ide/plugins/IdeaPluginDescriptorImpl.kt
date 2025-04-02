@@ -61,6 +61,31 @@ class IdeaPluginDescriptorImpl private constructor(
     isIndependentFromCoreClassLoader = false,
     descriptorPath = null)
 
+  /** see [type] */
+  @ApiStatus.Internal
+  enum class Type {
+    /**
+     * Main plugin descriptor, instantiated from "plugin.xml" (or from platform XMLs for Core).
+     *
+     * `descriptorPath`, `moduleName`, `moduleLoadingRule` properties are `null`.
+     */
+    MainDescriptor,
+
+    /**
+     * Descriptor instantiated as a sub-descriptor of some [MainDescriptor] using a content module info. See [createSub].
+     *
+     * `descriptorPath`, `moduleName`, `moduleLoadingRule` properties are _not_ `null`.
+     */
+    ContentModuleDescriptor,
+
+    /**
+     * Descriptor instantiated as a sub-descriptor of some [MainDescriptor] _or_ another [DependsSubDescriptor] in [initializeV1Dependencies]. See [createSub].
+     *
+     * `descriptorPath` is _not_ null, `moduleName` and `moduleLoadingRule` properties are `null`.
+     */
+    DependsSubDescriptor
+  }
+
   init {
     if (moduleName != null) {
       require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
@@ -141,6 +166,14 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
+
+  val type: Type get() {
+    return when {
+      moduleName != null -> Type.ContentModuleDescriptor
+      descriptorPath != null -> Type.DependsSubDescriptor
+      else -> Type.MainDescriptor
+    }
+  }
 
   override fun getPluginId(): PluginId = id
 
