@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -10,6 +10,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.lang.impl.TokenSequence;
 import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -17,6 +18,7 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet;
 import com.intellij.platform.syntax.element.SyntaxTokenTypes;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.platform.syntax.lexer.TokenListUtil;
+import com.intellij.platform.syntax.psi.IntelliJLogger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
@@ -35,12 +37,18 @@ public final class JavaParserUtil {
   public static final SyntaxElementTypeSet WS_COMMENTS =
     SyntaxElementTypes.INSTANCE.getJAVA_COMMENT_BIT_SET().plus(SyntaxTokenTypes.getWHITE_SPACE());
 
+  private static final com.intellij.platform.syntax.Logger SYNTAX_LOGGER =
+    IntelliJLogger.asSyntaxLogger(Logger.getInstance(JavaParserUtil.class));
+
   public static @NotNull TokenList obtainTokens(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
-        TokenListUtil.performLexing(file.getViewProvider().getContents(), new JavaLexer(PsiUtil.getLanguageLevel(file)),
-                                  ProgressManager::checkCanceled),
-        file));
+        TokenListUtil.performLexing(
+          file.getViewProvider().getContents(),
+          new JavaLexer(PsiUtil.getLanguageLevel(file)),
+          ProgressManager::checkCanceled,
+          SYNTAX_LOGGER
+        ), file));
   }
 
   /**

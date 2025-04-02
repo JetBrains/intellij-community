@@ -60,7 +60,7 @@ internal class ParsingTreeBuilder(
   override val lexingTimeNs: Long
 
   init {
-    val (tokens, _lexingTimeNs) = performLexing(cachedLexemes, text, lexer, cancellationProvider)
+    val (tokens, _lexingTimeNs) = performLexing(cachedLexemes, text, lexer, cancellationProvider, logger)
     lexingTimeNs = _lexingTimeNs
     myLexStarts = tokens.lexStarts
     myLexTypes = tokens.lexTypes
@@ -522,13 +522,14 @@ private fun performLexing(
   cachedLexemes: TokenList?,
   text: CharSequence,
   lexer: Lexer,
-  cancellationProvider: CancellationProvider?
+  cancellationProvider: CancellationProvider?,
+  logger: Logger?,
 ): LexingResult {
   if (cachedLexemes is TokenSequence) {
     assert(cachedLexemes.lexStarts[cachedLexemes.tokenCount] == text.length)
 
     if (doLexingOptimizationCorrectionCheck()) {
-      cachedLexemes.assertMatches(text, lexer, cancellationProvider)
+      cachedLexemes.assertMatches(text, lexer, cancellationProvider, logger)
     }
     return LexingResult(cachedLexemes, 0)
   }

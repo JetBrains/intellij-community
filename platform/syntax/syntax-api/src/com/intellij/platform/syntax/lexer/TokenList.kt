@@ -5,6 +5,7 @@
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import org.jetbrains.annotations.ApiStatus
@@ -49,7 +50,12 @@ interface TokenList {
   }
 }
 
-fun performLexing(text: CharSequence, lexer: Lexer, cancellationProvider: CancellationProvider? = null): TokenList {
+fun performLexing(
+  text: CharSequence,
+  lexer: Lexer,
+  cancellationProvider: CancellationProvider?,
+  logger: Logger?,
+): TokenList {
   if (lexer is TokenListLexerImpl) {
     val existing = lexer.tokens
     if (existing is TokenSequence && equal(text, existing.tokenizedText)) {
@@ -62,7 +68,7 @@ fun performLexing(text: CharSequence, lexer: Lexer, cancellationProvider: Cancel
       ) as TokenList
     }
   }
-  val sequence = Builder(text, lexer, cancellationProvider).performLexing()
+  val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
   return sequence as TokenList
 }
 
