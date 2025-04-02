@@ -28,7 +28,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleDeclarativeEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import java.io.File
@@ -59,8 +58,8 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     }
   }
 
-  private suspend fun configureProject(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    val project = context.project()
+  private fun configureProject(context: ProjectResolverContext, storage: MutableEntityStorage) {
+    val project = context.project
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
     val projectRootPath = Path.of(context.projectPath)
@@ -96,7 +95,8 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
 
     val settingsModel = projectBuildModel.projectSettingsModel
 
-    val rootDependencyDependencies = GradleLibrariesResolver().resolveAndAddLibraries(storage, context, entitySource, projectBuildModel)
+    val rootDependencyDependencies = GradleLibrariesResolver()
+      .resolveAndAddLibraries(project, storage, context, entitySource, projectBuildModel)
 
     if(settingsModel == null) { // no settings file so assume simple project
       LOG.debug("No settings file found in project root")
@@ -322,8 +322,8 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
     }
   }
 
-  private suspend fun removeDeclarativeModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    val project = context.project()
+  private fun removeDeclarativeModel(context: ProjectResolverContext, storage: MutableEntityStorage) {
+    val project = context.project
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
     val projectRootPath = Path.of(context.projectPath)

@@ -51,7 +51,8 @@ object GradleSyncProjectConfigurator {
       |  externalProjectPath = $externalProjectPath
     """.trimMargin()
     TELEMETRY.spanBuilder(configuratorName).use {
-      val project = context.project()
+      checkCanceled()
+      val project = context.project
       val workspaceModel = project.workspaceModel
       val storageSnapshot = workspaceModel.currentSnapshot
       val storage = MutableEntityStorage.from(storageSnapshot)
