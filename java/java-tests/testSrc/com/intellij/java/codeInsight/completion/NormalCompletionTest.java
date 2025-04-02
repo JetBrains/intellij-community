@@ -3235,6 +3235,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   }
 
   public void testNoSuggestionsAfterDotAtClassLevel() { doAntiTest(); }
+  public void testNoSuggestionsAfterDotInParameter() { doAntiTest(); }
 
   public void testNoSuggestionsAfterDotWithLetter() {
     String path = "/" + getTestName(false) + ".java";

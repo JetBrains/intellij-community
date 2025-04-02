@@ -99,6 +99,16 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         .withParent(PsiJavaCodeReferenceElement.class)
         .withSuperParent(2, PsiTypeElement.class)
         .withSuperParent(3, PsiClass.class),
+      //example: void test(String p.<caret>)
+      psiElement().afterLeaf(".")
+        .afterLeafSkipping(psiElement().andOr(
+                             psiElement().whitespace(),
+                             psiElement().withText("")),
+                           psiElement().withParent(PsiErrorElement.class))
+        .afterLeafSkipping(psiElement().withParent(PsiErrorElement.class),
+                           psiElement().withElementType(JavaTokenType.IDENTIFIER)
+                             .withParent(PsiParameter.class)
+                             .withSuperParent(2, PsiParameterList.class)),
       // like `call(Cls::methodRef.<caret>`
       psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
         psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))),

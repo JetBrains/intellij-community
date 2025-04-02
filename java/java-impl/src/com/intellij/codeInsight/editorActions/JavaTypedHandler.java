@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
+import com.intellij.codeInsight.completion.command.CommandCompletionFactoryKt;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.CommandProcessor;
@@ -234,6 +235,14 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
       while (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
       if (parent instanceof PsiParameterList list && PsiTreeUtil.isAncestor(list, lastElement, false) ||
           (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
+        if (CommandCompletionFactoryKt.commandCompletionEnabled() &&
+            parent instanceof PsiParameter parameter &&
+            lastElement instanceof PsiJavaToken javaToken &&
+            javaToken.textMatches(".") &&
+            prevSibling instanceof PsiIdentifier identifier &&
+            parameter.getIdentifyingElement() == identifier) {
+          return true;
+        }
         return false;
       }
 
