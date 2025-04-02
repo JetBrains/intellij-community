@@ -7622,13 +7622,12 @@ f:com.intellij.find.impl.FindInProjectUtil
 - s:setupViewPresentation(Z,com.intellij.find.FindModel):com.intellij.usages.UsageViewPresentation
 c:com.intellij.find.impl.FindInProjectUtil$StringUsageTarget
 - com.intellij.navigation.ItemPresentation
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.usages.ConfigurableUsageTarget
 - pf:myFindModel:com.intellij.find.FindModel
 - pf:myProject:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project,com.intellij.find.FindModel):V
 - findUsages():V
-- getData(java.lang.String):java.lang.Object
 - getIcon(Z):javax.swing.Icon
 - getLongDescriptiveName():java.lang.String
 - getName():java.lang.String
@@ -7637,6 +7636,7 @@ c:com.intellij.find.impl.FindInProjectUtil$StringUsageTarget
 - getShortcut():com.intellij.openapi.actionSystem.KeyboardShortcut
 - isValid():Z
 - showSettings():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.find.impl.FindManagerImpl
 - com.intellij.find.FindManager
 - <init>(com.intellij.openapi.project.Project):V
