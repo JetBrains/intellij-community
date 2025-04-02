@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
@@ -245,19 +246,23 @@ private fun AlignedContentExample(scrollbarStyle: ScrollbarStyle, modifier: Modi
                 Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
         ) {
             val shape = RoundedCornerShape(4.dp)
+            val borderColor =
+                if (JewelTheme.isDark) {
+                    JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF2E436E)
+                } else {
+                    JewelTheme.colorPalette.blueOrNull(2) ?: Color(0xFF315FBD)
+                }
+            val backgroundColor =
+                if (JewelTheme.isDark) {
+                    JewelTheme.colorPalette.grayOrNull(1) ?: Color(0xFF1E1F22)
+                } else {
+                    JewelTheme.colorPalette.grayOrNull(14) ?: Color(0xFFFFFFFF)
+                }
             Column(
                 modifier =
                     Modifier.align(Alignment.Center)
-                        .background(
-                            color =
-                                if (JewelTheme.isDark) {
-                                    JewelTheme.colorPalette.gray(1)
-                                } else {
-                                    JewelTheme.colorPalette.gray(14)
-                                },
-                            shape,
-                        )
-                        .border(1.dp, JewelTheme.colorPalette.blue(2), shape)
+                        .background(color = backgroundColor, shape)
+                        .border(1.dp, borderColor, shape)
                         .padding(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),

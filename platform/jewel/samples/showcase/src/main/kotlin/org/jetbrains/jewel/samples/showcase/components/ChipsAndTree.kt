@@ -173,9 +173,9 @@ public fun TreeSample(modifier: Modifier = Modifier) {
 
     val borderColor =
         if (JewelTheme.isDark) {
-            JewelTheme.colorPalette.gray(3)
+            JewelTheme.colorPalette.grayOrNull(3) ?: Color(0xFF393B40)
         } else {
-            JewelTheme.colorPalette.gray(12)
+            JewelTheme.colorPalette.grayOrNull(12) ?: Color(0xFFEBECF0)
         }
 
     Box(modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))) {

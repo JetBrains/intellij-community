@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -102,8 +103,18 @@ public fun Borders() {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         val isDark = JewelTheme.isDark
         val colorPalette = JewelTheme.colorPalette
-        val borderColor = remember(isDark) { if (isDark) colorPalette.blue(6) else colorPalette.blue(4) }
-        val backgroundColor = remember(isDark) { if (isDark) colorPalette.gray(4) else colorPalette.gray(11) }
+        val borderColor =
+            if (isDark) {
+                colorPalette.blueOrNull(6) ?: Color(0xFF3574F0)
+            } else {
+                colorPalette.blueOrNull(4) ?: Color(0xFF3574F0)
+            }
+        val backgroundColor =
+            if (isDark) {
+                colorPalette.grayOrNull(4) ?: Color(0xFF43454A)
+            } else {
+                colorPalette.grayOrNull(11) ?: Color(0xFFDFE1E5)
+            }
 
         Box(
             Modifier.size(28.dp, 28.dp)
