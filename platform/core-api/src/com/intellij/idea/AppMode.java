@@ -149,7 +149,7 @@ public final class AppMode {
       "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installFrontendPlugins", "installPlugins", "dumpActions",
       "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
       "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
-      "qodanaExcludedPlugins", "project-with-shared-caches", "registerBackendLocationForGateway", "cherryPickAnalyzer");
+      "qodanaExcludedPlugins", "project-with-shared-caches", "registerBackendLocationForGateway", "cherryPickAnalyzer", "listBundledPlugins");
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
