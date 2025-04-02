@@ -103,10 +103,10 @@ enum class LanguageLevel {
     require(name.endsWith("_PREVIEW")) { "Only preview versions could be unsupported: " + name }
   }
 
+  /**
+   * @return corresponding preview level, or `null` if level has no paired preview level
+   */
   val previewLevel: LanguageLevel?
-    /**
-     * @return corresponding preview level, or `null` if level has no paired preview level
-     */
     get() {
       if (this.isPreview) return this
       try {
@@ -117,10 +117,10 @@ enum class LanguageLevel {
       }
     }
 
+  /**
+   * @return corresponding non-preview level; this if this level is non-preview already
+   */
   val nonPreviewLevel: LanguageLevel
-    /**
-     * @return corresponding non-preview level; this if this level is non-preview already
-     */
     get() {
       if (!this.isPreview) return this
       return requireNotNull(ourStandardVersions[myVersion.feature])
@@ -161,10 +161,10 @@ enum class LanguageLevel {
     return myVersion.feature
   }
 
+  /**
+   * @return short representation of the corresponding language level, like '8', or '21-preview'
+   */
   val shortText: @NlsSafe String
-    /**
-     * @return short representation of the corresponding language level, like '8', or '21-preview'
-     */
     get() {
       if (this == JDK_X) {
         return "X"
