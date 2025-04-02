@@ -9,6 +9,7 @@
 - name: lib/maven-event-listener.jar
   modules:
   - name: intellij.maven.server.eventListener
+- name: lib/maven-indexer-api-rt.jar
 - name: lib/maven-jps.jar
   modules:
   - name: intellij.maven.jps
@@ -26,8 +27,6 @@
     libraries:
       plexus-archiver:
       - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar
-      jetbrains.idea.maven.indexer.api.rt:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023/maven-indexer-api-rt-2023.jar
 - name: lib/maven3-server-common.jar
   modules:
   - name: intellij.maven.server.m3.common
