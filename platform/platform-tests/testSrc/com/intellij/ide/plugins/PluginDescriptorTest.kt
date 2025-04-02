@@ -11,7 +11,6 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -28,6 +27,7 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 
 class PluginDescriptorTest {
   @TestDataPath("\$CONTENT_ROOT/testData/plugins/pluginDescriptor") @Suppress("unused")
@@ -454,7 +454,7 @@ class PluginDescriptorTest {
     assertThat(testLoadDescriptorsFromClassPath(TestLoader("jar:", "/jar spaces.jar!/"))).hasSize(1)
   }
 
-  // todo equals of IdeaPluginDescriptorImpl is also dependent on subdescriptor location (depends optional)
+  // todo equals of IdeaPluginDescriptorImpl is also dependent on sub-descriptor location (depends optional)
   @Test
   fun testEqualityById() {
     val tempFile = rootPath.resolve(PluginManagerCore.PLUGIN_XML_PATH)
@@ -472,9 +472,9 @@ class PluginDescriptorTest {
 </idea-plugin>""")
     val impl2 = loadDescriptorInTest(rootPath)
 
-    TestCase.assertEquals(impl1, impl2)
-    TestCase.assertEquals(impl1.hashCode(), impl2.hashCode())
-    TestCase.assertNotSame(impl1.name, impl2.name)
+    assertEquals(impl1, impl2)
+    assertEquals(impl1.hashCode(), impl2.hashCode())
+    assertNotEquals(impl1.name, impl2.name)
   }
 
   // todo why does it needs to know disabled plugins?
