@@ -284,14 +284,14 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     if (isIncomplete == null && moduleName == null) {
-      initializeV1Dependencies(context, pathResolver, dataLoader)
+      initializeV1Dependencies(context, pathResolver, dataLoader, ArrayList(3))
     }
   }
 
   private fun initializeV1Dependencies(context: DescriptorListLoadingContext,
                                        pathResolver: PathResolver,
-                                       dataLoader: DataLoader) {
-    var visitedFiles: MutableList<String>? = null
+                                       dataLoader: DataLoader,
+                                       visitedFiles: MutableList<String>) {
     for (dependency in pluginDependencies) {
       // context.isPluginIncomplete must be not checked here as another version of a plugin may be supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
@@ -337,17 +337,12 @@ class IdeaPluginDescriptorImpl private constructor(
         continue
       }
 
-      if (visitedFiles == null) {
-        visitedFiles = context.visitedFiles
-      }
-
       checkCycle(configFile, visitedFiles)
-
       visitedFiles.add(configFile)
       try {
         val subDescriptor = createSub(raw, configFile, context, module = null)
         if (subDescriptor.isIncomplete == null) {
-          subDescriptor.initializeV1Dependencies(context, pathResolver, dataLoader)
+          subDescriptor.initializeV1Dependencies(context, pathResolver, dataLoader, visitedFiles)
         }
         dependency.setSubDescriptor(subDescriptor)
       } finally {
