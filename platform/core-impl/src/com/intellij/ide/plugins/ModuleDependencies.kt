@@ -9,16 +9,20 @@ import java.util.Collections
  * A dependency from [plugins] in fact means a module dependency on the *implicit main module* of a plugin.
  */
 @ApiStatus.Experimental
-class ModuleDependencies(@JvmField val modules: List<ModuleReference>, @JvmField val plugins: List<PluginReference>) {
+class ModuleDependencies(
+  val modules: List<ModuleReference>,
+  val plugins: List<PluginReference>,
+) {
+  @ApiStatus.Internal
   companion object {
-    @JvmField val EMPTY: ModuleDependencies = ModuleDependencies(Collections.emptyList(), Collections.emptyList())
+    val EMPTY: ModuleDependencies = ModuleDependencies(Collections.emptyList(), Collections.emptyList())
   }
 
-  class ModuleReference(@JvmField val name: String) {
+  class ModuleReference(val name: String) {
     override fun toString(): String = "Module(name=$name)"
   }
 
-  class PluginReference(@JvmField val id: PluginId) {
+  class PluginReference(val id: PluginId) {
     override fun toString(): String = "Plugin(id=$id)"
   }
 

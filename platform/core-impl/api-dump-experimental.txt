@@ -11,18 +11,15 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - a:getModuleDependencies():com.intellij.ide.plugins.ModuleDependencies
 - a:getModuleName():java.lang.String
 *f:com.intellij.ide.plugins.ModuleDependencies
-- *sf:Companion:com.intellij.ide.plugins.ModuleDependencies$Companion
-- sf:EMPTY:com.intellij.ide.plugins.ModuleDependencies
-- f:modules:java.util.List
-- f:plugins:java.util.List
 - <init>(java.util.List,java.util.List):V
-*f:com.intellij.ide.plugins.ModuleDependencies$Companion
+- f:getModules():java.util.List
+- f:getPlugins():java.util.List
 *f:com.intellij.ide.plugins.ModuleDependencies$ModuleReference
-- f:name:java.lang.String
 - <init>(java.lang.String):V
+- f:getName():java.lang.String
 *f:com.intellij.ide.plugins.ModuleDependencies$PluginReference
-- f:id:com.intellij.openapi.extensions.PluginId
 - <init>(com.intellij.openapi.extensions.PluginId):V
+- f:getId():com.intellij.openapi.extensions.PluginId
 *:com.intellij.ide.plugins.PluginEnabler
 - sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
 - a:disable(java.util.Collection):Z
