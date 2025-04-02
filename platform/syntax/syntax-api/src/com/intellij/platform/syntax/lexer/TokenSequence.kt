@@ -54,6 +54,7 @@ internal class TokenSequence(
  */
 internal class TokenListLexerImpl(
   val tokens: TokenList,
+  val logger: Logger?,
 ) : Lexer {
 
   private var state: Int = 0
@@ -61,20 +62,17 @@ internal class TokenListLexerImpl(
   override fun getState(): Int = state
 
   fun startMeasured(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-    // todo find a way to perform lexing with logging
-    //if (!LOG.isDebugEnabled()) {
+    if (logger?.isDebugEnabled() != true) {
+      start(buffer, startOffset, endOffset, initialState)
+      return
+    }
+
+    val start = System.currentTimeMillis()
     start(buffer, startOffset, endOffset, initialState)
-    //return
-    //}
-    //val start = System.currentTimeMillis()
-    //start(buffer, startOffset, endOffset, initialState)
-    //val startDuration = System.currentTimeMillis() - start
-    //if (startDuration > LEXER_START_THRESHOLD) {
-    //  LOG.debug("Starting lexer took: ", startDuration,
-    //            "; at ", startOffset, " - ", endOffset, "; state: ", initialState,
-    //            "; text: ", StringUtil.shortenTextWithEllipsis(buffer.toString(), 1024, 500)
-    //  )
-    //}
+    val startDuration = System.currentTimeMillis() - start
+    if (startDuration > LEXER_START_THRESHOLD) {
+      logger.debug("Starting lexer took: $startDuration; at $startOffset - $endOffset; state: $initialState; text: ${buffer.shortenTextWithEllipsis(1024, 500)}")
+    }
   }
 
   override fun start(buf: CharSequence, start: Int, end: Int) {
@@ -213,3 +211,19 @@ internal fun equal(s1: CharSequence, s2: CharSequence): Boolean {
     s1[i] == s2[i]
   }
 }
+
+private fun CharSequence.shortenTextWithEllipsis(
+  maxLength: Int,
+  suffixLength: Int,
+): CharSequence {
+  val symbol = "..."
+  val textLength = length
+  if (textLength <= maxLength) {
+    return this
+  }
+
+  val prefixLength = maxLength - suffixLength - symbol.length
+  assert(prefixLength >= 0)
+  return substring(0, prefixLength) + symbol + substring(textLength - suffixLength)
+}
+

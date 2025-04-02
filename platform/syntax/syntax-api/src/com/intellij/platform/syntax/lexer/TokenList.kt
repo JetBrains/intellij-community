@@ -79,8 +79,8 @@ fun TokenList(
   tokenizedText: CharSequence,
 ): TokenList = TokenSequence(lexStarts, lexTypes, tokenCount, tokenizedText)
 
-fun tokenListLexer(tokenList: TokenList): Lexer =
-  TokenListLexerImpl(tokenList)
+fun tokenListLexer(tokenList: TokenList, logger: Logger? = null): Lexer =
+  TokenListLexerImpl(tokenList, logger)
 
 /**
  * @return whether [.getTokenType](index) would return the given type

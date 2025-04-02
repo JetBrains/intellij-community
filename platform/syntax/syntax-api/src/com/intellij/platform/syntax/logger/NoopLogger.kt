@@ -31,4 +31,6 @@ private object _NoopLogger : Logger {
 
   override fun trace(string: String) {
   }
+
+  override fun isDebugEnabled(): Boolean = false
 }

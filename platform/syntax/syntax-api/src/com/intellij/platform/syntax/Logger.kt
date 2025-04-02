@@ -19,5 +19,7 @@ interface Logger {
 
   fun trace(string: String)
 
+  fun isDebugEnabled(): Boolean
+
   class Attachment(val name: String, val content: String)
 }

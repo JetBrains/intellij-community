@@ -7,6 +7,7 @@
 - a:error(java.lang.String,com.intellij.platform.syntax.Logger$Attachment[]):V
 - a:info(java.lang.String,java.lang.Throwable):V
 - bs:info$default(com.intellij.platform.syntax.Logger,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
+- a:isDebugEnabled():Z
 - a:trace(java.lang.String):V
 - a:trace(java.lang.Throwable):V
 - a:warn(java.lang.String,java.lang.Throwable):V
@@ -90,9 +91,9 @@
 - sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType):Z
 - sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):Z
 - sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
-- sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
-- bs:performLexing$default(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,I,java.lang.Object):com.intellij.platform.syntax.lexer.TokenList
-- sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.lexer.Lexer
+- sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.lexer.TokenList
+- sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.Logger):com.intellij.platform.syntax.lexer.Lexer
+- bs:tokenListLexer$default(com.intellij.platform.syntax.lexer.TokenList,com.intellij.platform.syntax.Logger,I,java.lang.Object):com.intellij.platform.syntax.lexer.Lexer
 *f:com.intellij.platform.syntax.logger.NoopLogger
 - *sf:noopLogger():com.intellij.platform.syntax.Logger
 *:com.intellij.platform.syntax.parser.OpaqueElementPolicy

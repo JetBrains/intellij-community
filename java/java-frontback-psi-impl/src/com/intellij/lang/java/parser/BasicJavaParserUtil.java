@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -7,6 +7,7 @@ import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -40,6 +41,8 @@ import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COM
 public final class BasicJavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
+
+  private static final com.intellij.platform.syntax.Logger SYNTAX_LOGGER = IntelliJLogger.asSyntaxLogger(Logger.getInstance(BasicJavaParserUtil.class));
 
   private BasicJavaParserUtil() { }
 
@@ -344,7 +347,7 @@ public final class BasicJavaParserUtil {
     }
 
     LanguageLevel level = languageLevelFunction.apply(psi);
-    Lexer lexer = psi instanceof PsiFile && indexedText != null ? tokenListLexer(psiAsLexer.apply((PsiFile)psi))
+    Lexer lexer = psi instanceof PsiFile && indexedText != null ? tokenListLexer(psiAsLexer.apply((PsiFile)psi), SYNTAX_LOGGER)
                                                                 : new JavaLexer(level);
     Language language = psi.getLanguage();
     if (!language.isKindOf(JavaLanguage.INSTANCE)) language = JavaLanguage.INSTANCE;

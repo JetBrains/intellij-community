@@ -15,6 +15,9 @@ private class IntelliJLoggerAdapter(private val log: Logger) : com.intellij.plat
     log.error(string)
   }
 
+  override fun isDebugEnabled(): Boolean =
+    log.isDebugEnabled
+
   override fun error(string: String, vararg attachment: com.intellij.platform.syntax.Logger.Attachment) {
     val attachments = attachment
       .map { com.intellij.openapi.diagnostic.Attachment(it.name, it.content) }
