@@ -2,9 +2,14 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -21,27 +26,42 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class JavaDeleteCompletionCommand : ApplicableCompletionCommand(), DumbAware {
-  private var _highlightInfo: HighlightInfoLookup? = null
+internal class JavaDeleteCompletionCommandProvider : CommandProvider {
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
+    val element = getCommandContext(context.offset, context.psiFile) ?: return emptyList()
+    var psiElement = PsiTreeUtil.getParentOfType(element, PsiStatement::class.java, PsiMember::class.java) ?: return emptyList()
+    val hasTheSameOffset = psiElement.textRange.endOffset == context.offset
+    if (!hasTheSameOffset) return emptyList()
+    psiElement = getTopWithTheSameOffset(psiElement, context.offset)
+    val highlightInfo = HighlightInfoLookup(psiElement.textRange, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)
+    return listOf(createCommand(highlightInfo, psiElement))
+  }
+
+  private fun createCommand(highlightInfo: HighlightInfoLookup, psiElement: PsiElement): CompletionCommand {
+    return JavaDeleteCompletionCommand(highlightInfo, psiElement.text)
+  }
+}
+
+private fun getTopWithTheSameOffset(psiElement: PsiElement, offset: Int): PsiElement {
+  var psiElement1 = psiElement
+  var curElement = psiElement1
+  while (curElement.textRange.endOffset == offset) {
+    psiElement1 = curElement
+    curElement = PsiTreeUtil.getParentOfType(curElement, PsiStatement::class.java, PsiMember::class.java) ?: break
+  }
+  return psiElement1
+}
+
+private class JavaDeleteCompletionCommand(
+  override val highlightInfo: HighlightInfoLookup?,
+  private val originalText: String,
+) : CompletionCommand(), CompletionCommandWithPreview, DumbAware {
   override val name: String
     get() = "Delete element"
   override val i18nName: @Nls String
     get() = JavaBundle.message("command.completion.delete.element.text")
   override val icon: Icon?
     get() = null
-  override val highlightInfo: HighlightInfoLookup?
-    get() = _highlightInfo
-
-
-  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    val element = getCommandContext(offset, psiFile) ?: return false
-    var psiElement = PsiTreeUtil.getParentOfType(element, PsiStatement::class.java, PsiMember::class.java) ?: return false
-    val hasTheSameOffset = psiElement.textRange.endOffset == offset
-    if (!hasTheSameOffset) return false
-    psiElement = getTopWithTheSameOffset(psiElement, offset)
-    _highlightInfo = HighlightInfoLookup(psiElement.textRange, EditorColors.DELETED_TEXT_ATTRIBUTES, 0)
-    return true
-  }
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val element = getCommandContext(offset, psiFile) ?: return
@@ -54,15 +74,10 @@ internal class JavaDeleteCompletionCommand : ApplicableCompletionCommand(), Dumb
       parent.element?.let {
         ReformatCodeProcessor(psiFile, arrayOf(it.textRange)).run()
       }
-    }, psiFile)  }
+    }, psiFile)
+  }
 
-  private fun getTopWithTheSameOffset(psiElement: PsiElement, offset: Int): PsiElement {
-    var psiElement1 = psiElement
-    var curElement = psiElement1
-    while (curElement.textRange.endOffset == offset) {
-      psiElement1 = curElement
-      curElement = PsiTreeUtil.getParentOfType(curElement, PsiStatement::class.java, PsiMember::class.java) ?: break
-    }
-    return psiElement1
+  override fun getPreview(): IntentionPreviewInfo? {
+    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, originalText, "")
   }
 }

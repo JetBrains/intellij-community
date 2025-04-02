@@ -5,12 +5,10 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -42,7 +40,19 @@ abstract class CompletionCommand {
    * can be left null, in which case a default priority will be assumed.
    */
   open val priority: Int? = null
+
+  /**
+   * Provides additional information about the command that can be displayed
+   * in the completion popup. This information helps users understand the
+   * purpose or effect of the command.
+   */
   open val additionalInfo: String? = null
+
+  /**
+   * Specifies how the command should be highlighted in the editor.
+   * Contains information about the text range to highlight, the highlighting style,
+   * and the priority of the highlight effect.
+   */
   open val highlightInfo: HighlightInfoLookup? = null
 
   /**
@@ -83,38 +93,6 @@ abstract class CompletionCommand {
  */
 fun getCommandContext(offset: Int, psiFile: PsiFile): PsiElement? {
   return (if (offset == 0) psiFile.findElementAt(offset) else psiFile.findElementAt(offset - 1))
-}
-
-/**
- * Represents an abstract base class for completion commands that are applicable under specific conditions.
- * This class extends the functionality of `CompletionCommand` and introduces methods to evaluate the
- * applicability of the command in a given context.
- *
- * Should be stateless and can be applied either to physical and non-physical classes
- * Should implement DumbAware to support DumbMode
- */
-@Deprecated("Use providers instead")
-abstract class ApplicableCompletionCommand : CompletionCommand(), PossiblyDumbAware {
-
-  /**
-   * Indicates whether the implementation supports non-written files.
-   * (For example, a command can navigate to another file)
-   *
-   * @return true if non-written files are supported; false otherwise.
-   */
-  @Deprecated("Use providers instead")
-  open fun supportsReadOnly(): Boolean = false
-
-  /**
-   * Determines whether the command is applicable based on the given context.
-   * Can be called on non-physical classes and imaginary editors
-   *
-   * @param offset The offset in the file where the applicability should be checked.
-   * @param psiFile The PSI file where the applicability should be evaluated.
-   * @param editor The editor. Can be null. Used only for compatibility with old actions
-   */
-  @RequiresReadLock
-  abstract fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean
 }
 
 data class HighlightInfoLookup(

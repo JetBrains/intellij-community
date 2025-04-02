@@ -149,21 +149,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - documentationTarget(com.intellij.psi.PsiFile,com.intellij.codeInsight.lookup.LookupElement,I):com.intellij.platform.backend.documentation.DocumentationTarget
 *f:com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProviderKt
 - sf:combineFragments(java.util.List,java.util.List):java.util.List
-*a:com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
-- com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
-- com.intellij.openapi.project.DumbAware
-- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
-- f:getActionId():java.lang.String
-- getAdditionalInfo():java.lang.String
-- getI18nName():java.lang.String
-- getIcon():javax.swing.Icon
-- getName():java.lang.String
-- getPriority():java.lang.Integer
-- isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
-- pf:isApplicableToProject(I,com.intellij.psi.PsiFile):Z
-- f:setActionId(java.lang.String):V
 *a:com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V

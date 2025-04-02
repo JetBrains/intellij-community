@@ -763,10 +763,6 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.applicable.command"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.ApplicableCompletionCommand"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.skipper"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper"/>

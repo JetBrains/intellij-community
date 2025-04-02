@@ -1,12 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandCompletionUnsupportedOperationException
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.MyEditor
+import com.intellij.codeInsight.completion.command.commandCompletionEnabled
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
-import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescriptor
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
+import com.intellij.codeInsight.daemon.impl.IntentionActionFilter
+import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.IntentionsInfo
-import com.intellij.codeInsight.intention.*
+import com.intellij.codeInsight.intention.CommonIntentionAction
+import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable
@@ -25,6 +41,7 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -258,7 +275,9 @@ internal class DirectIntentionCommandProvider : CommandProvider {
         val isInjected = topLevelFile != psiFile
         val indicator = DaemonProgressIndicator()
         val errorHighlightings: List<HighlightInfo?>? = jobToIndicator(coroutineContext.job, indicator) {
-          HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(topLevelFile, true, true, true)
+          ApplicationManager.getApplication().runReadAction<List<HighlightInfo?>?> {
+            HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(topLevelFile, true, true, true)
+          }
         }
         if (errorHighlightings == null) return@readAction
         var insideRange = getLineRange(topLevelFile, topLevelOffset)
