@@ -262,8 +262,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           anno != annotation && manager.getAnnotationNullability(anno.getQualifiedName()).filter(n -> n != nullability).isPresent();
         PsiAnnotation oppositeAnno = ContainerUtil.find(owner.getAnnotations(), filter);
         if (oppositeAnno == null && listOwner != null) {
-          oppositeAnno = manager.findExplicitNullabilityAnnotation(
+          NullabilityAnnotationInfo result = manager.findNullabilityAnnotationInfo(
             listOwner, ContainerUtil.filter(Nullability.values(), n -> n != nullability));
+          oppositeAnno = result == null || result.isContainer() ? null : result.getAnnotation();
         }
         if (oppositeAnno != null &&
             Objects.equals(AnnotationUtil.getRelatedType(annotation), AnnotationUtil.getRelatedType(oppositeAnno))) {
@@ -693,8 +694,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
     static @NotNull Annotated from(@NotNull PsiModifierListOwner owner) {
       NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-      return new Annotated(manager.findExplicitNullabilityAnnotation(owner, Collections.singleton(Nullability.NOT_NULL)),
-                           manager.findExplicitNullabilityAnnotation(owner, Collections.singleton(Nullability.NULLABLE)));
+      NullabilityAnnotationInfo notNullInfo = manager.findNullabilityAnnotationInfo(owner, Collections.singleton(Nullability.NOT_NULL));
+      NullabilityAnnotationInfo nullableInfo = manager.findNullabilityAnnotationInfo(owner, Collections.singleton(Nullability.NULLABLE));
+      PsiAnnotation nullableAnno = notNullInfo == null || (notNullInfo.isContainer() && nullableInfo != null && !nullableInfo.isContainer()) 
+                                   ? null : notNullInfo.getAnnotation();
+      PsiAnnotation notNullAnno = nullableInfo == null || (nullableInfo.isContainer() && notNullInfo != null && !notNullInfo.isContainer())  
+                                  ? null : nullableInfo.getAnnotation();
+      return new Annotated(nullableAnno, notNullAnno);
     }
   }
 
