@@ -19,6 +19,7 @@ private const val MAX_BUFFER_SIZE = 8 * 1014 * 1024
 // Therefore, similar to read operations, using the Netty ChannelHandler concept doesn't make sense -
 // it doesn't solve the single-threaded execution problem and also complicates the code (coroutine-based code is more concise and logically grouped).
 internal class ZstdDecompressingFileDownloadHandler(
+  private val urlPath: CharSequence,
   private val result: CompletableDeferred<DownloadResult>,
   private val downloadResult: DownloadResult,
   private val file: Path,
@@ -72,7 +73,7 @@ internal class ZstdDecompressingFileDownloadHandler(
               result.complete(downloadResult)
             }
             else {
-              result.completeExceptionally(UnexpectedHttpStatus(null, status))
+              result.completeExceptionally(UnexpectedHttpStatus(urlPath, status))
             }
           }
         }

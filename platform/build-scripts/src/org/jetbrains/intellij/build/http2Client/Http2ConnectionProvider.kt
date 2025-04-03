@@ -220,32 +220,28 @@ internal class Http2ConnectionProvider(
       }
     }
   }
+}
 
-  // must be called with ioDispatcher
-  private suspend fun <T> openStreamAndConsume(
-    connectionState: ConnectionState,
-    block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit,
-  ): T {
-    val streamChannel = connectionState.bootstrap.open().cancellableAwait()
-    try {
-      // must be canceled when the parent context is canceled
-      val deferred = CompletableDeferred<T>(parent = coroutineContext.job)
-      block(streamChannel, deferred)
-      // Ensure the stream is closed before completing the operation.
-      // This prevents the risk of opening more streams than intended,
-      // especially when there is a limit on the number of parallel executed tasks.
-      // Also, avoid explicitly closing the stream in case of a successful operation.
-      streamChannel.closeFuture().joinCancellable(cancelFutureOnCancellation = false)
-      // 1. writer must send the last data frame with endStream=true
-      // 2. stream now has the half-closed state - we listen for server header response with endStream
-      // 3. our ChannelInboundHandler above checks status and Netty closes the stream (as endStream was sent by both client and server)
-      return deferred.await()
-    }
-    finally {
-      if (streamChannel.isOpen && connectionState.coroutineScope.isActive) {
-        withContext(NonCancellable) {
-          streamChannel.close().joinNonCancellable()
-        }
+// must be called with ioDispatcher
+private suspend fun <T> openStreamAndConsume(
+  connectionState: ConnectionState,
+  block: suspend (streamChannel: Http2StreamChannel, result: CompletableDeferred<T>) -> Unit,
+): T {
+  val streamChannel = connectionState.bootstrap.open().cancellableAwait()
+  try {
+    // must be canceled when the parent context is canceled
+    val deferred = CompletableDeferred<T>(parent = coroutineContext.job)
+    block(streamChannel, deferred)
+
+    // 1. writer must send the last data frame with endStream=true
+    // 2. stream now has the half-closed state - we listen for server header response with endStream
+    // 3. our ChannelInboundHandler above checks status and Netty closes the stream (as endStream was sent by both client and server)
+    return deferred.await()
+  }
+  finally {
+    if (streamChannel.isOpen && connectionState.coroutineScope.isActive) {
+      withContext(NonCancellable) {
+        streamChannel.close().joinNonCancellable()
       }
     }
   }

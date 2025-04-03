@@ -45,6 +45,7 @@ internal suspend fun Http2ClientConnection.download(
       group,
       "zstdDecompressingFileDownloadHandler",
       ZstdDecompressingFileDownloadHandler(
+        urlPath = path,
         result = result,
         downloadResult = DownloadResult(size = 0, digest = digestFactory?.invoke()),
         file = file,

@@ -7,6 +7,7 @@ import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdCompressCtx
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpMethod
@@ -15,6 +16,7 @@ import io.netty.handler.codec.http2.DefaultHttp2DataFrame
 import io.netty.handler.codec.http2.Http2HeadersFrame
 import io.netty.handler.codec.http2.Http2StreamChannel
 import io.netty.util.AsciiString
+import io.netty.util.ReferenceCountUtil
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.intellij.build.io.unmapBuffer
 import java.nio.MappedByteBuffer
@@ -28,30 +30,30 @@ private const val SOURCE_BUFFER_SIZE = 8 * 1024 * 1024
 
 internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
 
-internal data class UploadResult(@JvmField var uploadedSize: Long, @JvmField var fileSize: Long)
+internal class UploadResult {
+  @JvmField var uploadedSize: Long = 0L
+  @JvmField var fileSize: Long = 0L
+}
 
 internal suspend fun Http2ClientConnection.upload(path: CharSequence, file: Path): UploadResult {
   return connection.stream { stream, result ->
-    val status = CompletableDeferred<Unit>(parent = result)
-    stream.pipeline().addLast(WebDavPutStatusChecker(status))
+    val uploadResult = UploadResult()
+    stream.pipeline().addLast(WebDavPutStatusChecker(result, uploadResult, path))
 
     stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
 
-    val uploadResult = FileChannel.open(file, READ_OPERATION).use { channel ->
-      uploadUncompressed(fileChannel = channel, maxSourceBlockSize = SOURCE_BUFFER_SIZE, stream = stream, fileSize = channel.size())
+    FileChannel.open(file, READ_OPERATION).use { channel ->
+      uploadUncompressed(fileChannel = channel, maxSourceBlockSize = SOURCE_BUFFER_SIZE, stream = stream, fileSize = channel.size(), result = uploadResult)
     }
-
-    status.await()
-    result.complete(uploadResult)
   }
 }
 
 internal suspend fun Http2ClientConnection.upload(path: CharSequence, data: CharSequence) {
   return connection.stream { stream, result ->
-    stream.pipeline().addLast(WebDavPutStatusChecker(result))
+    stream.pipeline().addLast(WebDavPutStatusChecker(result, Unit, path))
 
     stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
-    stream.writeData(ByteBufUtil.writeUtf8(stream.alloc(), data), endStream = true)
+    stream.writeAndFlush(DefaultHttp2DataFrame(ByteBufUtil.writeUtf8(stream.alloc(), data), true)).joinCancellable()
   }
 }
 
@@ -63,34 +65,37 @@ internal suspend fun Http2ClientConnection.upload(
   isDir: Boolean = false,
 ): UploadResult {
   return connection.stream { stream, result ->
-    val status = CompletableDeferred<Unit>(parent = result)
-    stream.pipeline().addLast(WebDavPutStatusChecker(status))
+    val uploadResult = UploadResult()
+    stream.pipeline().addLast(WebDavPutStatusChecker(result, uploadResult, path))
 
     stream.writeHeaders(createHeaders(HttpMethod.PUT, AsciiString.of(path), HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM), endStream = false)
 
-    val uploadResult = if (isDir) {
+    if (isDir) {
       zstdCompressContextPool.withZstd(contentSize = -1) { zstd ->
-        compressAndUploadDir(dir = file, zstd = zstd, stream = stream, sourceBlockSize = sourceBlockSize)
+        compressAndUploadDir(dir = file, zstd = zstd, stream = stream, sourceBlockSize = sourceBlockSize, result = uploadResult)
       }
     }
     else {
-      compressFile(file = file, zstdCompressContextPool = zstdCompressContextPool, sourceBlockSize = sourceBlockSize, stream = stream)
+      compressFile(file = file, zstdCompressContextPool = zstdCompressContextPool, sourceBlockSize = sourceBlockSize, stream = stream, result = uploadResult)
     }
-
-    status.await()
-    result.complete(uploadResult)
   }
 }
 
-private suspend fun compressFile(file: Path, zstdCompressContextPool: ZstdCompressContextPool, sourceBlockSize: Int, stream: Http2StreamChannel): UploadResult {
+private suspend fun compressFile(
+  file: Path,
+  zstdCompressContextPool: ZstdCompressContextPool,
+  sourceBlockSize: Int,
+  stream: Http2StreamChannel,
+  result: UploadResult,
+) {
   val fileSize: Long
   val fileBuffer = FileChannel.open(file, READ_OPERATION).use { channel ->
     fileSize = channel.size()
     channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize)
   }
   try {
-    return zstdCompressContextPool.withZstd(fileSize) { zstd ->
-      compressAndUploadFile(fileBuffer = fileBuffer, maxSourceBlockSize = sourceBlockSize, zstd = zstd, stream = stream, fileSize = fileSize)
+    zstdCompressContextPool.withZstd(fileSize) { zstd ->
+      compressAndUploadFile(fileBuffer = fileBuffer, maxSourceBlockSize = sourceBlockSize, zstd = zstd, stream = stream, fileSize = fileSize, result = result)
     }
   }
   finally {
@@ -98,19 +103,44 @@ private suspend fun compressFile(file: Path, zstdCompressContextPool: ZstdCompre
   }
 }
 
-private class WebDavPutStatusChecker(private val result: CompletableDeferred<Unit>) : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
-  override fun channelRead0(context: ChannelHandlerContext, frame: Http2HeadersFrame) {
+private class WebDavPutStatusChecker<T : Any>(
+  private val result: CompletableDeferred<T>,
+  private val resultObject: T,
+  private val path: CharSequence,
+) : ChannelInboundHandlerAdapter() {
+  override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
+    result.completeExceptionally(cause)
+  }
+
+  override fun channelRead(ctx: ChannelHandlerContext, message: Any) {
+    if (message is Http2HeadersFrame) {
+      try {
+        handleFrame(message)
+      }
+      finally {
+        ReferenceCountUtil.release(message)
+      }
+    }
+    else {
+      ctx.fireChannelRead(message)
+    }
+  }
+
+  private fun handleFrame(frame: Http2HeadersFrame) {
+    val status = frame.headers().status()?.let { HttpResponseStatus.parseLine(it) }
     if (!frame.isEndStream) {
+      if (status != null && status.code() >= 400) {
+        result.completeExceptionally(UnexpectedHttpStatus(urlPath = path, status = status))
+      }
       return
     }
 
-    val status = HttpResponseStatus.parseLine(frame.headers().status())
     // WebDAV server returns 204 for existing resources
     if (status == HttpResponseStatus.CREATED || status == HttpResponseStatus.NO_CONTENT || status == HttpResponseStatus.OK) {
-      result.complete(Unit)
+      result.complete(resultObject)
     }
     else {
-      result.completeExceptionally(UnexpectedHttpStatus(urlPath = null, status = status))
+      result.completeExceptionally(UnexpectedHttpStatus(urlPath = path, status = status!!))
     }
   }
 }
@@ -121,9 +151,10 @@ private suspend fun compressAndUploadFile(
   zstd: ZstdCompressCtx,
   stream: Http2StreamChannel,
   fileSize: Long,
-): UploadResult {
+  result: UploadResult,
+) {
   var position = 0
-  var uploadedSize = 0L
+  result.fileSize = fileSize
   while (true) {
     val chunkSize = min(fileSize - position, maxSourceBlockSize.toLong()).toInt()
     val targetSize = Zstd.compressBound(chunkSize.toLong()).toInt()
@@ -142,19 +173,20 @@ private suspend fun compressAndUploadFile(
     assert(target.readableBytes() == compressedSize)
 
     position += chunkSize
-    uploadedSize += compressedSize
+    result.uploadedSize += compressedSize
 
+    //println("Uploaded $chunkSize bytes from $fileSize (compressed: ${result.uploadedSize})")
     val endStream = position >= fileSize
     stream.writeAndFlush(DefaultHttp2DataFrame(target, endStream)).joinCancellable()
     if (endStream) {
-      return UploadResult(uploadedSize = uploadedSize, fileSize = fileSize)
+      break
     }
   }
 }
 
-private suspend fun uploadUncompressed(fileChannel: FileChannel, maxSourceBlockSize: Int, stream: Http2StreamChannel, fileSize: Long): UploadResult {
+private suspend fun uploadUncompressed(fileChannel: FileChannel, maxSourceBlockSize: Int, stream: Http2StreamChannel, fileSize: Long, result: UploadResult) {
+  result.fileSize = fileSize
   var position = 0L
-  var uploadedSize = 0L
   while (true) {
     val chunkSize = min(fileSize - position, maxSourceBlockSize.toLong()).toInt()
     val target = stream.alloc().directBuffer(chunkSize)
@@ -170,12 +202,12 @@ private suspend fun uploadUncompressed(fileChannel: FileChannel, maxSourceBlockS
     }
 
     position += chunkSize
-    uploadedSize += chunkSize
+    result.uploadedSize += chunkSize
 
     val endStream = position >= fileSize
     stream.writeAndFlush(DefaultHttp2DataFrame(target, endStream)).joinCancellable()
     if (endStream) {
-      return UploadResult(uploadedSize = uploadedSize, fileSize = fileSize)
+      break
     }
   }
 }

@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.http2Client
 import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdCompressCtx
 import io.netty.buffer.ByteBuf
+import io.netty.channel.ChannelFuture
 import io.netty.handler.codec.http2.DefaultHttp2DataFrame
 import io.netty.handler.codec.http2.Http2StreamChannel
 import org.jetbrains.intellij.build.io.ZipIndexWriter
@@ -18,10 +19,17 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
-internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stream: Http2StreamChannel, sourceBlockSize: Int): UploadResult {
-  val zipIndexWriter = ZipIndexWriter(null, allocator = stream.alloc())
+internal suspend fun compressAndUploadDir(
+  dir: Path,
+  zstd: ZstdCompressCtx,
+  stream: Http2StreamChannel,
+  sourceBlockSize: Int,
+  result: UploadResult,
+) {
+  val zipIndexWriter = ZipIndexWriter(packageIndexBuilder = null, allocator = stream.alloc())
   try {
     val sourceBufferRef = AtomicReference<ByteBuf>(null)
+    var writeFuture: ChannelFuture? = null
     try {
       @Synchronized
       fun reallocateSourceBuffer(): ByteBuf {
@@ -32,9 +40,6 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
         }
         return sourceBuffer
       }
-
-      var uncompressedPosition = 0L
-      var uploadedSize = 0L
 
       val localPrefixLength = dir.toString().length + 1
       archiveDir(startDir = dir, addFile = { file ->
@@ -47,7 +52,7 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
         FileChannel.open(file, READ_OPERATION).use { channel ->
           assert(channel.size() <= Int.MAX_VALUE)
           val size = channel.size().toInt()
-          val relativeOffsetOfLocalFileHeader = uncompressedPosition
+          val relativeOffsetOfLocalFileHeader = result.fileSize
 
           val headerSize = 30 + name.size
           val requiredSize = headerSize + size
@@ -55,7 +60,15 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
           // make sure that we can write the file header
           var sourceBuffer = sourceBufferRef.get()
           if (sourceBuffer != null && sourceBuffer.writableBytes() < headerSize) {
-            uploadedSize += compressBufferAndWrite(sourceBuffer = sourceBuffer, stream = stream, zstd = zstd, endStream = false)
+            writeFuture?.joinCancellable()
+            writeFuture = compressBufferAndWrite(
+              sourceBuffer = sourceBuffer,
+              sourceBufferRefToUnset = sourceBufferRef,
+              stream = stream,
+              zstd = zstd,
+              endStream = false,
+              result = result,
+            )
             sourceBuffer = null
           }
 
@@ -66,14 +79,22 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
           writeZipLocalFileHeader(path = name, size = size, crc32 = 0, buffer = sourceBuffer)
           zipIndexWriter.writeCentralFileHeader(path = name, size = size, crc = 0, headerOffset = relativeOffsetOfLocalFileHeader)
 
-          uncompressedPosition += requiredSize
+          result.fileSize += requiredSize
 
           var toRead = size
           var readPosition = 0L
           while (toRead > 0) {
             if (!sourceBuffer.isWritable) {
+              writeFuture?.joinCancellable()
               // flush
-              uploadedSize += compressBufferAndWrite(sourceBuffer = sourceBuffer, stream = stream, zstd = zstd, endStream = false)
+              writeFuture = compressBufferAndWrite(
+                sourceBuffer = sourceBuffer,
+                sourceBufferRefToUnset = sourceBufferRef,
+                stream = stream,
+                zstd = zstd,
+                endStream = false,
+                result = result,
+              )
               sourceBuffer = reallocateSourceBuffer()
             }
 
@@ -89,9 +110,9 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
         }
       })
 
-      val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = uncompressedPosition, indexDataEnd = -1)
+      val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = result.fileSize, indexDataEnd = -1)
       var toRead = zipIndexData.readableBytes()
-      uncompressedPosition += toRead
+      result.fileSize += toRead
 
       // compress central directory not in a separate ZSTD frame if possible
       sourceBufferRef.get()?.let { sourceBuffer ->
@@ -100,29 +121,46 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
           sourceBuffer.writeBytes(zipIndexData, chunkSize)
           toRead -= chunkSize
 
-          uploadedSize += compressBufferAndWrite(sourceBuffer = sourceBuffer, stream = stream, zstd = zstd, endStream = toRead == 0)
+          writeFuture?.joinCancellable()
+          writeFuture = compressBufferAndWrite(
+            sourceBuffer = sourceBuffer,
+            sourceBufferRefToUnset = sourceBufferRef,
+            stream = stream,
+            zstd = zstd,
+            endStream = toRead == 0,
+            result = result,
+          )
         }
         else {
           sourceBuffer.release()
-          sourceBufferRef.compareAndSet(sourceBuffer, null)
+          require(sourceBufferRef.compareAndSet(sourceBuffer, null))
         }
       }
 
       if (toRead > 0) {
-        uploadedSize += compressBufferAndWrite(sourceBuffer = zipIndexData, stream = stream, zstd = zstd, endStream = true, releaseSource = false)
+        writeFuture?.joinCancellable()
+        writeFuture = compressBufferAndWrite(sourceBuffer = zipIndexData, stream = stream, zstd = zstd, endStream = true, sourceBufferRefToUnset = null, result = result)
       }
-      return UploadResult(uploadedSize = uploadedSize, fileSize = uncompressedPosition)
     }
     finally {
       sourceBufferRef.get()?.release()
     }
+
+    writeFuture?.joinCancellable()
   }
   finally {
     zipIndexWriter.release()
   }
 }
 
-private suspend fun compressBufferAndWrite(sourceBuffer: ByteBuf, stream: Http2StreamChannel, zstd: ZstdCompressCtx, endStream: Boolean, releaseSource: Boolean = true): Int {
+private fun compressBufferAndWrite(
+  sourceBuffer: ByteBuf,
+  sourceBufferRefToUnset: AtomicReference<ByteBuf>?,
+  stream: Http2StreamChannel,
+  zstd: ZstdCompressCtx,
+  endStream: Boolean,
+  result: UploadResult,
+): ChannelFuture {
   val chunkSize = sourceBuffer.readableBytes()
   val targetSize = Zstd.compressBound(chunkSize.toLong()).toInt()
   var targetBuffer = stream.alloc().directBuffer(targetSize)
@@ -137,18 +175,21 @@ private suspend fun compressBufferAndWrite(sourceBuffer: ByteBuf, stream: Http2S
       sourceNio.position(), // start reading at position()
       chunkSize, // read chunk size bytes
     )
+
+    if (sourceBufferRefToUnset != null) {
+      sourceBuffer.release()
+      require(sourceBufferRefToUnset.compareAndSet(sourceBuffer, null))
+    }
+
     assert(compressedSize > 0)
     targetBuffer.writerIndex(compressedSize)
     assert(targetBuffer.readableBytes() == compressedSize)
 
-    if (releaseSource) {
-      sourceBuffer.release()
-    }
+    result.uploadedSize += compressedSize
 
     val future = stream.writeAndFlush(DefaultHttp2DataFrame(targetBuffer, endStream))
     targetBuffer = null
-    future.joinCancellable()
-    return compressedSize
+    return future
   }
   finally {
     targetBuffer?.release()

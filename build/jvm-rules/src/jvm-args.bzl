@@ -4,7 +4,11 @@ def get_jvm_flags(flags):
         # "-XX:+ZGenerational",
         "-Xms4g",
         "-Xmx16g",
-        "-XX:ReservedCodeCacheSize=512m",
+
+        "-XX:NonProfiledCodeHeapSize=512m",
+        "-XX:ProfiledCodeHeapSize=512m",
+        "-XX:ReservedCodeCacheSize=2048m",
+
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
         # IJ PHM
