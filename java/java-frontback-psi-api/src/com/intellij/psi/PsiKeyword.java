@@ -1,370 +1,371 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.NlsSafe;
 
 /**
  * Represents a Java keyword.
  * <p/>
- * For constants representing all keywords and literals of the Java language use {@link com.intellij.java.syntax.parser.JavaKeywords}
+ * For constants representing all keywords and literals of the Java language use {@link JavaKeywords}
  */
 public interface PsiKeyword extends PsiJavaToken {
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String ABSTRACT = "abstract";
+  @Deprecated @NlsSafe String ABSTRACT = JavaKeywords.ABSTRACT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String ASSERT = "assert";
+  @Deprecated @NlsSafe String ASSERT = JavaKeywords.ASSERT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String BOOLEAN = "boolean";
+  @Deprecated @NlsSafe String BOOLEAN = JavaKeywords.BOOLEAN;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String BREAK = "break";
+  @Deprecated @NlsSafe String BREAK = JavaKeywords.BREAK;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String BYTE = "byte";
+  @Deprecated @NlsSafe String BYTE = JavaKeywords.BYTE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String CASE = "case";
+  @Deprecated @NlsSafe String CASE = JavaKeywords.CASE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String CATCH = "catch";
+  @Deprecated @NlsSafe String CATCH = JavaKeywords.CATCH;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String CHAR = "char";
+  @Deprecated @NlsSafe String CHAR = JavaKeywords.CHAR;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String CLASS = "class";
+  @Deprecated @NlsSafe String CLASS = JavaKeywords.CLASS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String CONST = "const";
+  @Deprecated @NlsSafe String CONST = JavaKeywords.CONST;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String CONTINUE = "continue";
+  @Deprecated @NlsSafe String CONTINUE = JavaKeywords.CONTINUE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String DEFAULT = "default";
+  @Deprecated @NlsSafe String DEFAULT = JavaKeywords.DEFAULT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String DO = "do";
+  @Deprecated @NlsSafe String DO = JavaKeywords.DO;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String DOUBLE = "double";
+  @Deprecated @NlsSafe String DOUBLE = JavaKeywords.DOUBLE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String ELSE = "else";
+  @Deprecated @NlsSafe String ELSE = JavaKeywords.ELSE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String ENUM = "enum";
+  @Deprecated @NlsSafe String ENUM = JavaKeywords.ENUM;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String EXTENDS = "extends";
+  @Deprecated @NlsSafe String EXTENDS = JavaKeywords.EXTENDS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String FINAL = "final";
+  @Deprecated @NlsSafe String FINAL = JavaKeywords.FINAL;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String FINALLY = "finally";
+  @Deprecated @NlsSafe String FINALLY = JavaKeywords.FINALLY;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String FLOAT = "float";
+  @Deprecated @NlsSafe String FLOAT = JavaKeywords.FLOAT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String FOR = "for";
+  @Deprecated @NlsSafe String FOR = JavaKeywords.FOR;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String GOTO = "goto";
+  @Deprecated @NlsSafe String GOTO = JavaKeywords.GOTO;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String IF = "if";
+  @Deprecated @NlsSafe String IF = JavaKeywords.IF;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String IMPLEMENTS = "implements";
+  @Deprecated @NlsSafe String IMPLEMENTS = JavaKeywords.IMPLEMENTS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String IMPORT = "import";
+  @Deprecated @NlsSafe String IMPORT = JavaKeywords.IMPORT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String INSTANCEOF = "instanceof";
+  @Deprecated @NlsSafe String INSTANCEOF = JavaKeywords.INSTANCEOF;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String INT = "int";
+  @Deprecated @NlsSafe String INT = JavaKeywords.INT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String INTERFACE = "interface";
+  @Deprecated @NlsSafe String INTERFACE = JavaKeywords.INTERFACE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String LONG = "long";
+  @Deprecated @NlsSafe String LONG = JavaKeywords.LONG;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String NATIVE = "native";
+  @Deprecated @NlsSafe String NATIVE = JavaKeywords.NATIVE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String NEW = "new";
+  @Deprecated @NlsSafe String NEW = JavaKeywords.NEW;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String PACKAGE = "package";
+  @Deprecated @NlsSafe String PACKAGE = JavaKeywords.PACKAGE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String PRIVATE = "private";
+  @Deprecated @NlsSafe String PRIVATE = JavaKeywords.PRIVATE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String PROTECTED = "protected";
+  @Deprecated @NlsSafe String PROTECTED = JavaKeywords.PROTECTED;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String PUBLIC = "public";
+  @Deprecated @NlsSafe String PUBLIC = JavaKeywords.PUBLIC;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String RETURN = "return";
+  @Deprecated @NlsSafe String RETURN = JavaKeywords.RETURN;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String SHORT = "short";
+  @Deprecated @NlsSafe String SHORT = JavaKeywords.SHORT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String STATIC = "static";
+  @Deprecated @NlsSafe String STATIC = JavaKeywords.STATIC;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String STRICTFP = "strictfp";
+  @Deprecated @NlsSafe String STRICTFP = JavaKeywords.STRICTFP;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String SUPER = "super";
+  @Deprecated @NlsSafe String SUPER = JavaKeywords.SUPER;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String SWITCH = "switch";
+  @Deprecated @NlsSafe String SWITCH = JavaKeywords.SWITCH;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String SYNCHRONIZED = "synchronized";
+  @Deprecated @NlsSafe String SYNCHRONIZED = JavaKeywords.SYNCHRONIZED;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String THIS = "this";
+  @Deprecated @NlsSafe String THIS = JavaKeywords.THIS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String THROW = "throw";
+  @Deprecated @NlsSafe String THROW = JavaKeywords.THROW;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String THROWS = "throws";
+  @Deprecated @NlsSafe String THROWS = JavaKeywords.THROWS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String TRANSIENT = "transient";
+  @Deprecated @NlsSafe String TRANSIENT = JavaKeywords.TRANSIENT;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String TRY = "try";
+  @Deprecated @NlsSafe String TRY = JavaKeywords.TRY;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String VOID = "void";
+  @Deprecated @NlsSafe String VOID = JavaKeywords.VOID;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String VOLATILE = "volatile";
+  @Deprecated @NlsSafe String VOLATILE = JavaKeywords.VOLATILE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String WHILE = "while";
-
-
-  /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
-   */
-  @Deprecated @NlsSafe String TRUE = "true";
-
-  /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
-   */
-  @Deprecated @NlsSafe String FALSE = "false";
-
-  /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
-   */
-  @Deprecated @NlsSafe String NULL = "null";
+  @Deprecated @NlsSafe String WHILE = JavaKeywords.WHILE;
 
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String NON_SEALED = "non-sealed";
+  @Deprecated @NlsSafe String TRUE = JavaKeywords.TRUE;
+
+  /**
+   * @deprecated Use {@link JavaKeywords} instead
+   */
+  @Deprecated @NlsSafe String FALSE = JavaKeywords.FALSE;
+
+  /**
+   * @deprecated Use {@link JavaKeywords} instead
+   */
+  @Deprecated @NlsSafe String NULL = JavaKeywords.NULL;
+
+
+  /**
+   * @deprecated Use {@link JavaKeywords} instead
+   */
+  @Deprecated @NlsSafe String NON_SEALED = JavaKeywords.NON_SEALED;
 
   // soft keywords:
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String EXPORTS = "exports";
+  @Deprecated @NlsSafe String EXPORTS = JavaKeywords.EXPORTS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String MODULE = "module";
+  @Deprecated @NlsSafe String MODULE = JavaKeywords.MODULE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String OPEN = "open";
+  @Deprecated @NlsSafe String OPEN = JavaKeywords.OPEN;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String OPENS = "opens";
+  @Deprecated @NlsSafe String OPENS = JavaKeywords.OPENS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String PERMITS = "permits";
+  @Deprecated @NlsSafe String PERMITS = JavaKeywords.PERMITS;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String PROVIDES = "provides";
+  @Deprecated @NlsSafe String PROVIDES = JavaKeywords.PROVIDES;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String RECORD = "record";
+  @Deprecated @NlsSafe String RECORD = JavaKeywords.RECORD;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String REQUIRES = "requires";
+  @Deprecated @NlsSafe String REQUIRES = JavaKeywords.REQUIRES;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String SEALED = "sealed";
+  @Deprecated @NlsSafe String SEALED = JavaKeywords.SEALED;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String TO = "to";
+  @Deprecated @NlsSafe String TO = JavaKeywords.TO;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String TRANSITIVE = "transitive";
+  @Deprecated @NlsSafe String TRANSITIVE = JavaKeywords.TRANSITIVE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String USES = "uses";
+  @Deprecated @NlsSafe String USES = JavaKeywords.USES;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String VALUE = "value";
+  @Deprecated @NlsSafe String VALUE = JavaKeywords.VALUE;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String VAR = "var";
+  @Deprecated @NlsSafe String VAR = JavaKeywords.VAR;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String WHEN = "when";
+  @Deprecated @NlsSafe String WHEN = JavaKeywords.WHEN;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String WITH = "with";
+  @Deprecated @NlsSafe String WITH = JavaKeywords.WITH;
 
   /**
-   * @deprecated Use {@link com.intellij.java.syntax.parser.JavaKeywords} instead
+   * @deprecated Use {@link JavaKeywords} instead
    */
-  @Deprecated @NlsSafe String YIELD = "yield";
+  @Deprecated @NlsSafe String YIELD = JavaKeywords.YIELD;
 }
