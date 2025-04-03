@@ -2168,13 +2168,6 @@ c:com.intellij.ide.actions.RefreshAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - registerShortcutOn(javax.swing.JComponent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-com.intellij.ide.actions.ReportFeedbackService
-- sf:Companion:com.intellij.ide.actions.ReportFeedbackService$Companion
-- a:collectLogs(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- a:getCoroutineScope():kotlinx.coroutines.CoroutineScope
-- s:getInstance():com.intellij.ide.actions.ReportFeedbackService
-f:com.intellij.ide.actions.ReportFeedbackService$Companion
-- f:getInstance():com.intellij.ide.actions.ReportFeedbackService
 c:com.intellij.ide.actions.RestartIdeAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware

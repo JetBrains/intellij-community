@@ -9,13 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportProgress
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class DefaultReportFeedbackService(override val coroutineScope: CoroutineScope): ReportFeedbackService {
-  override suspend fun collectLogs(project: Project?): String? =
-    if (project == null) null
-    else withBackgroundProgress(project, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
+internal class DefaultReportFeedbackService(override val coroutineScope: CoroutineScope): ReportFeedbackService {
+  override suspend fun collectLogs(project: Project): String? =
+    withBackgroundProgress(project, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
       val id = reportProgress { reporter ->
         reporter.indeterminateStep("") {
           val file = LogPacker.packLogs(project)
