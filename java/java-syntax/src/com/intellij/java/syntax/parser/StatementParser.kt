@@ -10,7 +10,6 @@ import com.intellij.java.syntax.parser.JavaParserUtil.done
 import com.intellij.java.syntax.parser.JavaParserUtil.error
 import com.intellij.java.syntax.parser.JavaParserUtil.expectOrError
 import com.intellij.java.syntax.parser.JavaParserUtil.exprType
-import com.intellij.java.syntax.parser.JavaParserUtil.isParseStatementCodeBlocksDeep
 import com.intellij.java.syntax.parser.JavaParserUtil.semicolon
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
@@ -28,7 +27,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import kotlin.jvm.JvmOverloads
 
-class StatementParser(private val myParser: JavaParser) {
+open class StatementParser(
+  private val myParser: JavaParser,
+  private val parseCodeBlockDeep: Boolean = false,
+) {
   private enum class BraceMode {
     TILL_FIRST, TILL_LAST
   }
@@ -38,8 +40,12 @@ class StatementParser(private val myParser: JavaParser) {
   @JvmOverloads
   fun parseCodeBlock(builder: SyntaxTreeBuilder, isStatement: Boolean = false): SyntaxTreeBuilder.Marker? {
     if (builder.tokenType !== JavaSyntaxTokenType.LBRACE) return null
-    if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false)
-    return builder.parseBlockLazy(JavaSyntaxTokenType.LBRACE, JavaSyntaxTokenType.RBRACE, JavaSyntaxElementType.CODE_BLOCK)
+    return if (isStatement && parseCodeBlockDeep) {
+      parseCodeBlockDeep(builder, false)
+    }
+    else {
+      builder.parseBlockLazy(JavaSyntaxTokenType.LBRACE, JavaSyntaxTokenType.RBRACE, JavaSyntaxElementType.CODE_BLOCK)
+    }
   }
 
   fun parseCodeBlockDeep(builder: SyntaxTreeBuilder, parseUntilEof: Boolean): SyntaxTreeBuilder.Marker? {
@@ -87,7 +93,7 @@ class StatementParser(private val myParser: JavaParser) {
     }
   }
 
-  fun parseStatement(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
+  open fun parseStatement(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
     val tokenType = builder.tokenType
     if (tokenType === JavaSyntaxTokenType.IF_KEYWORD) {
       return parseIfStatement(builder)

@@ -10,7 +10,7 @@ open class JavaParser(val languageLevel: LanguageLevel) {
   open val fileParser: FileParser = FileParser(this)
   val moduleParser: ModuleParser = ModuleParser(this)
   open val declarationParser: DeclarationParser = DeclarationParser(this)
-  val statementParser: StatementParser = StatementParser(this)
+  open val statementParser: StatementParser = StatementParser(this)
   val expressionParser: ExpressionParser = ExpressionParser(PrattExpressionParser(this))
   val referenceParser: ReferenceParser = ReferenceParser(this)
   val patternParser: PatternParser = PatternParser(this)

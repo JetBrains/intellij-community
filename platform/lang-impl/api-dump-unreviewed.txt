@@ -12613,17 +12613,6 @@ f:com.intellij.lexer.LexerUtil
 - s:getRootLexer(com.intellij.lexer.Lexer):com.intellij.lexer.Lexer
 - s:getTokenText(com.intellij.lexer.Lexer):java.lang.CharSequence
 - s:internToken(com.intellij.lexer.Lexer,com.intellij.util.CharTable):java.lang.CharSequence
-f:com.intellij.lexer.PrefixSuffixStripperLexer
-- com.intellij.lexer.LexerBase
-- <init>(java.lang.String,com.intellij.psi.tree.IElementType,java.lang.String,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):V
-- advance():V
-- getBufferEnd():I
-- getBufferSequence():java.lang.CharSequence
-- getState():I
-- getTokenEnd():I
-- getTokenStart():I
-- getTokenType():com.intellij.psi.tree.IElementType
-- start(java.lang.CharSequence,I,I,I):V
 f:com.intellij.microservices.url.inlay.UrlPathInlayHintsPresentationsKt
 - sf:urlInlayPresentation(com.intellij.codeInsight.hints.presentation.ScaleAwarePresentationFactory):com.intellij.codeInsight.hints.presentation.InlayPresentation
 f:com.intellij.microservices.url.inlay.UrlPathInlayHintsProviderFactoryKt

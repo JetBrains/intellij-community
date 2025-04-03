@@ -1,129 +1,119 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.syntax.util.lexer
 
-/*
- * @author max
- */
-package com.intellij.lexer;
+import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.util.text.CharArrayUtilKmp
+import com.intellij.util.text.CharArrayUtilKmp.regionMatches
+import org.jetbrains.annotations.ApiStatus
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NotNull;
+@ApiStatus.Experimental
+class PrefixSuffixStripperLexer(
+  private val prefix: String,
+  private val prefixType: SyntaxElementType?,
+  private val suffix: String,
+  private val suffixType: SyntaxElementType?,
+  private val middleTokenType: SyntaxElementType?
+) : LexerBase() {
 
-public final class PrefixSuffixStripperLexer extends LexerBase {
-  private CharSequence myBuffer;
-  private char[] myBufferArray;
-  private int myTokenStart;
-  private int myTokenEnd;
-  private IElementType myTokenType;
-  private int myState;
-  private int myBufferEnd;
-  private final String myPrefix;
-  private final IElementType myPrefixType;
-  private final String mySuffix;
-  private final IElementType myMiddleTokenType;
-  private final IElementType mySuffixType;
+  private lateinit var buffer: CharSequence
+  private var bufferArray: CharArray? = null
+  private var tokenStart = 0
+  private var tokenEnd = 0
+  private var tokenType: SyntaxElementType? = null
+  private var state: Int = 0
+  private var bufferEnd: Int = 0
 
-  public PrefixSuffixStripperLexer(final String prefix,
-                                   final IElementType prefixType,
-                                   final String suffix,
-                                   final IElementType suffixType,
-                                   final IElementType middleTokenType) {
-    mySuffixType = suffixType;
-    myMiddleTokenType = middleTokenType;
-    mySuffix = suffix;
-    myPrefixType = prefixType;
-    myPrefix = prefix;
+  override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
+    this.buffer = buffer
+    bufferArray = CharArrayUtilKmp.fromSequenceWithoutCopying(buffer)
+    tokenStart = startOffset
+    tokenEnd = startOffset
+    tokenType = null
+    state = initialState
+    bufferEnd = endOffset
   }
 
-  @Override
-  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-    myBuffer = buffer;
-    myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
-    myTokenStart = startOffset;
-    myTokenEnd = startOffset;
-    myTokenType = null;
-    myState = initialState;
-    myBufferEnd = endOffset;
+  override fun getTokenType(): SyntaxElementType? {
+    locateToken()
+    return tokenType
   }
 
-  @Override
-  public IElementType getTokenType() {
-    locateToken();
-    return myTokenType;
+  override fun getTokenStart(): Int {
+    locateToken()
+    return tokenStart
   }
 
-  @Override
-  public int getTokenStart() {
-    locateToken();
-    return myTokenStart;
+  override fun getTokenEnd(): Int {
+    locateToken()
+    return tokenEnd
   }
 
-  @Override
-  public int getTokenEnd() {
-    locateToken();
-    return myTokenEnd;
+  override fun getState(): Int {
+    return state
   }
 
-  @Override
-  public int getState() {
-    return myState;
+  override fun getBufferEnd(): Int {
+    return bufferEnd
   }
 
-  @Override
-  public int getBufferEnd() {
-    return myBufferEnd;
+  override fun getBufferSequence(): CharSequence {
+    return buffer
   }
 
-  @Override
-  public @NotNull CharSequence getBufferSequence() {
-    return myBuffer;
+  override fun advance() {
+    tokenType = null
   }
 
-  @Override
-  public void advance() {
-    myTokenType = null;
-  }
+  private fun locateToken() {
+    if (tokenType != null) return
 
-  private void locateToken() {
-    if (myTokenType != null || myState == 3) return;
+    when (state) {
+      0 -> {
+        tokenEnd = tokenStart + prefix.length
+        tokenType = prefixType
+        state = if (tokenEnd < bufferEnd) 1 else 3
+      }
 
-    if (myState == 0) {
-      myTokenEnd = myTokenStart + myPrefix.length();
-      myTokenType = myPrefixType;
-      myState = myTokenEnd < myBufferEnd ? 1 : 3;
-      return;
-    }
+      1 -> {
+        tokenStart = tokenEnd
+        val suffixStart = bufferEnd - suffix.length
+        tokenType = middleTokenType
 
-    if (myState == 1) {
-      myTokenStart = myTokenEnd;
-      final int suffixStart = myBufferEnd - mySuffix.length();
-      myTokenType = myMiddleTokenType;
-      if ( (myBufferArray != null && CharArrayUtil.regionMatches(myBufferArray, suffixStart, myBufferEnd, mySuffix)) ||
-           (myBufferArray == null && CharArrayUtil.regionMatches(myBuffer, suffixStart, myBufferEnd, mySuffix))
-      ) {
-        myTokenEnd = suffixStart;
-        if (myTokenStart < myTokenEnd) {
-          myState = 2;
+        val bufferMatches = when (val bufferArray = bufferArray) {
+          null -> buffer.regionMatches(suffixStart, bufferEnd, suffix)
+          else -> bufferArray.regionMatches(suffixStart, bufferEnd, suffix)
+        }
+        if (bufferMatches) {
+          tokenEnd = suffixStart
+          if (tokenStart < tokenEnd) {
+            state = 2
+          }
+          else {
+            state = 3
+            tokenType = suffixType
+            tokenEnd = bufferEnd
+          }
         }
         else {
-          myState = 3;
-          myTokenType = mySuffixType;
-          myTokenEnd = myBufferEnd;
+          tokenEnd = bufferEnd
+          state = 3
         }
       }
-      else {
-        myTokenEnd = myBufferEnd;
-        myState = 3;
+
+      2 -> {
+        tokenStart = tokenEnd
+        tokenEnd = bufferEnd
+        tokenType = suffixType
+        state = 3
       }
 
-      return;
-    }
+      3 -> {
+        /*do nothing*/
+      }
 
-    if (myState == 2) {
-      myTokenStart = myTokenEnd;
-      myTokenEnd = myBufferEnd;
-      myTokenType = mySuffixType;
-      myState = 3;
+      else -> {
+        throw IllegalStateException("Unexpected state: $state")
+      }
     }
   }
 }

@@ -17,17 +17,6 @@ import org.jetbrains.annotations.PropertyKey
 
 @ApiStatus.Experimental
 object JavaParserUtil {
-  @Suppress("unused")
-  fun setParseStatementCodeBlocksDeep(builder: SyntaxTreeBuilder, deep: Boolean) {
-    // todo implement me please when necessary
-    //      most likely, the state should be stored in JavaParser instead, not in SyntaxTreeBuilder
-  }
-
-  @Suppress("unused")
-  fun isParseStatementCodeBlocksDeep(builder: SyntaxTreeBuilder): Boolean {
-    return false
-  }
-
   fun done(
     marker: SyntaxTreeBuilder.Marker,
     type: SyntaxElementType,
@@ -55,6 +44,7 @@ object JavaParserUtil {
   }
 
   // used instead of SyntaxTreeBuilder.error() as it keeps all subsequent error messages
+  @JvmStatic
   fun error(builder: SyntaxTreeBuilder, message: @NlsContexts.ParsingError String) {
     builder.mark().error(message)
   }
@@ -128,6 +118,7 @@ object JavaParserUtil {
     return stoppingBuilder(builder, stopAt)
   }
 
+  @JvmStatic
   fun stoppingBuilder(builder: SyntaxTreeBuilder, stopAt: Int): SyntaxTreeBuilder {
     return object : SyntaxTreeBuilderAdapter(builder) {
       override val tokenType: SyntaxElementType?
@@ -136,6 +127,17 @@ object JavaParserUtil {
       override fun eof(): Boolean {
         return currentOffset >= stopAt || super.eof()
       }
+    }
+  }
+
+  @JvmStatic
+  fun stoppingBuilder(builder: SyntaxTreeBuilder, condition: (SyntaxElementType?, String?) -> Boolean): SyntaxTreeBuilder {
+    return object : SyntaxTreeBuilderAdapter(builder) {
+      override val tokenType: SyntaxElementType?
+        get() = if (condition(builder.tokenType, builder.tokenText)) null else super.tokenType
+
+      override fun eof(): Boolean =
+        condition(builder.tokenType, builder.tokenText) || super.eof()
     }
   }
 }

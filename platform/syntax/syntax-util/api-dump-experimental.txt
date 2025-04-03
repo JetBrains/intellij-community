@@ -54,6 +54,17 @@
 - a:merge(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.lexer.Lexer):com.intellij.platform.syntax.SyntaxElementType
 - restore(com.intellij.platform.syntax.lexer.LexerPosition):V
 - start(java.lang.CharSequence,I,I,I):V
+*f:com.intellij.platform.syntax.util.lexer.PrefixSuffixStripperLexer
+- com.intellij.platform.syntax.util.lexer.LexerBase
+- <init>(java.lang.String,com.intellij.platform.syntax.SyntaxElementType,java.lang.String,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- start(java.lang.CharSequence,I,I,I):V
 *f:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
 - sf:INSTANCE:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
 - f:advance(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):V
