@@ -277,10 +277,6 @@ private object RunInBackgroundWriteActionMarker
 fun CoroutineContext.isBackgroundWriteAction(): Boolean =
   currentThreadContext()[RunInBackgroundWriteActionMarker] != null
 
-internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): Boolean {
-  return useBackgroundWriteAction
-}
-
 /**
  * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
  *
@@ -300,8 +296,7 @@ internal fun isBackgroundWriteActionPossible(contextModality: ModalityState?): B
 @Experimental
 @Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
-  val isBackgroundActionAllowed = isBackgroundWriteActionPossible(coroutineContext.contextModality())
-  val context = if (isBackgroundActionAllowed) {
+  val context = if (useBackgroundWriteAction) {
     Dispatchers.Default + RunInBackgroundWriteActionMarker
   }
   else {
@@ -309,7 +304,7 @@ suspend fun <T> backgroundWriteAction(action: () -> T): T {
   }
 
   return withContext(context) {
-    val dumpJob = if (isBackgroundActionAllowed) launch {
+    val dumpJob = if (useBackgroundWriteAction) launch {
       delay(10.seconds)
       val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
       val dumpDir = PathManager.getLogDir().resolve("bg-wa")
