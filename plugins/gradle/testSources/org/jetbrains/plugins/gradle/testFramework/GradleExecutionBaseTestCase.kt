@@ -125,6 +125,14 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     buildViewFixture.assertSyncViewTree(assert)
   }
 
+  fun assertSyncViewNode(nodeText: String, assert: (String) -> Unit) {
+    buildViewFixture.assertSyncViewNode(nodeText, assert)
+  }
+
+  fun assertSyncViewSelectedNode(nodeText: String, assert: (String) -> Unit) {
+    buildViewFixture.assertSyncViewSelectedNode(nodeText, assert)
+  }
+
   fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     buildViewFixture.assertBuildViewTree(assert)
   }
