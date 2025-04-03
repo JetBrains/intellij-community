@@ -24,7 +24,12 @@ from _pydevd_bundle.pydevd_trace_dispatch import (
 from pydevd_file_utils import (
     NORM_PATHS_AND_BASE_CONTAINER, get_abs_path_real_path_and_base_from_frame)
 
-get_current_thread = threading.current_thread
+def get_current_thread():
+    try:
+        return threading.current_thread()
+    except:
+        return None
+
 get_file_type = DONT_TRACE.get
 
 global_cache_skips = {}
@@ -264,6 +269,8 @@ def call_callback(code, instruction_offset, callable, arg0):
             return monitoring.DISABLE
 
         thread = get_current_thread()
+        if thread is None:
+            return
 
         if not is_thread_alive(thread):
             return
@@ -317,6 +324,8 @@ def py_start_callback(code, instruction_offset):
             return monitoring.DISABLE
 
         thread = get_current_thread()
+        if thread is None:
+            return
 
         if not is_thread_alive(thread):
             return
@@ -442,6 +451,9 @@ def py_start_callback(code, instruction_offset):
 def py_line_callback(code, line_number):
     frame = _getframe(1)
     thread = get_current_thread()
+    if thread is None:
+        return
+
     info = _get_additional_info(thread)
 
     # print('LINE %s %s %s %s' % (frame.f_lineno, code.co_name, code.co_filename, info.pydev_step_cmd))
@@ -646,10 +658,12 @@ def py_raise_callback(code, instruction_offset, exception):
     if py_db is None:
         return
 
-    thread = get_current_thread()
-    info = _get_additional_info(thread)
-
     try:
+        thread = get_current_thread()
+        if thread is None:
+            return
+
+        info = _get_additional_info(thread)
         frame = _getframe(1)
         if frame is _get_top_level_frame():
             _stop_on_unhandled_exception(exc_info, py_db, thread)
@@ -673,6 +687,13 @@ def py_raise_callback(code, instruction_offset, exception):
     except KeyboardInterrupt:
         _clear_run_state(info)
         raise
+    except:
+        traceback.print_exc()
+        info.pydev_step_cmd = -1
+        raise
+
+    if py_db.quitting:
+        raise KeyboardInterrupt()
 
 
 def py_return_callback(code, instruction_offset, retval):
@@ -687,6 +708,8 @@ def py_return_callback(code, instruction_offset, retval):
 
     frame = _getframe(1)
     thread = get_current_thread()
+    if thread is None:
+        return
     info = _get_additional_info(thread)
     stop_frame = info.pydev_step_stop
     filename = _get_abs_path_real_path_and_base_from_frame(frame)[1]
@@ -780,3 +803,10 @@ def py_return_callback(code, instruction_offset, retval):
     except KeyboardInterrupt:
         _clear_run_state(info)
         raise
+    except:
+        traceback.print_exc()
+        info.pydev_step_cmd = -1
+        raise
+
+    if py_db.quitting:
+        raise KeyboardInterrupt()

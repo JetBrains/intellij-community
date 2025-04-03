@@ -184,7 +184,8 @@ def _get_unary_instruction(instruction, curr_line):
 if IS_PY311_OR_GREATER:
     _CALL_OPNAMES = {
         'CALL',
-        'CALL_FUNCTION_EX'
+        'CALL_FUNCTION_EX',
+        'CALL_KW'
     }
 else:
     _CALL_OPNAMES = {

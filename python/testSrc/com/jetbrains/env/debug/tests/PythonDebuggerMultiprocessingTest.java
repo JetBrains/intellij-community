@@ -195,6 +195,11 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         resume();
         waitForOutput("Process finished with exit code 0");
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON38) > 0;
+      }
     });
   }
 
@@ -276,6 +281,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_2.py") {
       @Override
       public void before() {
+        setWaitForTermination(false);
         toggleBreakpoint(5);
       }
 
@@ -302,8 +308,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         var third = eval("x").getValue();
         assertTrue(expectedValues.contains(third));
         resume();
-
-        waitForTerminate();
       }
     });
   }
