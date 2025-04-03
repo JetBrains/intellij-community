@@ -37,7 +37,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     get() = myParser.languageLevel
 
   fun parseClassBodyWithBraces(builder: SyntaxTreeBuilder, isAnnotation: Boolean, isEnum: Boolean) {
-    assert(builder.tokenType === JavaSyntaxTokenType.LBRACE) { builder.tokenType!! }
+    assert(builder.tokenType === JavaSyntaxTokenType.LBRACE) { builder.tokenType ?: "<null>" }
     builder.advanceLexer()
 
     val builderWrapper = JavaParserUtil.braceMatchingBuilder(builder)
