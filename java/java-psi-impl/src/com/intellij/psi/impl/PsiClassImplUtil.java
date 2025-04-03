@@ -186,7 +186,7 @@ public final class PsiClassImplUtil {
 
   private static MemberCache getMap(@NotNull PsiClass aClass, @NotNull GlobalSearchScope scope) {
     return CachedValuesManager.getProjectPsiDependentCache(aClass, c ->
-      ConcurrentFactoryMap.createMap((GlobalSearchScope s) -> new MemberCache(c, s))).get(scope);
+      ConcurrentFactoryMap.createWeakMap((GlobalSearchScope s) -> new MemberCache(c, s))).get(scope);
   }
 
   private static final class ClassIconRequest {
