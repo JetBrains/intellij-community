@@ -4,7 +4,6 @@ bazel_dep(name = "bazel_worker_api", version = "0.0.4")
 bazel_dep(name = "rules_java", version = "8.8.0")
 bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.5")
 # bazel_dep(name = "rules_graalvm", version = "0.11.3")
-bazel_dep(name = "lib")
 bazel_dep(name = "protobuf", version = "29.3")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "toolchains_protoc", version = "0.3.7")
@@ -19,11 +18,6 @@ register_toolchains("@toolchains_protoc_hub//:all")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-local_path_override(
-    module_name = "lib",
-    path = "../../lib",
-)
 
 # GraalVM
 # git_override(
