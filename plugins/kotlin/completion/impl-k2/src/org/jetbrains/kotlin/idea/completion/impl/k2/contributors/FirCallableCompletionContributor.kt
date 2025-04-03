@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -176,12 +177,45 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
+    private fun completeExpectedEnumEntries(
+        expectedType: KaType?,
+    ): Sequence<KaCallableSymbol> {
+        val expectedEnumType = expectedType?.takeUnless { it is KaErrorType }
+            ?.withNullability(KaTypeNullability.NON_NULLABLE)
+            ?.takeIf { it.isEnum() }
+
+        val enumClass = expectedEnumType?.symbol?.psi as? KtClassOrObject
+        return enumClass?.body?.enumEntries?.asSequence()?.map { it.symbol } ?: emptySequence()
+    }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun Sequence<KaCallableSymbol>.mapMemberCallables(
+        positionContext: KotlinNameReferencePositionContext
+    ) = filter { filter(it) }
+        .filter { runCatchingNSEE { visibilityChecker.isVisible(it, positionContext) } == true }
+        .map { it.asSignature() }
+        .map { signature ->
+            CallableWithMetadataForCompletion(
+                _signature = signature,
+                options = getOptions(signature),
+                symbolOrigin = CompletionSymbolOrigin.Index,
+                showReceiver = true,
+            )
+        }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun completeWithoutReceiver(
         positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         expectedType: KaType?,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
+        // If the expected type is an enum, we want to yield the enum entries very early on so they will
+        // definitely be available before the elements are frozen.
+        yieldAll(completeExpectedEnumEntries(expectedType).mapMemberCallables(positionContext))
+
         val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
             parameters = parameters,
             positionContext = positionContext,
@@ -284,18 +318,7 @@ internal open class FirCallableCompletionContributor(
             yieldAll(callables)
         }
 
-        val memberDescriptors = members.filter { filter(it) }
-            .filter { runCatchingNSEE { visibilityChecker.isVisible(it, positionContext) } == true }
-            .map { it.asSignature() }
-            .map { signature ->
-                CallableWithMetadataForCompletion(
-                    _signature = signature,
-                    options = getOptions(signature),
-                    symbolOrigin = CompletionSymbolOrigin.Index,
-                    showReceiver = true,
-                )
-            }
-        yieldAll(memberDescriptors)
+        yieldAll(members.mapMemberCallables(positionContext))
 
         val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
             positionContext = positionContext,

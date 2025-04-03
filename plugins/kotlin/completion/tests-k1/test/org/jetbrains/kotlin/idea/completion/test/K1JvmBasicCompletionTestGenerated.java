@@ -719,6 +719,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/enums/EnumEntryEmptyCompletion.kt");
             }
 
+            @TestMetadata("EnumEntryExpectedPreferred.kt")
+            public void testEnumEntryExpectedPreferred() throws Exception {
+                runTest("../testData/basic/common/enums/EnumEntryExpectedPreferred.kt");
+            }
+
+            @TestMetadata("EnumEntryExpectedPreferred2.kt")
+            public void testEnumEntryExpectedPreferred2() throws Exception {
+                runTest("../testData/basic/common/enums/EnumEntryExpectedPreferred2.kt");
+            }
+
             @TestMetadata("ExpectedEnumEntryCompletion.kt")
             public void testExpectedEnumEntryCompletion() throws Exception {
                 runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion.kt");
