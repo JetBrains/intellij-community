@@ -8,7 +8,7 @@ kt_jvm_library(
     deps = [
         "//:kotlin-stdlib",
         "//:collection",
-        "@lib//:asm",
+        "//:asm-all",
         "//:kotlin-metadata",
     ],
     visibility = [

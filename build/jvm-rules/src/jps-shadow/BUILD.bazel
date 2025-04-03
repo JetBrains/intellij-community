@@ -8,7 +8,7 @@ kt_jvm_library(
     srcs = glob(["**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
-        "@lib//:asm",
+        "//:asm-all",
         "//src/worker-util",
         "//:collection",
         "//:hash4j",

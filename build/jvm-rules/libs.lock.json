@@ -135,6 +135,10 @@
     "5a0d7557d494732a6165e4188eb11f10faca196350cad04d9950abd83e6dd148",
     "57d0e59cd6f6bd931d893ab0089bdcb13aee0ed78f1f8e85d88bc55b89815211"
   ],
+  "org.jetbrains.intellij.deps:asm-all:9.6.1": [
+    "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",
+    "a880ed438e15111a8ef4cdd450fa529cf80541da515261d24241520dbc4b220b"
+  ],
   "org.jetbrains.kotlin:kotlin-build-tools-api:2.1.20-RC3": [
     "6a68444b624432e23268df01450895fc67c042ef6da3ee0eda343fbd1f8eecea",
     "fe86558db8dc6b7712ef376b92de40f3573dd844f2529424fb8162309b97d7f6"

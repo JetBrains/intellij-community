@@ -31,7 +31,6 @@ kt_jvm_library(
         # ByteBufferBackedInputStream is used by arrow
         "//:jackson-databind",
         # jps needs these libs
-        "@lib//:asm",
         "@lib//:aalto-xml",
         "@lib//:platform-jps-build-qdox-java-parser",
     ],

@@ -440,6 +440,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "asm-all",
+    jar = "@asm-all//file",
+    source_jar = "@asm-all-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "intellij-deps-fastutil",
     jar = "@intellij-deps-fastutil//file",
     source_jar = "@intellij-deps-fastutil-sources//file",
