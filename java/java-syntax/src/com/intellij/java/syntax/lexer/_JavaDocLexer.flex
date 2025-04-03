@@ -9,7 +9,7 @@ import com.intellij.platform.syntax.util.lexer.FlexLexer
 %%
 
 %{
-  private var myJdk15Enabled: Boolean = false  // todo must be val
+  private val myJdk15Enabled: Boolean
   private var mySnippetBracesLevel = 0;
   /* Enable markdown support for java 23 */
   private var myMarkdownMode = false;
