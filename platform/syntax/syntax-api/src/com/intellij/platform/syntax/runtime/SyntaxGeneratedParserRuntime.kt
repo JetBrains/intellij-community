@@ -12,11 +12,11 @@ import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
 import com.intellij.platform.syntax.Logger
-import com.intellij.platform.syntax.NoopLogger
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import com.intellij.platform.syntax.i18n.ResourceBundle;
+import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.util.containers.LimitedPool
 import org.jetbrains.annotations.ApiStatus
@@ -109,7 +109,7 @@ final class SyntaxGeneratedParserRuntime(
 
   internal val bundle get() = ResourceBundle("com.intellij.analysis.AnalysisBundle", "messages.AnalysisBundle", this)
   private val error: ErrorState = ErrorState(bundle)
-  internal val LOG: Logger = NoopLogger
+  internal val LOG: Logger = noopLogger()
 
   internal var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit = { _, _ -> }
   internal val MAX_RECURSION_LEVEL: Int get() = maxRecursionDepth
