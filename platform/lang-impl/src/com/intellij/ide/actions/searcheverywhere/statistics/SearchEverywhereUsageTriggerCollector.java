@@ -111,11 +111,17 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     PROCESS_COMPLETE, PROCESS_STOPPED, EMPTY_PATTERN
   }
 
+  public enum FuzzySearchType {
+    FUZZY_FILE_SEARCH
+  }
+
+  public static final EnumEventField<FuzzySearchType> FUZZY_SEARCH_TYPE = EventFields.Enum("fuzzySearchType", FuzzySearchType.class);
   public static final IntEventField FUZZY_SEARCH_TOTAL_RESULTS = EventFields.Int("fuzzySearchTotalResults");
   public static final EnumEventField<FuzzySearchResult> FUZZY_SEARCH_RESULT =
     EventFields.Enum("fuzzySearchResult", FuzzySearchResult.class);
-  public static final IdeActivityDefinition FUZZY_FILE_SEARCH_ACTIVITY =
-    GROUP.registerIdeActivity("fuzzyFileSearch", new EventField[0], new EventField[]{FUZZY_SEARCH_TOTAL_RESULTS, FUZZY_SEARCH_RESULT});
+  public static final IdeActivityDefinition FUZZY_SEARCH_ACTIVITY =
+    GROUP.registerIdeActivity("fuzzySearch", new EventField[]{FUZZY_SEARCH_TYPE},
+                              new EventField[]{FUZZY_SEARCH_TOTAL_RESULTS, FUZZY_SEARCH_RESULT});
 
   @Override
   public EventLogGroup getGroup() {

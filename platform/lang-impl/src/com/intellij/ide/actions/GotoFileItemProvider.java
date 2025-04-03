@@ -125,7 +125,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                                         @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
                                                         @NotNull ProgressIndicator indicator) {
     long start = System.currentTimeMillis();
-    final StructuredIdeActivity fuzzySearchActivity = FUZZY_FILE_SEARCH_ACTIVITY.started(myProject);
+    final StructuredIdeActivity fuzzySearchActivity =
+      FUZZY_SEARCH_ACTIVITY.started(myProject, () -> List.of(FUZZY_SEARCH_TYPE.with(FuzzySearchType.FUZZY_FILE_SEARCH)));
 
     List<String> patternComponents = LevenshteinCalculator.normalizeString(parameters.getCompletePattern());
     if (patternComponents.isEmpty()) {
