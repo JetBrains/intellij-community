@@ -71,6 +71,8 @@
       version: 0.3.8
     - id: org.slf4j:slf4j-api
       version: 2.0.13
+    - id: org.slf4j:log4j-over-slf4j
+      version: 1.7.36
     # OpenTelemetry
     - id: io.opentelemetry:opentelemetry-api
       version: 1.48.0

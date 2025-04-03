@@ -303,6 +303,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "log4j-over-slf4j",
+    jar = "@log4j-over-slf4j//file",
+    source_jar = "@log4j-over-slf4j-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "opentelemetry-api",
     jar = "@opentelemetry-api//file",
     source_jar = "@opentelemetry-api-sources//file",
