@@ -1,4 +1,3 @@
-/* It's an automatically generated code. Do not modify it. */
 package com.intellij.java.syntax.lexer;
 
 import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
