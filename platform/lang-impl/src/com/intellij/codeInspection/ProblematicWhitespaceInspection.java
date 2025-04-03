@@ -131,7 +131,7 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
           else if (c == ' ') {
             if (useTabs) {
               if (!smartTabs) {
-                if (!isSpaceBeforeCommentStar(file, j, line) && registerError(file, startOffset, true)) {
+                if (!isSpaceAllowed(file, j, line, startOffset) && registerError(file, startOffset, true)) {
                   return;
                 }
               }
@@ -156,9 +156,11 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
       }
     }
 
-    private static boolean isSpaceBeforeCommentStar(@NotNull PsiFile file, int j, String line) {
-      return j + 1 < line.length() && line.charAt(j + 1) == '*'
-             && PsiTreeUtil.getParentOfType(file.findElementAt(j), PsiComment.class, false) != null;
+    private static boolean isSpaceAllowed(@NotNull PsiFile file, int index, String line, int lineOffsetInFile) {
+      PsiElement element = file.findElementAt(lineOffsetInFile + index);
+      if (!(element instanceof PsiWhiteSpace)) return true; // e.g. multiline string literal
+      return index + 1 < line.length() && line.charAt(index + 1) == '*'
+             && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null; // doc comment in java, c++, php...
     }
 
     private boolean registerError(PsiFile file, int startOffset, boolean tab) {
