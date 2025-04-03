@@ -76,7 +76,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
       keywordTokenType = JavaSyntaxTokenType.RECORD_KEYWORD
     }
-    assert(CLASS_KEYWORD_BIT_SET.contains(keywordTokenType)) { keywordTokenType!! }
+    assert(CLASS_KEYWORD_BIT_SET.contains(keywordTokenType)) { keywordTokenType ?: "<null>" }
     builder.advanceLexer()
     val isEnum = (keywordTokenType === JavaSyntaxTokenType.ENUM_KEYWORD)
 
@@ -283,10 +283,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
         return modList
       }
 
-      val codeBlock: SyntaxTreeBuilder.Marker? = checkNotNull(myParser.statementParser.parseCodeBlock(builder)) { builder.text }
+      val codeBlock = checkNotNull(myParser.statementParser.parseCodeBlock(builder)) { builder.text }
       if (typeParams != null) {
         val error = typeParams.precede()
-        error.errorBefore(message("unexpected.token"), codeBlock!!)
+        error.errorBefore(message("unexpected.token"), codeBlock)
       }
 
       JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS_INITIALIZER, languageLevel, myWhiteSpaceAndCommentSetHolder)
@@ -530,7 +530,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     val resources = (type == ListType.RESOURCE)
     val elementList = builder.mark()
     val leftParenth = builder.expect(JavaSyntaxTokenType.LPARENTH)
-    assert(lambda || leftParenth) { builder.tokenType!! }
+    assert(lambda || leftParenth) { builder.tokenType ?: "<null>" }
 
     val delimiter = if (resources) JavaSyntaxTokenType.SEMICOLON else JavaSyntaxTokenType.COMMA
     val noDelimiterMsg = if (resources) "expected.semicolon" else "expected.comma"
@@ -880,7 +880,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
   }
 
   fun parseAnnotation(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker {
-    assert(builder.tokenType === JavaSyntaxTokenType.AT) { builder.tokenType ?: "null" }
+    assert(builder.tokenType === JavaSyntaxTokenType.AT) { builder.tokenType ?: "<null>" }
     val anno = builder.mark()
     builder.advanceLexer()
 
