@@ -1,45 +1,59 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.impl.attach;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+package com.intellij.debugger.impl.attach
 
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.execution.process.BaseProcessHandler;
-import com.intellij.openapi.project.Project;
-import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.execution.process.BaseProcessHandler
+import com.intellij.openapi.project.Project
+import com.sun.tools.attach.AttachNotSupportedException
+import com.sun.tools.attach.VirtualMachine
+import sun.jvmstat.monitor.*
+import java.io.IOException
 
-import java.io.IOException;
-import java.util.Set;
+object JavaDebuggerAttachUtil {
+  @JvmStatic
+  fun canAttach(processHandler: BaseProcessHandler<*>): Boolean = JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler) != null
 
-public final class JavaDebuggerAttachUtil {
-  public static boolean canAttach(BaseProcessHandler processHandler) {
-    return JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler) != null;
-  }
-
-  public static boolean attach(BaseProcessHandler processHandler, Project project) {
-    JavaAttachDebuggerProvider.LocalAttachInfo info = JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler);
+  @JvmStatic
+  fun attach(processHandler: BaseProcessHandler<*>, project: Project?): Boolean {
+    val info = JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler)
     if (info != null) {
-      JavaAttachDebuggerProvider.attach(info, project);
-      return true;
+      JavaAttachDebuggerProvider.attach(info, project)
+      return true
     }
-    return false;
+    return false
   }
 
-  public static @NotNull Set<String> getAttachedPids(@NotNull Project project) {
-    return StreamEx.of(DebuggerManagerEx.getInstanceEx(project).getSessions())
-      .map(s -> s.getDebugEnvironment().getRemoteConnection())
-      .select(PidRemoteConnection.class)
-      .map(PidRemoteConnection::getPid)
-      .toSet();
+  @JvmStatic
+  fun getAttachedPids(project: Project): Set<String> {
+    return DebuggerManagerEx.getInstanceEx(project).getSessions()
+      .asSequence()
+      .map { it.debugEnvironment.getRemoteConnection() }
+      .filterIsInstance<PidRemoteConnection>()
+      .map { it.pid }
+      .toHashSet()
   }
 
-  public static @NotNull VirtualMachine attachVirtualMachine(String id) throws IOException, AttachNotSupportedException {
-    // avoid attaching to the 3rd party vms
-    if (VirtualMachine.list().stream().map(VirtualMachineDescriptor::id).noneMatch(id::equals)) {
-      throw new AttachNotSupportedException("AttachProvider for the vm is not found");
+  @JvmStatic
+  @Throws(IOException::class, AttachNotSupportedException::class)
+  fun attachVirtualMachine(id: String): VirtualMachine {
+    // avoid attaching to 3rd party vms
+    // below is a modified version of sun.tools.attach.HotSpotAttachProvider.testAttachable
+    // original version silently fail and allows attach to openj9 jvms (and crash them)
+    var vm: MonitoredVm? = null
+    try {
+      val host = MonitoredHost.getMonitoredHost(HostIdentifier(null as String?))
+      vm = host.getMonitoredVm(VmIdentifier(id))
+      if (!MonitoredVmUtil.isAttachable(vm)) {
+        throw AttachNotSupportedException("Vm is not attachable")
+      }
     }
-    return VirtualMachine.attach(id);
+    catch (e: Throwable) {
+      throw AttachNotSupportedException("Unable to attach").apply { initCause(e) }
+    }
+    finally {
+      vm?.detach()
+    }
+    return VirtualMachine.attach(id)
   }
 }
