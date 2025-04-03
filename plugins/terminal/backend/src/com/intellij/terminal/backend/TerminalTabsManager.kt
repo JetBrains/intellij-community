@@ -1,11 +1,9 @@
 package com.intellij.terminal.backend
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.backend.delete
 import com.intellij.platform.kernel.backend.findValueEntity
@@ -17,13 +15,11 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
-import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
@@ -136,7 +132,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     val optionsWithSize = options.builder().initialTermSize(termSize).build()
 
     val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
-    val session = createTerminalSession(project, ttyConnector, termSize, JBTerminalSystemSettingsProvider(), scope)
+    val observableTtyConnector = ObservableTtyConnector(ttyConnector)
+    val session = createTerminalSession(project, observableTtyConnector, termSize, JBTerminalSystemSettingsProvider(), scope)
     val stateAwareSession = StateAwareTerminalSession(session)
 
     val sessionEntity = newValueEntity(stateAwareSession)
@@ -145,30 +142,13 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       sessionEntity.delete()
     }
 
-    val portForwardingId = setupPortForwarding(ttyConnector, scope.asDisposable())
+    val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, scope.asDisposable())
 
     return TerminalSessionStartResult(
       sessionId = TerminalSessionId(sessionEntity.id),
       configuredOptions,
       portForwardingId
     )
-  }
-
-  private fun setupPortForwarding(ttyConnector: TtyConnector, disposable: Disposable): TerminalPortForwardingId? {
-    val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(ttyConnector) ?: run {
-      thisLogger().error("Failed to get ProcessTtyConnector from $ttyConnector. Port forwarding will not work.")
-      return null
-    }
-
-    val shellPid = try {
-      processTtyConnector.process.pid()
-    }
-    catch (t: Throwable) {
-      LOG.warn("Failed to get pid of the shell process. Port forwarding will not work.", t)
-      return null
-    }
-
-    return TerminalPortForwardingManager.getInstance(project).setupPortForwarding(shellPid, disposable)
   }
 
   private suspend fun <T> updateTabsAndStore(action: suspend (MutableMap<Int, TerminalSessionTab>) -> T): T {
