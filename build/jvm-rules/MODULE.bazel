@@ -425,6 +425,19 @@ http_file(
 )
 
 http_file(
+    name = "slf4j-api",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.13/slf4j-api-2.0.13.jar",
+    sha256 = "e7c2a48e8515ba1f49fa637d57b4e2f590b3f5bd97407ac699c3aa5efb1204a9",
+    downloaded_file_path = "slf4j-api-2.0.13.jar",
+)
+http_file(
+    name = "slf4j-api-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.13/slf4j-api-2.0.13-sources.jar",
+    sha256 = "84f366caa66ddaa9d204e5525580b562271663c05970f056815a1be8489e8b52",
+    downloaded_file_path = "slf4j-api-2.0.13-sources.jar",
+)
+
+http_file(
     name = "opentelemetry-api",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-api/1.48.0/opentelemetry-api-1.48.0.jar",
     sha256 = "8d3781bda58892f7d14216908fc0d1faf6f4e6b806e6e73e23489e41c0ecf012",

@@ -24,7 +24,7 @@ kt_jvm_library(
     ],
     runtime_deps = [
         # arrow wants slf4j
-        "@lib//:slf4j-api",
+        "//:slf4j-api",
         "@lib//:slf4j-jdk14",
         # use IJ logger as backend for slf4j
         "@lib//:log4_j",

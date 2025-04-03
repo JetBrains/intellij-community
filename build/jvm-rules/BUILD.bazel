@@ -296,6 +296,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "slf4j-api",
+    jar = "@slf4j-api//file",
+    source_jar = "@slf4j-api-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "opentelemetry-api",
     jar = "@opentelemetry-api//file",
     source_jar = "@opentelemetry-api-sources//file",
