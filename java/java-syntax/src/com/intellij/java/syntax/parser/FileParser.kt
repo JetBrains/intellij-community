@@ -86,7 +86,7 @@ open class FileParser(private val myParser: JavaParser) {
     if (IMPORT_LIST_STOPPER_SET.contains(type) || myParser.declarationParser.isRecordToken(b, type)) return true
     if (type === JavaSyntaxTokenType.IDENTIFIER) {
       val text = b.tokenText
-      if (JavaKeywords.OPEN == text || JavaKeywords.MODULE == text) return true
+      if (text == JavaKeywords.OPEN || text == JavaKeywords.MODULE) return true
     }
     return false
   }
@@ -184,7 +184,7 @@ open class FileParser(private val myParser: JavaParser) {
     //if it is `module` we should expect either `;` or `identifier`
     if (isOk && !isModule &&
         !isStatic && builder.tokenType !== JavaSyntaxTokenType.SEMICOLON &&
-        JavaKeywords.MODULE == identifierText
+        identifierText == JavaKeywords.MODULE
     ) {
       JavaParserUtil.error(builder, JavaSyntaxBundle.message("expected.identifier.or.semicolon"))
     }
@@ -203,7 +203,7 @@ open class FileParser(private val myParser: JavaParser) {
       return JavaSyntaxElementType.IMPORT_STATIC_STATEMENT
     }
     if (type === JavaSyntaxTokenType.IDENTIFIER &&
-        JavaKeywords.MODULE == builder.tokenText && builder.lookAhead(1) === JavaSyntaxTokenType.IDENTIFIER
+        builder.tokenText == JavaKeywords.MODULE && builder.lookAhead(1) === JavaSyntaxTokenType.IDENTIFIER
     ) {
       builder.remapCurrentToken(JavaSyntaxTokenType.MODULE_KEYWORD)
       builder.advanceLexer()
@@ -211,7 +211,6 @@ open class FileParser(private val myParser: JavaParser) {
     }
     return JavaSyntaxElementType.IMPORT_STATEMENT
   }
-
 }
 
 val IMPORT_LIST_STOPPER_SET: SyntaxElementTypeSet =
