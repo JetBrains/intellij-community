@@ -233,11 +233,6 @@ open class DeclarationParser(private val myParser: JavaParser) {
     }
     else if (!isRecordToken(builder, tokenType) && !isSealedToken(builder, tokenType) && !isNonSealedToken(builder, tokenType, languageLevel)) {
       if (!TYPE_START.contains(tokenType) || tokenType === JavaSyntaxTokenType.AT) {
-        //if (tokenType instanceof ILazyParseableElementType) { // todo this is not used!!!
-        //  builder.advanceLexer();
-        //  return null;
-        //}
-        //else
         if (!MODIFIER_BIT_SET.contains(tokenType) &&
             !CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
             tokenType !== JavaSyntaxTokenType.AT &&
