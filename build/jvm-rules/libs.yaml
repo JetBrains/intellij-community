@@ -59,6 +59,8 @@
         - ":arrow-memory-netty-buffer-patch"
     - id: org.apache.arrow:arrow-memory-netty-buffer-patch
       version: 18.2.0
+    - id: org.assertj:assertj-core
+      version: 3.27.3
     - id: org.jetbrains:annotations
       version: 26.0.2
     - id: org.jetbrains.kotlin:kotlin-stdlib

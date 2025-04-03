@@ -261,6 +261,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "assertj-core",
+    jar = "@assertj-core//file",
+    source_jar = "@assertj-core-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "annotations",
     jar = "@annotations//file",
     source_jar = "@annotations-sources//file",
