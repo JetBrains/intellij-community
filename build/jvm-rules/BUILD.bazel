@@ -181,6 +181,23 @@ jvm_import(
 )
 
 jvm_import(
+    name = "jackson-annotations",
+    jar = "@jackson-annotations//file",
+    source_jar = "@jackson-annotations-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "jackson-databind",
+    jar = "@jackson-databind//file",
+    source_jar = "@jackson-databind-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":jackson-annotations"
+    ],
+)
+
+jvm_import(
     name = "caffeine",
     jar = "@caffeine//file",
     source_jar = "@caffeine-sources//file",

@@ -29,7 +29,7 @@ kt_jvm_library(
         # use IJ logger as backend for slf4j
         "@lib//:log4_j",
         # ByteBufferBackedInputStream is used by arrow
-        "@lib//:jackson-databind",
+        "//:jackson-databind",
         # jps needs these libs
         "@lib//:asm",
         "@lib//:aalto-xml",

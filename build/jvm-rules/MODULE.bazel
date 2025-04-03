@@ -230,6 +230,32 @@ http_file(
 )
 
 http_file(
+    name = "jackson-annotations",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar",
+    sha256 = "873a606e23507969f9bbbea939d5e19274a88775ea5a169ba7e2d795aa5156e1",
+    downloaded_file_path = "jackson-annotations-2.17.2.jar",
+)
+http_file(
+    name = "jackson-annotations-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2-sources.jar",
+    sha256 = "c647697c578c4126e0ccae72924b641a824dddfce6db9935e4a4daefd59d06f2",
+    downloaded_file_path = "jackson-annotations-2.17.2-sources.jar",
+)
+
+http_file(
+    name = "jackson-databind",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar",
+    sha256 = "c04993f33c0f845342653784f14f38373d005280e6359db5f808701cfae73c0c",
+    downloaded_file_path = "jackson-databind-2.17.2.jar",
+)
+http_file(
+    name = "jackson-databind-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2-sources.jar",
+    sha256 = "09fb0d67d3c9fc3c03adef0ca87df3dee7e7a7db8ffd331dcdf09f62b6b66342",
+    downloaded_file_path = "jackson-databind-2.17.2-sources.jar",
+)
+
+http_file(
     name = "caffeine",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.0/caffeine-3.2.0.jar",
     sha256 = "ec411dfdf0c03f25218648ce89861630b71680e5858a9a7278ebac8e55cab3d7",

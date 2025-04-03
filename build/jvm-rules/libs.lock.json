@@ -7,9 +7,17 @@
     "0181873ba85684d119134f5598432f5b63109a03adc455767a1500b2145df8a2",
     "63ddb785e1691849d571a78dfca9c311f2646d148fd7cbf1a60999e7e93a54bc"
   ],
+  "com.fasterxml.jackson.core:jackson-annotations:2.17.2": [
+    "873a606e23507969f9bbbea939d5e19274a88775ea5a169ba7e2d795aa5156e1",
+    "c647697c578c4126e0ccae72924b641a824dddfce6db9935e4a4daefd59d06f2"
+  ],
   "com.fasterxml.jackson.core:jackson-core:2.17.0": [
     "55be130f6a68038088a261856c4e383ce79957a0fc1a29ecb213a9efd6ef4389",
     "97f4f4a85bf4da59174dde187130bddb927ac31320b385ed8ef1439c00df00f2"
+  ],
+  "com.fasterxml.jackson.core:jackson-databind:2.17.2": [
+    "c04993f33c0f845342653784f14f38373d005280e6359db5f808701cfae73c0c",
+    "09fb0d67d3c9fc3c03adef0ca87df3dee7e7a7db8ffd331dcdf09f62b6b66342"
   ],
   "com.github.ben-manes.caffeine:caffeine:3.2.0": [
     "ec411dfdf0c03f25218648ce89861630b71680e5858a9a7278ebac8e55cab3d7",
