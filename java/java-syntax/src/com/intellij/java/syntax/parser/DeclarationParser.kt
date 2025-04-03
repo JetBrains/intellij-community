@@ -525,33 +525,6 @@ open class DeclarationParser(private val myParser: JavaParser) {
     parseElementList(builder, if (typed) ListType.LAMBDA_TYPED else ListType.LAMBDA_UNTYPED)
   }
 
-  private enum class ListType {
-    METHOD,
-    RESOURCE,
-    LAMBDA_TYPED,
-    LAMBDA_UNTYPED,
-    RECORD_COMPONENTS;
-
-    val nodeType: SyntaxElementType
-      get() {
-        if (this == RESOURCE) {
-          return JavaSyntaxElementType.RESOURCE_LIST
-        }
-        if (this == RECORD_COMPONENTS) {
-          return JavaSyntaxElementType.RECORD_HEADER
-        }
-        return JavaSyntaxElementType.PARAMETER_LIST
-      }
-
-    val stopperTypes: SyntaxElementTypeSet
-      get() {
-        if (this == METHOD) {
-          return METHOD_PARAM_LIST_STOPPERS
-        }
-        return PARAM_LIST_STOPPERS
-      }
-  }
-
   private fun parseElementList(builder: SyntaxTreeBuilder, type: ListType) {
     val lambda = (type == ListType.LAMBDA_TYPED || type == ListType.LAMBDA_UNTYPED)
     val resources = (type == ListType.RESOURCE)
@@ -1028,6 +1001,27 @@ fun isNonSealedToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?, 
   val isNonSealed = JavaKeywords.SEALED == builder.tokenText
   maybeNonSealed.rollbackTo()
   return isNonSealed
+}
+
+private enum class ListType {
+  METHOD,
+  RESOURCE,
+  LAMBDA_TYPED,
+  LAMBDA_UNTYPED,
+  RECORD_COMPONENTS;
+
+  val nodeType: SyntaxElementType
+    get() = when (this) {
+      RESOURCE -> JavaSyntaxElementType.RESOURCE_LIST
+      RECORD_COMPONENTS -> JavaSyntaxElementType.RECORD_HEADER
+      else -> JavaSyntaxElementType.PARAMETER_LIST
+    }
+
+  val stopperTypes: SyntaxElementTypeSet
+    get() = when (this) {
+      METHOD -> METHOD_PARAM_LIST_STOPPERS
+      else -> PARAM_LIST_STOPPERS
+    }
 }
 
 private val TYPE_START: SyntaxElementTypeSet = PRIMITIVE_TYPE_BIT_SET + setOf(JavaSyntaxTokenType.IDENTIFIER, JavaSyntaxTokenType.AT, JavaSyntaxTokenType.VAR_KEYWORD)
