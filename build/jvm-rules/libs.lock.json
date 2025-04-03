@@ -170,5 +170,9 @@
   "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.8": [
     "72e9a9b0003ec5254b638186f7ca1675b08006bdde4c9c4c589970342ccd2e77",
     "80219b91c78709f696305970895d27481c78bda7cae0c180c7c8202240f47d34"
+  ],
+  "org.jetbrains:annotations:26.0.2": [
+    "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297",
+    "a3bea3ada0af186437f8f3a089e6b0f52ac5aa068c1cb829058fb8a5069f6b0f"
   ]
 }

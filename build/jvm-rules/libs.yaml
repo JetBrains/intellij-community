@@ -59,6 +59,8 @@
         - ":arrow-memory-netty-buffer-patch"
     - id: org.apache.arrow:arrow-memory-netty-buffer-patch
       version: 18.2.0
+    - id: org.jetbrains:annotations
+      version: 26.0.2
     - id: org.jetbrains.kotlin:kotlin-stdlib
       version: 2.1.20
     - id: org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm

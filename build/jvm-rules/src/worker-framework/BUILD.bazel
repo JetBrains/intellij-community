@@ -24,7 +24,7 @@ kt_jvm_library(
         "//:protobuf-java",
         "//:netty-buffer",
         "//:netty-common",
-        "@lib//:jetbrains-annotations",
+        "//:annotations",
     ],
     runtime_deps = [
         "//:jackson-core",

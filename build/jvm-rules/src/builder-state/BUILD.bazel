@@ -14,7 +14,7 @@ kt_jvm_library(
         "//zip",
         "//:arrow-vector",
         "//:arrow-memory-core",
-        "@lib//:jetbrains-annotations",
+        "//:annotations",
     ],
     visibility = ["//visibility:public"],
 )
