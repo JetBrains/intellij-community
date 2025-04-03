@@ -83,34 +83,21 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testConstructorTypeParameters() { runTest("08", null); }
 
   public void testInnerClass2() { runTest("InnerClass2", "SimpleClass"); }
+  
+  public void testIncompleteClass() { 
+    assertNotAvailable("IncompleteClass"); 
+  }
 
   public void testInjection() {
     runTest("Injection", null);
   }
 
   public void testRecords() {
-    configureByFile("/refactoring/replaceConstructorWithFactory/before" + "RecordConstructor" + ".java");
-    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
-    ActionContext context = ActionContext.from(getEditor(), getFile());
-    Presentation presentation = action.getPresentation(context);
-    assertNull(presentation);
+    assertNotAvailable("RecordConstructor");
   }
 
   public void testImplicitClass() {
-    configureFromFileText("A.java", """
-      enum E {A, B}
-      
-      record Rar() {
-      }
-      
-      void main() {
-          Rar rar = new R<caret>ar();
-      }
-      """);
-    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
-    ActionContext context = ActionContext.from(getEditor(), getFile());
-    Presentation presentation = action.getPresentation(context);
-    assertNull(presentation);
+    assertNotAvailable("ImplicitClass");
   }
 
   public void testImplicitClassNotChoose() {
@@ -133,7 +120,15 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   }
 
   public void testRedCode() {
-    runTest("RedCode", null);
+    assertNotAvailable("RedCode");
+  }
+
+  private void assertNotAvailable(String name) {
+    configureByFile("/refactoring/replaceConstructorWithFactory/before" + name + ".java");
+    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
+    ActionContext context = ActionContext.from(getEditor(), getFile());
+    Presentation presentation = action.getPresentation(context);
+    assertNull(presentation);
   }
 
   private void runTest(final String testIndex, @NonNls String targetClassName) {
@@ -143,7 +138,6 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/refactoring/replaceConstructorWithFactory/after" + testIndex + ".java");
   }
-
 
   private void perform(String targetClassName) {
     if (targetClassName != null) {
