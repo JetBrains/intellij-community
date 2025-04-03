@@ -26,7 +26,7 @@ class PyPoetrySyncIntegrationTest {
   val testRoot by testRootFixture
 
   private val project by projectFixture(testRootFixture, openAfterCreation = true)
-  private val multiprojectFixture by multiProjectFixture(testRootFixture)
+  private val multiprojectFixture by multiProjectFixture()
 
   @Test
   fun `project with path dependencies is properly mapped to IJ modules`() = timeoutRunBlocking {
@@ -43,7 +43,7 @@ class PyPoetrySyncIntegrationTest {
       name = "lib"
     """.trimIndent())
 
-    multiprojectFixture.linkProject(project, ".", PoetryConstants.SYSTEM_ID)
+    multiprojectFixture.linkProject(project, testRoot, PoetryConstants.SYSTEM_ID)
     syncAllProjects(project)
 
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()

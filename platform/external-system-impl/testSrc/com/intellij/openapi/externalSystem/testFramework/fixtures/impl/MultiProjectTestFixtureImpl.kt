@@ -18,19 +18,15 @@ import org.jetbrains.annotations.Nls
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
-class MultiProjectTestFixtureImpl(
-  private val testRoot: Path,
-) : MultiProjectTestFixture {
+class MultiProjectTestFixtureImpl: MultiProjectTestFixture {
 
-  override suspend fun openProject(relativePath: String): Project {
-    val projectRoot = testRoot.resolve(relativePath)
+  override suspend fun openProject(projectPath: Path): Project {
     return awaitOpenProjectConfiguration {
-      openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+      openProjectAsync(projectPath, UnlinkedProjectStartupActivity())
     }
   }
 
-  override suspend fun linkProject(project: Project, relativePath: String, systemId: ProjectSystemId) {
-    val projectPath = testRoot.resolve(relativePath)
+  override suspend fun linkProject(project: Project, projectPath: Path, systemId: ProjectSystemId) {
     val extension = ExternalSystemUnlinkedProjectAware.EP_NAME.findFirstSafe { it.systemId == systemId }
     Assertions.assertNotNull(extension) {
       "Cannot find applicable extension to link $systemId project"
@@ -40,8 +36,7 @@ class MultiProjectTestFixtureImpl(
     }
   }
 
-  override suspend fun unlinkProject(project: Project, relativePath: String, systemId: ProjectSystemId) {
-    val projectPath = testRoot.resolve(relativePath)
+  override suspend fun unlinkProject(project: Project, projectPath: Path, systemId: ProjectSystemId) {
     val extension = ExternalSystemUnlinkedProjectAware.EP_NAME.findFirstSafe { it.systemId == systemId }
     Assertions.assertNotNull(extension) {
       "Cannot find applicable extension to link $systemId project"

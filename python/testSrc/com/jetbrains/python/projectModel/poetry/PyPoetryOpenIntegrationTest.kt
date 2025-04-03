@@ -18,20 +18,21 @@ import kotlin.time.Duration.Companion.seconds
 @RegistryKey("python.project.model.poetry", "true")
 @TestApplication
 class PyPoetryOpenIntegrationTest {
-  private val testRootFixture = tempPathFixture()
-  private val testRoot by testRootFixture
-  private val multiprojectFixture by multiProjectFixture(testRootFixture)
+  private val testRoot by tempPathFixture()
+  private val multiprojectFixture by multiProjectFixture()
 
   @Test
   fun `project without dot-idea with pyproject-toml is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
-    testRoot.createFile("project/pyproject.toml").writeText("""
+    val projectPath = testRoot.resolve("project")
+
+    projectPath.createFile("pyproject.toml").writeText("""
       [tool.poetry]
       name = "project"
     """.trimIndent())
     
-    multiprojectFixture.openProject("project").useProjectAsync { project -> 
+    multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
       ModuleAssertions.assertModules(project, "project")
-      CollectionAssertions.assertEqualsUnordered(listOf(testRoot.resolve("project")),
+      CollectionAssertions.assertEqualsUnordered(listOf(projectPath),
                                                  project.service<PoetrySettings>().getLinkedProjects())
     }
   }
