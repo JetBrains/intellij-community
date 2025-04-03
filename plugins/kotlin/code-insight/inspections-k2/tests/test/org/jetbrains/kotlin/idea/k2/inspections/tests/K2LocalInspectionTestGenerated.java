@@ -13492,6 +13492,315 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference")
+    public static class RedundantCompanionReference extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/basic.kt");
+        }
+
+        @TestMetadata("companionClass.kt")
+        public void testCompanionClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/companionClass.kt");
+        }
+
+        @TestMetadata("companionClass2.kt")
+        public void testCompanionClass2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/companionClass2.kt");
+        }
+
+        @TestMetadata("companionClass3.kt")
+        public void testCompanionClass3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/companionClass3.kt");
+        }
+
+        @TestMetadata("companionClass4.kt")
+        public void testCompanionClass4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/companionClass4.kt");
+        }
+
+        @TestMetadata("companionDoubleNested.kt")
+        public void testCompanionDoubleNested() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/companionDoubleNested.kt");
+        }
+
+        @TestMetadata("companionNested.kt")
+        public void testCompanionNested() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/companionNested.kt");
+        }
+
+        @TestMetadata("companionNestedObject.kt")
+        public void testCompanionNestedObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/companionNestedObject.kt");
+        }
+
+        @TestMetadata("directCompanion.kt")
+        public void testDirectCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/directCompanion.kt");
+        }
+
+        @TestMetadata("enumEntries.kt")
+        public void testEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumEntries.kt");
+        }
+
+        @TestMetadata("enumEntries2.kt")
+        public void testEnumEntries2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumEntries2.kt");
+        }
+
+        @TestMetadata("enumEntries3.kt")
+        public void testEnumEntries3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumEntries3.kt");
+        }
+
+        @TestMetadata("enumValueOf.kt")
+        public void testEnumValueOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumValueOf.kt");
+        }
+
+        @TestMetadata("enumValueOf2.kt")
+        public void testEnumValueOf2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumValueOf2.kt");
+        }
+
+        @TestMetadata("enumValues.kt")
+        public void testEnumValues() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumValues.kt");
+        }
+
+        @TestMetadata("enumValues2.kt")
+        public void testEnumValues2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/enumValues2.kt");
+        }
+
+        @TestMetadata("functionReference.kt")
+        public void testFunctionReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/functionReference.kt");
+        }
+
+        @TestMetadata("import.kt")
+        public void testImport() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/import.kt");
+        }
+
+        @TestMetadata("inEnum.kt")
+        public void testInEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/inEnum.kt");
+        }
+
+        @TestMetadata("inEnumEntry.kt")
+        public void testInEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/inEnumEntry.kt");
+        }
+
+        @TestMetadata("inEnumEntry2.kt")
+        public void testInEnumEntry2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/inEnumEntry2.kt");
+        }
+
+        @TestMetadata("inEnumEntry3.kt")
+        public void testInEnumEntry3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/inEnumEntry3.kt");
+        }
+
+        @TestMetadata("javaFakeGetter.kt")
+        public void testJavaFakeGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/javaFakeGetter.kt");
+        }
+
+        @TestMetadata("javaGetter.kt")
+        public void testJavaGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/javaGetter.kt");
+        }
+
+        @TestMetadata("javaGetter2.kt")
+        public void testJavaGetter2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/javaGetter2.kt");
+        }
+
+        @TestMetadata("javaGetter3.kt")
+        public void testJavaGetter3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/javaGetter3.kt");
+        }
+
+        @TestMetadata("javaSetter.kt")
+        public void testJavaSetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/javaSetter.kt");
+        }
+
+        @TestMetadata("javaSetterWithoutGetter.kt")
+        public void testJavaSetterWithoutGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/javaSetterWithoutGetter.kt");
+        }
+
+        @TestMetadata("kotlinGetter.kt")
+        public void testKotlinGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/kotlinGetter.kt");
+        }
+
+        @TestMetadata("methodArgument.kt")
+        public void testMethodArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/methodArgument.kt");
+        }
+
+        @TestMetadata("named.kt")
+        public void testNamed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/named.kt");
+        }
+
+        @TestMetadata("namedWithSameNameFunction.kt")
+        public void testNamedWithSameNameFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/namedWithSameNameFunction.kt");
+        }
+
+        @TestMetadata("namedWithSameNameFunction2.kt")
+        public void testNamedWithSameNameFunction2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/namedWithSameNameFunction2.kt");
+        }
+
+        @TestMetadata("namedWithSameNameProperty.kt")
+        public void testNamedWithSameNameProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/namedWithSameNameProperty.kt");
+        }
+
+        @TestMetadata("notApplicableCollision.kt")
+        public void testNotApplicableCollision() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/notApplicableCollision.kt");
+        }
+
+        @TestMetadata("notApplicableCollision2.kt")
+        public void testNotApplicableCollision2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/notApplicableCollision2.kt");
+        }
+
+        @TestMetadata("notApplicablePackage.kt")
+        public void testNotApplicablePackage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/notApplicablePackage.kt");
+        }
+
+        @TestMetadata("notCompanion.kt")
+        public void testNotCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/notCompanion.kt");
+        }
+
+        @TestMetadata("onlyCompanion.kt")
+        public void testOnlyCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/onlyCompanion.kt");
+        }
+
+        @TestMetadata("sameNameDifferentArgsFunction.kt")
+        public void testSameNameDifferentArgsFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameDifferentArgsFunction.kt");
+        }
+
+        @TestMetadata("sameNameExtensionFunction.kt")
+        public void testSameNameExtensionFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameExtensionFunction.kt");
+        }
+
+        @TestMetadata("sameNameExtensionVariable.kt")
+        public void testSameNameExtensionVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameExtensionVariable.kt");
+        }
+
+        @TestMetadata("sameNameGlobalFunction.kt")
+        public void testSameNameGlobalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameGlobalFunction.kt");
+        }
+
+        @TestMetadata("sameNameGlobalVariable.kt")
+        public void testSameNameGlobalVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameGlobalVariable.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass.kt")
+        public void testSameNameInImplicitReceiverClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass2.kt")
+        public void testSameNameInImplicitReceiverClass2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass2.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass3.kt")
+        public void testSameNameInImplicitReceiverClass3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass3.kt");
+        }
+
+        @TestMetadata("sameNameInImplicitReceiverClass4.kt")
+        public void testSameNameInImplicitReceiverClass4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameInImplicitReceiverClass4.kt");
+        }
+
+        @TestMetadata("sameNameLocalFunction.kt")
+        public void testSameNameLocalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameLocalFunction.kt");
+        }
+
+        @TestMetadata("sameNameLocalVariable.kt")
+        public void testSameNameLocalVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameLocalVariable.kt");
+        }
+
+        @TestMetadata("sameNameLocalVariable2.kt")
+        public void testSameNameLocalVariable2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameLocalVariable2.kt");
+        }
+
+        @TestMetadata("sameNameMemberFunction.kt")
+        public void testSameNameMemberFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameMemberFunction.kt");
+        }
+
+        @TestMetadata("sameNameMemberVariable.kt")
+        public void testSameNameMemberVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameMemberVariable.kt");
+        }
+
+        @TestMetadata("sameNameSuperMemberFunction.kt")
+        public void testSameNameSuperMemberFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameSuperMemberFunction.kt");
+        }
+
+        @TestMetadata("sameNameSuperMemberFunction2.kt")
+        public void testSameNameSuperMemberFunction2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameSuperMemberFunction2.kt");
+        }
+
+        @TestMetadata("sameNameSuperMemberFunction3.kt")
+        public void testSameNameSuperMemberFunction3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameSuperMemberFunction3.kt");
+        }
+
+        @TestMetadata("sameNameSuperMemberVariable.kt")
+        public void testSameNameSuperMemberVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameSuperMemberVariable.kt");
+        }
+
+        @TestMetadata("sameNameSuperMemberVariable2.kt")
+        public void testSameNameSuperMemberVariable2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameSuperMemberVariable2.kt");
+        }
+
+        @TestMetadata("sameNameSuperMemberVariable3.kt")
+        public void testSameNameSuperMemberVariable3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantCompanionReference/sameNameSuperMemberVariable3.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override

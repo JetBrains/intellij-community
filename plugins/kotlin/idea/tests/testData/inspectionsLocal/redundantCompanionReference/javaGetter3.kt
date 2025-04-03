@@ -11,3 +11,6 @@ class K : KK() {
         val description = ""
     }
 }
+
+//KT-76541
+// IGNORE_K2

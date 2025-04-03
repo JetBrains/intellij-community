@@ -6,7 +6,7 @@ class Test {
     fun f(x: Int, y: String) = 2
 
     fun test() {
-        <caret>Companion.f(1, 2)
+        f(1, 2)
     }
 }
 

@@ -93,6 +93,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantEnumConstructorInvocation")
             model("${idea}/inspectionsLocal/orInWhenGuard")
             model("${idea}/inspectionsLocal/convertFromMultiDollarToRegularString")
+            model("${idea}/inspectionsLocal/redundantCompanionReference")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
