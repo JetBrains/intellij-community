@@ -6,11 +6,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.COLLECT_LOGS_NOTIFICATION_GROUP
 import com.intellij.ide.actions.ReportFeedbackService
 import com.intellij.ide.logsUploader.LogPacker
+import com.intellij.ide.logsUploader.LogUploader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.ui.IoErrorText
 import io.netty.channel.ChannelHandlerContext
@@ -56,18 +59,26 @@ private class UploadLogsService : RestService() {
       service<ReportFeedbackService>().coroutineScope.launch {
         try {
           withBackgroundProgress(project, IdeBundle.message("collect.upload.logs.progress.title"), true) {
-            try {
-              val byteOut = BufferExposingByteArrayOutputStream()
-              val uploadedID = LogPacker.uploadLogs(project)
-              JsonFactory().createGenerator(byteOut).useDefaultPrettyPrinter().use { writer ->
-                writer.obj {
-                  writer.writeStringField("Upload_id", uploadedID)
+            reportProgress { reporter ->
+              reporter.indeterminateStep {
+                @Suppress("IncorrectCancellationExceptionHandling")
+                try {
+                  val file = LogPacker.packLogs(project)
+                  checkCanceled()
+                  val uploadedID = LogUploader.uploadFile(file)
+                  LogUploader.notify(project, uploadedID)
+                  val byteOut = BufferExposingByteArrayOutputStream()
+                  JsonFactory().createGenerator(byteOut).useDefaultPrettyPrinter().use { writer ->
+                    writer.obj {
+                      writer.writeStringField("Upload_id", uploadedID)
+                    }
+                  }
+                  send(byteOut, request, context)
+                }
+                catch (_: CancellationException) {
+                  sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
                 }
               }
-              send(byteOut, request, context)
-            }
-            catch (_: CancellationException) {
-              sendStatus(HttpResponseStatus.BAD_REQUEST, false, channel)
             }
           }
         }
