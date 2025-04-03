@@ -6,22 +6,14 @@ import com.jetbrains.env.debug.tasks.PyDebuggerTask
 import com.jetbrains.python.debugger.PyDebuggerException
 import com.jetbrains.python.debugger.QuotingPolicy
 import com.jetbrains.python.debugger.getQuotingString
+import com.jetbrains.python.psi.LanguageLevel
 import org.junit.Assert
 import org.junit.Test
 
 class PythonDebuggerCopyActionTest : PyEnvTestCase() {
   @Test
   fun testGetFullValueFromCopyAction() {
-    runPythonTest(object : PyDebuggerTask("/debug", "test_get_full_value_from_copy_action.py") {
-      private val MINIMAL_LENGTH = 10000
-
-      @Throws(PyDebuggerException::class)
-      fun testLength(value: String?) {
-        // PyXCopyAction uses PyFullValueEvaluator, it uses myDebugProcess.evaluate
-        val result = myDebugProcess.evaluate(value, false, false)
-        Assert.assertTrue(result.value!!.length > MINIMAL_LENGTH)
-      }
-
+    runPythonTest(object : CopyValueTestCase("test_get_full_value_from_copy_action.py", 10000) {
       override fun before() {
         toggleBreakpoint(getFilePath(scriptName), 5)
       }
@@ -34,6 +26,23 @@ class PythonDebuggerCopyActionTest : PyEnvTestCase() {
       }
     })
   }
+
+  @Test
+  fun testGetFullValueFromCopyActionClass() {
+    runPythonTest(object : CopyValueTestCase("test_get_full_value_from_copy_action_class.py", 400) {
+      override fun before() {
+        toggleBreakpoint(getFilePath(scriptName), 38)
+      }
+
+      @Throws(Exception::class)
+      override fun testing() {
+        waitForPause()
+        testLength("foo")
+        resume()
+      }
+    })
+  }
+
 
   @Test
   fun testQuotingInCopyAction() {
@@ -68,5 +77,18 @@ class PythonDebuggerCopyActionTest : PyEnvTestCase() {
         resume()
       }
     })
+  }
+}
+
+private open class CopyValueTestCase(scriptName: String, private val minLen: Int): PyDebuggerTask("/debug", scriptName) {
+  @Throws(PyDebuggerException::class)
+  fun testLength(value: String?) {
+    // PyXCopyAction uses PyFullValueEvaluator, it uses myDebugProcess.evaluate
+    val result = myDebugProcess.evaluate(value, false, false)
+    Assert.assertTrue(result.value!!.length > minLen)
+  }
+
+  override fun isLanguageLevelSupported(level: LanguageLevel): Boolean {
+    return level > LanguageLevel.PYTHON27
   }
 }
