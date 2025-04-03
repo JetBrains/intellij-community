@@ -19,6 +19,8 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -279,19 +281,21 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture.configureByFiles("lib/p/Test.java");
     final PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
 
-    var manager = ModCommandAwareExternalAnnotationsManager.getInstance(myFixture.getProject());
+    Project project = myFixture.getProject();
+    var manager = ModCommandAwareExternalAnnotationsManager.getInstance(project);
     ModCommand command = manager.annotateExternallyModCommand(method, AnnotationUtil.NOT_NULL, null);
     VirtualFile parentDir = myFixture.getFile().getVirtualFile().getParent();
-    VirtualFile annoDir =
-      WriteCommandAction.runWriteCommandAction(
-        myFixture.getProject(),
-        (ThrowableComputable<VirtualFile, IOException>)() -> parentDir.createChildDirectory(this, "anno"));
+    VirtualFile annoDir = WriteCommandAction.runWriteCommandAction(
+      project,
+      (ThrowableComputable<VirtualFile, IOException>)() -> parentDir.createChildDirectory(this, "anno"));
     ModCommand withPath = ((ModEditOptions<?>)command).applyOptions(Map.of("myExternalAnnotationsRoot", annoDir.getPath()));
 
-    assertNull(manager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL));
+    assertNull(DumbService.getInstance(project)
+                 .computeWithAlternativeResolveEnabled(() -> manager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL)));
     ModCommandExecutor.executeInteractively(ActionContext.from(null, myFixture.getFile()), "", null, () -> withPath);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL));
+    assertNotNull(DumbService.getInstance(project)
+                 .computeWithAlternativeResolveEnabled(() -> manager.findExternalAnnotation(method, AnnotationUtil.NOT_NULL)));
   }
 
   public void testListenerNotifiedOnExternalChanges() throws IOException {
