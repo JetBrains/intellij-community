@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -158,7 +158,7 @@ public class MemberModel {
     }
 
     private @Nullable PsiJavaToken parseThrowsClause(@Nullable PsiJavaToken token) {
-      if (!(token instanceof PsiKeyword) || !PsiKeywords.THROWS.equals(token.getText())) return token;
+      if (!(token instanceof PsiKeyword) || !JavaKeywords.THROWS.equals(token.getText())) return token;
       token = tryCast(nextChild(), PsiIdentifier.class);
       if (token == null) return null;
       token = tryCast(parseQualifiedType(nextChild()), PsiJavaToken.class);

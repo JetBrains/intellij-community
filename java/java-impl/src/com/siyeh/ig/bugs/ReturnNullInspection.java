@@ -13,7 +13,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -138,7 +138,7 @@ public final class ReturnNullInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
       super.visitLiteralExpression(value);
       final String text = value.getText();
-      if (!PsiKeywords.NULL.equals(text)) {
+      if (!JavaKeywords.NULL.equals(text)) {
         return;
       }
       final PsiElement parent = ExpressionUtils.getPassThroughParent(value);

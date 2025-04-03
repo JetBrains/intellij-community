@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.RemoveAnnotationQuickFix
 import com.intellij.java.analysis.JavaAnalysisBundle
-import com.intellij.java.syntax.parser.PsiKeywords
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
@@ -55,7 +55,7 @@ class RedundantScheduledForRemovalAnnotationInspection : LocalInspectionTool() {
       val deprecatedAnnotation = forRemovalAnnotation.owner?.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) ?: return
       val javaFile = forRemovalAnnotation.containingFile as? PsiJavaFile
       forRemovalAnnotation.delete()
-      val trueLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeywords.TRUE, null)
+      val trueLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(JavaKeywords.TRUE, null)
       deprecatedAnnotation.setDeclaredAttributeValue("forRemoval", trueLiteral)
       if (javaFile != null) {
         JavaCodeStyleManager.getInstance(project).removeRedundantImports(javaFile)

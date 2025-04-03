@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -76,7 +76,7 @@ public final class JavaHighlightUtil {
   }
 
   public static @NotNull String formatType(@Nullable PsiType type) {
-    return type == null ? PsiKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+    return type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
   private static @Nullable PsiType getArrayInitializerType(@NotNull PsiArrayInitializerExpression element) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDirectory;
@@ -33,7 +33,7 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
     CharSequence requires = requiresText();
     CharSequence exports = exportsText();
 
-    return new StringBuilder().append(PsiKeywords.MODULE).append(" ").append(node().getName()).append(" {\n")
+    return new StringBuilder().append(JavaKeywords.MODULE).append(" ").append(node().getName()).append(" {\n")
       .append(requires)
       .append((!requires.isEmpty() && !exports.isEmpty()) ? "\n" : "")
       .append(exports)
@@ -49,12 +49,12 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
       boolean isBadSyntax = ContainerUtil.or(dependencyName.split("\\."),
                                              part -> PsiUtil.isKeyword(part, LanguageLevel.JDK_1_9));
 
-      text.append(isBadSyntax ? "// " : " ").append(PsiKeywords.REQUIRES).append(' ');
+      text.append(isBadSyntax ? "// " : " ").append(JavaKeywords.REQUIRES).append(' ');
       if(dependency.getValue().contains(STATIC)) {
-        text.append(PsiKeywords.STATIC).append(' ');
+        text.append(JavaKeywords.STATIC).append(' ');
       }
       if(dependency.getValue().contains(TRANSITIVE)) {
-        text.append(PsiKeywords.TRANSITIVE).append(' ');
+        text.append(JavaKeywords.TRANSITIVE).append(' ');
       }
       text.append(dependencyName).append(";\n");
     }
@@ -64,7 +64,7 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
   private @NotNull CharSequence exportsText() {
     StringBuilder text = new StringBuilder();
     for (String packageName : node().getExports()) {
-      text.append(PsiKeywords.EXPORTS).append(' ').append(packageName).append(";\n");
+      text.append(JavaKeywords.EXPORTS).append(' ').append(packageName).append(";\n");
     }
     return text;
   }

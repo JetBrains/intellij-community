@@ -5,7 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -29,13 +29,13 @@ public final class OnlyOneElementUsedInspection extends AbstractBaseJavaLocalIns
 
   private static class RedundantElementAccessVisitor extends JavaElementVisitor {
     private static final CallMatcher LIST_GET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "get")
-      .parameterTypes(PsiKeywords.INT);
+      .parameterTypes(JavaKeywords.INT);
     private static final CallMatcher LIST_CONSTRUCTOR = CallMatcher.anyOf(
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"),
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList")
     );
     private static final CallMatcher STRING_CHAR_AT = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "charAt")
-      .parameterTypes(PsiKeywords.INT);
+      .parameterTypes(JavaKeywords.INT);
     private final @NotNull ProblemsHolder myHolder;
 
     private RedundantElementAccessVisitor(@NotNull ProblemsHolder holder) { myHolder = holder; }

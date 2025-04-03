@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -33,7 +33,7 @@ public class NegationBroadScopeFix extends PsiUpdateModCommandAction<PsiPrefixEx
     String rop;
     if (parent instanceof PsiInstanceOfExpression instanceOf) {
       if (instanceOf.getOperand() != expression) return null;
-      text += PsiKeywords.INSTANCEOF + " ";
+      text += JavaKeywords.INSTANCEOF + " ";
       final PsiTypeElement typeElement = instanceOf.getCheckType();
       rop = typeElement == null ? "" : typeElement.getText();
     }

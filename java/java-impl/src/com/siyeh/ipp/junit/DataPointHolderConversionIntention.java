@@ -2,7 +2,7 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -83,7 +83,7 @@ public final class DataPointHolderConversionIntention extends PsiUpdateModComman
     assert body != null;
 
     final PsiStatement methodCode =
-      elementFactory.createStatementFromText(PsiKeywords.RETURN + " " + requireNonNull(fieldInitializer).getText() + ";", null);
+      elementFactory.createStatementFromText(JavaKeywords.RETURN + " " + requireNonNull(fieldInitializer).getText() + ";", null);
     body.add(methodCode);
     return method;
   }

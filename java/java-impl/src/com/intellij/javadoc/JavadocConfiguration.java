@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.NlsSafe;
 
 /**
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsSafe;
  */
 public class JavadocConfiguration {
   public String OUTPUT_DIRECTORY;
-  public @NlsSafe String OPTION_SCOPE = PsiKeywords.PROTECTED;
+  public @NlsSafe String OPTION_SCOPE = JavaKeywords.PROTECTED;
   public boolean OPTION_HIERARCHY = true;
   public boolean OPTION_NAVIGATOR = true;
   public boolean OPTION_INDEX = true;

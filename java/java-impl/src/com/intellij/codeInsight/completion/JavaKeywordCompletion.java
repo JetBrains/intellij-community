@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Conditions;
@@ -48,7 +48,7 @@ public class JavaKeywordCompletion {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
   static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL =
-    psiElement().afterLeaf(PsiKeywords.FINAL).inside(PsiDeclarationStatement.class);
+    psiElement().afterLeaf(JavaKeywords.FINAL).inside(PsiDeclarationStatement.class);
 
   private static final ElementPattern<PsiElement> INSIDE_PARAMETER_LIST =
     psiElement().withParent(
@@ -108,17 +108,17 @@ public class JavaKeywordCompletion {
 
   private static final ElementPattern<PsiElement> SUPER_OR_THIS_PATTERN =
     and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
-        not(psiElement().afterLeaf(PsiKeywords.CASE)),
-        not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeywords.THIS, PsiKeywords.SUPER))),
+        not(psiElement().afterLeaf(JavaKeywords.CASE)),
+        not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(JavaKeywords.THIS, JavaKeywords.SUPER))),
         not(psiElement().inside(PsiAnnotation.class)),
         not(START_SWITCH),
         not(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN));
 
   static final Set<String> PRIMITIVE_TYPES = ContainerUtil.newLinkedHashSet(
-    PsiKeywords.SHORT, PsiKeywords.BOOLEAN,
-    PsiKeywords.DOUBLE, PsiKeywords.LONG,
-    PsiKeywords.INT, PsiKeywords.FLOAT,
-    PsiKeywords.CHAR, PsiKeywords.BYTE
+    JavaKeywords.SHORT, JavaKeywords.BOOLEAN,
+    JavaKeywords.DOUBLE, JavaKeywords.LONG,
+    JavaKeywords.INT, JavaKeywords.FLOAT,
+    JavaKeywords.CHAR, JavaKeywords.BYTE
   );
 
   static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for"));
@@ -202,8 +202,8 @@ public class JavaKeywordCompletion {
       .withText("}")
       .withParent(psiElement(PsiCodeBlock.class).withParent(or(psiElement(PsiTryStatement.class), psiElement(PsiCatchSection.class))))
       .accepts(myPrevLeaf)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.CATCH), JavaTailTypes.CATCH_LPARENTH));
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.FINALLY), JavaTailTypes.FINALLY_LBRACE));
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.CATCH), JavaTailTypes.CATCH_LPARENTH));
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.FINALLY), JavaTailTypes.FINALLY_LBRACE));
       List<LookupElement> elements = CatchLookupElement.create(myPrevLeaf);
       for (LookupElement element : elements) {
         addKeyword(element);
@@ -213,18 +213,18 @@ public class JavaKeywordCompletion {
       }
     }
 
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.SWITCH), JavaTailTypes.SWITCH_LPARENTH));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.WHILE), JavaTailTypes.WHILE_LPARENTH));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.DO), JavaTailTypes.DO_LBRACE));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.FOR), JavaTailTypes.FOR_LPARENTH));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.IF), JavaTailTypes.IF_LPARENTH));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.TRY), JavaTailTypes.TRY_LBRACE));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.THROW), TailTypes.insertSpaceType()));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.NEW), TailTypes.insertSpaceType()));
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.SYNCHRONIZED), JavaTailTypes.SYNCHRONIZED_LPARENTH));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.SWITCH), JavaTailTypes.SWITCH_LPARENTH));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.WHILE), JavaTailTypes.WHILE_LPARENTH));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.DO), JavaTailTypes.DO_LBRACE));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.FOR), JavaTailTypes.FOR_LPARENTH));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.IF), JavaTailTypes.IF_LPARENTH));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.TRY), JavaTailTypes.TRY_LBRACE));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.THROW), TailTypes.insertSpaceType()));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.NEW), TailTypes.insertSpaceType()));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.SYNCHRONIZED), JavaTailTypes.SYNCHRONIZED_LPARENTH));
 
     if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, myPosition)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.ASSERT), TailTypes.insertSpaceType()));
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.ASSERT), TailTypes.insertSpaceType()));
     }
 
     if (!psiElement().inside(PsiSwitchExpression.class).accepts(myPosition) ||
@@ -234,15 +234,15 @@ public class JavaKeywordCompletion {
 
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(myPrevLeaf) ||
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(myPrevLeaf)) {
-      LookupElement elseKeyword = new OverridableSpace(createKeyword(PsiKeywords.ELSE), TailTypes.humbleSpaceBeforeWordType());
+      LookupElement elseKeyword = new OverridableSpace(createKeyword(JavaKeywords.ELSE), TailTypes.humbleSpaceBeforeWordType());
       CharSequence text = myParameters.getEditor().getDocument().getCharsSequence();
       int offset = myParameters.getOffset();
       while (text.length() > offset && Character.isWhitespace(text.charAt(offset))) {
         offset++;
       }
-      if (text.length() > offset + PsiKeywords.ELSE.length() &&
-          text.subSequence(offset, offset + PsiKeywords.ELSE.length()).toString().equals(PsiKeywords.ELSE) &&
-          Character.isWhitespace(text.charAt(offset + PsiKeywords.ELSE.length()))) {
+      if (text.length() > offset + JavaKeywords.ELSE.length() &&
+          text.subSequence(offset, offset + JavaKeywords.ELSE.length()).toString().equals(JavaKeywords.ELSE) &&
+          Character.isWhitespace(text.charAt(offset + JavaKeywords.ELSE.length()))) {
         elseKeyword = PrioritizedLookupElement.withPriority(elseKeyword, -1);
       }
       addKeyword(elseKeyword);
@@ -251,7 +251,7 @@ public class JavaKeywordCompletion {
 
   private @NotNull LookupElement createReturnKeyword() {
     TailType returnTail = getReturnTail(myPosition);
-    LookupElement ret = createKeyword(PsiKeywords.RETURN);
+    LookupElement ret = createKeyword(JavaKeywords.RETURN);
     if (returnTail != TailTypes.noneType()) {
       ret = new OverridableSpace(ret, returnTail);
     }
@@ -351,7 +351,7 @@ public class JavaKeywordCompletion {
     }
 
     final OverridableSpace defaultCaseRule =
-      new OverridableSpace(createKeyword(PsiKeywords.DEFAULT), JavaTailTypes.forSwitchLabel(switchBlock));
+      new OverridableSpace(createKeyword(JavaKeywords.DEFAULT), JavaTailTypes.forSwitchLabel(switchBlock));
     addKeyword(prioritizeForRule(LookupElementDecorator.withInsertHandler(defaultCaseRule, ADJUST_LINE_OFFSET), switchBlock));
   }
 
@@ -392,22 +392,22 @@ public class JavaKeywordCompletion {
     if (!(parentOfPattern instanceof PsiCaseLabelElementList)) {
       return;
     }
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.WHEN), TailTypes.insertSpaceType()));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.WHEN), TailTypes.insertSpaceType()));
   }
 
   private void addSwitchRuleKeywords(@NotNull PsiSwitchLabeledRuleStatement rule) {
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.THROW), TailTypes.insertSpaceType()));
-    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeywords.ASSERT), TailTypes.insertSpaceType())));
-    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeywords.WHILE), JavaTailTypes.WHILE_LPARENTH)));
-    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeywords.DO), JavaTailTypes.DO_LBRACE)));
-    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeywords.FOR), JavaTailTypes.FOR_LPARENTH)));
-    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeywords.IF), JavaTailTypes.IF_LPARENTH)));
-    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeywords.TRY), JavaTailTypes.TRY_LBRACE)));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.THROW), TailTypes.insertSpaceType()));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(JavaKeywords.ASSERT), TailTypes.insertSpaceType())));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(JavaKeywords.WHILE), JavaTailTypes.WHILE_LPARENTH)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(JavaKeywords.DO), JavaTailTypes.DO_LBRACE)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(JavaKeywords.FOR), JavaTailTypes.FOR_LPARENTH)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(JavaKeywords.IF), JavaTailTypes.IF_LPARENTH)));
+    addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(JavaKeywords.TRY), JavaTailTypes.TRY_LBRACE)));
     if (rule.getEnclosingSwitchBlock() instanceof PsiSwitchStatement) {
       addKeyword(wrapRuleIntoBlock(createReturnKeyword()));
     }
     else {
-      addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(PsiKeywords.YIELD), TailTypes.insertSpaceType())));
+      addKeyword(wrapRuleIntoBlock(new OverridableSpace(createKeyword(JavaKeywords.YIELD), TailTypes.insertSpaceType())));
     }
   }
 
@@ -458,7 +458,7 @@ public class JavaKeywordCompletion {
     final PsiType selectorType = getSelectorType(switchBlock);
     if (selectorType instanceof PsiPrimitiveType) return;
 
-    addKeyword(createKeyword(PsiKeywords.NULL));
+    addKeyword(createKeyword(JavaKeywords.NULL));
   }
 
   private boolean isInsideCaseLabel() {
@@ -468,7 +468,7 @@ public class JavaKeywordCompletion {
 
   private void addVar() {
     if (isVarAllowed()) {
-      addKeyword(createKeyword(PsiKeywords.VAR));
+      addKeyword(createKeyword(JavaKeywords.VAR));
     }
   }
 
@@ -500,7 +500,7 @@ public class JavaKeywordCompletion {
 
   boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
     if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
-      for (String keyword : ContainerUtil.ar(PsiKeywords.EXTENDS, PsiKeywords.SUPER)) {
+      for (String keyword : ContainerUtil.ar(JavaKeywords.EXTENDS, JavaKeywords.SUPER)) {
         if (myKeywordMatcher.isStartMatch(keyword)) {
           LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, keyword);
           result.addElement(new OverridableSpace(item, TailTypes.humbleSpaceBeforeWordType()));
@@ -515,10 +515,10 @@ public class JavaKeywordCompletion {
     if (psiElement().withText(")").withParents(PsiParameterList.class, PsiMethod.class).accepts(myPrevLeaf)) {
       assert myPrevLeaf != null;
       if (myPrevLeaf.getParent().getParent() instanceof PsiAnnotationMethod) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.DEFAULT), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.DEFAULT), TailTypes.humbleSpaceBeforeWordType()));
       }
       else {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.THROWS), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.THROWS), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
   }
@@ -528,12 +528,12 @@ public class JavaKeywordCompletion {
     if (switchBlock == null) return;
     PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
     if (defaultElement != null && defaultElement.getTextRange().getStartOffset() < myPosition.getTextRange().getStartOffset()) return;
-    addKeyword(new OverridableSpace(createKeyword(PsiKeywords.CASE), TailTypes.insertSpaceType()));
+    addKeyword(new OverridableSpace(createKeyword(JavaKeywords.CASE), TailTypes.insertSpaceType()));
     if (defaultElement != null) {
       return;
     }
     final OverridableSpace defaultCaseRule =
-      new OverridableSpace(createKeyword(PsiKeywords.DEFAULT), JavaTailTypes.forSwitchLabel(switchBlock));
+      new OverridableSpace(createKeyword(JavaKeywords.DEFAULT), JavaTailTypes.forSwitchLabel(switchBlock));
     addKeyword(prioritizeForRule(LookupElementDecorator.withInsertHandler(defaultCaseRule, ADJUST_LINE_OFFSET), switchBlock));
   }
 
@@ -551,10 +551,10 @@ public class JavaKeywordCompletion {
 
     final TailType caseRuleTail = JavaTailTypes.forSwitchLabel(switchBlock);
     Set<String> containedLabels = getSwitchCoveredLabels(switchBlock, myPosition);
-    if (!containedLabels.contains(PsiKeywords.NULL)) {
-      addKeyword(createCaseRule(PsiKeywords.NULL, caseRuleTail, switchBlock));
-      if (!containedLabels.contains(PsiKeywords.DEFAULT)) {
-        addKeyword(createCaseRule(PsiKeywords.NULL + ", " + PsiKeywords.DEFAULT, caseRuleTail, switchBlock));
+    if (!containedLabels.contains(JavaKeywords.NULL)) {
+      addKeyword(createCaseRule(JavaKeywords.NULL, caseRuleTail, switchBlock));
+      if (!containedLabels.contains(JavaKeywords.DEFAULT)) {
+        addKeyword(createCaseRule(JavaKeywords.NULL + ", " + JavaKeywords.DEFAULT, caseRuleTail, switchBlock));
       }
     }
     addSealedHierarchyCases(selectorType, containedLabels);
@@ -573,7 +573,7 @@ public class JavaKeywordCompletion {
     for (PsiStatement statement : body.getStatements()) {
       if (!(statement instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
       if (labelStatement.isDefaultCase()) {
-        labels.add(PsiKeywords.DEFAULT);
+        labels.add(JavaKeywords.DEFAULT);
         continue;
       }
       if (labelStatement.getGuardExpression() != null) {
@@ -586,11 +586,11 @@ public class JavaKeywordCompletion {
       for (PsiCaseLabelElement element : list.getElements()) {
         if (element instanceof PsiExpression expr &&
             ExpressionUtils.isNullLiteral(expr)) {
-          labels.add(PsiKeywords.NULL);
+          labels.add(JavaKeywords.NULL);
           continue;
         }
         if (element instanceof PsiDefaultCaseLabelElement) {
-          labels.add(PsiKeywords.DEFAULT);
+          labels.add(JavaKeywords.DEFAULT);
         }
         if (element.getTextRange().getStartOffset() >= offset) {
           break;
@@ -718,7 +718,7 @@ public class JavaKeywordCompletion {
         if (tryStatement == null ||
             tryStatement.getCatchSections().length > 0 ||
             tryStatement.getFinallyBlock() != null || tryStatement.getResourceList() != null) {
-          LookupElement finalKeyword = new OverridableSpace(createKeyword(PsiKeywords.FINAL), TailTypes.humbleSpaceBeforeWordType());
+          LookupElement finalKeyword = new OverridableSpace(createKeyword(JavaKeywords.FINAL), TailTypes.humbleSpaceBeforeWordType());
           if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
             finalKeyword = wrapRuleIntoBlock(finalKeyword);
           }
@@ -729,9 +729,9 @@ public class JavaKeywordCompletion {
     }
 
     if ((isInsideParameterList(myPosition) || isAtCatchOrResourceVariableStart(myPosition)) &&
-        !psiElement().afterLeaf(PsiKeywords.FINAL).accepts(myPosition) &&
+        !psiElement().afterLeaf(JavaKeywords.FINAL).accepts(myPosition) &&
         !AFTER_DOT.accepts(myPosition)) {
-      addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeywords.FINAL), TailTypes.humbleSpaceBeforeWordType()));
+      addKeyword(TailTypeDecorator.withTail(createKeyword(JavaKeywords.FINAL), TailTypes.humbleSpaceBeforeWordType()));
     }
   }
 
@@ -742,10 +742,10 @@ public class JavaKeywordCompletion {
       final boolean insideInheritorClass = PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myPosition) && isInsideInheritorClass();
       if (!afterDot || insideQualifierClass || insideInheritorClass) {
         if (!afterDot || insideQualifierClass) {
-          addKeyword(createKeyword(PsiKeywords.THIS));
+          addKeyword(createKeyword(JavaKeywords.THIS));
         }
 
-        final LookupElement superItem = createKeyword(PsiKeywords.SUPER);
+        final LookupElement superItem = createKeyword(JavaKeywords.SUPER);
         if (psiElement().afterLeaf(psiElement().withText("{").withSuperParent(2, psiMethod().constructor(true))).accepts(myPosition)) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(myPosition, PsiMethod.class, false, PsiClass.class);
           assert method != null;
@@ -777,23 +777,23 @@ public class JavaKeywordCompletion {
       boolean allowExprKeywords = !(grandParent instanceof PsiExpressionStatement) && !(grandParent instanceof PsiUnaryExpression);
       if (PsiTreeUtil.getParentOfType(myPosition, PsiAnnotation.class) == null) {
         if (!statementPosition) {
-          addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeywords.NEW), TailTypes.insertSpaceType()));
+          addKeyword(TailTypeDecorator.withTail(createKeyword(JavaKeywords.NEW), TailTypes.insertSpaceType()));
           if (PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, myPosition)) {
-            addKeyword(new OverridableSpace(createKeyword(PsiKeywords.SWITCH), JavaTailTypes.SWITCH_LPARENTH));
+            addKeyword(new OverridableSpace(createKeyword(JavaKeywords.SWITCH), JavaTailTypes.SWITCH_LPARENTH));
           }
         }
         if (allowExprKeywords) {
-          addKeyword(createKeyword(PsiKeywords.NULL));
+          addKeyword(createKeyword(JavaKeywords.NULL));
         }
       }
       if (allowExprKeywords && mayExpectBoolean(myParameters)) {
-        addKeyword(createKeyword(PsiKeywords.TRUE));
-        addKeyword(createKeyword(PsiKeywords.FALSE));
+        addKeyword(createKeyword(JavaKeywords.TRUE));
+        addKeyword(createKeyword(JavaKeywords.FALSE));
       }
     }
 
     if (isQualifiedNewContext()) {
-      addKeyword(createKeyword(PsiKeywords.NEW));
+      addKeyword(createKeyword(JavaKeywords.NEW));
     }
   }
 
@@ -829,31 +829,31 @@ public class JavaKeywordCompletion {
       if (myPrevLeaf == null ||
           bogusDeclarationInImplicitClass && file instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null &&
           javaFile.getImportList() != null && javaFile.getImportList().getAllImportStatements().length == 0) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
       else if (psiElement().inside(psiAnnotation().withParents(PsiModifierList.class, PsiFile.class)).accepts(myPrevLeaf)
                && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
       }
       else if (isEndOfBlock(myPosition) && (parentMember == null || bogusDeclarationInImplicitClass)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
 
-    if (PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, file) && myPrevLeaf != null && myPrevLeaf.textMatches(PsiKeywords.IMPORT)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.STATIC), TailTypes.humbleSpaceBeforeWordType()));
+    if (PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, file) && myPrevLeaf != null && myPrevLeaf.textMatches(JavaKeywords.IMPORT)) {
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.STATIC), TailTypes.humbleSpaceBeforeWordType()));
     }
 
-    if (PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, file) && myPrevLeaf != null && myPrevLeaf.textMatches(PsiKeywords.IMPORT)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.MODULE), TailTypes.humbleSpaceBeforeWordType()));
+    if (PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, file) && myPrevLeaf != null && myPrevLeaf.textMatches(JavaKeywords.IMPORT)) {
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.MODULE), TailTypes.humbleSpaceBeforeWordType()));
     }
   }
 
   private void addInstanceof() {
     if (isInstanceofPlace(myPosition)) {
       addKeyword(LookupElementDecorator.withInsertHandler(
-        createKeyword(PsiKeywords.INSTANCEOF),
+        createKeyword(JavaKeywords.INSTANCEOF),
         (context, item) -> {
           TailType tailType = TailTypes.humbleSpaceBeforeWordType();
           if (tailType.isApplicable(context)) {
@@ -894,28 +894,28 @@ public class JavaKeywordCompletion {
       }
 
       if (psiElement().insideStarting(psiElement(PsiLocalVariable.class, PsiExpressionStatement.class)).accepts(myPosition)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.CLASS), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.CLASS), TailTypes.humbleSpaceBeforeWordType()));
         addKeyword(new OverridableSpace(LookupElementBuilder.create("abstract class").bold(), TailTypes.humbleSpaceBeforeWordType()));
         if (PsiUtil.isAvailable(JavaFeature.RECORDS, myPosition)) {
-          addKeyword(new OverridableSpace(createKeyword(PsiKeywords.RECORD), TailTypes.humbleSpaceBeforeWordType()));
+          addKeyword(new OverridableSpace(createKeyword(JavaKeywords.RECORD), TailTypes.humbleSpaceBeforeWordType()));
         }
         if (PsiUtil.isAvailable(JavaFeature.LOCAL_ENUMS, myPosition)) {
-          addKeyword(new OverridableSpace(createKeyword(PsiKeywords.ENUM), TailTypes.humbleSpaceBeforeWordType()));
+          addKeyword(new OverridableSpace(createKeyword(JavaKeywords.ENUM), TailTypes.humbleSpaceBeforeWordType()));
         }
         if (PsiUtil.isAvailable(JavaFeature.LOCAL_INTERFACES, myPosition)) {
-          addKeyword(new OverridableSpace(createKeyword(PsiKeywords.INTERFACE), TailTypes.humbleSpaceBeforeWordType()));
+          addKeyword(new OverridableSpace(createKeyword(JavaKeywords.INTERFACE), TailTypes.humbleSpaceBeforeWordType()));
         }
       }
       if (PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class) == null &&
           PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
         List<String> keywords = new ArrayList<>();
-        keywords.add(PsiKeywords.CLASS);
-        keywords.add(PsiKeywords.INTERFACE);
+        keywords.add(JavaKeywords.CLASS);
+        keywords.add(JavaKeywords.INTERFACE);
         if (PsiUtil.isAvailable(JavaFeature.RECORDS, myPosition)) {
-          keywords.add(PsiKeywords.RECORD);
+          keywords.add(JavaKeywords.RECORD);
         }
         if (PsiUtil.isAvailable(JavaFeature.ENUMS, myPosition)) {
-          keywords.add(PsiKeywords.ENUM);
+          keywords.add(JavaKeywords.ENUM);
         }
         String className = recommendClassName();
         for (String keyword : keywords) {
@@ -931,7 +931,7 @@ public class JavaKeywordCompletion {
 
     if (psiElement().withText("@").andNot(psiElement().inside(PsiParameterList.class)).andNot(psiElement().inside(psiNameValuePair()))
       .accepts(myPrevLeaf)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.INTERFACE), TailTypes.humbleSpaceBeforeWordType()));
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.INTERFACE), TailTypes.humbleSpaceBeforeWordType()));
     }
   }
 
@@ -960,7 +960,7 @@ public class JavaKeywordCompletion {
         Document document = context.getDocument();
         int offset = context.getTailOffset();
         String suffix = " ";
-        if (keyword.equals(PsiKeywords.RECORD)) {
+        if (keyword.equals(JavaKeywords.RECORD)) {
           if (JavaTokenType.LPARENTH.equals(nextToken)) {
             suffix = "";
           }
@@ -985,7 +985,7 @@ public class JavaKeywordCompletion {
 
   private @Nullable String recommendClassName() {
     if (myPrevLeaf == null) return null;
-    if (!myPrevLeaf.textMatches(PsiKeywords.PUBLIC) || !(myPrevLeaf.getParent() instanceof PsiModifierList)) return null;
+    if (!myPrevLeaf.textMatches(JavaKeywords.PUBLIC) || !(myPrevLeaf.getParent() instanceof PsiModifierList)) return null;
 
     if (nextIsIdentifier(myPosition)) return null;
 
@@ -1026,7 +1026,7 @@ public class JavaKeywordCompletion {
 
   private void addClassLiteral() {
     if (isAfterTypeDot(myPosition)) {
-      addKeyword(createKeyword(PsiKeywords.CLASS));
+      addKeyword(createKeyword(JavaKeywords.CLASS));
     }
   }
 
@@ -1054,7 +1054,7 @@ public class JavaKeywordCompletion {
 
     if (psiClass != null) {
       if (!psiClass.isEnum() && !psiClass.isRecord()) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.EXTENDS), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.EXTENDS), TailTypes.humbleSpaceBeforeWordType()));
         if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, psiClass)) {
           PsiModifierList modifiers = psiClass.getModifierList();
           if (myParameters.getInvocationCount() > 1 ||
@@ -1071,14 +1071,14 @@ public class JavaKeywordCompletion {
               }
             };
             LookupElement element =
-              new OverridableSpace(LookupElementDecorator.withInsertHandler(createKeyword(PsiKeywords.PERMITS), handler),
+              new OverridableSpace(LookupElementDecorator.withInsertHandler(createKeyword(JavaKeywords.PERMITS), handler),
                                    TailTypes.humbleSpaceBeforeWordType());
             addKeyword(element);
           }
         }
       }
       if (!psiClass.isInterface() && !(psiClass instanceof PsiTypeParameter)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.IMPLEMENTS), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.IMPLEMENTS), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
   }
@@ -1159,7 +1159,7 @@ public class JavaKeywordCompletion {
     return psiElement().withParent(
       psiReferenceExpression().withFirstChild(
         psiElement(PsiClassObjectAccessExpression.class).withLastChild(
-          not(psiElement().withText(PsiKeywords.CLASS))))).accepts(element);
+          not(psiElement().withText(JavaKeywords.CLASS))))).accepts(element);
   }
 
   static boolean isAfterTypeDot(PsiElement position) {
@@ -1204,7 +1204,7 @@ public class JavaKeywordCompletion {
             .map(branch -> branch.toString())
             .collect(Collectors.toSet());
           TailType tailType = JavaTailTypes.forSwitchLabel(switchBlock);
-          for (String keyword : List.of(PsiKeywords.TRUE, PsiKeywords.FALSE)) {
+          for (String keyword : List.of(JavaKeywords.TRUE, JavaKeywords.FALSE)) {
             if(branches.contains(keyword)) continue;
             result.accept(new JavaKeywordCompletion.OverridableSpace(
               BasicExpressionCompletionContributor.createKeywordLookupItem(position, keyword), tailType));
@@ -1250,16 +1250,16 @@ public class JavaKeywordCompletion {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
         }
       }
-      if (expressionPosition && !session.isKeywordAlreadyProcessed(PsiKeywords.VOID)) {
-        result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeywords.VOID));
+      if (expressionPosition && !session.isKeywordAlreadyProcessed(JavaKeywords.VOID)) {
+        result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, JavaKeywords.VOID));
       }
     }
     if (declaration) {
-      LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeywords.VOID);
+      LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, JavaKeywords.VOID);
       result.consume(new OverridableSpace(item, TailTypes.humbleSpaceBeforeWordType()));
     }
     else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
-      result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeywords.VOID));
+      result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, JavaKeywords.VOID));
     }
   }
 
@@ -1293,7 +1293,7 @@ public class JavaKeywordCompletion {
    */
   private static boolean afterCaseForType(@Nullable PsiElement position) {
     if (position == null) return false;
-    return psiElement().afterLeaf(PsiKeywords.CASE).accepts(position) &&
+    return psiElement().afterLeaf(JavaKeywords.CASE).accepts(position) &&
            ((position.getParent() instanceof PsiReferenceExpression referenceExpression &&
              referenceExpression.getParent() instanceof PsiCaseLabelElementList)
             || (position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&
@@ -1368,8 +1368,8 @@ public class JavaKeywordCompletion {
     PsiLoopStatement loop =
       PsiTreeUtil.getParentOfType(myPosition, PsiLoopStatement.class, true, PsiLambdaExpression.class, PsiMember.class);
 
-    LookupElement br = createKeyword(PsiKeywords.BREAK);
-    LookupElement cont = createKeyword(PsiKeywords.CONTINUE);
+    LookupElement br = createKeyword(JavaKeywords.BREAK);
+    LookupElement cont = createKeyword(JavaKeywords.CONTINUE);
     TailType tailType;
     if (psiElement().insideSequence(true, psiElement(PsiLabeledStatement.class),
                                     or(psiElement(PsiFile.class), psiElement(PsiMethod.class),
@@ -1391,7 +1391,7 @@ public class JavaKeywordCompletion {
     }
     else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition) &&
              PsiUtil.isAvailable(JavaFeature.SWITCH_EXPRESSION, myPosition)) {
-      addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeywords.YIELD), TailTypes.insertSpaceType()));
+      addKeyword(TailTypeDecorator.withTail(createKeyword(JavaKeywords.YIELD), TailTypes.insertSpaceType()));
     }
 
     for (PsiLabeledStatement labeled : psiApi().parents(myPosition).takeWhile(notInstanceOf(PsiMember.class))
@@ -1497,43 +1497,43 @@ public class JavaKeywordCompletion {
     PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myPosition.getParent());
 
     if (context instanceof PsiField && context.getParent() instanceof PsiImplicitClass) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.MODULE), TailTypes.humbleSpaceBeforeWordType()));
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.MODULE), TailTypes.humbleSpaceBeforeWordType()));
       if (prevElement == null) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
 
     if (context instanceof PsiJavaFile && !(prevElement instanceof PsiJavaModule) || context instanceof PsiImportList) {
       if (myPrevLeaf == null || PsiUtil.isJavaToken(myPrevLeaf, JavaTokenType.SEMICOLON)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.MODULE), TailTypes.humbleSpaceBeforeWordType()));
-      if (myPrevLeaf == null || !myPrevLeaf.textMatches(PsiKeywords.OPEN)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.OPEN), TailTypes.humbleSpaceBeforeWordType()));
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.MODULE), TailTypes.humbleSpaceBeforeWordType()));
+      if (myPrevLeaf == null || !myPrevLeaf.textMatches(JavaKeywords.OPEN)) {
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.OPEN), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
     else if (context instanceof PsiJavaModule) {
       if (prevElement instanceof PsiPackageAccessibilityStatement && !myPrevLeaf.textMatches(";")) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.TO), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.TO), TailTypes.humbleSpaceBeforeWordType()));
       }
       else if (!PsiUtil.isJavaToken(prevElement, JavaTokenType.MODULE_KEYWORD)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.REQUIRES), TailTypes.humbleSpaceBeforeWordType()));
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.EXPORTS), TailTypes.humbleSpaceBeforeWordType()));
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.OPENS), TailTypes.humbleSpaceBeforeWordType()));
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.USES), TailTypes.humbleSpaceBeforeWordType()));
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.PROVIDES), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.REQUIRES), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.EXPORTS), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.OPENS), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.USES), TailTypes.humbleSpaceBeforeWordType()));
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.PROVIDES), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
     else if (context instanceof PsiRequiresStatement) {
-      if (!myPrevLeaf.textMatches(PsiKeywords.TRANSITIVE)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.TRANSITIVE), TailTypes.humbleSpaceBeforeWordType()));
+      if (!myPrevLeaf.textMatches(JavaKeywords.TRANSITIVE)) {
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.TRANSITIVE), TailTypes.humbleSpaceBeforeWordType()));
       }
-      if (!myPrevLeaf.textMatches(PsiKeywords.STATIC)) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeywords.STATIC), TailTypes.humbleSpaceBeforeWordType()));
+      if (!myPrevLeaf.textMatches(JavaKeywords.STATIC)) {
+        addKeyword(new OverridableSpace(createKeyword(JavaKeywords.STATIC), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
     else if (context instanceof PsiProvidesStatement && prevElement instanceof PsiJavaCodeReferenceElement) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeywords.WITH), TailTypes.humbleSpaceBeforeWordType()));
+      addKeyword(new OverridableSpace(createKeyword(JavaKeywords.WITH), TailTypes.humbleSpaceBeforeWordType()));
     }
   }
 

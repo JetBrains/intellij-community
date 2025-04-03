@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -55,7 +55,7 @@ public final class CompletionElement{
     }
     if(myElement instanceof PsiMethod){
       if (myMethodRefType != null) {
-        return ((PsiMethod)myElement).isConstructor() ? PsiKeywords.NEW : ((PsiMethod)myElement).getName();
+        return ((PsiMethod)myElement).isConstructor() ? JavaKeywords.NEW : ((PsiMethod)myElement).getName();
       }
 
       return Trinity.create(((PsiMethod)myElement).getName(),

@@ -2,7 +2,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
@@ -21,7 +21,7 @@ public final class JavaUsageTargetProvider implements UsageTargetProvider, DumbA
     PsiElement element = file.findElementAt(TargetElementUtil.adjustOffset(file, editor.getDocument(), offset));
     if (element == null) return null;
 
-    if (element instanceof PsiKeyword && PsiKeywords.THROWS.equals(element.getText())) {
+    if (element instanceof PsiKeyword && JavaKeywords.THROWS.equals(element.getText())) {
       return new UsageTarget[]{new PsiElement2UsageTargetAdapter(element)};
     }
 

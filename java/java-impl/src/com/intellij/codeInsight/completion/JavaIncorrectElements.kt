@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion
 import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.java.syntax.parser.PsiKeywords
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.patterns.ElementPattern
@@ -154,7 +154,7 @@ private object ExceptionPositionMatcher: LookupPositionMatcher {
 
 private object ImplementsDeclarationPositionMatcher: LookupPositionMatcher {
   private val INSIDE_IMPLEMENTS_LIST: ElementPattern<PsiElement> = PsiJavaPatterns.psiElement().afterLeaf(
-    PsiKeywords.IMPLEMENTS, ",").inside(PsiJavaPatterns.psiElement(JavaElementType.IMPLEMENTS_LIST))
+    JavaKeywords.IMPLEMENTS, ",").inside(PsiJavaPatterns.psiElement(JavaElementType.IMPLEMENTS_LIST))
 
   override fun match(position: PsiElement): Boolean {
     return INSIDE_IMPLEMENTS_LIST.accepts(position)
@@ -172,7 +172,7 @@ private object ImplementsDeclarationPositionMatcher: LookupPositionMatcher {
 
 private object ExtendsDeclarationPositionMatcher: LookupPositionMatcher {
   private val EXTENDS_LIST: ElementPattern<PsiElement> = PsiJavaPatterns.psiElement().afterLeaf(
-    PsiKeywords.EXTENDS, ",").inside(PsiJavaPatterns.psiElement(JavaElementType.EXTENDS_LIST))
+    JavaKeywords.EXTENDS, ",").inside(PsiJavaPatterns.psiElement(JavaElementType.EXTENDS_LIST))
 
   override fun match(position: PsiElement): Boolean {
     return EXTENDS_LIST.accepts(position)

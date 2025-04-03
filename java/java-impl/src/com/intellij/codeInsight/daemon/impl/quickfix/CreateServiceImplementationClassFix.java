@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -148,7 +148,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     String superClassName = StringUtil.getShortName(mySuperClassName);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "",
                                                "public class " + StringUtil.getShortName(myImplementationClassName) + " " +
-                                               (myInterface ? PsiKeywords.IMPLEMENTS : PsiKeywords.EXTENDS) + " " + superClassName + " {\n" +
+                                               (myInterface ? JavaKeywords.IMPLEMENTS : JavaKeywords.EXTENDS) + " " + superClassName + " {\n" +
                                                "  public static " + superClassName + " provider() { return null;}" +
                                                "\n}");
   }

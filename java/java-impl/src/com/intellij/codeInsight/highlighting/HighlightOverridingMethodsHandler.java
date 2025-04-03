@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +28,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
 
   @Override
   public @NotNull List<PsiClass> getTargets() {
-    PsiReferenceList list = PsiKeywords.EXTENDS.equals(myTarget.getText()) ? myClass.getExtendsList() : myClass.getImplementsList();
+    PsiReferenceList list = JavaKeywords.EXTENDS.equals(myTarget.getText()) ? myClass.getExtendsList() : myClass.getImplementsList();
     if (list == null) return Collections.emptyList();
     final PsiClassType[] classTypes = list.getReferencedTypes();
     return ChooseClassAndDoHighlightRunnable.resolveClasses(classTypes);

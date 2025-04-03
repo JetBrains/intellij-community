@@ -2,7 +2,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -43,7 +43,7 @@ public final class WaitNotifyNotInSynchronizedContextInspection extends BaseInsp
         if (isSynchronizedOnThis(expression) || isCoveredByGuardedByAnnotation(expression, "this")) {
           return;
         }
-        registerError(expression, PsiKeywords.THIS);
+        registerError(expression, JavaKeywords.THIS);
       }
       else if (qualifier instanceof PsiReferenceExpression) {
         if (isSynchronizedOn(expression, qualifier)) {

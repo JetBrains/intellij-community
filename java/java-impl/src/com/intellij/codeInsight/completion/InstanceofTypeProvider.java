@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
@@ -18,7 +18,7 @@ import java.util.Set;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 final class InstanceofTypeProvider {
-  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(PsiKeywords.INSTANCEOF);
+  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(JavaKeywords.INSTANCEOF);
 
   static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();

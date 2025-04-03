@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -58,7 +58,7 @@ public final class JavaCharFilter extends CharFilter {
       JavaMethodCallElement methodItem = item.as(JavaMethodCallElement.class);
       if (methodItem != null && methodItem.isNegatable()) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
 
-      if (o instanceof PsiKeyword && ((PsiKeyword)o).textMatches(PsiKeywords.INSTANCEOF)) {
+      if (o instanceof PsiKeyword && ((PsiKeyword)o).textMatches(JavaKeywords.INSTANCEOF)) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
 
@@ -88,7 +88,7 @@ public final class JavaCharFilter extends CharFilter {
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '(') {
       if (o instanceof PsiClass) {
-        if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeywords.NEW).accepts(lookup.getPsiElement())) {
+        if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.NEW).accepts(lookup.getPsiElement())) {
           return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
         }
         return Result.HIDE_LOOKUP;
@@ -110,7 +110,7 @@ public final class JavaCharFilter extends CharFilter {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
     }
-    if (c == '(' && PsiKeywords.RETURN.equals(item.getLookupString())) {
+    if (c == '(' && JavaKeywords.RETURN.equals(item.getLookupString())) {
       return Result.HIDE_LOOKUP;
     }
     return null;

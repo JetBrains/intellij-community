@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
@@ -314,7 +314,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
   private static @NotNull String getConstructorDeclarationText(@NotNull String className, @NotNull ReflectiveSignature methodSignature) {
     // Return type of the constructor should be 'void'. If it isn't so let's make that mistake more noticeable.
     final String returnType = methodSignature.getShortReturnType();
-    final String fakeReturnType = !PsiKeywords.VOID.equals(returnType) ? returnType + " " : "";
+    final String fakeReturnType = !JavaKeywords.VOID.equals(returnType) ? returnType + " " : "";
     return fakeReturnType + className + methodSignature.getShortArgumentTypes();
   }
 

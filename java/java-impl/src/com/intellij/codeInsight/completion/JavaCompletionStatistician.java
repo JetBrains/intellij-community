@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
@@ -18,7 +18,7 @@ import java.util.function.Function;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public final class JavaCompletionStatistician extends CompletionStatistician{
-  private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeywords.SUPER));
+  private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(JavaKeywords.SUPER));
 
   @Override
   public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(@NotNull CompletionLocation location) {

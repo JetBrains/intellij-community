@@ -2,7 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
@@ -96,7 +96,7 @@ public class BasicReferenceParser {
         isSet(flags, VAR_TYPE) &&
         builder.lookAhead(1) != JavaTokenType.DOT &&
         builder.lookAhead(1) != JavaTokenType.COLON &&
-        PsiKeywords.VAR.equals(builder.getTokenText()) &&
+        JavaKeywords.VAR.equals(builder.getTokenText()) &&
         JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
     }

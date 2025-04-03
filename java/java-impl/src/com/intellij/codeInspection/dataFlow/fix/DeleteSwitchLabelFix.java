@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.fix;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -94,7 +94,7 @@ public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabel
       else if (labelElementList.getElementCount() == 2) {
         PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(label);
         if (defaultElement != null && defaultElement != labelElement) {
-          assert PsiKeywords.CASE.equals(label.getFirstChild().getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
+          assert JavaKeywords.CASE.equals(label.getFirstChild().getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
           makeLabelDefault(label, project);
           return;
         }

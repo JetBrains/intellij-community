@@ -17,7 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -62,10 +62,10 @@ public final class UnnecessaryQualifierForThisInspection extends BaseInspection 
       final PsiElement parent = qualifier.getParent();
       CommentTracker tracker = new CommentTracker();
       if (parent instanceof PsiThisExpression) {
-        PsiReplacementUtil.replaceExpression((PsiThisExpression)parent, PsiKeywords.THIS, tracker);
+        PsiReplacementUtil.replaceExpression((PsiThisExpression)parent, JavaKeywords.THIS, tracker);
       }
       else if (parent instanceof PsiSuperExpression) {
-        PsiReplacementUtil.replaceExpression((PsiSuperExpression)parent, PsiKeywords.SUPER, tracker);
+        PsiReplacementUtil.replaceExpression((PsiSuperExpression)parent, JavaKeywords.SUPER, tracker);
       }
     }
   }
@@ -115,7 +115,7 @@ public final class UnnecessaryQualifierForThisInspection extends BaseInspection 
         }
         final PsiExpression copyQualifierExpression = copy.getQualifierExpression();
         assert copyQualifierExpression != null;
-        PsiReplacementUtil.replaceExpression(copyQualifierExpression, PsiKeywords.SUPER);
+        PsiReplacementUtil.replaceExpression(copyQualifierExpression, JavaKeywords.SUPER);
         if (copy.resolve() == ((PsiReferenceExpression)parent).resolve()) {
           registerError(qualifier, expression);
         }

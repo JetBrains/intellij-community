@@ -3,7 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -258,7 +258,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
         && PsiUtil.isAvailable(JavaFeature.LVTI, parent)
         && JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE
       ) {
-        displayType = TypeUtils.getType(PsiKeywords.VAR, parent.getContext());
+        displayType = TypeUtils.getType(JavaKeywords.VAR, parent.getContext());
       } else {
         displayType = type;
       }

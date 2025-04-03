@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
@@ -45,8 +45,8 @@ public class ChangeExtendsToImplementsFix extends PsiBasedModCommandAction<PsiCl
     if (!available) return null;
     String name = QuickFixBundle.message(
       "exchange.extends.implements.keyword",
-      myClass.isInterface() == classToExtendFrom.isInterface() ? PsiKeywords.IMPLEMENTS : PsiKeywords.EXTENDS,
-      myClass.isInterface() == classToExtendFrom.isInterface() ? PsiKeywords.EXTENDS : PsiKeywords.IMPLEMENTS,
+      myClass.isInterface() == classToExtendFrom.isInterface() ? JavaKeywords.IMPLEMENTS : JavaKeywords.EXTENDS,
+      myClass.isInterface() == classToExtendFrom.isInterface() ? JavaKeywords.EXTENDS : JavaKeywords.IMPLEMENTS,
       classToExtendFrom.getName());
     return Presentation.of(name).withPriority(PriorityAction.Priority.HIGH);
 

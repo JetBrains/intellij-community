@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.PreferByKindWeigher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -65,7 +65,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
         Objects.requireNonNull(PsiTreeUtil.getParentOfType(caretElement.getPrevSibling(), PsiStatement.class, false));
       newVarDeclarationTemplate = elementFactory.createVariableDeclarationStatement(myNewVarName,
                                                                                     elementFactory.createType(myQualifierClass),
-                                                                                    elementFactory.createExpressionFromText(PsiKeywords.NULL, null));
+                                                                                    elementFactory.createExpressionFromText(JavaKeywords.NULL, null));
 
     }
 

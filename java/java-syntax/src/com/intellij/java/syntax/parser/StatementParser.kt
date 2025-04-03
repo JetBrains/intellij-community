@@ -208,12 +208,12 @@ class StatementParser(private val myParser: JavaParser) {
       pos.rollbackTo()
       if (singleToken && builder.tokenType === JavaSyntaxTokenType.IDENTIFIER) {
         val text = builder.tokenText
-        if (PsiKeywords.RECORD == text && JavaFeature.RECORDS.isSufficient(
+        if (JavaKeywords.RECORD == text && JavaFeature.RECORDS.isSufficient(
             this.languageLevel)
         ) {
           incompleteDeclarationRestrictedTokenType = JavaSyntaxTokenType.RECORD_KEYWORD
         }
-        if (PsiKeywords.VAR == text && JavaFeature.LVTI.isSufficient(
+        if (JavaKeywords.VAR == text && JavaFeature.LVTI.isSufficient(
             this.languageLevel)
         ) {
           incompleteDeclarationRestrictedTokenType = JavaSyntaxTokenType.VAR_KEYWORD
@@ -265,7 +265,7 @@ class StatementParser(private val myParser: JavaParser) {
 
   private fun isStmtYieldToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?): Boolean {
     if (!(tokenType === JavaSyntaxTokenType.IDENTIFIER &&
-          PsiKeywords.YIELD == builder.tokenText &&
+          JavaKeywords.YIELD == builder.tokenText &&
           JavaFeature.SWITCH_EXPRESSION.isSufficient(this.languageLevel))
     ) {
       return false
@@ -601,7 +601,7 @@ class StatementParser(private val myParser: JavaParser) {
   }
 
   private fun parseGuard(builder: SyntaxTreeBuilder) {
-    if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER && PsiKeywords.WHEN == builder.tokenText) {
+    if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER && JavaKeywords.WHEN == builder.tokenText) {
       builder.remapCurrentToken(JavaSyntaxTokenType.WHEN_KEYWORD)
       builder.advanceLexer()
       val guardingExpression = myParser.expressionParser.parseAssignmentForbiddingLambda(builder)

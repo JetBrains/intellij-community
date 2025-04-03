@@ -3,7 +3,7 @@ package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
@@ -98,7 +98,7 @@ public final class SwitchLabeledRuleCanBeCodeBlockInspection extends AbstractBas
 
     private static void wrapExpression(PsiExpressionStatement expressionStatement) {
       CommentTracker tracker = new CommentTracker();
-      String valueKeyword = PsiKeywords.YIELD;
+      String valueKeyword = JavaKeywords.YIELD;
       tracker.replaceAndRestoreComments(expressionStatement, "{ " + valueKeyword + " " + tracker.text(expressionStatement) + "\n }");
     }
 

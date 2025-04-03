@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -67,7 +67,7 @@ public final class RefSerializationUtil {
     List<UParameter> parameters = method.getUastParameters();
     if (parameters.size() != 1) return false;
     if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectInputStream")) return false;
-    if (!equalsToText(method.getReturnType(), PsiKeywords.VOID)) return false;
+    if (!equalsToText(method.getReturnType(), JavaKeywords.VOID)) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isSerializable(aClass, refClass);
   }
@@ -76,7 +76,7 @@ public final class RefSerializationUtil {
     if (!"readObjectNoData".equals(method.getName())) return false;
     if (method.isStatic() || method.getVisibility() != UastVisibility.PRIVATE) return false;
     if (!method.getUastParameters().isEmpty()) return false;
-    if (!equalsToText(method.getReturnType(), PsiKeywords.VOID)) return false;
+    if (!equalsToText(method.getReturnType(), JavaKeywords.VOID)) return false;
     UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isSerializable(aClass, refClass);
   }

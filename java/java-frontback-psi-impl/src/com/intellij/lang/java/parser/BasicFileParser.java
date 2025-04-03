@@ -3,7 +3,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -112,7 +112,7 @@ public class BasicFileParser {
     if (IMPORT_LIST_STOPPER_SET.contains(type) || BasicDeclarationParser.isRecordToken(b, type)) return true;
     if (type == JavaTokenType.IDENTIFIER) {
       String text = b.getTokenText();
-      if (PsiKeywords.OPEN.equals(text) || PsiKeywords.MODULE.equals(text)) return true;
+      if (JavaKeywords.OPEN.equals(text) || JavaKeywords.MODULE.equals(text)) return true;
     }
     return false;
   }
@@ -208,7 +208,7 @@ public class BasicFileParser {
 
     //if it is `module` we should expect either `;` or `identifier`
     if (isOk && !isModule && !isStatic && builder.getTokenType() != JavaTokenType.SEMICOLON &&
-        PsiKeywords.MODULE.equals(identifierText)) {
+        JavaKeywords.MODULE.equals(identifierText)) {
       BasicJavaParserUtil.error(builder, JavaPsiBundle.message("expected.identifier.or.semicolon"));
     }
     else if (isOk) {
@@ -226,7 +226,7 @@ public class BasicFileParser {
       return myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
     }
     if (type == JavaTokenType.IDENTIFIER &&
-        PsiKeywords.MODULE.equals(builder.getTokenText()) &&
+        JavaKeywords.MODULE.equals(builder.getTokenText()) &&
         builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       builder.remapCurrentToken(JavaTokenType.MODULE_KEYWORD);
       builder.advanceLexer();

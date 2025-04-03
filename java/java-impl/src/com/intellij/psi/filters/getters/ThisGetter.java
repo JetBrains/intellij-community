@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -23,9 +23,9 @@ public final class ThisGetter {
         final String expressionText;
         if(first){
           first = false;
-          expressionText = PsiKeywords.THIS;
+          expressionText = JavaKeywords.THIS;
         }
-        else expressionText = ((PsiClass)context).getName() + "." + PsiKeywords.THIS;
+        else expressionText = ((PsiClass)context).getName() + "." + JavaKeywords.THIS;
         try{
           expressions.add(factory.createExpressionFromText(expressionText, context));
         }

@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static com.intellij.java.syntax.parser.PsiKeywords.*;
+import static com.intellij.java.syntax.parser.JavaKeywords.*;
 
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);

@@ -17,7 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiFieldImpl;
@@ -292,7 +292,7 @@ public final class JavaDfaValueFactory {
       }
       PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
-      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeywords.NULL)) {
+      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(JavaKeywords.NULL)) {
         return factory.fromDfType(DfTypes.NULL);
       }
       if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {

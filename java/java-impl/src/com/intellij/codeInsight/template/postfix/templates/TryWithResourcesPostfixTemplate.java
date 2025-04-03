@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -67,7 +67,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
     DumbService dumbService = DumbService.getInstance(project);
     if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
         PsiUtil.isAvailable(JavaFeature.LVTI, expression)) {
-      template.addVariable("type", new TextExpression(PsiKeywords.VAR), false);
+      template.addVariable("type", new TextExpression(JavaKeywords.VAR), false);
     } else {
       PsiType type = dumbService.computeWithAlternativeResolveEnabled(expression::getType);
       template.addVariable("type", new TypeExpression(project, new PsiType[]{type}), false);

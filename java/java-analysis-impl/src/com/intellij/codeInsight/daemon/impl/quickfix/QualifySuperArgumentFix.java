@@ -3,7 +3,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -19,7 +19,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
 
   @Override
   protected String getQualifierText() {
-    return PsiKeywords.SUPER;
+    return JavaKeywords.SUPER;
   }
 
   @Override

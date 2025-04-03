@@ -3,7 +3,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -122,7 +122,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false;
       }
     }
-    if (leaf.textMatches(PsiKeywords.TRUE) || leaf.textMatches(PsiKeywords.FALSE)) {
+    if (leaf.textMatches(JavaKeywords.TRUE) || leaf.textMatches(JavaKeywords.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
     }
     if (PsiUtil.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&

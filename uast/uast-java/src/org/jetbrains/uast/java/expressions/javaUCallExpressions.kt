@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
-import com.intellij.java.syntax.parser.PsiKeywords
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
@@ -24,7 +24,7 @@ class JavaUCallExpression(
   override val kind: UastCallKind
     get() {
       val element = nameReferenceElement
-      if (element is PsiKeyword && (element.text == PsiKeywords.THIS || element.text == PsiKeywords.SUPER))
+      if (element is PsiKeyword && (element.text == JavaKeywords.THIS || element.text == JavaKeywords.SUPER))
         return UastCallKind.CONSTRUCTOR_CALL
 
       return UastCallKind.METHOD_CALL

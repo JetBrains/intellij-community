@@ -2,7 +2,7 @@
 package com.siyeh.ipp.forloop;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.siyeh.ig.controlflow.ForLoopReplaceableByWhileInspection;
 import com.siyeh.ipp.IPPTestCase;
 
@@ -21,7 +21,7 @@ public class ReplaceForLoopWithWhileLoopFixTest extends IPPTestCase {
 
   @Override
   protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeywords.WHILE);
+    return CommonQuickFixBundle.message("fix.replace.with.x", JavaKeywords.WHILE);
   }
 
   @Override

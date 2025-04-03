@@ -6,7 +6,7 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -54,7 +54,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
 
   @Override
   public void renderElement(@NotNull LookupElementPresentation presentation) {
-    int catchLength = PsiKeywords.CATCH.length();
+    int catchLength = JavaKeywords.CATCH.length();
     presentation.setItemText(fullItemText.substring(0, catchLength));
     presentation.setItemTextBold(true);
     presentation.setTailText(fullItemText.substring(catchLength));

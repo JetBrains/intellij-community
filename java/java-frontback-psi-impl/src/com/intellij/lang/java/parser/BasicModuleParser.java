@@ -2,7 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaTokenType;
@@ -27,7 +27,7 @@ import static com.intellij.lang.java.parser.BasicJavaParserUtil.semicolon;
 @Deprecated
 public class BasicModuleParser {
   private static final Set<String> STATEMENT_KEYWORDS =
-    ContainerUtil.newHashSet(PsiKeywords.REQUIRES, PsiKeywords.EXPORTS, PsiKeywords.USES, PsiKeywords.PROVIDES);
+    ContainerUtil.newHashSet(JavaKeywords.REQUIRES, JavaKeywords.EXPORTS, JavaKeywords.USES, JavaKeywords.PROVIDES);
 
   private final BasicJavaParser myParser;
   private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
@@ -45,19 +45,19 @@ public class BasicModuleParser {
 
     IElementType type = builder.getTokenType();
     String text = type == JavaTokenType.IDENTIFIER ? builder.getTokenText() : null;
-    if (!(PsiKeywords.OPEN.equals(text) || PsiKeywords.MODULE.equals(text))) {
+    if (!(JavaKeywords.OPEN.equals(text) || JavaKeywords.MODULE.equals(text))) {
       module.rollbackTo();
       return null;
     }
 
     PsiBuilder.Marker modifierList = firstAnnotation != null ? firstAnnotation.precede() : builder.mark();
-    if (PsiKeywords.OPEN.equals(text)) {
+    if (JavaKeywords.OPEN.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.OPEN_KEYWORD);
       text = builder.getTokenText();
     }
     BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
-    if (PsiKeywords.MODULE.equals(text)) {
+    if (JavaKeywords.MODULE.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.MODULE_KEYWORD);
     }
     else {
@@ -169,11 +169,11 @@ public class BasicModuleParser {
 
   private PsiBuilder.Marker parseStatement(PsiBuilder builder) {
     String kw = builder.getTokenText();
-    if (PsiKeywords.REQUIRES.equals(kw)) return parseRequiresStatement(builder);
-    if (PsiKeywords.EXPORTS.equals(kw)) return parseExportsStatement(builder);
-    if (PsiKeywords.OPENS.equals(kw)) return parseOpensStatement(builder);
-    if (PsiKeywords.USES.equals(kw)) return parseUsesStatement(builder);
-    if (PsiKeywords.PROVIDES.equals(kw)) return parseProvidesStatement(builder);
+    if (JavaKeywords.REQUIRES.equals(kw)) return parseRequiresStatement(builder);
+    if (JavaKeywords.EXPORTS.equals(kw)) return parseExportsStatement(builder);
+    if (JavaKeywords.OPENS.equals(kw)) return parseOpensStatement(builder);
+    if (JavaKeywords.USES.equals(kw)) return parseUsesStatement(builder);
+    if (JavaKeywords.PROVIDES.equals(kw)) return parseProvidesStatement(builder);
     return null;
   }
 
@@ -184,7 +184,7 @@ public class BasicModuleParser {
     PsiBuilder.Marker modifierList = builder.mark();
     while (true) {
       if (expect(builder, BasicElementTypes.BASIC_MODIFIER_BIT_SET)) continue;
-      if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeywords.TRANSITIVE.equals(builder.getTokenText())) {
+      if (builder.getTokenType() == JavaTokenType.IDENTIFIER && JavaKeywords.TRANSITIVE.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TRANSITIVE_KEYWORD);
         continue;
       }
@@ -219,7 +219,7 @@ public class BasicModuleParser {
     boolean hasError = false;
 
     if (parseClassOrPackageRef(builder) != null) {
-      if (PsiKeywords.TO.equals(builder.getTokenText())) {
+      if (JavaKeywords.TO.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TO_KEYWORD);
 
         while (true) {
@@ -273,7 +273,7 @@ public class BasicModuleParser {
       hasError = true;
     }
 
-    if (PsiKeywords.WITH.equals(builder.getTokenText())) {
+    if (JavaKeywords.WITH.equals(builder.getTokenText())) {
       builder.remapCurrentToken(JavaTokenType.WITH_KEYWORD);
       hasError = myParser.getReferenceParser().parseReferenceList(builder, JavaTokenType.WITH_KEYWORD, myJavaElementTypeContainer.PROVIDES_WITH_LIST, JavaTokenType.COMMA);
     }

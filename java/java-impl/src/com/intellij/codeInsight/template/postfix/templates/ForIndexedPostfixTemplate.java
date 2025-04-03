@@ -7,12 +7,15 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.containers.ContainerUtil;
@@ -67,12 +70,12 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
     PsiType type = expr.getType();
     if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
          PsiUtil.isAvailable(JavaFeature.LVTI, expr)) {
-      return PsiKeywords.VAR;
+      return JavaKeywords.VAR;
     }
     if (isNumber(type)) {
       return type.getCanonicalText();
     }
-    return PsiKeywords.INT;
+    return JavaKeywords.INT;
   }
 
   @Override

@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -66,7 +66,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
       type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     }
     else {
-      return PsiKeywords.NULL; // normally shouldn't happen
+      return JavaKeywords.NULL; // normally shouldn't happen
     }
 
     // first try to find suitable local variable

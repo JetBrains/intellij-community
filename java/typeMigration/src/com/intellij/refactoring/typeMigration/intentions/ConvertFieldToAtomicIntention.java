@@ -11,7 +11,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -149,7 +149,7 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
     if (currentInitializer != null) return;
     PsiType type = var.getType();
     String initializerText = PsiTypesUtil.getDefaultValueOfType(type);
-    if (!PsiKeywords.NULL.equals(initializerText)) {
+    if (!JavaKeywords.NULL.equals(initializerText)) {
       WriteAction.run(() -> {
         PsiExpression initializer = JavaPsiFacade.getElementFactory(var.getProject()).createExpressionFromText(initializerText, var);
         var.setInitializer(initializer);

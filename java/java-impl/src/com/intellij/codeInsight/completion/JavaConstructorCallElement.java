@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -57,7 +57,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
         }
       }
       if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, type)) {
-        return new Arguments(PsiKeywords.NULL, PsiKeywords.NULL);
+        return new Arguments(JavaKeywords.NULL, JavaKeywords.NULL);
       }
     }
     return null;

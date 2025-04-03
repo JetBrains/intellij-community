@@ -10,7 +10,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -77,7 +77,7 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
       ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
       for (ExpectedTypeInfo info : infos) {
         if (!(info.getType() instanceof PsiPrimitiveType)) {
-          LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeywords.NULL);
+          LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), JavaKeywords.NULL);
           result.addElement(JavaSmartCompletionContributor.decorate(item, ContainerUtil.newHashSet(infos)));
           return;
         }

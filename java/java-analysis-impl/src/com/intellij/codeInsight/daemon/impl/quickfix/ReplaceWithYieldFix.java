@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -28,7 +28,7 @@ public class ReplaceWithYieldFix extends PsiUpdateModCommandAction<PsiReturnStat
     TextRange range = returnStatement.getFirstChild().getTextRange();
     // Work on document level to preserve formatting
     Document document = returnStatement.getContainingFile().getViewProvider().getDocument();
-    document.replaceString(range.getStartOffset(), range.getEndOffset(), PsiKeywords.YIELD);
+    document.replaceString(range.getStartOffset(), range.getEndOffset(), JavaKeywords.YIELD);
   }
 
   @Override
@@ -38,6 +38,6 @@ public class ReplaceWithYieldFix extends PsiUpdateModCommandAction<PsiReturnStat
 
   @Override
   public @NotNull String getFamilyName() {
-    return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeywords.YIELD);
+    return CommonQuickFixBundle.message("fix.replace.with.x", JavaKeywords.YIELD);
   }
 }

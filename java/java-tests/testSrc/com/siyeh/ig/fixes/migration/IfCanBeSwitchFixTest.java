@@ -2,7 +2,7 @@
 package com.siyeh.ig.fixes.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.ig.IGQuickFixesTestCase;
@@ -20,7 +20,7 @@ public class IfCanBeSwitchFixTest extends IGQuickFixesTestCase {
     inspection.suggestIntSwitches = true;
     myFixture.enableInspections(inspection);
     myRelativePath = "migration/if_can_be_switch";
-    myDefaultHint = CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeywords.IF, PsiKeywords.SWITCH);
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.IF, JavaKeywords.SWITCH);
   }
 
   @Override

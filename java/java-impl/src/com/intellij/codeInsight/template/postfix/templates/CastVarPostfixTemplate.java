@@ -11,12 +11,15 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -46,7 +49,7 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
     boolean useVar = Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
                      PsiUtil.isAvailable(JavaFeature.LVTI, file);
 
-    return (isFinal ? "final " : "") + (useVar ? PsiKeywords.VAR : "$" + TYPE_VAR + "$") +
+    return (isFinal ? "final " : "") + (useVar ? JavaKeywords.VAR : "$" + TYPE_VAR + "$") +
            " $" + VAR_NAME + "$ = ($" + TYPE_VAR + "$)$expr$;$END$";
   }
 

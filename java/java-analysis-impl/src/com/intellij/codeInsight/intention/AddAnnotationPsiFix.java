@@ -10,7 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.project.Project;
@@ -288,7 +288,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
         int index = ArrayUtil.indexOf(parameters, parameter);
         PsiParameterList newList;
         if (PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, list)) {
-          String newListText = StreamEx.of(parameters).map(p -> PsiKeywords.VAR + " " + p.getName()).joining(",", "(", ")");
+          String newListText = StreamEx.of(parameters).map(p -> JavaKeywords.VAR + " " + p.getName()).joining(",", "(", ")");
           newList = ((PsiLambdaExpression)JavaPsiFacade.getElementFactory(list.getProject())
             .createExpressionFromText(newListText+" -> {}", null)).getParameterList();
           newList = (PsiParameterList)new CommentTracker().replaceAndRestoreComments(list, newList);

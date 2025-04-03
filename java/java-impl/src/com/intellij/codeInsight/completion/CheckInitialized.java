@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.InheritanceUtil;
@@ -112,7 +112,7 @@ class CheckInitialized implements ElementFilter {
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {
           final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-          if (methodExpression.textMatches(PsiKeywords.THIS)) {
+          if (methodExpression.textMatches(JavaKeywords.THIS)) {
             fields.clear();
           }
         }

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
@@ -186,7 +186,7 @@ public final class UnreachableCodeInspection extends AbstractBaseJavaLocalInspec
           if (value instanceof Boolean || "".equals(value) || value instanceof Number number && number.doubleValue() == 0.0) {
             return true;
           }
-          if (literal.textMatches(PsiKeywords.NULL)) return true;
+          if (literal.textMatches(JavaKeywords.NULL)) return true;
         }
         return false;
       }

@@ -8,7 +8,7 @@ import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -529,7 +529,7 @@ public final class LocalVariablesUtil {
   }
 
   private static int getTypeSlotSize(String name) {
-    if (PsiKeywords.DOUBLE.equals(name) || PsiKeywords.LONG.equals(name)) {
+    if (JavaKeywords.DOUBLE.equals(name) || JavaKeywords.LONG.equals(name)) {
       return 2;
     }
     return 1;

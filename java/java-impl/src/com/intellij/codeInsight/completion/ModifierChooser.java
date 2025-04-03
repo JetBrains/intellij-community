@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
@@ -35,40 +35,40 @@ public final class ModifierChooser {
   }
 
   private static final ArrayOfModifiers[] CLASS_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeywords.PUBLIC}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.FINAL, PsiKeywords.ABSTRACT})
+    new ArrayOfModifiers(new String[]{JavaKeywords.PUBLIC}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.FINAL, JavaKeywords.ABSTRACT})
   };
 
   private static final String[] CLASS_MODIFIERS_WITH_SEALED = {
-    PsiKeywords.PUBLIC, PsiKeywords.FINAL, PsiKeywords.SEALED, PsiKeywords.NON_SEALED, PsiKeywords.ABSTRACT
+    JavaKeywords.PUBLIC, JavaKeywords.FINAL, JavaKeywords.SEALED, JavaKeywords.NON_SEALED, JavaKeywords.ABSTRACT
   };
 
   private static final ArrayOfModifiers[] CLASS_MEMBER_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeywords.PUBLIC, PsiKeywords.PROTECTED, PsiKeywords.PRIVATE}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.STATIC}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.FINAL, PsiKeywords.ABSTRACT}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.SEALED, PsiKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES),
-    new ArrayOfModifiers(new String[]{PsiKeywords.NATIVE}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.SYNCHRONIZED}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.STRICTFP}, el -> !PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, el)),
-    new ArrayOfModifiers(new String[]{PsiKeywords.VOLATILE}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.TRANSIENT})
+    new ArrayOfModifiers(new String[]{JavaKeywords.PUBLIC, JavaKeywords.PROTECTED, JavaKeywords.PRIVATE}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.STATIC}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.FINAL, JavaKeywords.ABSTRACT}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.SEALED, JavaKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES),
+    new ArrayOfModifiers(new String[]{JavaKeywords.NATIVE}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.SYNCHRONIZED}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.STRICTFP}, el -> !PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, el)),
+    new ArrayOfModifiers(new String[]{JavaKeywords.VOLATILE}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.TRANSIENT})
   };
 
   private static final ArrayOfModifiers[] FILE_MEMBER_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeywords.PUBLIC}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.FINAL, PsiKeywords.ABSTRACT}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.STRICTFP}, el -> !PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, el)),
-    new ArrayOfModifiers(new String[]{PsiKeywords.SEALED, PsiKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES)
+    new ArrayOfModifiers(new String[]{JavaKeywords.PUBLIC}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.FINAL, JavaKeywords.ABSTRACT}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.STRICTFP}, el -> !PsiUtil.isAvailable(JavaFeature.ALWAYS_STRICTFP, el)),
+    new ArrayOfModifiers(new String[]{JavaKeywords.SEALED, JavaKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES)
   };
 
   private static final ArrayOfModifiers[] INTERFACE_MEMBER_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{PsiKeywords.PUBLIC, PsiKeywords.PROTECTED},
+    new ArrayOfModifiers(new String[]{JavaKeywords.PUBLIC, JavaKeywords.PROTECTED},
                          el -> !PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, el)),
-    new ArrayOfModifiers(new String[]{PsiKeywords.PUBLIC, PsiKeywords.PROTECTED, PsiKeywords.PRIVATE}, JavaFeature.PRIVATE_INTERFACE_METHODS),
-    new ArrayOfModifiers(new String[]{PsiKeywords.FINAL, PsiKeywords.ABSTRACT}),
-    new ArrayOfModifiers(new String[]{PsiKeywords.STATIC, PsiKeywords.DEFAULT}, JavaFeature.STATIC_INTERFACE_CALLS),
-    new ArrayOfModifiers(new String[]{PsiKeywords.SEALED, PsiKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES)
+    new ArrayOfModifiers(new String[]{JavaKeywords.PUBLIC, JavaKeywords.PROTECTED, JavaKeywords.PRIVATE}, JavaFeature.PRIVATE_INTERFACE_METHODS),
+    new ArrayOfModifiers(new String[]{JavaKeywords.FINAL, JavaKeywords.ABSTRACT}),
+    new ArrayOfModifiers(new String[]{JavaKeywords.STATIC, JavaKeywords.DEFAULT}, JavaFeature.STATIC_INTERFACE_CALLS),
+    new ArrayOfModifiers(new String[]{JavaKeywords.SEALED, JavaKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES)
   };
 
   static String[] getKeywords(@NotNull PsiElement position) {

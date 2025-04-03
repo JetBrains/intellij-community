@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -365,10 +365,10 @@ public abstract class ImportLayoutPanel extends JPanel {
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
-          append(PsiKeywords.IMPORT, SimpleTextAttributes.fromTextAttributes(attributes));
+          append(JavaKeywords.IMPORT, SimpleTextAttributes.fromTextAttributes(attributes));
           if (entry.isStatic()) {
             append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            append(PsiKeywords.STATIC, SimpleTextAttributes.fromTextAttributes(attributes));
+            append(JavaKeywords.STATIC, SimpleTextAttributes.fromTextAttributes(attributes));
           }
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 

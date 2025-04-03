@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.java.syntax.parser.PsiKeywords
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -41,7 +41,7 @@ class AddExportsDirectiveFix(
   module: PsiJavaModule,
   private val packageName: String,
   targetName: String
-) : AddPackageAccessibilityFix(PsiKeywords.EXPORTS, module, packageName, targetName) {
+) : AddPackageAccessibilityFix(JavaKeywords.EXPORTS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.exports.name", packageName)
 
   override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
@@ -53,7 +53,7 @@ class AddOpensDirectiveFix(
   module: PsiJavaModule,
   private val packageName: String,
   targetName: String
-) : AddPackageAccessibilityFix(PsiKeywords.OPENS, module, packageName, targetName) {
+) : AddPackageAccessibilityFix(JavaKeywords.OPENS, module, packageName, targetName) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.opens.name", packageName)
 
   override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
@@ -90,7 +90,7 @@ class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : 
 
   override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {
     if (module.uses.find { svcName == it.classReference?.qualifiedName } == null) {
-      PsiUtil.addModuleStatement(module, PsiKeywords.USES + ' ' + svcName)
+      PsiUtil.addModuleStatement(module, JavaKeywords.USES + ' ' + svcName)
     }
   }
 }

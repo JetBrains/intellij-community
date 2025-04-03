@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -287,7 +287,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
         private static boolean hasSuperQualifier(@NotNull PsiReferenceExpression expression) {
           PsiElement qualifier = expression.getQualifier();
-          return qualifier != null && PsiKeywords.SUPER.equals(qualifier.getText());
+          return qualifier != null && JavaKeywords.SUPER.equals(qualifier.getText());
         }
       };
       psiMethod.accept(visitor);

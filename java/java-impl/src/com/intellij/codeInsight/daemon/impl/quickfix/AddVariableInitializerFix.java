@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.JavaFeature;
@@ -75,7 +75,7 @@ public class AddVariableInitializerFix extends PsiUpdateModCommandAction<PsiVari
             typeText = TypeConversionUtil.erasure(type).getCanonicalText(false) + "<>";
           }
         }
-        final String expressionText = PsiKeywords.NEW + " " + typeText + "()";
+        final String expressionText = JavaKeywords.NEW + " " + typeText + "()";
         PsiExpression initializer = elementFactory.createExpressionFromText(expressionText, variable);
         String variableName = variable.getName();
         LOG.assertTrue(variableName != null);

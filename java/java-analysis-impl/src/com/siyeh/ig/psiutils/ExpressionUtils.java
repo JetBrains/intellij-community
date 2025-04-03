@@ -8,7 +8,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil.ForwardReferenceProblem;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -307,7 +307,7 @@ public final class ExpressionUtils {
         if (ignoreNegatedNullComparison) {
           final String lhsText = lhs.getText();
           final String rhsText = rhs.getText();
-          if (PsiKeywords.NULL.equals(lhsText) || PsiKeywords.NULL.equals(rhsText)) {
+          if (JavaKeywords.NULL.equals(lhsText) || JavaKeywords.NULL.equals(rhsText)) {
             return false;
           }
         }
@@ -919,11 +919,11 @@ public final class ExpressionUtils {
               return null;
             }
           }
-          return factory.createExpressionFromText(thisQualifier + "." + PsiKeywords.THIS, ref);
+          return factory.createExpressionFromText(thisQualifier + "." + JavaKeywords.THIS, ref);
         }
       }
     }
-    return factory.createExpressionFromText(PsiKeywords.THIS, ref);
+    return factory.createExpressionFromText(JavaKeywords.THIS, ref);
   }
 
   private static boolean isStaticMember(@Nullable PsiMember member) {

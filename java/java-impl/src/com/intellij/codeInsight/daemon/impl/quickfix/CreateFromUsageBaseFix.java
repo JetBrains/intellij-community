@@ -11,7 +11,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -157,7 +157,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         if (run.getParent() instanceof PsiExpressionList &&
           run.getParent().getParent() instanceof PsiMethodCallExpression) {
           @NonNls String calleeText = ((PsiMethodCallExpression)run.getParent().getParent()).getMethodExpression().getText();
-          if (calleeText.equals(PsiKeywords.THIS) || calleeText.equals(PsiKeywords.SUPER)) return true;
+          if (calleeText.equals(JavaKeywords.THIS) || calleeText.equals(JavaKeywords.SUPER)) return true;
         }
       }
 

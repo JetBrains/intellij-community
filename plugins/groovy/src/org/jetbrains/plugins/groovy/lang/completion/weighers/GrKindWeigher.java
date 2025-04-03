@@ -6,13 +6,12 @@ import com.intellij.codeInsight.completion.CompletionLocation;
 import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.GrMainCompletionProvider;
@@ -26,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotat
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -34,9 +34,9 @@ import java.util.Set;
 public final class GrKindWeigher extends CompletionWeigher {
   private static final Set<String> TRASH_CLASSES = new HashSet<>(10);
   private static final Set<String> PRIORITY_KEYWORDS = ContainerUtil.newHashSet(
-    PsiKeywords.RETURN, PsiKeywords.INSTANCEOF, "in",
-    PsiKeywords.PRIVATE, PsiKeywords.PROTECTED, PsiKeywords.PUBLIC, PsiKeywords.STATIC, "def",
-    PsiKeywords.TRUE, PsiKeywords.FALSE, PsiKeywords.NULL);
+    JavaKeywords.RETURN, JavaKeywords.INSTANCEOF, "in",
+    JavaKeywords.PRIVATE, JavaKeywords.PROTECTED, JavaKeywords.PUBLIC, JavaKeywords.STATIC, "def",
+    JavaKeywords.TRUE, JavaKeywords.FALSE, JavaKeywords.NULL);
 
   static {
     TRASH_CLASSES.add(CommonClassNames.JAVA_LANG_CLASS);

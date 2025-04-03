@@ -2,7 +2,7 @@
 package com.intellij.javadoc
 
 import com.intellij.java.JavaBundle
-import com.intellij.java.syntax.parser.PsiKeywords
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -54,7 +54,7 @@ class JavadocGenerationAdditionalUi {
       }
         .layout(RowLayout.INDEPENDENT)
       row(JavaBundle.message("javadoc.generate.scope.row")) {
-        myScopeCombo = comboBox(listOf(PsiKeywords.PUBLIC, PsiKeywords.PROTECTED, PsiKeywords.PACKAGE, PsiKeywords.PRIVATE))
+        myScopeCombo = comboBox(listOf(JavaKeywords.PUBLIC, JavaKeywords.PROTECTED, JavaKeywords.PACKAGE, JavaKeywords.PRIVATE))
           .component
       }
         .layout(RowLayout.INDEPENDENT)

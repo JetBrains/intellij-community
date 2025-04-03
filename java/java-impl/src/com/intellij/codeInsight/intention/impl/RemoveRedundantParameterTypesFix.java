@@ -3,7 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
@@ -80,7 +80,7 @@ public class RemoveRedundantParameterTypesFix extends PsiUpdateModCommandAction<
         for (PsiParameter parameter : parameters) {
           PsiTypeElement element = parameter.getTypeElement();
           if (element != null) {
-            new CommentTracker().replaceAndRestoreComments(element, PsiKeywords.VAR);
+            new CommentTracker().replaceAndRestoreComments(element, JavaKeywords.VAR);
           }
         }
         return;

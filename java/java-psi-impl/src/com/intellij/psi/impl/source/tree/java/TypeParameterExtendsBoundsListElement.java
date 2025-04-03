@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterExtendsBoundsListElement extends ReferenceListElement {
   public TypeParameterExtendsBoundsListElement() {
-    super(JavaElementType.EXTENDS_BOUND_LIST, JavaTokenType.EXTENDS_KEYWORD, PsiKeywords.EXTENDS, JavaTokenType.AND, "&");
+    super(JavaElementType.EXTENDS_BOUND_LIST, JavaTokenType.EXTENDS_KEYWORD, JavaKeywords.EXTENDS, JavaTokenType.AND, "&");
   }
 
   @Override

@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -42,6 +42,6 @@ public class ConvertExpressionToReturnFix extends PsiUpdateModCommandAction<PsiE
 
   @Override
   public @NotNull String getFamilyName() {
-    return CommonQuickFixBundle.message("fix.insert.x", PsiKeywords.RETURN);
+    return CommonQuickFixBundle.message("fix.insert.x", JavaKeywords.RETURN);
   }
 }

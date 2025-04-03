@@ -5,7 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -40,7 +40,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
 
   @Override
   public @NotNull String getFamilyName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeywords.SWITCH, PsiKeywords.IF);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.SWITCH, JavaKeywords.IF);
   }
 
   @Override

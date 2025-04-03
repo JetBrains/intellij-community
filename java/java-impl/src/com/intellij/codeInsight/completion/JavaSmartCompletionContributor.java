@@ -5,7 +5,7 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementExtractorFilter;
@@ -52,9 +52,9 @@ public final class JavaSmartCompletionContributor {
   };
 
   private static final ElementExtractorFilter THROWABLES_FILTER = new ElementExtractorFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
-  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeywords.NEW));
-  static final ElementPattern<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeywords.NEW).afterLeaf(
-    PsiKeywords.THROW));
+  static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement().withText(JavaKeywords.NEW));
+  static final ElementPattern<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(psiElement().withText(JavaKeywords.NEW).afterLeaf(
+    JavaKeywords.THROW));
   public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = or(
         psiElement().withParent(PsiExpression.class)
           .andNot(psiElement().withParent(PsiLiteralExpression.class))

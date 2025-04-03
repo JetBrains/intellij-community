@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -166,7 +166,7 @@ public final class SplitConditionUtil {
       }
     }
     else {
-      thenString = "{" + createIfString(leave, thenBranch, String.join("\n" + PsiKeywords.ELSE + " ", elseChain), tracker) + "\n}";
+      thenString = "{" + createIfString(leave, thenBranch, String.join("\n" + JavaKeywords.ELSE + " ", elseChain), tracker) + "\n}";
     }
     String ifString = createIfString(extract, thenString, elseBranch, tracker);
     return (PsiIfStatement)factory.createStatementFromText(ifString, thenBranch);
@@ -213,8 +213,8 @@ public final class SplitConditionUtil {
   private static @NotNull String createIfString(@NotNull String condition,
                                                 @NotNull String thenBranch,
                                                 @Nullable String elseBranch) {
-    final String elsePart = elseBranch != null ? "\n " + PsiKeywords.ELSE + " " + elseBranch : "";
-    return PsiKeywords.IF + " (" + condition + ")\n" + thenBranch + elsePart;
+    final String elsePart = elseBranch != null ? "\n " + JavaKeywords.ELSE + " " + elseBranch : "";
+    return JavaKeywords.IF + " (" + condition + ")\n" + thenBranch + elsePart;
   }
 
   private static @NotNull String toThenBranchString(@NotNull PsiStatement statement) {

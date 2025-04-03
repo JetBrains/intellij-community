@@ -5,7 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
 import com.intellij.java.codeserver.highlighting.errors.*;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -948,12 +948,12 @@ final class ExpressionChecker {
 
     //do not highlight the 'module' keyword if the statement is not complete
     //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
-    if (PsiKeywords.MODULE.equals(ref.getText()) && ref.getParent() instanceof PsiImportStatement &&
+    if (JavaKeywords.MODULE.equals(ref.getText()) && ref.getParent() instanceof PsiImportStatement &&
         PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
       PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
       PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
       if (importKeywordExpected instanceof PsiKeyword keyword &&
-          keyword.textMatches(PsiKeywords.IMPORT) &&
+          keyword.textMatches(JavaKeywords.IMPORT) &&
           errorElementExpected instanceof PsiErrorElement errorElement &&
           JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
         return;
@@ -1461,7 +1461,7 @@ final class ExpressionChecker {
     PsiElement parent = expression.getParent();
     if (expression instanceof PsiJavaCodeReferenceElement referenceElement) {
       // redirected ctr
-      if (PsiKeywords.THIS.equals(referenceElement.getReferenceName())
+      if (JavaKeywords.THIS.equals(referenceElement.getReferenceName())
           && resolved instanceof PsiMethod psiMethod
           && psiMethod.isConstructor()) {
         return;
@@ -1514,7 +1514,7 @@ final class ExpressionChecker {
                 && PsiUtil.isInnerClass(superClass)
                 && InheritanceUtil.isInheritorOrSelf(referencedClass, superClass.getContainingClass(), true)) {
               // by default super() is considered "this"-qualified
-              resolvedName = PsiKeywords.THIS;
+              resolvedName = JavaKeywords.THIS;
             }
             else {
               return;
@@ -1524,8 +1524,8 @@ final class ExpressionChecker {
             resolvedName = qualifier.getText();
           }
         }
-        else if (PsiKeywords.THIS.equals(name)) {
-          resolvedName = PsiKeywords.THIS;
+        else if (JavaKeywords.THIS.equals(name)) {
+          resolvedName = JavaKeywords.THIS;
         }
         else {
           resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
@@ -1546,7 +1546,7 @@ final class ExpressionChecker {
     }
     else if (expression instanceof PsiQualifiedExpression qualifiedExpression) {
       referencedClass = PsiUtil.resolveClassInType(qualifiedExpression.getType());
-      String keyword = expression instanceof PsiThisExpression ? PsiKeywords.THIS : PsiKeywords.SUPER;
+      String keyword = expression instanceof PsiThisExpression ? JavaKeywords.THIS : JavaKeywords.SUPER;
       PsiJavaCodeReferenceElement qualifier = qualifiedExpression.getQualifier();
       resolvedName = qualifier != null && qualifier.resolve() instanceof PsiClass aClass
                      ? PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME) + "." + keyword

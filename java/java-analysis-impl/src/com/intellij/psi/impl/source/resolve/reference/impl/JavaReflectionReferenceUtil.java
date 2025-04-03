@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
@@ -767,7 +767,7 @@ public final class JavaReflectionReferenceUtil {
 
   public static final class ReflectiveSignature implements Comparable<ReflectiveSignature> {
     public static final ReflectiveSignature NO_ARGUMENT_CONSTRUCTOR_SIGNATURE =
-      new ReflectiveSignature(null, PsiKeywords.VOID, ArrayUtilRt.EMPTY_STRING_ARRAY);
+      new ReflectiveSignature(null, JavaKeywords.VOID, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     private final Icon myIcon;
     private final @NotNull String myReturnType;

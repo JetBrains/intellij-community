@@ -3,7 +3,7 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ final class DfIntRangeType extends DfAbstractRangeType implements DfIntType {
 
   @Override
   public @NotNull String toString() {
-    if (getRange() == FULL_RANGE) return PsiKeywords.INT;
-    return PsiKeywords.INT + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiTypes.intType());
+    if (getRange() == FULL_RANGE) return JavaKeywords.INT;
+    return JavaKeywords.INT + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiTypes.intType());
   }
 }

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -103,7 +103,7 @@ public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspec
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", "? " + (isExtends ? PsiKeywords.EXTENDS : PsiKeywords.SUPER));
+      return CommonQuickFixBundle.message("fix.replace.with.x", "? " + (isExtends ? JavaKeywords.EXTENDS : JavaKeywords.SUPER));
     }
 
     @Override

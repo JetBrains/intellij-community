@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwTabbedPane;
 
@@ -21,7 +21,7 @@ public class TabbedPaneLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.push(tabConstraints.myTitle);
     if (tabConstraints.myIcon != null || tabConstraints.myToolTip != null) {
       if (tabConstraints.myIcon == null) {
-        generator.pushVar(PsiKeywords.NULL);
+        generator.pushVar(JavaKeywords.NULL);
       }
       else {
         generator.pushIcon(tabConstraints.myIcon);

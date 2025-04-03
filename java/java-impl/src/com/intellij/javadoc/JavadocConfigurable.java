@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -87,7 +87,7 @@ public final class JavadocConfigurable implements Configurable {
     isModified |= !compareStrings(myPanel.myOtherOptionsField.getText(), configuration.OTHER_OPTIONS);
     isModified |= !compareStrings(myPanel.myHeapSizeField.getText(), configuration.HEAP_SIZE);
     isModified |= myPanel.myOpenInBrowserCheckBox.isSelected() != configuration.OPEN_IN_BROWSER;
-    isModified |= !compareStrings(myPanel.myScopeCombo.getItem(), (configuration.OPTION_SCOPE == null ? PsiKeywords.PROTECTED : configuration.OPTION_SCOPE));
+    isModified |= !compareStrings(myPanel.myScopeCombo.getItem(), (configuration.OPTION_SCOPE == null ? JavaKeywords.PROTECTED : configuration.OPTION_SCOPE));
     isModified |= myPanel.myHierarchy.isSelected() != configuration.OPTION_HIERARCHY;
     isModified |= myPanel.myNavigator.isSelected() != configuration.OPTION_NAVIGATOR;
     isModified |= myPanel.myIndex.isSelected() != configuration.OPTION_INDEX;

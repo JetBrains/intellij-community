@@ -97,7 +97,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     refParser.parseReferenceList(builder, JavaSyntaxTokenType.IMPLEMENTS_KEYWORD, JavaSyntaxElementType.IMPLEMENTS_LIST,
                                  JavaSyntaxTokenType.COMMA)
     if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER &&
-        PsiKeywords.PERMITS == builder.tokenText
+        JavaKeywords.PERMITS == builder.tokenText
     ) {
       builder.remapCurrentToken(JavaSyntaxTokenType.PERMITS_KEYWORD)
     }
@@ -387,7 +387,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
   }
 
   fun isRecordToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?): Boolean {
-    if (tokenType === JavaSyntaxTokenType.IDENTIFIER && PsiKeywords.RECORD == builder.tokenText) {
+    if (tokenType === JavaSyntaxTokenType.IDENTIFIER && JavaKeywords.RECORD == builder.tokenText) {
       val nextToken = builder.lookAhead(1)
       if (nextToken === JavaSyntaxTokenType.IDENTIFIER ||  // The following tokens cannot be part of a valid record declaration,
           // but we assume it to be a malformed record, rather than a malformed type.
@@ -406,12 +406,12 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
   private fun isSealedToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?): Boolean {
     return JavaFeature.SEALED_CLASSES.isSufficient(this.languageLevel) &&
-           tokenType === JavaSyntaxTokenType.IDENTIFIER && PsiKeywords.SEALED == builder.tokenText
+           tokenType === JavaSyntaxTokenType.IDENTIFIER && JavaKeywords.SEALED == builder.tokenText
   }
 
   private fun isValueToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?): Boolean {
     return JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(this.languageLevel) &&
-           tokenType === JavaSyntaxTokenType.IDENTIFIER && PsiKeywords.VALUE == builder.tokenText
+           tokenType === JavaSyntaxTokenType.IDENTIFIER && JavaKeywords.VALUE == builder.tokenText
   }
 
   @JvmOverloads
@@ -1025,7 +1025,7 @@ fun isNonSealedToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?, 
   }
   val maybeNonSealed = builder.mark()
   builder.advance(2)
-  val isNonSealed = PsiKeywords.SEALED == builder.tokenText
+  val isNonSealed = JavaKeywords.SEALED == builder.tokenText
   maybeNonSealed.rollbackTo()
   return isNonSealed
 }

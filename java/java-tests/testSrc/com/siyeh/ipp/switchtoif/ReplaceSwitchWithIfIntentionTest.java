@@ -2,7 +2,7 @@
 package com.siyeh.ipp.switchtoif;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -68,7 +68,7 @@ public class ReplaceSwitchWithIfIntentionTest extends IPPTestCase {
 
   @Override
   protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeywords.SWITCH, PsiKeywords.IF);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.SWITCH, JavaKeywords.IF);
   }
 
   @Override

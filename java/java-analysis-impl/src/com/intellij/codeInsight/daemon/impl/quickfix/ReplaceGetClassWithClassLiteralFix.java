@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -39,7 +39,7 @@ public class ReplaceGetClassWithClassLiteralFix extends PsiUpdateModCommandActio
     if (aClass == null) return null;
     String className = aClass.getName();
     if (className == null) return null;
-    return Presentation.of(CommonQuickFixBundle.message("fix.replace.with.x", className + "." + PsiKeywords.CLASS)).withPriority(
+    return Presentation.of(CommonQuickFixBundle.message("fix.replace.with.x", className + "." + JavaKeywords.CLASS)).withPriority(
       PriorityAction.Priority.HIGH);
   }
 

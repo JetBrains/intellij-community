@@ -10,7 +10,7 @@ import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
@@ -38,8 +38,8 @@ public final class BasicExpressionCompletionContributor {
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
     if (JavaKeywordCompletion.isAfterTypeDot(element)) {
-      addKeyword(result, element, PsiKeywords.CLASS);
-      addKeyword(result, element, PsiKeywords.THIS);
+      addKeyword(result, element, JavaKeywords.CLASS);
+      addKeyword(result, element, JavaKeywords.THIS);
 
     }
 
@@ -62,8 +62,8 @@ public final class BasicExpressionCompletionContributor {
           }
         }
 
-        addKeyword(result, position, PsiKeywords.TRUE);
-        addKeyword(result, position, PsiKeywords.FALSE);
+        addKeyword(result, position, JavaKeywords.TRUE);
+        addKeyword(result, position, JavaKeywords.FALSE);
 
         if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
           for (PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {

@@ -3,7 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -732,13 +732,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     static @Nullable String getSwitchLabelText(@Nullable PsiSwitchLabelStatementBase switchLabel) {
       if (switchLabel != null) {
         if (switchLabel.isDefaultCase()) {
-          return PsiKeywords.DEFAULT;
+          return JavaKeywords.DEFAULT;
         }
         PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
         if (labelElementList != null) {
           PsiCaseLabelElement[] expressions = labelElementList.getElements();
           if (expressions.length != 0) {
-            return PsiKeywords.CASE + ' ' + expressions[0].getText();
+            return JavaKeywords.CASE + ' ' + expressions[0].getText();
           }
         }
       }

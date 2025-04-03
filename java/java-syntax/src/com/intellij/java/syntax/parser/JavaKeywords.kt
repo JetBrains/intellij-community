@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 /**
  * Constants defined in this interface represent all keywords and literals of the Java language.
  */
-object PsiKeywords {
+object JavaKeywords {
   const val ABSTRACT: @NlsSafe String = "abstract"
   const val ASSERT: @NlsSafe String = "assert"
   const val BOOLEAN: @NlsSafe String = "boolean"

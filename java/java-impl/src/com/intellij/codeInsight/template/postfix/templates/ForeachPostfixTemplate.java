@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -44,7 +44,7 @@ public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate implemen
     if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
         element instanceof PsiExpression expr &&
         PsiUtil.isAvailable(JavaFeature.LVTI, expr)) {
-      template.addVariable("TYPE", new TextExpression(PsiKeywords.VAR), false);
+      template.addVariable("TYPE", new TextExpression(JavaKeywords.VAR), false);
     }
     else {
       template.addVariable("TYPE", type, type, false);

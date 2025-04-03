@@ -17,7 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -280,7 +280,7 @@ public final class BoolUtils {
       return false;
     }
     final @NonNls String text = literalExpression.getText();
-    return PsiKeywords.TRUE.equals(text) || PsiKeywords.FALSE.equals(text);
+    return JavaKeywords.TRUE.equals(text) || JavaKeywords.FALSE.equals(text);
   }
 
   @Contract(value = "null -> false", pure = true)
@@ -289,7 +289,7 @@ public final class BoolUtils {
     if (expression == null) {
       return false;
     }
-    return PsiKeywords.TRUE.equals(expression.getText());
+    return JavaKeywords.TRUE.equals(expression.getText());
   }
 
   @Contract(value = "null -> false", pure = true)
@@ -298,7 +298,7 @@ public final class BoolUtils {
     if (expression == null) {
       return false;
     }
-    return PsiKeywords.FALSE.equals(expression.getText());
+    return JavaKeywords.FALSE.equals(expression.getText());
   }
 
   /**

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -41,13 +41,13 @@ public final class FilterUtil{
   }
 
   public static PsiType getKeywordItemType(PsiElement context, final String keyword) {
-    if(PsiKeywords.CLASS.equals(keyword)){
+    if(JavaKeywords.CLASS.equals(keyword)){
       return PsiType.getJavaLangClass(context.getManager(), context.getResolveScope());
     }
-    else if(PsiKeywords.TRUE.equals(keyword) || PsiKeywords.FALSE.equals(keyword)){
+    else if(JavaKeywords.TRUE.equals(keyword) || JavaKeywords.FALSE.equals(keyword)){
       return PsiTypes.booleanType();
     }
-    else if(PsiKeywords.THIS.equals(keyword)){
+    else if(JavaKeywords.THIS.equals(keyword)){
       PsiElement previousElement = getPreviousElement(context, false);
       if(previousElement != null && ".".equals(previousElement.getText())){
         previousElement = getPreviousElement(previousElement, false);

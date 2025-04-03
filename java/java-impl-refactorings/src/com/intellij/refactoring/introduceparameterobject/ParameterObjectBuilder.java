@@ -3,7 +3,7 @@ package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
@@ -70,7 +70,7 @@ class ParameterObjectBuilder {
     if (!packageName.isEmpty()) out.append("package ").append(packageName).append(';');
     out.append('\n');
     out.append(myVisibility).append(" ");
-    out.append(recordsAvailable ? PsiKeywords.RECORD : PsiKeywords.CLASS);
+    out.append(recordsAvailable ? JavaKeywords.RECORD : JavaKeywords.CLASS);
     out.append(" ").append(className);
     if (!typeParams.isEmpty()) {
       out.append('<');

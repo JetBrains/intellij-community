@@ -2,8 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
-import com.intellij.psi.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiProvidesStatement;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,19 +25,19 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
 
   @Override
   public @NotNull String getText() {
-    return QuickFixBundle.message("java.9.merge.module.statements.fix.name", PsiKeywords.PROVIDES, myInterfaceName);
+    return QuickFixBundle.message("java.9.merge.module.statements.fix.name", JavaKeywords.PROVIDES, myInterfaceName);
   }
 
   @Override
   public @Nls @NotNull String getFamilyName() {
-    return QuickFixBundle.message("java.9.merge.module.statements.fix.family.name", PsiKeywords.PROVIDES);
+    return QuickFixBundle.message("java.9.merge.module.statements.fix.family.name", JavaKeywords.PROVIDES);
   }
 
   @Override
   protected @NotNull String getReplacementText(@NotNull List<? extends PsiProvidesStatement> statementsToMerge) {
     final List<String> implementationNames = getImplementationNames(statementsToMerge);
     LOG.assertTrue(!implementationNames.isEmpty());
-    return PsiKeywords.PROVIDES + ' ' + myInterfaceName + ' ' + PsiKeywords.WITH + ' ' + joinUniqueNames(implementationNames);
+    return JavaKeywords.PROVIDES + ' ' + myInterfaceName + ' ' + JavaKeywords.WITH + ' ' + joinUniqueNames(implementationNames);
   }
 
   private static @NotNull List<String> getImplementationNames(@NotNull List<? extends PsiProvidesStatement> statements) {

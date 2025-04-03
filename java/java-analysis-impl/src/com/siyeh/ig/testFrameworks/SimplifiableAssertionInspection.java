@@ -4,7 +4,7 @@ package com.siyeh.ig.testFrameworks;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.java.library.JavaLibraryUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.Module;
@@ -49,7 +49,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
   }
 
   private static boolean isAssertThatCouldBeFail(PsiExpression position, boolean checkTrue) {
-    return (checkTrue ? PsiKeywords.TRUE : PsiKeywords.FALSE).equals(position.getText());
+    return (checkTrue ? JavaKeywords.TRUE : JavaKeywords.FALSE).equals(position.getText());
   }
 
   private static boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint assertHint) {
@@ -64,10 +64,10 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
       return false;
     }
     final String text = expression1.getText();
-    if (PsiKeywords.NULL.equals(text)) {
+    if (JavaKeywords.NULL.equals(text)) {
       return true;
     }
-    if (!PsiKeywords.TRUE.equals(text) && !PsiKeywords.FALSE.equals(text)) {
+    if (!JavaKeywords.TRUE.equals(text) && !JavaKeywords.FALSE.equals(text)) {
       return false;
     }
     final PsiType type = expression2.getType();

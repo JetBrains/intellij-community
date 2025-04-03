@@ -8,8 +8,8 @@ import com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanoni
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.DeclarationParser;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.java.syntax.parser.JavaParser;
-import com.intellij.java.syntax.parser.PsiKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -325,7 +325,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
                   :
                   "if(obj == this) return true;\n" +
                   "if(obj == null || obj.getClass() != this.getClass()) return false;\n" +
-                  (JavaFeature.LVTI.isSufficient(myLanguageLevel) ? PsiKeywords.VAR : psiClass.getName()) +
+                  (JavaFeature.LVTI.isSufficient(myLanguageLevel) ? JavaKeywords.VAR : psiClass.getName()) +
                   " that = (" + psiClass.getName() + ")obj;\n" +
                   "return " + equalsExpression + ";\n";
     return "@" + CommonClassNames.JAVA_LANG_OVERRIDE + "\n" +

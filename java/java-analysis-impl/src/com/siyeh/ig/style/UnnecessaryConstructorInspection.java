@@ -17,7 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -135,7 +135,7 @@ public final class UnnecessaryConstructorInspection extends BaseInspection {
         return false;
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      return PsiKeywords.SUPER.equals(methodExpression.getReferenceName());
+      return JavaKeywords.SUPER.equals(methodExpression.getReferenceName());
     }
   }
 }

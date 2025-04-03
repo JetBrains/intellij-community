@@ -8,7 +8,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.*;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -102,7 +102,7 @@ public final class DataflowExceptionAnalysisProvider implements ExceptionAnalysi
 
   private @Nullable AnalysisStartingPoint getAnalysis(@NotNull PsiElement anchor,
                                                       @NotNull ExceptionInfo info) {
-    if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeywords.NEW)) {
+    if (anchor instanceof PsiKeyword && anchor.textMatches(JavaKeywords.NEW)) {
       PsiNewExpression exceptionConstructor = tryCast(anchor.getParent(), PsiNewExpression.class);
       if (exceptionConstructor != null && !exceptionConstructor.isArrayCreation()) {
         PsiThrowStatement throwStatement =

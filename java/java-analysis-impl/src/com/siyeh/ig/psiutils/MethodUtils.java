@@ -2,7 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.progress.ProgressManager;
@@ -386,7 +386,7 @@ public final class MethodUtils {
       }
       else if (expression instanceof UCallExpression) {
         final String methodName = ((UCallExpression)expression).getMethodName();
-        if (methodName != null && !methodName.equals(PsiKeywords.SUPER) && !methodName.equals("<init>")) return false;
+        if (methodName != null && !methodName.equals(JavaKeywords.SUPER) && !methodName.equals("<init>")) return false;
       }
       else return false;
     }

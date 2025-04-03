@@ -126,7 +126,7 @@ class PatternParser(private val myParser: JavaParser) {
 
     val hasIdentifier: Boolean
     if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER &&
-        (PsiKeywords.WHEN != builder.tokenText || isWhenAsIdentifier(isRecord))
+        (JavaKeywords.WHEN != builder.tokenText || isWhenAsIdentifier(isRecord))
     ) {
       // pattern variable after the record structure pattern
       if (isRecord) {

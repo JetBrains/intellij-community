@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -671,7 +671,7 @@ public abstract class CodeBlockSurrounder {
       PsiCodeBlock copyFinally = copy.getFinallyBlock();
       if (copyFinally != null) {
         PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsBackward(copyFinally);
-        if (element != null && element.textMatches(PsiKeywords.FINALLY)) {
+        if (element != null && element.textMatches(JavaKeywords.FINALLY)) {
           element.delete();
         }
         copyFinally.delete();

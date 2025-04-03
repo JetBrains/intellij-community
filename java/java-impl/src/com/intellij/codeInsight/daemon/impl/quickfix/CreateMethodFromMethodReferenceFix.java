@@ -5,7 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -46,7 +46,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
     final String name = call.getReferenceName();
 
     if (name == null) return false;
-    if (call.isConstructor() && name.equals(PsiKeywords.NEW) || PsiNameHelper.getInstance(call.getProject()).isIdentifier(name)) {
+    if (call.isConstructor() && name.equals(JavaKeywords.NEW) || PsiNameHelper.getInstance(call.getProject()).isIdentifier(name)) {
       setText(call.isConstructor() ? QuickFixBundle.message("create.constructor.from.new.text") : QuickFixBundle.message("create.method.from.usage.text", name));
       return true;
     }

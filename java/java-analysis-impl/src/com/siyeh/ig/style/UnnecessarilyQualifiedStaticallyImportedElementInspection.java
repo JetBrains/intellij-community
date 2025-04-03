@@ -3,7 +3,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -57,7 +57,7 @@ public final class UnnecessarilyQualifiedStaticallyImportedElementInspection ext
     @Override
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
-      if (PsiKeywords.YIELD.equals(reference.getReferenceName()) && reference.getParent() instanceof PsiMethodCallExpression) {
+      if (JavaKeywords.YIELD.equals(reference.getReferenceName()) && reference.getParent() instanceof PsiMethodCallExpression) {
         // Qualifier might be required since Java 14, so don't warn
         return;
       }

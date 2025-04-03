@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -67,7 +67,7 @@ public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<Ps
         withTypeArgsText = aClass.getQualifiedName();
       }
       else {
-        withTypeArgsText = PsiKeywords.THIS;
+        withTypeArgsText = JavaKeywords.THIS;
       }
     }
     withTypeArgsText += "." + typeArguments + call.getMethodExpression().getReferenceName();

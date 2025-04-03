@@ -2,7 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -41,7 +41,7 @@ public final class JavaSyntaxErrorChecker {
     }
     else if (description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
       String text = element.getText();
-      if ((text.equals(PsiKeywords.SEALED) || text.equals(PsiKeywords.NON_SEALED) || text.equals(PsiKeywords.VALUE)) &&
+      if ((text.equals(JavaKeywords.SEALED) || text.equals(JavaKeywords.NON_SEALED) || text.equals(JavaKeywords.VALUE)) &&
           PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiClass) {
         return false;
       }

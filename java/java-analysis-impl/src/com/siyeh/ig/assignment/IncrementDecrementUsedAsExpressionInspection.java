@@ -17,7 +17,7 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -177,11 +177,11 @@ public final class IncrementDecrementUsedAsExpressionInspection extends BaseInsp
         parent.addBefore(newStatement, statement);
         final String keyword;
         if (statement instanceof PsiReturnStatement) {
-          keyword = PsiKeywords.RETURN;
+          keyword = JavaKeywords.RETURN;
         } else if (statement instanceof PsiYieldStatement) {
-          keyword = PsiKeywords.YIELD;
+          keyword = JavaKeywords.YIELD;
         } else {
-          keyword = PsiKeywords.THROW;
+          keyword = JavaKeywords.THROW;
         }
         final PsiStatement newReturnStatement = factory.createStatementFromText(keyword + " " + variableName + ';', statement);
         statement.replace(newReturnStatement);

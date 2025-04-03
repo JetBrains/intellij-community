@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -72,9 +72,9 @@ public class GrRangeType extends GrLiteralClassType {
   @Override
   public @NotNull String getInternalCanonicalText() {
     return "[" +
-           (myLeft == null ? PsiKeywords.NULL : myLeft.getInternalCanonicalText()) +
+           (myLeft == null ? JavaKeywords.NULL : myLeft.getInternalCanonicalText()) +
            ".." +
-           (myRight == null ? PsiKeywords.NULL : myRight.getInternalCanonicalText()) +
+           (myRight == null ? JavaKeywords.NULL : myRight.getInternalCanonicalText()) +
            "]";
   }
 

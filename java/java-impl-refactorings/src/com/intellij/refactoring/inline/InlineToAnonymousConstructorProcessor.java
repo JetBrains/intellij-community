@@ -3,7 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -36,14 +36,14 @@ class InlineToAnonymousConstructorProcessor {
 
   private static final Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
   private static final Key<PsiCallExpression> ourCallKey = Key.create("call");
-  public static final ElementPattern<PsiLiteralExpression> ourNullPattern = psiElement(PsiLiteralExpression.class).withText(PsiKeywords.NULL);
+  public static final ElementPattern<PsiLiteralExpression> ourNullPattern = psiElement(PsiLiteralExpression.class).withText(JavaKeywords.NULL);
   private static final ElementPattern<PsiExpressionStatement>
     ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
   private static final ElementPattern<PsiExpressionStatement> ourSuperCallPattern = psiExpressionStatement().withFirstChild(
-    psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(PsiKeywords.SUPER)));
+    psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(JavaKeywords.SUPER)));
   private static final ElementPattern<PsiExpressionStatement>
     ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(
-    psiElement().withText(PsiKeywords.THIS)));
+    psiElement().withText(JavaKeywords.THIS)));
 
   private final PsiClass myClass;
   private PsiNewExpression myNewExpression;

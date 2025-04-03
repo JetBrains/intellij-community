@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -25,7 +25,7 @@ public final class ClsClassObjectAccessExpressionImpl extends ClsElementImpl imp
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
     myTypeElement.appendMirrorText(0, buffer);
-    buffer.append('.').append(PsiKeywords.CLASS);
+    buffer.append('.').append(JavaKeywords.CLASS);
   }
 
   @Override

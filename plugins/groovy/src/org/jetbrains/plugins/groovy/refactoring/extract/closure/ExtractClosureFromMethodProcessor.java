@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -86,7 +86,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
             if (!PsiTreeUtil.isAncestor(myMethod.getContainingClass(), usageInfo.getElement(), false)) {
               conflicts.putValue(statements[0], JavaRefactoringBundle
                 .message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
-                         CommonRefactoringUtil.htmlEmphasize(PsiKeywords.SUPER)));
+                         CommonRefactoringUtil.htmlEmphasize(JavaKeywords.SUPER)));
               break;
             }
           }

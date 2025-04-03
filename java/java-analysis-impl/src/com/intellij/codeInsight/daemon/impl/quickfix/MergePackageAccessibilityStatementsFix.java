@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
@@ -42,7 +42,7 @@ public class MergePackageAccessibilityStatementsFix
   protected @NotNull String getReplacementText(@NotNull List<? extends PsiPackageAccessibilityStatement> statementsToMerge) {
     final List<String> moduleNames = getModuleNames(statementsToMerge);
     if (!moduleNames.isEmpty()) {
-      return getKeyword() + ' ' + myPackageName + ' ' + PsiKeywords.TO + ' ' + joinUniqueNames(moduleNames);
+      return getKeyword() + ' ' + myPackageName + ' ' + JavaKeywords.TO + ' ' + joinUniqueNames(moduleNames);
     }
     else {
       return getKeyword() + ' ' + myPackageName;
@@ -90,8 +90,8 @@ public class MergePackageAccessibilityStatementsFix
 
   private @NotNull String getKeyword() {
     return switch (myRole) {
-      case OPENS -> PsiKeywords.OPENS;
-      case EXPORTS -> PsiKeywords.EXPORTS;
+      case OPENS -> JavaKeywords.OPENS;
+      case EXPORTS -> JavaKeywords.EXPORTS;
     };
   }
 }

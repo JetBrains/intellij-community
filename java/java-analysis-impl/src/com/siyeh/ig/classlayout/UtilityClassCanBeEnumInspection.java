@@ -3,7 +3,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -71,7 +71,7 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
       final PsiStatement statement = factory.createStatementFromText(";", element);
       final PsiElement token = statement.getChildren()[0];
       aClass.addAfter(token, aClass.getLBrace());
-      final PsiKeyword newKeyword = factory.createKeyword(PsiKeywords.ENUM);
+      final PsiKeyword newKeyword = factory.createKeyword(JavaKeywords.ENUM);
       keywords.get(0).replace(newKeyword);
     }
   }

@@ -2,7 +2,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.function.Function;
 
 public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissingSwitchBranchesFix {
-  private static final List<String> ALL_BOOLEAN_BRANCHES = List.of(PsiKeywords.TRUE, PsiKeywords.FALSE);
+  private static final List<String> ALL_BOOLEAN_BRANCHES = List.of(JavaKeywords.TRUE, JavaKeywords.FALSE);
 
   private CreateMissingBooleanPrimitiveBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
     super(block, names);

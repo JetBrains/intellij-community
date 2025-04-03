@@ -8,7 +8,7 @@ import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContribut
 import com.intellij.codeInsight.completion.command.CommandCompletionFactoryKt;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -265,11 +265,11 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
 
     int offset = editor.getCaretModel().getOffset();
     if (charTyped == ' ' &&
-        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeywords.NEW)) {
+        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, JavaKeywords.NEW)) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, f -> {
-        PsiElement leaf = f.findElementAt(offset - PsiKeywords.NEW.length());
+        PsiElement leaf = f.findElementAt(offset - JavaKeywords.NEW.length());
         return leaf instanceof PsiKeyword &&
-               leaf.textMatches(PsiKeywords.NEW) &&
+               leaf.textMatches(JavaKeywords.NEW) &&
                !PsiJavaPatterns.psiElement().insideStarting(PsiJavaPatterns.psiExpressionStatement()).accepts(leaf);
       });
       return Result.STOP;

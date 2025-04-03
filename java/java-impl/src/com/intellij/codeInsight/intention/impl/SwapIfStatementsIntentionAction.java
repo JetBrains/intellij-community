@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -47,7 +47,7 @@ public final class SwapIfStatementsIntentionAction extends PsiUpdateModCommandAc
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiKeyword element) {
-    if (!PsiKeywords.ELSE.equals(element.getText())) {
+    if (!JavaKeywords.ELSE.equals(element.getText())) {
       return null;
     }
     final PsiElement parent = element.getParent();

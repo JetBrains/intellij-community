@@ -17,7 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -72,7 +72,7 @@ public final class UnnecessarySuperConstructorInspection extends BaseInspection 
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      if (methodExpression.isQualified() || !PsiKeywords.SUPER.equals(methodExpression.getReferenceName())) {
+      if (methodExpression.isQualified() || !JavaKeywords.SUPER.equals(methodExpression.getReferenceName())) {
         return;
       }
       if (!call.getArgumentList().isEmpty()) {

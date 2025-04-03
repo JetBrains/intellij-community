@@ -3,7 +3,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -21,13 +21,13 @@ public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHand
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();
-      if (PsiKeywords.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
+      if (JavaKeywords.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
         return createHighlightTryHandler(editor, file, target, parent);
       }
-      if (PsiKeywords.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
+      if (JavaKeywords.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
         return createHighlightCatchHandler(editor, file, target, parent);
       }
-      if (PsiKeywords.THROWS.equals(target.getText())) {
+      if (JavaKeywords.THROWS.equals(target.getText())) {
         return createThrowsHandler(editor, file, target);
       }
     }

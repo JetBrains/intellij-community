@@ -2,7 +2,7 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -91,7 +91,7 @@ public final class RedundantClassCallInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeywords.INSTANCEOF);
+      return CommonQuickFixBundle.message("fix.replace.with.x", JavaKeywords.INSTANCEOF);
     }
 
     @Override

@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -118,7 +118,7 @@ public final class ThrowSearchUtil {
 
       return new Root[]{new Root(aThrow.getParent(), exType, isExactExnType(exn))};
     }
-    if (element instanceof PsiKeyword kwd && PsiKeywords.THROWS.equals(kwd.getText())) {
+    if (element instanceof PsiKeyword kwd && JavaKeywords.THROWS.equals(kwd.getText())) {
       final PsiElement parent = kwd.getParent();
       if (parent != null && parent.getParent() instanceof PsiMethod method) {
         final PsiReferenceList throwsList = method.getThrowsList();
@@ -143,7 +143,7 @@ public final class ThrowSearchUtil {
       final PsiType type = aThrow.getException().getType();
       return PsiFormatUtil.formatType(type, PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES, PsiSubstitutor.EMPTY);
     }
-    if (e instanceof PsiKeyword && PsiKeywords.THROWS.equals(e.getText())) {
+    if (e instanceof PsiKeyword && JavaKeywords.THROWS.equals(e.getText())) {
       return e.getParent().getText();
     }
     LOG.error("invalid searchable element");

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,7 +70,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
                                    JavaBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
                                    QuickFixFactory.getInstance()
-                                     .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", PsiKeywords.FOR)));
+                                     .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", JavaKeywords.FOR)));
             return;
           }
           registerProblem(statement, false);

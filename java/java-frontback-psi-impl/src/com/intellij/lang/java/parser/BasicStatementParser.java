@@ -2,7 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
 import com.intellij.openapi.util.Pair;
@@ -248,10 +248,10 @@ public class BasicStatementParser {
       pos.rollbackTo();
       if (singleToken && builder.getTokenType() == JavaTokenType.IDENTIFIER) {
         String text = builder.getTokenText();
-        if (PsiKeywords.RECORD.equals(text) && JavaFeature.RECORDS.isSufficient(getLanguageLevel(builder))) {
+        if (JavaKeywords.RECORD.equals(text) && JavaFeature.RECORDS.isSufficient(getLanguageLevel(builder))) {
           incompleteDeclarationRestrictedTokenType = JavaTokenType.RECORD_KEYWORD;
         }
-        if (PsiKeywords.VAR.equals(text) && JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
+        if (JavaKeywords.VAR.equals(text) && JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
           incompleteDeclarationRestrictedTokenType = JavaTokenType.VAR_KEYWORD;
         }
       }
@@ -297,7 +297,7 @@ public class BasicStatementParser {
 
   private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
     if (!(tokenType == JavaTokenType.IDENTIFIER &&
-          PsiKeywords.YIELD.equals(builder.getTokenText()) &&
+          JavaKeywords.YIELD.equals(builder.getTokenText()) &&
           JavaFeature.SWITCH_EXPRESSION.isSufficient(getLanguageLevel(builder)))) {
       return false;
     }
@@ -641,7 +641,7 @@ public class BasicStatementParser {
   }
 
   private void parseGuard(PsiBuilder builder) {
-    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeywords.WHEN.equals(builder.getTokenText())) {
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && JavaKeywords.WHEN.equals(builder.getTokenText())) {
       builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
       builder.advanceLexer();
       PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder);

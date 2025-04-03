@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion.scope;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -293,7 +293,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     if (element instanceof PsiMethod &&
         ((PsiMethod)element).isConstructor() &&
         myElement.getParent() instanceof PsiMethodReferenceExpression) {
-      name = PsiKeywords.NEW;
+      name = JavaKeywords.NEW;
     }
     return StringUtil.isNotEmpty(name) &&
            myMatcher.value(name) &&

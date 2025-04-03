@@ -5,7 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -76,7 +76,7 @@ class RecursionWeigher extends LookupElementWeigher {
   }
 
   static @Nullable ElementFilter recursionFilter(PsiElement element) {
-    if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeywords.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
+    if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
       return new ExcludeDeclaredFilter(ElementClassFilter.METHOD);
     }
 

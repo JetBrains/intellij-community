@@ -3,8 +3,8 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
+import com.intellij.java.syntax.parser.JavaKeywords.SUPER
 import com.intellij.psi.PsiElement
-import com.intellij.java.syntax.parser.PsiKeywords.SUPER
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile

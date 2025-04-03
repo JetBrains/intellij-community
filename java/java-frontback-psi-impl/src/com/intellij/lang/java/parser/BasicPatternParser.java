@@ -2,7 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
@@ -147,7 +147,7 @@ public class BasicPatternParser {
 
     final boolean hasIdentifier;
     if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
-        (!PsiKeywords.WHEN.equals(builder.getTokenText()) || isWhenAsIdentifier(isRecord))) {
+        (!JavaKeywords.WHEN.equals(builder.getTokenText()) || isWhenAsIdentifier(isRecord))) {
       // pattern variable after the record structure pattern
       if (isRecord) {
         PsiBuilder.Marker variable = builder.mark();

@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -21,12 +21,12 @@ public final class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQu
     PsiTypeElement typeElement = ObjectUtils.tryCast(ref.getParent(), PsiTypeElement.class);
     if (typeElement == null || typeElement.getFirstChild() != typeElement.getLastChild()) return;
     PsiElement parent = typeElement.getParent();
-    if (PsiKeywords.VAR.equals(ref.getReferenceName())) {
+    if (JavaKeywords.VAR.equals(ref.getReferenceName())) {
       registerSetVariableTypeFix(parent, registrar);
       registerLambdaParametersFix(parent, registrar);
       registerVarLanguageLevelFix(ref, parent, registrar);
     }
-    if (PsiKeywords.RECORD.equals(ref.getReferenceName())) {
+    if (JavaKeywords.RECORD.equals(ref.getReferenceName())) {
       registerRecordLanguageLevelFix(ref, parent, registrar);
     }
   }

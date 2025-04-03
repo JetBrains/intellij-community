@@ -17,7 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public final class FallthruInSwitchStatementInspection extends BaseInspection {
 
     @Override
     public @NotNull String getFamilyName() {
-      return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix", PsiKeywords.BREAK);
+      return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix", JavaKeywords.BREAK);
     }
 
     @Override
@@ -132,7 +132,7 @@ public final class FallthruInSwitchStatementInspection extends BaseInspection {
           continue;
         }
         if (ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
-          registerError(statement, switchBlock instanceof PsiSwitchStatement || isOnTheFly(), switchBlock instanceof PsiSwitchExpression ? PsiKeywords.YIELD : PsiKeywords.BREAK);
+          registerError(statement, switchBlock instanceof PsiSwitchStatement || isOnTheFly(), switchBlock instanceof PsiSwitchExpression ? JavaKeywords.YIELD : JavaKeywords.BREAK);
         }
       }
     }

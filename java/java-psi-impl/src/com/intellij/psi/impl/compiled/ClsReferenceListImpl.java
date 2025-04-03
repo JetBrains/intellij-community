@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -53,22 +53,22 @@ public final class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClass
       Role role = getRole();
       switch (role) {
         case EXTENDS_BOUNDS_LIST:
-          buffer.append(' ').append(PsiKeywords.EXTENDS).append(' ');
+          buffer.append(' ').append(JavaKeywords.EXTENDS).append(' ');
           break;
         case EXTENDS_LIST:
-          buffer.append(PsiKeywords.EXTENDS).append(' ');
+          buffer.append(JavaKeywords.EXTENDS).append(' ');
           break;
         case IMPLEMENTS_LIST:
-          buffer.append(PsiKeywords.IMPLEMENTS).append(' ');
+          buffer.append(JavaKeywords.IMPLEMENTS).append(' ');
           break;
         case PERMITS_LIST:
-          buffer.append(PsiKeywords.PERMITS).append(' ');
+          buffer.append(JavaKeywords.PERMITS).append(' ');
           break;
         case THROWS_LIST:
-          buffer.append(PsiKeywords.THROWS).append(' ');
+          buffer.append(JavaKeywords.THROWS).append(' ');
           break;
         case PROVIDES_WITH_LIST:
-          buffer.append(PsiKeywords.WITH).append(' ');
+          buffer.append(JavaKeywords.WITH).append(' ');
           break;
       }
       for (int i = 0; i < types.length; i++) {

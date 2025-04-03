@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -225,7 +225,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     }
     else if (e instanceof PsiJavaToken && e.textMatches("(") &&
              PsiTreeUtil.prevVisibleLeaf(e) instanceof PsiKeyword startSwitch &&
-             startSwitch.textMatches(PsiKeywords.SWITCH)) {
+             startSwitch.textMatches(JavaKeywords.SWITCH)) {
       PsiSwitchBlock switchBlock = tryCast(startSwitch.getParent(), PsiSwitchBlock.class);
       if (switchBlock != null) {
         PsiExpression selector = switchBlock.getExpression();
@@ -241,7 +241,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
              PsiTreeUtil.nextVisibleLeaf(e) instanceof PsiJavaToken dot &&
              dot.getTokenType().equals(JavaTokenType.DOT) &&
              PsiTreeUtil.nextVisibleLeaf(dot) instanceof PsiKeyword newKeyWord &&
-             newKeyWord.textMatches(PsiKeywords.NEW)) {
+             newKeyWord.textMatches(JavaKeywords.NEW)) {
       // qualified new
       PsiNewExpression newExpression = tryCast(newKeyWord.getParent(), PsiNewExpression.class);
       if (newExpression != null) {

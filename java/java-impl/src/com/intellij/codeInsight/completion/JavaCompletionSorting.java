@@ -6,7 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -250,8 +250,8 @@ public final class JavaCompletionSorting {
     if (hasNonVoid(expectedInfos)) {
       if (item.getObject() instanceof PsiKeyword) {
         String keyword = ((PsiKeyword)item.getObject()).getText();
-        if (PsiKeywords.NEW.equals(keyword) && !(position.getParent() instanceof PsiMethodReferenceExpression) ||
-            PsiKeywords.NULL.equals(keyword)) {
+        if (JavaKeywords.NEW.equals(keyword) && !(position.getParent() instanceof PsiMethodReferenceExpression) ||
+            JavaKeywords.NULL.equals(keyword)) {
           return ExpectedTypeMatching.maybeExpected;
         }
       }

@@ -2,7 +2,7 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,8 +43,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private final @NotNull GlobalCompilingVisitor myCompilingVisitor;
 
   private static final @NonNls Pattern COMMENT_PATTERN = Pattern.compile("__\\$_\\w+");
-  private static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeywords.CLASS, PsiKeywords.INTERFACE, PsiKeywords.ENUM,
-                                                                               PsiKeywords.THROWS, PsiKeywords.EXTENDS, PsiKeywords.IMPLEMENTS);
+  private static final Set<String> excludedKeywords = ContainerUtil.newHashSet(JavaKeywords.CLASS, JavaKeywords.INTERFACE, JavaKeywords.ENUM,
+                                                                               JavaKeywords.THROWS, JavaKeywords.EXTENDS, JavaKeywords.IMPLEMENTS);
 
   public JavaCompilingVisitor(@NotNull GlobalCompilingVisitor compilingVisitor) {
     myCompilingVisitor = compilingVisitor;
@@ -123,19 +123,19 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       final CompileContext context = myCompilingVisitor.getContext();
       if (!handleWord(aClass.getName(), CODE, context)) return;
       if (aClass.isInterface()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeywords.INTERFACE, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.INTERFACE, true, CODE, context);
       }
       else if (aClass.isEnum()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeywords.ENUM, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.ENUM, true, CODE, context);
       }
       else if (aClass.isRecord()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeywords.RECORD, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.RECORD, true, CODE, context);
       }
       else {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeywords.INTERFACE, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeywords.ENUM, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeywords.RECORD, false, CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeywords.CLASS, true, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.INTERFACE, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.ENUM, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.RECORD, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(JavaKeywords.CLASS, true, CODE, context);
       }
       super.visitClass(aClass);
     }

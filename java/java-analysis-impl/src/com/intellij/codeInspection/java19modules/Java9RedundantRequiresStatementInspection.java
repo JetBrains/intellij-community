@@ -8,7 +8,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -183,7 +183,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       if (parent instanceof PsiJavaModule currentModule) {
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
         for (String dependencyName : myDependencies) {
-          PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(PsiKeywords.REQUIRES + ' ' + dependencyName, null);
+          PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(JavaKeywords.REQUIRES + ' ' + dependencyName, null);
           currentModule.addAfter(requiresStatement, statementToDelete);
         }
       }

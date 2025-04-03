@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.suggested
 
-import com.intellij.java.syntax.parser.PsiKeywords
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.psi.PsiModifier
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
@@ -92,7 +92,7 @@ internal class JavaSignaturePresentationBuilder(
     exceptionTypes: List<String>,
     effectAndConnectionId: (Int) -> Pair<Effect, Any?>
   ) {
-    this += Leaf(PsiKeywords.THROWS)
+    this += Leaf(JavaKeywords.THROWS)
     this += LineBreak(" ", indentAfter = true)
 
     for ((index, exceptionType) in exceptionTypes.withIndex()) {

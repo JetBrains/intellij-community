@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -108,7 +108,7 @@ public class JavaInheritorsGetter {
     PsiElement position = parameters.getPosition();
     if ((parameters.getInvocationCount() < 2 || psiClass instanceof PsiCompiledElement) &&
         isInnerClassFromStaticContext(position, psiClass) &&
-        !psiElement().afterLeaf(psiElement().withText(PsiKeywords.NEW).afterLeaf(".")).accepts(position)) {
+        !psiElement().afterLeaf(psiElement().withText(JavaKeywords.NEW).afterLeaf(".")).accepts(position)) {
       return null;
     }
 

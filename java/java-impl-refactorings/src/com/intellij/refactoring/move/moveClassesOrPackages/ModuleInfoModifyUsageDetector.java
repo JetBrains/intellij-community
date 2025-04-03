@@ -3,7 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
@@ -208,10 +208,10 @@ class ModuleInfoModifyUsageDetector extends ModuleInfoUsageDetector {
   private static @NotNull String formModuleStatementText(@NotNull PsiPackageAccessibilityStatement.Role role, @NotNull Set<String> moduleRefNames, @NotNull String packageName) {
     String roleText = null;
     if (role == PsiPackageAccessibilityStatement.Role.EXPORTS) {
-      roleText = PsiKeywords.EXPORTS;
+      roleText = JavaKeywords.EXPORTS;
     }
     else if (role == PsiPackageAccessibilityStatement.Role.OPENS) {
-      roleText = PsiKeywords.OPENS;
+      roleText = JavaKeywords.OPENS;
     }
     assert roleText != null;
     String moduleRefsText;

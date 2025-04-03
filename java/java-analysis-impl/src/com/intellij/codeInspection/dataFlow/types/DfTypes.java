@@ -10,7 +10,7 @@ import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
-import com.intellij.java.syntax.parser.PsiKeywords;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
@@ -65,7 +65,7 @@ public final class DfTypes {
 
     @Override
     public @NotNull String toString() {
-      return PsiKeywords.BOOLEAN;
+      return JavaKeywords.BOOLEAN;
     }
   };
 
