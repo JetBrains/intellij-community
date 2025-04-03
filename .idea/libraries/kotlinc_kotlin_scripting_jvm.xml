@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.2.0-dev-12359">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.2.0-dev-14175">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.0-dev-12359/kotlin-scripting-jvm-2.2.0-dev-12359.jar">
-          <sha256sum>c8fdd278ebae67fcec6510376a33a8dfc8bfd936d4c149546c48bea2af58bfab</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.0-dev-14175/kotlin-scripting-jvm-2.2.0-dev-14175.jar">
+          <sha256sum>b0a8246512b62afbb657907ae37acf5f6ba40ebd214fc810a876e966dd0dc67d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.0-dev-12359/kotlin-scripting-jvm-2.2.0-dev-12359.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.0-dev-14175/kotlin-scripting-jvm-2.2.0-dev-14175.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.0-dev-12359/kotlin-scripting-jvm-2.2.0-dev-12359-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.0-dev-14175/kotlin-scripting-jvm-2.2.0-dev-14175-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

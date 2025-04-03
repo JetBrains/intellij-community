@@ -16,7 +16,7 @@ KaLibraryModule:
   libraryName: library
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of library)
   friendDependencies:
     <empty>
   dependsOnDependencies:

@@ -31,8 +31,8 @@ class KotlinSSUnaryExpressionTest : KotlinStructuralSearchTest() {
         fun postIncrement(a: Int): Int {
             var b = a
             <warning descr="SSR">++b</warning>
-            <warning descr="SSR">++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in Kotlin 2.2.">(b)</warning></warning>
-            <warning descr="SSR">++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in Kotlin 2.2.">(((b)))</warning></warning>
+            <warning descr="SSR">++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.2.">(b)</warning></warning>
+            <warning descr="SSR">++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.2.">(((b)))</warning></warning>
             <warning descr="SSR">b.inc()</warning>
             return b
         }
@@ -42,8 +42,8 @@ class KotlinSSUnaryExpressionTest : KotlinStructuralSearchTest() {
         fun postIncrement(a: Int): Int {
             var b = a
             <warning descr="SSR">b++</warning>
-            <warning descr="SSR"><warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in Kotlin 2.2.">(b)</warning>++</warning>
-            <warning descr="SSR"><warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in Kotlin 2.2.">(((b)))</warning>++</warning>
+            <warning descr="SSR"><warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.2.">(b)</warning>++</warning>
+            <warning descr="SSR"><warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.2.">(((b)))</warning>++</warning>
             <warning descr="SSR">b.inc()</warning>
             return b
         }

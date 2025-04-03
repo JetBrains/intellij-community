@@ -4,7 +4,7 @@ KaLibraryModule:
   libraryName: L
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of L)
   friendDependencies:
     <empty>
   dependsOnDependencies:

@@ -548,6 +548,11 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 super.setUp();
             }
 
+            @TestMetadata("All.kt")
+            public void testAll() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/withUseSiteTarget/All.kt"));
+            }
+
             @TestMetadata("DelegateTarget.kt")
             public void testDelegateTarget() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/withUseSiteTarget/DelegateTarget.kt"));
