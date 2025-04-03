@@ -16450,6 +16450,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/specifyVisibilityInExplicitApiMode/constructor.kt");
         }
 
+        @TestMetadata("fixAllProblemsInFile.kt")
+        public void testFixAllProblemsInFile() throws Exception {
+            runTest("testData/quickfix/specifyVisibilityInExplicitApiMode/fixAllProblemsInFile.kt");
+        }
+
         @TestMetadata("method.kt")
         public void testMethod() throws Exception {
             runTest("testData/quickfix/specifyVisibilityInExplicitApiMode/method.kt");
@@ -18126,6 +18131,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("dataClasNoParameterType.kt")
         public void testDataClasNoParameterType() throws Exception {
             runTest("testData/quickfix/typeAddition/dataClasNoParameterType.kt");
+        }
+
+        @TestMetadata("fixAllProblemsInFile.kt")
+        public void testFixAllProblemsInFile() throws Exception {
+            runTest("testData/quickfix/typeAddition/fixAllProblemsInFile.kt");
         }
 
         @TestMetadata("noAddErrorType.kt")

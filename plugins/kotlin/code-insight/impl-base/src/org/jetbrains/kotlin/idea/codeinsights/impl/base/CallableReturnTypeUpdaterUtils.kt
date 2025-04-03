@@ -355,7 +355,7 @@ object CallableReturnTypeUpdaterUtils {
                 is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
                 else -> KotlinBundle.message("specify.type.explicitly")
             }
-        )
+        ).withFixAllOption(this)
 
         override fun invoke(context: ActionContext, element: KtCallableDeclaration, updater: ModPsiUpdater): Unit =
             updateType(element, typeInfo, context.project, updater)

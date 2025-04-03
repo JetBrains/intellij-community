@@ -3396,6 +3396,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/specifyVisibilityInExplicitApiMode/constructor.kt");
         }
 
+        @TestMetadata("fixAllProblemsInFile.kt")
+        public void testFixAllProblemsInFile() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyVisibilityInExplicitApiMode/fixAllProblemsInFile.kt");
+        }
+
         @TestMetadata("method.kt")
         public void testMethod() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifyVisibilityInExplicitApiMode/method.kt");
@@ -4116,6 +4121,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("dataClasNoParameterType.kt")
         public void testDataClasNoParameterType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeAddition/dataClasNoParameterType.kt");
+        }
+
+        @TestMetadata("fixAllProblemsInFile.kt")
+        public void testFixAllProblemsInFile() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeAddition/fixAllProblemsInFile.kt");
         }
 
         @TestMetadata("noAddErrorType.kt")
