@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.javaFX
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
-import com.intellij.ide.starters.shared.*
+import com.intellij.ide.starters.shared.GRADLE_PROJECT
+import com.intellij.ide.starters.shared.GROOVY_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.JAVA_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.JUNIT_TEST_RUNNER
+import com.intellij.ide.starters.shared.MAVEN_PROJECT
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder
@@ -37,11 +41,8 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
               stage.setScene(scene);
               stage.show();
           }
-
-          public static void main(String[] args) {
-              launch();
-          }
       }
+
     """.trimIndent())
 
     val dlr = "\$"
@@ -134,22 +135,37 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       isCreatingNewProject = true
     }
 
+    expectFile("src/main/java/com/example/demo/Launcher.java", """
+      package com.example.demo;
+
+      import javafx.application.Application;
+
+      public class Launcher {
+          public static void main(String[] args) {
+              Application.launch(HelloApplication.class, args);
+          }
+      }
+
+    """.trimIndent())
+
     expectFile("src/main/java/com/example/demo/HelloController.java", """
       package com.example.demo;
 
       import javafx.fxml.FXML;
       import javafx.scene.control.Label;
-      
+
       public class HelloController {
           @FXML
           private Label welcomeText;
-      
+
           @FXML
           protected void onHelloButtonClick() {
               welcomeText.setText("Welcome to JavaFX Application!");
           }
       }
+
     """.trimIndent())
+
     val dlr = "\$"
     expectFile("build.gradle.kts", """
       plugins {
