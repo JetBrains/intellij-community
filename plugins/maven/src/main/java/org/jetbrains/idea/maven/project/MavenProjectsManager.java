@@ -28,6 +28,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.ui.update.MergingQueueUtil;
 import com.intellij.util.ui.update.Update;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -284,7 +285,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void doSave() {
-    mySaveQueue.queue(new Update(this) {
+    Update update = new Update(this) {
       @Override
       public void run() {
         try {
@@ -298,7 +299,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
           MavenLog.LOG.info(e);
         }
       }
-    });
+    };
+    if (MavenUtil.isMavenUnitTestModeEnabled()) {
+      mySaveQueue.queue(update);
+    } else {
+      MergingQueueUtil.queueTracked(mySaveQueue, update);
+    }
   }
 
   @ApiStatus.Internal
