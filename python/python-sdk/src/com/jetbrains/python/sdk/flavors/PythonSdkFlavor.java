@@ -365,14 +365,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
   }
 
-  /**
-   * @deprecated use {@link #PYTHON_VERSION_ARG}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull String getVersionOption() {
-    return PYTHON_VERSION_ARG;
-  }
-
   public @NotNull Collection<String> getExtraDebugOptions() {
     return Collections.emptyList();
   }
