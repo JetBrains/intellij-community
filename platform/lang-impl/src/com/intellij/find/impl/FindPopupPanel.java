@@ -325,6 +325,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         dialogWindow.setLocationRelativeTo(null);
       }
       mySuggestRegexHintForEmptyResults = true;
+      // Until we use lux in split mode for this dialog, we have to handle popup action in backend
+      myDialog.getRootPane().putClientProperty("ComponentInModalWindowLikeContext", Boolean.TRUE);
       myDialog.show();
 
       myDialog.setOnDeactivationAction(() -> closeIfPossible());
