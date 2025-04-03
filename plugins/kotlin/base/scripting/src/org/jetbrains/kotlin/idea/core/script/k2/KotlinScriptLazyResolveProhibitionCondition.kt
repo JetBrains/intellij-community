@@ -11,12 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
  */
 interface KotlinScriptLazyResolveProhibitionCondition {
     companion object {
-        val EP_NAME =
+        val EP_NAME: ProjectExtensionPointName<KotlinScriptLazyResolveProhibitionCondition> =
             ProjectExtensionPointName<KotlinScriptLazyResolveProhibitionCondition>("org.jetbrains.kotlin.kotlinScriptLazyResolveProhibitionCondition")
 
-        fun prohibitLazyResolve(project: Project, script: VirtualFile): Boolean =
-            EP_NAME.getExtensions(project).any { it.prohibitLazyResolve(script) }
+        fun shouldPostponeResolution(project: Project, script: VirtualFile): Boolean =
+            EP_NAME.getExtensions(project).any { it.shouldPostponeResolution(script) }
     }
 
-    fun prohibitLazyResolve(script: VirtualFile): Boolean = false
+    fun shouldPostponeResolution(script: VirtualFile): Boolean = false
 }

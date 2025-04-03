@@ -4,10 +4,15 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 import KotlinGradleScriptingBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.EnvironmentUtil
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.core.script.k2.configurationResolverDelegate
 import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.k2.scriptWorkspaceModelManagerDelegate
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
@@ -109,9 +114,6 @@ private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<Str
         ?: emptyList()
 }
 
-/**
- * Force-wrap legacy definitions into `ScriptDefinition.FromConfigurations` when updating.
- */
 private fun loadGradleTemplates(
     projectPath: String,
     templateClasses: List<String>,
@@ -142,7 +144,8 @@ private fun loadGradleTemplates(
                 legacyDefinition,
                 it.hostConfiguration,
                 it.evaluationConfiguration,
-                it.defaultCompilerOptions
+                it.defaultCompilerOptions,
+                project
             )
         } ?: it
     }
@@ -180,7 +183,7 @@ private fun String?.toGradleHomePath(): Path {
     }
 }
 
-fun getFullDefinitionsClasspath(gradleLibDir: Path): List<Path> {
+private fun getFullDefinitionsClasspath(gradleLibDir: Path): List<Path> {
     val templateClasspath = Files.newDirectoryStream(gradleLibDir) { kotlinDslDependencySelector.matches(it.name) }
         .use(DirectoryStream<Path>::toList)
         .ifEmpty { error(KotlinGradleScriptingBundle.message("error.text.missing.jars.in.gradle.directory")) }
@@ -215,7 +218,8 @@ class GradleKotlinScriptDefinitionWrapper(
     legacyDefinition: KotlinScriptDefinitionFromAnnotatedTemplate,
     override val hostConfiguration: ScriptingHostConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?,
-    override val defaultCompilerOptions: Iterable<String>
+    override val defaultCompilerOptions: Iterable<String>,
+    val project: Project
 ) : ScriptDefinition.FromConfigurationsBase() {
 
     init {
@@ -230,16 +234,34 @@ class GradleKotlinScriptDefinitionWrapper(
             hostConfiguration,
             legacyDefinition
         ).with {
-            ScriptCompilationConfiguration.ide.acceptedLocations.put(listOf(ScriptAcceptedLocation.Project))
             @Suppress("DEPRECATION_ERROR")
-            ScriptCompilationConfiguration.fileNamePattern.put(legacyDefinition.scriptFilePattern.pattern)
-            ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply{
-                id = "gradle-kts"
-                title = ".gradle.kts"
-                templateName = "Kotlin Script Gradle"
-            })
+            fileNamePattern.put(legacyDefinition.scriptFilePattern.pattern)
+            ide {
+                acceptedLocations.put(listOf(ScriptAcceptedLocation.Project))
+                kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
+                    id = "gradle-kts"
+                    title = ".gradle.kts"
+                    templateName = "Kotlin Script Gradle"
+                })
+                configurationResolverDelegate {
+                    GradleScriptRefinedConfigurationProvider.getInstance(project)
+                }
+                scriptWorkspaceModelManagerDelegate {
+                    GradleScriptRefinedConfigurationProvider.getInstance(project)
+                }
+            }
         }
     }
 
     override val canDefinitionBeSwitchedOff: Boolean = false
 }
+
+data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) : KotlinScriptEntitySource(virtualFileUrl)
+
+class GradleScriptModel(
+    val virtualFile: VirtualFile,
+    val classPath: List<String> = listOf(),
+    val sourcePath: List<String> = listOf(),
+    val imports: List<String> = listOf(),
+    val javaHome: String? = null
+)

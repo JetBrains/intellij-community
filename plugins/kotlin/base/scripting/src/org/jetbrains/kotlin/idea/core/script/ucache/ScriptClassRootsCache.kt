@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathVirtualFileCache
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathUtil
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.lang.ref.Reference
@@ -96,7 +96,7 @@ class ScriptClassRootsCache(
     private fun computeHeavy(lightScriptInfo: LightScriptInfo): HeavyScriptInfo? {
         val configuration = lightScriptInfo.buildConfiguration() ?: return null
 
-        val vfsRoots = configuration.dependenciesClassPath.mapNotNull { ScriptClassPathVirtualFileCache.findVirtualFile(it.path) }
+        val vfsRoots = configuration.dependenciesClassPath.mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
         val sdk = sdks[SdkId(configuration.javaHome?.toPath())]
 
         fun heavyInfoForRoots(roots: List<VirtualFile>): HeavyScriptInfo {
@@ -123,7 +123,7 @@ class ScriptClassRootsCache(
             return if (classpathVfsHint?.containsKey(this) == true) {
                 classpathVfsHint[this]
             } else {
-                ScriptClassPathVirtualFileCache.findVirtualFile(this).also { vFile ->
+                ScriptClassPathUtil.findVirtualFile(this).also { vFile ->
                     classpathVfsHint?.put(this, vFile)
                 }
             }
@@ -159,7 +159,7 @@ class ScriptClassRootsCache(
 
     fun getScriptDependenciesSourceFiles(file: VirtualFile): List<VirtualFile> {
         return getHeavyScriptInfo(file.path)?.scriptConfiguration?.dependenciesSources?.mapNotNull { file ->
-            ScriptClassPathVirtualFileCache.findVirtualFile(file.path)
+            ScriptClassPathUtil.findVirtualFile(file.path)
         } ?: emptyList()
     }
 

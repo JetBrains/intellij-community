@@ -12,19 +12,30 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
+import kotlin.script.experimental.api.ScriptDependency
+import kotlin.script.experimental.jvm.JvmDependency
 
-class ScriptClassPathVirtualFileCache {
+class ScriptClassPathUtil {
     private constructor()
 
     private val cache = mutableMapOf<String, VirtualFile?>()
 
     fun findVirtualFile(pathString: String): VirtualFile? =
         cache.computeIfAbsent(pathString) {
-            ScriptClassPathVirtualFileCache.findVirtualFile(pathString)
+            ScriptClassPathUtil.findVirtualFile(pathString)
         }
 
     companion object {
-        fun getInstance(): ScriptClassPathVirtualFileCache = ScriptClassPathVirtualFileCache()
+        fun getInstance(): ScriptClassPathUtil = ScriptClassPathUtil()
+
+        fun List<ScriptDependency>?.findVirtualFiles(): List<VirtualFile> {
+            this ?: return emptyList()
+            return this
+                .flatMap { (it as? JvmDependency)?.classpath ?: emptyList() }
+                .distinct()
+                .mapNotNull { findVirtualFile(it.path) }
+                .sortedBy { it.name }
+        }
 
         fun findVirtualFile(pathString: String): VirtualFile? {
             val path = pathString.toNioPathOrNull()

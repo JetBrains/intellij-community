@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 private const val GRADLE_KTS = ".gradle.kts"
 
 class GradleScriptLazyResolveProhibitionCondition(val project: Project) : KotlinScriptLazyResolveProhibitionCondition {
-    override fun prohibitLazyResolve(script: VirtualFile): Boolean {
+    override fun shouldPostponeResolution(script: VirtualFile): Boolean {
         val gradleDefinitionIds =
             project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.definitions?.map { it.definitionId }?.toSet()
                 ?: emptySet()

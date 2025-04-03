@@ -7,24 +7,19 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import java.io.File
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.withTransformedResolvers
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
-    val classPath: List<File> = listOf(
-        KotlinArtifacts.kotlinMainKts,
-        KotlinArtifacts.kotlinScriptRuntime,
-        KotlinArtifacts.kotlinStdlib,
-        KotlinArtifacts.kotlinReflect
-    )
 
     override val definitions: Sequence<ScriptDefinition>
         get() {
             val discoveredDefinitions = ScriptDefinitionsFromClasspathDiscoverySource(
-                classPath, defaultJvmScriptingHostConfiguration, ::loggingReporter
+                listOf(KotlinArtifacts.kotlinMainKts, KotlinArtifacts.kotlinStdlib, KotlinArtifacts.kotlinScriptRuntime, KotlinArtifacts.kotlinReflect),
+                defaultJvmScriptingHostConfiguration,
+                ::loggingReporter
             ).definitions
 
             return discoveredDefinitions.map { definition ->
@@ -32,17 +27,25 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                     ReportingExternalDependenciesResolver(it, DependencyResolutionService.getInstance(project))
                 }.with {
                     ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
-                    ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
-                        id = "main-kts"
-                        title = ".main.kts"
-                        templateName = "Kotlin Script MainKts"
-                    })
+                    ide {
+                        kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
+                            id = "main-kts"
+                            title = ".main.kts"
+                            templateName = "Kotlin Script MainKts"
+                        })
+                        configurationResolverDelegate {
+                            MainKtsScriptConfigurationProvider.getInstance(project)
+                        }
+                        scriptWorkspaceModelManagerDelegate {
+                            MainKtsScriptConfigurationProvider.getInstance(project)
+                        }
+                    }
                 }
 
                 ScriptDefinition.FromConfigurations(
                     compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration] ?: defaultJvmScriptingHostConfiguration,
                     compilationConfiguration,
-                    definition.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default
+                    definition.evaluationConfiguration
                 ).apply {
                     order = Int.MIN_VALUE
                 }
@@ -53,11 +56,10 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
 fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
     val log = Logger.getInstance("ScriptDefinitionsProviders")
     when (severity) {
-        ScriptDiagnostic.Severity.FATAL,
-        ScriptDiagnostic.Severity.ERROR -> log.error(message)
-        ScriptDiagnostic.Severity.WARNING,
-        ScriptDiagnostic.Severity.INFO -> log.info(message)
+        ScriptDiagnostic.Severity.FATAL, ScriptDiagnostic.Severity.ERROR -> log.error(message)
+
+        ScriptDiagnostic.Severity.WARNING, ScriptDiagnostic.Severity.INFO -> log.info(message)
+
         else -> {}
     }
 }
-
