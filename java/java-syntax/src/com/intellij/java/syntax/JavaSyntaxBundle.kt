@@ -10,6 +10,7 @@ import org.jetbrains.annotations.PropertyKey
 @ApiStatus.Internal
 object JavaSyntaxBundle {
   const val BUNDLE: @NonNls String = "messages.JavaSyntaxBundle"
+
   val resourceBundle: ResourceBundle = ResourceBundle("com.intellij.java.syntax.JavaSyntaxBundle", BUNDLE, this)
 
   @JvmStatic
@@ -22,4 +23,3 @@ object JavaSyntaxBundle {
     return resourceBundle.messagePointer(key, *params)
   }
 }
-
