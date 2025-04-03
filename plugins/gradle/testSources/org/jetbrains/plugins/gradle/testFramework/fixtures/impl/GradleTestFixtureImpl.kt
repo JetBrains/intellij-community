@@ -19,9 +19,7 @@ import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
-class GradleTestFixtureImpl(
-  private val testRoot: Path,
-) : GradleTestFixture {
+class GradleTestFixtureImpl: GradleTestFixture {
 
   private lateinit var reloadLeakTracker: OperationLeakTracker
 
@@ -34,22 +32,22 @@ class GradleTestFixtureImpl(
     reloadLeakTracker.tearDown()
   }
 
-  override suspend fun openProject(relativePath: String, numProjectSyncs: Int): Project {
+  override suspend fun openProject(projectPath: Path, numProjectSyncs: Int): Project {
     return awaitOpenProjectConfiguration(numProjectSyncs) {
-      openProjectAsync(testRoot.resolve(relativePath).normalize(), UnlinkedProjectStartupActivity())
+      openProjectAsync(projectPath, UnlinkedProjectStartupActivity())
     }
   }
 
-  override suspend fun linkProject(project: Project, relativePath: String) {
+  override suspend fun linkProject(project: Project, projectPath: Path) {
     awaitProjectConfiguration(project) {
-      linkAndSyncGradleProject(project, testRoot.resolve(relativePath).toCanonicalPath())
+      linkAndSyncGradleProject(project, projectPath.toCanonicalPath())
     }
   }
 
-  override suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit) {
+  override suspend fun reloadProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit) {
     awaitProjectConfiguration(project) {
       ExternalSystemUtil.refreshProject(
-        testRoot.resolve(relativePath).toCanonicalPath(),
+        projectPath.toCanonicalPath(),
         ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
           .apply(configure)
       )

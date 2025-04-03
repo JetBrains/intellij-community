@@ -5,13 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
-import java.nio.file.Path
 
 fun gradleJvmFixture(
   gradleVersion: GradleVersion,
@@ -24,11 +22,8 @@ fun gradleJvmFixture(
   }
 }
 
-fun gradleFixture(
-  pathFixture: TestFixture<Path> = tempPathFixture(),
-): TestFixture<GradleTestFixture> = testFixture {
-  val testRoot = pathFixture.init()
-  val fixture = GradleTestFixtureImpl(testRoot)
+fun gradleFixture(): TestFixture<GradleTestFixture> = testFixture {
+  val fixture = GradleTestFixtureImpl()
   fixture.setUp()
   initialized(fixture) {
     fixture.tearDown()
