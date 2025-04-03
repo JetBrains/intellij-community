@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel.Declarations.MoveTargetType
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
@@ -309,6 +311,9 @@ sealed class K2MoveModel {
 
             fun isMultiFileMove(movedElements: List<PsiElement>) = movedElements.fileElements().toSet().size > 1
 
+            fun PsiElement.isOpenOrOverrideFunction(): Boolean = this is KtNamedFunction
+                    && (this.hasModifier(KtTokens.OPEN_KEYWORD) || this.hasModifier(KtTokens.OVERRIDE_KEYWORD))
+
             fun PsiElement?.isSingleClassContainer(): Boolean {
                 if (this !is KtClassOrObject) return false
                 val file = parent as? KtFile ?: return false
@@ -349,6 +354,14 @@ sealed class K2MoveModel {
             if (isMultiFileMove(elementsToMove) && elementsToMove.any { it is KtNamedDeclaration && !it.isSingleClassContainer() }) {
                 val message = RefactoringBundle.getCannotRefactorMessage(
                     KotlinBundle.message("text.move.declaration.no.support.for.multi.file")
+                )
+                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
+                return null
+            }
+
+            if (elementsToMove.any { it.isOpenOrOverrideFunction() }) {
+                val message = RefactoringBundle.getCannotRefactorMessage(
+                    KotlinBundle.message("text.move.declaration.no.support.for.open.override.function")
                 )
                 CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
                 return null

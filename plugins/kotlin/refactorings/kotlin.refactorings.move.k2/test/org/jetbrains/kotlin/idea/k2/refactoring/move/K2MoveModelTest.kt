@@ -578,4 +578,40 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
     }
+
+    fun `test moving override function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open fun fn() {}
+            }
+            
+            open class Derived : Base() {
+                override fun fn<caret>() {
+                    super.fn()
+                }
+            }
+        """.trimIndent()) as KtFile
+        val overrideFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(overrideFunction), null)
+        }
+    }
+
+    fun `test moving open function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open fun fn<caret>() {}
+            }
+            
+            open class Derived : Base() {
+                override fun fn() {
+                    super.fn()
+                }
+            }
+        """.trimIndent()) as KtFile
+        val overrideFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(overrideFunction), null)
+        }
+    }
 }
