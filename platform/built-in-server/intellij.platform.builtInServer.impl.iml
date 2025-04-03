@@ -35,5 +35,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="netty-codec-compression" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
   </component>
 </module>
