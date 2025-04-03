@@ -1012,25 +1012,22 @@ open class DeclarationParser(private val myParser: JavaParser) {
       else -> myParser.expressionParser.parseConditional(builder)
     }
   }
+}
 
-  companion object {
-    // todo move out companion object???
-    fun isNonSealedToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?, level: LanguageLevel): Boolean {
-      if (!JavaFeature.SEALED_CLASSES.isSufficient(level) ||
-          tokenType !== JavaSyntaxTokenType.IDENTIFIER ||
-          "non" != builder.tokenText ||
-          builder.lookAhead(1) !== JavaSyntaxTokenType.MINUS ||
-          builder.lookAhead(2) !== JavaSyntaxTokenType.IDENTIFIER
-      ) {
-        return false
-      }
-      val maybeNonSealed = builder.mark()
-      builder.advance(2)
-      val isNonSealed = PsiKeywords.SEALED == builder.tokenText
-      maybeNonSealed.rollbackTo()
-      return isNonSealed
-    }
+fun isNonSealedToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?, level: LanguageLevel): Boolean {
+  if (!JavaFeature.SEALED_CLASSES.isSufficient(level) ||
+      tokenType !== JavaSyntaxTokenType.IDENTIFIER ||
+      "non" != builder.tokenText ||
+      builder.lookAhead(1) !== JavaSyntaxTokenType.MINUS ||
+      builder.lookAhead(2) !== JavaSyntaxTokenType.IDENTIFIER
+  ) {
+    return false
   }
+  val maybeNonSealed = builder.mark()
+  builder.advance(2)
+  val isNonSealed = PsiKeywords.SEALED == builder.tokenText
+  maybeNonSealed.rollbackTo()
+  return isNonSealed
 }
 
 private val TYPE_START: SyntaxElementTypeSet = PRIMITIVE_TYPE_BIT_SET + setOf(JavaSyntaxTokenType.IDENTIFIER, JavaSyntaxTokenType.AT, JavaSyntaxTokenType.VAR_KEYWORD)

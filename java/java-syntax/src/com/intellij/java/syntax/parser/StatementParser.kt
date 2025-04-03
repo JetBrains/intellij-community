@@ -141,8 +141,7 @@ class StatementParser(private val myParser: JavaParser) {
     }
     else if (tokenType === JavaSyntaxTokenType.IDENTIFIER || tokenType === JavaSyntaxTokenType.AT) {
       val refPos = builder.mark()
-      val nonSealed = DeclarationParser.isNonSealedToken(builder, tokenType,
-                                                         this.languageLevel)
+      val nonSealed = isNonSealedToken(builder, tokenType, languageLevel)
       myParser.declarationParser.parseAnnotations(builder)
       skipQualifiedName(builder)
       val current = builder.tokenType
