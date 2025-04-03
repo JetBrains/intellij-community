@@ -10,14 +10,12 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import org.gradle.internal.FileUtils
-import org.jetbrains.plugins.gradle.properties.GRADLE_CACHE_DIR_NAME
-import org.jetbrains.plugins.gradle.properties.USER_HOME
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_USER_HOME_ENV_KEY
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_USER_HOME_PROPERTY_KEY
+import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
 import java.io.File
 import java.nio.file.Path
-
-private const val GRADLE_USER_HOME_ENV_KEY = GradleConstants.SYSTEM_DIRECTORY_PATH_KEY
-private const val GRADLE_USER_HOME_PROPERTY_KEY = "gradle.user.home"
 
 fun gradleUserHomeDir(): File {
   var gradleUserHome = Environment.getProperty(GRADLE_USER_HOME_PROPERTY_KEY)
@@ -25,7 +23,7 @@ fun gradleUserHomeDir(): File {
     gradleUserHome = Environment.getVariable(GRADLE_USER_HOME_ENV_KEY)
   }
   if (gradleUserHome == null) {
-    val userHome = Environment.getProperty(USER_HOME)
+    val userHome = Environment.getProperty(USER_HOME_PROPERTY_KEY)
     gradleUserHome = "$userHome/$GRADLE_CACHE_DIR_NAME"
   }
   return FileUtils.canonicalize(File(gradleUserHome))

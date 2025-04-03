@@ -2,14 +2,20 @@
 package org.jetbrains.plugins.gradle.properties
 
 import org.jetbrains.plugins.gradle.properties.models.getStringProperty
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_DIR_NAME
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME = "gradle-daemon-jvm.properties"
-const val GRADLE_DAEMON_JVM_VERSION_PROPERTY = "toolchainVersion"
-const val GRADLE_DAEMON_JVM_VENDOR_PROPERTY = "toolchainVendor"
-const val GRADLE_FOLDER = "gradle"
+@Deprecated("Use GradleConstants#GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME instead")
+const val GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME: String = GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME
+
+const val GRADLE_DAEMON_JVM_VERSION_PROPERTY: String = "toolchainVersion"
+const val GRADLE_DAEMON_JVM_VENDOR_PROPERTY: String = "toolchainVendor"
+
+@Deprecated("Use GradleConstants#GRADLE_DIR_NAME instead")
+const val GRADLE_FOLDER: String = GRADLE_DIR_NAME
 
 object GradleDaemonJvmPropertiesFile {
 
@@ -21,7 +27,7 @@ object GradleDaemonJvmPropertiesFile {
 
   @JvmStatic
   fun getPropertyPath(externalProjectPath: Path): Path {
-    return externalProjectPath.resolve(Paths.get(GRADLE_FOLDER, GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME))
+    return externalProjectPath.resolve(Paths.get(GRADLE_DIR_NAME, GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME))
       .toAbsolutePath().normalize()
   }
 

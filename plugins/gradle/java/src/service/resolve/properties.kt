@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.gradle.properties.GRADLE_PROPERTIES_FILE_NAME
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
 import java.nio.file.Path
 
 internal fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {

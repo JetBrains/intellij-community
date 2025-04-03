@@ -2,12 +2,16 @@
 package org.jetbrains.plugins.gradle.properties
 
 import org.jetbrains.plugins.gradle.properties.models.getStringProperty
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_LOCAL_PROPERTIES_FILE_NAME
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val GRADLE_LOCAL_JAVA_HOME_PROPERTY = "java.home"
-const val GRADLE_LOCAL_PROPERTIES_FILE_NAME = "config.properties"
+const val GRADLE_LOCAL_JAVA_HOME_PROPERTY: String = "java.home"
+
+@Deprecated("Use GradleConstants#GRADLE_LOCAL_PROPERTIES_FILE_NAME instead")
+const val GRADLE_LOCAL_PROPERTIES_FILE_NAME: String = GRADLE_LOCAL_PROPERTIES_FILE_NAME
 
 object GradleLocalPropertiesFile {
 

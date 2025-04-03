@@ -9,22 +9,28 @@ import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
-const val USER_HOME = "user.home"
+@Deprecated("Use GradleConstants#USER_HOME_PROPERTY_KEY instead")
+const val USER_HOME: String = USER_HOME_PROPERTY_KEY
 
-const val GRADLE_CACHE_DIR_NAME = ".gradle"
+@Deprecated("Use GradleConstants#GRADLE_CACHE_DIR_NAME instead")
+const val GRADLE_CACHE_DIR_NAME: String = GRADLE_CACHE_DIR_NAME
 
-const val GRADLE_PROPERTIES_FILE_NAME = "gradle.properties"
+@Deprecated("Use GradleConstants#GRADLE_PROPERTIES_FILE_NAME instead")
+const val GRADLE_PROPERTIES_FILE_NAME: String = GRADLE_PROPERTIES_FILE_NAME
 
-const val GRADLE_JAVA_HOME_PROPERTY = "org.gradle.java.home"
-const val GRADLE_LOGGING_LEVEL_PROPERTY = "org.gradle.logging.level"
-const val GRADLE_PARALLEL_PROPERTY = "org.gradle.parallel"
-const val GRADLE_JVM_OPTIONS_PROPERTY = "org.gradle.jvmargs"
-const val GRADLE_ISOLATED_PROJECTS_PROPERTY = "org.gradle.unsafe.isolated-projects"
+const val GRADLE_JAVA_HOME_PROPERTY: String = "org.gradle.java.home"
+const val GRADLE_LOGGING_LEVEL_PROPERTY: String = "org.gradle.logging.level"
+const val GRADLE_PARALLEL_PROPERTY: String = "org.gradle.parallel"
+const val GRADLE_JVM_OPTIONS_PROPERTY: String = "org.gradle.jvmargs"
+const val GRADLE_ISOLATED_PROJECTS_PROPERTY: String = "org.gradle.unsafe.isolated-projects"
 
 object GradlePropertiesFile {
 
