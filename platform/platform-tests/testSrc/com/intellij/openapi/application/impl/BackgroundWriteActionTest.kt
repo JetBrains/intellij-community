@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertFalse
@@ -468,6 +469,26 @@ class BackgroundWriteActionTest {
           ApplicationManager.getApplication().assertWriteAccessAllowed()
         }
       }
+    }
+  }
+
+  @Test
+  fun `prevention of WA is thread-local`(): Unit = concurrencyTest {
+    launch {
+      getGlobalThreadingSupport().prohibitWriteActionsInside().use {
+        checkpoint(1)
+        checkpoint(4)
+        assertThrows<IllegalStateException> {
+          backgroundWriteAction {  }
+        }
+        checkpoint(5)
+      }
+    }
+    launch {
+      checkpoint(2)
+      backgroundWriteAction { // can safely start
+      }
+      checkpoint(3)
     }
   }
 }

@@ -407,7 +407,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
    */
   @Suppress("RemoveExplicitTypeArguments")
   private val myWriteActionPending = AtomicReference<Array<AtomicInteger>>(Array(1) { AtomicInteger(0) })
-  private var myNoWriteActionCounter = AtomicInteger()
+  private val myNoWriteActionCounter = ThreadLocal<Int>.withInitial { 0 }
 
   private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
   private val myLockingProhibited: ThreadLocal<Pair<Boolean, String>?> = ThreadLocal.withInitial { null }
@@ -871,8 +871,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     // Check that write action is not disabled
     // NB: It is before all cancellations will be run via fireBeforeWriteActionStart
     // It is change for old behavior, when ProgressUtilService checked this AFTER all cancellations.
-    if (!useBackgroundWriteAction && myNoWriteActionCounter.get() > 0) {
-      // TODO TODO TODO use coroutine context elements
+    if (myNoWriteActionCounter.get() > 0) {
       throwCannotWriteException()
     }
 
@@ -881,7 +880,6 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     startPendingWriteAction(computationState)
 
     if (myWriteActionsStack.isEmpty()) {
-      // TODO TODO TODO handle different-level write actions
       fireBeforeWriteActionStart(listener, clazz)
     }
 
@@ -1067,10 +1065,10 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun prohibitWriteActionsInside(): AccessToken {
-    myNoWriteActionCounter.incrementAndGet()
+    myNoWriteActionCounter.set(myNoWriteActionCounter.get() + 1)
     return object : AccessToken() {
       override fun finish() {
-        myNoWriteActionCounter.decrementAndGet()
+        myNoWriteActionCounter.set(myNoWriteActionCounter.get() - 1)
       }
     }
   }
