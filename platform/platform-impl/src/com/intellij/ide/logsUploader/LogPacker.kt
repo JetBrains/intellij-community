@@ -1,60 +1,37 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.logsUploader
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
 import com.intellij.diagnostic.MacOSDiagnosticReportDirectories
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.COLLECT_LOGS_NOTIFICATION_GROUP
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 import com.intellij.ide.troubleshooting.collectDimensionServiceDiagnosticsData
 import com.intellij.idea.LoggerFactory
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.platform.util.progress.reportProgress
 import com.intellij.troubleshooting.TroubleInfoCollector
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.Compressor
-import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.jackson.obj
-import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.forEachDirectoryEntry
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 
 @ApiStatus.Internal
 object LogPacker {
-  private const val UPLOADS_SERVICE_URL = "https://uploads.jetbrains.com"
-
-  private val gson: Gson by lazy {
-    GsonBuilder()
-      .setPrettyPrinting()
-      .disableHtmlEscaping()
-      .create()
-  }
-
   @JvmStatic
   @RequiresBackgroundThread
   @Throws(IOException::class)
@@ -134,73 +111,6 @@ object LogPacker {
     }
     archive
   }
-
-  @RequiresBackgroundThread
-  @Throws(IOException::class)
-  suspend fun uploadLogs(project: Project?): String = reportProgress { reporter ->
-    reporter.indeterminateStep("") {
-      val file = packLogs(project)
-      checkCanceled()
-
-      val folderName = uploadFile(file)
-
-      val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
-      Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
-      folderName
-    }
-  }
-
-  suspend fun uploadFile(file: Path): String {
-    val responseJson = requestSign(file.name)
-    val uploadUrl = responseJson["url"] as String
-    val folderName = responseJson["folderName"] as String
-    val headers = responseJson["headers"] as Map<*, *>
-    checkCanceled()
-    coroutineToIndicator {
-      upload(file, uploadUrl, headers)
-    }
-    return folderName
-  }
-
-  private fun requestSign(fileName: String): Map<String, Any> {
-    return HttpRequests.post("$UPLOADS_SERVICE_URL/sign", HttpRequests.JSON_CONTENT_TYPE)
-      .accept(HttpRequests.JSON_CONTENT_TYPE)
-      .connect { request ->
-        val out = BufferExposingByteArrayOutputStream()
-        JsonFactory().createGenerator(out).useDefaultPrettyPrinter().use { writer ->
-          writer.obj {
-            writer.writeStringField("filename", fileName)
-            writer.writeStringField("method", "put")
-            writer.writeStringField("contentType", "application/octet-stream")
-          }
-        }
-        request.write(out.toByteArray())
-        gson.fromJson(request.reader, object : TypeToken<Map<String, Any?>?>() {}.type)
-      }
-  }
-
-  private fun upload(file: Path, uploadUrl: String, headers: Map<*, *>) {
-    val indicator = ProgressManager.getGlobalProgressIndicator()
-    HttpRequests.put(uploadUrl, "application/octet-stream")
-      .productNameAsUserAgent()
-      .tuner { urlConnection ->
-        headers.forEach {
-          urlConnection.addRequestProperty(it.key as String, it.value as String)
-        }
-      }
-      .connect {
-        val http = it.connection as HttpURLConnection
-        val length = file.fileSize()
-        http.setFixedLengthStreamingMode(length)
-        http.outputStream.use { outputStream ->
-          file.inputStream().buffered(64 * 1024).use { inputStream ->
-            NetUtils.copyStreamContent(indicator, inputStream, outputStream, length)
-          }
-        }
-      }
-  }
-
-  fun getBrowseUrl(folderName: String): String = "$UPLOADS_SERVICE_URL/browse#$folderName"
 
   private fun doesMacOSDiagnosticReportBelongToThisApp(path: Path): Boolean {
     val name = path.name
