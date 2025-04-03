@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import training.dsl.LessonContext
 import training.learn.course.KLesson
 import training.learn.exceptons.InvalidSdkException
@@ -71,13 +72,18 @@ interface LangSupport {
    * Implement that method to define SDK lookup depending on a given project.
    *
    * @return an SDK instance which (existing or newly created) should be applied to the project given. Return `null`
-   * if no SDK is okay for this project.
+   * if no SDK is okay for this project. If sdk is not null, we call [applyProjectSdk]
    *
    * @throws NoSdkException in the case no valid SDK is available, yet it's required for the given project
    */
   @Throws(NoSdkException::class)
+  @RequiresEdt
   fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk?
 
+  /**
+   * [sdk] is from [getSdkForProject]
+   */
+  @RequiresEdt
   fun applyProjectSdk(sdk: Sdk, project: Project)
 
   fun applyToProjectAfterConfigure(): (Project) -> Unit

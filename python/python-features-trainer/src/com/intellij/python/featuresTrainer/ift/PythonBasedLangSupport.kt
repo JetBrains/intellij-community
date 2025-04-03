@@ -15,6 +15,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -65,6 +66,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
       val existingSdks = getExistingSdks()
       return applyBaseSdk(project, selectedSdk, existingSdks, module)
     }
+    return selectedSdk
     if (project.pythonSdk != null) return null  // sdk already configured
 
     // Run in parallel, because we can not wait for SDK here
@@ -100,6 +102,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
     }
   }
 
+  @RequiresEdt
   override fun applyProjectSdk(sdk: Sdk, project: Project) {
     setReadyToUseSdk(project, project.modules.first(), sdk)
   }
