@@ -2,6 +2,11 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.actions
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
@@ -11,7 +16,7 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsFilterData
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,24 +45,34 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
 @ApiStatus.Internal
 class SeActionsFilterEditor : ObservableOptionEditor<SeFilterState> {
   private var current: SeActionsFilterData? = null
+    set(value) {
+      field = value
+      _resultFlow.value = value?.toFilterData()
+    }
 
   private val _resultFlow: MutableStateFlow<SeFilterState?> = MutableStateFlow(current?.toFilterData())
   override val resultFlow: StateFlow<SeFilterState?> = _resultFlow.asStateFlow()
 
-  override fun getComponent(): JComponent {
-    return panel {
-      row {
-        val checkBox = checkBox(IdeBundle.message("checkbox.disabled.included"))
-
-        checkBox.component.model.isSelected = current?.includeDisabled ?: false
-        checkBox.onChanged {
-          if (current?.includeDisabled != it.isSelected) {
-            current = SeActionsFilterData(it.isSelected)
-            _resultFlow.value = current?.toFilterData()
-          }
-        }
+  fun getActions(): List<AnAction> {
+    return listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")) {
+      override fun isEverywhere(): Boolean {
+        return current?.includeDisabled ?: false
       }
-    }
+
+      override fun setEverywhere(state: Boolean) {
+        current = SeActionsFilterData(state)
+      }
+    })
+  }
+
+  override fun getComponent(): JComponent {
+    val actionGroup = DefaultActionGroup(getActions())
+    val toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
+    val toolbarComponent = toolbar.getComponent()
+    toolbarComponent.setOpaque(false)
+    toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
+    return toolbarComponent
   }
 
   override fun result(): SeFilterState {

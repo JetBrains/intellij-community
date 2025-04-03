@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItem
@@ -18,6 +19,11 @@ class SeActionsAdaptedProvider(val project: Project, private val legacyContribut
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
     val filter = SeActionsFilterData.from(params.filter)
+    legacyContributor.getActions({}).firstOrNull {
+      it is CheckBoxSearchEverywhereToggleAction
+    }?.let {
+      (it as CheckBoxSearchEverywhereToggleAction).isEverywhere = filter.includeDisabled
+    }
 
     coroutineScope {
       legacyContributor.fetchWeightedElements(this, inputQuery) {
