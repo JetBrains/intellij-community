@@ -25,34 +25,16 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.createXmlStreamReader
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.ByteArrayInputStream
-import java.io.Closeable
-import java.io.DataInputStream
-import java.io.File
-import java.io.IOException
-import java.io.InputStream
+import java.io.*
 import java.net.URL
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.NotDirectoryException
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.util.Collections
-import java.util.StringTokenizer
+import java.nio.file.*
+import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -241,7 +223,7 @@ fun initMainDescriptorByRaw(
     if (module.descriptorContent == null) {
       val jarFile = moduleDir?.resolve("${module.name}.jar")
       if (jarFile != null && Files.exists(jarFile)) {
-        val subRaw = loadModuleFromSeparateJar(pool, jarFile, subDescriptorFile, context, dataLoader)
+        val subRaw = loadModuleFromSeparateJar(pool, jarFile, subDescriptorFile, context)
         val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
         subDescriptor.jarFiles = Collections.singletonList(jarFile)
         module.descriptor = subDescriptor
@@ -787,7 +769,7 @@ private fun loadPluginDescriptor(
       if (input == null) {
         val jarFile = pluginDir.resolve("lib/modules/${module.name}.jar")
         classPath = Collections.singletonList(jarFile)
-        loadModuleFromSeparateJar(pool = zipPool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
+        loadModuleFromSeparateJar(pool = zipPool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context)
       }
       else {
         PluginDescriptorFromXmlStreamConsumer(context, pluginPathResolver.toXIncludeLoader(dataLoader)).let {
@@ -874,7 +856,6 @@ private fun loadModuleFromSeparateJar(
   jarFile: Path,
   subDescriptorFile: String,
   context: DescriptorListLoadingContext,
-  dataLoader: DataLoader,
 ): PluginDescriptorBuilder {
   val resolver = pool.load(jarFile)
   try {
