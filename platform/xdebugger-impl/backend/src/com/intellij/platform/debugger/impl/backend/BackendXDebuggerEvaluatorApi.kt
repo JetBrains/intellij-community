@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.rpc.document
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -15,15 +16,17 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
-import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
-import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.XStackFrameModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asDeferred
@@ -105,8 +108,26 @@ internal suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     canNavigateToSource = xValue.canNavigateToSource(),
     canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
     canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
-    valueMarkupFlow
+    valueMarkupFlow,
+    xValueModel.presentation.toRpc(),
+    xValueModel.getEvaluatorDtoFlow().toRpc()
   )
+}
+
+private fun BackendXValueModel.getEvaluatorDtoFlow(): Flow<XFullValueEvaluatorDto?> {
+  return fullValueEvaluator.map {
+    if (it == null) {
+      return@map null
+    }
+    XFullValueEvaluatorDto(
+      it.linkText,
+      it.isEnabled,
+      it.isShowValuePopup,
+      it.linkAttributes?.let { attributes ->
+        FullValueEvaluatorLinkAttributes(attributes.linkIcon?.rpcId(), attributes.linkTooltipText, attributes.shortcutSupplier?.get())
+      }
+    )
+  }
 }
 
 internal fun newXValueModel(

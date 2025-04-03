@@ -99,6 +99,8 @@ data class XValueDto(
   @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
   val valueMark: RpcFlow<XValueMarkerDto?>,
+  val presentation: RpcFlow<XValueSerializedPresentation>,
+  val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
 )
 
 @ApiStatus.Internal
@@ -112,19 +114,19 @@ data class XDebuggerEvaluatorDto(val canEvaluateInDocument: Boolean)
 
 @ApiStatus.Internal
 @Serializable
-sealed interface XValuePresentationEvent {
+sealed interface XValueSerializedPresentation {
   @ApiStatus.Internal
   @Serializable
-  data class SetSimplePresentation(
+  data class SimplePresentation(
     @JvmField val icon: IconId?,
     @JvmField val presentationType: String?,
     @JvmField val value: String,
     @JvmField val hasChildren: Boolean,
-  ) : XValuePresentationEvent
+  ) : XValueSerializedPresentation
 
   @ApiStatus.Internal
   @Serializable
-  data class SetAdvancedPresentation(
+  data class AdvancedPresentation(
     @JvmField val icon: IconId?,
     @JvmField val hasChildren: Boolean,
     @JvmField val separator: String,
@@ -132,15 +134,7 @@ sealed interface XValuePresentationEvent {
     @JvmField val presentationType: String?,
     @JvmField val isAsync: Boolean,
     @JvmField val parts: List<XValueAdvancedPresentationPart>,
-  ) : XValuePresentationEvent
-
-  @ApiStatus.Internal
-  @Serializable
-  data class SetFullValueEvaluator(val fullValueEvaluatorDto: XFullValueEvaluatorDto) : XValuePresentationEvent
-
-  @ApiStatus.Internal
-  @Serializable
-  data object ClearFullValueEvaluator : XValuePresentationEvent
+  ) : XValueSerializedPresentation
 }
 
 @ApiStatus.Internal

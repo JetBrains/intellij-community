@@ -13,15 +13,13 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
+import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -50,6 +48,21 @@ class BackendXValueModel internal constructor(
   private val _fullValueEvaluator = MutableStateFlow<XFullValueEvaluator?>(null)
   val fullValueEvaluator: StateFlow<XFullValueEvaluator?> = _fullValueEvaluator.asStateFlow()
 
+  private val _presentation = MutableSharedFlow<XValueSerializedPresentation>(replay = 1)
+  val presentation: Flow<XValueSerializedPresentation> = _presentation.asSharedFlow()
+
+  init {
+    xValue.computePresentation(
+      cs,
+      presentationHandler = {
+        _presentation.tryEmit(it)
+      },
+      fullValueEvaluatorHandler = {
+        _fullValueEvaluator.value = it
+      }
+    )
+  }
+
   fun setMarker(marker: ValueMarkup?) {
     if (marker == null) {
       _marker.value = null
@@ -60,6 +73,10 @@ class BackendXValueModel internal constructor(
 
   fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator?) {
     _fullValueEvaluator.value = fullValueEvaluator
+  }
+
+  fun setPresentation(presentation: XValueSerializedPresentation) {
+    _presentation.tryEmit(presentation)
   }
 
   @ApiStatus.Internal

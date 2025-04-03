@@ -2,128 +2,31 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
-import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueContainer
-import com.intellij.xdebugger.frame.XValuePlace
-import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.XExpressionDto
-import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto
-import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
-import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorResult
-import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
-import com.intellij.xdebugger.impl.rpc.XValueApi
-import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
-import com.intellij.xdebugger.impl.rpc.XValueId
-import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
-import com.intellij.xdebugger.impl.rpc.toRpc
-import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.asCompletableFuture
 import java.awt.Font
 import javax.swing.Icon
 
 internal class BackendXValueApi : XValueApi {
-  override suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>? {
-    val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
-    val xValue = xValueModel.xValue
-    val presentations = Channel<XValuePresentationEvent>(capacity = Int.MAX_VALUE)
-    return channelFlow {
-      var isObsolete = false
-
-      val valueNode = object : XValueNodeEx {
-        override fun isObsolete(): Boolean {
-          return isObsolete
-        }
-
-        override fun setPresentation(icon: Icon?, type: @NonNls String?, value: @NonNls String, hasChildren: Boolean) {
-          presentations.trySend(XValuePresentationEvent.SetSimplePresentation(icon?.rpcId(), type, value, hasChildren))
-        }
-
-        override fun setPresentation(icon: Icon?, presentation: XValuePresentation, hasChildren: Boolean) {
-          val partsCollector = XValueTextRendererPartsCollector()
-          presentation.renderValue(partsCollector)
-
-          presentations.trySend(XValuePresentationEvent.SetAdvancedPresentation(
-            icon?.rpcId(), hasChildren,
-            presentation.separator, presentation.isShowName, presentation.type, presentation.isAsync,
-            partsCollector.parts
-          ))
-        }
-
-        override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {
-          if (fullValueEvaluator is CustomComponentEvaluator) {
-            // TODO[IJPL-160146]: support CustomComponentEvaluator
-            return
-          }
-          xValueModel.setFullValueEvaluator(fullValueEvaluator)
-          presentations.trySend(
-            XValuePresentationEvent.SetFullValueEvaluator(
-              XFullValueEvaluatorDto(
-                fullValueEvaluator.linkText,
-                fullValueEvaluator.isEnabled,
-                fullValueEvaluator.isShowValuePopup,
-                fullValueEvaluator.linkAttributes?.let {
-                  FullValueEvaluatorLinkAttributes(it.linkIcon?.rpcId(), it.linkTooltipText, it.shortcutSupplier?.get())
-                }
-              ))
-          )
-        }
-
-        override fun getXValue(): XValue {
-          return xValue
-        }
-
-        override fun clearFullValueEvaluator() {
-          xValueModel.setFullValueEvaluator(null)
-          presentations.trySend(XValuePresentationEvent.ClearFullValueEvaluator)
-        }
-      }
-      xValue.computePresentation(valueNode, xValuePlace)
-
-      launch {
-        try {
-          awaitCancellation()
-        }
-        finally {
-          isObsolete = true
-        }
-      }
-
-      for (presentation in presentations) {
-        send(presentation)
-      }
-    }
-  }
-
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
     return computeContainerChildren(xValueModel.cs, xValueModel.xValue, xValueModel.session)
@@ -172,50 +75,6 @@ internal class BackendXValueApi : XValueApi {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
     val xExpression = xValueModel.xValue.calculateEvaluationExpression().asCompletableFuture().await() ?: return null
     return xExpression.toRpc()
-  }
-
-
-  private class XValueTextRendererPartsCollector : XValueTextRenderer {
-    private val _parts = mutableListOf<XValueAdvancedPresentationPart>()
-
-    val parts: List<XValueAdvancedPresentationPart>
-      get() = _parts
-
-    override fun renderValue(value: @NlsSafe String) {
-      _parts.add(XValueAdvancedPresentationPart.Value(value))
-    }
-
-    override fun renderStringValue(value: @NlsSafe String) {
-      _parts.add(XValueAdvancedPresentationPart.StringValue(value))
-    }
-
-    override fun renderNumericValue(value: @NlsSafe String) {
-      _parts.add(XValueAdvancedPresentationPart.NumericValue(value))
-    }
-
-    override fun renderKeywordValue(value: @NlsSafe String) {
-      _parts.add(XValueAdvancedPresentationPart.KeywordValue(value))
-    }
-
-    override fun renderValue(value: @NlsSafe String, key: TextAttributesKey) {
-      _parts.add(XValueAdvancedPresentationPart.ValueWithAttributes(value, key))
-    }
-
-    override fun renderStringValue(value: @NlsSafe String, additionalSpecialCharsToHighlight: @NlsSafe String?, maxLength: Int) {
-      _parts.add(XValueAdvancedPresentationPart.StringValueWithHighlighting(value, additionalSpecialCharsToHighlight, maxLength))
-    }
-
-    override fun renderComment(comment: @NlsSafe String) {
-      _parts.add(XValueAdvancedPresentationPart.Comment(comment))
-    }
-
-    override fun renderSpecialSymbol(symbol: @NlsSafe String) {
-      _parts.add(XValueAdvancedPresentationPart.SpecialSymbol(symbol))
-    }
-
-    override fun renderError(error: @NlsSafe String) {
-      _parts.add(XValueAdvancedPresentationPart.Error(error))
-    }
   }
 }
 
@@ -332,9 +191,13 @@ private sealed interface RawComputeChildrenEvent {
       val childrenXValueEntities = childrenXValues.map { childXValue ->
         newChildXValueModel(childXValue, parentCoroutineScope, session)
       }
-      val childrenXValueDtos = childrenXValueEntities.map { childXValueEntity ->
-        childXValueEntity.toXValueDto()
-      }
+      val childrenXValueDtos = coroutineScope {
+        childrenXValueEntities.map { childXValueEntity ->
+          async {
+            childXValueEntity.toXValueDto()
+          }
+        }
+      }.awaitAll()
       return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last)
     }
   }

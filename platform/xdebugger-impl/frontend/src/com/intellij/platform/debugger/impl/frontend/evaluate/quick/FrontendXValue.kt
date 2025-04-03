@@ -11,52 +11,27 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
-import com.intellij.xdebugger.frame.XCompositeNode
-import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.frame.XValueDescriptor
-import com.intellij.xdebugger.frame.XValueModifier
-import com.intellij.xdebugger.frame.XValueNode
-import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
-import com.intellij.xdebugger.impl.rpc.XValueApi
-import com.intellij.xdebugger.impl.rpc.XValueDto
-import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
-import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
-import com.intellij.xdebugger.impl.rpc.xExpression
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
+import com.intellij.xdebugger.impl.rpc.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.concurrency.asPromise
 
 @ApiStatus.Internal
-class FrontendXValue(
+class FrontendXValue private constructor(
   val project: Project,
-  evaluatorCoroutineScope: CoroutineScope,
+  private val cs: CoroutineScope,
   val xValueDto: XValueDto,
   hasParentValue: Boolean,
+  private val presentation: StateFlow<XValueSerializedPresentation>,
 ) : XValue() {
-  // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
-  //   So, XValues will live more than popups where they appeared
-  //   But it is needed for Mark object functionality at least.
-  //   Since we cannot dispose XValue when evaluation popup is closed
-  //   because it getting closed when Mark Object dialog is shown,
-  //   so we cannot refer to the backend's xValue
-  private val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
 
   @Volatile
   private var modifier: XValueModifier? = null
@@ -122,24 +97,21 @@ class FrontendXValue(
   }
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
+    node.setPresentation(presentation.value)
     node.childCoroutineScope(parentScope = cs, "FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      XValueApi.getInstance().computePresentation(xValueDto.id, place)?.collect { presentationEvent ->
-        when (presentationEvent) {
-          is XValuePresentationEvent.SetSimplePresentation -> {
-            node.setPresentation(presentationEvent.icon?.icon(), presentationEvent.presentationType, presentationEvent.value, presentationEvent.hasChildren)
-          }
-          is XValuePresentationEvent.SetAdvancedPresentation -> {
-            node.setPresentation(presentationEvent.icon?.icon(), FrontendXValuePresentation(presentationEvent), presentationEvent.hasChildren)
-          }
-          is XValuePresentationEvent.SetFullValueEvaluator -> {
-            node.setFullValueEvaluator(FrontendXFullValueEvaluator(cs, xValueDto.id, presentationEvent.fullValueEvaluatorDto))
-          }
-          XValuePresentationEvent.ClearFullValueEvaluator -> {
-            if (node is XValueNodeEx) {
-              node.clearFullValueEvaluator()
-            }
-          }
-        }
+      presentation.collectLatest {
+        node.setPresentation(it)
+      }
+    }
+  }
+
+  private fun XValueNode.setPresentation(presentation: XValueSerializedPresentation) {
+    when (presentation) {
+      is XValueSerializedPresentation.SimplePresentation -> {
+        setPresentation(presentation.icon?.icon(), presentation.presentationType, presentation.value, presentation.hasChildren)
+      }
+      is XValueSerializedPresentation.AdvancedPresentation -> {
+        setPresentation(presentation.icon?.icon(), FrontendXValuePresentation(presentation), presentation.hasChildren)
       }
     }
   }
@@ -160,7 +132,7 @@ class FrontendXValue(
     return deferred.asCompletableFuture().asPromise()
   }
 
-  private class FrontendXValuePresentation(private val advancedPresentation: XValuePresentationEvent.SetAdvancedPresentation) : XValuePresentation() {
+  private class FrontendXValuePresentation(private val advancedPresentation: XValueSerializedPresentation.AdvancedPresentation) : XValuePresentation() {
     override fun renderValue(renderer: XValueTextRenderer) {
       for (part in advancedPresentation.parts) {
         when (part) {
@@ -216,6 +188,21 @@ class FrontendXValue(
 
     override fun isAsync(): Boolean {
       return advancedPresentation.isAsync
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    suspend fun create(project: Project, evaluatorCoroutineScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): FrontendXValue {
+      // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
+      //   So, XValues will live more than popups where they appeared
+      //   But it is needed for Mark object functionality at least.
+      //   Since we cannot dispose XValue when evaluation popup is closed
+      //   because it getting closed when Mark Object dialog is shown,
+      //   so we cannot refer to the backend's xValue
+      val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
+      val presentation = xValueDto.presentation.toFlow().stateIn(cs)
+      return FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
     }
   }
 }

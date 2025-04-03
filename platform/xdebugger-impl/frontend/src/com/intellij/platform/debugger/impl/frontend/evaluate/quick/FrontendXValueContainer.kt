@@ -11,6 +11,9 @@ import com.intellij.xdebugger.frame.XValueContainer
 import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
@@ -25,9 +28,16 @@ internal class FrontendXValueContainer(
       childrenComputation().collect { computeChildrenEvent ->
         when (computeChildrenEvent) {
           is XValueComputeChildrenEvent.AddChildren -> {
+            val childrenXValues = coroutineScope {
+              computeChildrenEvent.children.map {
+                async {
+                  FrontendXValue.create(project, cs, it, hasParentValue)
+                }
+              }.awaitAll()
+            }
             val childrenList = XValueChildrenList()
             for (i in computeChildrenEvent.children.indices) {
-              childrenList.add(computeChildrenEvent.names[i], FrontendXValue(project, cs, computeChildrenEvent.children[i], hasParentValue))
+              childrenList.add(computeChildrenEvent.names[i], childrenXValues[i])
             }
             node.addChildren(childrenList, computeChildrenEvent.isLast)
           }
