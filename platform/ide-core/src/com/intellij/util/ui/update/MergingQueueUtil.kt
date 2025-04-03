@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * hence the platform needs to know about all undelivered updates to proper track the configuration of a project.
  */
 fun MergingUpdateQueue.queueTracked(update: Update) {
+  require(this.isActive) { "Queue must be active for tracking" }
   val tracker = ApplicationManager.getApplication().service<MergingUpdateQueueTracker>()
   val trackedUpdate = tracker.trackUpdate(update)
   queue(trackedUpdate)
