@@ -207,7 +207,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     }
 
     if (missingErrorsCount != 0 || unexpectedErrorsCount != 0) {
-      allErrors.add(Triple(testFileName, missingErrorsCount, unexpectedErrorsCount))
+      failures.add(Failure(testFileName, missingErrorsCount, unexpectedErrorsCount))
       fail(failMessage.toString())
     }
   }
@@ -225,7 +225,9 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     private const val TESTS_DIR = "typing/conformance/tests"
     private val TESTS_DIR_ABSOLUTE_PATH = Path.of(PythonTestUtil.getTestDataPath(), TESTS_DIR)
     private val IGNORED_TESTS = Files.readAllLines(TESTS_DIR_ABSOLUTE_PATH / "_ignored.txt").toSet()
-    private val allErrors = mutableListOf<Triple<String, Int, Int>>()
+    private val failures = mutableListOf<Failure>()
+
+    private class Failure(val testFileName: String, val missingErrorsCount: Int, val unexpectedErrorsCount: Int)
 
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
@@ -239,13 +241,13 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     @AfterClass
     @JvmStatic
     fun afterClass() {
-      if (allErrors.isNotEmpty()) {
-        val missingErrorsCount = allErrors.sumOf { it.second }
-        val unexpectedErrorsCount = allErrors.sumOf { it.third }
+      if (failures.isNotEmpty()) {
+        val missingErrorsCount = failures.sumOf { it.missingErrorsCount }
+        val unexpectedErrorsCount = failures.sumOf { it.unexpectedErrorsCount }
         println("Test failed: missing errors: $missingErrorsCount; unexpected errors: $unexpectedErrorsCount")
 
-        allErrors.sortedBy { it.second + it.third }.forEach {
-          println("${it.first} ${it.second} ${it.third}")
+        failures.sortedBy { it.missingErrorsCount + it.unexpectedErrorsCount }.forEach {
+          println("${it.testFileName} ${it.missingErrorsCount} ${it.unexpectedErrorsCount}")
         }
       }
     }
