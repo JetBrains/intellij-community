@@ -44,7 +44,7 @@ public final class Restarter {
       }
     }
     else if (SystemInfo.isMac) {
-      Path starter = Path.of(PathManager.getHomePath(), "MacOS", ApplicationNamesInfo.getInstance().getScriptName());
+      var starter = Path.of(PathManager.getHomePath(), "MacOS", ApplicationNamesInfo.getInstance().getScriptName());
       if (Files.exists(starter)) {
         return starter;
       }
