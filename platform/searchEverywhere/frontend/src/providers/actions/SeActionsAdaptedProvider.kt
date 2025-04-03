@@ -18,7 +18,7 @@ class SeActionsAdaptedProvider(val project: Project, private val legacyContribut
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
-    val filter = SeActionsFilterData.from(params.filter)
+    val filter = SeActionsFilter.from(params.filter)
     legacyContributor.getActions({}).firstOrNull {
       it is CheckBoxSearchEverywhereToggleAction
     }?.let {

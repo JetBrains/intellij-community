@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
@@ -37,12 +38,13 @@ class SePopupInstance(private val popupVm: SePopupVm,
   }
 
   fun toggleEverywhereFilter() {
-    TODO("Not yet implemented")
+    val action = currentTabSearchEverywhereToggleAction ?: return
+    if (action.canToggleEverywhere()) {
+      action.isEverywhere = !action.isEverywhere
+    }
   }
 
-  fun isEverywhere(): Boolean {
-    TODO("Not yet implemented")
-  }
+  fun isEverywhere(): Boolean = currentTabSearchEverywhereToggleAction?.isEverywhere ?: true
 
   @ApiStatus.Internal
   override fun selectFirstItem() {
@@ -59,4 +61,9 @@ class SePopupInstance(private val popupVm: SePopupVm,
   override fun findElementsForPattern(pattern: String): Future<List<Any>> {
     TODO("Not yet implemented")
   }
+
+  private val currentTabSearchEverywhereToggleAction: SearchEverywhereToggleAction?
+    get() = (popupVm.currentTab.filterEditor as? SeFilterEditor<*>)?.getActions()?.firstOrNull {
+      it is SearchEverywhereToggleAction
+    } as? SearchEverywhereToggleAction
 }
