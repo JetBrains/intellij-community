@@ -71,7 +71,7 @@ object CallableReturnTypeUpdaterUtils {
         declaration: KtCallableDeclaration,
         typeInfo: TypeInfo,
         project: Project,
-    ) = updateType(
+    ): Unit = updateType(
         declaration,
         typeInfo,
         project,
