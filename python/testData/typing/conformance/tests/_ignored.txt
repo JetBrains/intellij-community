@@ -29,7 +29,6 @@ dataclasses_usage.py
 directives_no_type_check.py
 directives_type_checking.py
 directives_version_platform.py
-exceptions_context_managers.py
 generics_base_class.py
 generics_defaults.py
 generics_defaults_referential.py

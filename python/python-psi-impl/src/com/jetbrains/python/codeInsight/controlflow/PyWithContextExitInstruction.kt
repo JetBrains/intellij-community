@@ -6,7 +6,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.PyWithItem
 import com.jetbrains.python.psi.PyWithStatement
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.types.PyCollectionType
+import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -24,6 +26,7 @@ class PyWithContextExitInstruction(builder: ControlFlowBuilder, withItem: PyWith
     return context.getType(element.expression)
       .let { PyTypeUtil.convertToType(it, abstractType, element, context) }
       .let { (it as? PyCollectionType)?.elementTypes?.getOrNull(1) }
-      .let { it == PyBuiltinCache.getInstance(element).boolType }
+      .let { it == PyBuiltinCache.getInstance(element).boolType ||
+             it is PyLiteralType && PyEvaluator.getBooleanLiteralValue(it.expression) == true }
   }
 }
