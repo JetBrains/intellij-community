@@ -13,7 +13,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ensureActive
 import java.nio.file.Path
 
-private const val MAX_BUFFER_SIZE = 4 * 1014 * 1024
+private const val MAX_BUFFER_SIZE = 8 * 1014 * 1024
 
 // In Netty HTTP2, all streams use the same single-threaded event loop as we only use one channel.
 // Therefore, similar to read operations, using the Netty ChannelHandler concept doesn't make sense -
