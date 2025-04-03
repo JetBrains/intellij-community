@@ -3,6 +3,7 @@ package com.intellij.codeInsight.options;
 
 import com.intellij.codeInspection.ui.StringValidatorWithSwingSelector;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -25,6 +26,10 @@ public class LocalFolderValidator implements StringValidatorWithSwingSelector {
   
   @Override
   public @Nullable String select(@NotNull Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // Unable to instantiate chooser in tests
+      return null;
+    }
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.singleDir();
     descriptor.setTitle(myTitle);
     descriptor.setForcedToUseIdeaFileChooser(true);
