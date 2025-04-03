@@ -12,21 +12,12 @@ fun CoroutineContext.coroutineNameAppended(name: String, separator: String = " >
   return CoroutineName(if (parentName == null) name else parentName + separator + name)
 }
 
-private class RogueCancellationException(msg: String, cause: CancellationException) : Exception(msg, cause)
-
-private const val CatchRogueCancellation: Boolean = false
-
 suspend fun <T> catching(body: suspend CoroutineScope.() -> T): Result<T> =
   try {
     Result.success(coroutineScope { body() })
   }
   catch (c: CancellationException) {
-    if (CatchRogueCancellation && currentCoroutineContext().job.isActive) {
-      Result.failure(RogueCancellationException("deferred was cancelled but needed", c))
-    }
-    else {
-      throw c
-    }
+    throw c
   }
   catch (x: Throwable) {
     Result.failure(x)
