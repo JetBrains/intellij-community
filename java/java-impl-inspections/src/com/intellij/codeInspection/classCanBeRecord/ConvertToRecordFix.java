@@ -39,12 +39,10 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.PsiModifier.*;
 
 public class ConvertToRecordFix extends InspectionGadgetsFix {
-  private final boolean myShowAffectedMembers;
   private final boolean mySuggestAccessorsRenaming;
   private final @NotNull List<String> myIgnoredAnnotations;
 
-  ConvertToRecordFix(boolean showAffectedMembers, boolean suggestAccessorsRenaming, @NotNull List<String> ignoredAnnotations) {
-    myShowAffectedMembers = showAffectedMembers;
+  ConvertToRecordFix(boolean suggestAccessorsRenaming, @NotNull List<String> ignoredAnnotations) {
     mySuggestAccessorsRenaming = suggestAccessorsRenaming;
     myIgnoredAnnotations = ignoredAnnotations;
   }
@@ -77,7 +75,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     RecordCandidate recordCandidate = getClassDefinition(psiClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
     if (recordCandidate == null) return null;
 
-    return new ConvertToRecordProcessor(recordCandidate, myShowAffectedMembers);
+    return new ConvertToRecordProcessor(recordCandidate);
   }
 
   @Override

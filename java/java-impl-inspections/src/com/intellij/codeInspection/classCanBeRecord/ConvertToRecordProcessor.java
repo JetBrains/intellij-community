@@ -47,14 +47,12 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   private static final CallMatcher OBJECT_HASHCODE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode").parameterCount(0);
   private final RecordCandidate myRecordCandidate;
-  private final boolean myShowAffectedMembers;
 
   private final Map<PsiElement, String> myAllRenames = new LinkedHashMap<>();
 
-  ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate, boolean showAffectedMembers) {
+  ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate) {
     super(recordCandidate.getProject());
     myRecordCandidate = recordCandidate;
-    myShowAffectedMembers = showAffectedMembers;
   }
 
   @Override
@@ -123,9 +121,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       usages.add(new RenameMethodUsageInfo(fieldAccessorCandidate.getAccessor(), backingFieldName));
     }
 
-    if (myShowAffectedMembers) {
-      usages.addAll(findConflicts(myRecordCandidate));
-    }
+    usages.addAll(findConflicts(myRecordCandidate));
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 

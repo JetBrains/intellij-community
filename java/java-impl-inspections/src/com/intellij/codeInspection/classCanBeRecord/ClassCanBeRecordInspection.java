@@ -73,7 +73,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection implements 
 
     boolean suggestQuickFix = (boolean)infos[0];
     if (suggestQuickFix) {
-      fixes.add(new ConvertToRecordFix(true, suggestAccessorsRenaming, myIgnoredAnnotations));
+      fixes.add(new ConvertToRecordFix(suggestAccessorsRenaming, myIgnoredAnnotations));
       PsiClass psiClass = ObjectUtils.tryCast(infos[1], PsiClass.class);
       if (psiClass != null) {
         PsiAnnotation[] annotations = psiClass.getAnnotations();
