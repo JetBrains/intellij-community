@@ -201,7 +201,13 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
     //  it should work both way: cancelling promise should cancel downloading
     //  and cancelling coroutineScope should cancel promise (make it fail with CancellationException)
 
-    val promise = AsyncPromise<Unit>()
+    val promise = object : AsyncPromise<Unit>() {
+      // Do not call Logger.error which may cause exception re-throwing in UNIT TESTS and
+      // breaking of the following try { catch {} } code
+      // Example: a race between executing launch {} code and setting onError on the promise
+      // (which disables error logging too)
+      override fun shouldLogErrors(): Boolean = false
+    }
 
     coroutineScope.launch {
       val remotes = remoteRepositories
