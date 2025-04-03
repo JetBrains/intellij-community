@@ -589,7 +589,7 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     }
     catch (Throwable t) {
-      // shouldn't interrupt reader thread
+      // shouldn't interrupt the reader thread
       LOG.error(t);
     }
   }
