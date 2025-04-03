@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
-import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import java.net.HttpURLConnection
@@ -21,7 +21,7 @@ import kotlin.io.path.name
  * </p>
  */
 class IntellijModulesPublication(
-  private val context: CompilationContext,
+  private val context: BuildContext,
   private val options: Options,
 ) : AutoCloseable {
   private val mavenSettings: Path = mavenSettings()
@@ -30,7 +30,7 @@ class IntellijModulesPublication(
     mavenSettings.deleteExisting()
   }
 
-  constructor(context: CompilationContext) : this(context = context, options = Options(version = context.options.buildNumber!!))
+  constructor(context: BuildContext) : this(context = context, options = Options(version = context.options.buildNumber!!))
 
   class Options(
     val version: String,
@@ -86,11 +86,12 @@ class IntellijModulesPublication(
     if (modules.isEmpty()) {
       context.messages.warning("Nothing to publish")
     }
+    val builder = MavenArtifactsBuilder(context)
     for (module in modules) {
-      val coordinates = MavenArtifactsBuilder.generateMavenCoordinates(module.name, options.version)
+      val coordinates = builder.generateMavenCoordinates(module.name, options.version)
       deployModuleArtifact(coordinates)
 
-      val squashedCoordinates = MavenArtifactsBuilder.generateMavenCoordinatesSquashed(module.name, options.version)
+      val squashedCoordinates = builder.generateMavenCoordinatesSquashed(module.name, options.version)
       if (Files.exists(options.outputDir.resolve(squashedCoordinates.directoryPath))) {
         deployModuleArtifact(squashedCoordinates)
       }
