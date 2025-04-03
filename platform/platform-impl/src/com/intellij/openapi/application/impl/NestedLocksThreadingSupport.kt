@@ -393,7 +393,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   private var mySuspendingWriteActionListener: SuspendingWriteActionListener? = null
   private var myLegacyProgressIndicatorProvider: LegacyProgressIndicatorProvider? = null
 
-  private val myWriteActionsStack = Stack<Class<*>>()
+  private val myWriteActionsStack = Collections.synchronizedList(ArrayList<Class<*>>())
   private var myWriteStackBase = 0
 
   /**
@@ -932,7 +932,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     myTopmostReadAction.set(false)
 
 
-    myWriteActionsStack.push(clazz)
+    myWriteActionsStack.add(clazz)
     fireWriteActionStarted(preparatoryWriteIntent.listener, clazz)
 
     return WriteLockInitResult(shouldRelease, currentReadState, preparatoryWriteIntent.listener, state, clazz)
@@ -957,7 +957,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   ) {
     fun release() {
       fireWriteActionFinished(listener, clazz)
-      myWriteActionsStack.pop()
+      myWriteActionsStack.removeLast()
       if (shouldRelease) {
         myWriteAcquired = null
         state.releaseWritePermit()
