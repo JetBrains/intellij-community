@@ -152,6 +152,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val CHERRY_PICK_ABORT_SUCCESS = "git.cherry.pick.abort.success"
     const val CLONE_FAILED = "git.clone.failed"
     const val CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR = "git.clone.unable.to.create.destination.dir"
+    const val CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR = "git.clone.unable.to.find.destination.dir"
     const val COLLECT_UPDATED_CHANGES_ERROR = "git.rebase.collect.updated.changes.error"
     const val COMMIT_CANCELLED = "git.commit.cancelled"
     const val COMMIT_EDIT_SUCCESS = "git.commit.edit.success"
