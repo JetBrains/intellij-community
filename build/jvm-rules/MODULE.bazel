@@ -295,6 +295,19 @@ http_file(
 )
 
 http_file(
+    name = "qdox",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar",
+    sha256 = "c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2",
+    downloaded_file_path = "qdox-2.2.0.jar",
+)
+http_file(
+    name = "qdox-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0-sources.jar",
+    sha256 = "614806dd73810c80a4751daf28bffc5eb641d6026ee58c71f4a28354e06a7dc8",
+    downloaded_file_path = "qdox-2.2.0-sources.jar",
+)
+
+http_file(
     name = "arrow-format",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.2.0/arrow-format-18.2.0.jar",
     sha256 = "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",

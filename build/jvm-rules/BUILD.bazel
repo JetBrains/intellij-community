@@ -219,6 +219,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "qdox",
+    jar = "@qdox//file",
+    source_jar = "@qdox-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "arrow-format",
     jar = "@arrow-format//file",
     source_jar = "@arrow-format-sources//file",

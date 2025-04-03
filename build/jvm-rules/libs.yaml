@@ -44,6 +44,8 @@
       version: 25.2.10
     - id: com.h2database:h2-mvstore
       version: 2.3.232
+    - id: com.thoughtworks.qdox:qdox
+      version: 2.2.0
     - id: org.apache.arrow:arrow-format
       version: 18.2.0
     - id: org.apache.arrow:arrow-vector
