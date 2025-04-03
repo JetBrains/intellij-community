@@ -20,9 +20,9 @@ const val GRADLE_FOLDER: String = GRADLE_DIR_NAME
 object GradleDaemonJvmPropertiesFile {
 
   @JvmStatic
-  fun getProperties(externalProjectPath: Path): GradleDaemonJvmProperties? {
+  fun getProperties(externalProjectPath: Path): GradleDaemonJvmProperties {
     val propertiesPath = getPropertyPath(externalProjectPath)
-    return loadGradleDaemonJvmProperties(propertiesPath)
+    return loadGradleDaemonJvmProperties(propertiesPath) ?: EMPTY
   }
 
   @JvmStatic
@@ -38,4 +38,9 @@ object GradleDaemonJvmPropertiesFile {
       vendor = properties.getStringProperty(GRADLE_DAEMON_JVM_VENDOR_PROPERTY, propertiesPath)
     )
   }
+
+  private val EMPTY = GradleDaemonJvmPropertiesImpl(
+    version = null,
+    vendor = null
+  )
 }

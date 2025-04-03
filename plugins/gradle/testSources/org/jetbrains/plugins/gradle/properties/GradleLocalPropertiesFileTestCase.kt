@@ -31,7 +31,6 @@ abstract class GradleLocalPropertiesFileTestCase {
   }
 
   fun asserGradleLocalPropertiesFile(assertion: GradleLocalProperties. () -> Unit) {
-    val properties = GradleLocalPropertiesFile.getProperties(projectPath)
-    properties.assertion()
+    GradleLocalPropertiesFile.getProperties(projectPath).assertion()
   }
 }

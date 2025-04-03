@@ -18,7 +18,7 @@ object GradleLocalPropertiesFile {
   @JvmStatic
   fun getProperties(externalProjectPath: Path): GradleLocalProperties {
     val propertiesPath = getPropertyPath(externalProjectPath)
-    return loadGradleLocalProperties(propertiesPath)
+    return loadGradleLocalProperties(propertiesPath) ?: EMPTY
   }
 
   @JvmStatic
@@ -27,14 +27,14 @@ object GradleLocalPropertiesFile {
       .toAbsolutePath().normalize()
   }
 
-  private fun loadGradleLocalProperties(propertiesPath: Path): GradleLocalProperties {
-    val properties = GradleUtil.readGradleProperties(propertiesPath) ?: return EMPTY_GRADLE_PROPERTIES
+  private fun loadGradleLocalProperties(propertiesPath: Path): GradleLocalProperties? {
+    val properties = GradleUtil.readGradleProperties(propertiesPath) ?: return null
     return GradleLocalPropertiesImpl(
       javaHomeProperty = properties.getStringProperty(GRADLE_LOCAL_JAVA_HOME_PROPERTY, propertiesPath)
     )
   }
 
-  private val EMPTY_GRADLE_PROPERTIES = GradleLocalPropertiesImpl(
+  private val EMPTY = GradleLocalPropertiesImpl(
     javaHomeProperty = null
   )
 }

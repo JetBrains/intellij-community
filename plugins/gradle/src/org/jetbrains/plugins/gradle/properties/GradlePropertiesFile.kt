@@ -101,7 +101,7 @@ object GradlePropertiesFile {
   private fun loadAndMergeProperties(propertyPaths: List<Path>): GradleProperties {
     return propertyPaths.asSequence()
       .mapNotNull(::loadGradleProperties)
-      .fold(EMPTY_GRADLE_PROPERTIES, ::mergeGradleProperties)
+      .fold(EMPTY, ::mergeGradleProperties)
   }
 
   private fun loadGradleProperties(propertiesPath: Path): GradleProperties? {
@@ -125,7 +125,7 @@ object GradlePropertiesFile {
     )
   }
 
-  private val EMPTY_GRADLE_PROPERTIES = GradlePropertiesImpl(
+  private val EMPTY = GradlePropertiesImpl(
     javaHomeProperty = null,
     logLevel = null,
     parallel = null,

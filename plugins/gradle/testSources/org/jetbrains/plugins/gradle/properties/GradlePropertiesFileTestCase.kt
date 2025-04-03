@@ -29,7 +29,6 @@ abstract class GradlePropertiesFileTestCase {
   }
 
   fun assertGradlePropertiesFile(projectPath: Path, assertion: GradleProperties. () -> Unit) {
-    val properties = GradlePropertiesFile.getProperties(null, projectPath)
-    properties.assertion()
+    GradlePropertiesFile.getProperties(null, projectPath).assertion()
   }
 }

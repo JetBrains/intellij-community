@@ -187,8 +187,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   fun assertDaemonJvmProperties(project: Project) {
     val externalProjectPath = Path.of(project.basePath!!)
     val properties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
-    Assertions.assertNotNull(properties)
-    Assertions.assertEquals(gradleJvmInfo.toJvmCriteria(), properties!!.criteria)
+    Assertions.assertEquals(gradleJvmInfo.toJvmCriteria(), properties.criteria)
   }
 
   companion object {

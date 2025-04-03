@@ -60,7 +60,7 @@ object GradleDaemonJvmHelper {
   fun isProjectUsingDaemonJvmCriteria(externalProjectPath: Path, gradleVersion: GradleVersion): Boolean {
     return Registry.`is`("gradle.daemon.jvm.criteria") && when {
       isDaemonJvmCriteriaRequired(gradleVersion) -> true
-      isDaemonJvmCriteriaSupported(gradleVersion) && GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)?.version != null -> true
+      isDaemonJvmCriteriaSupported(gradleVersion) && GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath).version != null -> true
       else -> false
     }
   }

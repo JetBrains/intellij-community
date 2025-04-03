@@ -31,7 +31,6 @@ abstract class GradleDaemonJvmPropertiesFileTestCase {
   }
 
   fun assertGradleDaemonJvmPropertiesFile(assertion: GradleDaemonJvmProperties. () -> Unit) {
-    val properties = GradleDaemonJvmPropertiesFile.getProperties(projectPath)!!
-    properties.assertion()
+    GradleDaemonJvmPropertiesFile.getProperties(projectPath).assertion()
   }
 }
