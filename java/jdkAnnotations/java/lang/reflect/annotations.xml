@@ -1,6 +1,6 @@
 <root>
   <item name='java.lang.reflect.AccessibleObject T getAnnotation(java.lang.Class&lt;T&gt;)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -9,7 +9,7 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.reflect.AccessibleObject T getDeclaredAnnotation(java.lang.Class&lt;T&gt;)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.AccessibleObject T getDeclaredAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -61,13 +61,13 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
-      <annotation name='org.jetbrains.annotations.Nullable'/>
+      <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.AnnotatedElement T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.reflect.AnnotatedElement T getDeclaredAnnotation(java.lang.Class&lt;T&gt;)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.AnnotatedElement T getDeclaredAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -130,6 +130,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.AnnotatedType T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -187,7 +188,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.Constructor T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -296,7 +297,7 @@
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.lang.reflect.Executable T getAnnotation(java.lang.Class&lt;T&gt;)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -343,7 +344,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.Field T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -486,7 +487,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.Method T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -613,13 +614,13 @@
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.lang.reflect.Parameter T getAnnotation(java.lang.Class&lt;T&gt;)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.Parameter T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.reflect.Parameter T getDeclaredAnnotation(java.lang.Class&lt;T&gt;)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -701,6 +702,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
   </item>
   <item name='java.lang.reflect.RecordComponent T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
