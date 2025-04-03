@@ -94,18 +94,14 @@ open class DeclarationParser(private val myParser: JavaParser) {
       parseElementList(builder, ListType.RECORD_COMPONENTS)
     }
 
-    refParser.parseReferenceList(builder, JavaSyntaxTokenType.EXTENDS_KEYWORD, JavaSyntaxElementType.EXTENDS_LIST,
-                                 JavaSyntaxTokenType.COMMA)
-    refParser.parseReferenceList(builder, JavaSyntaxTokenType.IMPLEMENTS_KEYWORD, JavaSyntaxElementType.IMPLEMENTS_LIST,
-                                 JavaSyntaxTokenType.COMMA)
-    if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER &&
-        JavaKeywords.PERMITS == builder.tokenText
-    ) {
+    refParser.parseReferenceList(builder, JavaSyntaxTokenType.EXTENDS_KEYWORD, JavaSyntaxElementType.EXTENDS_LIST, JavaSyntaxTokenType.COMMA)
+    refParser.parseReferenceList(builder, JavaSyntaxTokenType.IMPLEMENTS_KEYWORD, JavaSyntaxElementType.IMPLEMENTS_LIST, JavaSyntaxTokenType.COMMA)
+
+    if (builder.tokenType === JavaSyntaxTokenType.IDENTIFIER && JavaKeywords.PERMITS == builder.tokenText) {
       builder.remapCurrentToken(JavaSyntaxTokenType.PERMITS_KEYWORD)
     }
     if (builder.tokenType === JavaSyntaxTokenType.PERMITS_KEYWORD) {
-      refParser.parseReferenceList(builder, JavaSyntaxTokenType.PERMITS_KEYWORD, JavaSyntaxElementType.PERMITS_LIST,
-                                   JavaSyntaxTokenType.COMMA)
+      refParser.parseReferenceList(builder, JavaSyntaxTokenType.PERMITS_KEYWORD, JavaSyntaxElementType.PERMITS_LIST, JavaSyntaxTokenType.COMMA)
     }
 
     if (builder.tokenType !== JavaSyntaxTokenType.LBRACE) {
@@ -230,22 +226,21 @@ open class DeclarationParser(private val myParser: JavaParser) {
   }
 
   open fun parse(builder: SyntaxTreeBuilder, context: Context?): SyntaxTreeBuilder.Marker? {
-    val tokenType = builder.tokenType
-    if (tokenType == null) return null
+    val tokenType = builder.tokenType ?: return null
 
     if (tokenType === JavaSyntaxTokenType.LBRACE) {
       if (context == Context.FILE || context == Context.CODE_BLOCK) return null
     }
-    else if (!isRecordToken(builder, tokenType) && !isSealedToken(builder, tokenType) && !isNonSealedToken(builder, tokenType,
-                                                                                                           this.languageLevel)
-    ) {
+    else if (!isRecordToken(builder, tokenType) && !isSealedToken(builder, tokenType) && !isNonSealedToken(builder, tokenType, languageLevel)) {
       if (!TYPE_START.contains(tokenType) || tokenType === JavaSyntaxTokenType.AT) {
         //if (tokenType instanceof ILazyParseableElementType) { // todo this is not used!!!
         //  builder.advanceLexer();
         //  return null;
         //}
         //else
-        if (!MODIFIER_BIT_SET.contains(tokenType) && !CLASS_KEYWORD_BIT_SET.contains(tokenType) && tokenType !== JavaSyntaxTokenType.AT &&
+        if (!MODIFIER_BIT_SET.contains(tokenType) &&
+            !CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
+            tokenType !== JavaSyntaxTokenType.AT &&
             (context === Context.CODE_BLOCK || tokenType !== JavaSyntaxTokenType.LT)
         ) {
           return null
@@ -268,14 +263,15 @@ open class DeclarationParser(private val myParser: JavaParser) {
         return null
       }
     }
+
     if (CLASS_KEYWORD_BIT_SET.contains(builder.tokenType) || isRecordToken(builder, builder.tokenType)) {
       return parseClassFromKeyword(builder, declaration, false, context) ?: modList
     }
 
-    var typeParams: SyntaxTreeBuilder.Marker? = null
-    if (builder.tokenType === JavaSyntaxTokenType.LT && context != Context.CODE_BLOCK) {
-      typeParams = myParser.referenceParser.parseTypeParameters(builder)
+    val typeParams = if (builder.tokenType === JavaSyntaxTokenType.LT && context != Context.CODE_BLOCK) {
+      myParser.referenceParser.parseTypeParameters(builder)
     }
+    else null
 
     if (builder.tokenType === JavaSyntaxTokenType.LBRACE) {
       if (context == Context.CODE_BLOCK) {
@@ -300,13 +296,18 @@ open class DeclarationParser(private val myParser: JavaParser) {
       val pos = builder.mark()
 
       var flags = ReferenceParser.EAT_LAST_DOT or ReferenceParser.WILDCARD
-      if (context == Context.CODE_BLOCK || context == Context.JSHELL) flags = flags or ReferenceParser.VAR_TYPE
+      if (context == Context.CODE_BLOCK || context == Context.JSHELL) {
+        flags = flags or ReferenceParser.VAR_TYPE
+      }
       type = myParser.referenceParser.parseTypeInfo(builder, flags)
 
       if (type == null) {
         pos.rollbackTo()
       }
-      else if (builder.tokenType === JavaSyntaxTokenType.LPARENTH || builder.tokenType === JavaSyntaxTokenType.LBRACE || builder.tokenType === JavaSyntaxTokenType.THROWS_KEYWORD) {  // constructor
+      else if (builder.tokenType === JavaSyntaxTokenType.LPARENTH ||
+               builder.tokenType === JavaSyntaxTokenType.LBRACE ||
+               builder.tokenType === JavaSyntaxTokenType.THROWS_KEYWORD
+      ) {  // constructor
         if (context == Context.CODE_BLOCK) {
           declaration.rollbackTo()
           return null
@@ -363,7 +364,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       if (context != Context.CODE_BLOCK ||
           !modListInfo.second ||
           (type.isPrimitive && builder.tokenType !== JavaSyntaxTokenType.DOT)
-        ) {
+      ) {
         typeParams?.precede()?.errorBefore(message("unexpected.token"), type.marker)
         builder.error(message("expected.identifier"))
         declaration.drop()
@@ -393,8 +394,12 @@ open class DeclarationParser(private val myParser: JavaParser) {
       val nextToken = builder.lookAhead(1)
       if (nextToken === JavaSyntaxTokenType.IDENTIFIER ||  // The following tokens cannot be part of a valid record declaration,
           // but we assume it to be a malformed record, rather than a malformed type.
-          MODIFIER_BIT_SET.contains(nextToken) || CLASS_KEYWORD_BIT_SET.contains(nextToken) || TYPE_START.contains(
-          nextToken) || nextToken === JavaSyntaxTokenType.AT || nextToken === JavaSyntaxTokenType.LBRACE || nextToken === JavaSyntaxTokenType.RBRACE
+          MODIFIER_BIT_SET.contains(nextToken) ||
+          CLASS_KEYWORD_BIT_SET.contains(nextToken) ||
+          TYPE_START.contains(nextToken) ||
+          nextToken === JavaSyntaxTokenType.AT ||
+          nextToken === JavaSyntaxTokenType.LBRACE ||
+          nextToken === JavaSyntaxTokenType.RBRACE
       ) {
         val level = languageLevel
         return JavaFeature.RECORDS.isSufficient(level)
@@ -404,13 +409,15 @@ open class DeclarationParser(private val myParser: JavaParser) {
   }
 
   private fun isSealedToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?): Boolean {
-    return JavaFeature.SEALED_CLASSES.isSufficient(this.languageLevel) &&
-           tokenType === JavaSyntaxTokenType.IDENTIFIER && JavaKeywords.SEALED == builder.tokenText
+    return JavaFeature.SEALED_CLASSES.isSufficient(languageLevel) &&
+           tokenType === JavaSyntaxTokenType.IDENTIFIER &&
+           JavaKeywords.SEALED == builder.tokenText
   }
 
   private fun isValueToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?): Boolean {
-    return JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(this.languageLevel) &&
-           tokenType === JavaSyntaxTokenType.IDENTIFIER && JavaKeywords.VALUE == builder.tokenText
+    return JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(languageLevel) &&
+           tokenType === JavaSyntaxTokenType.IDENTIFIER &&
+           JavaKeywords.VALUE == builder.tokenText
   }
 
   @JvmOverloads
@@ -422,8 +429,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     var isEmpty = true
 
     while (true) {
-      var tokenType = builder.tokenType
-      if (tokenType == null) break
+      var tokenType = builder.tokenType ?: break
       if (isValueToken(builder, tokenType)) {
         builder.remapCurrentToken(JavaSyntaxTokenType.VALUE_KEYWORD)
         tokenType = JavaSyntaxTokenType.VALUE_KEYWORD
@@ -432,7 +438,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
         builder.remapCurrentToken(JavaSyntaxTokenType.SEALED_KEYWORD)
         tokenType = JavaSyntaxTokenType.SEALED_KEYWORD
       }
-      if (isNonSealedToken(builder, tokenType, this.languageLevel)) {
+      if (isNonSealedToken(builder, tokenType, languageLevel)) {
         val nonSealed = builder.mark()
         builder.advance(3)
         nonSealed.collapse(JavaSyntaxTokenType.NON_SEALED_KEYWORD)
@@ -494,7 +500,9 @@ open class DeclarationParser(private val myParser: JavaParser) {
           if (ch == '\n') {
             break@Loop
           }
-          else if (ch != ' ' && ch != '\t') break
+          else if (ch != ' ' && ch != '\t') {
+            break
+          }
         }
         if (!builder.expect(APPEND_TO_METHOD_SET)) break
       }
@@ -653,8 +661,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
     if (ellipsis) typeFlags = typeFlags or ReferenceParser.ELLIPSIS
     if (disjunctiveType) typeFlags = typeFlags or ReferenceParser.DISJUNCTIONS
     if (varType) typeFlags = typeFlags or ReferenceParser.VAR_TYPE
-    return parseListElement(builder, true, typeFlags,
-                            if (isParameter) JavaSyntaxElementType.PARAMETER else JavaSyntaxElementType.RECORD_COMPONENT)
+    return parseListElement(builder = builder,
+                            typed = true,
+                            typeFlags = typeFlags,
+                            type = if (isParameter) JavaSyntaxElementType.PARAMETER else JavaSyntaxElementType.RECORD_COMPONENT)
   }
 
   fun parseResource(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
@@ -676,8 +686,13 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
   fun parseLambdaParameter(builder: SyntaxTreeBuilder, typed: Boolean): SyntaxTreeBuilder.Marker? {
     var flags = ReferenceParser.ELLIPSIS
-    if (JavaFeature.VAR_LAMBDA_PARAMETER.isSufficient(this.languageLevel)) flags = flags or ReferenceParser.VAR_TYPE
-    return parseListElement(builder, typed, flags, JavaSyntaxElementType.PARAMETER)
+    if (JavaFeature.VAR_LAMBDA_PARAMETER.isSufficient(languageLevel)) {
+      flags = flags or ReferenceParser.VAR_TYPE
+    }
+    return parseListElement(builder = builder,
+                            typed = typed,
+                            typeFlags = flags,
+                            type = JavaSyntaxElementType.PARAMETER)
   }
 
 
@@ -712,7 +727,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       val tokenType = builder.tokenType
       if (tokenType === JavaSyntaxTokenType.THIS_KEYWORD ||
           tokenType === JavaSyntaxTokenType.IDENTIFIER && builder.lookAhead(1) === JavaSyntaxTokenType.DOT
-        ) {
+      ) {
         val mark = builder.mark()
 
         val expr = myParser.expressionParser.parse(builder)
@@ -933,9 +948,11 @@ open class DeclarationParser(private val myParser: JavaParser) {
           JavaParserUtil.error(builder, message(if (elementMarker == null) "expected.parameter.or.rparen" else "expected.comma.or.rparen"))
           break
         }
+
         builder.expect(JavaSyntaxTokenType.RPARENTH) -> {
           break
         }
+
         tokenType === JavaSyntaxTokenType.COMMA -> {
           builder.advanceLexer()
           elementMarker = parseAnnotationElement(builder)
@@ -947,6 +964,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
             }
           }
         }
+
         else -> {
           JavaParserUtil.error(builder, message(if (elementMarker == null) "expected.parameter.or.rparen" else "expected.comma.or.rparen"))
           tokenType = builder.lookAhead(1)
@@ -990,10 +1008,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
       JavaSyntaxTokenType.AT -> parseAnnotation(builder)
       JavaSyntaxTokenType.LBRACE -> {
         myParser.expressionParser.parseArrayInitializer(
-          /* builder = */ builder,
-          /* type = */ JavaSyntaxElementType.ANNOTATION_ARRAY_INITIALIZER,
-          /* elementParser = */ { builder -> parseAnnotationValue(builder) },
-          /* missingElementKey = */ "expected.value")
+          builder = builder,
+          type = JavaSyntaxElementType.ANNOTATION_ARRAY_INITIALIZER,
+          elementParser = { builder -> parseAnnotationValue(builder) },
+          missingElementKey = "expected.value")
       }
       else -> myParser.expressionParser.parseConditional(builder)
     }
