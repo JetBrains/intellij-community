@@ -8,14 +8,13 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
+import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Rpc
 interface MarkdownLinkOpenerRemoteApi: RemoteApi<Unit> {
-  suspend fun collectHeaders(projectId: ProjectId?, uri: String): List<MarkdownHeaderInfo>?
-  suspend fun guessProjectForUri(uri: String): ProjectId?
-  suspend fun resolveLinkAsFilePath(link: String, virtualFileId: VirtualFileId?): String?
+  suspend fun fetchLinkNavigationData(link: String, virtualFileId: VirtualFileId?): MarkdownLinkNavigationData
 
   companion object {
     @JvmStatic

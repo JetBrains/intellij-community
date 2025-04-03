@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.mapper;
 
+import com.intellij.ide.vfs.VirtualFileId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
+import com.intellij.ide.vfs.VirtualFileIdKt;
 
 /**
  * Mapper class for converting a MarkdownHeader into a MarkdownHeaderInfo.
@@ -36,7 +38,9 @@ public final class MarkdownHeaderMapper {
       lineNumber = document.getLineNumber(textOffset) + 1;
     }
 
-    return new MarkdownHeaderInfo(headerText, filePath, fileName, lineNumber, textOffset);
+    VirtualFileId virtualFileId = VirtualFileIdKt.rpcId(header.getContainingFile().getVirtualFile());
+
+    return new MarkdownHeaderInfo(headerText, filePath, fileName, lineNumber, textOffset, virtualFileId);
   }
 }
 

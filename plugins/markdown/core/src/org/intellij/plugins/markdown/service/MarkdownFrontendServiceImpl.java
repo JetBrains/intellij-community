@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.service;
 
 import com.intellij.ide.actions.OpenFileAction;
+import com.intellij.ide.vfs.VirtualFileIdKt;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -70,14 +71,15 @@ public final class MarkdownFrontendServiceImpl implements MarkdownFrontendServic
   public void navigateToHeader(ProjectId projectId, MarkdownHeaderInfo headerInfo) {
     URI uri = createFileUri(headerInfo.getFilePath());
     if (uri == null) return;
-    VirtualFile file = findVirtualFile(uri);
+    VirtualFile file = VirtualFileIdKt.virtualFile(headerInfo.getVirtualFileId());
+    if (file == null) return;
     Project project = ProjectIdKt.findProject(projectId);
     FileEditorManager manager = FileEditorManager.getInstance(project);
     List<MarkdownEditorWithPreview> openedEditors = manager.getEditorList(file).stream()
       .filter(editor -> editor instanceof MarkdownEditorWithPreview)
       .map(editor -> (MarkdownEditorWithPreview)editor)
       .toList();
-    PsiElement element = PsiUtilCore.getPsiFile(project,file).findElementAt(headerInfo.getTextOffset());
+    PsiElement element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.getTextOffset());
     if (element == null) return;
     if (!openedEditors.isEmpty()) {
       for (MarkdownEditorWithPreview editor : openedEditors) {

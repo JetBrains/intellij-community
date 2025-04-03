@@ -6,7 +6,7 @@
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="org.intellij.plugins.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
     <registryKey key="markdown.open.link.fallback"
-                 defaultValue="true"
+                 defaultValue="false"
                  description="Should fallback to Markdown link opening implementation before the split."/>
   </extensions>
 </idea-plugin>

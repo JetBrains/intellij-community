@@ -3,10 +3,10 @@ package org.intellij.plugins.markdown.frontend.preview.accessor.impl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.projectId
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.isLocalHost
 import kotlinx.coroutines.CoroutineScope
@@ -53,12 +52,53 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
   }
 
   override fun openLink(project: Project?, link: String, containingFile: VirtualFile?) {
-    val uri = createUri(link, containingFile) ?: return
-    if (tryOpenInEditor(project, uri)) {
+    coroutineScope.launch {
+      val data = MarkdownLinkOpenerRemoteApi.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
+      val uri = createUri(data.uri) ?: return@launch
+      if (uri.scheme != "file") {
+        openExternalLink(project, uri)
+        return@launch
+      }
+      @Suppress("NAME_SHADOWING")
+      val project = project ?: data.projectId?.findProject() ?: return@launch
+      val fileToOpen = data.virtualFileId?.virtualFile() ?: return@launch
+      val anchor = uri.fragment
+      if (anchor == null) {
+        withContext(Dispatchers.EDT) {
+          runReadAction {
+            OpenFileAction.openFile(fileToOpen, project)
+          }
+        }
+        return@launch
+      }
+      processHeaders(fileToOpen, anchor, project, data.headers)
+    }
+  }
+
+  private suspend fun processHeaders(file: VirtualFile, anchor: String, project: Project, headers: List<MarkdownHeaderInfo>?){
+    if (headers == null) {
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
+        functionality = DumbModeBlockedFunctionality.ActionWithoutId
+        )
       return
     }
-    coroutineScope.launch {
-      openExternalLink(project, uri)
+    if (headers.size == 1) {
+      withContext(Dispatchers.EDT) {
+        runReadAction {
+          MarkdownFrontendService.getInstance().navigateToHeader(project.projectId(), headers.first())
+        }
+      }
+      return
+    }
+    val point = obtainHeadersPopupPosition(project)
+    if (point == null) {
+      logger.warn("Failed to obtain screen point for showing popup")
+      return
+    }
+    when {
+      headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
+      headers.size > 1 ->  showHeadersPopup(project, headers, point)
     }
   }
 
@@ -133,15 +173,6 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     }
   }
 
-  private fun tryOpenInEditor(project: Project?, uri: URI): Boolean {
-    if (uri.scheme != "file") {
-      return false
-    }
-    return runReadAction {
-      actuallyOpenInEditor(project, uri)
-    }
-  }
-
   private fun tryOpenInEditorDeprecated(project: Project?, uri: URI): Boolean {
     if (uri.scheme != "file") {
       return false
@@ -191,80 +222,6 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       }
     }
     return true
-  }
-
-  private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
-    @Suppress("NAME_SHADOWING")
-    val project = project ?:
-        runBlockingCancellable {
-          withContext(Dispatchers.IO) {
-            MarkdownLinkOpenerRemoteApi.getInstance().guessProjectForUri(uri.toString())?.findProject()
-          }
-        }
-    if (project == null) return false
-    val anchor = uri.fragment
-    if (anchor == null){
-      coroutineScope.launch(Dispatchers.EDT) {
-        OpenFileAction.openFile(uri.path, project)
-      }
-      return true
-    }
-    var headers = runBlockingCancellable {
-      withContext(Dispatchers.IO) {
-        MarkdownLinkOpenerRemoteApi.getInstance().collectHeaders(project.projectId(), uri.toString())
-      }
-    }
-    if (headers == null) {
-      coroutineScope.launch {
-        DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-          message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
-          functionality = DumbModeBlockedFunctionality.ActionWithoutId
-        )
-      }
-      // Return true to prevent external navigation from happening
-      return true
-    }
-    if (headers.size == 1) {
-      coroutineScope.launch(Dispatchers.EDT) {
-        MarkdownFrontendService.getInstance().navigateToHeader(project.projectId(), headers.first())
-      }
-      return true
-    }
-    val point = obtainHeadersPopupPosition(project)
-    if (point == null) {
-      logger.warn("Failed to obtain screen point for showing popup")
-      return false
-    }
-    coroutineScope.launch {
-      when {
-        headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
-        headers.size > 1 ->  showHeadersPopup(project, headers, point)
-      }
-    }
-    return true
-  }
-
-  private fun createUri(link: String, containingFile: VirtualFile?): URI? {
-    return try {
-      if (BrowserUtil.isAbsoluteURL(link)) return URI(link)
-      else {
-        if (PlatformUtils.isJetBrainsClient()){
-          val scheme = runBlockingCancellable {
-            withContext(Dispatchers.IO) {
-              MarkdownLinkOpenerRemoteApi.getInstance().resolveLinkAsFilePath(link, containingFile?.rpcId())
-            }
-          }
-          if (scheme != null && scheme.startsWith("file://")) {
-              return URI(scheme)
-          }
-        }
-
-        return URI("http://$link")
-      }
-    } catch (exception: URISyntaxException) {
-      logger.warn(exception)
-      null
-    }
   }
 
   companion object {
