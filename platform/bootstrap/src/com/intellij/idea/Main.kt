@@ -197,6 +197,8 @@ private fun initRemoteDev(args: List<String>) {
 
   val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
   if (isSplitMode) {
+    System.setProperty("jb.privacy.policy.text", "<!--999.999-->")
+    System.setProperty("jb.consents.confirmation.enabled", "false")
     System.setProperty("idea.initially.ask.config", "never")
   }
 
