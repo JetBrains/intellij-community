@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -23,9 +23,19 @@ abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() 
             testFile = Path.of(testPath),
             disableTestDirective = DIRECTIVES.of(pluginMode)
         ) {
-            val parts = KotlinTestUtils.loadBeforeAfterText(testPath)
+            val parts = KotlinTestUtils.loadBeforeAfterAndDependenciesText(testPath)
 
-            myFixture.configureByText(KotlinFileType.INSTANCE, parts[0])
+            val firstFile = parts.first()
+            val lastFile = parts.last()
+
+            for (index in 1 until (parts.size - 1)) {
+                val testFile = parts[index]
+                val fileType = FileTypeManager.getInstance().getFileTypeByExtension(testFile.name.substringAfterLast("."))
+                myFixture.configureByText(fileType, testFile.content)
+            }
+
+            val firstFileType = FileTypeManager.getInstance().getFileTypeByExtension(firstFile.name.substringAfterLast("."))
+            myFixture.configureByText(firstFileType, firstFile.content)
             performAction()
 
             val fileEditorManager = FileEditorManager.getInstance(myFixture.project) as FileEditorManagerEx
@@ -36,7 +46,7 @@ abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() 
                 val afterText = StringBuilder(text).insert(editor.caretModel.offset, "<caret>").toString().trim()
 
                 try {
-                    Assert.assertEquals(parts[1].trim(), afterText)
+                    Assert.assertEquals(lastFile.content.trim(), afterText)
                 } catch (e: ComparisonFailure) {
                     throw FileComparisonFailedError(
                         e.message,
@@ -57,7 +67,7 @@ abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() 
                     toString()
                 }
 
-                Assert.assertEquals(parts[1], withCaret)
+                Assert.assertEquals(lastFile.content, withCaret)
             }
         }
     }
