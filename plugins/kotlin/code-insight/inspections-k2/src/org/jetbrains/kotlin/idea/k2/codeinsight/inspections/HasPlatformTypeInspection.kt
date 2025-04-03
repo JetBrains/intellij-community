@@ -75,7 +75,7 @@ internal class HasPlatformTypeInspection(
     private fun KaSession.checkForPlatformType(element: KtCallableDeclaration, nameIdentifier: PsiElement, holder: ProblemsHolder) {
         val dangerousFlexibleType = dangerousFlexibleTypeOrNull(element, publicAPIOnly, reportPlatformArguments) ?: return
         val fixes = mutableListOf<ModCommandAction>(
-            SpecifyExplicitTypeQuickFix(element, CallableReturnTypeUpdaterUtils.getTypeInfo(element))
+            SpecifyExplicitTypeQuickFix(element, CallableReturnTypeUpdaterUtils.getTypeInfo(element, useTemplate = holder.isOnTheFly))
         )
 
         if (dangerousFlexibleType.canBeNull) {

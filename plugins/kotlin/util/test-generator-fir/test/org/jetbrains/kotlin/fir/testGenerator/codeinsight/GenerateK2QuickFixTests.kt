@@ -223,6 +223,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/wrongLongSuffix", pattern = pattern)
             model("$idea/quickfix/yieldUnsupported", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/changeSuperTypeListEntryTypeArgument", pattern = pattern, isRecursive = false)
+            model("$idea/quickfix/publicApiImplicitType", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
