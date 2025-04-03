@@ -3,12 +3,13 @@ package org.jetbrains.intellij.build.io
 
 import com.dynatrace.hash4j.hashing.Hashing
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
 import java.util.zip.ZipEntry
 
 internal const val INDEX_FORMAT_VERSION: Byte = 4
 
-class ZipIndexWriter(@JvmField val packageIndexBuilder: PackageIndexBuilder?) {
-  private var buffer: ByteBuf? = byteBufferAllocator.directBuffer(64 * 1024)
+class ZipIndexWriter(@JvmField val packageIndexBuilder: PackageIndexBuilder?, allocator: ByteBufAllocator = byteBufferAllocator) {
+  private var buffer: ByteBuf? = allocator.directBuffer(64 * 1024)
 
   private var entryCount = 0
 

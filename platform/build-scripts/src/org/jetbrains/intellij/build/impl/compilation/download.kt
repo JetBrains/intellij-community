@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -9,8 +8,13 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.intellij.build.forEachConcurrent
-import org.jetbrains.intellij.build.http2Client.*
-import org.jetbrains.intellij.build.io.INDEX_FILENAME
+import org.jetbrains.intellij.build.http2Client.DownloadResult
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
+import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
+import org.jetbrains.intellij.build.http2Client.checkMirrorAndConnect
+import org.jetbrains.intellij.build.http2Client.download
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.IOException
@@ -19,7 +23,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
@@ -56,7 +60,6 @@ internal suspend fun downloadCompilationCache(
               unpackCompilationPartArchive(item = item, saveHash = saveHash)
             }
           }
-          downloaded
 
           downloadedBytes.getAndAdd(downloaded)
         }
@@ -136,23 +139,22 @@ private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardO
 
 private fun unpackTrustedArchive(archiveFile: Path, outDir: Path) {
   Files.createDirectories(outDir)
-  HashMapZipFile.load(archiveFile).use { zipFile ->
-    val createdDirs = HashSet<Path>()
-    createdDirs.add(outDir)
-    for (entry in zipFile.entries) {
-      if (entry.isDirectory || entry.name == INDEX_FILENAME) {
-        continue
-      }
+  val createdDirs = HashSet<Path>()
+  createdDirs.add(outDir)
+  readZipFile(archiveFile) { name, dataProvider ->
+    val file = outDir.resolve(name)
+    val parent = file.parent
+    if (createdDirs.add(parent)) {
+      Files.createDirectories(parent)
+    }
 
-      val file = outDir.resolve(entry.name)
-      val parent = file.parent
-      if (createdDirs.add(parent)) {
-        Files.createDirectories(parent)
+    FileChannel.open(file, OVERWRITE_OPERATION).use { fileChannel ->
+      val data = dataProvider()
+      var currentPosition = 0L
+      do {
+        currentPosition += fileChannel.write(data, currentPosition)
       }
-
-      FileChannel.open(file, OVERWRITE_OPERATION).use { channel ->
-        channel.write(entry.getByteBuffer(zipFile, null))
-      }
+      while (data.hasRemaining())
     }
   }
 }

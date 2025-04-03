@@ -24,7 +24,7 @@ import java.nio.file.StandardOpenOption
 import java.util.EnumSet
 import kotlin.math.min
 
-private const val SOURCE_BUFFER_SIZE = 4 * 1024 * 1024
+private const val SOURCE_BUFFER_SIZE = 8 * 1024 * 1024
 
 internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
 

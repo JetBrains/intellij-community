@@ -19,11 +19,8 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
 internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stream: Http2StreamChannel, sourceBlockSize: Int): UploadResult {
-  val localPrefixLength = dir.toString().length + 1
-  val zipIndexWriter = ZipIndexWriter(null)
+  val zipIndexWriter = ZipIndexWriter(null, allocator = stream.alloc())
   try {
-    var uncompressedPosition = 0L
-    var uploadedSize = 0L
     val sourceBufferRef = AtomicReference<ByteBuf>(null)
     try {
       @Synchronized
@@ -36,6 +33,10 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
         return sourceBuffer
       }
 
+      var uncompressedPosition = 0L
+      var uploadedSize = 0L
+
+      val localPrefixLength = dir.toString().length + 1
       archiveDir(startDir = dir, addFile = { file ->
         val name = file.toString().substring(localPrefixLength).replace(File.separatorChar, '/').toByteArray()
 
@@ -110,12 +111,11 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
       if (toRead > 0) {
         uploadedSize += compressBufferAndWrite(sourceBuffer = zipIndexData, stream = stream, zstd = zstd, endStream = true, releaseSource = false)
       }
+      return UploadResult(uploadedSize = uploadedSize, fileSize = uncompressedPosition)
     }
     finally {
       sourceBufferRef.get()?.release()
     }
-
-    return UploadResult(uploadedSize = uploadedSize, fileSize = uncompressedPosition)
   }
   finally {
     zipIndexWriter.release()
@@ -125,9 +125,9 @@ internal suspend fun compressAndUploadDir(dir: Path, zstd: ZstdCompressCtx, stre
 private suspend fun compressBufferAndWrite(sourceBuffer: ByteBuf, stream: Http2StreamChannel, zstd: ZstdCompressCtx, endStream: Boolean, releaseSource: Boolean = true): Int {
   val chunkSize = sourceBuffer.readableBytes()
   val targetSize = Zstd.compressBound(chunkSize.toLong()).toInt()
-  var target = stream.alloc().directBuffer(targetSize)
+  var targetBuffer = stream.alloc().directBuffer(targetSize)
   try {
-    val targetNio = target.internalNioBuffer(target.writerIndex(), targetSize)
+    val targetNio = targetBuffer.internalNioBuffer(targetBuffer.writerIndex(), targetSize)
     val sourceNio = sourceBuffer.internalNioBuffer(sourceBuffer.readerIndex(), sourceBuffer.readableBytes())
     val compressedSize = zstd.compressDirectByteBuffer(
       targetNio, // compress into targetBuffer
@@ -138,19 +138,19 @@ private suspend fun compressBufferAndWrite(sourceBuffer: ByteBuf, stream: Http2S
       chunkSize, // read chunk size bytes
     )
     assert(compressedSize > 0)
-    target.writerIndex(compressedSize)
-    assert(target.readableBytes() == compressedSize)
+    targetBuffer.writerIndex(compressedSize)
+    assert(targetBuffer.readableBytes() == compressedSize)
 
     if (releaseSource) {
       sourceBuffer.release()
     }
 
-    val future = stream.writeAndFlush(DefaultHttp2DataFrame(target, endStream))
-    target = null
+    val future = stream.writeAndFlush(DefaultHttp2DataFrame(targetBuffer, endStream))
+    targetBuffer = null
     future.joinCancellable()
     return compressedSize
   }
   finally {
-    target?.release()
+    targetBuffer?.release()
   }
 }
