@@ -768,6 +768,11 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          """);
     doTest();
   }
+  
+  public void testUnresolvedReferenceAfterParenthesis() {
+    doTest();
+  }
+  
   private void doTest() {
     doTest(".java");
   }
