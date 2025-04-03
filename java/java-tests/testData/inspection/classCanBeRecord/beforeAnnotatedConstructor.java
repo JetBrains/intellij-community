@@ -1,4 +1,4 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 import org.jetbrains.annotations.NotNull;
 
 public final class <caret>Box {

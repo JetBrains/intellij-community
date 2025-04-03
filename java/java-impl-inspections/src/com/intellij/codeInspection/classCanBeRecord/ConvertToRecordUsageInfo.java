@@ -16,7 +16,7 @@ interface ConvertToRecordUsageInfo {
 }
 
 /**
- * Encapsulates the field which will be narrowed its visibility as the record introduces a private final field.
+ * Encapsulates the field which will become less accessible the record introduces a private final field.
  */
 class FieldUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
   final PsiField myField;
