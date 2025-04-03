@@ -22,8 +22,6 @@ import kotlin.io.path.div
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
-private const val CHECK_OPTIONAL_ERRORS = false
-
 private val inspections
   get() = arrayOf(
     PyArgumentListInspection(),
@@ -149,7 +147,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     val failMessage = StringBuilder()
 
     for ((lineNumber, expectedError) in expectedErrors.lineToError) {
-      if (CHECK_OPTIONAL_ERRORS || !expectedError.isOptional) {
+      if (!expectedError.isOptional) {
         val actualError = actualErrors[lineNumber]
         if (actualError == null) {
           missingErrorsCount++
@@ -163,7 +161,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     }
 
     for ((tag, lineNumbers) in expectedErrors.errorGroups) {
-      if (!lineNumbers.isEmpty() && lineNumbers.all { it !in actualErrors }) {
+      if (!lineNumbers.any { it in actualErrors }) {
         missingErrorsCount++
         failMessage.append("Expected error (tag $tag) at ").appendLocation(lineNumbers[0])
         lineNumbers.subList(1, lineNumbers.size).map { it + 1 }.joinTo(failMessage, ", ", "[", "]")
