@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.rpc
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.Id
+import com.intellij.platform.rpc.UID
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.impl.rpc.serializers.SimpleTextAttributesSerializer
 import kotlinx.serialization.Serializable
@@ -25,7 +26,7 @@ sealed interface XExecutionStacksEvent {
  */
 @ApiStatus.Internal
 @Serializable
-data class XExecutionStackId(override val uid: com.intellij.platform.rpc.UID): Id
+data class XExecutionStackId(override val uid: UID): Id
 
 @ApiStatus.Internal
 @Serializable
@@ -52,7 +53,7 @@ sealed interface XStackFramesEvent {
  */
 @ApiStatus.Internal
 @Serializable
-data class XStackFrameId(override val uid: com.intellij.platform.rpc.UID) : Id
+data class XStackFrameId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
@@ -61,8 +62,20 @@ data class XStackFrameDto(
   val sourcePosition: XSourcePositionDto?,
   val equalityObject: XStackFrameEqualityObject?,
   val evaluator: XDebuggerEvaluatorDto,
-  val initialPresentation: XStackFramePresentation
+  val initialPresentation: XStackFramePresentation,
+  val captionInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo.noInfo,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XStackFrameCaptionInfo(
+  val hasSeparatorAbove: Boolean,
+  val caption: @NlsContexts.Separator String?,
+) {
+  companion object {
+    val noInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo(hasSeparatorAbove = false, caption = null)
+  }
+}
 
 @ApiStatus.Internal
 @Serializable

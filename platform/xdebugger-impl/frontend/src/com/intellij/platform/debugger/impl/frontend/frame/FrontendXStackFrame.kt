@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.ui.ColoredTextContainer
@@ -10,6 +11,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
 import com.intellij.xdebugger.impl.rpc.XStackFrameDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
@@ -20,7 +22,7 @@ internal class FrontendXStackFrame(
   private val frameDto: XStackFrameDto,
   private val project: Project,
   private val cs: CoroutineScope,
-) : XStackFrame() {
+) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
   private val evaluator by lazy {
     createFrontendXDebuggerEvaluator(project, cs, frameDto.evaluator, frameDto.stackFrameId)
   }
@@ -62,6 +64,14 @@ internal class FrontendXStackFrame(
     for ((text, attributes) in fragments) {
       component.append(text, attributes)
     }
+  }
+
+  override fun hasSeparatorAbove(): Boolean {
+    return frameDto.captionInfo.hasSeparatorAbove
+  }
+
+  override fun getCaptionAboveOf(): @NlsContexts.Separator String? {
+    return frameDto.captionInfo.caption
   }
 
   override fun equals(other: Any?): Boolean {

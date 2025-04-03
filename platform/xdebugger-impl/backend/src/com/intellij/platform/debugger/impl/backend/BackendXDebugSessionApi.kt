@@ -14,6 +14,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionState
@@ -25,6 +26,7 @@ import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XExecutionStacksEvent
 import com.intellij.xdebugger.impl.rpc.XExpressionDto
 import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
+import com.intellij.xdebugger.impl.rpc.XStackFrameCaptionInfo
 import com.intellij.xdebugger.impl.rpc.XStackFrameDto
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.XStackFramePresentation
@@ -170,9 +172,18 @@ internal fun createXStackFrameDto(frame: XStackFrame, id: XStackFrameId): XStack
   }
   val canEvaluateInDocument = frame.isDocumentEvaluator
   val evaluatorDto = XDebuggerEvaluatorDto(canEvaluateInDocument)
-  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.initialPresentation())
+  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.initialPresentation(),
+                        frame.captionInfo())
 }
 
+private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
+  return if (this is XDebuggerFramesList.ItemWithSeparatorAbove) {
+    XStackFrameCaptionInfo(hasSeparatorAbove(), captionAboveOf)
+  }
+  else {
+    XStackFrameCaptionInfo.noInfo
+  }
+}
 private fun XStackFrame.initialPresentation(): XStackFramePresentation {
   val parts = mutableListOf<XStackFramePresentationFragment>()
   var iconId: IconId? = null
