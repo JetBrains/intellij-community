@@ -22,6 +22,7 @@ import com.intellij.util.text.CharArrayUtilKmp.shiftBackward
 import com.intellij.util.text.CharArrayUtilKmp.shiftBackwardUntil
 import com.intellij.util.text.CharArrayUtilKmp.shiftForward
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
 @ApiStatus.Experimental
@@ -536,8 +537,12 @@ open class DeclarationParser(private val myParser: JavaParser) {
     val noDelimiterMsg = if (resources) "expected.semicolon" else "expected.comma"
     val noElementMsg = if (resources) "expected.resource" else "expected.parameter"
 
-    var invalidElements: SyntaxTreeBuilder.Marker? = null
-    var errorMessage: String? = null
+    data class ErrorState(
+      val marker: SyntaxTreeBuilder.Marker,
+      val errorMessage: @Nls String
+    )
+
+    var errorState: ErrorState? = null
     var delimiterExpected = false
     var noElements = true
     while (true) {
@@ -549,16 +554,18 @@ open class DeclarationParser(private val myParser: JavaParser) {
           JavaParserUtil.error(builder, message(key))
         }
         if (tokenType === JavaSyntaxTokenType.RPARENTH) {
-          if (invalidElements != null) {
-            invalidElements.error(errorMessage!!)
-            invalidElements = null
+          errorState?.let { (invalidElements, errorMessage) ->
+            invalidElements.error(errorMessage)
+            errorState = null
           }
           builder.advanceLexer()
         }
         else {
           if (!noLastElement || resources) {
-            invalidElements?.error(errorMessage!!)
-            invalidElements = null
+            errorState?.let { (invalidElements, errorMessage) ->
+              invalidElements.error(errorMessage)
+              errorState = null
+            }
             if (leftParenth) {
               JavaParserUtil.error(builder, message("expected.rparen"))
             }
@@ -570,9 +577,9 @@ open class DeclarationParser(private val myParser: JavaParser) {
       if (delimiterExpected) {
         if (builder.tokenType === delimiter) {
           delimiterExpected = false
-          if (invalidElements != null) {
-            invalidElements.error(errorMessage!!)
-            invalidElements = null
+          errorState?.let { (invalidElements, errorMessage) ->
+            invalidElements.error(errorMessage)
+            errorState = null
           }
           builder.advanceLexer()
           continue
@@ -586,16 +593,16 @@ open class DeclarationParser(private val myParser: JavaParser) {
           else parseParameter(builder, true, false, false)
         if (listElement != null) {
           delimiterExpected = true
-          if (invalidElements != null) {
-            invalidElements.errorBefore(errorMessage!!, listElement)
-            invalidElements = null
+          errorState?.let { (invalidElements, errorMessage) ->
+            invalidElements.errorBefore(errorMessage, listElement)
+            errorState = null
           }
           noElements = false
           continue
         }
       }
 
-      if (invalidElements == null) {
+      if (errorState == null) {
         if (builder.tokenType === delimiter) {
           JavaParserUtil.error(builder, message(noElementMsg))
           builder.advanceLexer()
@@ -605,8 +612,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
           continue
         }
         else {
-          invalidElements = builder.mark()
-          errorMessage = message(if (delimiterExpected) noDelimiterMsg else noElementMsg)
+          errorState = ErrorState(
+            marker = builder.mark(),
+            errorMessage = message(if (delimiterExpected) noDelimiterMsg else noElementMsg)
+          )
         }
       }
 
@@ -617,7 +626,9 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    invalidElements?.error(errorMessage!!)
+    errorState?.let { (marker, error) ->
+      marker.error(error)
+    }
 
     JavaParserUtil.done(elementList, type.nodeType, languageLevel, myWhiteSpaceAndCommentSetHolder)
   }
