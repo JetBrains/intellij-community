@@ -101,7 +101,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
             val function = current.parentOfType<KtFunction>()
             if (function != null) {
                 val realFun = function.parent as? KtLambdaExpression ?: function
-                val arg = realFun?.parent as? KtValueArgument
+                val arg = realFun.parent as? KtValueArgument
                 val call = when(arg) {
                     is KtLambdaArgument -> arg.parent
                     else -> arg?.parent?.parent
@@ -134,9 +134,9 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         if (qualifier == null) {
             if (descriptor is KtLambdaThisVariableDescriptor) {
                 val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
-                val scopePart = scopeName?.replace(Regex("\\W"), "_")?.let(Regex::escape) ?: ".+"
+                val scopePart = scopeName?.replace(Regex("[^\\p{L}\\d]"), "_")?.let(Regex::escape) ?: ".+"
                 val inlinedPart = Regex.escape(inlineSuffix)
-                val regex = Regex("\\\$this\\\$${scopePart}(_\\w+)?_u\\d+lambda_u\\d+$inlinedPart")
+                val regex = Regex("\\\$this\\$${scopePart}(_\\w+)?_u\\d+lambda_u\\d+$inlinedPart")
                 val lambdaThis = proxy.stackFrame.visibleVariables().filter { it.name().matches(regex) }
                 if (lambdaThis.size == 1) {
                     return postprocess(proxy.stackFrame.getValue(lambdaThis.first()))
@@ -146,7 +146,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                 val pointer = descriptor.classDef?.pointer
                 val contextName = descriptor.contextName
                 if (contextName != null) {
-                    val thisName = "\$this\$${contextName}$inlineSuffix"
+                    val thisName = "\$this$${contextName}$inlineSuffix"
                     val thisVar = proxy.visibleVariableByName(thisName)
                     if (thisVar != null) {
                         return postprocess(proxy.getVariableValue(thisVar))
