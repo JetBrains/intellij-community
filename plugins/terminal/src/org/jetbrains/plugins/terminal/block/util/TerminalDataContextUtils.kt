@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction.Companion.SUPPRESS_COMPLETION
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
 import org.jetbrains.plugins.terminal.block.SimpleTerminalController
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
@@ -29,9 +30,6 @@ object TerminalDataContextUtils {
 
   @ApiStatus.Internal
   val IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferModelEditor")
-
-  // Do not show a completion popup (if true)
-  val SUPPRESS_COMPLETION: Key<Boolean> = Key.create("SUPPRESS_TERMINAL_COMPLETION")
 
   val Editor.isPromptEditor: Boolean
     get() = getUserData(IS_PROMPT_EDITOR_KEY) == true
