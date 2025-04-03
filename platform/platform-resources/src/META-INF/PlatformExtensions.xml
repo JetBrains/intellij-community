@@ -1124,10 +1124,13 @@
                              instance="com.intellij.openapi.editor.impl.stickyLines.configurable.StickyLinesConfigurable"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
-    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.UnsupportedGlibcNotifierActivity" os="linux"/>
     <registryKey key="ide.check.windows.defender.rules"
                  defaultValue="true"
                  description="Enables Windows Defender configuration check on project open"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.UnsupportedGlibcNotifierActivity" os="linux"/>
+    <registryKey key="ide.warn.glibc.version.unsupported" defaultValue="true"
+                 description="Shows a warning notification to users of unsupported Linux distributions with glibc less than minimum supported"/>
 
     <applicationActivity implementation="com.intellij.codeInsight.editorActions.TypedHandlerPreloader"/>
 
