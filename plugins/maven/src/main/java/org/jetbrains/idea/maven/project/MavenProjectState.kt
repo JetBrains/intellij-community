@@ -12,6 +12,9 @@ import java.util.*
 data class MavenPluginWithArtifact(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable
 
 @ApiStatus.Internal
+data class MavenProfileData(val profileId: String, val containsModules: Boolean) : Serializable
+
+@ApiStatus.Internal
 data class MavenProjectState(
   val lastReadStamp: Long = 0,
   val mavenId: MavenId? = null,
@@ -38,7 +41,7 @@ data class MavenProjectState(
   val managedDependencies: Map<String, MavenId> = emptyMap(),
   val modulesPathsAndNames: Map<String, String> = emptyMap(),
   val modelMap: Map<String, String> = emptyMap(),
-  val profilesIds: Collection<String> = emptySet(),
+  val profiles: Collection<MavenProfileData> = emptySet(),
   val activatedProfilesIds: MavenExplicitProfiles = MavenExplicitProfiles.NONE,
   val dependencyHash: String? = null,
   val unresolvedArtifactIds: Set<MavenId> = emptySet(),
@@ -50,6 +53,9 @@ data class MavenProjectState(
   val plugins: List<MavenPlugin> get() = pluginInfos.map { it.plugin }
   val declaredPluginInfos: List<MavenPluginWithArtifact> get() = pluginInfos.filter { !it.plugin.isDefault }
   val declaredPlugins: List<MavenPlugin> get() = declaredPluginInfos.map { it.plugin }
+
+  val profilesIds: Collection<String>
+    get()= profiles.map { it.profileId }
 
   val isParentResolved: Boolean
     get() = !unresolvedArtifactIds.contains(parentId)

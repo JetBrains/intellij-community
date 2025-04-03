@@ -343,13 +343,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     val root = rootProjects[0]
     val mavenProject = getModules(root)[0]
-    forMaven3 {
-      val problem = mavenProject.problems[0].description!!
-      assertTrue(problem.contains("Non-parseable POM"))
-    }
-    forMaven4 {
-      assertProblems(mavenProject, "'pom.xml' has syntax errors")
-    }
+    assertProblems(mavenProject, "'pom.xml' has syntax errors")
   }
 
   @Test

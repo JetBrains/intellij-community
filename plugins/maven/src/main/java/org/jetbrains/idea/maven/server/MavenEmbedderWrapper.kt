@@ -19,7 +19,6 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -58,6 +57,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   suspend fun resolveProject(
     filesToResolve: List<VirtualFile>,
+    buildRecursively: Boolean,
     pomToDependencyHash: Map<VirtualFile, String?>,
     pomDependencies: Map<VirtualFile, Set<File>>,
     explicitProfiles: MavenExplicitProfiles,
@@ -87,6 +87,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     val toResolve = filesToResolve.mapNotNull { file -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
     val request = ProjectResolutionRequest(
       toResolve,
+      buildRecursively,
       pomHashMap,
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,

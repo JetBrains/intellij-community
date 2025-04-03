@@ -167,12 +167,23 @@ class MavenProjectResolver(private val myProject: Project) {
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
     val explicitProfiles = tree.explicitProfiles
     val projects = tree.projects
-    val filesToResolve = mavenProjects.map { tree.findRootProject(it) }.map { it.file }.distinct()
+
+    // for performance reasons, only build projects recursively if a module path needs to be interpolated or a profile contains modules
+    val buildRecursively = mavenProjects.flatMap { it.modulesPathsAndNames.keys }.any { it.contains("\${") }
+                           || mavenProjects.flatMap { it.profiles }.any { it.containsModules }
+
+    val filesToResolve = if (buildRecursively)  {
+      mavenProjects.map { tree.findRootProject(it) }.map { it.file }.distinct()
+    }
+    else {
+      pomToDependencyHash.keys.toList()
+    }
     val pomDependencies = projects
       .associate { it.file to it.dependencies.filter { it.file.path.endsWith(MavenConstants.POM_XML) }.map { it.file }.toSet() }
       .filterValues { it.isNotEmpty() }
     val results = resolveProjectsInEmbedder(
       filesToResolve,
+      buildRecursively,
       embedder,
       pomToDependencyHash,
       pomDependencies,
@@ -331,6 +342,7 @@ class MavenProjectResolver(private val myProject: Project) {
 
   private suspend fun resolveProjectsInEmbedder(
     filesToResolve: List<VirtualFile>,
+    buildRecursively: Boolean,
     embedder: MavenEmbedderWrapper,
     pomToDependencyHash: Map<VirtualFile, String?>,
     pomDependencies: Map<VirtualFile, Set<File>>,
@@ -348,6 +360,7 @@ class MavenProjectResolver(private val myProject: Project) {
         .useWithScope {
           embedder.resolveProject(
             filesToResolve,
+            buildRecursively,
             pomToDependencyHash,
             pomDependencies,
             explicitProfiles,

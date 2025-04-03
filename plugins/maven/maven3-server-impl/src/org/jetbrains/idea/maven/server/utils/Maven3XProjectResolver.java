@@ -86,6 +86,7 @@ public class Maven3XProjectResolver {
   private final @NotNull Maven3ImporterSpy myImporterSpy;
   private final LongRunningTask myLongRunningTask;
   @NotNull List<@NotNull File> myFilesToResolve;
+  private final boolean buildRecursively;
   private final PomHashMap myPomHashMap;
   private final List<String> myActiveProfiles;
   private final List<String> myInactiveProfiles;
@@ -99,6 +100,7 @@ public class Maven3XProjectResolver {
                                 @NotNull Maven3ImporterSpy importerSpy,
                                 @NotNull LongRunningTask longRunningTask,
                                 @NotNull List<@NotNull File> filesToResolve,
+                                boolean buildRecursively,
                                 @NotNull PomHashMap pomHashMap,
                                 @NotNull List<String> activeProfiles,
                                 @NotNull List<String> inactiveProfiles,
@@ -111,6 +113,7 @@ public class Maven3XProjectResolver {
     myImporterSpy = importerSpy;
     myLongRunningTask = longRunningTask;
     myFilesToResolve = filesToResolve;
+    this.buildRecursively = buildRecursively;
     myPomHashMap = pomHashMap;
     myActiveProfiles = activeProfiles;
     myInactiveProfiles = inactiveProfiles;
@@ -157,7 +160,7 @@ public class Maven3XProjectResolver {
   }
 
   private @NotNull ArrayList<MavenServerExecutionResult> doResolveProject() {
-    List<File> files = myFilesToResolve;
+    Collection<File> files = buildRecursively ? myPomHashMap.keySet() : myFilesToResolve;
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
     MavenExecutionRequest request = myEmbedder.createRequest(file, myActiveProfiles, myInactiveProfiles, userProperties);
@@ -459,17 +462,20 @@ public class Maven3XProjectResolver {
     projectBuildingRequest.setResolveDependencies(false);
 
     try {
-      try {
+      if (buildRecursively) {
         buildMultiplyPoms(builder, buildingResults, projectBuildingRequest, files);
       }
-      catch (ProjectBuildingException e) {
-        for (ProjectBuildingResult result : e.getResults()) {
-          if (result.getProject() != null) {
-            buildingResults.add(result);
-          }
-          else {
-            buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
-          }
+      else {
+        buildMultiplyPomsNonRecursively(builder, buildingResults, projectBuildingRequest, files);
+      }
+    }
+    catch (ProjectBuildingException e) {
+      for (ProjectBuildingResult result : e.getResults()) {
+        if (result.getProject() != null) {
+          buildingResults.add(result);
+        }
+        else {
+          buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
         }
       }
     }
@@ -487,6 +493,14 @@ public class Maven3XProjectResolver {
                                    @NotNull Collection<File> files
   ) throws ProjectBuildingException {
     buildingResults.addAll(builder.build(new ArrayList<>(files), true, projectBuildingRequest));
+  }
+
+  protected void buildMultiplyPomsNonRecursively(@NotNull ProjectBuilder builder,
+                                   List<ProjectBuildingResult> buildingResults,
+                                   ProjectBuildingRequest projectBuildingRequest,
+                                   @NotNull Collection<File> files
+  ) throws ProjectBuildingException {
+    buildingResults.addAll(builder.build(new ArrayList<>(files), false, projectBuildingRequest));
   }
 
   protected void buildSinglePom(ProjectBuilder builder,
