@@ -1,16 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
-import com.intellij.codeInspection.InspectionEP
-import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
 import com.intellij.util.io.URLUtil
-import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
@@ -27,12 +23,12 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 private const val CHECK_OPTIONAL_ERRORS = false
-private const val RUN_ALL_INSPECTIONS = false
 
 private val inspections
   get() = arrayOf(
     PyArgumentListInspection(),
     PyAssertTypeInspection(),
+    PyCallingNonCallableInspection(),
     PyClassVarInspection(),
     PyDataclassInspection(),
     PyEnumInspection(),
@@ -45,16 +41,7 @@ private val inspections
     PyTypeCheckerInspection(),
     PyTypeHintsInspection(),
     PyUnresolvedReferencesInspection(),
-    PyCallingNonCallableInspection(),
   )
-
-private val IGNORED_INSPECTIONS = listOf(
-  PyInitNewSignatureInspection::class, // False negative constructors_consistency.py
-  PyInterpreterInspection::class,
-  PyPep8Inspection::class,
-  PyRedeclarationInspection::class,
-  PyStatementEffectInspection::class,
-).map { it.java.name }
 
 @RunWith(Parameterized::class)
 class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
@@ -65,7 +52,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     settings.HIGHLIGHT_UNUSED_IMPORTS = false
     try {
       myFixture.configureByFiles(*getFilePaths())
-      myFixture.enableInspections(*getInspections())
+      myFixture.enableInspections(*inspections)
       checkHighlighting()
     }
     finally {
@@ -86,19 +73,6 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       .toList()
       .toTypedArray()
   }
-
-  private fun getInspections(): Array<out InspectionProfileEntry> =
-    if (RUN_ALL_INSPECTIONS) {
-      sequenceOf(LocalInspectionEP.LOCAL_INSPECTION, LocalInspectionEP.GLOBAL_INSPECTION)
-        .flatMap { it.extensionList }
-        .filter { !IGNORED_INSPECTIONS.contains(it.implementationClass) && it.language == PythonLanguage.INSTANCE.id && it.enabledByDefault }
-        .map(InspectionEP::instantiateTool)
-        .toList()
-        .toTypedArray()
-    }
-    else {
-      inspections
-    }
 
   private fun checkHighlighting() {
     val document = myFixture.getDocument(myFixture.file)
