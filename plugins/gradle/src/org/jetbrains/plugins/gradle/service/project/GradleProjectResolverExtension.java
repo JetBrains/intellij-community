@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -91,17 +94,27 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @ApiStatus.Experimental
   default void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {}
 
-  @NotNull
-  Set<Class<?>> getExtraProjectModelClasses();
+  default @NotNull Set<Class<?>> getExtraProjectModelClasses() {
+    return Collections.emptySet();
+  }
 
-  @NotNull
-  Set<Class<?>> getExtraBuildModelClasses();
+  default @NotNull Set<Class<?>> getExtraBuildModelClasses() {
+    return Collections.emptySet();
+  }
 
-  default @Nullable ProjectImportModelProvider getModelProvider() { return null; }
+  default @Nullable ProjectImportModelProvider getModelProvider() {
+    return null;
+  }
 
   default @NotNull List<ProjectImportModelProvider> getModelProviders() {
     ProjectImportModelProvider provider = getModelProvider();
-    return provider == null ? Collections.emptyList() : List.of(provider);
+    if (provider != null) {
+      return List.of(provider);
+    }
+    List<ProjectImportModelProvider> providers = new ArrayList<>();
+    providers.addAll(GradleClassProjectModelProvider.createAll(getExtraProjectModelClasses()));
+    providers.addAll(GradleClassBuildModelProvider.createAll(getExtraBuildModelClasses()));
+    return providers;
   }
 
   /**
@@ -109,8 +122,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    *
    * @return classes to be available for gradle
    */
-  @NotNull
-  Set<Class<?>> getToolingExtensionsClasses();
+  default @NotNull Set<Class<?>> getToolingExtensionsClasses() {
+    return Collections.emptySet();
+  }
 
   /**
    * add target types to be used in the polymorphic containers
@@ -119,11 +133,13 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
     return Collections.emptySet();
   }
 
-  @NotNull
-  List<Pair<String, String>> getExtraJvmArgs();
+  default @NotNull List<Pair<String, String>> getExtraJvmArgs() {
+    return Collections.emptyList();
+  }
 
-  @NotNull
-  List<String> getExtraCommandLineArgs();
+  default @NotNull List<String> getExtraCommandLineArgs() {
+    return Collections.emptyList();
+  }
 
   @NotNull
   ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
@@ -131,10 +147,16 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
                                                @NotNull String projectPath,
                                                @Nullable String buildFilePath);
 
+
+  @Override
+  default void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  }
+
   /**
    * Performs project configuration and other checks before the actual project import (before invocation of gradle tooling API).
    */
-  void preImportCheck();
+  default void preImportCheck() {
+  }
 
   /**
    * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
