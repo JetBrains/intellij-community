@@ -121,6 +121,8 @@
       version: 1.5.0
 - url: https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies
   libs:
+    - id: com.intellij.platform:kotlinx-coroutines-core-jvm
+      version: 1.10.1-intellij-4
     - id: jetbrains.fleet:expects-compiler-plugin
       version: 2.1.20-RC2-0.3
     - id: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil

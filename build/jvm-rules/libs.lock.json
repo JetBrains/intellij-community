@@ -35,6 +35,10 @@
     "2c8225cd73b2394382b9d0016d9278a00291562224a594eef00c00a6ac50bc04",
     "48642b96b9fcb08f22326e10edad49fde210ae5884febeb06a0b107bba3f9478"
   ],
+  "com.intellij.platform:kotlinx-coroutines-core-jvm:1.10.1-intellij-4": [
+    "e4861dd9812c08a8f82b597dc04110d81ecd0dd952e3f3f12a053f388bdeaea2",
+    "3a4f4c13f6b7ea5175786fe07a4712def5fef4a8eb8505ace6f7f9ba364e1830"
+  ],
   "io.netty:netty-buffer:4.2.0.RC4": [
     "070f8f5dd3993ff9feb129425de6b0963f3d6e64a57c35eef8c40c9ea74113d7",
     "8dc8ae3e60fc111f6e536bfb4122d9422886e0e093584ab000b2e525307036fe"

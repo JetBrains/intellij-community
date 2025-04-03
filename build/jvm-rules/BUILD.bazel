@@ -412,6 +412,13 @@ jvm_import(
 )
 
 jvm_import(
+    name = "kotlinx-coroutines-core",
+    jar = "@kotlinx-coroutines-core-jvm//file",
+    source_jar = "@kotlinx-coroutines-core-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "expects-compiler-plugin",
     jar = "@expects-compiler-plugin//file",
     source_jar = "@expects-compiler-plugin-sources//file",
