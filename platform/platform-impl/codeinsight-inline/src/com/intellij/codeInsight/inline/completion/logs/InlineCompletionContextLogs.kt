@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlin.math.abs
 
 internal object InlineCompletionContextLogs {
   @RequiresReadLock
@@ -38,9 +39,13 @@ internal object InlineCompletionContextLogs {
     with(AcceptanceRateFeatures()) {
       for (duration in AcceptanceRateFactorsComponent.DECAY_DURATIONS) {
         val (selectionField, showupField, acceptanceField) = Logs.DECAYING_FEATURES[duration] ?: continue
-        add(selectionField with selectionCountDecayedBy(duration))
-        add(showupField with showUpCountDecayedBy(duration))
-        add(acceptanceField with smoothedAcceptanceRate(duration))
+        if(abs(showUpCountDecayedBy(duration)) > 1e-9) {
+          add(showupField with showUpCountDecayedBy(duration))
+          if(abs(selectionCountDecayedBy(duration)) > 1e-9) {
+            add(selectionField with selectionCountDecayedBy(duration))
+            add(acceptanceField with smoothedAcceptanceRate(duration))
+          }
+        }
       }
       add(Logs.PREV_SELECTED with prevSelected)
       add(Logs.TIME_SINCE_LAST_SHOWUP with timeSinceLastShowup)
@@ -56,12 +61,12 @@ internal object InlineCompletionContextLogs {
     }
 
     with(PrefixLengthFeatures()) {
-      add(Logs.MOST_FREQUENT_PREFIX_LENGTH with getMostFrequentPrefixLength())
-      add(Logs.AVERAGE_PREFIX_LENGTH with getAveragePrefixLength())
+      getMostFrequentPrefixLength()?.let{add(Logs.MOST_FREQUENT_PREFIX_LENGTH with it)}
+      getAveragePrefixLength()?.let{add(Logs.AVERAGE_PREFIX_LENGTH with it)}
     }
 
     with(TimeBetweenTypingFeatures()) {
-      add(Logs.AVERAGE_TIME_BETWEEN_TYPING with getAverageTypingSpeed())
+      getAverageTypingSpeed()?.let{add(Logs.AVERAGE_TIME_BETWEEN_TYPING with it)}
     }
   }
 

@@ -68,5 +68,5 @@ internal class TimeBetweenTypingFeatures() {
   private val component
     get() = TimeBetweenTypingComponent.getInstance()
 
-  fun getAverageTypingSpeed(): Double = component.getAverageTimeBetweenTyping() ?: 0.0
+  fun getAverageTypingSpeed(): Double? = component.getAverageTimeBetweenTyping()
 }

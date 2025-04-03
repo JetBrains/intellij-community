@@ -142,5 +142,6 @@ internal class CompletionFinishTypeFeatures() {
     return safeDiv(explicitCancel.toLong(), total.toLong()) ?: 0.0
   }
 
+  // Use this function before calling `getSomeRatio` to avoid sending unnecessary 0.0
   fun hasCompletionStatistics(): Boolean = component.getTotalCount() > 0
 }

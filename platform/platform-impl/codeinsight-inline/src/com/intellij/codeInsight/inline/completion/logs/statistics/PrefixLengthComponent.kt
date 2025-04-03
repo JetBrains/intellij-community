@@ -83,10 +83,10 @@ internal class PrefixLengthFeatures() {
   private val component
     get() = PrefixLengthComponent.getInstance()
 
-  fun getMostFrequentPrefixLength(): Int {
+  fun getMostFrequentPrefixLength(): Int? {
     return component.getCountsByPrefixLength()
-             .maxByOrNull { it.value }?.key ?: 0
+             .maxByOrNull { it.value }?.key
   }
 
-  fun getAveragePrefixLength(): Double = component.getAveragePrefixLength() ?: 0.0
+  fun getAveragePrefixLength(): Double? = component.getAveragePrefixLength()
 }
