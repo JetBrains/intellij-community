@@ -32,6 +32,9 @@ open class DeclarationParser(private val myParser: JavaParser) {
   
   private val myWhiteSpaceAndCommentSetHolder = WhiteSpaceAndCommentSetHolder
 
+  private val languageLevel: LanguageLevel
+    get() = myParser.languageLevel
+
   fun parseClassBodyWithBraces(builder: SyntaxTreeBuilder, isAnnotation: Boolean, isEnum: Boolean) {
     assert(builder.tokenType === JavaSyntaxTokenType.LBRACE) { builder.tokenType!! }
     builder.advanceLexer()
@@ -44,8 +47,6 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     JavaParserUtil.expectOrError(builder, JavaSyntaxTokenType.RBRACE, "expected.rbrace")
   }
-
-  private val level get() = myParser.languageLevel
 
   private fun parseClassFromKeyword(
     builder: SyntaxTreeBuilder,
@@ -118,7 +119,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       parseClassBodyWithBraces(builder, isAnnotation, isEnum)
     }
 
-    JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS, level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS, languageLevel, myWhiteSpaceAndCommentSetHolder)
     return declaration
   }
 
@@ -175,10 +176,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
       if (builder.tokenType === JavaSyntaxTokenType.LBRACE) {
         val constantInit = builder.mark()
         parseClassBodyWithBraces(builder, false, false)
-        JavaParserUtil.done(constantInit, JavaSyntaxElementType.ENUM_CONSTANT_INITIALIZER, level, myWhiteSpaceAndCommentSetHolder)
+        JavaParserUtil.done(constantInit, JavaSyntaxElementType.ENUM_CONSTANT_INITIALIZER, languageLevel, myWhiteSpaceAndCommentSetHolder)
       }
 
-      JavaParserUtil.done(constant, JavaSyntaxElementType.ENUM_CONSTANT, level, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(constant, JavaSyntaxElementType.ENUM_CONSTANT, languageLevel, myWhiteSpaceAndCommentSetHolder)
       return constant
     }
     else {
@@ -288,7 +289,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
         error.errorBefore(message("unexpected.token"), codeBlock!!)
       }
 
-      JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS_INITIALIZER, level, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(declaration, JavaSyntaxElementType.CLASS_INITIALIZER, languageLevel, myWhiteSpaceAndCommentSetHolder)
       return declaration
     }
 
@@ -394,15 +395,12 @@ open class DeclarationParser(private val myParser: JavaParser) {
           MODIFIER_BIT_SET.contains(nextToken) || CLASS_KEYWORD_BIT_SET.contains(nextToken) || TYPE_START.contains(
           nextToken) || nextToken === JavaSyntaxTokenType.AT || nextToken === JavaSyntaxTokenType.LBRACE || nextToken === JavaSyntaxTokenType.RBRACE
       ) {
-        val level = this.languageLevel
+        val level = languageLevel
         return JavaFeature.RECORDS.isSufficient(level)
       }
     }
     return false
   }
-
-  private val languageLevel: LanguageLevel
-    get() = level
 
   private fun isSealedToken(builder: SyntaxTreeBuilder, tokenType: SyntaxElementType?): Boolean {
     return JavaFeature.SEALED_CLASSES.isSufficient(this.languageLevel) &&
@@ -455,7 +453,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(modList, JavaSyntaxElementType.MODIFIER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
     return modList to isEmpty
   }
 
@@ -508,8 +506,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    JavaParserUtil.done(declaration, if (anno) JavaSyntaxElementType.ANNOTATION_METHOD else JavaSyntaxElementType.METHOD,
-                        level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(marker = declaration,
+                        type = if (anno) JavaSyntaxElementType.ANNOTATION_METHOD else JavaSyntaxElementType.METHOD,
+                        languageLevel = languageLevel,
+                        commentSetHolder = myWhiteSpaceAndCommentSetHolder)
     return declaration
   }
 
@@ -619,7 +619,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     invalidElements?.error(errorMessage!!)
 
-    JavaParserUtil.done(elementList, type.nodeType, level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(elementList, type.nodeType, languageLevel, myWhiteSpaceAndCommentSetHolder)
   }
 
   fun parseParameter(
@@ -707,7 +707,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
         val expr = myParser.expressionParser.parse(builder)
         if (expr != null && JavaParserUtil.exprType(expr) === JavaSyntaxElementType.THIS_EXPRESSION) {
           mark.drop()
-          JavaParserUtil.done(param, JavaSyntaxElementType.RECEIVER_PARAMETER, level, myWhiteSpaceAndCommentSetHolder)
+          JavaParserUtil.done(param, JavaSyntaxElementType.RECEIVER_PARAMETER, languageLevel, myWhiteSpaceAndCommentSetHolder)
           return param
         }
 
@@ -718,7 +718,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     if (builder.expect(JavaSyntaxTokenType.IDENTIFIER)) {
       if (type === JavaSyntaxElementType.PARAMETER || type === JavaSyntaxElementType.RECORD_COMPONENT) {
         eatBrackets(builder, null)
-        JavaParserUtil.done(param, type, level, myWhiteSpaceAndCommentSetHolder)
+        JavaParserUtil.done(param, type, languageLevel, myWhiteSpaceAndCommentSetHolder)
         return param
       }
     }
@@ -734,7 +734,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    JavaParserUtil.done(param, JavaSyntaxElementType.RESOURCE_VARIABLE, level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(param, JavaSyntaxElementType.RESOURCE_VARIABLE, languageLevel, myWhiteSpaceAndCommentSetHolder)
     return param
   }
 
@@ -778,8 +778,10 @@ open class DeclarationParser(private val myParser: JavaParser) {
         }
       }
 
-      if (builder.tokenType !== JavaSyntaxTokenType.COMMA) break
-      JavaParserUtil.done(variable, varType, level, myWhiteSpaceAndCommentSetHolder)
+      if (builder.tokenType !== JavaSyntaxTokenType.COMMA) {
+        break
+      }
+      JavaParserUtil.done(variable, varType, languageLevel, myWhiteSpaceAndCommentSetHolder)
       builder.advanceLexer()
 
       if (builder.tokenType !== JavaSyntaxTokenType.IDENTIFIER) {
@@ -818,7 +820,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     }
 
     if (openMarker) {
-      JavaParserUtil.done(variable, varType, level, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(variable, varType, languageLevel, myWhiteSpaceAndCommentSetHolder)
     }
 
     return declaration
@@ -893,7 +895,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
 
     parseAnnotationParameterList(builder)
 
-    JavaParserUtil.done(anno, JavaSyntaxElementType.ANNOTATION, level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(anno, JavaSyntaxElementType.ANNOTATION, languageLevel, myWhiteSpaceAndCommentSetHolder)
     return anno
   }
 
@@ -903,13 +905,13 @@ open class DeclarationParser(private val myParser: JavaParser) {
     if (!builder.expect(JavaSyntaxTokenType.LPARENTH) ||
         builder.expect(JavaSyntaxTokenType.RPARENTH)
     ) {
-      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, level, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
       return
     }
 
     if (builder.tokenType == null) {
       JavaParserUtil.error(builder, message("expected.parameter.or.rparen"))
-      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, level, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
       return
     }
     var elementMarker = parseAnnotationElement(builder)
@@ -943,7 +945,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
     }
 
-    JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(list, JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST, languageLevel, myWhiteSpaceAndCommentSetHolder)
   }
 
   private fun parseAnnotationElement(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
@@ -955,7 +957,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       return null
     }
     if (builder.tokenType !== JavaSyntaxTokenType.EQ) {
-      JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, level, myWhiteSpaceAndCommentSetHolder)
+      JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, languageLevel, myWhiteSpaceAndCommentSetHolder)
       return pair
     }
 
@@ -967,7 +969,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     valueMarker = parseAnnotationValue(builder)
     if (valueMarker == null) JavaParserUtil.error(builder, message("expected.value"))
 
-    JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, level, myWhiteSpaceAndCommentSetHolder)
+    JavaParserUtil.done(pair, JavaSyntaxElementType.NAME_VALUE_PAIR, languageLevel, myWhiteSpaceAndCommentSetHolder)
     return pair
   }
 
