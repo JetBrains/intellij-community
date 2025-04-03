@@ -16,6 +16,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -340,7 +341,9 @@ class ProjectEntityIndexingService(
     }
 
     private fun <E : WorkspaceEntity> isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity: E): Boolean {
-      return newEntity is LibraryEntity && !Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")
+      return newEntity is LibraryEntity &&
+             (newEntity as LibraryEntity).symbolicId.tableId is LibraryTableId.GlobalLibraryTableId &&
+             !Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")
     }
 
     private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleDependencies(
