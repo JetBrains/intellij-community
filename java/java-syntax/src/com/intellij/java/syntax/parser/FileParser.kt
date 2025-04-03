@@ -42,8 +42,7 @@ open class FileParser(private val myParser: JavaParser) {
         continue
       }
 
-      var declaration = myParser.moduleParser.parse(builder)
-      if (declaration == null) declaration = parseInitial(builder)
+      val declaration = myParser.moduleParser.parse(builder) ?: parseInitial(builder)
       if (declaration != null) {
         if (invalidElements != null) {
           invalidElements.errorBefore(bundle.message(errorMessageKey), declaration)
