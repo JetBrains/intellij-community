@@ -30,6 +30,8 @@
     # other libs
     - id: com.dynatrace.hash4j:hash4j
       version: 0.20.0
+    - id: com.fasterxml.jackson.core:jackson-core
+      version: 2.17.0
     - id: com.github.ben-manes.caffeine:caffeine
       version: 3.2.0
     - id: com.google.flatbuffers:flatbuffers-java

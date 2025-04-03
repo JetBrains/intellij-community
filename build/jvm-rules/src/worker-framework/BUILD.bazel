@@ -27,7 +27,7 @@ kt_jvm_library(
         "@lib//:jetbrains-annotations",
     ],
     runtime_deps = [
-        "@lib//:jackson",
+        "//:jackson-core",
     ],
     visibility = ["//visibility:public"],
 )

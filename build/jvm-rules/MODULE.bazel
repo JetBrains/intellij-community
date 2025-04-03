@@ -217,6 +217,19 @@ http_file(
 )
 
 http_file(
+    name = "jackson-core",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.17.0/jackson-core-2.17.0.jar",
+    sha256 = "55be130f6a68038088a261856c4e383ce79957a0fc1a29ecb213a9efd6ef4389",
+    downloaded_file_path = "jackson-core-2.17.0.jar",
+)
+http_file(
+    name = "jackson-core-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.17.0/jackson-core-2.17.0-sources.jar",
+    sha256 = "97f4f4a85bf4da59174dde187130bddb927ac31320b385ed8ef1439c00df00f2",
+    downloaded_file_path = "jackson-core-2.17.0-sources.jar",
+)
+
+http_file(
     name = "caffeine",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.0/caffeine-3.2.0.jar",
     sha256 = "ec411dfdf0c03f25218648ce89861630b71680e5858a9a7278ebac8e55cab3d7",
