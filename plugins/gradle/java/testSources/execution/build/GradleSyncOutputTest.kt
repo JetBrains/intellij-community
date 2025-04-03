@@ -5,7 +5,7 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -14,7 +14,8 @@ class GradleSyncOutputTest : GradleSyncOutputTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test sync with lazy task configuration`(gradleVersion: GradleVersion): Unit = runBlocking {
-    GradleJvmTestFixture.installProjectSettingsConfigurator(gradleVersion, JavaVersionRestriction.NO, asDisposable())
+    gradleJvmFixture(gradleVersion, JavaVersionRestriction.NO, asDisposable())
+      .installProjectSettingsConfigurator(asDisposable())
 
     createSettingsFile(gradleVersion) {
       setProjectName(project.name)
