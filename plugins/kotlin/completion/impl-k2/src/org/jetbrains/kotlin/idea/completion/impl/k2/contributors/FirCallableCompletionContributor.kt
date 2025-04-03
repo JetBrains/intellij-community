@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiEnumConstant
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.*
+import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -184,15 +182,26 @@ internal open class FirCallableCompletionContributor(
             ?.withNullability(KaTypeNullability.NON_NULLABLE)
             ?.takeIf { it.isEnum() }
 
-        val enumClass = expectedEnumType?.symbol?.psi as? KtClassOrObject
-        return enumClass?.body?.enumEntries?.asSequence()?.map { it.symbol } ?: emptySequence()
+        val enumClass = expectedEnumType?.symbol?.psi
+        return when (enumClass) {
+            is KtClassOrObject -> {
+                enumClass.body?.enumEntries?.asSequence()?.map { it.symbol } ?: emptySequence()
+            }
+
+            is PsiClass -> {
+                enumClass.childrenOfType<PsiEnumConstant>().asSequence().mapNotNull { it.callableSymbol }
+            }
+
+            else -> emptySequence()
+        }
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun Sequence<KaCallableSymbol>.mapMemberCallables(
-        positionContext: KotlinNameReferencePositionContext
-    ) = filter { filter(it) }
+    private fun createAndFilterMetadataForMemberCallables(
+        callables: Sequence<KaCallableSymbol>,
+        positionContext: KotlinNameReferencePositionContext,
+    ): Sequence<CallableWithMetadataForCompletion> = callables.filter { filter(it) }
         .filter { runCatchingNSEE { visibilityChecker.isVisible(it, positionContext) } == true }
         .map { it.asSignature() }
         .map { signature ->
@@ -214,7 +223,7 @@ internal open class FirCallableCompletionContributor(
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         // If the expected type is an enum, we want to yield the enum entries very early on so they will
         // definitely be available before the elements are frozen.
-        yieldAll(completeExpectedEnumEntries(expectedType).mapMemberCallables(positionContext))
+        yieldAll(createAndFilterMetadataForMemberCallables(completeExpectedEnumEntries(expectedType), positionContext))
 
         val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
             parameters = parameters,
@@ -318,7 +327,7 @@ internal open class FirCallableCompletionContributor(
             yieldAll(callables)
         }
 
-        yieldAll(members.mapMemberCallables(positionContext))
+        yieldAll(createAndFilterMetadataForMemberCallables(members, positionContext))
 
         val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
             positionContext = positionContext,
