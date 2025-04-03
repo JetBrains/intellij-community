@@ -35,7 +35,7 @@ class PythonDebuggerSuspendThreadsTest : PyEnvTestCase() {
       }
 
       override fun isLanguageLevelSupported(level: LanguageLevel): Boolean {
-        return level.compareTo(LanguageLevel.PYTHON27) != 0
+        return level > LanguageLevel.PYTHON38
       }
     })
   }
@@ -67,7 +67,7 @@ class PythonDebuggerSuspendThreadsTest : PyEnvTestCase() {
       }
 
       override fun isLanguageLevelSupported(level: LanguageLevel): Boolean {
-        return level > LanguageLevel.PYTHON27
+        return level > LanguageLevel.PYTHON38
       }
     })
   }
@@ -92,7 +92,7 @@ class PythonDebuggerSuspendThreadsTest : PyEnvTestCase() {
       }
 
       override fun isLanguageLevelSupported(level: LanguageLevel): Boolean {
-        return level.compareTo(LanguageLevel.PYTHON27) != 0
+        return level > LanguageLevel.PYTHON38
       }
     })
   }

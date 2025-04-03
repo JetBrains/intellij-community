@@ -132,9 +132,7 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
                 if breakpoint.func_name in ('None', curr_func_name):
                     has_breakpoint_in_frame = True
                     # New breakpoint was processed -> stop tracing monitoring.events.INSTRUCTION
-                    if getattr(breakpoint, '_not_processed', None):
-                        breakpoint._not_processed = False
-                        _modify_global_events(_EVENT_ACTIONS["REMOVE"], monitoring.events.INSTRUCTION)
+                    remove_breakpoint(breakpoint)
                     break
 
                 # Check is f_back has a breakpoint => need register return event
@@ -214,7 +212,7 @@ def enable_pep669_monitoring():
             (monitoring.events.LINE, py_line_callback),
             (monitoring.events.PY_RETURN, py_return_callback),
             (monitoring.events.RAISE, py_raise_callback),
-            (monitoring.events.INSTRUCTION, instruction_callback),
+            (monitoring.events.CALL, call_callback),
         ):
             monitoring.register_callback(DEBUGGER_ID, event_type, callback)
 
@@ -223,9 +221,16 @@ def enable_pep669_monitoring():
         debugger.is_pep669_monitoring_enabled = True
 
 
-def process_new_breakpoint(breakpoint):
+def add_new_breakpoint(breakpoint):
     breakpoint._not_processed = True
-    _modify_global_events(_EVENT_ACTIONS["ADD"], monitoring.events.INSTRUCTION)
+    monitoring.restart_events()
+    _modify_global_events(_EVENT_ACTIONS["ADD"], monitoring.events.CALL)
+
+
+def remove_breakpoint(breakpoint):
+    if getattr(breakpoint, '_not_processed', None):
+        breakpoint._not_processed = False
+        _modify_global_events(_EVENT_ACTIONS["REMOVE"], monitoring.events.CALL)
 
 
 def _modify_global_events(action, event):
@@ -249,7 +254,7 @@ def _enable_line_tracing(code):
                                 local_events | monitoring.events.LINE)
 
 
-def instruction_callback(code, instruction_offset):
+def call_callback(code, instruction_offset, callable, arg0):
     try:
         py_db = GlobalDebuggerHolder.global_dbg
     except AttributeError:
@@ -258,7 +263,7 @@ def instruction_callback(code, instruction_offset):
         return monitoring.DISABLE
 
     frame = _getframe(1)
-    # print('ENTER: INSTRUCTION ', code.co_filename, frame.f_lineno, code.co_name)
+    # print('ENTER: CALL ', code.co_filename, frame.f_lineno, code.co_name)
 
     try:
         if py_db._finish_debugging_session:
@@ -276,7 +281,7 @@ def instruction_callback(code, instruction_offset):
         is_stepping = pydev_step_cmd != -1
 
         if not is_stepping and frame_cache_key in global_cache_skips:
-            return
+            return monitoring.DISABLE
 
         abs_path_real_path_and_base = _get_abs_path_real_path_and_base_from_frame(frame)
         filename = abs_path_real_path_and_base[1]
@@ -284,7 +289,7 @@ def instruction_callback(code, instruction_offset):
         breakpoints_for_file = (py_db.breakpoints.get(filename)
                                 or py_db.has_plugin_line_breaks)
         if not breakpoints_for_file and not is_stepping:
-            return
+            return monitoring.DISABLE
 
         if _should_enable_line_events_for_code(frame, code, filename, info):
             _enable_line_tracing(code)
