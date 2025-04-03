@@ -14,14 +14,22 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.Base64
 import java.util.concurrent.Executor
 import kotlin.jvm.optionals.getOrDefault
 
 
-class MavenHttpProxyServerFixture(val portMap: Map<String, Int>, val port: Int, val executor: Executor) : IdeaTestFixture {
+class MavenHttpProxyServerFixture(
+  val portMap: Map<String, Int>,
+  val port: Int,
+  val executor: Executor,
+) : IdeaTestFixture {
   private lateinit var myClient: HttpClient
   private lateinit var serverSocket: ServerSocket
   private var running = false
+
+  private var proxyUsername: String? = null
+  private var proxyPassword: String? = null
 
   override fun setUp() {
     serverSocket = ServerSocket(port);
@@ -60,6 +68,9 @@ class MavenHttpProxyServerFixture(val portMap: Map<String, Int>, val port: Int, 
       while (!socket.isClosed) {
         val reader = BufferedReader(InputStreamReader(iStream))
         val requestString = reader.readLine()
+        if (requestString == null) {
+          break
+        }
         val index = requestString.indexOf(' ')
         if (index < 0) throw IllegalStateException("Bad Request: $requestString")
         val type: String? = requestString.substring(0, index)
@@ -81,25 +92,9 @@ class MavenHttpProxyServerFixture(val portMap: Map<String, Int>, val port: Int, 
 
   }
 
-  private fun printMethodNotSupportedInfo(requestString: String, type: String?, os: OutputStream) {
-    os.writelnString("HTTP/1.1 405 Method Not Allowed")
-    os.writelnString("Content-Type: text/html")
-    os.writelnString()
-    os.writelnString("""
-      <html>
-        <head>
-          <title>405 Method $type is not supported by ${this.javaClass.simpleName}></title>
-        </head>
-        <body>
-          <h1>405 Not supported</h1>
-          <p>Bad HTTP request line: $requestString</p>
-        </body>
-      </html>""")
-  }
-
   private fun connectAndLoadData(requestString: String, reader: BufferedReader, os: OutputStream) {
     val request = requestString.split(' ')
-    directLoad(request[1], reader, os)
+    performGet(request[1], reader, os)
   }
 
 
@@ -113,22 +108,33 @@ class MavenHttpProxyServerFixture(val portMap: Map<String, Int>, val port: Int, 
     return result
   }
 
-  private fun directLoad(urlString: String, reader: BufferedReader, os: OutputStream) {
+  private fun performGet(urlString: String, reader: BufferedReader, os: OutputStream) {
     val tempUri = URI.create(if (urlString.startsWith("http", true)) urlString else "http://$urlString")
     val port = portMap[tempUri.host]
     if (port == null) throw IllegalArgumentException("Host ${tempUri.host} is not permitted")
     val clientUri = URI(tempUri.scheme, "$LOCALHOST:$port", tempUri.path, tempUri.query, tempUri.fragment)
     try {
-      emptyReader(reader)
-      val serverResponse = makeHttpCall(clientUri)
-      writeClientResponse(os, serverResponse)
-
+      val headers = emptyReader(reader)
+      if (isAuthInfoCorrect(headers)) {
+        val serverResponse = makeHttpCall(clientUri)
+        writeClientResponse(os, serverResponse)
+      }
+      else {
+        printProxyAuthRequired(os)
+      }
       os.flush()
     }
     catch (e: Exception) {
       e.printStackTrace()
     }
 
+  }
+
+  private fun isAuthInfoCorrect(headers: List<String>): Boolean {
+    if (proxyUsername == null) return true
+    val encodedStr = Base64.getEncoder().encodeToString("$proxyUsername:$proxyPassword".toByteArray())
+    val expectedString = "Proxy-Authorization: Basic $encodedStr"
+    return headers.contains(expectedString)
   }
 
   private fun writeClientResponse(os: OutputStream, serverResponse: HttpResponse<ByteArray>) {
@@ -172,6 +178,44 @@ class MavenHttpProxyServerFixture(val portMap: Map<String, Int>, val port: Int, 
   override fun tearDown() {
     running = false
     serverSocket.close()
+  }
+
+  private fun printMethodNotSupportedInfo(requestString: String, type: String?, os: OutputStream) {
+    os.writelnString("HTTP/1.1 405 Method Not Allowed")
+    os.writelnString("Content-Type: text/html")
+    os.writelnString()
+    os.writelnString("""
+      <html>
+        <head>
+          <title>405 Method $type is not supported by ${this.javaClass.simpleName}</title>
+        </head>
+        <body>
+          <h1>405 Not supported</h1>
+          <p>Bad HTTP request line: $requestString</p>
+        </body>
+      </html>""")
+  }
+
+  private fun printProxyAuthRequired(os: OutputStream) {
+    os.writelnString("HTTP/1.1 407 Proxy Authentication Required")
+    os.writelnString("Content-Type: text/html")
+    os.writelnString("Proxy-Authenticate: Basic realm=\"MavenHttpProxyServerFixture\"")
+    os.writelnString()
+    os.writelnString("""
+      <html>
+        <head>
+          <title>407 Proxy Authentication Required</title>
+        </head>
+        <body>
+          <h1>407 Proxy Authentication Required</h1>
+          <p>use $proxyUsername:$proxyPassword as credentials</p>
+        </body>
+      </html>""")
+  }
+
+  fun requireAuthentication(username: String, password: String) {
+    proxyUsername = username
+    proxyPassword = password
   }
 
   companion object {

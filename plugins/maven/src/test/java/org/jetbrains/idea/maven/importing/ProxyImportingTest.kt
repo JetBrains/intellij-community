@@ -12,6 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.junit.Test
 import java.net.URI
+import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
 class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
@@ -33,34 +34,42 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
     myRepositoryFixture.startRepositoryFor(remoteRepoPath.toString())
     val localRepoPath = myHelper.getTestData("local1")
     repositoryPath = localRepoPath
+  }
 
-    runBlocking {
-      val settingsXml = createProjectSubFile(
-        "settings.xml",
-        """
-          <settings>
-            <localRepository>$localRepoPath</localRepository>
-            <mirrors>
-              <mirror>
-                <id>central-mirror</id>
-                <name>my-mirror</name>
-                <url>http://mavendummycentral.jetbrains.com/</url>
-                <mirrorOf>central</mirrorOf>
-              </mirror>
-            </mirrors>
-            <proxies>
-              <proxy>
-                <id>my</id>
-                <active>true</active>
-                <protocol>http</protocol>
-                <host>127.0.0.1</host>
-                <port>${myProxyFixture.port}</port>
-              </proxy>
-            </proxies>
-          </settings>
-          """.trimIndent())
-      mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+  private fun setupSettingsXml(localRepoPath: Path, withProxyAuth: Boolean) {
+    val proxyAuthInfo = if (withProxyAuth) {
+      """
+        <username>$proxyUsername</username>
+        <password>$proxyPassword</password>
+      """
     }
+    else ""
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+            <settings>
+              <localRepository>$localRepoPath</localRepository>
+              <mirrors>
+                <mirror>
+                  <id>central-mirror</id>
+                  <name>my-mirror</name>
+                  <url>http://mavendummycentral.jetbrains.com/</url>
+                  <mirrorOf>central</mirrorOf>
+                </mirror>
+              </mirrors>
+              <proxies>
+                <proxy>
+                  <id>my</id>
+                  <active>true</active>
+                  <protocol>http</protocol>
+                  <host>127.0.0.1</host>
+                  $proxyAuthInfo
+                  <port>${myProxyFixture.port}</port>
+                </proxy>
+              </proxies>
+            </settings>
+            """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
   }
 
   override fun tearDown() {
@@ -76,6 +85,7 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDownloadDependencyUsingProxy() = runBlocking {
+    setupSettingsXml(repositoryPath.toAbsolutePath(), false)
     removeFromLocalRepository("org/mytest/myartifact/")
     importProjectAsync("""
                        <groupId>test</groupId>
@@ -90,6 +100,33 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent()
     )
+    assertTrue("File should be downloaded", repositoryPath.resolve("org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+  }
+
+
+  @Test
+  fun testDownloadDependencyUsingProxyWithAuthorization() = runBlocking {
+    removeFromLocalRepository("org/mytest/myartifact/")
+    setupSettingsXml(repositoryPath.toAbsolutePath(), true)
+    myProxyFixture.requireAuthentication(proxyUsername, proxyPassword)
+    importProjectAsync("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>org.mytest</groupId>
+                           <artifactId>myartifact</artifactId>
+                           <version>1.0</version>
+                         </dependency>
+                       </dependencies>
+                       """.trimIndent()
+    )
     assertTrue("File should be downloaded", myHelper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
+  }
+
+  companion object {
+    const val proxyUsername = "IntellijIdea"
+    const val proxyPassword = "Rulezzz!!!111"
   }
 }
