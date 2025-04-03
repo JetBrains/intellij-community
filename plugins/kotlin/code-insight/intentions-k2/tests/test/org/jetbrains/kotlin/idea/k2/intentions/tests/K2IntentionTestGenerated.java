@@ -12670,7 +12670,59 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign")
+    public static class ReplaceAddWithPlusAssign extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("add.kt")
+        public void testAdd() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/add.kt");
+        }
+
+        @TestMetadata("addAll.kt")
+        public void testAddAll() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addAll.kt");
+        }
+
+        @TestMetadata("addAllAtIndex.kt")
+        public void testAddAllAtIndex() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addAllAtIndex.kt");
+        }
+
+        @TestMetadata("addAllToVar.kt")
+        public void testAddAllToVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addAllToVar.kt");
+        }
+
+        @TestMetadata("addAtIndex.kt")
+        public void testAddAtIndex() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addAtIndex.kt");
+        }
+
+        @TestMetadata("addGeneric.kt")
+        public void testAddGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addGeneric.kt");
+        }
+
+        @TestMetadata("addToVar.kt")
+        public void testAddToVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/addToVar.kt");
+        }
+
+        @TestMetadata("nonCollection.kt")
+        public void testNonCollection() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceAddWithPlusAssign/nonCollection.kt");
+        }
+    }
 
 
 
