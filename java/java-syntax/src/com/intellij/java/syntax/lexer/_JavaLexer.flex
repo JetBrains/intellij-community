@@ -10,8 +10,8 @@ import com.intellij.pom.java.LanguageLevel
 %%
 
 %{
-  private var myAssertKeyword: Boolean = false // todo must be val
-  private var myEnumKeyword: Boolean = false   // todo must be val
+  private val myAssertKeyword: Boolean
+  private val myEnumKeyword: Boolean
 
   constructor(level: LanguageLevel) {
     myAssertKeyword = level.isAtLeast(LanguageLevel.JDK_1_4)
