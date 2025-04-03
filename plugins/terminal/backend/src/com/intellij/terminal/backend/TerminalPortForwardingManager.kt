@@ -8,7 +8,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortFor
 
 @ApiStatus.Internal
 interface TerminalPortForwardingManager {
-  fun setupPortForwarding(shellPid: Long, disposable: Disposable): TerminalPortForwardingId?
+  fun setupPortForwarding(ttyConnector: ObservableTtyConnector, disposable: Disposable): TerminalPortForwardingId?
 
   companion object {
     fun getInstance(project: Project): TerminalPortForwardingManager = project.service()
@@ -19,7 +19,7 @@ interface TerminalPortForwardingManager {
  * Default implementation of the [TerminalPortForwardingManager]: no port forwarding is provided.
  */
 internal class TerminalNoPortForwardingManager : TerminalPortForwardingManager {
-  override fun setupPortForwarding(shellPid: Long, disposable: Disposable): TerminalPortForwardingId? {
+  override fun setupPortForwarding(ttyConnector: ObservableTtyConnector, disposable: Disposable): TerminalPortForwardingId? {
     return null
   }
 }
