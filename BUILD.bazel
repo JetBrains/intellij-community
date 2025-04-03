@@ -234,8 +234,6 @@ java_library(
     "//plugins/search-everywhere-ml/ranking/yaml:searchEverywhereMl-ranking-yaml",
     "//plugins/search-everywhere-ml/typos:searchEverywhereMl-typos",
     "//plugins/grazie",
-    "//plugins/compilation-charts:compilation-charts",
-    "//plugins/compilation-charts/jps-plugin:compilation-charts-jps",
     "//plugins/compose:compose-ide-plugin",
     "//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1",
     "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2",

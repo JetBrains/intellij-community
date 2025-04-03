@@ -14,10 +14,10 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
   deps = [
-    "@community//jps/jps-builders:build",
-    "@community//platform/util",
+    "//jps/jps-builders:build",
+    "//platform/util",
     "@lib//:gson",
-    "@community//jps/model-api:model",
+    "//jps/model-api:model",
   ],
   runtime_deps = [":compilation-charts-jps_resources"]
 )

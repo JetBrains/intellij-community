@@ -50,7 +50,6 @@ java_library(
     ":pycharm-community-customization_resources",
     "//python/ide/impl:pycharm-community-ide-impl",
     "@lib//:tips-pycharm-community",
-    "//jupyter/viewOnly",
     "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
     "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
     "//python/ide/customization.shared:pycharm-community-customization-shared",
