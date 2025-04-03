@@ -440,12 +440,12 @@ def warn_bytes_args():
 
 def create_warn_multiproc(original_name):
 
-    def new_warn_multiproc(*args):
+    def new_warn_multiproc(*args, **kwargs):
         import os
 
         warn_multiproc()
 
-        result = getattr(os, original_name)(*args)
+        result = getattr(os, original_name)(*args, **kwargs)
 
         if original_name == _ORIGINAL_PREFIX + 'fork':
             pid = result
