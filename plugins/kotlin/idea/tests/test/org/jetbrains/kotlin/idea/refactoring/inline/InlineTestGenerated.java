@@ -2635,6 +2635,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/singleArgumentVarargs.kt");
             }
 
+            @TestMetadata("smartCastInThis.kt")
+            public void testSmartCastInThis() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/smartCastInThis.kt");
+            }
+
             @TestMetadata("thisAsArgument.kt")
             public void testThisAsArgument() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/thisAsArgument.kt");
