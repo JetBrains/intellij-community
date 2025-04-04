@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.application.impl
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -525,7 +526,7 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       launch { writeAction { } }
     }
   }
-
+  @IJIgnore(issue = "IDEA-370400")
   @Test
   fun `RA does not lead to leaking read access`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     val waJob = Job()
