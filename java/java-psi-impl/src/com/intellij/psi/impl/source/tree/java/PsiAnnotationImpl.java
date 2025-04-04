@@ -61,7 +61,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
   @Override
   public @NotNull PsiAnnotationParameterList getParameterList() {
-    return getNotNullStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST, PsiAnnotationParameterList.class);
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST, PsiAnnotationParameterList.class);
   }
 
   @Override

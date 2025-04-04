@@ -191,7 +191,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    return getNotNullStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override

@@ -206,7 +206,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public @NotNull PsiReferenceList getExtendsList() {
-    return getNotNullStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST, PsiReferenceList.class);
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST, PsiReferenceList.class);
   }
 
   @Override
