@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.action
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -7,6 +8,7 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.application
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
@@ -24,6 +26,8 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
       TerminalOptionsProvider.instance.terminalEngine = engine
+      // Call save manually, because otherwise this change will be synced to backend only at some time later.
+      saveSettingsForRemoteDevelopment(application)
 
       TerminalToolWindowManager.getInstance(e.project!!).createNewSession()
     }
