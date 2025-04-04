@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -24,18 +22,17 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.GradleJavaCoroutineScopeService.Companion.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadLegacyDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader.CoroutineScopeService.Companion.coroutineScope
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -60,10 +57,9 @@ object GradleArtifactDownloader {
     artifactNotation: String,
     externalProjectPath: String,
   ): CompletableFuture<Path> {
-    return project.coroutineScope
-      .async {
-        downloadArtifactImpl(project, executionName, artifactNotation, externalProjectPath)
-      }.asCompletableFuture()
+    return project.gradleCoroutineScope.async {
+      downloadArtifactImpl(project, executionName, artifactNotation, externalProjectPath)
+    }.asCompletableFuture()
   }
 
   private suspend fun downloadArtifactImpl(
@@ -172,14 +168,6 @@ object GradleArtifactDownloader {
   private fun String.asResolvedAbsolutePath(eel: EelApi): Path {
     val eelPath = eel.fs.getPath(this)
     return eelPath.asNioPath()
-  }
-
-  @Service(Service.Level.PROJECT)
-  private class CoroutineScopeService(private val coroutineScope: CoroutineScope) {
-    companion object {
-      val Project.coroutineScope: CoroutineScope
-        get() = service<CoroutineScopeService>().coroutineScope
-    }
   }
 
   private fun TaskExecutionSpecBuilder.withResultListener(future: CompletableFuture<Nothing?>) = withListener(
