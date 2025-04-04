@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.logsUploader;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,9 +34,7 @@ public final class LogUploader {
   }
 
   public static @NotNull String uploadFile(@NotNull Path file, @NotNull String fileName) throws IOException {
-    var mapper = new ObjectMapper();
-
-    var requestObj = mapper.writeValueAsString(Map.of(
+    var requestObj = JSON.std.asString(Map.of(
       "filename", fileName,
       "method", "put",
       "contentType", BYTES_CONTENT_TYPE
@@ -44,7 +43,8 @@ public final class LogUploader {
       .accept(JSON_CONTENT_TYPE)
       .connect(request -> {
         request.write(requestObj);
-        return mapper.readValue(request.getReader(), Map.class);
+        var response = StreamUtil.readText(request.getReader());
+        return JSON.std.mapFrom(response);
       });
 
     var uploadUrl = responseObj.get("url").toString();
