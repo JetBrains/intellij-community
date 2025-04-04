@@ -8,7 +8,9 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 
 internal class ChangedFilesVfsListener(private val project: Project) : IdeDocumentHistoryImpl.RecentPlacesListener {
-  override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
+  override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {}
+
+  override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean, groupId: Any?) {
     updateRecentFilesModel(isChanged, FileChangeKind.ADDED, changePlace)
   }
 
@@ -18,8 +20,11 @@ internal class ChangedFilesVfsListener(private val project: Project) : IdeDocume
 
   private fun updateRecentFilesModel(isChanged: Boolean, changeKind: FileChangeKind, changePlace: IdeDocumentHistoryImpl.PlaceInfo) {
     if (!isChanged || ApplicationManager.getApplication().isUnitTestMode) return
-
     val changedFile = changePlace.file.takeIf { it.isValid && it.isFile } ?: return
-    BackendRecentFilesModel.getInstance(project).applyBackendChanges(RecentFileKind.RECENTLY_EDITED, changeKind, listOf(changedFile))
+    val recentFilesModel = BackendRecentFilesModel.getInstance(project)
+
+    recentFilesModel.applyBackendChanges(RecentFileKind.RECENTLY_EDITED, changeKind, listOf(changedFile))
+    recentFilesModel.applyBackendChanges(RecentFileKind.RECENTLY_OPENED, changeKind, listOf(changedFile))
+    recentFilesModel.applyBackendChanges(RecentFileKind.RECENTLY_OPENED_UNPINNED, changeKind, listOf(changedFile))
   }
 }
