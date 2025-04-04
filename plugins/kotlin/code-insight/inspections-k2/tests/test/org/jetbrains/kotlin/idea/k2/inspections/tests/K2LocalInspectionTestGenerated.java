@@ -13900,6 +13900,55 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast")
+    public static class ReplaceRangeStartEndInclusiveWithFirstLast extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("customRange.kt")
+        public void testCustomRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast/customRange.kt");
+        }
+
+        @TestMetadata("endInclusiveCharRange.kt")
+        public void testEndInclusiveCharRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast/endInclusiveCharRange.kt");
+        }
+
+        @TestMetadata("endInclusiveIntRange.kt")
+        public void testEndInclusiveIntRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast/endInclusiveIntRange.kt");
+        }
+
+        @TestMetadata("endInclusiveLongRange.kt")
+        public void testEndInclusiveLongRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast/endInclusiveLongRange.kt");
+        }
+
+        @TestMetadata("startCharRange.kt")
+        public void testStartCharRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast/startCharRange.kt");
+        }
+
+        @TestMetadata("startIntRange.kt")
+        public void testStartIntRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast/startIntRange.kt");
+        }
+
+        @TestMetadata("startLongRange.kt")
+        public void testStartLongRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast/startLongRange.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
