@@ -154,7 +154,11 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
       public void setRejected() {
         try {
           super.setRejected();
-          if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+          // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+          //
+          // Also, this update may be canceled because the new update has arrived
+          // in this case we get no data, hence there are no highlighters to apply
+          if (!myProject.isDisposed() && !myAnnotationData.isEmpty()) {
             doFinish();
           }
         }
