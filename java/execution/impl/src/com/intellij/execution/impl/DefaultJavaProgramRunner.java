@@ -31,14 +31,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.threadDumpParser.ThreadDumpParser;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,8 +46,6 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
-import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -57,11 +53,6 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -315,36 +306,15 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
           runTab instanceof RunContentBuilder ? ((RunContentBuilder)runTab).getSearchScope() : GlobalSearchScope.allScope(project);
         if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
           myExecutor.execute(() -> {
-            VirtualMachine vm = null;
-            try {
-              vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
-              InputStream inputStream = (InputStream)vm.getClass()
-                .getMethod("remoteDataDump", Object[].class)
-                .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
-              String text;
-              try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-                text = StreamUtil.readText(reader);
-              }
-              List<ThreadState> threads = ThreadDumpParser.parse(text);
+            String dump = ThreadDumpProvider.dump(pid);
+            if (dump != null) {
+              List<ThreadState> threads = ThreadDumpParser.parse(dump);
               ApplicationManager.getApplication().invokeLater(
                 () -> DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), scope),
                 ModalityState.nonModal());
             }
-            catch (AttachNotSupportedException e) {
-              LOG.debug(e);
+            else {
               dumpWithBreak(proxy, project, processHandler);
-            }
-            catch (Exception e) {
-              LOG.warn(e);
-              dumpWithBreak(proxy, project, processHandler);
-            }
-            finally {
-              if (vm != null) {
-                try {
-                  vm.detach();
-                }
-                catch (IOException ignored) { }
-              }
             }
           });
           return;

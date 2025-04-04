@@ -294,6 +294,9 @@
 
     <extensionPoint qualifiedName="com.intellij.gotoByName.defaultProvider.ignoreLanguage" dynamic="true"
                     beanClass="com.intellij.ide.util.gotoByName.IgnoreLanguageInDefaultProvider"/>
+
+    <extensionPoint qualifiedName="com.intellij.threadDumpProvider"
+                    interface="com.intellij.execution.impl.ThreadDumpProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -2781,6 +2784,8 @@
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
+
+    <threadDumpProvider implementation="com.intellij.execution.impl.AttachAPIThreadDumpProvider" order="last"/>
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
