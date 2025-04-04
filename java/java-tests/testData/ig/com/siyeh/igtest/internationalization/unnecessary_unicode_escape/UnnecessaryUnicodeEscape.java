@@ -29,7 +29,15 @@ class UnnecessaryUnicodeEscape {
    * \uuuu005Cuuuu004C
    * some description\u005Cu004Csome description
    */
-  void foo() {}
+
+  /// <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning>
+  /// <warning descr="Unicode escape sequence '\uuuu005C' can be replaced with '\'">\uuuu005C</warning>
+  /// <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning> u004C
+  /// <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning> <warning descr="Unicode escape sequence '\u004C' can be replaced with 'L'">\u004C</warning>
+  /// \u005Cu004C
+  /// \uuuu005Cuuuu004C
+  /// some description\u005Cu004Csome description
+
 }
 @SuppressWarnings("UnnecessaryUnicodeEscape")
 class Suppress {
