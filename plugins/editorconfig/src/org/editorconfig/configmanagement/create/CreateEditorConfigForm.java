@@ -133,7 +133,7 @@ public class CreateEditorConfigForm {
     myAboutEditorConfigLink =
       new BrowserLink(
         EditorConfigBundle.message("export.editor.config.about"),
-        "http://www.editorconfig.org");
+        "http://editorconfig.org");
     myAboutEditorConfigLink.setIconTextGap(0);
     myAboutEditorConfigLink.setHorizontalTextPosition(SwingConstants.LEFT);
     myContextHelpLabel = ContextHelpLabel.create("", EditorConfigBundle.message("export.editor.config.root.help"));
