@@ -8,7 +8,7 @@ import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.EnumSet
+import java.util.*
 import java.util.zip.DataFormatException
 import java.util.zip.Inflater
 import java.util.zip.ZipException
@@ -184,19 +184,21 @@ private fun getByteBuffer(
         inflater.end()
       }
     }
-    else -> throw ZipException("Found unsupported compression method $method")
+    else -> throw ZipException("Unsupported compression method $method")
   }
 }
 
-private fun computeDataOffsetIfNeededAndReadInputBuffer(mappedBuffer: ByteBuffer,
-                                                        headerOffset: Int,
-                                                        nameLengthInBytes: Int,
-                                                        compressedSize: Int): ByteBuffer {
+private fun computeDataOffsetIfNeededAndReadInputBuffer(
+  mappedBuffer: ByteBuffer,
+  headerOffset: Int,
+  nameLengthInBytes: Int,
+  compressedSize: Int,
+): ByteBuffer {
   val dataOffset = computeDataOffset(mappedBuffer = mappedBuffer, headerOffset = headerOffset, nameLengthInBytes = nameLengthInBytes)
-  val inputBuffer = mappedBuffer.asReadOnlyBuffer()
-  inputBuffer.position(dataOffset)
-  inputBuffer.limit(dataOffset + compressedSize)
-  return inputBuffer
+  return mappedBuffer
+    .asReadOnlyBuffer()
+    .position(dataOffset)
+    .limit(dataOffset + compressedSize)
 }
 
 private fun computeDataOffset(mappedBuffer: ByteBuffer, headerOffset: Int, nameLengthInBytes: Int): Int {

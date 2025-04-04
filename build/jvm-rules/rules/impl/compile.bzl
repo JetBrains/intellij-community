@@ -1,5 +1,3 @@
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
-
 # Copyright 2018 The Bazel Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +11,8 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load(
     "@rules_kotlin//kotlin/internal:defs.bzl",
@@ -191,33 +191,6 @@ def _new_plugin_from(plugin_id_to_configuration, plugins_for_phase):
         options = options,
     )
 
-def _fold_jars_action(ctx, rule_kind, toolchains, output_jar, input_jars, action_type = ""):
-    """Set up an action to Fold the input jars into a normalized output jar."""
-    args = ctx.actions.args()
-    args.add_all([
-        "--normalize",
-        "--exclude_build_data",
-        "--add_missing_directories",
-    ])
-    args.add_all([
-        "--deploy_manifest_lines",
-        "Target-Label: %s" % str(ctx.label),
-        "Injecting-Rule-Kind: %s" % rule_kind,
-    ])
-    args.add("--output", output_jar)
-    args.add_all(input_jars, before_each = "--sources")
-    ctx.actions.run(
-        mnemonic = "KotlinFoldJars" + action_type,
-        inputs = input_jars,
-        outputs = [output_jar],
-        executable = toolchains.java.single_jar,
-        arguments = [args],
-        progress_message = "Merging Kotlin output jar %%{label}%s from %d inputs" % (
-            "" if not action_type else " (%s)" % action_type,
-            len(input_jars),
-        ),
-    )
-
 def kt_jvm_produce_jar_actions(ctx, rule_kind):
     """This macro sets up a compile action for a Kotlin jar.
 
@@ -250,16 +223,16 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
     _collect_runtime_jars(ctx.attr.deps, transitiveInputs)
 
     outputs_struct = _run_jvm_builder(
-          ctx = ctx,
-          output_jar = output_jar,
-          rule_kind = rule_kind,
-          toolchains = toolchains,
-          srcs = srcs,
-          associates = associates,
-          compile_deps = compile_deps,
-          transitiveInputs = transitiveInputs,
-          plugins = plugins,
-      )
+        ctx = ctx,
+        output_jar = output_jar,
+        rule_kind = rule_kind,
+        toolchains = toolchains,
+        srcs = srcs,
+        associates = associates,
+        compile_deps = compile_deps,
+        transitiveInputs = transitiveInputs,
+        plugins = plugins,
+    )
 
     compile_jar = outputs_struct.compile_jar
     generated_src_jars = outputs_struct.generated_src_jars
@@ -309,44 +282,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
         ),
     )
 
-def _compile_java_sources(ctx, output, srcs, generated_ksp_src_jars, compile_deps, kt_stubs_for_java, toolchains, strict_deps):
-    """Compiles Java sources if present, otherwise uses KT ABI jar."""
-
-    kotlincOpts = ctx.attr.kotlinc_opts[KotlincOptions]
-
-    javac_options = []
-    if kotlincOpts.warn == "off":
-        javac_options.append("-XepDisableAllChecks")
-        javac_options.append("-Xlint:none")
-        javac_options.append("-nowarn")
-
-    javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
-    if javac_opts and javac_opts.add_exports:
-        javac_options.extend(["--add-exports " + it for it in javac_opts.add_exports])
-
-        # exporting a package from system module is not allowed with --release
-        if kotlincOpts.jvm_target != 0:
-            javac_options.append("-target " + str(kotlincOpts.jvm_target))
-            javac_options.append("-source " + str(kotlincOpts.jvm_target))
-    elif kotlincOpts.jvm_target != 0:
-        javac_options.append("--release " + str(kotlincOpts.jvm_target))
-
-    if srcs.kt:
-        # assemblage consideration for Kotlin annotation processing
-        javac_options.append("-proc:none")
-
-    return java_common.compile(
-        ctx,
-        source_files = srcs.java,
-        source_jars = srcs.src_jars + generated_ksp_src_jars,
-        output = output,
-        deps = compile_deps.deps + ([] if kt_stubs_for_java == None else [kt_stubs_for_java]),
-        java_toolchain = toolchains.java,
-        javac_opts = javac_options,
-        neverlink = getattr(ctx.attr, "neverlink", False),
-        strict_deps = strict_deps,
-    )
-
 def _run_jvm_builder(
         ctx,
         output_jar,
@@ -374,10 +309,9 @@ def _run_jvm_builder(
 
     outputs = [output_jar]
     abi_jar = output_jar
-    if not "kt_abi_plugin_incompatible" in ctx.attr.tags:
-        abi_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
-        outputs.append(abi_jar)
-        args.add("--abi-out", abi_jar)
+    abi_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
+    outputs.append(abi_jar)
+    args.add("--abi-out", abi_jar)
 
     javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
     if javac_opts and javac_opts.add_exports:
@@ -391,6 +325,9 @@ def _run_jvm_builder(
     args.add("--java-count", javaCount)
     ctx.actions.run(
         mnemonic = "JpsCompile",
+        env = {
+            "MALLOC_ARENA_MAX": "2",
+        },
         inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
         use_default_shell_env = True,
         outputs = outputs,

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.AdaptiveByteBufAllocator
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -12,41 +11,44 @@ import java.nio.ByteOrder
 val byteBufferAllocator: ByteBufAllocator = run {
   System.setProperty("io.netty.tryReflectionSetAccessible", "true")
 
-  if (System.getProperty("io.netty.allocator.useCachedMagazinesForNonEventLoopThreads") == "true" &&
-      System.getProperty("io.netty.allocator.type", "adaptive") == "adaptive") {
+  if (System.getProperty("io.netty.allocator.type", "adaptive") == "adaptive") {
     val allocator = ByteBufAllocator.DEFAULT
     if (allocator is AdaptiveByteBufAllocator) {
       return@run allocator
     }
   }
-  AdaptiveByteBufAllocator(true, true)
+  AdaptiveByteBufAllocator(/* preferDirect = */ true, /* useCacheForNonEventLoopThreads = */ false)
 }
 
 // not thread-safe, intended only for single thread for one time use
 internal class ByteBufferAllocator() : AutoCloseable {
-  private var byteBuf: ByteBuf? = null
+  private var byteBuffer: ByteBuffer? = null
 
   @Synchronized
   fun allocate(size: Int): ByteBuffer {
-    var result = byteBuf
+    var result = byteBuffer
     if (result != null && result.capacity() < size) {
-      result.release()
+      // clear references to object to make sure that it can be collected by GC
+      byteBuffer = null
+      unmapBuffer(result)
       result = null
     }
 
     if (result == null) {
-      result = byteBufferAllocator.directBuffer(roundUpInt(size, 65_536))
-      byteBuf = result
+      result = ByteBuffer.allocateDirect(roundUpInt(size, 65_536))!!
+      byteBuffer = result
     }
-    return result.nioBuffer(0, size).order(ByteOrder.LITTLE_ENDIAN)
+
+    return result
+      // not `clear` as we in any case set limit to size
+      .rewind()
+      .order(ByteOrder.LITTLE_ENDIAN)
+      .limit(size)
   }
 
   @Synchronized
   override fun close() {
-    byteBuf?.let {
-      byteBuf = null
-      it.release()
-    }
+    byteBuffer?.let { unmapBuffer(it) }
   }
 }
 
