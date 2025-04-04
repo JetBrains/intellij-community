@@ -1,7 +1,7 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
@@ -23,6 +23,8 @@ internal class TerminalInput(
 ) {
   companion object {
     val KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
+
+    private val LOG = logger<TerminalInput>()
   }
 
   /**
@@ -36,7 +38,7 @@ internal class TerminalInput(
     }
 
   init {
-    coroutineScope.launch {
+    val job = coroutineScope.launch {
       val targetChannel = inputChannelDeferred.await()
 
       try {
@@ -48,11 +50,14 @@ internal class TerminalInput(
         throw e
       }
       catch (_: ClosedSendChannelException) {
-        thisLogger().warn("Failed to send the event because input channel is closed")
+        LOG.warn("Failed to send the event because input channel is closed")
       }
       catch (t: Throwable) {
-        thisLogger().error("Error while sending input event", t)
+        LOG.error("Error while sending input event", t)
       }
+    }
+    job.invokeOnCompletion {
+      bufferChannel.close()
     }
   }
 
@@ -87,6 +92,12 @@ internal class TerminalInput(
   }
 
   private fun sendEvent(event: TerminalInputEvent) {
-    bufferChannel.trySend(event)
+    val result = bufferChannel.trySend(event)
+    if (result.isClosed) {
+      LOG.warn("Terminal input channel is closed, $event won't be sent", result.exceptionOrNull())
+    }
+    else if (result.isFailure) {
+      LOG.error("Failed to send input event: $event", result.exceptionOrNull())
+    }
   }
 }
