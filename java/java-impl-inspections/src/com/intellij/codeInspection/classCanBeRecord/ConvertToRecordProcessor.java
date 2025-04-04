@@ -259,7 +259,6 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
-    prepareRenameOfConstructorParameters();
     renameMembers(usages);
 
     final PsiClass psiClass = myRecordCandidate.getPsiClass();
