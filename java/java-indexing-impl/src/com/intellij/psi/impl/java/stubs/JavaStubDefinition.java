@@ -13,7 +13,6 @@ import com.intellij.platform.syntax.psi.ParsingDiagnostics;
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
-import com.intellij.psi.stubs.LanguageStubDefinition;
 import com.intellij.psi.stubs.LightLanguageStubDefinition;
 import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 @ApiStatus.Internal
-public class JavaStubDefinition implements LightLanguageStubDefinition, LanguageStubDefinition {
+public class JavaStubDefinition implements LightLanguageStubDefinition {
   private static volatile int TEST_STUB_VERSION_MODIFIER = 0;
 
   @Override
@@ -40,7 +39,7 @@ public class JavaStubDefinition implements LightLanguageStubDefinition, Language
     return shouldBuildStubForFile(file);
   }
 
-  public static boolean shouldBuildStubForFile(VirtualFile file) {
+  public static boolean shouldBuildStubForFile(@NotNull VirtualFile file) {
     return JavaFileElementType.isInSourceContent(file);
   }
 
