@@ -15,6 +15,7 @@ import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex.Companion.getInstance
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
 internal class ModuleFilesIteratorImpl(
@@ -74,7 +75,7 @@ internal class ModuleFilesIteratorImpl(
     customFilter: VirtualFileFilter,
     myWorkspaceFileIndex: WorkspaceFileIndexEx,
   ): Boolean {
-    return myWorkspaceFileIndex.processContentFilesRecursively(dir, processor, customFilter) { fileSet: WorkspaceFileSetWithCustomData<*> -> !isScopeDisposed() && isInContent(fileSet) }
+    return myWorkspaceFileIndex.processContentFilesRecursively(dir, processor, customFilter) { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
   }
 
   private fun toContentIteratorEx(processor: ContentIterator): ContentIteratorEx {
@@ -89,7 +90,8 @@ internal class ModuleFilesIteratorImpl(
   }
 
   fun isInContent(fileSet: WorkspaceFileSetWithCustomData<*>): Boolean {
-    return fileSet.kind.isContent
+    val data = fileSet.data
+    return data is ModuleRelatedRootData && data.module == module
   }
 
   override fun getRootUrls(project: Project): Set<String> = module.rootManager.contentRootUrls.toSet()
