@@ -9,6 +9,7 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
+import org.jetbrains.jps.dependency.kotlin.TypealiasesIndex;
 
 import java.util.*;
 import java.util.function.Function;
@@ -25,6 +26,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     super(containerFactory);
     try {
       addIndex(new SubclassesIndex(containerFactory));
+      addIndex(new TypealiasesIndex(containerFactory)); // todo: make registration 'pluggable', e.g. via DifferentiateStrategy
       myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
     }
     catch (RuntimeException e) {

@@ -8,10 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -282,5 +279,26 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
         debug(affectReason, source);
       }
     }
+  }
+
+  // affects node sources in the current chunk
+  protected boolean affectNodeSourcesIfNotCompiled(DifferentiateContext context, Iterable<ReferenceID> nodeIds, Utils utils, String affectReason) {
+    Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
+    Predicate<? super NodeSource> belongsToChunk = context.getParams().belongsToCurrentCompilationChunk();
+
+    Set<NodeSource> candidates = collect(
+      filter(flat(map(nodeIds, utils::getNodeSources)), s -> !deletedSources.contains(s) && belongsToChunk.test(s)), new HashSet<>()
+    );
+
+    if (find(candidates, src -> !context.isCompiled(src)) != null) { // contains non-compiled sources
+      final StringBuilder msg = new StringBuilder(affectReason);
+      for (NodeSource candidate : candidates) {
+        context.affectNodeSource(candidate);
+        msg.append(candidate).append("; ");
+      }
+      debug(msg.toString());
+      return true;
+    }
+    return false;
   }
 }

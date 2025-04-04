@@ -95,16 +95,39 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         // calls to newly added class' constructors may shadow calls to functions named similarly
         debug("Affecting lookup usages for added class ", addedClass.getName());
         affectClassLookupUsages(context, addedClass);
+
+        if (!addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
+          if (affectConflictingTypeAliasDeclarations(context, addedClass.getReferenceID(), present)) { // if there exists a type alias with the same fq name
+            affectSources(context, context.getDelta().getSources(addedClass.getReferenceID()), "Found conflicting type alias declarations", true);
+          }
+        }
       }
       else {
-        debug("Affecting lookup usages for top-level functions and properties in a newly added file ", addedClass.getName());
-        String scopeName = KJvmUtils.getKotlinName(addedClass);
-        for (String symbolName : unique(flat(
+        debug("Affecting lookup usages for top-level functions properties and type aliases in a newly added file ", addedClass.getName());
+        String scopeName = addedClass.getPackageName();
+        for (String symbolName : unique(flat(List.of(
           map(filter(container.getFunctions(), f -> !KJvmUtils.isPrivate(f)), KmFunction::getName),
-          map(filter(container.getProperties(), p -> !KJvmUtils.isPrivate(p)), KmProperty::getName)
-        ))) {
+          map(filter(container.getProperties(), p -> !KJvmUtils.isPrivate(p)), KmProperty::getName),
+          map(filter(container.getTypeAliases(), ta -> !KJvmUtils.isPrivate(ta)), KmTypeAlias::getName)
+        )))) {
           context.affectUsage(new LookupNameUsage(scopeName, symbolName));
           debug("Affect ", "lookup '" + symbolName + "'", " usage owned by node '", addedClass.getName(), "'");
+        }
+
+        boolean conflictsFound = false;
+        for (KmTypeAlias alias : filter(container.getTypeAliases(), ta -> !KJvmUtils.isPrivate(ta))) {
+          JvmNodeReferenceID conflictingNodeId = new JvmNodeReferenceID(scopeName.isBlank() ? alias.getName() : scopeName + "." + alias.getName());
+
+          conflictsFound |= affectConflictingTypeAliasDeclarations(
+            context, conflictingNodeId, present
+          );
+
+          conflictsFound |= affectNodeSourcesIfNotCompiled(
+            context, asIterable(conflictingNodeId), present, "Possible conflict with an equally named class in the same compilation chunk; Scheduling for recompilation sources: "
+          );
+        }
+        if (conflictsFound) {
+          affectSources(context, context.getDelta().getSources(addedClass.getReferenceID()), "Found conflicting type alias / class declarations", true);
         }
       }
     }
@@ -410,12 +433,29 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         }
       }
 
-      for (KmTypeAlias alias : flat(metaDiff.typeAliases().removed(), metaDiff.typeAliases().added())) {
-        if (!KJvmUtils.isPrivate(Attributes.getVisibility(alias))) {
-          debug("A type alias declaration was added/removed; affecting lookup usages ", alias.getName());
-          affectMemberLookupUsages(context, changedClass, alias.getName(), future, cache);
-        }
+      for (KmTypeAlias alias : filter(metaDiff.typeAliases().removed(), ta -> !KJvmUtils.isPrivate(ta))) {
+        debug("A type alias declaration was removed; affecting lookup usages ", alias.getName());
+        affectMemberLookupUsages(context, changedClass, alias.getName(), future, cache);
       }
+
+      boolean conflictsFound = false;
+      for (KmTypeAlias alias : filter(metaDiff.typeAliases().added(), ta -> !KJvmUtils.isPrivate(ta))) {
+        debug("A type alias declaration was added; affecting lookup usages ", alias.getName());
+        affectMemberLookupUsages(context, changedClass, alias.getName(), future, cache);
+
+        String scopeName = changedClass.getPackageName();
+        JvmNodeReferenceID conflictingNodeId = new JvmNodeReferenceID(scopeName.isBlank() ? alias.getName() : scopeName + "." + alias.getName());
+        conflictsFound |= affectConflictingTypeAliasDeclarations(
+          context, conflictingNodeId, present
+        );
+        conflictsFound |= affectNodeSourcesIfNotCompiled(
+          context, asIterable(conflictingNodeId), present, "Possible conflict with an equally named class in the same compilation chunk; Scheduling for recompilation sources: "
+        );
+      }
+      if (conflictsFound) {
+        affectSources(context, context.getDelta().getSources(changedClass.getReferenceID()), "Found conflicting type alias declarations", true);
+      }
+
       for (Difference.Change<KmTypeAlias, KotlinMeta.KmTypeAliasDiff> aChange : metaDiff.typeAliases().changed()) {
         KotlinMeta.KmTypeAliasDiff aDiff = aChange.getDiff();
         if (aDiff.accessRestricted() || aDiff.underlyingTypeChanged()) {
@@ -719,11 +759,17 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   private static @Nullable JvmMethod getJvmMethod(JvmClass cls, JvmMethodSignature sig) {
     return sig != null? find(cls.getMethods(), m -> Objects.equals(m.getName(), sig.getName()) && Objects.equals(m.getDescriptor(), sig.getDescriptor())) : null;
   }
+  
   private static Iterable<JvmMethod> withJvmOverloads(JvmClass cls, JvmMethod method) {
     return unique(flat(
       asIterable(method),
       filter(cls.getMethods(), m -> Objects.equals(m.getName(), method.getName()) && Objects.equals(m.getType(), method.getType()) && contains(map(m.getAnnotations(), AnnotationInstance::getAnnotationClass), JVM_OVERLOADS_ANNOTATION))
     ));
+  }
+
+  private boolean affectConflictingTypeAliasDeclarations(DifferentiateContext context, JvmNodeReferenceID typeAliasId, Utils utils) {
+    BackDependencyIndex aliasIndex = Objects.requireNonNull(context.getGraph().getIndex(TypealiasesIndex.NAME));
+    return affectNodeSourcesIfNotCompiled(context, aliasIndex.getDependencies(typeAliasId), utils, "Possible conflict with an equally named type alias in the same compilation chunk; Scheduling for recompilation sources: ");
   }
 
 }
