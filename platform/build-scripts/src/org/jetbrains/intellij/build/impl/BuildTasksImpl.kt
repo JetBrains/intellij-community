@@ -498,7 +498,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
-    val builtArtifacts = mutableSetOf<MavenArtifactData>()
+    val builtArtifacts = mutableMapOf<MavenArtifactData, List<Path>>()
     @Suppress("UsePropertyAccessSyntax")
     if (!platformModules.isEmpty()) {
       mavenArtifactsBuilder.generateMavenArtifacts(
@@ -523,7 +523,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
         outputDir = "proprietary-maven-artifacts"
       )
     }
-    mavenArtifacts.validate(builtArtifacts.map { it.module to it.coordinates })
+    mavenArtifactsBuilder.validate(builtArtifacts)
   }
 }
 
