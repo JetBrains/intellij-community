@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.impl.commonModuleExcludes
 import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
 import org.jetbrains.intellij.build.impl.getLibraryFilename
+import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -266,7 +267,15 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
             mavenizable = false
             continue
           }
-          dependencies.add(MavenArtifactDependency(depArtifact.coordinates, true, ArrayList<String>(), scope))
+          if (depArtifact.module.isLibraryModule()) {
+            check(depArtifact.dependencies.any()) {
+              "A library module ${depArtifact.module.name} is expected to have some library dependencies"
+            }
+            dependencies += depArtifact.dependencies
+          }
+          else {
+            dependencies.add(MavenArtifactDependency(depArtifact.coordinates, true, ArrayList(), scope))
+          }
         }
       }
       else if (dependency is JpsLibraryDependency) {
@@ -291,7 +300,9 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     }
 
     val artifactData = MavenArtifactData(module, generateMavenCoordinatesForModule(module), dependencies)
-    results[module] = artifactData
+    if (!module.isLibraryModule()) {
+      results[module] = artifactData
+    }
     return artifactData
   }
 
