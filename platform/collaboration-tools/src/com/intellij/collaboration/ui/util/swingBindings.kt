@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
@@ -350,19 +351,27 @@ fun Wrapper.bindContent(
 private suspend fun <D> Wrapper.bindContentImpl(
   dataFlow: Flow<D>,
   componentFactory: CoroutineScope.(D) -> JComponent?,
-) {
-  dataFlow.collectScoped {
-    val component = componentFactory(it) ?: return@collectScoped
-    setContent(component)
-    repaint()
-
-    try {
+): Nothing {
+  try {
+    dataFlow.collectScoped {
+      val component = componentFactory(it) ?: return@collectScoped
+      runPreservingFocus {
+        setContent(component)
+      }
       awaitCancellation()
     }
-    finally {
-      setContent(null)
-      repaint()
-    }
+    awaitCancellation()
+  }
+  finally {
+    setContent(null)
+  }
+}
+
+private fun JPanel.runPreservingFocus(runnable: () -> Unit) {
+  val focused = CollaborationToolsUIUtil.isFocusParent(this)
+  runnable()
+  if (focused) {
+    CollaborationToolsUIUtil.focusPanel(this)
   }
 }
 
