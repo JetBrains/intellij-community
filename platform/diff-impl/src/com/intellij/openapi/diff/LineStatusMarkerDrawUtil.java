@@ -308,7 +308,8 @@ public final class LineStatusMarkerDrawUtil {
   }
 
   private static int getTriangleHeight(@NotNull Editor editor) {
-    return scaleWithEditor(JBUIScale.scale(4), editor);
+    int unscaled = ExperimentalUI.isNewUI() ? 5 : 4;
+    return scaleWithEditor(unscaled, editor);
   }
 
   private static int getTriangleAimGap(@NotNull Editor editor) {
