@@ -1153,7 +1153,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                              ModalityState.current().asContextElement() +
                              ClientId.coroutineContext() +
                              ActionContextElement.create(actionId, event.place, event.inputEvent, component)
-      installThreadContext(coroutineContext.minusKey(ContinuationInterceptor), replace = true).use { _ ->
+      val coroutineContext2 = coroutineContext + ThreadScopeCheckpoint(coroutineContext) // permit `currentThreadCoroutineScope` inside
+      installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true).use { _ ->
         SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
           runnable.run()
         }

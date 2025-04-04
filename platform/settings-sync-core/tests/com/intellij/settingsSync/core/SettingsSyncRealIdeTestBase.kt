@@ -7,13 +7,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil.createTempDirectory
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.replaceService
 import com.intellij.util.xmlb.annotations.Attribute
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.AfterEach
@@ -74,11 +74,11 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
     componentStore.resetComponents()
   }
 
-  protected suspend fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit, crossIdeSync: Boolean = false) {
+  protected fun CoroutineScope.initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit, crossIdeSync: Boolean = false) {
     SettingsSyncSettings.getInstance().syncEnabled = true
     SettingsSyncLocalSettings.getInstance().state.crossIdeSyncEnabled = crossIdeSync;
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
-    val controls = SettingsSyncMain.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, ideMediator)
+    val controls = SettingsSyncMain.init(this, disposable, settingsSyncStorage, configDir, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)

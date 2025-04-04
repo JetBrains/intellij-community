@@ -7,6 +7,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
@@ -248,7 +249,9 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       finally {
         // Trigger sending the updated values to the backend
         coroutineScope.launch {
-          saveSettingsForRemoteDevelopment(application)
+          withCurrentThreadCoroutineScope {
+            saveSettingsForRemoteDevelopment(application)
+          }
         }
       }
     }

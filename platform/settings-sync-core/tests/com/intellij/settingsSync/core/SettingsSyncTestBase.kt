@@ -14,6 +14,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -100,7 +101,7 @@ internal abstract class SettingsSyncTestBase {
     coroutineName: String? = null,
     action: suspend CoroutineScope.() -> T,
   ): T {
-    return timeoutRunBlocking(timeout, coroutineName) {
+    return timeoutRunBlocking(timeout, coroutineName, context = Dispatchers.Default) {
       val retval = action()
       cleanup()
       retval

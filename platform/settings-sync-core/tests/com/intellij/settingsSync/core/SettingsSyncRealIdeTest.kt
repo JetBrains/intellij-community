@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.core.SettingsSnapshot.MetaInfo
 import com.intellij.util.toByteArray
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -357,7 +358,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
 
-  private suspend fun testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
+  private fun CoroutineScope.testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
     component.aState.foo = "bar"
     runBlocking {
       application.componentStore.saveComponent(component)
