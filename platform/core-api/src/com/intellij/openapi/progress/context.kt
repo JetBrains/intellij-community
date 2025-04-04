@@ -8,6 +8,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.asContextElement
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
+import com.intellij.util.concurrency.ThreadScopeCheckpoint
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -26,7 +27,7 @@ fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContextInner(job,
 /**
  * ```
  * launch {
- *   blockingContext {
+ *   blockingContextScope {
  *     val blockingJob = Cancellation.currentJob()
  *     executeOnPooledThread {
  *       val executeOnPooledThreadJob = Cancellation.currentJob() // a child of blockingJob
@@ -43,7 +44,7 @@ fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContextInner(job,
  * ```
  */
 internal fun prepareCurrentThreadContext(): CoroutineContext {
-  return currentThreadContext().minusKey(BlockingJob)
+  return currentThreadContext().minusKey(BlockingJob).minusKey(ThreadScopeCheckpoint)
 }
 
 @Internal

@@ -294,6 +294,8 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - *sf:coroutineToIndicator(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
+- *sf:withCurrentThreadCoroutineScope(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:withCurrentThreadCoroutineScopeBlocking(kotlin.jvm.functions.Function0):kotlin.Pair
 *f:com.intellij.openapi.progress.SuspenderKt
 - sf:asContextElement(com.intellij.openapi.progress.CoroutineSuspender):kotlin.coroutines.CoroutineContext$Element
 - sf:coroutineSuspender(Z):com.intellij.openapi.progress.CoroutineSuspender

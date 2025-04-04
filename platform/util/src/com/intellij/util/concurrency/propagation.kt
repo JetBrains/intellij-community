@@ -63,8 +63,19 @@ internal val isPropagateThreadContext: Boolean
 internal val isCheckContextAssertions: Boolean
   get() = Holder.checkIdeAssertion
 
+/**
+ * Tracks all IntelliJ Platform async computations launched inside
+ * ```
+ * withContext(BlockingJob(Job())) {
+ *   application.executeOnPooledThread {} // tracked
+ *   currentThreadCoroutineScope().launch {} // tracked
+ * }
+ * ```
+ * Both `executeOnPooledThread` and `launch` will be awaited by `withContext`
+ */
 @Internal
 class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob), IntelliJContextElement {
+  companion object : CoroutineContext.Key<BlockingJob>
 
   /**
    * Consider the following case:
@@ -96,10 +107,49 @@ class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(Blocki
   }
 
   fun isRemembered(element: IntelliJContextElement): Boolean = rememberedElements.containsKey(element)
+}
 
-  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+/**
+ * Tracks only coroutines bound to `currentThreadCoroutineScope` inside
+ * ```
+ * withContext(ThreadScopeCheckpoint(Job())) {
+ *   application.executeOnPooledThread { } // NOT tracked
+ *   currentThreadCoroutineScope().launch { } // tracked
+ * }
+ * ```
+ */
+@Internal
+class ThreadScopeCheckpoint(val context: CoroutineContext) : AbstractCoroutineContextElement(ThreadScopeCheckpoint), IntelliJContextElement {
+  companion object : CoroutineContext.Key<ThreadScopeCheckpoint>
 
-  companion object : CoroutineContext.Key<BlockingJob>
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement? {
+    return if (parentContext[BlockingJob] != null) {
+      this
+    }
+    else {
+      null
+    }
+  }
+
+  override fun toString(): String {
+    return "ThreadScopeCheckpoint"
+  }
+
+  fun startWaitingForChildren(): Job {
+    val supervisingJob = context.job as CompletableJob
+    @Suppress("RAW_SCOPE_CREATION")
+    CoroutineScope(supervisingJob + Dispatchers.Default).launch {
+      val thisLaunchJob = coroutineContext.job
+      supervisingJob.children.forEach {
+        if (it == thisLaunchJob) {
+          return@forEach
+        }
+        it.join()
+      }
+      supervisingJob.complete()
+    }
+    return supervisingJob
+  }
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -232,7 +282,7 @@ private fun doCreateChildContext(debugName: @NonNls String, unconditionalCancell
 
   val parentBlockingJob =
     if (unconditionalCancellationPropagation) currentThreadContext[Job]
-    else currentThreadContext[BlockingJob]?.blockingJob
+    else blockingJob?.blockingJob
   val (cancellationContext, childContinuation) = if (parentBlockingJob != null) {
     val continuation: Continuation<Unit> = childContinuation(debugName, parentBlockingJob)
     Pair((currentThreadContext[BlockingJob] ?: EmptyCoroutineContext) + continuation.context.job, continuation)

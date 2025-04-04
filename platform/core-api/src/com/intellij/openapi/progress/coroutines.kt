@@ -13,6 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.concurrency.BlockingJob
+import com.intellij.util.concurrency.ThreadScopeCheckpoint
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.EDT
@@ -289,23 +290,84 @@ suspend fun <T> blockingContext(action: () -> T): T {
  * @see [coroutineScope]
  */
 suspend fun <T> blockingContextScope(action: () -> T): T {
-  return coroutineScope {
-    val coroutineContext = coroutineContext
-    val blockingJob = BlockingJob(coroutineContext.job)
-    rememberElements(blockingJob, coroutineContext)
-    blockingContextInner(coroutineContext + blockingJob, action)
+  val (result, job) = withCurrentThreadCoroutineScope {
+    coroutineScope {
+      val coroutineContext = coroutineContext
+      val blockingJob = BlockingJob(coroutineContext.job)
+      rememberElements(blockingJob, coroutineContext)
+      blockingContextInner(coroutineContext + blockingJob, action)
+    }
+  }
+  job.join()
+  return result
+}
+
+/**
+ * The same as [withCurrentThreadCoroutineScope], but for non-suspending execution context.
+ */
+@ApiStatus.Experimental
+@RequiresBlockingContext
+fun <T> withCurrentThreadCoroutineScopeBlocking(action: () -> T): Pair<T, Job> {
+  val currentContext = currentThreadContext()
+  val checkpoint = getFixThreadScopeElements(currentContext)
+  return installThreadContext(currentContext + checkpoint, true).use {
+    val actionResult = try {
+      action()
+    }
+    catch (e: Throwable) {
+      checkpoint.context.job.cancel()
+      throw e
+    }
+    actionResult to checkpoint.startWaitingForChildren()
   }
 }
 
 /**
- * Returns [CoroutineScope] that corresponds to the caller's context.
+ * Executes the given [action] and provides access to [currentThreadCoroutineScope] inside.
+ *
+ * In contrast to [blockingContextScope], it does **not** wait for
+ * IntelliJ Platform asynchronous computations (such as [Application.invokeLater]) inside [action].
+ *
+ * This is needed to support old scoping code such as [ProgressManager.runProcessWithProgressSynchronously], which defines a _scope_ (bound to modality),
+ * but does not fully await for asynchronous computations (like [Application.executeOnPooledThread]) to complete.
+ *
+ * @return A result of the computation, and a [Job] which binds all coroutines spawned with [currentThreadCoroutineScope]
+ */
+@ApiStatus.Experimental
+suspend fun <T> withCurrentThreadCoroutineScope(action: suspend CoroutineScope.() -> T): Pair<T, Job> {
+  val checkpoint = getFixThreadScopeElements(coroutineContext)
+  return withContext(checkpoint) {
+    val actionResult = try {
+      action()
+    }
+    catch (e: Throwable) {
+      checkpoint.context.job.cancel()
+      throw e
+    }
+    actionResult to checkpoint.startWaitingForChildren()
+  }
+}
+
+private fun getFixThreadScopeElements(context: CoroutineContext): ThreadScopeCheckpoint {
+  val totalCoroutinesJob = SupervisorJob(context[Job])
+  val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+    totalCoroutinesJob.cancel("Exception from children coroutines", throwable)
+  }
+  return ThreadScopeCheckpoint(context + totalCoroutinesJob + exceptionHandler)
+}
+
+/**
+ * Returns [CoroutineScope] that corresponds to the caller's chosen context.
  *
  * This method should be the default choice for initiating coroutines in blocking code.
- * Its advantage is ensuring the alignment of coroutines' context with the blocking code's cancellation strategy from the spawning point.
+ * This coroutine scope binds the spawned coroutines to the first checkpoint defined by the caller code.
+ * For example, you can use this function to launch coroutines in `AnAction.actionPerformed`.
+ *
+ * To enable usage of [currentThreadCoroutineScope], consider using either [blockingContextScope] or [withCurrentThreadCoroutineScopeBlocking]
  *
  * Example:
  *
- * ```
+ * ```kotlin
  * suspend fun deepPlatformCode() {
  *   for (extension in SomeExtensionPoint.EP_NAME.extensionList) {
  *     // the platform has not yet designed suspending API for `SomeExtensionPoint`
@@ -325,28 +387,43 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
  *   }
  * }
  *
- * fun myTestFunction = runBlocking {
+ * fun myTestFunction() = runBlocking {
  *   blockingContextScope {
  *     MyPluginExtension().legacyApiImplementation() // the 'launch' is tracked now
  *   }
  * }
  * ```
  *
- * An alternative approach would be to create a service that exposes the injected coroutine scope;
+ * An alternative is a pattern with a service that exposes the injected coroutine scope:
+ * ```
+ * @Service(Service.Level.APP)
+ * class ScopeService(val scope: CoroutineScope)
+ *
+ * fun blockingFunction() {
+ *   service<ScopeService>().scope.launch {
+ *     // ...
+ *   }
+ * }
+ * ```
  * the difference between these two approaches is similar to the difference between [coroutineScope] and [GlobalScope]:
  * the coroutines spawned on the service scope are not controlled by the code that spawned them.
  */
 @RequiresBlockingContext
 fun currentThreadCoroutineScope(): CoroutineScope {
-  val threadContext = prepareCurrentThreadContext()
-  if (threadContext[Job] == null) {
+  val threadContext = currentThreadContext()
+  val checkpoint = threadContext[ThreadScopeCheckpoint]
+  if (checkpoint == null) {
     LOG.error(IllegalStateException(
-      """There is no `Job` in this thread, spawned coroutines are not cancellable. 
-        | If the transition from coroutines to blocking code happens in the same stack frame as the call to this function, the transition should use `blockingContext`.
-        | If the transition occurs in the different stack frame, then the transition should use `blockingContextScope` to set up a `Job` on this frame.""".trimMargin()))
+      """There is no scoping element in this thread. Current context: ${threadContext}. 
+        | Please use `blockingContextScope` or `withCurrentThreadCoroutineScope` to ensure that spawned coroutines are tracked""".trimMargin()))
   }
-  @Suppress("SSBasedInspection")
-  return CoroutineScope(threadContext)
+  @Suppress("RAW_SCOPE_CREATION")
+  return if (checkpoint == null) {
+    CoroutineScope(threadContext.minusKey(BlockingJob))
+  }
+  else {
+    CoroutineScope(checkpoint.context)
+  }
 }
 
 @Internal
