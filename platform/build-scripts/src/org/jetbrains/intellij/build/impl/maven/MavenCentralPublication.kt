@@ -28,7 +28,18 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.PathWalkOption
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.readLines
+import kotlin.io.path.relativeTo
+import kotlin.io.path.walk
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -41,6 +52,7 @@ import kotlin.time.Duration.Companion.minutes
  * See https://youtrack.jetbrains.com/articles/IJPL-A-611 internal article for more details
  */
 @ApiStatus.Internal
+@OptIn(ExperimentalPathApi::class)
 class MavenCentralPublication(
   private val context: BuildContext,
   private val workDir: Path,
@@ -75,24 +87,53 @@ class MavenCentralPublication(
     val distributionFiles: List<Path> = listOf(jar, pom, javadoc, sources)
 
     val signatures: List<Path>
-      get() = if (sign) files(extension = "asc") else emptyList()
+      get() = distributionFiles.asSequence()
+        .map { it.resolveSibling("${it.fileName}.asc") }
+        .onEach {
+          check(sign || dryRun || it.exists()) {
+            "Signature file $it is expected to present"
+          }
+        }.filter {
+          it.exists()
+        }.toList()
 
     val checksums: List<Path>
-      get() = files("md5") +
-              files("sha1") +
-              files("sha256") +
-              files("sha512")
+      get() = distributionFiles.asSequence().flatMap {
+        sequenceOf(
+          it.resolveSibling("${it.fileName}.md5"),
+          it.resolveSibling("${it.fileName}.sha1"),
+          it.resolveSibling("${it.fileName}.sha256"),
+          it.resolveSibling("${it.fileName}.sha512"),
+        )
+      }.onEach {
+        check(it.exists()) {
+          "Checksum file $it is expected to present"
+        }
+      }.toList()
+  }
+
+  private fun Path.listDirectoryEntriesRecursively(glob: String): List<Path> {
+    val matchingFiles = walk(PathWalkOption.INCLUDE_DIRECTORIES)
+      .filter { it.isDirectory() }
+      .flatMap { it.listDirectoryEntries(glob = glob) }
+      .toList()
+    check(matchingFiles.size == matchingFiles.distinctBy { it.name }.size) {
+      matchingFiles.joinToString(prefix = "Duplicate files found in $this:\n", separator = "\n") {
+        it.relativeTo(this).toString()
+      }
+    }
+    return matchingFiles
   }
 
   private fun file(name: String): Path {
-    val matchingFiles = workDir.listDirectoryEntries(glob = name)
+    val matchingFiles = workDir.listDirectoryEntriesRecursively(glob = name)
     return requireNotNull(matchingFiles.singleOrNull()) {
       "A single $name file is expected to be present in $workDir but found: $matchingFiles"
     }
   }
 
   private fun files(extension: String): List<Path> {
-    val matchingFiles = workDir.listDirectoryEntries(glob = "*.$extension")
+    val matchingFiles = workDir.listDirectoryEntriesRecursively(glob = "*.$extension")
     require(matchingFiles.any()) {
       "No *.$extension files in $workDir"
     }
@@ -178,6 +219,7 @@ class MavenCentralPublication(
   private suspend fun bundle(): Path {
     return spanBuilder("creating a bundle").use {
       val bundle = workDir.resolve("bundle.zip")
+      bundle.deleteIfExists()
       Compressor.Zip(bundle).use { zip ->
         for (artifact in artifacts) {
           artifact.distributionFiles.asSequence()
