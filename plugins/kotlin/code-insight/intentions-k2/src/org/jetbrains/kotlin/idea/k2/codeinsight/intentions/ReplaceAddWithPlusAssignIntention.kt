@@ -6,16 +6,14 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAction<KtDotQualifiedExpression, Unit>(
@@ -35,12 +33,12 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
     }
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
-        val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val partiallyAppliedSymbol = resolvedCall.partiallyAppliedSymbol
         val receiver = partiallyAppliedSymbol.dispatchReceiver ?: partiallyAppliedSymbol.extensionReceiver ?: return null
         val receiverType = receiver.type as? KaClassType ?: return null
 
-        if (!isMutableCollection(receiverType)) return null
+        if (!receiverType.isSubtypeOf(StandardClassIds.MutableCollection)) return null
 
         val variableSymbol = element.receiverExpression.mainReference?.resolveToSymbol() as? KaVariableSymbol ?: return null
         if (!variableSymbol.isVal) return null
@@ -65,10 +63,3 @@ internal class ReplaceAddWithPlusAssignIntention : KotlinApplicableModCommandAct
 
 private val KtQualifiedExpression.calleeName: String?
     get() = (callExpression?.calleeExpression as? KtNameReferenceExpression)?.text
-
-private fun KaSession.isMutableCollection(type: KaType): Boolean {
-    val mutableCollectionClassId = ClassId.topLevel(StandardNames.FqNames.mutableCollection)
-    return (sequenceOf(type) + type.allSupertypes).any {
-        it.isClassType(mutableCollectionClassId)
-    }
-}
