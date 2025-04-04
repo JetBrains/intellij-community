@@ -5,7 +5,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.VirtualFile
@@ -84,19 +83,21 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
     }
 
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
-        val updatedStorage = getUpdatedStorage(project, configurationPerFile)
+        val workspaceModel = project.workspaceModel
+        workspaceModel.update("updating .main.kts modules") { targetStorage ->
+            val updatedStorage = getUpdatedStorage(project, configurationPerFile, workspaceModel)
 
-        project.workspaceModel.update("updating .main.kts modules") { targetStorage ->
             targetStorage.applyChangesFrom(updatedStorage)
         }
     }
 
-    private suspend fun getUpdatedStorage(
+    private fun getUpdatedStorage(
         project: Project,
         configurationsData: Map<VirtualFile, ScriptConfigurationWithSdk>,
+        workspaceModel: WorkspaceModel,
     ): MutableEntityStorage {
-        val virtualFileManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
-        val storageToUpdate = MutableEntityStorage.from(project.workspaceModel.currentSnapshot)
+        val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
+        val storageToUpdate = MutableEntityStorage.from(workspaceModel.currentSnapshot)
 
         for ((scriptFile, configurationWithSdk) in configurationsData) {
             val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
