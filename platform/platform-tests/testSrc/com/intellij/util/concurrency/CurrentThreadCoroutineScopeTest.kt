@@ -5,6 +5,8 @@ import com.intellij.concurrency.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.*
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -14,6 +16,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -265,6 +268,36 @@ class CurrentThreadCoroutineScopeTest {
       assertFalse(job.isActive, "The job should be completed")
       assertFalse(pooledThreadExecuted.isCompleted, "The pooled thread should not have completed yet")
       pooledThreadExecuted.join()
+    }
+  }
+
+  @Test
+  fun `currentThreadCoroutineScope is available in modal progresses`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    blockingContextScope {
+      val innerCoroutineCompleted = AtomicBoolean(false)
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+        @Suppress("ForbiddenInSuspectContextMethod")
+        currentThreadCoroutineScope().launch {
+          delay(100)
+          innerCoroutineCompleted.set(true)
+        }
+      }
+      assertTrue(innerCoroutineCompleted.get(), "The coroutine in modal dialog must be completed at this point")
+    }
+  }
+
+  @Test
+  fun `currentThreadCoroutineScope propagates exceptions`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    blockingContextScope {
+      assertThrows<IllegalStateException> {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+          @Suppress("ForbiddenInSuspectContextMethod")
+          currentThreadCoroutineScope().launch {
+            delay(100)
+            throw IllegalStateException("Something went intentionally wrong")
+          }
+        }
+      }
     }
   }
 }

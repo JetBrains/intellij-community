@@ -17,8 +17,10 @@ import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.util.*
+import com.intellij.openapi.progress.util.ProgressDialogUI
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.progress.util.createDialogWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
@@ -380,7 +382,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         // an unhandled exception in `async` can kill the entire computation tree
         // we need to propagate the exception to the caller, since they may have some way to handle it.
         runCatching {
-          pipe.collectProgressUpdates(action)
+          handleCurrentThreadScopeCoroutines { pipe.collectProgressUpdates(action) }
         }
       }
       val modalJob = cs.launch(modalityContext) {
@@ -421,6 +423,18 @@ private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTas
   }
 
   override fun getJob(): Job = modalJob
+}
+
+@OptIn(InternalCoroutinesApi::class)
+private suspend fun <T> handleCurrentThreadScopeCoroutines(action: suspend () -> T): T {
+  val (result, coroutinesResult) = withCurrentThreadCoroutineScope {
+    action()
+  }
+  coroutinesResult.apply {
+    join()
+    getCancellationException().cause?.let { throw it }
+  }
+  return result
 }
 
 private val progressManagerTracer by lazy {
