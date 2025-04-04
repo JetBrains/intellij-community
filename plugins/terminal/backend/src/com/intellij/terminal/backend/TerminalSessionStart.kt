@@ -91,7 +91,7 @@ internal fun createTerminalSession(
     }
   }
 
-  return BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
+  return BackendTerminalSession(inputChannel, outputFlow.asSharedFlow(), coroutineScope)
 }
 
 private fun createJediTermServices(
