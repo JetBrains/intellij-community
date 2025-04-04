@@ -35,10 +35,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
-                        serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"
-                        overrides="true"/>
-
     <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 
     <fileBasedIndexLayout id="default"

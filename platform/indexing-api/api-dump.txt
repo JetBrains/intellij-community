@@ -510,12 +510,6 @@ com.intellij.psi.stubs.StubIndexExtension
 - a:getKey():com.intellij.psi.stubs.StubIndexKey
 - a:getKeyDescriptor():com.intellij.util.io.KeyDescriptor
 - a:getVersion():I
-*:com.intellij.psi.stubs.StubRegistry
-- a:registerLightStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.LightStubElementFactory):V
-- a:registerStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubElementFactory):V
-- a:registerStubSerializer(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.ObjectStubSerializer):V
-*:com.intellij.psi.stubs.StubRegistryExtension
-- a:register(com.intellij.psi.stubs.StubRegistry):V
 f:com.intellij.usageView.UsageViewTypeLocation
 - com.intellij.psi.ElementDescriptionLocation
 - sf:INSTANCE:com.intellij.usageView.UsageViewTypeLocation

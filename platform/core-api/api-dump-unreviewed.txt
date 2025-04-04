@@ -5422,6 +5422,12 @@ c:com.intellij.psi.stubs.StubOutputStream
 - writeName(java.lang.String):V
 - writeUTFFast(java.lang.String):V
 - writeVarInt(I):V
+*:com.intellij.psi.stubs.StubRegistry
+- a:registerLightStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.LightStubElementFactory):V
+- a:registerStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubElementFactory):V
+- a:registerStubSerializer(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.ObjectStubSerializer):V
+*:com.intellij.psi.stubs.StubRegistryExtension
+- a:register(com.intellij.psi.stubs.StubRegistry):V
 com.intellij.psi.stubs.StubSerializer
 - com.intellij.psi.stubs.ObjectStubSerializer
 c:com.intellij.psi.targets.AliasingPsiTarget

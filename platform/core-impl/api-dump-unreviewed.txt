@@ -339,6 +339,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - getLanguage():com.intellij.lang.Language
 - getManager():com.intellij.psi.impl.PsiManagerEx
 - getNode():com.intellij.lang.ASTNode
+- *f:getNotNullStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 - getParent():com.intellij.psi.PsiElement
 - pf:getParentByStub():com.intellij.psi.PsiElement
 - getProject():com.intellij.openapi.project.Project
@@ -346,8 +347,10 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - getStub():com.intellij.psi.stubs.StubElement
 - getStubOrPsiChild(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
+- *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 - getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
+- getStubOrPsiChildren(com.intellij.psi.tree.IElementType,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.tree.TokenSet,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.tree.TokenSet,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
 - p:getStubOrPsiParentOfType(java.lang.Class):com.intellij.psi.PsiElement
