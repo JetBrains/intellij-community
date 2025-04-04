@@ -70,6 +70,10 @@ public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> 
 
   public static List<IdeaPlugin> findPlugins(@NotNull DomElement place, @NotNull String idOrModule) {
     Project project = place.getManager().getProject();
+    return findPlugins(idOrModule, project);
+  }
+
+  public static @NotNull List<IdeaPlugin> findPlugins(@NotNull String idOrModule, Project project) {
     Collection<VirtualFile> vFiles = getFiles(project, idOrModule);
     return JBIterable.from(vFiles)
       .map(PsiManager.getInstance(project)::findFile)
