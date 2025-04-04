@@ -94,17 +94,25 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   }
 
 
-  fun applyBackendChanges(fileKind: RecentFileKind, files: List<VirtualFile>, isAdded: Boolean) {
+  fun applyBackendChanges(fileKind: RecentFileKind, changeKind: FileChangeKind, files: List<VirtualFile>) {
     coroutineScope.launch {
-      LOG.debug("Switcher emit file update initiated by backend, file: $files, isAdded: ${isAdded}, project: $project")
-      val fileEvent = if (isAdded) {
-        val models = readAction {
-          files.map { createRecentFileViewModel(it, project) }
+      LOG.debug("Switcher emit file update initiated by backend, file: $files, change kind: ${changeKind}, project: $project")
+      val fileEvent = when (changeKind) {
+        FileChangeKind.ADDED -> {
+          val models = readAction {
+            files.map { createRecentFileViewModel(it, project) }
+          }
+          RecentFilesEvent.ItemsAdded(models)
         }
-        RecentFilesEvent.ItemsAdded(models)
-      }
-      else {
-        RecentFilesEvent.ItemsRemoved(files.map { it.rpcId() })
+        FileChangeKind.UPDATED -> {
+          val models = readAction {
+            files.map { createRecentFileViewModel(it, project) }
+          }
+          RecentFilesEvent.ItemsUpdated(models)
+        }
+        FileChangeKind.REMOVED -> {
+          RecentFilesEvent.ItemsRemoved(files.map { it.rpcId() })
+        }
       }
 
       chooseTargetFlow(fileKind).emit(fileEvent)
@@ -167,4 +175,8 @@ internal class BackendRecentFilesModel(private val project: Project, private val
       return project.serviceAsync<BackendRecentFilesModel>()
     }
   }
+}
+
+internal enum class FileChangeKind {
+  REMOVED, ADDED, UPDATED
 }
