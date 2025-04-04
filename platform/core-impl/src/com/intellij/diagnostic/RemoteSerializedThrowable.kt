@@ -11,12 +11,13 @@ private val logger = logger<RemoteSerializedThrowable>()
 
 /**
  * Throwable that replaces its type and other data like stacktrace with given from a remote Throwable
+ *
  * @param message ordinary message
  * @param localizedMessage localized message
  * @param classFqn FQN of original throwable
  * @param stacktrace stacktrace of original throwable
  * @param cause nested throwable (can be any exception)
- * @param headerPrefix prefix that will be added in front of throwable text
+ * @param headerPrefix prefix that will be added in front of the throwable text
  */
 @ApiStatus.Internal
 class RemoteSerializedThrowable(
@@ -60,11 +61,9 @@ class RemoteSerializedThrowable(
     }
   }
 
-  override fun getLocalizedMessage(): String? {
-    return localizedMessage
-  }
+  override fun getLocalizedMessage(): String? = localizedMessage
 
-  override fun getAttachments(): Array<out Attachment?> = attachments
+  override fun getAttachments(): Array<out Attachment> = attachments
 
   override fun toString(): String {
     val typePrefix = if (headerPrefix != null) "[$headerPrefix] $classFqn" else classFqn
