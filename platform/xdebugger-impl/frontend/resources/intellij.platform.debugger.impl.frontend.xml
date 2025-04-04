@@ -24,8 +24,5 @@
                                            order="last"/>
     <xdebugger.entityIdProvider implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerEntityIdProvider"
                                 order="last"/>
-
-    <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
-                 description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
   </extensions>
 </idea-plugin>
