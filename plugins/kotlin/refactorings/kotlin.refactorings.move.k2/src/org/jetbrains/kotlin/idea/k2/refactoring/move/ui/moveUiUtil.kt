@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
@@ -15,9 +17,9 @@ internal fun String.isValidKotlinFile(): Boolean {
     return endsWith(KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension ?: return false) || endsWith(".kts")
 }
 
-internal fun isMultiFileMove(movedElements: List<PsiElement>) = movedElements.toFileElements().toSet().size > 1
+internal fun isMultiFileMove(movedElements: List<PsiElement>): Boolean = movedElements.toFileElements().toSet().size > 1
 
-internal fun isSingleFileMove(movedElements: List<PsiElement>) = movedElements.all { it is KtNamedDeclaration }
+internal fun isSingleFileMove(movedElements: List<PsiElement>): Boolean = movedElements.all { it is KtNamedDeclaration }
         || movedElements.singleOrNull() is KtFile
 
 internal fun PsiElement?.isSingleClassContainer(): Boolean {
@@ -34,7 +36,7 @@ internal fun isInSourceRoot(project: Project, declarations: List<PsiElement>, ta
     return fileIndex.isInSourceContent(targetFile)
 }
 
-internal fun List<PsiElement>.toFileElements() = map { it as? PsiDirectory ?: it.containingFile }
+internal fun List<PsiElement>.toFileElements(): List<PsiFileSystemItem> = map { it as? PsiDirectory ?: it.containingFile }
 
 internal fun findSourceFileNameByMovedElements(elementsToMove: List<PsiElement>): String {
     val firstElem = elementsToMove.firstOrNull() as KtElement
@@ -44,3 +46,6 @@ internal fun findSourceFileNameByMovedElements(elementsToMove: List<PsiElement>)
         else -> error("Element to move should be a file or declaration")
     }
 }
+
+internal fun containNestedDeclarations(elementsToMove: List<PsiElement>): Boolean =
+    elementsToMove.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }
