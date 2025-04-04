@@ -136,6 +136,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void dispose() {
     mySyncConsole.set(null);
     myManagerListeners.clear();
+    saveTree();
   }
 
   public ModificationTracker getModificationTracker() {
@@ -288,22 +289,26 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     Update update = new Update(this) {
       @Override
       public void run() {
-        try {
-          MavenProjectsTree tree = myProjectsTree;
-          if (tree == null) {
-            return;
-          }
-          tree.save(getProjectsTreeFile());
-        }
-        catch (IOException e) {
-          MavenLog.LOG.info(e);
-        }
+       saveTree();
       }
     };
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       mySaveQueue.queue(update);
     } else {
       MergingQueueUtil.queueTracked(mySaveQueue, update);
+    }
+  }
+
+  private void saveTree() {
+    try {
+      MavenProjectsTree tree = myProjectsTree;
+      if (tree == null) {
+        return;
+      }
+      tree.save(getProjectsTreeFile());
+    }
+    catch (IOException e) {
+      MavenLog.LOG.info(e);
     }
   }
 
