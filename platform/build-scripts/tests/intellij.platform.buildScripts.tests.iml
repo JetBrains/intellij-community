@@ -31,5 +31,6 @@
     <orderEntry type="library" scope="TEST" name="netty-buffer" level="project" />
     <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
+    <orderEntry type="library" scope="TEST" name="maven-resolver-provider" level="project" />
   </component>
 </module>

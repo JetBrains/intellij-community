@@ -6,14 +6,15 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.apache.maven.model.Dependency
 import org.apache.maven.model.Developer
 import org.apache.maven.model.Exclusion
 import org.apache.maven.model.Model
 import org.apache.maven.model.Organization
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
 import org.jetbrains.intellij.build.ZipSource
@@ -23,7 +24,11 @@ import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
 import org.jetbrains.intellij.build.impl.getLibraryFilename
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.jps.model.java.*
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
@@ -33,7 +38,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 import java.util.function.BiConsumer
 
 /**
@@ -132,13 +137,15 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     moduleNamesToPublish: Collection<String>,
     moduleNamesToSquashAndPublish: List<String> = emptyList(),
     outputDir: String,
+    validate: Boolean = false,
   ) {
     generateMavenArtifacts(
       moduleNamesToPublish,
       moduleNamesToSquashAndPublish,
       outputDir,
       ignoreNonMavenizable = false,
-      builtArtifacts = mutableSetOf(),
+      builtArtifacts = mutableMapOf(),
+      validate = validate,
     )
   }
 
@@ -150,7 +157,8 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     moduleNamesToSquashAndPublish: List<String> = emptyList(),
     outputDir: String,
     ignoreNonMavenizable: Boolean = false,
-    builtArtifacts: MutableSet<MavenArtifactData>,
+    builtArtifacts: MutableMap<MavenArtifactData, List<Path>>,
+    validate: Boolean = false,
   ) {
     val artifactsToBuild = HashMap<MavenArtifactData, List<JpsModule>>()
 
@@ -175,14 +183,16 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       val coordinates = generateMavenCoordinatesSquashed(module.name, context.buildNumber)
       artifactsToBuild[MavenArtifactData(module, coordinates, dependencies)] = modules.toList()
     }
-    artifactsToBuild -= builtArtifacts
-    spanBuilder("layout maven artifacts")
+    artifactsToBuild -= builtArtifacts.keys
+    builtArtifacts += spanBuilder("layout maven artifacts")
       .setAttribute(AttributeKey.stringArrayKey("modules"), artifactsToBuild.entries.map { entry ->
         "  [${entry.value.joinToString(separator = ",") { it.name }}] -> ${entry.key.coordinates}"
       }).use {
         layoutMavenArtifacts(artifactsToBuild, context.paths.artifactDir.resolve(outputDir), context)
       }
-    builtArtifacts += artifactsToBuild.keys
+    if (validate) {
+      validate(builtArtifacts)
+    }
   }
 
   private fun generateMavenArtifactData(moduleNames: Collection<String>, ignoreNonMavenizable: Boolean): Map<JpsModule, MavenArtifactData> {
@@ -292,6 +302,12 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
 
   protected open fun generateMavenCoordinatesForModule(module: JpsModule): MavenCoordinates {
     return generateMavenCoordinates(module.name, context.buildNumber)
+  }
+
+  internal fun validate(builtArtifacts: Map<MavenArtifactData, List<Path>>) {
+    context.productProperties.mavenArtifacts.validate(context, builtArtifacts.map { (data, files) ->
+      GeneratedMavenArtifacts(data.module, data.coordinates, files)
+    })
   }
 }
 
@@ -422,13 +438,15 @@ private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
  */
 private val COMMON_GROUP_NAMES: Set<String> = setOf("platform", "vcs", "tools", "clouds")
 
-private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<JpsModule>>,
-                                         outputDir: Path,
-                                         context: BuildContext) {
-  val publishSourceFilter = context.productProperties.mavenArtifacts.publishSourcesFilter
-  coroutineScope {
-    for ((artifactData, modules) in modulesToPublish.entries) {
-      launch(CoroutineName("layout maven artifact ${artifactData.coordinates}")) {
+private suspend fun layoutMavenArtifacts(
+  modulesToPublish: Map<MavenArtifactData, List<JpsModule>>,
+  outputDir: Path,
+  context: BuildContext,
+): Map<MavenArtifactData, List<Path>> {
+  return coroutineScope {
+    modulesToPublish.entries.map { (artifactData, modules) ->
+      async(CoroutineName("layout maven artifact ${artifactData.coordinates}")) {
+        val artifacts = mutableListOf<Path>()
         val modulesWithSources = modules.filter {
           it.getSourceRoots(JavaSourceRootType.SOURCE).any() || it.getSourceRoots(JavaResourceRootType.RESOURCE).any()
         }
@@ -436,15 +454,16 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
         val dirPath = artifactData.coordinates.directoryPath
         val artifactDir = outputDir.resolve(dirPath)
         Files.createDirectories(artifactDir)
-
+        val pom = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "pom"))
         generatePomXmlData(
           context = context,
           artifactData = artifactData,
-          file = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "pom")),
+          file = pom,
         )
-
+        artifacts.add(pom)
+        val jar = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "jar"))
         buildJar(
-          targetFile = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "jar")),
+          targetFile = jar,
           sources = modulesWithSources.map {
             val moduleOutput = context.getModuleOutputDir(it)
             if (moduleOutput.toString().endsWith(".jar")) {
@@ -455,11 +474,15 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
             }
           },
         )
+        artifacts.add(jar)
 
-        val publishSourcesForModules = modules.filter { publishSourceFilter(it, context) }
+        val publishSourcesForModules = modules.filter {
+          context.productProperties.mavenArtifacts.publishSourcesFilter(it, context)
+        }
         if (!publishSourcesForModules.isEmpty() && !modulesWithSources.isEmpty()) {
+          val sources = artifactDir.resolve(artifactData.coordinates.getFileName("sources", "jar"))
           buildJar(
-            targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("sources", "jar")),
+            targetFile = sources,
             sources = publishSourcesForModules.flatMap { module ->
               module.getSourceRoots(JavaSourceRootType.SOURCE).asSequence().map {
                 DirSource(dir = it.path, prefix = it.properties.packagePrefix.replace('.', '/'), excludes = commonModuleExcludes)
@@ -470,19 +493,30 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
             },
             compress = true,
           )
+          artifacts.add(sources)
         }
         if (context.productProperties.mavenArtifacts.isJavadocJarRequired(artifactData.module)) {
           check(modulesWithSources.any()) {
             "No modules with sources found in $modules, a documentation cannot be generated"
           }
           val docsFolder = Dokka(context).generateDocumentation(modules = modulesWithSources)
+          val javadoc = artifactDir.resolve(artifactData.coordinates.getFileName("javadoc", "jar"))
           buildJar(
-            targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("javadoc", "jar")),
+            targetFile = javadoc,
             sources = listOf(DirSource(docsFolder)),
             compress = true,
           )
+          artifacts.add(javadoc)
         }
+        artifactData to artifacts
       }
-    }
+    }.associate { it.await() }
   }
 }
+
+@ApiStatus.Internal
+data class GeneratedMavenArtifacts(
+  val module: JpsModule,
+  val coordinates: MavenCoordinates,
+  val files: List<Path>,
+)
