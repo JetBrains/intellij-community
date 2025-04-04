@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.BootstrapBundle;
+import com.intellij.ide.logsUploader.LogUploader;
 import com.intellij.ide.plugins.EssentialPluginMissingException;
 import com.intellij.ide.plugins.PluginConflictReporter;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -22,7 +23,7 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.SystemProperties;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.*;
@@ -37,6 +38,9 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ExecutionException;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -170,53 +174,32 @@ public final class StartupErrorReporter {
   }
 
   private static void reportProblem(String title, String description, @Nullable Throwable error) {
-    var progressBar = new JProgressBar();
-    progressBar.setIndeterminate(true);
-    var label = new JLabel(BootstrapBundle.message("bootstrap.error.message.logs"));
-    var panel = new JPanel(new BorderLayout(5, 5));
-    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    panel.add(label, BorderLayout.NORTH);
-    panel.add(progressBar, BorderLayout.CENTER);
-    var progressDialog = new JDialog(JOptionPane.getRootFrame(), BootstrapBundle.message("bootstrap.error.title.logs"), true);
-    progressDialog.add(panel);
-    progressDialog.setSize(300, 100);
-    progressDialog.setLocationRelativeTo(null);
-
-    @SuppressWarnings("SSBasedInspection")
-    var worker = new SwingWorker<Path, Void>() {
-      @Override
-      protected Path doInBackground() throws Exception {
-        return collectLogs(error);
-      }
-
-      @Override
-      protected void done() {
-        progressDialog.setVisible(false);
-        progressDialog.dispose();
-      }
-    };
-
-    worker.execute();
-    progressDialog.setVisible(true);
-
-    var logs = (Path)null;
-    try {
-      logs = worker.get();
-    }
-    catch (Throwable t) {
-      var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.no.logs", t));
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.no.logs"), JOptionPane.ERROR_MESSAGE);
-      return;
+    if (error != null) {
+      title += " (" + error.getClass().getSimpleName() + ": " + shorten(error.getMessage()) + ')';
     }
 
-    var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.ready", logs));
-    var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
-    if (ok != 0) return;
+    var uploadId = (String)null;
+    if (error instanceof ExceptionWithAttachments ewa) {
+      var message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.confirm"));
+      var ok = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.option.report"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+      if (ok != JOptionPane.OK_OPTION) return;
+
+      try {
+        uploadId = uploadLogs(ewa);
+      }
+      catch (Throwable t) {
+        var buf = new StringWriter();
+        t.printStackTrace(new PrintWriter(buf));
+        message = prepareMessage(BootstrapBundle.message("bootstrap.error.message.no.logs", buf));
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.no.logs"), JOptionPane.ERROR_MESSAGE);
+        return;
+      }
+    }
+    if (uploadId != null) {
+      description += "\n\n-----\n[Upload ID: " + uploadId + ']';
+    }
 
     try {
-      if (error != null) {
-        title += " (" + error.getClass().getSimpleName() + ": " + shorten(error.getMessage()) + ')';
-      }
       var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
         .replace("$DESCR$", URLUtil.encodeURIComponent(description))
@@ -238,8 +221,48 @@ public final class StartupErrorReporter {
     return message + (message.endsWith(".") ? ".." : "...");
   }
 
-  private static Path collectLogs(@Nullable Throwable error) throws IOException {
-    var logs = Files.createTempFile(Path.of(SystemProperties.getUserHome()), "startup-logs-", ".zip");
+  private static @Nullable String uploadLogs(ExceptionWithAttachments error) throws ExecutionException, InterruptedException {
+    var progressBar = new JProgressBar();
+    progressBar.setIndeterminate(true);
+    var label = new JLabel(BootstrapBundle.message("bootstrap.error.message.logs"));
+    var panel = new JPanel(new BorderLayout(5, 5));
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(progressBar, BorderLayout.CENTER);
+    var progressDialog = new JDialog(JOptionPane.getRootFrame(), BootstrapBundle.message("bootstrap.error.title.logs"), true);
+    progressDialog.add(panel);
+    progressDialog.setSize(300, 100);
+    progressDialog.setLocationRelativeTo(null);
+
+    @SuppressWarnings("SSBasedInspection")
+    var worker = new SwingWorker<String, Void>() {
+      @Override
+      protected String doInBackground() throws Exception {
+        var logs = collectLogs(error);
+        try {
+          return LogUploader.uploadFile(logs);
+        }
+        finally {
+          NioFiles.deleteQuietly(logs);
+        }
+      }
+
+      @Override
+      protected void done() {
+        progressDialog.setVisible(false);
+        progressDialog.dispose();
+      }
+    };
+
+    worker.execute();
+    progressDialog.setVisible(true);
+
+    return worker.get();
+  }
+
+  private static Path collectLogs(ExceptionWithAttachments error) throws IOException {
+    var ts = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now());
+    var logs = Files.createTempFile("startup-err-logs-" + ts + '-', ".zip");
 
     try (var zip = new Compressor.Zip(logs)) {
       var log = PathManager.getLogDir().resolve("idea.log");
@@ -255,10 +278,8 @@ public final class StartupErrorReporter {
         zip.addFile(productData.getFileName().toString(), productData);
       }
 
-      if (error instanceof ExceptionWithAttachments ewa) {
-        for (var attachment : ewa.getAttachments()) {
-          zip.addFile(attachment.getName(), attachment.getBytes());
-        }
+      for (var attachment : error.getAttachments()) {
+        zip.addFile(attachment.getName(), attachment.getBytes());
       }
     }
 
