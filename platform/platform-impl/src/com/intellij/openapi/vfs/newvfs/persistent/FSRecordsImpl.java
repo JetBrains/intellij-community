@@ -610,6 +610,14 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
+    forEachRoot((rootId, rootUrlId) -> {
+      String rootUrl = getNameByNameId(rootUrlId);
+      rootConsumer.accept(rootUrl, rootId);
+      return true;
+    });
+  }
+
+  void forEachRoot(@NotNull PersistentFSTreeAccessor.RootsConsumer rootConsumer) {
     checkNotClosed();
 
     try {
@@ -617,10 +625,7 @@ public final class FSRecordsImpl implements Closeable {
       withRecordReadLock(
         PersistentFSTreeAccessor.SUPER_ROOT_ID,
         () -> {
-          treeAccessor.forEachRoot((rootId, rootUrlId) -> {
-            String rootUrl = getNameByNameId(rootUrlId);
-            rootConsumer.accept(rootUrl, rootId);
-          });
+          treeAccessor.forEachRoot(rootConsumer);
           return null;
         }
       );

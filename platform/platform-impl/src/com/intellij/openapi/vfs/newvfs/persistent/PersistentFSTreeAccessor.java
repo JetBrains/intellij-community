@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
 
@@ -256,8 +255,11 @@ public class PersistentFSTreeAccessor {
     }
   }
 
-  /** supplies all the roots into rootConsumer, along with appropriate rootUrlId */
-  void forEachRoot(@NotNull BiConsumer<Integer, Integer> rootConsumer) throws IOException {
+  /**
+   * Supplies all the roots into rootConsumer, along with appropriate rootUrlId.
+   * Iteration could be interrupted early by returning false from the {@link RootsConsumer#processRoot(int, int)} method
+   */
+  void forEachRoot(@NotNull RootsConsumer rootConsumer) throws IOException {
     try (DataInputStream input = attributeAccessor.readAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
       if (input != null) {
         int count = DataInputOutputUtil.readINT(input);
@@ -265,15 +267,18 @@ public class PersistentFSTreeAccessor {
           throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
         }
         int prevId = 0;
-        int prevNameId = 0;
+        int prevUrlId = 0;
 
         for (int i = 0; i < count; i++) {
-          int nameId = DataInputOutputUtil.readINT(input) + prevNameId;
+          int rootUrlId = DataInputOutputUtil.readINT(input) + prevUrlId;
           int rootId = DataInputOutputUtil.readINT(input) + prevId;
-          prevNameId = nameId;
+          prevUrlId = rootUrlId;
           prevId = rootId;
 
-          rootConsumer.accept(rootId, nameId);
+          boolean continueProcessing = rootConsumer.processRoot(rootId, rootUrlId);
+          if (!continueProcessing) {
+            return;
+          }
         }
       }
     }
@@ -379,5 +384,9 @@ public class PersistentFSTreeAccessor {
         " (" + SUPER_ROOT_ID + ".." + maxAllocatedID + "] " +
         "-> VFS is corrupted (was IDE forcibly terminated?)");
     }
+  }
+
+  interface RootsConsumer {
+    boolean processRoot(int rootFileId, int rootUrlId);
   }
 }

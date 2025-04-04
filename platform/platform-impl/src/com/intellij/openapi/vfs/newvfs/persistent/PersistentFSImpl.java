@@ -1785,16 +1785,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return;
     }
     Ref<String> missedRootUrlRef = new Ref<>();
-    try {
-      vfsPeer.treeAccessor().forEachRoot((rootFileId, rootUrlId) -> {
-        if (rootId == rootFileId) {
-          missedRootUrlRef.set(getNameByNameId(rootUrlId));
-        }
-      });
-    }
-    catch (IOException e) {
-      throw vfsPeer.handleError(e);
-    }
+    vfsPeer.forEachRoot((rootFileId, rootUrlId) -> {
+      if (rootId == rootFileId) {
+        missedRootUrlRef.set(getNameByNameId(rootUrlId));
+        return false; //stop iteration
+      }
+      return true;
+    });
 
     if (missedRootUrlRef.isNull()) {
       missedRootIds.add(rootId);
