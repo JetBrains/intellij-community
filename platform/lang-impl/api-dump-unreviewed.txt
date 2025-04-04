@@ -8334,10 +8334,12 @@ f:com.intellij.ide.actions.GotoRelatedSymbolAction$Companion
 - bs:getItems$default(com.intellij.ide.actions.GotoRelatedSymbolAction$Companion,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext,I,java.lang.Object):java.util.List
 f:com.intellij.ide.actions.NewActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
+- com.intellij.openapi.actionSystem.ActionWithDelegate
 - <init>():V
 - s:anyActionFromGroupMatches(com.intellij.openapi.actionSystem.ActionGroup,Z,java.util.function.Predicate):Z
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- getDelegate():com.intellij.openapi.actionSystem.ActionGroup
 - s:isActionInNewPopupMenu(com.intellij.openapi.actionSystem.AnAction):Z
 c:com.intellij.ide.actions.NewElementAction
 - com.intellij.openapi.project.DumbAwareAction
@@ -8348,6 +8350,7 @@ c:com.intellij.ide.actions.NewElementAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getDisposeCallback():java.lang.Runnable
 - p:getGroup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.ActionGroup
+- p:getGroup(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.ActionGroup
 - p:getMaxRowCount():I
 - p:getPlace():java.lang.String
 - p:getPreselectActionCondition(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.util.Condition
