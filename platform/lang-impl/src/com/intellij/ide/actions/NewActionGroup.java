@@ -12,10 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-/**
- * @author Dmitry Avdeev
- */
-public final class NewActionGroup extends ActionGroup {
+public final class NewActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
   private static final @NonNls String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @Override
@@ -44,6 +41,11 @@ public final class NewActionGroup extends ActionGroup {
     mergedActions.add(Separator.getInstance());
     Collections.addAll(mergedActions, actions1);
     return mergedActions.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  @Override
+  public @NotNull ActionGroup getDelegate() {
+    return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
   }
 
   /** @deprecated Avoid explicit synchronous group expansion! */

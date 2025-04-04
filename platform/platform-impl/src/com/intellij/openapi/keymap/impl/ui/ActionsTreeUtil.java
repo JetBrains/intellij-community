@@ -15,6 +15,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.actionSystem.impl.ActionGroupStub;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -169,7 +170,7 @@ public final class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(getMainMenuTitle(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
+    fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered, actionManager);
     return group;
   }
 
@@ -209,8 +210,9 @@ public final class ActionsTreeUtil {
 
   private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup,
                                                Group group,
-                                               Condition<? super AnAction> filtered) {
-    AnAction[] mainMenuTopGroups = getActions(actionGroup);
+                                               Condition<? super AnAction> filtered,
+                                               ActionManager actionManager) {
+    AnAction[] mainMenuTopGroups = getActions(actionGroup, actionManager);
     for (AnAction action : mainMenuTopGroups) {
       if (!(action instanceof ActionGroup)) continue;
       Group subGroup = createGroup((ActionGroup)action, false, filtered);
@@ -277,7 +279,7 @@ public final class ActionsTreeUtil {
                                    boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
-    AnAction[] children = getActions(actionGroup);
+    AnAction[] children = getActions(actionGroup, actionManager);
     for (AnAction action : children) {
       if (action == null) {
         LOG.error(groupName + " contains null actions");
@@ -339,7 +341,7 @@ public final class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     String groupId = actionManager.getId(actionGroup);
     Group group = new Group(groupName, groupId, getTemplatePresentation(actionGroup).getIcon());
-    List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup)));
+    List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup, actionManager)));
 
     for (ActionUrl actionUrl : actionUrls) {
       Object component = actionUrl.getComponent();
@@ -486,14 +488,15 @@ public final class ActionsTreeUtil {
   private static Group createQuickListsGroup(@Nullable Condition<? super AnAction> filtered,
                                              @Nullable String filter,
                                              boolean forceFiltering,
-                                             QuickList @NotNull[] quickLists) {
+                                             QuickList @NotNull [] quickLists) {
     Arrays.sort(quickLists, Comparator.comparing(QuickList::getActionId));
 
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"));
     for (QuickList quickList : quickLists) {
       if (filtered != null && actionMatchesFilter(filtered, actionManager, quickList.getActionId()) ||
-          SearchUtil.INSTANCE.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null, SearchableOptionsRegistrar.getInstance()) ||
+          SearchUtil.INSTANCE.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null,
+                                                     SearchableOptionsRegistrar.getInstance()) ||
           filtered == null && StringUtil.isEmpty(filter)) {
         group.addQuickList(quickList);
       }
@@ -661,7 +664,8 @@ public final class ActionsTreeUtil {
         Object o = i.next();
         if (o instanceof Group group) {
           if (group.getSize() == 0) {
-            if (!SearchUtil.INSTANCE.isComponentHighlighted(group.getName(), filter, forceFiltering, null, SearchableOptionsRegistrar.getInstance())) {
+            if (!SearchUtil.INSTANCE.isComponentHighlighted(group.getName(), filter, forceFiltering, null,
+                                                            SearchableOptionsRegistrar.getInstance())) {
               i.remove();
             }
           }
@@ -779,19 +783,41 @@ public final class ActionsTreeUtil {
       PluginException.logPluginError(LOG, actionGroup + " is not a group", null, group.getClass());
       return AnAction.EMPTY_ARRAY;
     }
-    return getActions((ActionGroup)group);
+    return getActions((ActionGroup)group, actionManager);
   }
 
-  private static AnAction @NotNull [] getActions(@NotNull ActionGroup group) {
-    if (group instanceof DefaultActionGroup g) {
+  private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
+    ActionGroup target = group;
+    if (target instanceof ActionGroupStub stub) {
+      target = (ActionGroup)actionManager.getAction(stub.getId());
+    }
+
+    if (target instanceof DefaultActionGroup g) {
       return g.getChildActionsOrStubs();
     }
-    else if (group instanceof CustomisedActionGroup g) {
+    else if (target instanceof CustomisedActionGroup g) {
       return g.getDefaultChildrenOrStubs();
     }
     else {
+      if (target instanceof ActionWithDelegate<?> g) {
+        ActionGroup unwrapped = unwrapGroup(g);
+        if (unwrapped instanceof DefaultActionGroup u) {
+          return u.getChildActionsOrStubs();
+        }
+      }
+
       return AnAction.EMPTY_ARRAY;
     }
+  }
+
+  private static @NotNull ActionGroup unwrapGroup(@NotNull ActionWithDelegate<?> g) {
+    ActionWithDelegate<?> current = g;
+
+    while (current.getDelegate() instanceof ActionWithDelegate) {
+      current = (ActionWithDelegate<?>)current.getDelegate();
+    }
+
+    return (ActionGroup)current.getDelegate();
   }
 
   private static boolean actionMatchesFilter(@Nullable Predicate<? super AnAction> filtered, AnAction action) {
