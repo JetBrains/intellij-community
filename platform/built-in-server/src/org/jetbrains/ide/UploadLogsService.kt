@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.COLLECT_LOGS_NOTIFICATION_GROUP
 import com.intellij.ide.actions.ReportFeedbackService
@@ -61,7 +61,7 @@ private class UploadLogsService : RestService() {
                 val uploadedID = LogUploader.uploadFile(file)
                 LogUploader.notify(project, uploadedID)
                 val byteOut = BufferExposingByteArrayOutputStream()
-                ObjectMapper().writeValue(byteOut, mapOf("Upload_id" to uploadedID))
+                JSON.std.write(mapOf("Upload_id" to uploadedID), byteOut)
                 send(byteOut, request, context)
               }
               catch (_: CancellationException) {
