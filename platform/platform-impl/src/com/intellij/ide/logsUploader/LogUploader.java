@@ -61,7 +61,7 @@ public final class LogUploader {
         var http = ((HttpURLConnection)it.getConnection());
         var length = Files.size(file);
         http.setFixedLengthStreamingMode(length);
-        try (var outputStream = http.getOutputStream(); var inputStream = new BufferedInputStream(http.getInputStream(), 64 * 1024)) {
+        try (var outputStream = http.getOutputStream(); var inputStream = new BufferedInputStream(Files.newInputStream(file), 64 * 1024)) {
           NetUtils.copyStreamContent(indicator, inputStream, outputStream, length);
         }
         return null;
