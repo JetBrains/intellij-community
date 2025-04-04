@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.DocumentationContent
@@ -77,7 +78,19 @@ private class CommandCompletionDocumentationTarget(
     if (command !is CompletionCommandWithPreview) return null
     return DocumentationResult.asyncDocumentation {
       readAction {
-        val previewResult = command.getPreview() ?: return@readAction null
+        val computed = command.getUserData(CACHED_COMPUTED_PREVIEW_KEY)
+        val previewResult = if (computed == true) {
+          val previewInfo = command.getUserData(CACHED_COMPUTED_PREVIEW) ?: return@readAction null
+          previewInfo
+        }
+        else {
+          val
+            preview = command.getPreview()
+          command.putUserData(CACHED_COMPUTED_PREVIEW_KEY, true)
+          command.putUserData(CACHED_COMPUTED_PREVIEW, preview)
+          if (preview == null) return@readAction null
+          preview
+        }
         render(postprocess(previewResult))
       }
     }
@@ -184,7 +197,10 @@ private class CommandCompletionDocumentationTarget(
     val defaultBackground = scheme.defaultBackground
     val lineSpacing = scheme.lineSpacing
     val backgroundColor = ColorUtil.toHtmlColor(defaultBackground)
-    return "<div style=\"min-width: 150px; max-width: 250px;\"> " + "<div style=\"width: 95%; background-color:#$backgroundColor; line-height: ${lineSpacing * 1.1}\">" + "$builder<br/>" + "</div>" + "</div>"
+    return """
+      <div style="min-width: 150px; max-width: 250px; padding: 0; margin: 0;"> 
+      <div style="width: 95%; background-color:$backgroundColor; line-height: ${lineSpacing * 1.1}">$builder<br/>
+      </div></div>""".trimIndent()
   }
 
   private fun createLineNumberTextHandler(
@@ -321,3 +337,6 @@ fun combineFragments(
   }
   return combinedFragments
 }
+
+private val CACHED_COMPUTED_PREVIEW_KEY: Key<Boolean> = Key.create("completion.command.cached.computed.preview.key")
+private val CACHED_COMPUTED_PREVIEW: Key<IntentionPreviewInfo?> = Key.create("completion.command.cached.computed.preview.key")

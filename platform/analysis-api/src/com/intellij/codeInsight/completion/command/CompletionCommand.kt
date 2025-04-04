@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -19,7 +20,7 @@ import javax.swing.Icon
  *
  * This class is marked as experimental and may change in future releases.
  */
-abstract class CompletionCommand {
+abstract class CompletionCommand : UserDataHolderBase() {
   /**
    * Represents the name which is used as a main lookup string
    */

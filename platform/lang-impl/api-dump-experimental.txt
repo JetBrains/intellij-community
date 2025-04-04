@@ -431,6 +431,10 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - sf:SEARCH_EVERYWHERE:com.intellij.codeInsight.intention.IntentionSource
 - s:valueOf(java.lang.String):com.intellij.codeInsight.intention.IntentionSource
 - s:values():com.intellij.codeInsight.intention.IntentionSource[]
+*:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponentHolder
+- com.intellij.openapi.Disposable
+- a:component():javax.swing.JComponent
+- a:isDisposed():Z
 *:com.intellij.codeInsight.navigation.SymbolTypeProvider
 - a:getSymbolTypes(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.List
 f:com.intellij.codeInsight.navigation.UtilKt

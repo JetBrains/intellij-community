@@ -35,6 +35,7 @@
 - getId():java.lang.String
 - supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.CompletionCommand
+- com.intellij.openapi.util.UserDataHolderBase
 - <init>():V
 - customPrefixMatcher(java.lang.String):com.intellij.codeInsight.completion.PrefixMatcher
 - a:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V

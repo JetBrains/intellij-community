@@ -3,12 +3,17 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE
+import com.intellij.codeInsight.intention.impl.preview.LookupPreviewHandler
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
@@ -26,6 +31,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.DocumentationTarget
@@ -43,6 +49,7 @@ import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.lang.ref.WeakReference
+import java.util.function.Function
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -167,6 +174,39 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     val inModalContext = isModalContext(lookup.editor.component)
     if ((!inModalContext && !settings.AUTO_POPUP_JAVADOC_INFO)
         || (inModalContext && !DocumentationSettings.autoShowQuickDocInModalDialogs())) {
+      if (lookup is LookupImpl && EditorSettingsExternalizable.getInstance().isShowIntentionPreview) {
+        val previewHandler =
+          LookupPreviewHandler(
+            project, lookup,
+            LookupElement::class.java,
+            Function { element ->
+              val commandElement = element.`as`(CommandCompletionLookupElement::class.java)
+              if (commandElement != null &&
+                  commandElement.command is CompletionCommandWithPreview) {
+                commandElement.command.getPreview()
+              }
+              else {
+                IntentionPreviewInfo.EMPTY
+              }
+            }
+          )
+        lookup.addLookupListener(object : LookupListener{
+          override fun currentItemChanged(event: LookupEvent) {
+            val currentItem = event.lookup.currentItem
+            val element = currentItem
+              ?.`as`(CommandCompletionLookupElement::class.java)
+            if (element != null) {
+              previewHandler.showInitially()
+            }
+          }
+
+          override fun itemSelected(event: LookupEvent): Unit = lookupClosed()
+          override fun lookupCanceled(event: LookupEvent): Unit = lookupClosed()
+          private fun lookupClosed() {
+            lookup.removeLookupListener(this)
+          }
+        })
+      }
       return
     }
     val delay = settings.JAVADOC_INFO_DELAY.toLong()
