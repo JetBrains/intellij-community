@@ -66,7 +66,6 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
       val existingSdks = getExistingSdks()
       return applyBaseSdk(project, selectedSdk, existingSdks, module)
     }
-    return selectedSdk
     if (project.pythonSdk != null) return null  // sdk already configured
 
     // Run in parallel, because we can not wait for SDK here
