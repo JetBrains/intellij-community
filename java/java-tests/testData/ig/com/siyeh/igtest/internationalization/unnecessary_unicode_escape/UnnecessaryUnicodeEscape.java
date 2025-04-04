@@ -3,6 +3,8 @@ package com.siyeh.igtest.internationalization.unnecessary_unicode_escape;
 class UnnecessaryUnicodeEscape {
   // <warning descr="Unicode escape sequence '\uuuuuu0061' can be replaced with 'a'">\uuuuuu0061</warning><warning descr="Unicode escape sequence '\u0062' can be replaced with 'b'">\u0062</warning>
   // control char & not representable char: \u0010 \u00e4
+  // <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning>u004C
+  // <warning descr="Unicode escape sequence '\uuuu005C' can be replaced with '\'">\uuuu005C</warning>uuuuu004C
 
   char[] surrogates = new char[]{'\ud800','\udc00'};<warning descr="Unicode escape sequence '\u0021' can be replaced with '!'"><error descr="Illegal character: \ (U+005C)">\</error><error descr="Cannot resolve symbol 'u0021'">u0021</error></warning><EOLError descr="Identifier expected"></EOLError>
 
@@ -17,6 +19,17 @@ class UnnecessaryUnicodeEscape {
 
   // <warning descr="Unicode escape sequence '\u0009' can be replaced with '\t'">\u0009</warning>
   // <warning descr="Unicode escape sequence '\u000A' can be replaced with a line feed character">\u000A</warning>
+
+  /**
+   * <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning>
+   * <warning descr="Unicode escape sequence '\uuuu005C' can be replaced with '\'">\uuuu005C</warning>
+   * <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning> u004C
+   * <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning> <warning descr="Unicode escape sequence '\u004C' can be replaced with 'L'">\u004C</warning>
+   * \u005Cu004C
+   * \uuuu005Cuuuu004C
+   * some description\u005Cu004Csome description
+   */
+  void foo() {}
 }
 @SuppressWarnings("UnnecessaryUnicodeEscape")
 class Suppress {

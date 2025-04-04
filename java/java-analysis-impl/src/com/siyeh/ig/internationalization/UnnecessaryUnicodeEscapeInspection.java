@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,6 +29,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
+import java.util.regex.Pattern;
 
 /**
  * @author Bas Leijdekkers
@@ -165,6 +167,11 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           PsiElement element = file.findElementAt(i);
           if (element == null) {
             return;
+          }
+          final Pattern pattern = Pattern.compile("\\\\u+005C(?!\\\\)u+[0-9A-Fa-f]{4}");
+          if (element.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA &&
+              pattern.matcher(element.getText()).find()) {
+            continue;
           }
           final RangeMarker rangeMarker = document.createRangeMarker(i, escapeEnd);
           TextRange range = element.getTextRange();
