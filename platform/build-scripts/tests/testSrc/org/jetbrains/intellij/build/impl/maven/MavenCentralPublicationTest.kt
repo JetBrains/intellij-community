@@ -4,6 +4,11 @@ package org.jetbrains.intellij.build.impl.maven
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.utils.io.createFile
 import kotlinx.coroutines.runBlocking
+import org.apache.maven.model.Developer
+import org.apache.maven.model.License
+import org.apache.maven.model.Model
+import org.apache.maven.model.Scm
+import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.IdeaCommunityProperties
@@ -14,8 +19,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
 class MavenCentralPublicationTest {
@@ -52,19 +57,27 @@ class MavenCentralPublicationTest {
         val zipPath = "${coordinates.directoryPath}/$name"
         val file = workDir.resolve(if (flatLayout) name else zipPath).createFile()
         if (packaging == "pom") {
-          file.writeText(
-            """
-              <project>
-                <groupId>${coordinates.groupId}</groupId>
-                <artifactId>${coordinates.artifactId}</artifactId>
-                <version>${coordinates.version}</version>
-              </project>
-            """.trimIndent()
-          )
+          writePom(coordinates, file)
         }
         Result(file, zipPath = zipPath)
       }
     }.toList()
+  }
+
+  private fun writePom(coordinates: MavenCoordinates, file: Path) {
+    val pom = Model()
+    pom.groupId = coordinates.groupId
+    pom.artifactId = coordinates.artifactId
+    pom.version = coordinates.version
+    pom.name = coordinates.artifactId
+    pom.description = coordinates.artifactId
+    pom.url = "https://github.com/JetBrains/intellij-community"
+    pom.addDeveloper(Developer())
+    pom.scm = Scm()
+    pom.addLicense(License())
+    Files.newBufferedWriter(file).use {
+      MavenXpp3Writer().write(it, pom)
+    }
   }
 
   @Test
@@ -76,10 +89,9 @@ class MavenCentralPublicationTest {
     }
   }
 
-  @Test
-  fun `should generate a bundle zip for artifacts`() {
+  private fun `should generate a bundle zip for artifacts`(flatLayout: Boolean) {
     runBlocking {
-      val files = createDistributionFiles().map { it.zipPath }
+      val files = createDistributionFiles(flatLayout = flatLayout).map { it.zipPath }
       publication.execute()
       val bundle = workDir.resolve("bundle.zip")
       assertThat(bundle).exists()
@@ -100,28 +112,15 @@ class MavenCentralPublicationTest {
     }
   }
 
+
+  @Test
+  fun `should generate a bundle zip for artifacts`() {
+    `should generate a bundle zip for artifacts`(flatLayout = false)
+  }
+
   @Test
   fun `should generate a bundle zip for flat artifacts layout`() {
-    runBlocking {
-      val files = createDistributionFiles(flatLayout = true).map { it.zipPath }
-      publication.execute()
-      val bundle = workDir.resolve("bundle.zip")
-      assert(bundle.exists())
-      val entries = buildList {
-        suspendAwareReadZipFile(bundle) { entry, _ ->
-          add(entry)
-        }
-      }.sorted()
-      Assertions.assertEquals(
-        files.asSequence()
-          .plus(files.asSequence().map { "$it.sha1" })
-          .plus(files.asSequence().map { "$it.sha256" })
-          .plus(files.asSequence().map { "$it.sha512" })
-          .plus(files.asSequence().map { "$it.md5" })
-          .sorted().toList(),
-        entries,
-      )
-    }
+    `should generate a bundle zip for artifacts`(flatLayout = true)
   }
 
   @Test

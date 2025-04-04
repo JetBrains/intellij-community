@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.apache.maven.model.Model
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.maven.GeneratedMavenArtifacts
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
@@ -61,5 +62,5 @@ class MavenArtifactsProperties {
   var isJavadocJarRequired: (JpsModule) -> Boolean = { false }
 
   @ApiStatus.Internal
-  var validate: (Collection<Pair<JpsModule, MavenCoordinates>>) -> Unit = {}
+  var validate: (BuildContext, Collection<GeneratedMavenArtifacts>) -> Unit = { _, _ -> }
 }
