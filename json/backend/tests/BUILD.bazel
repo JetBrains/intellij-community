@@ -3,24 +3,24 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "tests_test_resources",
+  name = "json-tests_test_resources",
   files = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
 java_library(
-  name = "tests",
+  name = "json-tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "tests_test_lib",
+  name = "json-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//json",
+    "//json/backend",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/lang-impl",
@@ -37,11 +37,11 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "@lib//:kotlin-reflect",
   ],
-  runtime_deps = [":tests_test_resources"]
+  runtime_deps = [":json-tests_test_resources"]
 )
 
 jvm_test(
-  name = "tests_test",
-  runtime_deps = [":tests_test_lib"]
+  name = "json-tests_test",
+  runtime_deps = [":json-tests_test_lib"]
 )
 ### auto-generated section `build intellij.json.tests` end

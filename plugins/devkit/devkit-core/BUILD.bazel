@@ -68,7 +68,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "//json",
+    "//json/backend",
     "@lib//:kotlinx-serialization-protobuf",
     "//platform/built-in-server-api:builtInServer",
     "@lib//:caffeine",

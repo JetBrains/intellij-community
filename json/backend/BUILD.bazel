@@ -1,15 +1,15 @@
-### auto-generated section `build intellij.json` start
+### auto-generated section `build intellij.json.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "json_resources",
+  name = "backend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "json",
-  module_name = "intellij.json",
+  name = "backend",
+  module_name = "intellij.json.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
@@ -40,13 +40,13 @@ jvm_library(
     "@lib//:caffeine",
     "@lib//:stream_ex",
     "@lib//:kotlinx-collections-immutable",
-    "//json/split",
+    "//json",
     "@lib//:jackson-module-kotlin",
   ],
-  exports = ["//json/split"],
+  exports = ["//json"],
   runtime_deps = [
-    ":json_resources",
+    ":backend_resources",
     "//platform/backend",
   ]
 )
-### auto-generated section `build intellij.json` end
+### auto-generated section `build intellij.json.backend` end

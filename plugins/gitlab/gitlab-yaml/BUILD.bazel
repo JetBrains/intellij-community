@@ -39,7 +39,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//json/tests:tests_test_lib",
+    "//json/backend/tests:json-tests_test_lib",
   ],
   runtime_deps = [":vcs-gitlab-yaml_resources"]
 )

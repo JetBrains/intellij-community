@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.platform.jewel.markdown.extension.gfmStrikethrough` start
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmStrikethrough` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
@@ -14,14 +14,14 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-extension-gfmStrikethrough_resources",
+  name = "jewel-markdown-extensions-gfmStrikethrough_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-extension-gfmStrikethrough",
-  module_name = "intellij.platform.jewel.markdown.extension.gfmStrikethrough",
+  name = "jewel-markdown-extensions-gfmStrikethrough",
+  module_name = "intellij.platform.jewel.markdown.extensions.gfmStrikethrough",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
@@ -33,9 +33,9 @@ jvm_library(
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
-    "@lib//:platform-jewel-markdown-extension-gfm_strikethrough-commonmark-ext-gfm-strikethrough",
+    "@lib//:platform-jewel-markdown-extensions-gfm_strikethrough-commonmark-ext-gfm-strikethrough",
   ],
-  runtime_deps = [":jewel-markdown-extension-gfmStrikethrough_resources"],
+  runtime_deps = [":jewel-markdown-extensions-gfmStrikethrough_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
-### auto-generated section `build intellij.platform.jewel.markdown.extension.gfmStrikethrough` end
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmStrikethrough` end

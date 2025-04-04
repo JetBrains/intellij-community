@@ -18,10 +18,10 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/toml/core",
     "@lib//:kotlin-stdlib",
-    "//json",
+    "//json/backend",
     "@lib//:stream_ex",
   ],
-  exports = ["//json"],
+  exports = ["//json/backend"],
   runtime_deps = [":json_resources"]
 )
 ### auto-generated section `build intellij.toml.json` end

@@ -16,7 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/grazie/src:core",
     "//platform/core-api:core",
-    "//json",
+    "//json/backend",
     "//platform/util-ex",
   ],
   runtime_deps = [":json_resources"]

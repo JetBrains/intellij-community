@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.pycharm.community.ide.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "pycharm-community-ide-impl_resources",
@@ -46,5 +46,63 @@ jvm_library(
     "//python/python-hatch:hatch",
   ],
   runtime_deps = [":pycharm-community-ide-impl_resources"]
+)
+
+jvm_library(
+  name = "pycharm-community-ide-impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":pycharm-community-ide-impl"],
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//python:python-community-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/diff-api:diff",
+    "@lib//:guava",
+    "@lib//:stream_ex",
+    "//platform/xdebugger-api:debugger",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/core-ui",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/vcs-api:vcs",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    "//python/python-features-trainer:featuresTrainer",
+    "//python/python-features-trainer:featuresTrainer_test_lib",
+    "//platform/util/progress",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:http-client",
+    "//platform/whatsNew",
+    "//platform/whatsNew:whatsNew_test_lib",
+    "//platform/util/coroutines",
+    "//platform/experiment",
+    "@lib//:jna",
+    "//python/services/system-python:python-community-services-systemPython",
+    "//python/services/system-python:python-community-services-systemPython_test_lib",
+    "//platform/eel",
+    "//python/services/shared:python-community-services-shared",
+    "//python/poetry:community-impl-poetry",
+    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:community-impl-venv_test_lib",
+    "@lib//:jetbrains-annotations",
+    "//python/python-pyproject:pyproject",
+    "//python/python-pyproject:pyproject_test_lib",
+    "//python/python-hatch:hatch",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5",
+  ],
+  runtime_deps = [":pycharm-community-ide-impl_resources"]
+)
+
+jvm_test(
+  name = "pycharm-community-ide-impl_test",
+  runtime_deps = [":pycharm-community-ide-impl_test_lib"]
 )
 ### auto-generated section `build intellij.pycharm.community.ide.impl` end
