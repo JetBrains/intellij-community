@@ -32,8 +32,8 @@ import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix.Companion.showWrapperPropertiesFile
-import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -60,20 +60,19 @@ class GradleVersionQuickFix(
   override val id: String = "fix_gradle_version_in_wrapper"
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    return GradleCoroutineScopeProvider.getInstance(project).cs
-      .launch {
-        runBatchChange(project) {
-          updateOrCreateWrapper(project)
-          showWrapperPropertiesFile(project)
-          resetProjectDistributionType(project)
-          runWrapperTask(project)
-          if (requestImport) {
-            delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
-            val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
-            importFuture.await()
-          }
+    return project.gradleCoroutineScope.launch {
+      runBatchChange(project) {
+        updateOrCreateWrapper(project)
+        showWrapperPropertiesFile(project)
+        resetProjectDistributionType(project)
+        runWrapperTask(project)
+        if (requestImport) {
+          delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
+          val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
+          importFuture.await()
         }
-      }.asCompletableFuture()
+      }
+    }.asCompletableFuture()
   }
 
   private fun resetProjectDistributionType(project: Project) {
