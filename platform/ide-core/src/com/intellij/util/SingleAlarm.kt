@@ -327,7 +327,13 @@ class SingleAlarm @Internal constructor(
       }
 
       currentJob = taskCoroutineScope.launch {
-        prevCurrentJob?.join()
+        // Imagine tasks A, B, C scheduled in a row.
+        // If B waits for A to complete, and B gets canceled by starting C,
+        // then B will be canceled promptly because it is suspended in `join`.
+        // To avoid prompt cancellation, we run wait for the previous task in a non-cancellable section.
+        withContext(NonCancellable) {
+          prevCurrentJob?.join()
+        }
         prevCurrentJob = null
 
         delay(effectiveDelay)
