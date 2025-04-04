@@ -1,5 +1,7 @@
 package com.intellij.terminal.backend
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.session.TerminalInputEvent
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
@@ -38,5 +40,9 @@ internal class BackendTerminalSession(
     }
 
     return closeAwareOutputFlow
+  }
+
+  companion object {
+    val LOG: Logger = logger<BackendTerminalSession>()
   }
 }

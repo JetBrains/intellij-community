@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -30,8 +29,6 @@ import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CancellationException
 
-private val LOG: Logger = Logger.getInstance(BackendTerminalSession::class.java)
-
 /**
  * Returns a pair of started terminal session and final options used for session start.
  */
@@ -43,7 +40,7 @@ internal fun startTerminalSession(
   coroutineScope: CoroutineScope,
 ): Pair<TerminalSession, ShellStartupOptions> {
   val termSize = options.initialTermSize ?: run {
-    LOG.warn("No initial terminal size provided, using default 80x24. $options")
+    BackendTerminalSession.LOG.warn("No initial terminal size provided, using default 80x24. $options")
     TermSize(80, 24)
   }
   val optionsWithSize = options.builder().initialTermSize(termSize).build()
@@ -124,14 +121,14 @@ private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
     terminalStarter.start()
   }
   catch (t: Throwable) {
-    LOG.error(t)
+    BackendTerminalSession.LOG.error(t)
   }
   finally {
     try {
       terminalStarter.ttyConnector.close()
     }
     catch (t: Throwable) {
-      LOG.error("Error closing TtyConnector", t)
+      BackendTerminalSession.LOG.error("Error closing TtyConnector", t)
     }
   }
 }
