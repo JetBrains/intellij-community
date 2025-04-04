@@ -20,6 +20,7 @@ import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.showingScope
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -322,8 +323,20 @@ fun <D> Wrapper.bindContent(
   dataFlow: Flow<D>,
   componentFactory: CoroutineScope.(D) -> JComponent?,
 ) {
-  showingScope(debugName) {
-    bindContentImpl(dataFlow, componentFactory)
+  launchOnShow(debugName) {
+    bindContentImpl(dataFlow, null, componentFactory)
+  }
+}
+
+@ApiStatus.Internal
+fun <D> Wrapper.bindContent(
+  debugName: String,
+  dataFlow: Flow<D>,
+  defaultComponent: JComponent,
+  componentFactory: CoroutineScope.(D) -> JComponent?,
+) {
+  launchOnShow(debugName) {
+    bindContentImpl(dataFlow, defaultComponent, componentFactory)
   }
 }
 
@@ -332,7 +345,7 @@ fun <D> Wrapper.bindContentIn(
   componentFactory: CoroutineScope.(D) -> JComponent?,
 ) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    bindContentImpl(dataFlow, componentFactory)
+    bindContentImpl(dataFlow, null, componentFactory)
   }
 }
 
@@ -340,7 +353,7 @@ fun <D> Wrapper.bindContentIn(
 fun Wrapper.bindContent(
   debugName: String, contentFlow: Flow<JComponent?>,
 ) {
-  showingScope(debugName) {
+  launchOnShow(debugName) {
     contentFlow.collect {
       setContent(it)
       repaint()
@@ -350,6 +363,7 @@ fun Wrapper.bindContent(
 
 private suspend fun <D> Wrapper.bindContentImpl(
   dataFlow: Flow<D>,
+  defaultComponent: JComponent?,
   componentFactory: CoroutineScope.(D) -> JComponent?,
 ): Nothing {
   try {
@@ -363,7 +377,7 @@ private suspend fun <D> Wrapper.bindContentImpl(
     awaitCancellation()
   }
   finally {
-    setContent(null)
+    setContent(defaultComponent)
   }
 }
 
