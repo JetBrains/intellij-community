@@ -5,13 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.ConfigurableClientSocket
-import com.intellij.platform.eel.ConfigurableSocket
-import com.intellij.platform.eel.EelConnectionError
-import com.intellij.platform.eel.EelIpPreference
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.EelTunnelsApi
-import com.intellij.platform.eel.EelTunnelsApi.ConnectionAcceptor
+import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelTunnelsApi.*
 import com.intellij.platform.eel.impl.NetworkError
 import com.intellij.platform.eel.impl.NetworkOk
 import com.intellij.platform.eel.impl.UnknownFailure
@@ -25,14 +20,26 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.ProtocolFamily
-import java.net.SocketTimeoutException
 import java.net.StandardProtocolFamily
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 
 private val logger = fileLogger()
 
-internal suspend fun getConnectionToRemotePortImpl(address: EelTunnelsApi.HostAddress, configureSocket: ConfigurableClientSocket.() -> Unit): EelResult<EelTunnelsApi.Connection, EelConnectionError> = withContext(Dispatchers.IO) {
+internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsApi {
+  override suspend fun listenOnUnixSocket(path: CreateFilePath): ListenOnUnixSocketResult {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getConnectionToRemotePort(address: HostAddress, configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit): EelResult<Connection, EelConnectionError> =
+    getConnectionToRemotePortImpl(address, configureSocketBeforeConnection)
+
+  override suspend fun getAcceptorForRemotePort(address: HostAddress, configureServerSocket: ConfigurableSocket.() -> Unit): EelResult<ConnectionAcceptor, EelConnectionError> =
+    getAcceptorForRemotePortImpl(address, configureServerSocket)
+
+}
+
+private suspend fun getConnectionToRemotePortImpl(address: HostAddress, configureSocket: ConfigurableClientSocket.() -> Unit): EelResult<EelTunnelsApi.Connection, EelConnectionError> = withContext(Dispatchers.IO) {
   val socketChannel = address.protocolPreference.protocolFamily?.let {
     SocketChannel.open(it)
   } ?: SocketChannel.open()
@@ -53,7 +60,7 @@ internal suspend fun getConnectionToRemotePortImpl(address: EelTunnelsApi.HostAd
   }
 }
 
-internal fun getAcceptorForRemotePortImpl(address: EelTunnelsApi.HostAddress, configureSocket: ConfigurableSocket.() -> Unit): EelResult<ConnectionAcceptor, EelConnectionError> {
+private fun getAcceptorForRemotePortImpl(address: HostAddress, configureSocket: ConfigurableSocket.() -> Unit): EelResult<ConnectionAcceptor, EelConnectionError> {
   val channel = try {
     ServerSocketChannel.open().apply {
       bind(address.asInetSocketAddress)
@@ -74,7 +81,7 @@ private val EelIpPreference.protocolFamily: ProtocolFamily?
     EelIpPreference.USE_SYSTEM_DEFAULT -> null
   }
 
-private val EelTunnelsApi.HostAddress.asInetSocketAddress: InetSocketAddress get() = InetSocketAddress(hostname, port.toInt())
+private val HostAddress.asInetSocketAddress: InetSocketAddress get() = InetSocketAddress(hostname, port.toInt())
 
 private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocketChannel) : ConnectionAcceptor {
   private val listenSocket: Job
