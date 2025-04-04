@@ -295,6 +295,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     List<IntentionPreviewInfo.CustomDiff> customDiffList = new ArrayList<>();
     IntentionPreviewInfo navigateInfo = IntentionPreviewInfo.EMPTY;
     List<@NlsSafe String> createdDirs = new ArrayList<>();
+    List<HtmlChunk> fsActions = new ArrayList<>();
     for (ModCommand command : modCommand.unpack()) {
       if (command instanceof ModUpdateFileText modFile) {
         VirtualFile vFile = modFile.file();
@@ -359,11 +360,13 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
       else if (command instanceof ModMoveFile moveFile) {
         FutureVirtualFile targetFile = moveFile.targetFile();
+        IntentionPreviewInfo.Html html;
         if (targetFile.getName().equals(moveFile.file().getName())) {
-          navigateInfo = IntentionPreviewInfo.moveToDirectory(moveFile.file(), targetFile.getParent());
+          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.moveToDirectory(moveFile.file(), targetFile.getParent());
         } else {
-          navigateInfo = IntentionPreviewInfo.rename(moveFile.file(), targetFile.getName());
+          html = (IntentionPreviewInfo.Html)IntentionPreviewInfo.rename(moveFile.file(), targetFile.getName());
         }
+        fsActions.add(html.content());
       }
       else if (command instanceof ModUpdateSystemOptions options) {
         HtmlChunk preview = createOptionsPreview(context, options);
@@ -372,17 +375,25 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     }
     customDiffList.sort(Comparator.comparing(diff -> diff.fileName() != null));
     if (customDiffList.isEmpty()) {
+      HtmlBuilder builder = new HtmlBuilder();
       if (!createdDirs.isEmpty()) {
         if (createdDirs.size() == 1) {
-          return new IntentionPreviewInfo.Html(text(AnalysisBundle.message("preview.create.directory", createdDirs.get(0))));
+          builder.append(AnalysisBundle.message("preview.create.directory", createdDirs.get(0))).br();
+        } else {
+          builder.append(tag("p").addText(AnalysisBundle.message("preview.create.directories")).children(
+              ContainerUtil.map(createdDirs, text -> new HtmlBuilder().br()
+                .appendRaw("&bull; ") //NON-NLS
+                .append(text)
+                .toFragment()))
+          );
         }
-        return new IntentionPreviewInfo.Html(
-          tag("p").addText(AnalysisBundle.message("preview.create.directories")).children(
-            ContainerUtil.map(createdDirs, text -> new HtmlBuilder().br()
-              .appendRaw("&bull; ") //NON-NLS
-              .append(text)
-              .toFragment()))
-        );
+      }
+      if (!fsActions.isEmpty()) {
+        if (!builder.isEmpty()) builder.br();
+        fsActions.forEach(builder::append);
+      }
+      if (!builder.isEmpty()) {
+        return new IntentionPreviewInfo.Html(builder.toFragment());
       }
       return navigateInfo;
     }

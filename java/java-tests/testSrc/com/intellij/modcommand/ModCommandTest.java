@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
@@ -82,5 +83,19 @@ public final class ModCommandTest extends LightPlatformCodeInsightTestCase {
     IntentionPreviewInfo.Html html = assertInstanceOf(preview, IntentionPreviewInfo.Html.class);
     String actual = html.content().toString();
     assertEquals("<p>Create directories:<br/>&bull; a<br/>&bull; a/b<br/>&bull; a/c</p>", actual);
+  }
+
+  public void testCreateDirectoriesAndMovePreview() {
+    configureFromFileText("dummy.txt", "");
+    VirtualFile vFile = getFile().getVirtualFile();
+    FutureVirtualFile target = new FutureVirtualFile(vFile.getParent(), "a", null);
+    ModCommand command = new ModCreateFile(target, new ModCreateFile.Directory())
+      .andThen(new ModMoveFile(vFile, new FutureVirtualFile(target, vFile.getName(), vFile.getFileType())));
+    IntentionPreviewInfo preview = ModCommandExecutor.getInstance().getPreview(command, ActionContext.from(null, getFile()));
+    IntentionPreviewInfo.Html html = assertInstanceOf(preview, IntentionPreviewInfo.Html.class);
+    String actual = html.content().toString();
+    assertEquals("""
+                   Create directory &#39;a&#39;<br/><br/><p><icon src="file"/>&nbsp;dummy.txt &rarr; \
+                   <icon src="dir"/>&nbsp;$src$a</p>""".replace("$", File.separator), actual);
   }
 }
