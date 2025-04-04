@@ -3,10 +3,15 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.text.StringUtilRt
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.FileStore
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 
 internal class NoDiskSpaceLeftException(message: String, e: IOException) : RuntimeException(message, e)
@@ -23,18 +28,9 @@ internal inline fun <T> checkForNoDiskSpace(context: BuildContext, task: () -> T
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 private fun getDiskInfo(fileStore: FileStore, builder: StringBuilder) {
   builder.appendLine("Disk info of ${fileStore.name()}")
-  builder.appendLine("  Total space: " + formatSize(fileStore.totalSpace))
-  builder.appendLine("  Unallocated space: " + formatSize(fileStore.unallocatedSpace))
-  builder.appendLine("  Usable space: " + formatSize(fileStore.usableSpace))
-}
-
-@Suppress("SpellCheckingInspection")
-private fun formatSize(value: Long): String {
-  if (value < 1024) {
-    return "$value B"
-  }
-  val z = (63 - java.lang.Long.numberOfLeadingZeros(value)) / 10
-  return String.format("%.1f %sB", value.toDouble() / (1L shl z * 10), " KMGTPE"[z])
+  builder.appendLine("  Total space: " + StringUtilRt.formatFileSize(fileStore.totalSpace))
+  builder.appendLine("  Unallocated space: " + StringUtilRt.formatFileSize(fileStore.unallocatedSpace))
+  builder.appendLine("  Usable space: " + StringUtilRt.formatFileSize(fileStore.usableSpace))
 }
 
 private fun describe(dir: Path, builder: StringBuilder) {
@@ -176,29 +172,14 @@ private fun listDirectoryContent(directoryPath: Path, @Suppress("SameParameterVa
 
     if (entry.size == -1L) {
       val size = directorySizes.getLong(entry.path)
-      result.appendLine("$indent[DIR] $name: ${formatFileSize(size)}")
+      result.appendLine("$indent[DIR] $name: ${StringUtilRt.formatFileSize(size)}")
     }
     else {
-      result.appendLine("$indent$name: ${formatFileSize(entry.size)}")
+      result.appendLine("$indent$name: ${StringUtilRt.formatFileSize(entry.size)}")
     }
   }
   // add total size
-  result.appendLine("Total size: ${formatFileSize(directorySizes.getLong(directoryPath))}")
+  result.appendLine("Total size: ${StringUtilRt.formatFileSize(directorySizes.getLong(directoryPath))}")
 
   return result.toString()
-}
-
-private fun formatFileSize(size: Long): String {
-    if (size < 1024) return "$size B"
-
-    val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB")
-    var value = size.toDouble()
-    var unitIndex = 0
-
-    while (value >= 1024 && unitIndex < units.size - 1) {
-        value /= 1024
-        unitIndex++
-    }
-
-    return "%.2f %s".format(value, units[unitIndex])
 }
