@@ -180,6 +180,7 @@ public final class StartupErrorReporter {
     var progressDialog = new JDialog(JOptionPane.getRootFrame(), BootstrapBundle.message("bootstrap.error.title.logs"), true);
     progressDialog.add(panel);
     progressDialog.setSize(300, 100);
+    progressDialog.setLocationRelativeTo(null);
 
     @SuppressWarnings("SSBasedInspection")
     var worker = new SwingWorker<Path, Void>() {
