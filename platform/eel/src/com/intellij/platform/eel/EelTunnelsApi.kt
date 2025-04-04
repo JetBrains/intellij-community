@@ -17,6 +17,47 @@ import kotlin.time.Duration.Companion.seconds
  * API for sockets. Use [hostAddressBuilder] to create arguments.
  */
 sealed interface EelTunnelsApi {
+  /**
+   * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
+   * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
+   *
+   * Packets sent to the channel and received from the channel may be split and/or concatenated.
+   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+   *
+   * Local implementation should work for **nix and all modern Windows.
+   *
+   * The call accepts only one connection. If multiple connections should be accepted, the function is supposed to be called in a loop:
+   * ```kotlin
+   * val ijent: IjentApi = ijentApiFactory()
+   *
+   * val (socketPath, tx, rx) = listenOnUnixSocket(CreateFilePath.MkTemp(prefix = "ijent-", suffix = ".sock"))
+   * println(socketPath) // /tmp/ijent-12345678.sock
+   * launch {
+   *   handleConnection(tx, rx)
+   * }
+   * while (true) {
+   *   val (_, tx, rx) = listenOnUnixSocket(CreateFilePath.Fixed(socketPath))
+   *   launch {
+   *     handleConnection(tx, rx)
+   *   }
+   * }
+   * ```
+   */
+  @CheckReturnValue
+  suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
+
+  data class ListenOnUnixSocketResult(
+    val unixSocketPath: String,
+    val tx: EelSendChannel<IOException>,
+    val rx: EelReceiveChannel<IOException>,
+  )
+
+  sealed interface CreateFilePath {
+    data class Fixed(val path: String) : CreateFilePath
+
+    /** When [directory] is empty, the usual tmpdir is used. */
+    data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
+  }
 
   /**
    * **For applied usages, consider using [withConnectionToRemotePort]**.
@@ -280,45 +321,7 @@ operator fun Connection.component1(): EelSendChannel<IOException> = sendChannel
 operator fun Connection.component2(): EelReceiveChannel<IOException> = receiveChannel
 
 interface EelTunnelsPosixApi : EelTunnelsApi {
-  /**
-   * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
-   * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
-   *
-   * Packets sent to the channel and received from the channel may be split and/or concatenated.
-   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
-   *
-   * The call accepts only one connection. If multiple connections should be accepted, the function is supposed to be called in a loop:
-   * ```kotlin
-   * val ijent: IjentApi = ijentApiFactory()
-   *
-   * val (socketPath, tx, rx) = listenOnUnixSocket(CreateFilePath.MkTemp(prefix = "ijent-", suffix = ".sock"))
-   * println(socketPath) // /tmp/ijent-12345678.sock
-   * launch {
-   *   handleConnection(tx, rx)
-   * }
-   * while (true) {
-   *   val (_, tx, rx) = listenOnUnixSocket(CreateFilePath.Fixed(socketPath))
-   *   launch {
-   *     handleConnection(tx, rx)
-   *   }
-   * }
-   * ```
-   */
-  @CheckReturnValue
-  suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
-  data class ListenOnUnixSocketResult(
-    val unixSocketPath: String,
-    val tx: EelSendChannel<IOException>,
-    val rx: EelReceiveChannel<IOException>,
-  )
-
-  sealed interface CreateFilePath {
-    data class Fixed(val path: String) : CreateFilePath
-
-    /** When [directory] is empty, the usual tmpdir is used. */
-    data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
-  }
 }
 
 interface EelTunnelsWindowsApi : EelTunnelsApi

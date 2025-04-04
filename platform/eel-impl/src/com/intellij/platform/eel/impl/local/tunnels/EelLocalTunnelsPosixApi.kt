@@ -2,17 +2,18 @@
 package com.intellij.platform.eel.impl.local.tunnels
 
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelTunnelsApi.*
 
 internal object EelLocalTunnelsPosixApi : EelTunnelsPosixApi {
-  override suspend fun listenOnUnixSocket(path: EelTunnelsPosixApi.CreateFilePath): EelTunnelsPosixApi.ListenOnUnixSocketResult {
+  override suspend fun listenOnUnixSocket(path: CreateFilePath): ListenOnUnixSocketResult {
     TODO("Not yet implemented")
   }
 
 
-  override suspend fun getConnectionToRemotePort(address: EelTunnelsApi.HostAddress, configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit): EelResult<EelTunnelsApi.Connection, EelConnectionError> =
+  override suspend fun getConnectionToRemotePort(address: HostAddress, configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit): EelResult<Connection, EelConnectionError> =
     getConnectionToRemotePortImpl(address, configureSocketBeforeConnection)
 
-  override suspend fun getAcceptorForRemotePort(address: EelTunnelsApi.HostAddress, configureServerSocket: ConfigurableSocket.() -> Unit): EelResult<EelTunnelsApi.ConnectionAcceptor, EelConnectionError> =
+  override suspend fun getAcceptorForRemotePort(address: HostAddress, configureServerSocket: ConfigurableSocket.() -> Unit): EelResult<ConnectionAcceptor, EelConnectionError> =
     getAcceptorForRemotePortImpl(address, configureServerSocket)
 
 }

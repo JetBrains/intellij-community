@@ -9,6 +9,9 @@ import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.EelTunnelsWindowsApi
 
 internal object EelLocalTunnelsWindowsApi : EelTunnelsWindowsApi {
+  override suspend fun listenOnUnixSocket(path: EelTunnelsApi.CreateFilePath): EelTunnelsApi.ListenOnUnixSocketResult {
+    TODO("Not yet implemented")
+  }
 
   override suspend fun getConnectionToRemotePort(address: EelTunnelsApi.HostAddress, configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit): EelResult<EelTunnelsApi.Connection, EelConnectionError> =
     getConnectionToRemotePortImpl(address, configureSocketBeforeConnection)
