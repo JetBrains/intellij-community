@@ -48,8 +48,6 @@ class ErrorNotificationPanel private constructor(
     val horizontalLayout = items.size <= HORIZONTAL_LAYOUT_THRESHOLD
     textPane = htmlErrorMessage?.let { createTextPanel(htmlErrorMessage, horizontalLayout) }
     initComponent(items, horizontalLayout)
-
-    SwingUtilities.invokeLater { requestFocusInWindow() }
   }
 
   private fun initComponent(items: List<PanelItem>, horizontalLayout: Boolean) {
