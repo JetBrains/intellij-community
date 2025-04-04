@@ -94,7 +94,7 @@ private val libsUsedInJps = setOf(
 )
 
 private val presignedLibNames = setOf(
-  "pty4j", "jna", "sqlite-native", "async-profiler" //, "jetbrains.skiko.awt.runtime.all" - do not pre-sign skiko until we can use different files per classloader
+  "pty4j", "jna", "sqlite-native", "async-profiler", "jetbrains.skiko.awt.runtime.all"
 )
 
 private fun isLibPreSigned(library: JpsLibrary) = presignedLibNames.contains(library.name)

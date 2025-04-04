@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.toSize
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.registry.Registry
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -83,6 +84,9 @@ public fun JewelToolWindowNoThemeComposePanel(
 }
 
 private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanelWrapper) -> Unit): JewelComposePanelWrapper {
+    if (System.getProperty("skiko.library.path") == null) {
+        System.setProperty("skiko.library.path", PathManager.getLibPath() + "/skiko-awt-runtime-all")
+    }
     if (ApplicationManager.getApplication().isInternal) {
         System.setProperty("compose.swing.render.on.graphics", Registry.stringValue("compose.swing.render.on.graphics"))
     }

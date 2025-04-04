@@ -236,20 +236,11 @@ private suspend fun handleZipSource(
       return@suspendAwareReadZipFile
     }
 
-    val sourceFileName = sourceFile.fileName.toString()
-    val isSkiko = sourceFileName.startsWith("skiko-awt-runtime-all-") && sourceFileName.endsWith(".jar")
-    val shouldStayInJar = if (isSkiko && nativeFileHandler != null) {
-      !nativeFileHandler.isNative(name) || nativeFileHandler.isCompatibleWithTargetPlatform(name)
-    }
-    else {
-      true
-    }
-
     if (nativeFileHandler?.isNative(name) == true) {
       if (source.isPreSignedAndExtractedCandidate) {
         nativeFiles!!.value.add(name)
       }
-      else if (shouldStayInJar) {
+      else {
         packageIndexBuilder?.addFile(name)
 
         // sign it
@@ -264,7 +255,7 @@ private suspend fun handleZipSource(
         }
       }
     }
-    else if (shouldStayInJar) {
+    else {
       packageIndexBuilder?.addFile(name)
       writeZipData(dataSupplier())
     }
