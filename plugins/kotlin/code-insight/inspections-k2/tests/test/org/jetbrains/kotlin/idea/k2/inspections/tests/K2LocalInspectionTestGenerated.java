@@ -4644,6 +4644,200 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow")
+    public static class RedundantLambdaArrow extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("explicitType.kt")
+        public void testExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/explicitType.kt");
+        }
+
+        @TestMetadata("for.kt")
+        public void testFor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/for.kt");
+        }
+
+        @TestMetadata("forEach.kt")
+        public void testForEach() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/forEach.kt");
+        }
+
+        @TestMetadata("forEachWithIt.kt")
+        public void testForEachWithIt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/forEachWithIt.kt");
+        }
+
+        @TestMetadata("hasArguments.kt")
+        public void testHasArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/hasArguments.kt");
+        }
+
+        @TestMetadata("inIfElse.kt")
+        public void testInIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/inIfElse.kt");
+        }
+
+        @TestMetadata("inIfElse2.kt")
+        public void testInIfElse2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/inIfElse2.kt");
+        }
+
+        @TestMetadata("inIfThen.kt")
+        public void testInIfThen() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/inIfThen.kt");
+        }
+
+        @TestMetadata("inIfThen2.kt")
+        public void testInIfThen2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/inIfThen2.kt");
+        }
+
+        @TestMetadata("inIfWhenEntry.kt")
+        public void testInIfWhenEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/inIfWhenEntry.kt");
+        }
+
+        @TestMetadata("inIfWhenEntry2.kt")
+        public void testInIfWhenEntry2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/inIfWhenEntry2.kt");
+        }
+
+        @TestMetadata("it.kt")
+        public void testIt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/it.kt");
+        }
+
+        @TestMetadata("it2.kt")
+        public void testIt2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/it2.kt");
+        }
+
+        @TestMetadata("nestedLambda.kt")
+        public void testNestedLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/nestedLambda.kt");
+        }
+
+        @TestMetadata("nestedLambda2.kt")
+        public void testNestedLambda2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/nestedLambda2.kt");
+        }
+
+        @TestMetadata("nestedLambda3.kt")
+        public void testNestedLambda3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/nestedLambda3.kt");
+        }
+
+        @TestMetadata("noExpectedType.kt")
+        public void testNoExpectedType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/noExpectedType.kt");
+        }
+
+        @TestMetadata("notApplicableGenericConstructor.kt")
+        public void testNotApplicableGenericConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableGenericConstructor.kt");
+        }
+
+        @TestMetadata("notApplicableGenericConstructor2.kt")
+        public void testNotApplicableGenericConstructor2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableGenericConstructor2.kt");
+        }
+
+        @TestMetadata("notApplicableInBinaryArgument.kt")
+        public void testNotApplicableInBinaryArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableInBinaryArgument.kt");
+        }
+
+        @TestMetadata("notApplicableInNestedCallArgument.kt")
+        public void testNotApplicableInNestedCallArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableInNestedCallArgument.kt");
+        }
+
+        @TestMetadata("notApplicableOverload.kt")
+        public void testNotApplicableOverload() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableOverload.kt");
+        }
+
+        @TestMetadata("notApplicableOverload2.kt")
+        public void testNotApplicableOverload2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableOverload2.kt");
+        }
+
+        @TestMetadata("notApplicableOverload3.kt")
+        public void testNotApplicableOverload3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableOverload3.kt");
+        }
+
+        @TestMetadata("notApplicableOverload5.kt")
+        public void testNotApplicableOverload5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableOverload5.kt");
+        }
+
+        @TestMetadata("notApplicableVararg.kt")
+        public void testNotApplicableVararg() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableVararg.kt");
+        }
+
+        @TestMetadata("notApplicableVararg2.kt")
+        public void testNotApplicableVararg2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/notApplicableVararg2.kt");
+        }
+
+        @TestMetadata("nullableReceiver.kt")
+        public void testNullableReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/nullableReceiver.kt");
+        }
+
+        @TestMetadata("overload4.kt")
+        public void testOverload4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/overload4.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/simple.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/typeParameter.kt");
+        }
+
+        @TestMetadata("typeParameter2.kt")
+        public void testTypeParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/typeParameter2.kt");
+        }
+
+        @TestMetadata("typeParameter3.kt")
+        public void testTypeParameter3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/typeParameter3.kt");
+        }
+
+        @TestMetadata("typeParameter4.kt")
+        public void testTypeParameter4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/typeParameter4.kt");
+        }
+
+        @TestMetadata("underscore.kt")
+        public void testUnderscore() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/underscore.kt");
+        }
+
+        @TestMetadata("while.kt")
+        public void testWhile() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantLambdaArrow/while.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/mayBeConstant")
     public static class MayBeConstant extends AbstractK2LocalInspectionTest {
         @java.lang.Override

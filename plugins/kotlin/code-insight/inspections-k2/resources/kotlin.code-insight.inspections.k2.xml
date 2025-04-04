@@ -716,6 +716,15 @@
                      key="redundant.call.of.the.conversion.method" bundle="messages.KotlinBundle">
     </localInspection>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantLambdaArrowInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="redundant.lambda.arrow" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveExplicitTypeArgumentsInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
