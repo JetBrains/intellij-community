@@ -37,8 +37,8 @@ internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) 
   }
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor!!
-    if (LookupManager.getActiveLookup(editor) == null || !editor.isOutputModelEditor) {
+    val editor = e.editor
+    if (editor == null || LookupManager.getActiveLookup(editor) == null || !editor.isOutputModelEditor) {
       e.presentation.isEnabled = false
     }
   }

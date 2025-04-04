@@ -37,7 +37,7 @@ import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 
-class TerminalPromptModelImpl(
+internal class TerminalPromptModelImpl(
   override val editor: EditorEx,
   private val session: BlockTerminalSession,
 ) : TerminalPromptModel, Disposable {
