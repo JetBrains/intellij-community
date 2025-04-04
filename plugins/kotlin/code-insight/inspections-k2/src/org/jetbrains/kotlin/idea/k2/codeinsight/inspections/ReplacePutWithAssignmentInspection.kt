@@ -9,18 +9,18 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.types.Variance
@@ -53,14 +53,14 @@ internal class ReplacePutWithAssignmentInspection : KotlinApplicableInspectionBa
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
         if (element.isUsedAsExpression) return null
 
-        val resolvedCall = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val receiverType = resolvedCall.partiallyAppliedSymbol.dispatchReceiver?.type ?: return null
-        if (!isMutableMap(receiverType)) return null
+        if (!receiverType.isSubtypeOf(StandardClassIds.MutableMap)) return null
 
         val functionSymbol = resolvedCall.partiallyAppliedSymbol.symbol
         if (functionSymbol.allOverriddenSymbolsWithSelf.none { it.isMutableMapPutFunction() }) return null
 
-        val receiverTypeText = element.receiverExpression.expressionType?.render(position = Variance.INVARIANT) ?: return null
+        val receiverTypeText = element.receiverExpression.expressionType?.render(position = Variance.IN_VARIANCE) ?: return null
         val assignment = createAssignmentExpression(element)
 
         val codeFragment = KtPsiFactory(
@@ -116,13 +116,6 @@ private fun createAssignmentExpression(element: KtDotQualifiedExpression): KtBin
         element.receiverExpression, firstArg, secondArg,
         reformat = false
     ) as? KtBinaryExpression
-}
-
-private fun KaSession.isMutableMap(type: KaType): Boolean {
-    val mutableMapClassId = ClassId.topLevel(StandardNames.FqNames.mutableMap)
-    return (sequenceOf(type) + type.allSupertypes).any {
-        it.isClassType(mutableMapClassId)
-    }
 }
 
 private fun KaCallableSymbol.isMutableMapPutFunction(): Boolean =
