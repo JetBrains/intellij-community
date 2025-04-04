@@ -31,10 +31,13 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
+/**
+ * "Triangle" means the marker for the deleted block. In the new UI its shape is different
+ */
 public final class LineStatusMarkerDrawUtil {
   public static @NotNull List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
     int lineHeight = editor.getLineHeight();
-    int triangleGap = lineHeight / 3;
+    int triangleGap = getTriangleAimGap(editor);
 
     Rectangle clip = new Rectangle(0, y - lineHeight, editor.getComponent().getWidth(), lineHeight * 2);
     List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, clip);
@@ -140,7 +143,7 @@ public final class LineStatusMarkerDrawUtil {
         Color gutterColor = colorScheme.getColor(editor, change.type);
         int line = gutter.getHoveredFreeMarkersLine();
         if (isRangeHovered(editor, line, x, start, end)) {
-          paintRect(g, gutterColor, null, x - JBUI.scale(3), start, endX, end);
+          paintRect(g, gutterColor, null, x - getHoveredMarkerExtraWidth(), start, endX, end);
         }
         else {
           paintRect(g, gutterColor, null, x, start, endX, end);
@@ -271,7 +274,7 @@ public final class LineStatusMarkerDrawUtil {
 
   public static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
                                    int x1, int x2, int y) {
-    int size = scaleWithEditor(JBUIScale.scale(4), editor);
+    int size = getTriangleHeight(editor);
     if (y < size) y = size;
 
     if (ExperimentalUI.isNewUI()) {
@@ -302,6 +305,23 @@ public final class LineStatusMarkerDrawUtil {
       g.drawPolygon(xPoints, yPoints, xPoints.length);
       g.setStroke(oldStroke);
     }
+  }
+
+  private static int getTriangleHeight(@NotNull Editor editor) {
+    return scaleWithEditor(JBUIScale.scale(4), editor);
+  }
+
+  private static int getTriangleAimGap(@NotNull Editor editor) {
+    return editor.getLineHeight() / 3;
+  }
+
+  /**
+   * Used only for the new UI
+   *
+   * @see EditorGutterComponentImpl#updateFreePainters
+   */
+  private static int getHoveredMarkerExtraWidth() {
+    return JBUI.scale(3);
   }
 
   private static int scaleWithEditor(float v, @NotNull Editor editor) {
