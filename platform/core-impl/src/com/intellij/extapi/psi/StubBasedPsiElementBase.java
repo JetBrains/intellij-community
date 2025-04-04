@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -374,7 +374,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * @return a child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @see #getNotNullStubOrPsiChild(IElementType, Class)
+   * @see #getStubOrPsiChild(IElementType, Class)
+   *
+   * @return a child of the specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
   @ApiStatus.Experimental
   public final @Nullable PsiElement getStubOrPsiChild(@NotNull IElementType elementType) {
@@ -392,6 +395,22 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       }
     }
     return null;
+  }
+
+  @ApiStatus.Experimental
+  public final <Psi extends PsiElement> @Nullable Psi getStubOrPsiChild(@NotNull IElementType elementType, @NotNull Class<Psi> psiClass) {
+    PsiElement child = getStubOrPsiChild(elementType);
+    return psiClass.cast(child);
+  }
+
+  @ApiStatus.Experimental
+  public final <Psi extends PsiElement> @NotNull Psi getNotNullStubOrPsiChild(@NotNull IElementType elementType,
+                                                                              @NotNull Class<Psi> psiClass) {
+    PsiElement child = getStubOrPsiChild(elementType);
+    if (child == null) {
+      throw new IllegalStateException("Cannot find child of " + elementType + " in " + this);
+    }
+    return psiClass.cast(child);
   }
 
   /**
