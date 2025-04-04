@@ -2,7 +2,8 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - com.intellij.extapi.psi.ASTDelegatePsiElement
 - *:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
 - *pf:getElementTypeImpl():com.intellij.psi.tree.IElementType
-- *f:getNotNullStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
+- *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
+- *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 *:com.intellij.ide.plugins.PluginEnabler
