@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
@@ -1040,7 +1039,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     expression.accept(this);
     myTrueFalseNodes = prevTrueFalseNodes;
 
-    if (!isLogicalExpression(Objects.requireNonNull(PyPsiUtils.flattenParens(expression)))) {
+    final PyExpression condition = PyPsiUtils.flattenParens(expression);
+    if (condition != null && !isLogicalExpression(condition)) {
       addConditionalNode(expression, false, falseNode);
       addConditionalNode(expression, true, trueNode);
     }
