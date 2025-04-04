@@ -14,6 +14,9 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import kotlin.text.lines
+import java.awt.KeyboardFocusManager
+import java.awt.KeyEventDispatcher
+import java.awt.event.KeyEvent
 
 class EditorCellDragAssistant(
   private val editor: EditorImpl,
@@ -36,10 +39,52 @@ class EditorCellDragAssistant(
   private var outputInitialStates: MutableMap<Int, Boolean> = mutableMapOf()
 
   private val inlayManager = NotebookCellInlayManager.get(editor)
+  private var keyEventDispatcher: KeyEventDispatcher? = null
 
   fun initDrag(e: MouseEvent) {
     isDragging = true
     dragStartPoint = e.locationOnScreen
+    attachKeyEventDispatcher()
+  }
+
+  private fun attachKeyEventDispatcher() {
+    if (keyEventDispatcher == null) {
+      keyEventDispatcher = KeyEventDispatcher { keyEvent ->
+        if (isDragging) {
+          when (keyEvent.id) {
+            KeyEvent.KEY_PRESSED -> {
+              handleKeyPressedDuringDrag(keyEvent)
+              return@KeyEventDispatcher false
+            }
+          }
+        }
+        false
+      }
+
+      KeyboardFocusManager.getCurrentKeyboardFocusManager()
+        .addKeyEventDispatcher(keyEventDispatcher)
+    }
+  }
+
+  private fun handleKeyPressedDuringDrag(keyEvent: KeyEvent) {
+    when (keyEvent.keyCode) {
+      KeyEvent.VK_ESCAPE -> cancelDrag()
+      KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> cancelDrag()
+    }
+  }
+
+  private fun cancelDrag() {
+    deleteDragPreview()
+    clearDragState()
+    unfoldCellIfNeeded()
+    removeKeyEventDispatcher()
+  }
+
+  private fun removeKeyEventDispatcher() {
+    keyEventDispatcher?.let {
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(it)
+      keyEventDispatcher = null
+    }
   }
 
   fun updateDragOperation(e: MouseEvent) {
@@ -58,6 +103,8 @@ class EditorCellDragAssistant(
 
   fun finishDrag(e: MouseEvent) {
     deleteDragPreview()
+    removeKeyEventDispatcher()
+
     if (!isDragging || dragStartPoint == null) {
       isDragging = false
       return
@@ -112,7 +159,7 @@ class EditorCellDragAssistant(
 
   private fun foldDraggedCell() {
     inputFoldedState = cellInput.folded
-    if (inputFoldedState == false) foldInput()
+    if (!inputFoldedState) foldInput()
 
     cellInput.cell.view?.outputs?.outputs?.forEachIndexed { index, output ->
       outputInitialStates[index] = output.collapsed
@@ -122,8 +169,8 @@ class EditorCellDragAssistant(
   }
 
   private fun unfoldCellIfNeeded() {
-    if (wasFolded == false) return
-    if (inputFoldedState == false) unfoldInput()
+    if (!wasFolded) return
+    if (!inputFoldedState) unfoldInput()
 
     cellInput.cell.view?.outputs?.outputs?.forEachIndexed { index, output ->
       output.collapsed = outputInitialStates[index] == true
@@ -164,6 +211,7 @@ class EditorCellDragAssistant(
   }
 
   override fun dispose() {
+    removeKeyEventDispatcher()
     deleteDropIndicator()
     deleteDragPreview()
     unfoldCellIfNeeded()
