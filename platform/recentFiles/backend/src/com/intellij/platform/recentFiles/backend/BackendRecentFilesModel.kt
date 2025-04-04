@@ -93,8 +93,13 @@ internal class BackendRecentFilesModel(private val project: Project, private val
     }
   }
 
+  fun applyBackendChangesToAllFileKinds(changeKind: FileChangeKind, files: List<VirtualFile>) {
+    for (fileKind in RecentFileKind.entries) {
+      scheduleApplyBackendChanges(fileKind, changeKind, files)
+    }
+  }
 
-  fun applyBackendChanges(fileKind: RecentFileKind, changeKind: FileChangeKind, files: List<VirtualFile>) {
+  private fun scheduleApplyBackendChanges(fileKind: RecentFileKind, changeKind: FileChangeKind, files: List<VirtualFile>) {
     coroutineScope.launch {
       LOG.debug("Switcher emit file update initiated by backend, file: $files, change kind: ${changeKind}, project: $project")
       val fileEvent = when (changeKind) {
