@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
@@ -15,39 +16,14 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionState
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoCallback
-import com.intellij.xdebugger.impl.rpc.XExecutionStackDto
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XExecutionStacksEvent
-import com.intellij.xdebugger.impl.rpc.XExpressionDto
-import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
-import com.intellij.xdebugger.impl.rpc.XStackFrameCaptionInfo
-import com.intellij.xdebugger.impl.rpc.XStackFrameDto
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
-import com.intellij.xdebugger.impl.rpc.XStackFramePresentation
-import com.intellij.xdebugger.impl.rpc.XStackFramePresentationFragment
-import com.intellij.xdebugger.impl.rpc.XStackFrameStringEqualityObject
-import com.intellij.xdebugger.impl.rpc.XSuspendContextId
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
-import com.intellij.xdebugger.impl.rpc.sourcePosition
-import com.intellij.xdebugger.impl.rpc.toRpc
-import com.intellij.xdebugger.impl.rpc.xExpression
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import javax.swing.Icon
 
@@ -184,13 +160,14 @@ private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
     XStackFrameCaptionInfo.noInfo
   }
 }
+
 private fun XStackFrame.initialPresentation(): XStackFramePresentation {
   val parts = mutableListOf<XStackFramePresentationFragment>()
   var iconId: IconId? = null
   var tooltip: String? = null
   customizePresentation(object : ColoredTextContainer {
     override fun append(fragment: @NlsContexts.Label String, attributes: SimpleTextAttributes) {
-      parts += XStackFramePresentationFragment(fragment, attributes)
+      parts += XStackFramePresentationFragment(fragment, attributes.toRpc())
     }
 
     override fun setIcon(icon: Icon?) {
@@ -204,3 +181,7 @@ private fun XStackFrame.initialPresentation(): XStackFramePresentation {
   return XStackFramePresentation(parts, iconId, tooltip)
 }
 
+private fun SimpleTextAttributes.toRpc() = SerializableSimpleTextAttributes(bgColor?.rpcId(),
+                                                                            fgColor?.rpcId(),
+                                                                            waveColor?.rpcId(),
+                                                                            style)

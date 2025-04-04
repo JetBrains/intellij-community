@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.frame
 
+import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.ui.ColoredTextContainer
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
@@ -62,7 +64,11 @@ internal class FrontendXStackFrame(
     component.setIcon(iconId?.icon())
     component.setToolTipText(tooltipText)
     for ((text, attributes) in fragments) {
-      component.append(text, attributes)
+      val (bgColor, fgColor, waveColor, style) = attributes
+      component.append(text, SimpleTextAttributes(bgColor?.color(),
+                                                  fgColor?.color(),
+                                                  waveColor?.color(),
+                                                  style))
     }
   }
 
