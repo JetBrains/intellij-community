@@ -58,7 +58,7 @@ class FrontendRecentFilesModel(private val project: Project) {
         }
       }
 
-      if (isAdded) { // todo consider enum, not boolean
+      if (isAdded) {
         FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(filesKind, files, project))
       }
       else {

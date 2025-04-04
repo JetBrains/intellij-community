@@ -68,10 +68,12 @@ internal fun getFilesToShow(project: Project, recentFileKind: RecentFileKind, fi
     for (i in filesForInit.size - 1 downTo minIndex) {
       val info = filesForInit[i]
       var add = true
-      for (fileInfo in filesData) {
-        if (fileInfo == info) {
-          add = false
-          break
+      if (!unpinned) {
+        for (fileInfo in filesData) {
+          if (fileInfo == info) {
+            add = false
+            break
+          }
         }
       }
       if (add) {

@@ -9,7 +9,7 @@ import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 
 internal fun createFilesSearchRequestRequest(recentFileKind: RecentFileKind, project: Project): RecentFilesBackendRequest.FetchFiles {
-  val filesFromFrontendEditorSelectionHistory = if (recentFileKind != RecentFileKind.RECENTLY_OPENED_UNPINNED) collectFilesFromFrontendEditorSelectionHistory(project) else emptyList()
+  val filesFromFrontendEditorSelectionHistory = if (recentFileKind == RecentFileKind.RECENTLY_OPENED_UNPINNED) collectFilesFromFrontendEditorSelectionHistory(project) else emptyList()
   return RecentFilesBackendRequest.FetchFiles(
     filesKind = recentFileKind,
     frontendEditorSelectionHistory = filesFromFrontendEditorSelectionHistory.map(VirtualFile::rpcId),

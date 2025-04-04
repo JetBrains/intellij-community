@@ -15,6 +15,11 @@ private class RecentlySelectedEditorListener : FileEditorManagerListener {
     frontendRecentFilesModel.applyFrontendChanges(RecentFileKind.RECENTLY_OPENED_UNPINNED, listOf(file), true)
   }
 
+  override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+    val frontendRecentFilesModel = FrontendRecentFilesModel.getInstance(source.project)
+    frontendRecentFilesModel.applyFrontendChanges(RecentFileKind.RECENTLY_OPENED_UNPINNED, listOf(file), false)
+  }
+
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val file = event.newFile ?: return
     val frontendRecentFilesModel = FrontendRecentFilesModel.getInstance(event.manager.project)
