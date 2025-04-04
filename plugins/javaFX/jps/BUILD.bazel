@@ -7,12 +7,6 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-jvm_resources(
-  name = "jps_resources_1",
-  files = glob(["src/META-INF/**/*"]),
-  strip_prefix = "src"
-)
-
 jvm_library(
   name = "jps",
   module_name = "intellij.javaFX.jps",
@@ -29,9 +23,6 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [
-    ":jps_resources",
-    ":jps_resources_1",
-  ]
+  runtime_deps = [":jps_resources"]
 )
 ### auto-generated section `build intellij.javaFX.jps` end
