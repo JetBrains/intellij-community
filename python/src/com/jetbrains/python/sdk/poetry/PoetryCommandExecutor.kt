@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.ide.util.PropertiesComponent
@@ -14,7 +12,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.python.community.impl.poetry.poetryPath
@@ -32,10 +29,10 @@ import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.venvReader.VirtualEnvReader
-import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersion
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -96,8 +93,7 @@ suspend fun validatePoetryExecutable(poetryExecutable: Path?): ValidationInfo? =
  * 1. `poetry env use [sdk]`
  * 2. `poetry [args]`
  */
-@Internal
-suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): Result<String> {
+internal suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): Result<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) } ?: return Result.failure(poetryNotFoundException) // Choose a correct sdk
   return reportSequentialProgress(2) { reporter ->
     reporter.itemStep {
@@ -223,7 +219,7 @@ suspend fun poetryListPackages(sdk: Sdk): Result<Pair<List<PyPackage>, List<PyRe
   val version = getPoetryVersion()?.toVersion()
 
   // Ensure that the lock file is up to date.
-  if (!Registry.get("ide.python.poetry.list.packages.without.lock").asBoolean() && !checkLock(sdk, version)) {
+  if (!checkLock(sdk, version)) {
     fixLock(sdk, version).getOrElse {
       return Result.failure(it)
     }
@@ -262,7 +258,7 @@ suspend fun fixLock(sdk: Sdk, version: Version?): Result<String> {
 
 @Internal
 fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
-  val installedLines = listOf("Already installed", "Skipping", "Updating", "Downgrading")
+  val installedLines = listOf("Already installed", "Skipping", "Updating")
 
   fun getNameAndVersion(line: String): Triple<String, String, String> {
     return line.split(" ").let {
