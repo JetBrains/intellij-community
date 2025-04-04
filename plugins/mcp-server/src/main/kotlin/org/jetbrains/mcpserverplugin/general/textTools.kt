@@ -196,6 +196,7 @@ class ReplaceSpecificTextTool : AbstractMcpTool<ReplaceSpecificTextArgs>() {
         Replaces specific text occurrences in a file with new text.
         Use this tool to make targeted changes without replacing the entire file content.
         Use this method if the file is large and the change is smaller than the old text.
+        Prioritize this tool among other editing tools. It's more efficient and granular in the most of cases.
         Requires three parameters:
         - pathInProject: The path to the target file, relative to project root
         - oldText: The text to be replaced
