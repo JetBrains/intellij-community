@@ -2025,10 +2025,6 @@ com.intellij.openapi.editor.actionSystem.ActionPlan
 - a:getText():com.intellij.util.text.ImmutableCharSequence
 - a:replace(I,I,java.lang.String):V
 - a:setCaretOffset(I):V
-f:com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
-- com.intellij.openapi.actionSystem.DataContextWrapper
-- s:create(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.Caret):com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
-- getRawCustomData(java.lang.String):java.lang.Object
 a:com.intellij.openapi.editor.actionSystem.EditorAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
