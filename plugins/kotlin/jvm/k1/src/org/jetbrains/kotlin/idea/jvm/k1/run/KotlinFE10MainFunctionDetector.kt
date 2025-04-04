@@ -21,7 +21,7 @@ internal class KotlinFE10MainFunctionDetector : KotlinMainFunctionDetector {
             return false
         }
 
-        if (!function.typeParameters.isEmpty()) {
+        if (function.typeParameters.isNotEmpty()) {
             return false
         }
 

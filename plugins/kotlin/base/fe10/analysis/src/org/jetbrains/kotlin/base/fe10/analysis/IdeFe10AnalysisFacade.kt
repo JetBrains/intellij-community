@@ -114,7 +114,7 @@ internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10Analysi
         }
 
         val scriptFiles = files.filter { it.isScript() }
-        if (!scriptFiles.isEmpty()) {
+        if (scriptFiles.isNotEmpty()) {
             return kotlinCacheService.getResolutionFacade(scriptFiles)
         }
 

@@ -59,7 +59,7 @@ data class DefaultTargetConfigurationIR(
         copy(irs = irs)
 
     override fun GradlePrinter.renderGradle() {
-        if (!parameters.isEmpty()) {
+        if (parameters.isNotEmpty()) {
             call(targetAccess.type.toString(), forceBrackets = false) {
                 parameters.list { it.render(this) }
             }

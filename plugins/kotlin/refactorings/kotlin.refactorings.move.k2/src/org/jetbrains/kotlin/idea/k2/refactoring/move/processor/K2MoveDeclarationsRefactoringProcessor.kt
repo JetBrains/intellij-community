@@ -107,7 +107,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * package directive (which are usually copyright notices).
      */
     private fun KtFile.isEffectivelyEmpty(): Boolean {
-        if (!declarations.isEmpty()) return false
+        if (declarations.isNotEmpty()) return false
         val packageDeclaration = packageDirective
         return children.all {
             it is PsiWhiteSpace ||
@@ -123,7 +123,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * We consider a class effectively empty if it only contains whitespaces.
      */
     private fun KtClassOrObject.isEffectivelyEmpty(): Boolean {
-        if (!declarations.isEmpty()) return false
+        if (declarations.isNotEmpty()) return false
         return body?.children?.all { it is PsiWhiteSpace } == true
     }
 

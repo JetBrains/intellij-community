@@ -278,7 +278,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
             val lines = str.text.lines()
             if (lines.size <= 2) return null
 
-            val middleNonBlank = lines.subList(1, lines.size - 1).filter { !it.isBlank() }
+            val middleNonBlank = lines.subList(1, lines.size - 1).filter { it.isNotBlank() }
 
             if (middleNonBlank.isNotEmpty() && middleNonBlank.all { it.trimStart().startsWith(marginChar) }) {
                 return marginChar
