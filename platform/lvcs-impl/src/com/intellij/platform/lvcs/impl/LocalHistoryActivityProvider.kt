@@ -161,7 +161,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     val icon = provider?.getIcon(activityId.kind)
     return when (item) {
       is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon)
-      is LabelActivityItem -> ActivityPresentation(item.name ?: "", icon)
+      is LabelActivityItem -> ActivityPresentation(item.name ?: "", icon, item.color)
       else -> null
     }
   }
