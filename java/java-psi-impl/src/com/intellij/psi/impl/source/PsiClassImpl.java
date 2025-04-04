@@ -170,7 +170,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiModifierList getModifierList() {
-    return (PsiModifierList)getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override
@@ -181,12 +181,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiReferenceList getExtendsList() {
-    return (PsiReferenceList)getStubOrPsiChild(JavaStubElementTypes.EXTENDS_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.EXTENDS_LIST, PsiReferenceList.class);
   }
 
   @Override
   public PsiReferenceList getImplementsList() {
-    return (PsiReferenceList)getStubOrPsiChild(JavaStubElementTypes.IMPLEMENTS_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.IMPLEMENTS_LIST, PsiReferenceList.class);
   }
 
   @Override
@@ -201,7 +201,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public @Nullable PsiReferenceList getPermitsList() {
-    return (PsiReferenceList)getStubOrPsiChild(JavaStubElementTypes.PERMITS_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.PERMITS_LIST, PsiReferenceList.class);
   }
 
   @Override
@@ -300,7 +300,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public @Nullable PsiRecordHeader getRecordHeader() {
-    return (PsiRecordHeader)getStubOrPsiChild(JavaStubElementTypes.RECORD_HEADER);
+    return getStubOrPsiChild(JavaStubElementTypes.RECORD_HEADER, PsiRecordHeader.class);
   }
 
   @Override
@@ -380,7 +380,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return (PsiTypeParameterList)getStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST, PsiTypeParameterList.class);
   }
 
   @Override

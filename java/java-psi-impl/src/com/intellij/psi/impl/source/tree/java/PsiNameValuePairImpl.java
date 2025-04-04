@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -76,7 +76,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
 
   @Override
   public PsiAnnotationMemberValue getValue() {
-    PsiLiteralExpression child = (PsiLiteralExpression)getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION);
+    PsiLiteralExpression child = getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION, PsiLiteralExpression.class);
     if (child != null) return child;
 
     ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_VALUE);
