@@ -1626,6 +1626,19 @@ elements:
                           [`<project-components>`](#element:idea-plugin__project-components) element.
                         requirement:
                           required: no
+                    - element:
+                        name: skipForDefaultProject
+                        sdkDocsFixedPath: [idea-plugin, application-components, component, skipForDefaultProject]
+                        deprecatedSince: *componentsDeprecatedSince
+                        deprecationNote: *componentsDeprecationNote
+                        description: |
+                          In the past, if present, the component was not loaded for the default project.
+
+                          Currently, project components aren't loaded in the default project by default, so this element has no effect.
+                          Use [`<loadForDefaultProject>`](#element:idea-plugin__application-components__component__loadForDefaultProject)
+                          if it is required to load a component in the default project.
+                        requirement:
+                          required: no
         - element:
             name: project-components
             deprecatedSince: *componentsDeprecatedSince
