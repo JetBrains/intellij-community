@@ -48,12 +48,11 @@ com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
 - getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 f:com.intellij.openapi.actionSystem.DataKey
-- com.intellij.openapi.util.ValueKey
 - sf:Companion:com.intellij.openapi.actionSystem.DataKey$Companion
 - sf:create(java.lang.String):com.intellij.openapi.actionSystem.DataKey
 - f:getData(com.intellij.openapi.actionSystem.DataContext):java.lang.Object
 - f:getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
-- getName():java.lang.String
+- f:getName():java.lang.String
 - f:is(java.lang.String):Z
 f:com.intellij.openapi.actionSystem.DataKey$Companion
 - f:create(java.lang.String):com.intellij.openapi.actionSystem.DataKey
