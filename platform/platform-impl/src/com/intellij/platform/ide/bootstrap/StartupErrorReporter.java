@@ -215,7 +215,7 @@ public final class StartupErrorReporter {
 
     try {
       if (error != null) {
-        title += " (" + error.getClass().getSimpleName() + ": " + error.getMessage() + ')';
+        title += " (" + error.getClass().getSimpleName() + ": " + shorten(error.getMessage()) + ')';
       }
       var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
@@ -226,6 +226,16 @@ public final class StartupErrorReporter {
     catch (Throwable t) {
       showBrowserError(t);
     }
+  }
+
+  private static String shorten(String message) {
+    if (message.length() <= 200) return message;
+    int p = message.indexOf('\n', 200);
+    if (p < 0 || p >= 250) p = message.indexOf(". ", 200);
+    if (p < 0 || p >= 250) p = message.indexOf(' ', 200);
+    if (p < 0 || p >= 250) p = 200;
+    message = message.substring(0, p);
+    return message + (message.endsWith(".") ? ".." : "...");
   }
 
   private static Path collectLogs(@Nullable Throwable error) throws IOException {
