@@ -10,11 +10,12 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-class SuspiciousEqualsCombination : KotlinApplicableInspectionBase<KtBinaryExpression, Unit>() {
+internal class SuspiciousEqualsCombination : KotlinApplicableInspectionBase<KtBinaryExpression, Unit>() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = binaryExpressionVisitor {
         visitTargetElement(it, holder, isOnTheFly)
     }
@@ -22,12 +23,10 @@ class SuspiciousEqualsCombination : KotlinApplicableInspectionBase<KtBinaryExpre
     override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         if (element.parent is KtBinaryExpression) return null
         val operands = element.parseBinary()
-        val eqeq = operands.eqEqOperands.map { it.text }
-        val eqeqeq = operands.eqEqEqOperands.map { it.text }
-        return if (eqeq.intersect(eqeqeq).isNotEmpty()) {
-            Unit
-        }
-        else null
+        val (eqEqOperands, eqEqEqOperands) = operands
+        val eqeq = eqEqOperands.map { it.text }
+        val eqeqeq = eqEqEqOperands.map { it.text }
+        return eqeq.intersect(eqeqeq).isNotEmpty().asUnit
     }
 
     override fun InspectionManager.createProblemDescriptor(
@@ -76,5 +75,5 @@ class SuspiciousEqualsCombination : KotlinApplicableInspectionBase<KtBinaryExpre
 
 private data class ComparisonOperands(
     val eqEqOperands: MutableList<KtExpression> = mutableListOf(),
-    val eqEqEqOperands: MutableList<KtExpression> = mutableListOf()
+    val eqEqEqOperands: MutableList<KtExpression> = mutableListOf(),
 )
