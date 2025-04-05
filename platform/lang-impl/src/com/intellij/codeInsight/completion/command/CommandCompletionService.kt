@@ -181,6 +181,7 @@ internal class CommandCompletionListener : LookupManagerListener {
     if (newLookup !is LookupImpl) return
     val completionService = editor.project?.getService(CommandCompletionService::class.java)
     completionService?.addFilters(newLookup, nonWrittenFiles, psiFile, editor)
+    installLookupIntentionPreviewListener(newLookup)
     val highlightingListener = CommandCompletionHighlightingListener(topLevelEditor, newLookup, psiFile, nonWrittenFiles, completionService)
     newLookup.addLookupListener(highlightingListener)
     Disposer.register(newLookup, highlightingListener)

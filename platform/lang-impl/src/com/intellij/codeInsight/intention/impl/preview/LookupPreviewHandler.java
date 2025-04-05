@@ -11,10 +11,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -33,27 +33,32 @@ import java.util.function.Function;
 public final class LookupPreviewHandler<T> implements LookupListener {
   private final IntentionPreviewPopupUpdateProcessor myProcessor;
   private final LookupImpl myLookup;
-  private final Class<T> myClass;
+  private final Function<Object, @Nullable T> myMapper;
   private final Map<T, Integer> counterHolder = new HashMap<>();
   private final AtomicInteger counterValue = new AtomicInteger(0);
   private final AtomicBoolean shown = new AtomicBoolean(false);
   private final IntentionPreviewComponentHolder myPopup;
 
   /**
-   * Construct and install the helper to the listPopup.
+   * Constructs a LookupPreviewHandler instance responsible for handling the preview
+   * of intentions/actions in an IntelliJ lookup component.
    *
-   * @param project          current project
-   * @param lookup           list popup to install the preview to
-   * @param allowedClass     class of the elements in the list, for which the preview is supported
-   * @param previewGenerator a function to generate {@link IntentionPreviewInfo} from the item. Executed in background read action.
+   * @param project          the IntelliJ project for which the preview handler is created, must not be null
+   * @param lookup           the instance of {@code LookupImpl} that provides the lookup UI, must not be null
+   * @param mapper           a function that maps an object to an optional type {@code T}, must not be null
+   * @param previewGenerator a function that generates an IntentionPreviewInfo based on the mapped type {@code T}, must not be null
    */
   public LookupPreviewHandler(@NotNull Project project,
                               @NotNull LookupImpl lookup,
-                              @NotNull Class<T> allowedClass,
-                              @NotNull Function<? super T, ? extends @NotNull IntentionPreviewInfo> previewGenerator) {
+                              @NotNull Function<Object, @Nullable T> mapper,
+                              @NotNull Function<? super @NotNull T, ? extends @NotNull IntentionPreviewInfo> previewGenerator) {
     myLookup = lookup;
-    myClass = allowedClass;
-    myProcessor = new IntentionPreviewPopupUpdateProcessor(project, obj -> previewGenerator.apply(myClass.cast(obj)));
+    myMapper = mapper;
+    myProcessor = new IntentionPreviewPopupUpdateProcessor(project, obj -> {
+      T target = mapper.apply(obj);
+      if (target == null) return IntentionPreviewInfo.EMPTY;
+      return previewGenerator.apply(target);
+    });
     myPopup = new IntentionPreviewComponentHolder() {
       @Override
       public @NotNull JComponent component() {
@@ -98,7 +103,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
 
   private void update(@NotNull LookupImpl list) {
     Object selectedItem = list.getCurrentItem();
-    T item = ObjectUtils.tryCast(selectedItem, myClass);
+    T item = myMapper.apply(selectedItem);
     if (item != null) {
       update(item);
     }
@@ -132,7 +137,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
     shown.set(true);
     myProcessor.show();
     LookupElement item = myLookup.getCurrentItem();
-    T targetValue = ObjectUtils.tryCast(item, myClass);
+    T targetValue = myMapper.apply(item);
     if (targetValue != null) {
       update(targetValue);
     }

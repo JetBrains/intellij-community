@@ -1,19 +1,32 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult.HighlightingType
+import com.intellij.codeInsight.intention.impl.preview.LookupPreviewHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.Language
+import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
 import com.intellij.model.Pointer
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder
@@ -22,6 +35,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.backend.documentation.DocumentationContent
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
@@ -35,8 +49,10 @@ import com.intellij.ui.DeferredIcon
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.function.Function
 
 
 class CommandCompletionDocumentationProvider : LookupElementDocumentationTargetProvider {
@@ -340,3 +356,69 @@ fun combineFragments(
 
 private val CACHED_COMPUTED_PREVIEW_KEY: Key<Boolean> = Key.create("completion.command.cached.computed.preview.key")
 private val CACHED_COMPUTED_PREVIEW: Key<IntentionPreviewInfo?> = Key.create("completion.command.cached.computed.preview.key")
+
+/**
+ * Installs a listener on the provided lookup that enables preview functionality for intentions
+ * if certain user settings allow it. The preview displays additional context or suggestions
+ * for relevant completion items when the lookup selection changes.
+ *
+ * @param lookup the instance of `LookupImpl` for which the preview listener is to be installed
+ */
+internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
+  if (!EditorSettingsExternalizable.getInstance().isShowIntentionPreview) return
+  val project = lookup.project
+  if (showJavaDocPreview(project)) return
+  val previewHandler =
+    LookupPreviewHandler(
+      project, lookup,
+      Function { element ->
+        return@Function element as? LookupElement
+      },
+      Function { element ->
+        val commandElement = element.`as`(CommandCompletionLookupElement::class.java)
+        if (commandElement != null &&
+            commandElement.command is CompletionCommandWithPreview) {
+          commandElement.command.getPreview()
+        }
+        else {
+          IntentionPreviewInfo.EMPTY
+        }
+      }
+    )
+
+  val listener = object : LookupListener {
+    override fun currentItemChanged(event: LookupEvent) {
+      val currentItem = event.lookup.currentItem
+      val element = currentItem
+        ?.`as`(CommandCompletionLookupElement::class.java)
+      if (element != null) {
+        previewHandler.showInitially()
+      }
+    }
+
+    override fun itemSelected(event: LookupEvent): Unit = stopPreview()
+    override fun lookupCanceled(event: LookupEvent): Unit = stopPreview()
+    fun stopPreview() {
+      previewHandler.close()
+      lookup.removeLookupListener(this)
+    }
+  }
+
+  lookup.addLookupListener(listener)
+
+  val connection: MessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect(lookup)
+  connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+      if (action !is ShowQuickDocInfoAction) {
+        return
+      }
+      listener.stopPreview()
+    }
+  })
+}
+
+internal fun showJavaDocPreview(project: Project): Boolean =
+  CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO ||
+  DocumentationSettings.autoShowQuickDocInModalDialogs() ||
+  ToolWindowManager.getInstance(project)
+    .getToolWindow(DocumentationToolWindowManager.TOOL_WINDOW_ID)?.isVisible == true
