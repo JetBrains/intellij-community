@@ -11836,7 +11836,44 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/copyConcatenatedStringToClipboard")
+    public static class CopyConcatenatedStringToClipboard extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constants.kt")
+        public void testConstants() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/copyConcatenatedStringToClipboard/constants.kt");
+        }
+
+        @TestMetadata("numbers.kt")
+        public void testNumbers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/copyConcatenatedStringToClipboard/numbers.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/copyConcatenatedStringToClipboard/simple.kt");
+        }
+
+        @TestMetadata("simpleString.kt")
+        public void testSimpleString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/copyConcatenatedStringToClipboard/simpleString.kt");
+        }
+
+        @TestMetadata("variables.kt")
+        public void testVariables() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/copyConcatenatedStringToClipboard/variables.kt");
+        }
+    }
 
 
 
