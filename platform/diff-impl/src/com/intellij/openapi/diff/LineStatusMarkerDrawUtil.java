@@ -212,7 +212,8 @@ public final class LineStatusMarkerDrawUtil {
         int start = change.y1;
         if (!change.flags.isIgnored) {
           Color gutterColor = colorScheme.getColor(editor, change.type);
-          paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
+          int x1 = isHovered ? x - getHoveredMarkerExtraWidth() : x;
+          paintTriangle(g, editor, gutterColor, borderColor, x1, endX, start);
         }
         else {
           Color ignoredBorderColor = borderColor != null ? borderColor : colorScheme.getIgnoredBorderColor(editor, change.type);
