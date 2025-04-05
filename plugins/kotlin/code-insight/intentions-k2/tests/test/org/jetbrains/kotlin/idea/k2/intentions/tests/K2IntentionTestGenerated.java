@@ -8760,7 +8760,79 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertArrayParameterToVararg")
+    public static class ConvertArrayParameterToVararg extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayGenericType.kt")
+        public void testArrayGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/arrayGenericType.kt");
+        }
+
+        @TestMetadata("arrayInt.kt")
+        public void testArrayInt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/arrayInt.kt");
+        }
+
+        @TestMetadata("arrayString.kt")
+        public void testArrayString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/arrayString.kt");
+        }
+
+        @TestMetadata("inConstructor.kt")
+        public void testInConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/inConstructor.kt");
+        }
+
+        @TestMetadata("inLambda.kt")
+        public void testInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/inLambda.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/intArray.kt");
+        }
+
+        @TestMetadata("longArray.kt")
+        public void testLongArray() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/longArray.kt");
+        }
+
+        @TestMetadata("starProjection.kt")
+        public void testStarProjection() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/starProjection.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/vararg.kt");
+        }
+
+        @TestMetadata("withContravariant.kt")
+        public void testWithContravariant() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/withContravariant.kt");
+        }
+
+        @TestMetadata("withCovariance.kt")
+        public void testWithCovariance() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/withCovariance.kt");
+        }
+
+        @TestMetadata("withDefaultValue.kt")
+        public void testWithDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/withDefaultValue.kt");
+        }
+    }
 
 
 
