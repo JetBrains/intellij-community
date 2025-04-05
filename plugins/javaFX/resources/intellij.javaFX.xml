@@ -99,6 +99,9 @@
     <moduleBuilder builderClass="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder"/>
     <fileTemplateGroup implementation="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleTemplateGroup"/>
 
+    <internalFileTemplate name="JavaFXApplication"/>
+    <internalFileTemplate name="FxmlFile"/>
+
     <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavafxBundledDictionaryProvider"/>
   </extensions>
 
