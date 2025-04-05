@@ -52,6 +52,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarnings
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
 import com.intellij.xdebugger.impl.frame.XValueMarkers
@@ -191,7 +192,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myTabInitDataFlow
 
   override fun getRunContentDescriptor(): RunContentDescriptor {
-    if (useFeProxy()) {
+    if (useFeProxy() && showFeWarnings()) {
       LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
     }
     val descriptor = myRunContentDescriptor
@@ -406,7 +407,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   val sessionTab: XDebugSessionTab?
     get() {
-      if (useFeProxy()) {
+      if (useFeProxy() && showFeWarnings()) {
         LOG.error("Debug tab should not be used in split mode from XDebugSession")
       }
       return mySessionTab

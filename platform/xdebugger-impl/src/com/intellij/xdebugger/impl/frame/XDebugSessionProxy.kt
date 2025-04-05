@@ -82,6 +82,8 @@ interface XDebugSessionProxy {
 
     @JvmStatic
     fun useFeProxy(): Boolean = Registry.`is`("xdebugger.toolwindow.split")
+
+    fun showFeWarnings(): Boolean = Registry.`is`("xdebugger.toolwindow.split.warnings")
   }
 
   // TODO WeakReference<XDebugSession>?
