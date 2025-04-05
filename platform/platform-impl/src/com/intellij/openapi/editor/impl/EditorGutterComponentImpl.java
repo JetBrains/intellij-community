@@ -219,6 +219,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private boolean myHovered = false;
   private final @NotNull EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
   private int myHoveredFreeMarkersLine = -1;
+  private int myHoveredFreeMarkersY = -1;
   private @Nullable GutterIconRenderer myCurrentHoveringGutterRenderer;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
@@ -2091,16 +2092,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     int x = convertX(point.x);
 
     int hoveredLine;
+    int hoveredY;
     if (x >= getExtraLineMarkerFreePaintersAreaOffset() &&
         x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraRightFreePaintersAreaWidth()) {
       hoveredLine = getEditor().xyToLogicalPosition(point).line;
+      hoveredY = point.y;
     }
     else {
       hoveredLine = -1;
+      hoveredY = -1;
     }
 
-    if (myHoveredFreeMarkersLine != hoveredLine) {
+    if (myHoveredFreeMarkersLine != hoveredLine || myHoveredFreeMarkersY != hoveredY) {
       myHoveredFreeMarkersLine = hoveredLine;
+      myHoveredFreeMarkersY = hoveredY;
       repaint();
     }
   }
@@ -2981,6 +2986,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   @Override
   public int getHoveredFreeMarkersLine() {
     return myHoveredFreeMarkersLine;
+  }
+
+  @Override
+  public int getHoveredFreeMarkersY() {
+    return myHoveredFreeMarkersY;
   }
 
   @Override
