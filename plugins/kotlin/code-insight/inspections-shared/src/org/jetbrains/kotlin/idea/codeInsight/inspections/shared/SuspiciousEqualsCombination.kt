@@ -2,30 +2,46 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+class SuspiciousEqualsCombination : KotlinApplicableInspectionBase<KtBinaryExpression, Unit>() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = binaryExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
+    }
 
-class SuspiciousEqualsCombination : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
-        binaryExpressionVisitor(fun(expression) {
-            if (expression.parent is KtBinaryExpression) return
-            val operands = expression.parseBinary()
-            val eqeq = operands.eqEqOperands.map { it.text }
-            val eqeqeq = operands.eqEqEqOperands.map { it.text }
-            if (eqeq.intersect(eqeqeq).isNotEmpty()) {
-                holder.registerProblem(
-                    expression, KotlinBundle.message("suspicious.combination.of.and"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                )
-            }
-        })
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+        if (element.parent is KtBinaryExpression) return null
+        val operands = element.parseBinary()
+        val eqeq = operands.eqEqOperands.map { it.text }
+        val eqeqeq = operands.eqEqEqOperands.map { it.text }
+        return if (eqeq.intersect(eqeqeq).isNotEmpty()) {
+            Unit
+        }
+        else null
+    }
+
+    override fun InspectionManager.createProblemDescriptor(
+        element: KtBinaryExpression,
+        context: Unit,
+        rangeInElement: TextRange?,
+        onTheFly: Boolean,
+    ): ProblemDescriptor = createProblemDescriptor(
+        /* psiElement = */ element,
+        /* rangeInElement = */ rangeInElement,
+        /* descriptionTemplate = */ KotlinBundle.message("suspicious.combination.of.and"),
+        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        /* onTheFly = */ onTheFly,
+    )
 
     private fun KtBinaryExpression.parseBinary(pair: ComparisonOperands = ComparisonOperands()): ComparisonOperands {
         when (operationToken) {
