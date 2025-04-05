@@ -14197,6 +14197,140 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator")
+    public static class RemoveRedundantSpreadOperator extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/basic.kt");
+        }
+
+        @TestMetadata("booleanArrayOf.kt")
+        public void testBooleanArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/booleanArrayOf.kt");
+        }
+
+        @TestMetadata("byteArrayOf.kt")
+        public void testByteArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/byteArrayOf.kt");
+        }
+
+        @TestMetadata("charArrayOf.kt")
+        public void testCharArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/charArrayOf.kt");
+        }
+
+        @TestMetadata("doubleArrayOf.kt")
+        public void testDoubleArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/doubleArrayOf.kt");
+        }
+
+        @TestMetadata("emptyArray.kt")
+        public void testEmptyArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/emptyArray.kt");
+        }
+
+        @TestMetadata("emptyLiteral.kt")
+        public void testEmptyLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/emptyLiteral.kt");
+        }
+
+        @TestMetadata("floatArrayOf.kt")
+        public void testFloatArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/floatArrayOf.kt");
+        }
+
+        @TestMetadata("hasOverloadFunction.kt")
+        public void testHasOverloadFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/hasOverloadFunction.kt");
+        }
+
+        @TestMetadata("hasOverloadFunction2.kt")
+        public void testHasOverloadFunction2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/hasOverloadFunction2.kt");
+        }
+
+        @TestMetadata("hasOverloadFunction3.kt")
+        public void testHasOverloadFunction3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/hasOverloadFunction3.kt");
+        }
+
+        @TestMetadata("intArrayOf.kt")
+        public void testIntArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/intArrayOf.kt");
+        }
+
+        @TestMetadata("intArrayOfWithoutArguments.kt")
+        public void testIntArrayOfWithoutArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/intArrayOfWithoutArguments.kt");
+        }
+
+        @TestMetadata("intArrayOfWithoutArguments2.kt")
+        public void testIntArrayOfWithoutArguments2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/intArrayOfWithoutArguments2.kt");
+        }
+
+        @TestMetadata("intArrayOfWithoutArguments3.kt")
+        public void testIntArrayOfWithoutArguments3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/intArrayOfWithoutArguments3.kt");
+        }
+
+        @TestMetadata("literal.kt")
+        public void testLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/literal.kt");
+        }
+
+        @TestMetadata("longArrayOf.kt")
+        public void testLongArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/longArrayOf.kt");
+        }
+
+        @TestMetadata("multipleValues.kt")
+        public void testMultipleValues() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/multipleValues.kt");
+        }
+
+        @TestMetadata("multipleValuesWithOtherValues.kt")
+        public void testMultipleValuesWithOtherValues() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/multipleValuesWithOtherValues.kt");
+        }
+
+        @TestMetadata("namedArgument.kt")
+        public void testNamedArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/namedArgument.kt");
+        }
+
+        @TestMetadata("namedArgumentForArray.kt")
+        public void testNamedArgumentForArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/namedArgumentForArray.kt");
+        }
+
+        @TestMetadata("noParams.kt")
+        public void testNoParams() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/noParams.kt");
+        }
+
+        @TestMetadata("shortArrayOf.kt")
+        public void testShortArrayOf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/shortArrayOf.kt");
+        }
+
+        @TestMetadata("spredOperatorArgument.kt")
+        public void testSpredOperatorArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator/spredOperatorArgument.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override

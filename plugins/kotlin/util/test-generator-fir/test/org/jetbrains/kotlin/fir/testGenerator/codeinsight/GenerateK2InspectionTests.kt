@@ -98,6 +98,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replacePutWithAssignment")
             model("${idea}/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast")
             model("${idea}/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty")
+            model("${idea}/inspectionsLocal/removeRedundantSpreadOperator")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.
