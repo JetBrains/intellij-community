@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-internal class SuspiciousEqualsCombination : KotlinApplicableInspectionBase<KtBinaryExpression, Unit>() {
+internal class SuspiciousEqualsCombinationInspection : KotlinApplicableInspectionBase<KtBinaryExpression, Unit>() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> = binaryExpressionVisitor {
         visitTargetElement(it, holder, isOnTheFly)
     }

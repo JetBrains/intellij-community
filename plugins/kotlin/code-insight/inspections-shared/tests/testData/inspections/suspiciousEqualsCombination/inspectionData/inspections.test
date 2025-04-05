@@ -1,2 +1,2 @@
-// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousEqualsCombination
-// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousEqualsCombination
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousEqualsCombinationInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousEqualsCombinationInspection
