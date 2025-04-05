@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes
 
 import com.intellij.ide.fileTemplates.FileTemplate
+import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.PluginBundledTemplate
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -37,6 +38,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
+
+private val LOG = Logger.getInstance(FileTypeUsageCounterCollector::class.java)
 
 @ApiStatus.Internal
 object FileTypeUsageCounterCollector : CounterUsagesCollector() {
@@ -119,6 +122,17 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
         pairs.add(EventFields.PluginInfo.with(getPluginInfoByDescriptor(pluginDescriptor)))
       }
     })
+
+    if (fileTemplate is PluginBundledTemplate) {
+      val internalTemplates = FileTemplateManager.getDefaultInstance().getInternalTemplates()
+        .map { t -> t.getName() }
+        .toSet()
+
+      LOG.assertTrue(
+        internalTemplates.contains(fileTemplate.name),
+        "Unknown bundled file template: $fileTemplate, register it in plugin.xml via <internalFileTemplate name=\"${fileTemplate.name}\"/> tag"
+      )
+    }
   }
 
   fun logOpened(
