@@ -2,6 +2,7 @@
 package com.intellij.execution.eel
 
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelTunnelsApi.CreateFilePath
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
@@ -11,17 +12,25 @@ import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.network.NetworkConstants
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import io.ktor.util.decodeString
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.not
-import org.hamcrest.MatcherAssert.*
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels.SocketChannel
+import java.nio.file.Path
+import kotlin.io.path.pathString
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -35,10 +44,8 @@ class EelLocalTunnelApiTest {
 
     @BeforeAll
     @JvmStatic
-    fun createExecutor() {
-      // helper is SERVER (we connect)
-      serverExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_SERVER.name)
-      // helper is CLIENT (we are the server)
+    fun createExecutor() { // helper is SERVER (we connect)
+      serverExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_SERVER.name) // helper is CLIENT (we are the server)
       clientExecutor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.NETWORK_CLIENT.name)
     }
   }
@@ -57,8 +64,7 @@ class EelLocalTunnelApiTest {
       val buffer = ByteBuffer.allocate(4096)
       connection.receiveChannel.receive(buffer).getOrThrow()
       Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer.flip()))
-      connection.sendChannel.sendWholeBuffer(NetworkConstants.HELLO_FROM_CLIENT.toBuffer()).getOrThrow()
-      //      Helper closes the stream, so does the channel
+      connection.sendChannel.sendWholeBuffer(NetworkConstants.HELLO_FROM_CLIENT.toBuffer()).getOrThrow() //      Helper closes the stream, so does the channel
       Assertions.assertEquals(ReadResult.EOF, connection.receiveChannel.receive(ByteBuffer.allocate(1)).getOrThrow())
     }
   }
@@ -73,8 +79,7 @@ class EelLocalTunnelApiTest {
       connection.close()
       val result = helper.awaitProcessResult()
       val hasReset = containsString("reset")
-      assertThat("With linger 0 there must be reset. Without linger no.",
-                 result.stderr.decodeToString(), if (setLingerZero) hasReset else not(hasReset))
+      assertThat("With linger 0 there must be reset. Without linger no.", result.stderr.decodeToString(), if (setLingerZero) hasReset else not(hasReset))
     }
   }
 
@@ -95,15 +100,51 @@ class EelLocalTunnelApiTest {
     }
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  fun testUnixSocket(explicitSocket: Boolean, @TempDir tempDir: Path): Unit = timeoutRunBlocking {
+    val path = if (explicitSocket) {
+      CreateFilePath.Fixed(tempDir.resolve("file.sock").pathString)
+    }
+    else {
+      CreateFilePath.MkTemp()
+    }
+    repeat(5) {
+      val (socketPathStr, tx, rx) = localEel.tunnels.listenOnUnixSocket(path)
+      val socketPath = Path.of(socketPathStr)
+      val helloFromClient = "fromClient".encodeToByteArray()
+      val helloFromServer = "fromServer".encodeToByteArray()
+      val client = async(Dispatchers.IO) {
+        SocketChannel.open(UnixDomainSocketAddress.of(socketPath)).use {
+          val bufferRecv = ByteBuffer.allocate(helloFromServer.size)
+          while (bufferRecv.hasRemaining()) {
+            it.read(bufferRecv)
+          }
+          Assertions.assertEquals(helloFromServer.decodeToString(), bufferRecv.flip().decodeString())
+          val bufferSnd = ByteBuffer.wrap(helloFromClient)
+          while (bufferSnd.hasRemaining()) {
+            it.write(bufferSnd)
+          }
+        }
+      }
+      tx.sendWholeBuffer(ByteBuffer.wrap(helloFromServer)).getOrThrow()
+      val bufferRecv = ByteBuffer.allocate(helloFromClient.size)
+      while (bufferRecv.hasRemaining()) {
+        rx.receive(bufferRecv)
+      }
+      Assertions.assertEquals(helloFromClient.decodeToString(), bufferRecv.flip().decodeString())
+      client.join()
+      rx.close()
+      tx.close()
+    }
+  }
+
   private suspend fun withServer(block: suspend CoroutineScope.(EelTunnelsApi.Connection, EelProcess) -> Unit) {
 
     val helper = localEel.exec.execute(serverExecutor.createBuilderToExecuteMain().build()).getOrThrow()
     try {
       val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
-      val connection = localEel.tunnels.getConnectionToRemotePort()
-        .port(port.toUShort())
-        .preferV4()
-        .getOrThrow()
+      val connection = localEel.tunnels.getConnectionToRemotePort().port(port.toUShort()).preferV4().getOrThrow()
       coroutineScope {
         block(connection, helper)
       }
