@@ -14,9 +14,12 @@ import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
@@ -46,6 +49,14 @@ class FrontendXValue private constructor(
   private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
     XValueApi.getInstance().computeChildren(xValueDto.id)
   }
+
+  private val fullValueEvaluator = xValueDto.fullValueEvaluator.toFlow().map { evaluatorDto ->
+    if (evaluatorDto == null) {
+      return@map null
+    }
+    // TODO: should we strict the coroutine scope?
+    FrontendXFullValueEvaluator(cs, xValueDto.id, evaluatorDto)
+  }.stateIn(cs, SharingStarted.Eagerly, null)
 
   init {
     cs.launch {
@@ -98,9 +109,25 @@ class FrontendXValue private constructor(
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.setPresentation(presentation.value)
+    val initialFullValueEvaluator = fullValueEvaluator.value
+    if (initialFullValueEvaluator != null) {
+      node.setFullValueEvaluator(initialFullValueEvaluator)
+    }
     node.childCoroutineScope(parentScope = cs, "FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      presentation.collectLatest {
-        node.setPresentation(it)
+      launch {
+        fullValueEvaluator.collectLatest { evaluator ->
+          if (evaluator != null) {
+            node.setFullValueEvaluator(evaluator)
+          }
+          else if (node is XValueNodeEx) {
+            node.clearFullValueEvaluator()
+          }
+        }
+      }
+      launch {
+        presentation.collectLatest {
+          node.setPresentation(it)
+        }
       }
     }
   }
