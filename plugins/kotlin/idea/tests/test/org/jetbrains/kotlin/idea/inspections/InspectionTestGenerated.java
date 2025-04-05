@@ -306,11 +306,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/spelling/inspectionData/inspections.test");
         }
 
-        @TestMetadata("suspiciousEqualsCombination/inspectionData/inspections.test")
-        public void testSuspiciousEqualsCombination_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/suspiciousEqualsCombination/inspectionData/inspections.test");
-        }
-
         @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
         public void testTwoSetOfTypeparameters_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/twoSetOfTypeparameters/inspectionData/inspections.test");
