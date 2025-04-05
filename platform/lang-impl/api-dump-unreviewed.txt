@@ -8112,6 +8112,7 @@ c:com.intellij.ide.actions.CreateDirectoryOrPackageAction
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - sf:TEST_DIRECTORY_NAME_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
+- p:<init>(Z):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:collectSuggestedDirectories(com.intellij.psi.PsiDirectory):java.util.List
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
