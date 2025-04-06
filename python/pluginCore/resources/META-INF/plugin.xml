@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://www.jetbrains.com/pycharm/">
   <!--Python community support for Pycharm, DS and IC.-->
   <!--Include core Python functionality-->
