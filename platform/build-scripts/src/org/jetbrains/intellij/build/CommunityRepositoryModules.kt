@@ -188,9 +188,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
-    pluginAuto("intellij.emojipicker") { spec ->
-      spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
-    },
     pluginAuto(listOf("intellij.textmate")) { spec ->
       spec.withResource("lib/bundles", "lib/bundles")
     },
