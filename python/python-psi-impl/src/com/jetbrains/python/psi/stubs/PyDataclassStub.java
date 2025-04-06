@@ -53,6 +53,12 @@ public interface PyDataclassStub extends PyCustomClassStub {
   @Nullable Boolean frozenValue();
 
   /**
+   * @return value of `matchArgs` parameter or
+   * its default value if it is not specified or could not be evaluated.
+   */
+  @Nullable Boolean matchArgsValue();
+
+  /**
    * @return value of `kw_only` (attrs) parameter or
    * its default value if it is not specified or could not be evaluated.
    */

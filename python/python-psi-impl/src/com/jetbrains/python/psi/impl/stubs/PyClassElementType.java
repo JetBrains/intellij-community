@@ -52,6 +52,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                ContainerUtil.map(psi.getSuperClassExpressions(), PsiElement::getText),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
+                               psi.getOwnMatchArgs(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
                                psi.getDeprecationMessage(),
                                getStubElementType(),
@@ -128,6 +129,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     QualifiedName.serialize(pyClassStub.getMetaClass(), dataStream);
 
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
+    PyFileElementType.writeNullableList(dataStream, pyClassStub.getMatchArgs());
 
     final String docString = pyClassStub.getDocString();
     dataStream.writeUTFFast(docString != null ? docString : "");
@@ -158,6 +160,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final QualifiedName metaClass = QualifiedName.deserialize(dataStream);
 
     final List<String> slots = PyFileElementType.readNullableList(dataStream);
+    final List<String> matchArgs = PyFileElementType.readNullableList(dataStream);
 
     final String docStringInStub = dataStream.readUTFFast();
     final String docString = StringUtil.nullize(docStringInStub);
@@ -168,7 +171,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
     final PyCustomClassStub customStub = deserializeCustomStub(dataStream);
 
-    return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, docString, deprecationMessage,
+    return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, matchArgs, docString, deprecationMessage,
                                getStubElementType(), versions, customStub);
   }
 

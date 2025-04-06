@@ -89,6 +89,11 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     @ApiStatus.Internal
     class InitVarInfo(val targetExpression: PyTargetExpression, val type: PyType?)
 
+    fun getGeneratedMatchArgs(cls: PyClass, context: TypeEvalContext): List<String>? {
+      if (parseDataclassParameters(cls, context)?.matchArgs != true) return null
+      return getDataclassTypeForClass(cls, context)?.getParameters(context)?.mapNotNull { it.name }
+    }
+
     private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
       val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null
       val callee = call.callee as? PyReferenceExpression ?: return null

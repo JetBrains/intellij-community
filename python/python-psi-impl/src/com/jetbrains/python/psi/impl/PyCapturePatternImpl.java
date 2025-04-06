@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -146,20 +146,15 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
           return null;
         }
 
-        final PyTargetExpression matchArgs = as(resolveTypeMember(classType, PyNames.MATCH_ARGS, context), PyTargetExpression.class);
-        if (matchArgs == null) return null;
-
-        var matchArgsValue = PyPsiUtils.flattenParens(matchArgs.findAssignedValue());
-        if (matchArgsValue instanceof PySequenceExpression sequenceExpression) {
-          if (sequenceExpression.getElements().length <= index) return null;
-
-          final String attributeName = PyEvaluator.evaluate(sequenceExpression.getElements()[index], String.class);
-          if (attributeName == null) return null;
-
-          final PyExpression instanceAttribute = as(resolveTypeMember(classType, attributeName, context), PyExpression.class);
-          if (instanceAttribute == null) return null;
-          return context.getType(instanceAttribute);
+        final PyClass cls = classType.getPyClass();
+        List<String> matchArgs = cls.getOwnMatchArgs();
+        if (matchArgs == null) {
+          matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(cls, context);
         }
+        if (matchArgs == null || matchArgs.size() > arguments.size()) return null;
+
+        final PyTypedElement instanceAttribute = as(resolveTypeMember(classType, matchArgs.get(index), context), PyTypedElement.class);
+        return instanceAttribute != null ? context.getType(instanceAttribute) : null;
       }
       return null;
     }
@@ -168,7 +163,7 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
       if (classPattern == null) return null;
 
       if (context.getType(classPattern) instanceof PyClassType classType) {
-        final PyExpression instanceAttribute = as(resolveTypeMember(classType, keywordPattern.getKeyword(), context), PyExpression.class);
+        final PyTypedElement instanceAttribute = as(resolveTypeMember(classType, keywordPattern.getKeyword(), context), PyTypedElement.class);
         if (instanceAttribute == null) return null;
         return context.getType(instanceAttribute);
       }

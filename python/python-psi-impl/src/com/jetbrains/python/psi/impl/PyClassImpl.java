@@ -263,6 +263,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
+  public @Nullable List<@NotNull String> getOwnMatchArgs() {
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getMatchArgs();
+    }
+
+    final PyTargetExpression matchArgs = ContainerUtil.find(getClassAttributes(), target -> PyNames.MATCH_ARGS.equals(target.getName()));
+    if (matchArgs != null) {
+      final PyExpression value = matchArgs.findAssignedValue();
+      return PyUtilCore.strListValue(value);
+    }
+
+    return null;
+  }
+
+  @Override
   public PyClass @NotNull [] getSuperClasses(@Nullable TypeEvalContext context) {
     final List<PyClassLikeType> superTypes = getSuperClassTypes(notNullizeContext(context));
     if (superTypes.isEmpty()) {
