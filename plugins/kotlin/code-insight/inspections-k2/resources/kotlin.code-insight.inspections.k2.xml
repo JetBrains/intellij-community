@@ -805,5 +805,14 @@
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.redundant.spread.operator.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.RedundantAsSequenceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle"
+                     groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.redundant.assequence.call" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
