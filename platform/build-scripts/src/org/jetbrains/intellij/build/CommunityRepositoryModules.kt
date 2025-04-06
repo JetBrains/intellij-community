@@ -112,6 +112,8 @@ object CommunityRepositoryModules {
 
       spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "maven-event-listener.jar")
 
+      spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
+
       spec.doNotCopyModuleLibrariesAutomatically(listOf(
         "intellij.maven.artifactResolver.common",
         "intellij.maven.artifactResolver.m31",
@@ -121,6 +123,7 @@ object CommunityRepositoryModules {
         "intellij.maven.server.m40",
         "intellij.maven.server.indexer",
       ))
+
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
@@ -211,6 +214,12 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.compilation.charts")) { spec ->
       spec.withModule("intellij.compilation.charts.jps")
     },
+    plugin("intellij.repository.search") { spec ->
+      spec.withModule("intellij.maven.model", relativeJarPath = "maven-model.jar")
+      spec.withProjectLibrary("package-search-api-client")
+      spec.withProjectLibrary("ktor-client-logging")
+      spec.withProjectLibrary("kotlinx-document-store-mvstore")
+    }
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(

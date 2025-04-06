@@ -74,6 +74,9 @@
 - name: lib/maven-server-telemetry.jar
   modules:
   - name: intellij.maven.server.telemetry
+- name: lib/maven-server.jar
+  modules:
+  - name: intellij.maven.server
 - name: lib/maven.jar
   modules:
   - name: intellij.idea.community.build.dependencies

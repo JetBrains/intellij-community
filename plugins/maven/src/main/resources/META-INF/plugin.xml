@@ -1,23 +1,23 @@
 <idea-plugin allow-bundled-update="true">
   <id>org.jetbrains.idea.maven</id>
   <name>Maven</name>
-  <category>Build Tools</category>
-  <description>
-    <![CDATA[
-      Provides <a href="https://maven.apache.org/">Maven</a> support.
-      The following features are available:
-        <ul>
-        <li>Maven Projects tool window.</li>
-        <li>Dedicated module type.</li>
-        <li>Maven repositories support.</li>
-        <li>Full editing support for pom.xml file.</li>
-        <li>Possibility to import Maven projects.</li>
-        <li>Running and debugging Maven goals.</li>
-        <li>Compiling.</li>
-        </ul>
-      ]]>
-  </description>
   <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+
+  <description><![CDATA[
+    Provides <a href="https://maven.apache.org/">Maven</a> support.
+    The following features are available:
+    <ul>
+      <li>Maven Projects tool window.</li>
+      <li>Dedicated module type.</li>
+      <li>Maven repositories support.</li>
+      <li>Full editing support for the pom.xml file.</li>
+      <li>Possibility to import Maven projects.</li>
+      <li>Running and debugging Maven goals.</li>
+      <li>Compiling.</li>
+    </ul>
+  ]]></description>
+
   <resource-bundle>messages.MavenProjectBundle</resource-bundle>
 
   <extensionPoints>
@@ -61,11 +61,12 @@
     <extensionPoint name="mavenRemoteConnectionCreator" interface="org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator" dynamic="true"/>
   </extensionPoints>
 
-  <depends>com.intellij.properties</depends>
-  <depends>com.intellij.modules.java</depends>
-  <depends>org.jetbrains.idea.reposearch</depends>
-  <depends>org.jetbrains.idea.maven.model</depends>
-  <depends>org.jetbrains.idea.maven.server.api</depends>
+  <dependencies>
+    <plugin id="com.intellij.properties"/>
+    <plugin id="com.intellij.java"/>
+    <plugin id="org.jetbrains.idea.reposearch"/>
+  </dependencies>
+
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
   <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
