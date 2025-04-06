@@ -3636,6 +3636,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testUninitializedWithGetter3() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/variables/changeMutability/canBeVal/uninitializedWithGetter3.kt");
         }
+
+        @TestMetadata("uninitializedWithGetterAndSetter.kt")
+        public void testUninitializedWithGetterAndSetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/variables/changeMutability/canBeVal/uninitializedWithGetterAndSetter.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

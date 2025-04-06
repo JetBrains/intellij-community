@@ -20406,6 +20406,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 public void testUninitializedWithGetter3() throws Exception {
                     runTest("testData/quickfix/variables/changeMutability/canBeVal/uninitializedWithGetter3.kt");
                 }
+
+                @TestMetadata("uninitializedWithGetterAndSetter.kt")
+                public void testUninitializedWithGetterAndSetter() throws Exception {
+                    runTest("testData/quickfix/variables/changeMutability/canBeVal/uninitializedWithGetterAndSetter.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
