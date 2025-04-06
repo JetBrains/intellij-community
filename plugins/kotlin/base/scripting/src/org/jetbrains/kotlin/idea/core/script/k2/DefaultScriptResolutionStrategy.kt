@@ -74,7 +74,7 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
                     project.publishGlobalModuleStateModificationEvent()
                 }
 
-                ScriptDependenciesModificationTracker.Companion.getInstance(project).incModificationCount()
+                ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
                 HighlightingSettingsPerFile.getInstance(project).incModificationCount()
 
                 if (project.isOpen && !project.isDisposed) {

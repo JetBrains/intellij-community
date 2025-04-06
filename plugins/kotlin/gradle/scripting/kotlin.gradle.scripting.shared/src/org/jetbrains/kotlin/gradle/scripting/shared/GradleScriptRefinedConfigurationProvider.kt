@@ -13,10 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.LibraryDependency
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.SdkDependency
-import com.intellij.platform.workspace.jps.entities.SdkId
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.*
@@ -27,9 +24,10 @@ import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.JvmDependency
@@ -40,11 +38,11 @@ import kotlin.script.experimental.jvm.jvm
 class GradleScriptRefinedConfigurationProvider(
     val project: Project, val coroutineScope: CoroutineScope
 ) : ScriptRefinedConfigurationResolver, ScriptWorkspaceModelManager {
-    private val data = ConcurrentHashMap<VirtualFile, ScriptConfigurationWithSdk>()
+    private val data = AtomicReference<Map<VirtualFile, ScriptConfigurationWithSdk>>(emptyMap())
 
     override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? = null
 
-    override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
+    override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data.get()[virtualFile]
 
     suspend fun updateConfigurations(scripts: Iterable<GradleScriptModel>) {
         val configurations = scripts.associate { it: GradleScriptModel ->
@@ -72,21 +70,23 @@ class GradleScriptRefinedConfigurationProvider(
             it.virtualFile to ScriptConfigurationWithSdk(updatedConfiguration, sdk)
         }
 
-        data.putAll(configurations)
+        data.set(configurations)
     }
 
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
-        val storageWithGradleScriptModules = getUpdatedStorage(configurationPerFile)
-
         project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
+            val storageWithGradleScriptModules = getUpdatedStorage(configurationPerFile)
+
             storage.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, storageWithGradleScriptModules)
         }
     }
 
-    private suspend fun getUpdatedStorage(configurations: Map<VirtualFile, ScriptConfigurationWithSdk>): MutableEntityStorage {
+    private fun getUpdatedStorage(
+        configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
+    ): MutableEntityStorage {
         val result = MutableEntityStorage.create()
 
-        val urlManager = project.serviceAsync<WorkspaceModel>().getVirtualFileUrlManager()
+        val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
         val virtualFileCache = ScriptClassPathUtil.getInstance()
         val dependencyFactory = ScriptDependencyFactory(result, configurations, virtualFileCache)
 
@@ -94,7 +94,9 @@ class GradleScriptRefinedConfigurationProvider(
             val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
             val source = KotlinGradleScriptModuleEntitySource(scriptFile.toVirtualFileUrl(urlManager))
 
-            val definitionName = findScriptDefinition(project, VirtualFileScriptSource(scriptFile)).name
+            val definition = findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
+            val definitionName = definition.name
+            val externalProjectPath = definition.compilationConfiguration[ScriptCompilationConfiguration.gradle.externalProjectPath]
             val scriptRelativeLocation = project.scriptModuleRelativeLocation(scriptFile)
 
             val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
@@ -130,7 +132,16 @@ class GradleScriptRefinedConfigurationProvider(
                 })
             }.distinct().sortedBy { it.library.name }
 
-            result.addEntity(ModuleEntity("$KOTLIN_SCRIPTS_MODULE_NAME.$definitionName.$scriptRelativeLocation", allDependencies, source))
+
+            val moduleName = "$KOTLIN_SCRIPTS_MODULE_NAME.$definitionName.$scriptRelativeLocation"
+            result addEntity ModuleEntity(moduleName, allDependencies, source) {
+                this.exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
+                    this.externalSystem = GradleConstants.SYSTEM_ID.id
+                    this.module = this@ModuleEntity
+                    this.rootProjectPath = externalProjectPath
+                    this.linkedProjectId = moduleName
+                }
+            }
         }
 
         return result

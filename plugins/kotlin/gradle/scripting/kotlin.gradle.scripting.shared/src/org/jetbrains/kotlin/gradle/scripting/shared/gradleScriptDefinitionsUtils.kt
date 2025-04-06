@@ -9,10 +9,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.EnvironmentUtil
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
-import org.jetbrains.kotlin.idea.core.script.k2.configurationResolverDelegate
-import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
-import org.jetbrains.kotlin.idea.core.script.k2.scriptWorkspaceModelManagerDelegate
+import org.jetbrains.kotlin.idea.core.script.k2.*
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
@@ -30,6 +27,7 @@ import kotlin.io.path.*
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
+import kotlin.script.experimental.util.PropertiesCollection
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 fun loadGradleDefinitions(
@@ -145,7 +143,8 @@ private fun loadGradleTemplates(
                 it.hostConfiguration,
                 it.evaluationConfiguration,
                 it.defaultCompilerOptions,
-                project
+                project,
+                projectPath
             )
         } ?: it
     }
@@ -219,7 +218,8 @@ class GradleKotlinScriptDefinitionWrapper(
     override val hostConfiguration: ScriptingHostConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?,
     override val defaultCompilerOptions: Iterable<String>,
-    val project: Project
+    val project: Project,
+    externalProjectPath: String? = null
 ) : ScriptDefinition.FromConfigurationsBase() {
 
     init {
@@ -236,6 +236,9 @@ class GradleKotlinScriptDefinitionWrapper(
         ).with {
             @Suppress("DEPRECATION_ERROR")
             fileNamePattern.put(legacyDefinition.scriptFilePattern.pattern)
+            gradle {
+                externalProjectPath(externalProjectPath)
+            }
             ide {
                 acceptedLocations.put(listOf(ScriptAcceptedLocation.Project))
                 kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
@@ -256,12 +259,27 @@ class GradleKotlinScriptDefinitionWrapper(
     override val canDefinitionBeSwitchedOff: Boolean = false
 }
 
+val GradleScriptCompilationConfigurationKeys.external: PropertiesCollection.Key<() -> ScriptRefinedConfigurationResolver> by PropertiesCollection.key()
+
+interface GradleScriptCompilationConfigurationKeys
+
+open class GradleScriptCompilationConfigurationBuilder : PropertiesCollection.Builder(),
+                                                         GradleScriptCompilationConfigurationKeys {
+    companion object : GradleScriptCompilationConfigurationKeys
+}
+
+val ScriptCompilationConfigurationKeys.gradle: GradleScriptCompilationConfigurationBuilder
+    get() = GradleScriptCompilationConfigurationBuilder()
+
+val GradleScriptCompilationConfigurationKeys.externalProjectPath: PropertiesCollection.Key<String?> by PropertiesCollection.key()
+
+
 data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) : KotlinScriptEntitySource(virtualFileUrl)
 
 class GradleScriptModel(
     val virtualFile: VirtualFile,
-    val classPath: List<String> = listOf(),
-    val sourcePath: List<String> = listOf(),
-    val imports: List<String> = listOf(),
-    val javaHome: String? = null
+    val classPath: List<String>,
+    val sourcePath: List<String>,
+    val imports: List<String>,
+    val javaHome: String? = null,
 )
