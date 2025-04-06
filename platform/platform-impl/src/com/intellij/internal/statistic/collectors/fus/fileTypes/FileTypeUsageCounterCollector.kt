@@ -209,7 +209,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
       return
     }
     val fileNameMatchers = fileTypeManager.getStandardMatchers(fileType)
-    fileNameMatchers.asSequence()
+    fileNameMatchers
       .firstOrNull { it.acceptsCharSequence(file.getName()) }
       ?.let {
         data.add(FILE_NAME_PATTERN_FIELD.with(it.getPresentableString()))

@@ -63,7 +63,7 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
   private fun firstIndexOrNull(fullSearch: Boolean, predicate: (SeItemData) -> Boolean): Int? {
     val startIndex = if (fullSearch || ignoreFreezing) 0 else frozenCount
 
-    return (startIndex until size).asSequence().firstOrNull { index ->
+    return (startIndex until size).firstOrNull { index ->
       when (val row = getElementAt(index)) {
         is SeResultListItemRow -> {
           predicate(row.item)

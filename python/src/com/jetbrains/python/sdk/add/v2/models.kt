@@ -439,7 +439,7 @@ internal val PythonAddInterpreterModel.existingSdks
   get() = allInterpreters.value.filterIsInstance<ExistingSelectableInterpreter>().map { it.sdk }
 
 internal fun PythonAddInterpreterModel.findInterpreter(path: String): PythonSelectableInterpreter? {
-  return allInterpreters.value.asSequence().find { it.homePath == path }
+  return allInterpreters.value.find { it.homePath == path }
 }
 
 internal suspend fun PythonAddInterpreterModel.detectCondaEnvironmentsOrError(errorSink: ErrorSink) {

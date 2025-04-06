@@ -34,7 +34,7 @@ internal suspend fun generateClasspath(context: BuildContext): List<String> {
       val excluded = excludedLibJars(context)
       val existing = HashSet<Path>()
       Files.newDirectoryStream(libDir).use { stream ->
-        stream.asSequence().filterTo(existing) { it.toString().endsWith(".jar") && !excluded.contains(it.fileName.toString()) }
+        stream.filterTo(existing) { it.toString().endsWith(".jar") && !excluded.contains(it.fileName.toString()) }
       }
       val result = computeAppClassPath(libDir, existing).map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
