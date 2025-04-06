@@ -814,5 +814,13 @@
                      language="kotlin"
                      key="inspection.redundant.assequence.call" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertPairConstructorToToFunctionInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.convert.pair.constructor.to.to.function.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
