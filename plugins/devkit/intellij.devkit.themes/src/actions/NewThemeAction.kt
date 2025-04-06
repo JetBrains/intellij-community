@@ -70,7 +70,8 @@ internal class NewThemeAction : AnAction(), NewFileActionWithCategory {
 
   override fun update(e: AnActionEvent) {
     val module = e.getData(PlatformCoreDataKeys.MODULE)
-    e.presentation.isEnabled = module != null && (PluginModuleType.get(module) is PluginModuleType || PsiUtil.isPluginModule(module))
+    e.presentation.isEnabledAndVisible = module != null
+                                         && (PluginModuleType.get(module) is PluginModuleType || PsiUtil.isPluginModule(module))
   }
 
   private fun createThemeJson(themeName: String,
