@@ -14,7 +14,6 @@ import java.util.Properties;
 
 public class ProjectResolutionRequest implements Serializable {
   private final @NotNull List<@NotNull File> filesToResolve;
-  private final boolean buildRecursively;
   private final @NotNull PomHashMap pomHashMap;
   private final @NotNull List<String> activeProfiles = new ArrayList<>();
   private final @NotNull List<String> inactiveProfiles = new ArrayList<>();
@@ -23,7 +22,6 @@ public class ProjectResolutionRequest implements Serializable {
   private final Properties userProperties;
 
   public ProjectResolutionRequest(@NotNull List<@NotNull File> filesToResolve,
-                                  boolean buildRecursively,
                                   @NotNull PomHashMap pomHashMap,
                                   @NotNull Collection<String> activeProfiles,
                                   @NotNull Collection<String> inactiveProfiles,
@@ -31,7 +29,6 @@ public class ProjectResolutionRequest implements Serializable {
                                   boolean updateSnapshots,
                                   @NotNull Properties userProperties) {
     this.filesToResolve = filesToResolve;
-    this.buildRecursively = buildRecursively;
     this.pomHashMap = pomHashMap;
     this.activeProfiles.addAll(activeProfiles);
     this.inactiveProfiles.addAll(inactiveProfiles);
@@ -42,10 +39,6 @@ public class ProjectResolutionRequest implements Serializable {
 
   public @NotNull List<@NotNull File> getFilesToResolve() {
     return filesToResolve;
-  }
-
-  public boolean buildRecursively() {
-    return buildRecursively;
   }
 
   public @NotNull PomHashMap getPomHashMap() {

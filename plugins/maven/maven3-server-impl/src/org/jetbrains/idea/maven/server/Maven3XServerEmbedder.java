@@ -532,7 +532,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
     @NotNull List<@NotNull File> filesToResolve = request.getFilesToResolve();
-    boolean buildRecursively = request.buildRecursively();
     PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
@@ -540,7 +539,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pomHashMap.size(), myConsoleWrapper)) {
       Maven3XProjectResolver projectResolver =
-        createProjectResolver(filesToResolve, buildRecursively, request, telemetry, updateSnapshots, task, pomHashMap, activeProfiles, inactiveProfiles, workspaceMap);
+        createProjectResolver(filesToResolve, request, telemetry, updateSnapshots, task, pomHashMap, activeProfiles, inactiveProfiles, workspaceMap);
       try {
         customizeComponents(workspaceMap);
         ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
@@ -555,7 +554,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   protected @NotNull Maven3XProjectResolver createProjectResolver(@NotNull List<@NotNull File> filesToResolve,
-                                                                  boolean buildRecursively,
                                                                   @NotNull ProjectResolutionRequest request,
                                                                   MavenServerOpenTelemetry telemetry,
                                                                   boolean updateSnapshots,
@@ -571,7 +569,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myImporterSpy,
       task,
       filesToResolve,
-      buildRecursively,
       pomHashMap,
       activeProfiles,
       inactiveProfiles,

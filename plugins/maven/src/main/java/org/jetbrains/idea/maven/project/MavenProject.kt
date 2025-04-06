@@ -501,11 +501,6 @@ class MavenProject(val file: VirtualFile) {
       return myState.modulesPathsAndNames
     }
 
-  val profiles: Collection<MavenProfileData>
-    get() {
-      return myState.profiles
-    }
-
   val profilesIds: Collection<String>
     get() {
       return myState.profilesIds
@@ -925,7 +920,7 @@ class MavenProject(val file: VirtualFile) {
         filters = build.filters,
         properties = model.properties,
         modulesPathsAndNames = collectModulePathsAndNames(model, directory, fileExtension),
-        profiles = collectProfileData(model.profiles) + if (keepPreviousProfiles) state.profiles else emptySet(),
+        profilesIds = collectProfilesIds(model.profiles) + if (keepPreviousProfiles) state.profilesIds else emptySet(),
         modelMap = nativeModelMap,
         sources = build.sources,
         testSources = build.testSources,
@@ -987,8 +982,14 @@ class MavenProject(val file: VirtualFile) {
       return result
     }
 
-    private fun collectProfileData(profiles: Collection<MavenProfile>?): Set<MavenProfileData> {
-      return profiles?.map { MavenProfileData(it.id, !it.modules.isNullOrEmpty()) }?.toSet() ?: emptySet()
+    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Set<String> {
+      if (profiles == null) return emptySet()
+
+      val result = HashSet<String>(profiles.size)
+      for (each in profiles) {
+        result.add(each.id)
+      }
+      return result
     }
   }
 }
