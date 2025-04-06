@@ -14439,6 +14439,50 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry")
+    public static class RemoveEmptyParenthesesFromAnnotationEntry extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("allParameterHaveDefaults.kt")
+        public void testAllParameterHaveDefaults() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry/allParameterHaveDefaults.kt");
+        }
+
+        @TestMetadata("annotatedExpr.kt")
+        public void testAnnotatedExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry/annotatedExpr.kt");
+        }
+
+        @TestMetadata("parenthesesWithWhitespace.kt")
+        public void testParenthesesWithWhitespace() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry/parenthesesWithWhitespace.kt");
+        }
+
+        @TestMetadata("requiresArguments.kt")
+        public void testRequiresArguments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry/requiresArguments.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry/simple.kt");
+        }
+
+        @TestMetadata("usingJavaAnnotation.kt")
+        public void testUsingJavaAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry/usingJavaAnnotation.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
