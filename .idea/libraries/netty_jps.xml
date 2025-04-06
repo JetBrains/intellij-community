@@ -1,30 +1,30 @@
 <component name="libraryTable">
   <library name="netty-jps" type="repository">
-    <properties maven-id="io.netty:netty-all:4.1.119.Final">
+    <properties maven-id="io.netty:netty-all:4.1.117.Final">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.119.Final/netty-all-4.1.119.Final.jar">
-          <sha256sum>ff8f0e067a85452082d039b307cf2d3dd040725c3a7ee68d427bd8b7841ac714</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.117.Final/netty-all-4.1.117.Final.jar">
+          <sha256sum>c78613ac0db94650c03a37b2a35b3238b2d018fcac9f10e5fe268c3887cf5e0b</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.119.Final/netty-buffer-4.1.119.Final.jar">
-          <sha256sum>32226218d854c2e51d4935a7ebe4663b72ecb9af4da881b86bf518e61aed48d3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.117.Final/netty-buffer-4.1.117.Final.jar">
+          <sha256sum>7d01bf0334ffa3ab55f3828bb50188bf9969774a23791a3df1905e53bfeea8f5</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.119.Final/netty-codec-4.1.119.Final.jar">
-          <sha256sum>c497934a057444b126a86e06f2b509188e48ca6c5a5e14c182a02f1e8c8d5fdb</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.117.Final/netty-codec-4.1.117.Final.jar">
+          <sha256sum>0b93f01cff5bc2a64af829ca01c826e8e861a03b96a871fa2a240fa25681df78</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.119.Final/netty-codec-http-4.1.119.Final.jar">
-          <sha256sum>ff48db63e44e273e677832e52cc2a1ce2670da796f22af129a8bd4c3786a2d34</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.117.Final/netty-codec-http-4.1.117.Final.jar">
+          <sha256sum>a7e19945a6baa86ab285383a0bda632eae7703a889da1d20ea4eaad4c996cc21</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.119.Final/netty-common-4.1.119.Final.jar">
-          <sha256sum>991a69b1594dcad9926e268e7e94530cfdaa89feef42af26922a302d3e2e9212</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.117.Final/netty-common-4.1.117.Final.jar">
+          <sha256sum>5b4e125a341566b24d5030479da475b20ea1f6145bf7b3c3d69fe537088bb4c1</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.1.119.Final/netty-handler-4.1.119.Final.jar">
-          <sha256sum>9b49be98e36bb79a2025ffb5159aec87da2720cfa545f56de39c3bc108587b1b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.1.117.Final/netty-handler-4.1.117.Final.jar">
+          <sha256sum>f3272149099883cf98ad8a2a82a08111a78d17e604aebc094c80592a730fcac5</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.119.Final/netty-resolver-4.1.119.Final.jar">
-          <sha256sum>3b6c9f9f6f360747213d154971dec1fc8852820dc1a98d055ff09d09676f8836</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.117.Final/netty-resolver-4.1.117.Final.jar">
+          <sha256sum>0f5f7220d34d32751cc624bc9c47afdde7392f0d9551569c90a568309015d796</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.119.Final/netty-transport-4.1.119.Final.jar">
-          <sha256sum>c0921ea0e79c3b936daabe08a26e926642a4ad24951d6115fb43362c21dfeb10</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.117.Final/netty-transport-4.1.117.Final.jar">
+          <sha256sum>c07aac2ea55aa42c34fc6b53fbee661e0de077f45483133b6ca297c70a67a44a</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -54,24 +54,24 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.119.Final/netty-all-4.1.119.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.119.Final/netty-buffer-4.1.119.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.119.Final/netty-codec-4.1.119.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.119.Final/netty-codec-http-4.1.119.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.119.Final/netty-common-4.1.119.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.1.119.Final/netty-handler-4.1.119.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.119.Final/netty-resolver-4.1.119.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.119.Final/netty-transport-4.1.119.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.117.Final/netty-all-4.1.117.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.117.Final/netty-buffer-4.1.117.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.117.Final/netty-codec-4.1.117.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.117.Final/netty-codec-http-4.1.117.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.117.Final/netty-common-4.1.117.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.1.117.Final/netty-handler-4.1.117.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.117.Final/netty-resolver-4.1.117.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.117.Final/netty-transport-4.1.117.Final.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.119.Final/netty-buffer-4.1.119.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.119.Final/netty-codec-4.1.119.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.119.Final/netty-codec-http-4.1.119.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.119.Final/netty-common-4.1.119.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.1.119.Final/netty-handler-4.1.119.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.119.Final/netty-resolver-4.1.119.Final-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.119.Final/netty-transport-4.1.119.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.117.Final/netty-buffer-4.1.117.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.117.Final/netty-codec-4.1.117.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.117.Final/netty-codec-http-4.1.117.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.117.Final/netty-common-4.1.117.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler/4.1.117.Final/netty-handler-4.1.117.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.117.Final/netty-resolver-4.1.117.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.117.Final/netty-transport-4.1.117.Final-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
