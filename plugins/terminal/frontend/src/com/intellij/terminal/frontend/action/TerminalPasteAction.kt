@@ -107,7 +107,10 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   private fun getClipboardText(): String? {
     val content = CopyPasteManager.getInstance().contents ?: return null
     val text = try {
-      content.getTransferData(DataFlavor.stringFlavor) as String
+      if (content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+        content.getTransferData(DataFlavor.stringFlavor) as String
+      }
+      else null
     }
     catch (t: Throwable) {
       thisLogger().error("Failed to get text from clipboard", t)
