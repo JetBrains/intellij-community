@@ -43,6 +43,10 @@
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
+    <action id="Terminal.PasteSelection" class="com.intellij.terminal.frontend.action.TerminalPasteSelectionAction"
+            use-shortcut-of="EditorPasteFromX11">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
       <override-text place="GoToAction"/>
     </action>
