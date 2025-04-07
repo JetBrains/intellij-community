@@ -1343,7 +1343,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       .map(requiredPluginId -> {
         IdeaPluginDescriptorImpl requiredDescriptor = pluginIdMap.get(requiredPluginId);
         return Pair.create(requiredPluginId, requiredDescriptor == null && PluginManagerCore.isPlatformModule(requiredPluginId) ?
-                                             PluginManagerCore.INSTANCE.findPluginByModuleDependency(requiredPluginId) :
+                                             PluginManagerCore.INSTANCE.findPluginByPlatformModuleId(requiredPluginId) :
                                              requiredDescriptor);
       });
   }

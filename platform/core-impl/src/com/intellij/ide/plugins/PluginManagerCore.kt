@@ -192,7 +192,7 @@ object PluginManagerCore {
   }
 
   @Internal
-  fun findPluginByModuleDependency(id: PluginId): IdeaPluginDescriptorImpl? =
+  fun findPluginByPlatformModuleId(id: PluginId): IdeaPluginDescriptorImpl? =
     getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
 
   @ApiStatus.ScheduledForRemoval
