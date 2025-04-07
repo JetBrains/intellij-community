@@ -112,7 +112,7 @@ public final class XFramesView extends XDebugView {
         }
       }
     };
-    myFramesList = new XDebuggerFramesList(myProject) {
+    myFramesList = new XDebuggerFramesList(myProject, sessionProxy) {
       @Override
       protected @NotNull OccurenceInfo goOccurrence(int step) {
         OccurenceInfo info = super.goOccurrence(step);

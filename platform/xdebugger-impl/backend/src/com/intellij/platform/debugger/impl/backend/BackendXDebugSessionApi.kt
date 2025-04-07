@@ -7,6 +7,9 @@ import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTextContainer
@@ -15,6 +18,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
@@ -137,6 +141,28 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
       })
       awaitClose()
     }.buffer(Channel.UNLIMITED)
+  }
+
+  override suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return channelFlow {
+      session.fileColorsComputer.fileColors.collect { (virtualFile, colorState) ->
+        val serializedState = when (colorState) {
+          is ColorState.Computed -> SerializedColorState.Computed(colorState.color.rpcId())
+          ColorState.Computing -> SerializedColorState.Computing
+          ColorState.NoColor -> SerializedColorState.NoColor
+        }
+        // TODO[IJPL-177087]: send in batches to optimize throughput?
+        send(XFileColorDto(virtualFile.rpcId(), serializedState))
+      }
+    }
+  }
+
+  override suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId) {
+    val session = sessionId.findValue() ?: return
+    val file = virtualFileId.virtualFile() ?: return
+    // TODO[IJPL-177087]: collect in batches to optimize throughput?
+    session.fileColorsComputer.sendRequest(file)
   }
 }
 

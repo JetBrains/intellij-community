@@ -52,6 +52,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
+import com.intellij.xdebugger.impl.frame.FileColorsComputer
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarnings
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
@@ -138,6 +139,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myIcon: Icon? = icon
   private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
   private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
+  @get:ApiStatus.Internal
+  val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
 
   var currentExecutionStack: XExecutionStack?
     get() = executionStackFlow.value.get()

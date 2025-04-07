@@ -32,18 +32,10 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionState
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfoCallback
-import com.intellij.xdebugger.impl.rpc.XValueMarkerId
-import com.intellij.xdebugger.impl.rpc.consoleView
-import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
@@ -328,6 +320,10 @@ class FrontendXDebuggerSession private constructor(
     cs.launch {
       XDebugSessionApi.getInstance().onTabInitialized(id, XDebuggerSessionTabInfoCallback(tab))
     }
+  }
+
+  override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
+    return FrontendXStackFramesListColorsCache(this, framesList)
   }
 
   companion object {

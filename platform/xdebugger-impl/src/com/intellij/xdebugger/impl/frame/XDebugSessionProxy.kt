@@ -75,6 +75,7 @@ interface XDebugSessionProxy {
   fun putKey(sink: DataSink)
   fun updateExecutionPosition()
   fun onTabInitialized(tab: XDebugSessionTab)
+  fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache
 
   companion object {
     @JvmField
@@ -190,6 +191,10 @@ interface XDebugSessionProxy {
 
     override fun onTabInitialized(tab: XDebugSessionTab) {
       (session as? XDebugSessionImpl)?.tabInitialized(tab)
+    }
+
+    override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
+      return XStackFramesListColorsCache.Monolith(session as XDebugSessionImpl, framesList)
     }
   }
 }

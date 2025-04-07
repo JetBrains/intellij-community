@@ -632,6 +632,7 @@ c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.components.JBList
 - <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.XDebugSession):V
 - p:createListRenderer():javax.swing.ListCellRenderer
 - p:getFrameNavigatable(com.intellij.xdebugger.frame.XStackFrame,Z):com.intellij.pom.Navigatable
 - getSelectedFrame():com.intellij.xdebugger.frame.XStackFrame

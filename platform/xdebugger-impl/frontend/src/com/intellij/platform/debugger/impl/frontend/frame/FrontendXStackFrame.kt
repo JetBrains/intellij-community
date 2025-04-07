@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
@@ -34,6 +35,7 @@ internal class FrontendXStackFrame(
   }
 
   val id: XStackFrameId get() = frameDto.stackFrameId
+  val fileId: VirtualFileId? get() = frameDto.sourcePosition?.fileId
 
   override fun getSourcePosition(): XSourcePosition? {
     return frameDto.sourcePosition?.sourcePosition()

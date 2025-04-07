@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
@@ -50,6 +51,9 @@ interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean)
 
   suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent>
+
+  suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto>
+  suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId)
 
   companion object {
     @JvmStatic
