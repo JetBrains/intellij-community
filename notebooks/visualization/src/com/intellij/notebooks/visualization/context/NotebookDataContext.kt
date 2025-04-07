@@ -3,7 +3,7 @@ package com.intellij.notebooks.visualization.context
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.cellSelectionModel
 import com.intellij.notebooks.visualization.ui.EditorCellOutput
-import com.intellij.notebooks.visualization.ui.notebookEditor
+import com.intellij.notebooks.visualization.ui.notebookEditorOrNull
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -44,7 +44,7 @@ object NotebookDataContext {
 
   val DataContext.hoveredInterval: NotebookCellLines.Interval?
     get() {
-      return notebookEditor?.notebookEditor?.mouseOverCell?.cell?.interval
+      return notebookEditor?.notebookEditorOrNull?.mouseOverCell?.cell?.interval
     }
 
   val DataContext.hoveredOrSelectedInterval: NotebookCellLines.Interval?
