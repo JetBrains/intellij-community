@@ -86,23 +86,37 @@ class GetVcsStatusTool : AbstractMcpTool<NoArgs>() {
 
         val changeListManager = ChangeListManager.getInstance(project)
         val changes = changeListManager.allChanges
+        val unversionedFiles = changeListManager.unversionedFilesPaths
 
-        return Response(changes.mapNotNull { change ->
+        val result = mutableListOf<Map<String, String>>()
+
+        // Process tracked changes
+        changes.forEach { change ->
             val absolutePath = change.virtualFile?.path ?: change.afterRevision?.file?.path
             val changeType = change.type
 
             if (absolutePath != null) {
                 try {
                     val relativePath = projectDir.relativize(Path(absolutePath)).toString()
-                    relativePath to changeType
+                    result.add(mapOf("path" to relativePath, "type" to changeType.toString()))
                 } catch (e: IllegalArgumentException) {
-                    null  // Skip files outside project directory
+                    // Skip files outside project directory
                 }
-            } else {
-                null
             }
-        }.joinToString(",\n", prefix = "[", postfix = "]") {
-            """{"path": "${it.first}", "type": "${it.second}"}"""
+        }
+
+        // Process unversioned files
+        unversionedFiles.forEach { file ->
+            try {
+                val relativePath = projectDir.relativize(Path(file.path)).toString()
+                result.add(mapOf("path" to relativePath, "type" to "UNVERSIONED"))
+            } catch (e: IllegalArgumentException) {
+                // Skip files outside project directory
+            }
+        }
+
+        return Response(result.joinToString(",\n", prefix = "[", postfix = "]") {
+            """{"path": "${it["path"]}", "type": "${it["type"]}"}"""
         })
     }
 }
