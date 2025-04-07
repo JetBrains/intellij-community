@@ -19,11 +19,8 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTrack
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ide
 
 @Service(Service.Level.PROJECT)
 class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: CoroutineScope) {
@@ -33,8 +30,8 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
             return false
         }
 
-        val configurationsSupplier = definition.refinedConfigurationSupplier()
-        val projectModelUpdater = definition.projectModelUpdater()
+        val configurationsSupplier = definition.getConfigurationResolver(project)
+        val projectModelUpdater = definition.getWorkspaceModelManager(project)
 
         return configurationsSupplier.get(ktFile.alwaysVirtualFile) != null
                 && projectModelUpdater.isModuleExist(project, ktFile.alwaysVirtualFile, definition)
@@ -47,8 +44,8 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
             return Job()
         }
 
-        val configurationsSupplier = firstDefinition.refinedConfigurationSupplier()
-        val projectModelUpdater = firstDefinition.projectModelUpdater()
+        val configurationsSupplier = firstDefinition.getConfigurationResolver(project)
+        val projectModelUpdater = firstDefinition.getWorkspaceModelManager(project)
 
         val definitionByVirtualFile = ktFiles.associate {
             it.alwaysVirtualFile to findScriptDefinition(
@@ -88,14 +85,6 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
             }
         }
     }
-
-    private fun ScriptDefinition.refinedConfigurationSupplier(): ScriptRefinedConfigurationResolver =
-        compilationConfiguration[ScriptCompilationConfiguration.ide.configurationResolverDelegate]?.invoke()
-            ?: DefaultScriptConfigurationHandler.getInstance(project)
-
-    private fun ScriptDefinition.projectModelUpdater(): ScriptWorkspaceModelManager =
-        compilationConfiguration[ScriptCompilationConfiguration.ide.scriptWorkspaceModelManagerDelegate]?.invoke()
-            ?: DefaultScriptConfigurationHandler.getInstance(project)
 
     companion object {
         @JvmStatic

@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.io.File
 import javax.swing.Icon
 import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.util.PropertiesCollection
 
 
@@ -38,6 +40,14 @@ val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplateInfo: PropertiesCo
 
 val IdeScriptCompilationConfigurationKeys.configurationResolverDelegate: PropertiesCollection.Key<() -> ScriptRefinedConfigurationResolver> by PropertiesCollection.key()
 val IdeScriptCompilationConfigurationKeys.scriptWorkspaceModelManagerDelegate: PropertiesCollection.Key<() -> ScriptWorkspaceModelManager> by PropertiesCollection.key()
+
+fun ScriptDefinition.getConfigurationResolver(project: Project): ScriptRefinedConfigurationResolver =
+    compilationConfiguration[ScriptCompilationConfiguration.ide.configurationResolverDelegate]?.invoke()
+        ?: DefaultScriptConfigurationHandler.getInstance(project)
+
+fun ScriptDefinition.getWorkspaceModelManager(project: Project): ScriptWorkspaceModelManager =
+    compilationConfiguration[ScriptCompilationConfiguration.ide.scriptWorkspaceModelManagerDelegate]?.invoke()
+        ?: DefaultScriptConfigurationHandler.getInstance(project)
 
 interface ScriptRefinedConfigurationResolver {
     suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk?
