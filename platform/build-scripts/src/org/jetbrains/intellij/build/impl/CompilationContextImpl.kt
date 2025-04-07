@@ -60,15 +60,12 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.extension
+import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.pathString
-import kotlin.io.path.readBytes
 import kotlin.io.path.relativeToOrNull
 
 @Obsolete
@@ -562,14 +559,19 @@ internal suspend fun resolveProjectDependencies(context: CompilationContext) {
 
 @Internal
 suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePath: String): Boolean {
-  val output = this.getModuleOutputDir(module)
-  if (!Files.exists(output)) {
+  val output = getModuleOutputDir(module)
+
+  val attributes = try {
+    Files.readAttributes(output, BasicFileAttributes::class.java)
+  }
+  catch (_: FileSystemException) {
     return false
   }
-  if (output.isDirectory()) {
+
+  if (attributes.isDirectory) {
     return Files.exists(output.resolve(relativePath))
   }
-  else if (output.isRegularFile() && output.extension == "jar") {
+  else if (attributes.isRegularFile && output.toString().endsWith(".jar")) {
     var found = false
     readZipFile(output) { name, _ ->
       if (name == relativePath) {
@@ -579,22 +581,30 @@ suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePa
     return found
   }
   else {
-    throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar ${output.pathString}")
+    throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
   }
 }
 
 @Internal
 suspend fun CompilationContext.getModuleOutputFileContent(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray? {
-  val output = this.getModuleOutputDir(module, forTests = forTests)
-  if (!Files.exists(output)) {
+  val output = getModuleOutputDir(module = module, forTests = forTests)
+  val attributes = try {
+    Files.readAttributes(output, BasicFileAttributes::class.java)
+  }
+  catch (_: FileSystemException) {
     return null
   }
-  if (output.isDirectory()) {
-    val path = output.resolve(relativePath)
-    if (!Files.exists(path)) return null
-    return path.readBytes()
+
+  if (attributes.isDirectory) {
+    val file = output.resolve(relativePath)
+    try {
+      return Files.readAllBytes(file)
+    }
+    catch (_: NoSuchFileException) {
+      return null
+    }
   }
-  else if (output.isRegularFile() && output.extension == "jar") {
+  else if (attributes.isRegularFile && output.toString().endsWith("jar")) {
     var content: ByteArray? = null
     readZipFile(output) { name, dataSupplier ->
       if (name == relativePath) {
@@ -607,6 +617,6 @@ suspend fun CompilationContext.getModuleOutputFileContent(module: JpsModule, rel
     return content
   }
   else {
-    throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar ${output.pathString}")
+    throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
   }
 }
