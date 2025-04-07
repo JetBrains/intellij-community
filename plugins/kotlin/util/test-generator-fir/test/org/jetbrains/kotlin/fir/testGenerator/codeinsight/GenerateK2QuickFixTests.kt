@@ -187,7 +187,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/removeTypeVariance", pattern = pattern)
             model("$idea/quickfix/removeUnused", pattern = pattern)
             model("$idea/quickfix/removeUnusedParameter", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/removeUnusedReceiver", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/removeUnusedReceiver", pattern = pattern)
             model("$idea/quickfix/removeUseSiteTarget", pattern = pattern)
             model("$idea/quickfix/renameToUnderscore", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/renameUnresolvedReference", pattern = pattern, isIgnored = true)
