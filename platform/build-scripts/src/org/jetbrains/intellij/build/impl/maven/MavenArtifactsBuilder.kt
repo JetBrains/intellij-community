@@ -479,6 +479,9 @@ private suspend fun layoutMavenArtifacts(
           targetFile = jar,
           sources = modulesWithSources.map {
             val moduleOutput = context.getModuleOutputDir(it)
+            check(Files.exists(moduleOutput)) {
+              "$it module output directory doesn't exist: $moduleOutput"
+            }
             if (moduleOutput.toString().endsWith(".jar")) {
               ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
             }
