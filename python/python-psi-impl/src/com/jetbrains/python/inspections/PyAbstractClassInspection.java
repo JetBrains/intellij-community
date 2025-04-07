@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -16,14 +17,16 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class PyAbstractClassInspection extends PyInspection {
 
@@ -36,22 +39,39 @@ public final class PyAbstractClassInspection extends PyInspection {
 
   private static final class Visitor extends PyInspectionVisitor {
 
+    private static @Nls @NotNull String canNotInstantiateAbstractClassMessage(@NotNull PyClass pyClass) {
+      return PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName());
+    }
+
     private Visitor(@NotNull ProblemsHolder holder,
                     @NotNull TypeEvalContext context) {
       super(holder, context);
     }
 
     @Override
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
+      if (node.getCallee() instanceof PyReferenceExpression calleeReferenceExpression) {
+        QualifiedResolveResult resolveResult = calleeReferenceExpression.followAssignmentsChain(getResolveContext());
+        if (resolveResult.getElement() instanceof PyClass pyClass) {
+          if (canHaveAbstractMethods(pyClass)) {
+            if (hasAbstractMethod(pyClass) || !getAllSuperAbstractMethods(pyClass).isEmpty()) {
+              registerProblem(node, canNotInstantiateAbstractClassMessage(pyClass), ProblemHighlightType.WARNING);
+            }
+            else if (isAbstract(pyClass)) {
+              registerProblem(node, canNotInstantiateAbstractClassMessage(pyClass));
+            }
+          }
+        }
+      }
+    }
+
+    @Override
     public void visitPyClass(@NotNull PyClass pyClass) {
-      if (isAbstract(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
+      if (isAbstract(pyClass) || hasAbstractMethod(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
         return;
       }
 
-      /* Do not report problem if class contains only methods that raise NotImplementedError without any abc.* decorators
-         but keep ability to implement them via quickfix (see PY-38680) */
-      final List<PyFunction> toImplement = ContainerUtil
-        .filter(PyPsiRefactoringUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext),
-                function -> PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext));
+      final List<PyFunction> toImplement = getAllSuperAbstractMethods(pyClass);
 
       final ASTNode nameNode = pyClass.getNameNode();
       if (!toImplement.isEmpty() && nameNode != null) {
@@ -73,6 +93,17 @@ public final class PyAbstractClassInspection extends PyInspection {
       }
     }
 
+    private boolean canHaveAbstractMethods(@NotNull PyClass pyClass) {
+      PyClassLikeType metaClassType = pyClass.getMetaClassType(true, myTypeEvalContext);
+      if (metaClassType != null && PyNames.ABC_META.equals(metaClassType.getClassQName())) {
+        return true;
+      }
+      return pyClass.getAncestorTypes(myTypeEvalContext).stream()
+        .filter(Objects::nonNull)
+        .map(PyClassLikeType::getClassQName)
+        .anyMatch(qName -> PyTypingTypeProvider.PROTOCOL.equals(qName) || PyTypingTypeProvider.PROTOCOL_EXT.equals(qName));
+    }
+
     private boolean isAbstract(@NotNull PyClass pyClass) {
       final PyClassLikeType metaClass = pyClass.getMetaClassType(false, myTypeEvalContext);
       if (metaClass != null && PyNames.ABC_META_CLASS.equals(metaClass.getName())) {
@@ -83,12 +114,23 @@ public final class PyAbstractClassInspection extends PyInspection {
           return true;
         }
       }
+      return false;
+    }
+
+    private boolean hasAbstractMethod(@NotNull PyClass pyClass) {
       for (PyFunction method : pyClass.getMethods()) {
         if (PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext)) {
           return true;
         }
       }
       return false;
+    }
+
+    private @NotNull List<PyFunction> getAllSuperAbstractMethods(@NotNull PyClass pyClass) {
+    /* Do not report problem if class contains only methods that raise NotImplementedError without any abc.* decorators
+       but keep ability to implement them via quickfix (see PY-38680) */
+      return ContainerUtil.filter(PyPsiRefactoringUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext),
+                                  function -> PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext));
     }
 
     private static class AddABCToSuperclassesQuickFix extends PsiUpdateModCommandQuickFix {

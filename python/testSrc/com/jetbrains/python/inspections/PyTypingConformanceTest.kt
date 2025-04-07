@@ -24,6 +24,7 @@ import kotlin.io.path.name
 
 private val inspections
   get() = arrayOf(
+    PyAbstractClassInspection(),
     PyArgumentListInspection(),
     PyAssertTypeInspection(),
     PyCallingNonCallableInspection(),
