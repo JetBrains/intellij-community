@@ -10294,6 +10294,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/longSafeCast.kt");
         }
 
+        @TestMetadata("qualifiedExpr.kt")
+        public void testQualifiedExpr() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/qualifiedExpr.kt");
+        }
+
+        @TestMetadata("safeCallExpr.kt")
+        public void testSafeCallExpr() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/safeCallExpr.kt");
+        }
+
         @TestMetadata("safeCast.kt")
         public void testSafeCast() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/safeCast.kt");
