@@ -213,12 +213,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       if (request.writeCoreClasspath) {
+        val excluded = excludedLibJars(context)
+        val classPathString = classPath
+          .asSequence()
+          .filter { !excluded.contains(it.fileName.toString()) }
+          .joinToString(separator = "\n")
         launch(Dispatchers.IO) {
-          val excluded = excludedLibJars(context)
-          val classPathString = classPath
-            .asSequence()
-            .filter { it.fileName.toString() !in excluded }
-            .joinToString(separator = "\n")
           Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
         }
       }
@@ -235,7 +235,16 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
-      buildPlugins(request, context, runDir, platformLayout, artifactTask, searchableOptionSet, platformDistributionEntriesDeferred, moduleOutputPatcher)
+      buildPlugins(
+        request = request,
+        context = context,
+        runDir = runDir,
+        platformLayout = platformLayout,
+        artifactTask = artifactTask,
+        searchableOptionSet = searchableOptionSet,
+        buildPlatformJob = platformDistributionEntriesDeferred,
+        moduleOutputPatcher = moduleOutputPatcher,
+      )
     }
 
     launch {
@@ -248,7 +257,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val out = DataOutputStream(byteOut)
         val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
         platformDistributionEntriesDeferred.join()
-        writePluginClassPathHeader(out, isJarOnly = !request.isUnpackedDist, pluginCount, moduleOutputPatcher, context)
+        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
         out.write(mainData)
         additionalData?.let { out.write(it) }
         out.close()
@@ -270,9 +279,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     launch(Dispatchers.IO) {
-      platformDistributionEntriesDeferred.await() // ensure platform dist files added to the list
-      pluginDistributionEntriesDeferred.await() // ensure plugins dist files added to the list
-      copyDistFiles(context, runDir, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
+      // ensure platform dist files added to the list
+      platformDistributionEntriesDeferred.await()
+      // ensure plugin dist files added to the list
+      pluginDistributionEntriesDeferred.await()
+
+      copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
     }
   }.invokeOnCompletion {
     // close debug logging to prevent locking of the output directory on Windows
@@ -581,8 +593,8 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
     return true
   }
 
-  return satisfiesBundlingRequirements(plugin, OsFamily.currentOs, JvmArchitecture.currentJvmArch, context) ||
-         satisfiesBundlingRequirements(plugin, osFamily = null, JvmArchitecture.currentJvmArch, context)
+  return satisfiesBundlingRequirements(plugin = plugin, osFamily = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, context = context) ||
+         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 
 internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, compilationContext: CompilationContext, request: BuildRequest): ProductProperties {
@@ -633,7 +645,14 @@ private suspend fun layoutPlatform(
   context: BuildContext,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): Pair<List<DistributionFileEntry>, Set<Path>> {
-  val entries = layoutPlatformDistribution(moduleOutputPatcher, runDir, platformLayout, searchableOptionSet, copyFiles = true, context)
+  val entries = layoutPlatformDistribution(
+    moduleOutputPatcher = moduleOutputPatcher,
+    targetDirectory = runDir,
+    platform = platformLayout,
+    searchableOptionSet = searchableOptionSet,
+    copyFiles = true,
+    context = context,
+  )
   lateinit var sortedClassPath: Set<Path>
   coroutineScope {
     launch {
@@ -682,5 +701,6 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
   }
 }
 
-private fun getCommunityHomePath(homePath: Path): Path =
-  if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+private fun getCommunityHomePath(homePath: Path): Path {
+  return if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+}
