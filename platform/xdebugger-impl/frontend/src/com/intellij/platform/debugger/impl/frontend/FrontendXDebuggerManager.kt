@@ -17,9 +17,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
+@VisibleForTesting
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
+class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
   private val sessions = MutableStateFlow<List<FrontendXDebuggerSession>>(listOf())
   private val synchronousExecutor = Channel<suspend () -> Unit>(capacity = Integer.MAX_VALUE)
 
