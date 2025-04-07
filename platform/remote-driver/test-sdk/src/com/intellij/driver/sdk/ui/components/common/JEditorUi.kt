@@ -49,8 +49,8 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   protected open val editorComponent : EditorComponentImpl
     get() = driver.cast(component, EditorComponentImpl::class)
 
-  val document: Document by lazy { editor.getDocument() }
-  val editor: Editor by lazy { editorComponent.getEditor() }
+  val editor: Editor get() = editorComponent.getEditor()
+  val document: Document get() = editor.getDocument()
 
   var text: String
     get() = document.getText()
