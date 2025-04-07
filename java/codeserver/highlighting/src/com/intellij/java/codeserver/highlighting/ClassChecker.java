@@ -351,7 +351,8 @@ final class ClassChecker {
       if (nameIdentifier == null) return;
       if (psiClass.isEnum()) return;
 
-      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(psiClass).findAll();
+      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.searchAllSealedInheritors(
+        psiClass, GlobalSearchScope.allScope(myVisitor.project()).union(GlobalSearchScope.fileScope(myVisitor.file()))).findAll();
       if (inheritors.isEmpty()) {
         myVisitor.report(JavaErrorKinds.CLASS_SEALED_NO_INHERITORS.create(psiClass));
         return;

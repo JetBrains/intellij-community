@@ -3,7 +3,9 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -37,12 +39,25 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
     private final @NotNull SearchScope myScope;
     private final boolean myIncludeAnonymous;
     private final boolean myCheckInheritance;
+    private final boolean myRestrictSealedHierarchy;
 
-    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous, boolean checkInheritance) {
+    /**
+     * @param aClass class to search inheritors of
+     * @param scope scope to search in
+     * @param includeAnonymous whether to include anonymous inheritors of the class
+     * @param restrictSealedHierarchy if false, inheritors of sealed class undeclared in permits list will be found as well
+     */
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous, boolean checkInheritance,
+                            boolean restrictSealedHierarchy) {
       myClass = aClass;
       myScope = scope;
       myIncludeAnonymous = includeAnonymous;
       myCheckInheritance = checkInheritance;
+      myRestrictSealedHierarchy = restrictSealedHierarchy;
+    }
+
+    public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous, boolean checkInheritance) {
+      this(aClass, scope, includeAnonymous, checkInheritance, true);
     }
 
     public SearchParameters(@NotNull PsiClass aClass, @NotNull SearchScope scope, final boolean includeAnonymous) {
@@ -69,6 +84,13 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
       return myIncludeAnonymous;
     }
 
+    /**
+     * @return false if inheritors of sealed class undeclared in the 'permits' list should be found as well.
+     */
+    public boolean restrictSealedHierarchy() {
+      return myRestrictSealedHierarchy;
+    }
+
     public @Nullable ClassInheritorsSearch.SearchParameters getOriginalParameters() {
       return null;
     }
@@ -84,7 +106,16 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
   }
 
   public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass) {
-    return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
+    GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass));
+    PsiFile file = aClass.getContainingFile();
+    if (file != null) {
+      VirtualFile vFile = file.getVirtualFile();
+      if (vFile != null && !scope.contains(vFile)) {
+        // include file scope to properly support scratch files
+        scope = scope.union(GlobalSearchScope.fileScope(file));
+      }
+    }
+    return search(aClass, scope);
   }
 
   public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
@@ -93,6 +124,15 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
 
   public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous) {
     return search(new SearchParameters(aClass, scope, includeAnonymous, true));
+  }
+
+  /**
+   * @param aClass class to search inheritors of
+   * @param scope scope to search in
+   * @return query that returns all inheritors of the given class, including not permitted inheritors if (aClass is sealed)
+   */
+  public static @NotNull Query<PsiClass> searchAllSealedInheritors(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+    return search(new SearchParameters(aClass, scope, true, true, false));
   }
 
   public static @NotNull Query<PsiClass> search(@NotNull SearchParameters parameters) {

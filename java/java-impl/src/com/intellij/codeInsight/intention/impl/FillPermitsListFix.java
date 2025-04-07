@@ -54,7 +54,7 @@ public class FillPermitsListFix extends PsiBasedModCommandAction<PsiIdentifier> 
                                                           @NotNull Set<PsiClass> permittedClasses) {
     Collection<String> missingInheritors = new SmartList<>();
     PsiJavaModule module = JavaPsiModuleUtil.findDescriptorByElement(psiClass);
-    for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass).asIterable()) {
+    for (PsiClass inheritor : DirectClassInheritorsSearch.searchAllSealedInheritors(psiClass, psiClass.getUseScope()).asIterable()) {
       String errorTitle = SealedUtils.checkInheritor(psiJavaFile, module, inheritor);
       if (errorTitle != null) {
         return ModCommand.error(JavaBundle.message(errorTitle));
