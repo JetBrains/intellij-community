@@ -20,9 +20,6 @@
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
-    <xdebugger.currentSessionProxyProvider implementation="com.intellij.platform.debugger.impl.frontend.FrontendCurrentSessionProxyProvider"
-                                           order="last"/>
-    <xdebugger.entityIdProvider implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerEntityIdProvider"
-                                order="last"/>
+    <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="last"/>
   </extensions>
 </idea-plugin>

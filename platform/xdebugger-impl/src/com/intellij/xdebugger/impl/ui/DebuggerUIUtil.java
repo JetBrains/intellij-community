@@ -52,7 +52,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
-import com.intellij.xdebugger.impl.frame.CurrentXDebugSessionProxyProvider;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -525,7 +525,7 @@ public final class DebuggerUIUtil {
     if (session != null) return session;
     Project project = e.getProject();
     if (project == null) return null;
-    return CurrentXDebugSessionProxyProvider.getCurrentSessionProxy(project);
+    return XDebugManagerProxy.getInstance().getCurrentSessionProxy(project);
   }
 
 
