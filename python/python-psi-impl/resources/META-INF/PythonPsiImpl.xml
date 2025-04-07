@@ -30,6 +30,9 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
+                    serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
+
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>

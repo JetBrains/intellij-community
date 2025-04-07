@@ -43,8 +43,4 @@
                     interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"
                     dynamic="true"/>
   </extensionPoints>
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
-                    serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
-  </extensions>
 </idea-plugin>
