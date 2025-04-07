@@ -115,6 +115,11 @@ class FrontendRecentFilesModel(private val project: Project) {
         LOG.debug("Removing all items from $targetFilesKind frontend model")
         targetModel.update { RecentFilesState(listOf()) }
       }
+      is RecentFilesEvent.UncertainChangeOccurred -> {
+        LOG.debug("Updating all items in $targetFilesKind frontend model because of undetermined backend IDE state change")
+        val targetState = chooseState(targetFilesKind).value.entries.mapNotNull { it.virtualFile }
+        FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(targetFilesKind, targetState, project))
+      }
     }
   }
 

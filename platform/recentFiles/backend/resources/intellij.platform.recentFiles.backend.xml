@@ -7,6 +7,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.recentFiles.backend.RecentFilesBackendApiProvider"/>
-    <vfs.asyncListener id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.backend.RemovedRecentFilesListener"/>
+    <vfs.asyncListener id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.backend.RecentFilesVfsListener"/>
   </extensions>
 </idea-plugin>

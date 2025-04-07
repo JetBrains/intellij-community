@@ -8,21 +8,19 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.*
 
-internal class RemovedRecentFilesListener : AsyncFileListener {
+internal class RecentFilesVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     if (ApplicationManager.getApplication().isUnitTestMode) return null
 
     val removedFiles = collectRemovedFiles(events)
     val movedFiles = collectMovedFiles(events)
     val renamedFiles = collectRenamedFiles(events)
+    val filesWithChangedContents = collectFilesWithChangedContents(events)
 
     return object : AsyncFileListener.ChangeApplier {
-      override fun beforeVfsChange() {
+      override fun afterVfsChange() {
         for (project in ProjectManager.getInstance().openProjects) {
           val recentFilesModel = BackendRecentFilesModel.getInstance(project)
 
@@ -31,14 +29,13 @@ internal class RemovedRecentFilesListener : AsyncFileListener {
             recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.REMOVED, projectFilesToRemove)
           }
 
-          val projectFilesToUpdate = filterProjectFiles(movedFiles, project)
-          if (projectFilesToUpdate.isNotEmpty()) {
-            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, projectFilesToRemove)
-          }
-
+          val projectFilesToMove = filterProjectFiles(movedFiles, project)
           val projectFilesToRename = filterProjectFiles(renamedFiles, project)
-          if (projectFilesToRename.isNotEmpty()) {
-            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, projectFilesToRemove)
+          val projectFilesWithChangedContents = filterProjectFiles(filesWithChangedContents, project)
+
+          val projectFilesToUpdate = (projectFilesToMove + projectFilesToRename + projectFilesWithChangedContents).distinct()
+          if (projectFilesToUpdate.isNotEmpty()) {
+            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, projectFilesToUpdate)
           }
         }
       }
@@ -56,7 +53,7 @@ internal class RemovedRecentFilesListener : AsyncFileListener {
 
   private fun collectRenamedFiles(events: List<VFileEvent>): List<VirtualFile> {
     return events.filterIsInstance<VFilePropertyChangeEvent>()
-      .filter { it.propertyName == "name" }
+      .filter { it.propertyName == VirtualFile.PROP_NAME }
       .map { it.file }
   }
 
@@ -67,6 +64,11 @@ internal class RemovedRecentFilesListener : AsyncFileListener {
 
   private fun collectRemovedFiles(events: List<VFileEvent>): List<VirtualFile> {
     return events.filterIsInstance<VFileDeleteEvent>()
+      .map { it.file }
+  }
+
+  private fun collectFilesWithChangedContents(events: List<VFileEvent>): List<VirtualFile> {
+    return events.filterIsInstance<VFileContentChangeEvent>()
       .map { it.file }
   }
 }

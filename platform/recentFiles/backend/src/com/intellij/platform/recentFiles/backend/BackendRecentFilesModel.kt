@@ -25,6 +25,7 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
+import com.intellij.problems.ProblemListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -65,6 +66,7 @@ internal class BackendRecentFilesModel(private val project: Project, private val
         subscribe(RecentFileHistoryOrderListener.TOPIC, ChangedIdeHistoryFileHistoryOrderListener(project))
         subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, RecentFilesDaemonAnalyserListener(project))
         subscribe(FileStatusListener.TOPIC, RecentFilesVcsStatusListener(project))
+        subscribe(ProblemListener.TOPIC, RecentFilesProblemsListener(project))
       }
     }
   }
@@ -101,6 +103,12 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   fun applyBackendChangesToAllFileKinds(changeKind: FileChangeKind, files: List<VirtualFile>) {
     for (fileKind in RecentFileKind.entries) {
       scheduleApplyBackendChanges(fileKind, changeKind, files)
+    }
+  }
+
+  fun emitUncertainChange() {
+    for (fileKind in RecentFileKind.entries) {
+      chooseTargetFlow(fileKind).tryEmit(RecentFilesEvent.UncertainChangeOccurred())
     }
   }
 
