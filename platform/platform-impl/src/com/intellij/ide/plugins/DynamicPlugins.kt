@@ -807,15 +807,13 @@ object DynamicPlugins {
       area.unregisterExtensionPoints(points, module)
     }
 
-    app.unloadServices(module, module.appContainerDescriptor.services)
     val appMessageBus = app.messageBus as MessageBusEx
-    module.appContainerDescriptor.listeners.let { appMessageBus.unsubscribeLazyListeners(module, it) }
+    app.unloadServices(module, module.appContainerDescriptor.services)
+    appMessageBus.unsubscribeLazyListeners(module, module.appContainerDescriptor.listeners)
 
     for (project in openedProjects) {
       (project as ComponentManagerEx).unloadServices(module, module.projectContainerDescriptor.services)
-      module.projectContainerDescriptor.listeners?.let {
-        ((project as ComponentManagerEx).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
-      }
+      (project.messageBus as MessageBusEx).unsubscribeLazyListeners(module, module.projectContainerDescriptor.listeners)
 
       val moduleServices = module.moduleContainerDescriptor.services
       for (ideaModule in ModuleManager.getInstance(project).modules) {
