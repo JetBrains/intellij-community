@@ -1,3 +1,43 @@
+*:com.intellij.codeInsight.multiverse.CodeInsightContext
+*:com.intellij.codeInsight.multiverse.CodeInsightContextChangeListener
+- java.util.EventListener
+- a:contextsChanged():V
+*:com.intellij.codeInsight.multiverse.CodeInsightContextManager
+- *sf:Companion:com.intellij.codeInsight.multiverse.CodeInsightContextManager$Companion
+- a:getChangeFlow():kotlinx.coroutines.flow.Flow
+- a:getCodeInsightContext(com.intellij.psi.FileViewProvider):com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getCodeInsightContexts(com.intellij.openapi.vfs.VirtualFile):java.util.List
+- getCurrentCodeInsightContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getCurrentCodeInsightSession():com.intellij.codeInsight.multiverse.CodeInsightSession
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.CodeInsightContextManager
+- a:getPreferredContext(com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:isSharedSourceSupportEnabled():Z
+- a:performCodeInsightSession(com.intellij.codeInsight.multiverse.CodeInsightContext,kotlin.jvm.functions.Function1):java.lang.Object
+*f:com.intellij.codeInsight.multiverse.CodeInsightContextManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.CodeInsightContextManager
+- f:getInstanceAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- f:getTopic():com.intellij.util.messages.Topic
+*:com.intellij.codeInsight.multiverse.CodeInsightContextPresentationProvider
+- a:getIcon(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):javax.swing.Icon
+- a:getPresentableText(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):java.lang.String
+- a:isApplicable(com.intellij.codeInsight.multiverse.CodeInsightContext):Z
+*:com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+- a:getContexts(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.util.List
+- a:invalidationRequestFlow(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.Flow
+*:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator
+- a:requestInvalidation(kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.codeInsight.multiverse.CodeInsightContexts
+- sf:anyContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- sf:defaultContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- sf:isSharedSourceSupportEnabled(com.intellij.openapi.project.Project):Z
+- sf:isShowAllInheritorsEnabled():Z
+*:com.intellij.codeInsight.multiverse.CodeInsightSession
+- a:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+*:com.intellij.codeInsight.multiverse.ModuleContext
+- com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getModule():com.intellij.openapi.module.Module
+*:com.intellij.codeInsight.multiverse.MultiverseEnabler
+- a:enableMultiverse(com.intellij.openapi.project.Project):Z
 *:com.intellij.ide.lightEdit.LightEditCompatible
 *e:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - java.lang.Enum
