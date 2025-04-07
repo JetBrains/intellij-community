@@ -33,10 +33,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroup;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
@@ -61,6 +58,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
 
   private final Object myInitialBreakpoint;
+  private final XBreakpointManagerProxy myBreakpointManager;
 
   private BreakpointItemsTreeController myTreeController;
 
@@ -95,14 +93,15 @@ public class BreakpointsDialog extends DialogWrapper {
   private final Disposable myListenerDisposable = Disposer.newDisposable();
   private final List<ToggleAction> myToggleRuleActions = new ArrayList<>();
 
-  private XBreakpointManagerImpl getBreakpointManager() {
-    return (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
+  private XBreakpointManagerProxy getBreakpointManager() {
+    return myBreakpointManager;
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint) {
+  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, XBreakpointManagerProxy breakpointManager) {
     super(project);
     myProject = project;
     myInitialBreakpoint = breakpoint;
+    myBreakpointManager = breakpointManager;
 
     collectGroupingRules();
 
@@ -159,7 +158,7 @@ public class BreakpointsDialog extends DialogWrapper {
   void collectItems() {
     disposeItems();
     myBreakpointItems.clear();
-    myBreakpointItems.addAll(XBreakpointUtil.getAllBreakpointItems(myProject));
+    myBreakpointItems.addAll(getBreakpointManager().getAllBreakpointItems());
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {
@@ -315,10 +314,12 @@ public class BreakpointsDialog extends DialogWrapper {
 
     registerEditSourceAction(tree);
 
-    DefaultActionGroup breakpointTypes = XBreakpointUtil.breakpointTypes()
+    List<AddXBreakpointAction> breakpointTypeActions = getBreakpointManager().getAllBreakpointTypes().stream()
       .filter(XBreakpointType::isAddBreakpointButtonVisible)
       .map(AddXBreakpointAction::new)
-      .toListAndThen(DefaultActionGroup::new);
+      .toList();
+
+    DefaultActionGroup breakpointTypes = new DefaultActionGroup(breakpointTypeActions);
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
       setToolbarPosition(ActionToolbarPosition.TOP).

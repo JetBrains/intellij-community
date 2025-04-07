@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.application.ModalityState;
@@ -23,17 +23,19 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-class XBreakpointItem extends BreakpointItem {
+@ApiStatus.Internal
+public class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
   private XLightBreakpointPropertiesPanel myPropertiesPanel;
 
-  XBreakpointItem(XBreakpoint<?> breakpoint) {
+  public XBreakpointItem(XBreakpoint<?> breakpoint) {
     myBreakpoint = breakpoint;
   }
 
