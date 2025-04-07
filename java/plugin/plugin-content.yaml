@@ -1,6 +1,11 @@
 - name: lib/aether-dependency-resolver.jar
   modules:
   - name: intellij.java.aetherDependencyResolver
+- name: lib/completion-ranking-java.jar
+  library: completion-ranking-java
+  module: intellij.java.impl
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
 - name: lib/debugger-memory-agent.jar
   library: debugger-memory-agent
   module: intellij.java.debugger.memory.agent
@@ -53,9 +58,6 @@
   - name: intellij.java.indexing.impl
   - name: intellij.java.psi.impl
   - name: intellij.java.impl
-    libraries:
-      completion-ranking-java:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
   - name: intellij.java.impl.inspections
   - name: intellij.java.impl.refactorings
   - name: intellij.jsp.spi
@@ -76,10 +78,6 @@
   - name: intellij.java.performancePlugin
   - name: intellij.java.terminal
   - name: intellij.java.debugger.impl.backend
-  library: netty-codec-protobuf
-  files:
-  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
-  reason: <- intellij.java.compiler.impl
 - name: lib/javac2.jar
   modules:
   - name: intellij.java.compiler.antTasks
@@ -159,6 +157,11 @@
 - name: lib/modules/intellij.jvm.analysis.impl.jar
   contentModules:
   - name: intellij.jvm.analysis.impl
+- name: lib/netty-codec-protobuf.jar
+  library: netty-codec-protobuf
+  files:
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
+  reason: <- intellij.java.compiler.impl
 - name: lib/rt/debugger-agent.jar
   library: debugger-agent
   module: intellij.java.debugger.agent.holder

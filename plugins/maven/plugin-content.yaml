@@ -82,9 +82,6 @@
   - name: intellij.idea.community.build.dependencies
   - name: intellij.maven.errorProne.compiler
   - name: intellij.maven
-    libraries:
-      plexus-archiver:
-      - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar
 - name: lib/maven3-server-common.jar
   modules:
   - name: intellij.maven.server.m3.common
@@ -97,3 +94,8 @@
 - name: lib/maven40-server.jar
   modules:
   - name: intellij.maven.server.m40
+- name: lib/plexus-archiver.jar
+  library: plexus-archiver
+  module: intellij.maven
+  files:
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar

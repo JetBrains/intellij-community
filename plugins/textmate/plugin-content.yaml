@@ -1,3 +1,9 @@
+- name: lib/joni.jar
+  library: joni
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
+  - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar
+  reason: <- intellij.textmate.joni
 - name: lib/textmate.jar
   modules:
   - name: intellij.textmate
@@ -5,8 +11,3 @@
     reason: <- intellij.textmate
   - name: intellij.textmate.joni
     reason: <- intellij.textmate
-  library: joni
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
-  - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar
-  reason: <- intellij.textmate.joni

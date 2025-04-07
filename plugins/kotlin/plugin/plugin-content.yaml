@@ -1,3 +1,18 @@
+- name: lib/amper.dependency.resolution.kotlin.base.scripting.jar
+  library: amper.dependency.resolution.kotlin.base.scripting
+  module: kotlin.base.scripting
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0/dependency-resolution-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0/concurrency-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2/slf4j-api-2.jar
+  - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0/serialization-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0/core-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1/kotlinx-coroutines-core-1.jar
+- name: lib/completion-ranking-kotlin.jar
+  library: completion-ranking-kotlin
+  module: kotlin.ml-completion
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend
@@ -101,14 +116,6 @@
   - name: kotlin.base.project-structure
   - name: kotlin.base.external-build-system
   - name: kotlin.base.scripting
-    libraries:
-      amper.dependency.resolution.kotlin.base.scripting:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0/dependency-resolution-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0/concurrency-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2/slf4j-api-2.jar
-      - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0/serialization-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0/core-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1/kotlinx-coroutines-core-1.jar
   - name: kotlin.base.analysis-api-platform
   - name: kotlin.base.analysis
   - name: kotlin.base.code-insight
@@ -191,9 +198,6 @@
   - name: kotlin.scripting
   - name: kotlin.coverage
   - name: kotlin.ml-completion
-    libraries:
-      completion-ranking-kotlin:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
   - name: kotlin.copyright
   - name: kotlin.spellchecker
   - name: kotlin.jvm-decompiler

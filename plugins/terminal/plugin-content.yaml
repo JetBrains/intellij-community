@@ -1,18 +1,25 @@
+- name: lib/completion-ranking-sh.jar
+  library: completion-ranking-sh
+  module: intellij.terminal
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0/completion-ranking-sh-0.jar
 - name: lib/modules/intellij.terminal.frontend.split.jar
   contentModules:
   - name: intellij.terminal.frontend.split
+- name: lib/terminal-completion-db-with-extensions.jar
+  library: terminal-completion-db-with-extensions
+  module: intellij.terminal
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0/completion-db-with-extensions-0.jar
+- name: lib/terminal-completion-spec.jar
+  library: terminal-completion-spec
+  module: intellij.terminal.completion
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0/completion-spec-0.jar
 - name: lib/terminal.jar
   modules:
   - name: intellij.terminal
-    libraries:
-      terminal-completion-db-with-extensions:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0/completion-db-with-extensions-0.jar
-      completion-ranking-sh:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0/completion-ranking-sh-0.jar
   - name: intellij.terminal.completion
-    libraries:
-      terminal-completion-spec:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0/completion-spec-0.jar
   contentModules:
   - name: intellij.terminal.backend
   - name: intellij.terminal.frontend
