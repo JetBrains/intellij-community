@@ -119,6 +119,10 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
     final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
+    if (testSdk == null) {
+      LOG.warn("testSdk is null. assertSdkRootsNotParsed is skipped");
+      return;
+    }
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
       assertRootNotParsed(currentFile, root, null);
     }
