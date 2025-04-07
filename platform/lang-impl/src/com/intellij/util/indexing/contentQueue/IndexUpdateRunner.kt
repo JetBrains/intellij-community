@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.util.indexing.contentQueue
 
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -10,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -173,7 +176,7 @@ class IndexUpdateRunner(
 
     val filesToIndexCount = fileSet.size()
     TRACER.spanBuilder("doIndexFiles").setAttribute("files", filesToIndexCount.toLong()).useWithScope {
-      withContext(Dispatchers.Default + CoroutineName("Indexing(${project.locationHash}")) {
+      withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash}")) {
         //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
         // of distributing the load across available CPUs.
         // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
@@ -186,7 +189,6 @@ class IndexUpdateRunner(
         repeat(INDEXING_PARALLELIZATION) { workerNo ->
           launch {
             try {
-              var i = 0
               for (fileIndexingRequest in channel) {
                 while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
                   delay(1)
@@ -199,10 +201,7 @@ class IndexUpdateRunner(
                     processRequestTask(fileIndexingRequest)
                   }
 
-                i++
-                if (i % 10 == 0) {
-                  yield()
-                }
+                ensureActive()
               }
             }
             //FIXME RC: for profiling, remove afterwards
@@ -299,7 +298,7 @@ class IndexUpdateRunner(
         // ProjectRootManager.isExcluded looks safe enough, but not exactly the same check as done by scanning.
         // upd: also, files, registered as non indexable (see WorkspaceFileKind.CONTENT_NON_INDEXABLE) should be skipped during indexing.
         val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
-        val excluded = readAction {
+        val excluded = readActionUndispatched {
           val isIndexable = workspaceFileIndex.isIndexable(file)
           val belongsToContentNonIndexable = workspaceFileIndex.findFileSet(file, true, false, includeContentNonIndexableSets = true, false, false, false) != null
           // We don't want to just exclude all !isIndexable,
@@ -351,7 +350,7 @@ class IndexUpdateRunner(
       indexingStamp: FileIndexingStamp,
       file: VirtualFile,
     ): FileIndexingResult? {
-      val fileIndexingResult = readAction {
+      val fileIndexingResult = readActionUndispatched {
         fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
       }
       incIndexingSuccessfulCountAndLogIfNeeded()
@@ -376,7 +375,7 @@ class IndexUpdateRunner(
       try {
         val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
         val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
-        val fileIndexingResult = readAction {
+        val fileIndexingResult = readActionUndispatched {
           indexingAttemptCount.incrementAndGet()
           val fileType = if (fileTypeChangeChecker.get()) type else null
           fileBasedIndex.indexFileContent(project, fileContent, false, fileType, indexingStamp)
