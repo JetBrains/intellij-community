@@ -247,5 +247,7 @@
               topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
     <listener class="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardUpdater"
               topic="com.intellij.execution.ExecutionListener"/>
+    <listener class="com.intellij.xdebugger.impl.ui.XDebugRunContentListener"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
 </idea-plugin>

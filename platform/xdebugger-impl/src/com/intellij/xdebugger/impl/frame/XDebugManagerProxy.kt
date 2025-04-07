@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,6 +22,7 @@ interface XDebugManagerProxy {
   fun isEnabled(): Boolean
   suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T
   fun getCurrentSessionProxy(project: Project): XDebugSessionProxy?
+  fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId?
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")

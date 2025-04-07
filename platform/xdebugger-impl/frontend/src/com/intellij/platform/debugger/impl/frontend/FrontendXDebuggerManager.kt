@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -88,6 +89,10 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
       }
     }
+  }
+
+  internal fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {
+    return sessions.value.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
   }
 
   private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto) {
