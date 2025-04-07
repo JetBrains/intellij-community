@@ -9799,6 +9799,16 @@ e:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
 - sf:WELL_IF_YOU_INSIST:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
 - s:valueOf(java.lang.String):com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
 - s:values():com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8[]
+f:com.intellij.openapi.vfs.impl.eel.EelFileWatcher
+- com.intellij.openapi.vfs.local.PluggableFileWatcher
+- <init>():V
+- dispose():V
+- initialize(com.intellij.openapi.vfs.newvfs.ManagingFS,com.intellij.openapi.vfs.local.FileWatcherNotificationSink):V
+- isOperational():Z
+- isSettingRoots():Z
+- setWatchRoots(java.util.List,java.util.List,Z):V
+- shutdown():V
+- startup():V
 c:com.intellij.openapi.vfs.impl.http.DefaultRemoteContentProvider
 - com.intellij.openapi.vfs.impl.http.RemoteContentProvider
 - <init>():V

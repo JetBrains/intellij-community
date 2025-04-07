@@ -142,6 +142,8 @@ jvm_library(
     "//platform/kernel/pasta",
     "//platform/workspace/storage",
     "//platform/plugins/parser/impl",
+    "//platform/eel",
+    "//platform/platform-util-io:ide-util-io",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -296,6 +298,8 @@ jvm_library(
     "//platform/kernel/pasta",
     "//platform/workspace/storage",
     "//platform/plugins/parser/impl",
+    "//platform/eel",
+    "//platform/platform-util-io:ide-util-io",
   ],
   runtime_deps = [":ide-impl_resources"]
 )

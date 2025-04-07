@@ -1117,6 +1117,7 @@
 
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl"/>
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.wsl.WslFileWatcher"/>
+    <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.eel.EelFileWatcher"/>
 
     <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>
     <virtualFileSystem key="http" implementationClass="com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl"/>
