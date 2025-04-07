@@ -6,8 +6,7 @@ import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
 
 class GitLocalBranch(name: String) : GitBranch(name) {
-  override val isRemote: Boolean
-    get() = false
+  override val isRemote: Boolean = false
 
   override val fullName: @NlsSafe String
     get() = REFS_HEADS_PREFIX + name

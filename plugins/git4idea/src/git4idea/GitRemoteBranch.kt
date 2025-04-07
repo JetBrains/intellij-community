@@ -21,6 +21,5 @@ abstract class GitRemoteBranch protected constructor(name: String, val remote: G
    */
   abstract val nameForLocalOperations: @NlsSafe String
 
-  override val isRemote: Boolean
-    get() = true
+  override val isRemote: Boolean = true
 }

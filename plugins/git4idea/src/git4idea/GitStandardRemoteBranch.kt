@@ -12,8 +12,7 @@ class GitStandardRemoteBranch(remote: GitRemote, nameAtRemote: String) :
 
   override val nameForRemoteOperations: String = GitBranchUtil.stripRefsPrefix(nameAtRemote)
 
-  override val nameForLocalOperations: String
-    get() = name
+  override val nameForLocalOperations: String = name
 
   override fun equals(o: Any?): Boolean {
     if (this === o) return true

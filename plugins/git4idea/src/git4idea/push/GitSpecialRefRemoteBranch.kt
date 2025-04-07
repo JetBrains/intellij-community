@@ -8,13 +8,10 @@ import git4idea.repo.GitRemote
 /**
  * Semi-fake remote branch if pushing to special push specs like "HEAD:refs/for/master".
  */
-class GitSpecialRefRemoteBranch(private val ref: String, remote: GitRemote) : GitRemoteBranch(ref, remote) {
-  override val nameForRemoteOperations: @NlsSafe String
-    get() = ref
+class GitSpecialRefRemoteBranch(ref: String, remote: GitRemote) : GitRemoteBranch(ref, remote) {
+  override val nameForRemoteOperations: @NlsSafe String = ref
 
-  override val nameForLocalOperations: @NlsSafe String
-    get() = ref
+  override val nameForLocalOperations: @NlsSafe String = ref
 
-  override val fullName: @NlsSafe String
-    get() = ref
+  override val fullName: @NlsSafe String = ref
 }

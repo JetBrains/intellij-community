@@ -12,12 +12,9 @@ import git4idea.repo.GitRemote
  * Because of these differences, GitSvnRemoteBranch doesn't [GitStandardRemoteBranch].
  */
 class GitSvnRemoteBranch(private val ref: String) : GitRemoteBranch(ref, GitRemote.DOT) {
-  override val nameForRemoteOperations: String
-    get() = ref
+  override val nameForRemoteOperations: String = ref
 
-  override val nameForLocalOperations: String
-    get() = ref
+  override val nameForLocalOperations: String = ref
 
-  override val fullName: String
-    get() = ref
+  override val fullName: String = ref
 }
