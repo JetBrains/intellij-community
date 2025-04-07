@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManagerEx
@@ -79,6 +80,7 @@ import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
+import com.intellij.util.ObjectUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
@@ -86,6 +88,8 @@ import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
 import com.intellij.util.xmlb.clearPropertyCollectorCache
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.KeyboardFocusManager
 import java.awt.Window
@@ -438,20 +442,33 @@ object DynamicPlugins {
                                          pluginDescriptor: IdeaPluginDescriptorImpl,
                                          options: UnloadPluginOptions): Boolean {
     var result = false
+    val modalOwner = project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess()
     if (options.save) {
       runInAutoSaveDisabledMode {
         FileDocumentManager.getInstance().saveAllDocuments()
-        runWithModalProgressBlocking(project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {
+        runWithModalProgressBlocking(modalOwner, "") {
           saveProjectsAndApp(true)
         }
       }
     }
-    val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
-                                     project,
-                                     parentComponent,
-                                     null)
-    indicator.runInSwingThread {
-      result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
+    // We are doing a very bad thing here: we are using `PotemkinProgress` with a non-modal state.
+    // We cannot properly replace it with the classic modal progress, because the function inside frequently uses write actions,
+    // and we need to update the progress bar.
+    // The problem here is that because of the non-modal state,
+    // any dialog can appear on top of PotemkinProgress. But PotemkinProgress blocks input events if they are not related to the appeared dialog,
+    // hence the user cannot interact with the dialog.
+    // We are using an ad-hoc modality here to block any attempts to initiate a modal dialog stemming from a non-modal state.
+    // A proper fix would be to transfer the inner write actions to background, and show normal running modal progress dialog instead of Potemkin; see IJPL-182690
+    runWithModalProgressBlocking(modalOwner, IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name)) {
+      withContext(Dispatchers.EDT) {
+        val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
+                                         project,
+                                         parentComponent,
+                                         null)
+        indicator.runInSwingThread {
+          result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
+        }
+      }
     }
     return result
   }
