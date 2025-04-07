@@ -72,7 +72,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private XDebugSessionData mySessionData;
 
   /**
-   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironment, RunContentDescriptor, boolean, boolean)}
+   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironmentProxy, RunContentDescriptor, boolean, boolean)}
    */
   @Deprecated
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
@@ -215,10 +215,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected final void createDefaultTabs(XDebugSessionProxy session) {
-    Content framesContent = createFramesContent(session);
-    if (framesContent != null) {
-      myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
-    }
+    myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
 
     if (Registry.is("debugger.new.threads.view")) {
       Content threadsContent = createThreadsContent(session);
@@ -356,7 +353,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return watchesContent;
   }
 
-  private @Nullable Content createFramesContent(XDebugSessionProxy proxy) {
+  private @NotNull Content createFramesContent(XDebugSessionProxy proxy) {
     XFramesView framesView = new XFramesView(proxy);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
