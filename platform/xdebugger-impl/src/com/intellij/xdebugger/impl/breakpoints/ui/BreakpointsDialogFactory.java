@@ -56,7 +56,6 @@ public class BreakpointsDialogFactory {
       @Override
       protected void dispose() {
         myBreakpoint = null;
-        XBreakpointUtil.PANEL_PROVIDER.onDialogClosed(myProject);
         myDialogShowing = null;
 
         super.dispose();

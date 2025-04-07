@@ -17,7 +17,5 @@ public abstract class BreakpointPanelProvider {
 
   public abstract void addListener(BreakpointsListener listener, Project project, Disposable disposable);
 
-  public abstract void onDialogClosed(final Project project);
-
   public abstract void provideBreakpointItems(Project project, Collection<? super BreakpointItem> items);
 }

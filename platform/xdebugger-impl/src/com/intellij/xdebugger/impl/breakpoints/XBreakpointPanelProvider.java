@@ -23,10 +23,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider {
   }
 
   @Override
-  public void onDialogClosed(final Project project) {
-  }
-
-  @Override
   public void provideBreakpointItems(Project project, Collection<? super BreakpointItem> items) {
     Arrays.stream(XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints())
       .map(XBreakpointItem::new)
