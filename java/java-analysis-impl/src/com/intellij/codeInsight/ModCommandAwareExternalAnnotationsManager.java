@@ -182,14 +182,14 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
   public static @NonNls @NotNull String createAnnotationTag(@NotNull String annotationFQName, PsiNameValuePair @Nullable [] values) {
     @NonNls String text;
     if (values != null && values.length != 0) {
-      text = "  <annotation name='" + annotationFQName + "'>\n";
+      text = "<annotation name='" + annotationFQName + "'>\n";
       text += StringUtil.join(values, pair -> "<val" +
                                               (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
                                               " val=\"" + StringUtil.escapeXmlEntities(pair.getValue().getText()) + "\"/>", "    \n");
-      text += "  </annotation>";
+      text += "</annotation>";
     }
     else {
-      text = "  <annotation name='" + annotationFQName + "'/>\n";
+      text = "<annotation name='" + annotationFQName + "'/>\n";
     }
     return text;
   }

@@ -57,6 +57,7 @@ import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
@@ -352,6 +353,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     if (!(addedElement instanceof XmlTag)) {
       throw new IncorrectOperationException("Failed to add annotation " + annotation + " after " + anchor);
     }
+    CodeStyleManager.getInstance(myPsiManager.getProject()).reformat(addedElement);
 
     return (XmlTag)addedElement;
   }
@@ -393,6 +395,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     if (!(addedElement instanceof XmlTag)) {
       throw new IncorrectOperationException("Failed to add annotation " + annotation + " after " + anchor);
     }
+    CodeStyleManager.getInstance(myPsiManager.getProject()).reformat(addedElement);
 
     return itemTag;
   }
