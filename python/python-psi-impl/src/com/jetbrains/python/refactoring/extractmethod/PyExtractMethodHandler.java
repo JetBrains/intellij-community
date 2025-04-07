@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -17,8 +18,12 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +35,25 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     // select editor text fragment
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      // Get the current offset where the caret is positioned
+      int caretOffset = editor.getCaretModel().getOffset();
+
+      // Find PsiElement at caret
+      PsiElement element = file.findElementAt(caretOffset);
+
+      // Check if the element or its parent is a keyword argument
+      if (element != null && (isPartOfKeywordArgument(element))) {
+        // Find the whole expression the keyword argument belongs to
+        PsiElement expressionElement = findContainingExpression(element);
+        if (expressionElement != null) {
+          int startOffset = expressionElement.getTextRange().getStartOffset();
+          int endOffset = expressionElement.getTextRange().getEndOffset();
+          editor.getSelectionModel().setSelection(startOffset, endOffset);
+        }
+      } else {
+        // Default behavior: select the line at caret
+        editor.getSelectionModel().selectLineAtCaret();
+      }
     }
     invokeOnEditor(project, editor, file);
   }
@@ -115,6 +138,53 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
                                         RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
   }
 
+  /**
+   * Checks if the given element is a Python keyword argument or part of it
+   */
+  private static boolean isPartOfKeywordArgument(PsiElement element) {
+    if (element instanceof PyKeywordArgument || element instanceof PsiWhiteSpace) {
+      return true;
+    }
+
+    // If the element itself is not a keyword argument, check if it's part of one
+    PsiElement parent = element.getParent();
+    while (parent != null) {
+      if (parent instanceof PyKeywordArgument|| parent instanceof PyCallExpression) {
+        return true;
+      }
+      // Only check immediate parents to avoid going too far up the tree
+      if (parent.getParent() == null || parent instanceof PyCallExpression) {
+        break;
+      }
+      parent = parent.getParent();
+    }
+
+    return false;
+  }
+
+  /**
+   * Finds the containing call expression for a Python keyword argument element
+   */
+  private static PsiElement findContainingExpression(PsiElement keywordArgElement) {
+    PsiElement current = keywordArgElement;
+
+    while (current != null) {
+      if (current instanceof PyCallExpression) {
+        return current;
+      }
+
+      // Check if we've already reached a complete expression or the root
+      if (current instanceof PyStatement &&
+          !(current instanceof PyExpressionStatement)) {
+        break;
+      }
+
+      current = current.getParent();
+    }
+
+    return current;
+  }
+
   private static boolean rangeBelongsToSameClassBody(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     final PyClass firstScopeOwner = PsiTreeUtil.getParentOfType(element1, PyClass.class, false, ScopeOwner.class);
     final PyClass secondScopeOwner = PsiTreeUtil.getParentOfType(element2, PyClass.class, false, ScopeOwner.class);
@@ -141,6 +211,17 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     // return elements if they are really first and last elements of statements
     if (element1 == PsiTreeUtil.getDeepestFirst(statement1) &&
         element2 == PyPsiUtils.getPrevSignificantLeaf(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
+      return Couple.of(statement1, statement2);
+    }
+
+    // multi-line function call
+    boolean isLeftParen = "(".equals(element2.getText());
+    PsiElement prevSignificantLeaf = PyPsiUtils.getPrevSignificantLeaf(
+      PsiTreeUtil.getDeepestLast(statement2),
+      !(statement2 instanceof PsiComment)
+    );
+    boolean isRightParen = prevSignificantLeaf != null && ")".equals(prevSignificantLeaf.getText());
+    if (isLeftParen && isRightParen) {
       return Couple.of(statement1, statement2);
     }
     return null;
