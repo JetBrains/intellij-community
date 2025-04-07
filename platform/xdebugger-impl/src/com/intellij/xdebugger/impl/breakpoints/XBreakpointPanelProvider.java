@@ -2,15 +2,11 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
@@ -24,11 +20,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider {
   public void addListener(final BreakpointsListener listener, Project project, Disposable disposable) {
     project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new MyXBreakpointListener(listener,
                                                                                                                XDebuggerManager.getInstance(project).getBreakpointManager()));
-  }
-
-  @Override
-  public int getPriority() {
-    return 0;
   }
 
   @Override
