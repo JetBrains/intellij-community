@@ -42,6 +42,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,12 +54,13 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.subscribeOnBreakpointsChanges;
+
 @ApiStatus.Internal
 public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
 
   private final Object myInitialBreakpoint;
-  private final List<BreakpointPanelProvider> myBreakpointsPanelProviders;
 
   private BreakpointItemsTreeController myTreeController;
 
@@ -97,10 +99,9 @@ public class BreakpointsDialog extends DialogWrapper {
     return (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider> providers) {
+  protected BreakpointsDialog(@NotNull Project project, Object breakpoint) {
     super(project);
     myProject = project;
-    myBreakpointsPanelProviders = providers;
     myInitialBreakpoint = breakpoint;
 
     collectGroupingRules();
@@ -156,13 +157,9 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   void collectItems() {
-    if (!myBreakpointsPanelProviders.isEmpty()) {
-      disposeItems();
-      myBreakpointItems.clear();
-      for (BreakpointPanelProvider panelProvider : myBreakpointsPanelProviders) {
-        panelProvider.provideBreakpointItems(myProject, myBreakpointItems);
-      }
-    }
+    disposeItems();
+    myBreakpointItems.clear();
+    XBreakpointUtil.PANEL_PROVIDER.provideBreakpointItems(myProject, myBreakpointItems);
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {
@@ -348,7 +345,10 @@ public class BreakpointsDialog extends DialogWrapper {
 
     initSelection(myBreakpointItems);
 
-    myBreakpointsPanelProviders.forEach(provider -> provider.addListener(myRebuildAlarm::cancelAndRequest, myProject, myListenerDisposable));
+    subscribeOnBreakpointsChanges(myProject, myListenerDisposable, breakpoint -> {
+      myRebuildAlarm.cancelAndRequest();
+      return Unit.INSTANCE;
+    });
 
     return decoratorPanel;
   }

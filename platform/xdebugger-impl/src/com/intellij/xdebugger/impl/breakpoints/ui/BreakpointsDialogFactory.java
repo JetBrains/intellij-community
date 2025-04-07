@@ -51,8 +51,7 @@ public class BreakpointsDialogFactory {
   public void showDialog(@Nullable Object initialBreakpoint) {
     if (selectInDialogShowing(initialBreakpoint)) return;
 
-    final BreakpointsDialog dialog = new BreakpointsDialog(myProject, initialBreakpoint != null ? initialBreakpoint : myBreakpoint,
-                                                           List.of(XBreakpointUtil.PANEL_PROVIDER)) {
+    final BreakpointsDialog dialog = new BreakpointsDialog(myProject, initialBreakpoint != null ? initialBreakpoint : myBreakpoint) {
       @Override
       protected void dispose() {
         myBreakpoint = null;

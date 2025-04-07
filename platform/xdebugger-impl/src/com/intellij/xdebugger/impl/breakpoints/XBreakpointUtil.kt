@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -127,6 +128,24 @@ object XBreakpointUtil {
     }
 
     return null
+  }
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun subscribeOnBreakpointsChanges(project: Project, disposable: Disposable, onBreakpointChange: (XBreakpoint<*>) -> Unit) {
+    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, object : XBreakpointListener<XBreakpoint<*>> {
+      override fun breakpointAdded(breakpoint: XBreakpoint<*>) {
+        onBreakpointChange(breakpoint)
+      }
+
+      override fun breakpointChanged(breakpoint: XBreakpoint<*>) {
+        onBreakpointChange(breakpoint)
+      }
+
+      override fun breakpointRemoved(breakpoint: XBreakpoint<*>) {
+        onBreakpointChange(breakpoint)
+      }
+    })
   }
 
   @ApiStatus.Internal
