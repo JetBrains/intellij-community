@@ -31,7 +31,6 @@ import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 import java.awt.Color
 import java.util.*
 import javax.swing.JComponent
@@ -49,7 +48,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 ) {
   override fun createPanel(): DialogPanel {
     val optionsProvider = TerminalOptionsProvider.instance
-    val osSpecificOptions = TerminalOsSpecificOptions.getInstance()
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
 
@@ -215,7 +213,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
-            .bindSelected(osSpecificOptions::copyOnSelection)
+            .bindSelected(optionsProvider::copyOnSelection)
+            .visible(!SystemInfo.isLinux)
         }
         row {
           checkBox(message("settings.paste.on.middle.mouse.button.click"))

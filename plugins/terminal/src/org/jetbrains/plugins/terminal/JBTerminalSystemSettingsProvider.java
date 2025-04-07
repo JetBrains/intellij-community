@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.TerminalFontSizeProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -11,9 +13,8 @@ import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
-import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions;
 
-import java.awt.Font;
+import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
 public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
@@ -65,7 +66,9 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOsSpecificOptions.getInstance().getCopyOnSelection();
+    return (CopyPasteManager.getInstance().isSystemSelectionSupported()
+            || TerminalOptionsProvider.getInstance().getCopyOnSelection())
+           && Registry.is("editor.caret.update.primary.selection");
   }
 
   @Override
