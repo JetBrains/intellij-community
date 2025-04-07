@@ -63,6 +63,7 @@ data class XStackFrameDto(
   val evaluator: XDebuggerEvaluatorDto,
   val initialPresentation: XStackFramePresentation,
   val captionInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo.noInfo,
+  val customBackgroundInfo: XStackFrameCustomBackgroundInfo? = null
 )
 
 @ApiStatus.Internal
@@ -75,6 +76,12 @@ data class XStackFrameCaptionInfo(
     val noInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo(hasSeparatorAbove = false, caption = null)
   }
 }
+
+@ApiStatus.Internal
+@Serializable
+data class XStackFrameCustomBackgroundInfo(
+  val backgroundColor: ColorId? = null,
+)
 
 @ApiStatus.Internal
 @Serializable

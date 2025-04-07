@@ -43,6 +43,11 @@ internal class FrontendXStackFramesListColorsCache(
 
   override fun get(stackFrame: XStackFrame): Color? {
     require(stackFrame is FrontendXStackFrame) { "Expected FrontendXStackFrame, got ${stackFrame::class.java}" }
+
+    if (stackFrame.requiresCustomBackground) {
+      return stackFrame.customBackgroundColor
+    }
+
     val virtualFileId = stackFrame.fileId
     if (virtualFileId == null) {
       return colorsManager.getScopeColor(NonProjectFilesScope.NAME)

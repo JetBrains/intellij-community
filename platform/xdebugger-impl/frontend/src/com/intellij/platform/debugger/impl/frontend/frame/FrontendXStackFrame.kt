@@ -37,6 +37,13 @@ internal class FrontendXStackFrame(
   val id: XStackFrameId get() = frameDto.stackFrameId
   val fileId: VirtualFileId? get() = frameDto.sourcePosition?.fileId
 
+  // TODO[IJPL-177087]: collapse these two into a three-state value? (NoCustomBackground/WithCustomBackground(null)/WithCustomBackground(color)?
+  //  Is it worth it?
+  val requiresCustomBackground: Boolean
+    get() = frameDto.customBackgroundInfo != null
+  val customBackgroundColor: java.awt.Color?
+    get() = frameDto.customBackgroundInfo?.backgroundColor?.color()
+
   override fun getSourcePosition(): XSourcePosition? {
     return frameDto.sourcePosition?.sourcePosition()
   }

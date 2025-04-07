@@ -175,7 +175,7 @@ internal fun createXStackFrameDto(frame: XStackFrame, id: XStackFrameId): XStack
   val canEvaluateInDocument = frame.isDocumentEvaluator
   val evaluatorDto = XDebuggerEvaluatorDto(canEvaluateInDocument)
   return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.initialPresentation(),
-                        frame.captionInfo())
+                        frame.captionInfo(), frame.customBackgroundInfo())
 }
 
 private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
@@ -185,6 +185,13 @@ private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
   else {
     XStackFrameCaptionInfo.noInfo
   }
+}
+
+private fun XStackFrame.customBackgroundInfo(): XStackFrameCustomBackgroundInfo? {
+  if (this !is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
+    return null
+  }
+  return XStackFrameCustomBackgroundInfo(backgroundColor?.rpcId())
 }
 
 private fun XStackFrame.initialPresentation(): XStackFramePresentation {
