@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CustomAssetDescriptor
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
@@ -257,8 +258,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       }
     }
 
-    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
-      val key = SupportedDistribution(os, arch)
+    fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, generator: ResourceGenerator) {
+      val key = SupportedDistribution(os, arch, libc)
       val newValue = layout.platformResourceGenerators[key]?.let { it + generator } ?: persistentListOf(generator)
       layout.platformResourceGenerators += key to newValue
     }
@@ -327,8 +328,8 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       }
     }
 
-    fun withPlatformBin(os: OsFamily, arch: JvmArchitecture, binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
-      withGeneratedPlatformResources(os, arch) { targetDir, context ->
+    fun withPlatformBin(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
+      withGeneratedPlatformResources(os, arch, libc) { targetDir, context ->
         copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
       }
     }

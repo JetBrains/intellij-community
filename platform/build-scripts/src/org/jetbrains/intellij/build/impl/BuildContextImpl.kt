@@ -30,7 +30,9 @@ import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
@@ -38,7 +40,6 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.computeAppInfoXml
-import org.jetbrains.intellij.build.dependencies.LinuxLibcImpl
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
@@ -146,7 +147,7 @@ class BuildContextImpl internal constructor(
       productProperties.productLayout.compatiblePluginsToIgnore =
         productProperties.productLayout.compatiblePluginsToIgnore.addAll(options.compatiblePluginsToIgnore)
     }
-    check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix || LinuxLibcImpl.isLinuxMusl) {
+    check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix || LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
       "The runtime type doesn't match the one specified in the product properties: ${bundledRuntime.prefix} != ${productProperties.runtimeDistribution.artifactPrefix}"
     }
   }
@@ -198,7 +199,7 @@ class BuildContextImpl internal constructor(
   override fun addDistFile(file: DistFile) {
     Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
 
-    val existing = distFiles.firstOrNull { it.os == file.os && it.arch == file.arch && it.relativePath == file.relativePath }
+    val existing = distFiles.firstOrNull { it.os == file.os && it.arch == file.arch && it.libcImpl == file.libcImpl && it.relativePath == file.relativePath }
     check(existing == null) {
       "$file duplicates $existing"
     }
@@ -217,11 +218,12 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
+  override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?, libcImpl: LibcImpl?): Collection<DistFile> {
     val result = distFiles.filterTo(mutableListOf()) {
-      (os == null && arch == null) ||
+      (os == null && arch == null && libcImpl == null) ||
       (os == null || it.os == null || it.os == os) &&
-      (arch == null || it.arch == null || it.arch == arch)
+      (arch == null || it.arch == null || it.arch == arch) &&
+      (libcImpl == null || it.libcImpl == null || it.libcImpl == libcImpl)
     }
     result.sortWith(compareBy({ it.relativePath }, { it.os }, { it.arch }))
     return result

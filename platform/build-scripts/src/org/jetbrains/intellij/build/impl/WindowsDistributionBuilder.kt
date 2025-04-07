@@ -24,9 +24,11 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.FileSet
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
@@ -71,6 +73,9 @@ internal class WindowsDistributionBuilder(
   override val targetOs: OsFamily
     get() = OsFamily.WINDOWS
 
+  override val targetLibcImpl: LibcImpl
+    get() = WindowsLibcImpl.DEFAULT
+
   companion object {
     private val CompareDistributionsSemaphore = Semaphore(Integer.getInteger("intellij.build.win.compare.concurrency", 1))
   }
@@ -87,7 +92,7 @@ internal class WindowsDistributionBuilder(
       copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
       generateBuildTxt(context, targetPath)
-      copyDistFiles(context, targetPath, OsFamily.WINDOWS, arch)
+      copyDistFiles(context, targetPath, OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
@@ -129,7 +134,7 @@ internal class WindowsDistributionBuilder(
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
-    val runtimeDir = context.bundledRuntime.extract(OsFamily.WINDOWS, arch)
+    val runtimeDir = context.bundledRuntime.extract(OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT)
 
     @Suppress("SpellCheckingInspection")
     val vcRtDll = runtimeDir.resolve("jbr/bin/msvcp140.dll")

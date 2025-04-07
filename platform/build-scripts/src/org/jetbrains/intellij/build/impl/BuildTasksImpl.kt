@@ -30,9 +30,13 @@ import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.DistFileContent
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.LocalDistFileContent
+import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
+import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
@@ -114,32 +118,35 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       JvmArchitecture.currentJvmArch
     }
     context.options.targetArch = arch
+    val targetLibcImpl = LibcImpl.current(OsFamily.currentOs)
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = createIdeaPropertyFile(context)
-      val builder = getOsDistributionBuilder(currentOs, context, propertiesFile)!!
+      val builder = getOsDistributionBuilder(currentOs, targetLibcImpl, context, propertiesFile)!!
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      context.bundledRuntime.extractTo(currentOs, arch, targetDirectory.resolve("jbr"))
-      updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys)
-      builder.checkExecutablePermissions(targetDirectory, root = "", includeRuntime = true, arch)
+      context.bundledRuntime.extractTo(currentOs, arch, targetLibcImpl, targetDirectory.resolve("jbr"))
+      updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch, targetLibcImpl).keys)
+      builder.checkExecutablePermissions(targetDirectory, root = "", includeRuntime = true, arch, targetLibcImpl)
       builder.writeProductInfoFile(targetDirectory, arch)
     }
     else {
-      copyDistFiles(context, targetDirectory, currentOs, arch)
+      copyDistFiles(context, targetDirectory, currentOs, arch, targetLibcImpl)
     }
   }
 }
 
-data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
+data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture, @JvmField val libcImpl: LibcImpl)
 
 @JvmField
 val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
-  SupportedDistribution(OsFamily.WINDOWS, JvmArchitecture.x64),
-  SupportedDistribution(OsFamily.WINDOWS, JvmArchitecture.aarch64),
-  SupportedDistribution(OsFamily.MACOS, JvmArchitecture.x64),
-  SupportedDistribution(OsFamily.MACOS, JvmArchitecture.aarch64),
-  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64),
-  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64),
+  SupportedDistribution(OsFamily.WINDOWS, JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
+  SupportedDistribution(OsFamily.WINDOWS, JvmArchitecture.aarch64, WindowsLibcImpl.DEFAULT),
+  SupportedDistribution(OsFamily.MACOS, JvmArchitecture.x64, MacLibcImpl.DEFAULT),
+  SupportedDistribution(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
+  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
+  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC),
+  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.MUSL),
+  SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.MUSL),
 )
 
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
@@ -251,6 +258,7 @@ internal suspend fun updateExecutablePermissions(destinationDir: Path, executabl
 class DistributionForOsTaskResult(
   @JvmField val builder: OsSpecificDistributionBuilder,
   @JvmField val arch: JvmArchitecture,
+  @JvmField val libc: LibcImpl,
   @JvmField val outDir: Path
 )
 
@@ -277,7 +285,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
     spanBuilder("Adjust executable permissions on common dist").use {
       val matchers = SUPPORTED_DISTRIBUTIONS.mapNotNull {
-        getOsDistributionBuilder(it.os, context)
+        getOsDistributionBuilder(it.os, it.libcImpl, context)
       }.flatMap { builder ->
         JvmArchitecture.entries.flatMap { arch ->
           builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys
@@ -287,12 +295,12 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
     }
 
     supervisorScope {
-      SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch) ->
+      SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch, libcImpl) ->
         if (!context.shouldBuildDistributionForOS(os, arch)) {
           return@mapNotNull null
         }
 
-        val builder = getOsDistributionBuilder(os, context, ideaPropertyFileContent) ?: return@mapNotNull null
+        val builder = getOsDistributionBuilder(os, libcImpl, context, ideaPropertyFileContent) ?: return@mapNotNull null
 
         val stepId = "${os.osId} ${arch.name}"
         if (context.options.buildStepsToSkip.contains(stepId)) {
@@ -302,10 +310,10 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
         async(CoroutineName("$stepId build step")) {
           spanBuilder(stepId).use {
-            val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(os, arch, context)
+            val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(os, arch, libcImpl, context)
             builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
             checkClassFiles(osAndArchSpecificDistDirectory, context, isDistAll = false)
-            DistributionForOsTaskResult(builder, arch, osAndArchSpecificDistDirectory)
+            DistributionForOsTaskResult(builder, arch, libcImpl, osAndArchSpecificDistDirectory)
           }
         }
       }
@@ -814,7 +822,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
 
   val runtimeModuleRepositoryPath = if (context.generateRuntimeModuleRepository) {
     spanBuilder("generate runtime repository for cross-platform distribution").use {
-      generateCrossPlatformRepository(context.paths.distAllDir, distResults.filter { it.arch == JvmArchitecture.x64 }.map { it.outDir }, context)
+      generateCrossPlatformRepository(context.paths.distAllDir, distResults.filter { it.arch == JvmArchitecture.x64 && it.libc != LinuxLibcImpl.MUSL }.map { it.outDir }, context)
     }
   }
   else {
@@ -824,7 +832,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
   val extraFiles = mapOf("dependencies.txt" to copyDependenciesFile(context))
-  crossPlatformZip(context, distResults, targetFile, executableName, productJson, extraFiles, runtimeModuleRepositoryPath)
+  crossPlatformZip(context, distResults.filter { it.libc != LinuxLibcImpl.MUSL } , targetFile, executableName, productJson, extraFiles, runtimeModuleRepositoryPath)
 
   validateProductJson(targetFile, pathInArchive = "", context)
 
@@ -868,7 +876,7 @@ private fun checkPlatformSpecificPluginResources(pluginLayouts: List<PluginLayou
   }
 }
 
-fun getOsDistributionBuilder(os: OsFamily, context: BuildContext, ideaProperties: CharSequence? = null): OsSpecificDistributionBuilder? = when (os) {
+fun getOsDistributionBuilder(os: OsFamily, libcImpl: LibcImpl, context: BuildContext, ideaProperties: CharSequence? = null): OsSpecificDistributionBuilder? = when (os) {
   OsFamily.WINDOWS -> context.windowsDistributionCustomizer?.let {
     WindowsDistributionBuilder(context, customizer = it, ideaProperties)
   }
@@ -876,7 +884,7 @@ fun getOsDistributionBuilder(os: OsFamily, context: BuildContext, ideaProperties
     MacDistributionBuilder(context, customizer = it, ideaProperties)
   }
   OsFamily.LINUX -> context.linuxDistributionCustomizer?.let {
-    LinuxDistributionBuilder(context, customizer = it, ideaProperties)
+    LinuxDistributionBuilder(context, customizer = it, ideaProperties, targetLibcImpl = libcImpl as LinuxLibcImpl)
   }
 }
 
@@ -904,7 +912,7 @@ private fun crossPlatformZip(
 ) {
   val winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir
   val macArm64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir
-  val linuxX64DistDir = distResults.first { it.builder.targetOs == OsFamily.LINUX && it.arch == JvmArchitecture.x64 }.outDir
+  val linuxX64DistDir = distResults.first { it.builder.targetOs == OsFamily.LINUX && it.arch == JvmArchitecture.x64 && it.libc == LinuxLibcImpl.GLIBC }.outDir
 
   val executablePatterns = distResults.flatMap {
     it.builder.generateExecutableFilesMatchers(includeRuntime = false, JvmArchitecture.x64).keys +
@@ -1000,7 +1008,7 @@ private fun crossPlatformZip(
         }, entryCustomizer)
       }
 
-      val distFiles = context.getDistFiles(os = null, arch = null)
+      val distFiles = context.getDistFiles(os = null, arch = null, libcImpl = null)
       for (distFile in distFiles) {
         // Linux and Windows: we don't add specific dist dirs for ARM, so, copy dist files explicitly
         // macOS: we don't copy dist files to avoid extra copy operation
@@ -1101,8 +1109,8 @@ internal suspend fun collectIncludedPluginModules(enabledPluginModules: Collecti
   }
 }
 
-internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
-  for (item in context.getDistFiles(os, arch)) {
+internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture, libcImpl: LibcImpl) {
+  for (item in context.getDistFiles(os, arch, libcImpl)) {
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)
     if (item.content is LocalDistFileContent) {

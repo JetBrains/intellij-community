@@ -79,7 +79,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       }
       return SUPPORTED_DISTRIBUTIONS
         .mapNotNull { distribution ->
-          val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
+          val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, distribution.libcImpl, context)
           if (osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
             { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, context) }
           }

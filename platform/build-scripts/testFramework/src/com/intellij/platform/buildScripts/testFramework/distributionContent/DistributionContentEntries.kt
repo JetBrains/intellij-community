@@ -12,6 +12,7 @@ data class FileEntry(
 
   @JvmField val os: String? = null,
   @JvmField val arch: String? = null,
+  @JvmField val libc: String? = null,
 
   /**
    * The list of included in the file project libraries.

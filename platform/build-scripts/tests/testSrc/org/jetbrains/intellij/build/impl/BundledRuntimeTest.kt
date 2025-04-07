@@ -21,21 +21,29 @@ class BundledRuntimeTest {
       for (prefix in JetBrainsRuntimeDistribution.ALL) {
         for (os in OsFamily.ALL) {
           for (arch in JvmArchitecture.ALL) {
-            val home = try {
-              bundledRuntime.extract(os, arch, prefix.artifactPrefix)
+            val libcList = when (os) {
+              OsFamily.LINUX -> LinuxLibcImpl.ALL
+              OsFamily.WINDOWS -> WindowsLibcImpl.ALL
+              OsFamily.MACOS -> MacLibcImpl.ALL
             }
-            catch (t: Throwable) {
-              throw IllegalStateException(
-                "Unable to download JBR for os $os, arch $arch, type $prefix (classifier '${prefix.classifier}', artifact prefix '${prefix.artifactPrefix}': ${t.message}",
-                t)
-            }
+            for (libc in libcList) {
+              val home = try {
+                bundledRuntime.extract(os, arch, libc, prefix.artifactPrefix)
+              }
+              catch (t: Throwable) {
+                throw IllegalStateException(
+                  "Unable to download JBR for os $os, arch $arch, type $prefix (classifier '${prefix.classifier}', artifact prefix '${prefix.artifactPrefix}': ${t.message}",
+                  t
+                )
+              }
 
-            // do not cache, takes too much space. Do not delete current jbr for this os and arch
-            if (currentJbr.startsWith(home)) {
-              spottedCurrentJbrInDownloadVariants = true
-            }
-            else {
-              FileUtil.delete(home)
+              // do not cache, takes too much space. Do not delete current jbr for this os and arch
+              if (currentJbr.startsWith(home)) {
+                spottedCurrentJbrInDownloadVariants = true
+              }
+              else {
+                FileUtil.delete(home)
+              }
             }
           }
         }

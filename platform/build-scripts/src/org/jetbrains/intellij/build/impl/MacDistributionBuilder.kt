@@ -21,8 +21,10 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
@@ -69,6 +71,9 @@ class MacDistributionBuilder(
 ) : OsSpecificDistributionBuilder {
   override val targetOs: OsFamily
     get() = OsFamily.MACOS
+
+  override val targetLibcImpl: LibcImpl
+    get() = MacLibcImpl.DEFAULT
 
   private val targetIcnsFileName: String
     get() = "${context.productProperties.baseFileName}.icns"
@@ -137,7 +142,7 @@ class MacDistributionBuilder(
 
     // if copyDistFiles false, it means that we will copy dist files directly without a stage dir
     if (copyDistFiles) {
-      copyDistFiles(context, macDistDir, OsFamily.MACOS, arch)
+      copyDistFiles(context, macDistDir, OsFamily.MACOS, arch, MacLibcImpl.DEFAULT)
     }
 
     customizer.copyAdditionalFiles(context, macDistDir, arch)
@@ -154,7 +159,7 @@ class MacDistributionBuilder(
       val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
       updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
 
-      val runtimeDir = context.bundledRuntime.extract(OsFamily.MACOS, arch)
+      val runtimeDir = context.bundledRuntime.extract(OsFamily.MACOS, arch, MacLibcImpl.DEFAULT)
       updateExecutablePermissions(runtimeDir, executableFileMatchers)
 
       if (context.isMacCodeSignEnabled) {
@@ -172,7 +177,7 @@ class MacDistributionBuilder(
       val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + NO_RUNTIME_SUFFIX + ".zip")
       val zipRoot = getMacZipRoot(customizer, context)
       val compressionLevel = if (publishSitArchive || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
-      val extraFiles = context.getDistFiles(OsFamily.MACOS, arch)
+      val extraFiles = context.getDistFiles(OsFamily.MACOS, arch, MacLibcImpl.DEFAULT)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
       val builder = this@MacDistributionBuilder
       val productJson = generateProductJson(context, arch, withRuntime = true)
@@ -312,7 +317,7 @@ class MacDistributionBuilder(
     }
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> =
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> =
     customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
 
   private suspend fun buildForArch(arch: JvmArchitecture, macZip: Path, macZipWithoutRuntime: Path?) {
@@ -574,7 +579,7 @@ class MacDistributionBuilder(
     }
 
     val zipRoot = getMacZipRoot(customizer, context)
-    checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled, arch)
+    checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled, arch, targetLibcImpl)
 
     if (isRuntimeBundled) {
       generateIntegrityManifest(sitFile, zipRoot, arch, context)

@@ -119,7 +119,7 @@ interface BuildContext : CompilationContext {
   /**
    * @return sorted [DistFile] collection
    */
-  fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
+  fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?, libcImpl: LibcImpl?): Collection<DistFile>
 
   fun patchInspectScript(path: Path)
 
@@ -252,5 +252,6 @@ data class DistFile(
   @JvmField val content: DistFileContent,
   @JvmField val relativePath: String,
   @JvmField val os: OsFamily? = null,
+  @JvmField val libcImpl: LibcImpl? = null,
   @JvmField val arch: JvmArchitecture? = null,
 )

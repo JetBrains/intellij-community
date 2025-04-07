@@ -43,10 +43,10 @@ object CommunityRepositoryModules {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
     plugin("intellij.webp") { spec ->
-      spec.withPlatformBin(OsFamily.WINDOWS, JvmArchitecture.x64, "plugins/webp/lib/libwebp/win", "lib/libwebp/win")
-      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.x64, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.aarch64, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
-      spec.withPlatformBin(OsFamily.LINUX, JvmArchitecture.x64, "plugins/webp/lib/libwebp/linux", "lib/libwebp/linux")
+      spec.withPlatformBin(OsFamily.WINDOWS, JvmArchitecture.x64, WindowsLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/win", "lib/libwebp/win")
+      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.x64, MacLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
+      spec.withPlatformBin(OsFamily.MACOS, JvmArchitecture.aarch64, MacLibcImpl.DEFAULT, "plugins/webp/lib/libwebp/mac", "lib/libwebp/mac")
+      spec.withPlatformBin(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC, "plugins/webp/lib/libwebp/linux", "lib/libwebp/linux")
     },
     plugin("intellij.webp") { spec ->
       spec.bundlingRestrictions.marketplace = true
@@ -272,10 +272,10 @@ object CommunityRepositoryModules {
   }
 
   val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
-    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
-    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
-    SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
-    SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
+    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64, MacLibcImpl.DEFAULT),
+    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64, MacLibcImpl.DEFAULT),
+    SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64, WindowsLibcImpl.DEFAULT),
+    SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64, LinuxLibcImpl.GLIBC),
   )
 
   private fun createAndroidPluginLayout(
@@ -508,7 +508,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("ffmpeg-javacpp", "intellij.android.streaming", "javacpp-$javacppVersion.jar")
 
       // include only required as platform-dependent binaries
-      for ((supportedOs, supportedArch) in supportedFfmpegPresets) {
+      for ((supportedOs, supportedArch, supportedLibc) in supportedFfmpegPresets) {
         val osName = supportedOs.osName.lowercase(Locale.ENGLISH)
         val ffmpegLibraryName = "ffmpeg-$osName-$supportedArch"
         val javacppLibraryName = "javacpp-$osName-$supportedArch"
@@ -519,7 +519,7 @@ object CommunityRepositoryModules {
           spec.withModuleLibrary(javacppLibraryName, "intellij.android.streaming", "${javacppLibraryName}-$javacppVersion.jar")
         }
         else {
-          spec.withGeneratedPlatformResources(supportedOs, supportedArch) { targetDir, context ->
+          spec.withGeneratedPlatformResources(supportedOs, supportedArch, supportedLibc) { targetDir, context ->
             val streamingModule = context.projectModel.project.modules.find { it.name == "intellij.android.streaming" }!!
             val ffmpegLibrary = streamingModule.libraryCollection.findLibrary(ffmpegLibraryName)!!
             val javacppLibrary = streamingModule.libraryCollection.findLibrary(javacppLibraryName)!!

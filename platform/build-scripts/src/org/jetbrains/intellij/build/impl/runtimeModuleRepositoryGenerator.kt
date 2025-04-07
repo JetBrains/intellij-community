@@ -38,7 +38,7 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
 
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
-                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context) }
+                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context) }
   for (entry in entries) {
     val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
@@ -56,7 +56,7 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
   }
   else {
     for (distribution in SUPPORTED_DISTRIBUTIONS) {
-      val targetDirectory = getOsAndArchSpecificDistDirectory(osFamily = distribution.os, arch = distribution.arch, context = context)
+      val targetDirectory = getOsAndArchSpecificDistDirectory(osFamily = distribution.os, arch = distribution.arch, libc = distribution.libcImpl, context = context)
       val actualEntries = repositoryEntries.filter { it.distribution == null || it.distribution == distribution }
       generateRepositoryForDistribution(
         targetDirectory = targetDirectory,

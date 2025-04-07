@@ -35,6 +35,8 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.InMemoryDistFileContent
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
@@ -266,7 +268,7 @@ private fun writePluginInfo(
     specificClasspath?.let { out.write(it) }
     out.close()
 
-    context.addDistFile(DistFile(content = InMemoryDistFileContent(byteOut.toByteArray()), relativePath = PLUGIN_CLASSPATH, os = supportedDist.os, arch = supportedDist.arch))
+    context.addDistFile(DistFile(content = InMemoryDistFileContent(byteOut.toByteArray()), relativePath = PLUGIN_CLASSPATH, os = supportedDist.os, arch = supportedDist.arch, libcImpl = supportedDist.libcImpl))
   }
 }
 
@@ -281,11 +283,11 @@ fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
 
 private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> {
   if (isUpdateFromSources) {
-    return listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+    return listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch, LibcImpl.current(OsFamily.currentOs)) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
   }
   else {
     return SUPPORTED_DISTRIBUTIONS.map {
-      it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context).resolve(PLUGINS_DIRECTORY)
+      it to getOsAndArchSpecificDistDirectory(it.os, it.arch, it.libcImpl, context).resolve(PLUGINS_DIRECTORY)
     }
   }
 }
@@ -833,8 +835,8 @@ private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutp
   moduleOutputPatcher.patchModuleOutput(moduleName, relativePath, text)
 }
 
-fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
-  return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
+fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, libc: LibcImpl, context: BuildContext): Path {
+  return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}${if (libc == LinuxLibcImpl.MUSL) { "-musl" } else {""} }")
 }
 
 private suspend fun checkOutputOfPluginModules(

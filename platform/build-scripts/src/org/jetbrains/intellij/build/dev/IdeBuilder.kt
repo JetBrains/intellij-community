@@ -33,8 +33,11 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.ProductProperties
@@ -42,6 +45,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.computeAppClassPath
 import org.jetbrains.intellij.build.excludedLibJars
 import org.jetbrains.intellij.build.generatePluginClassPath
@@ -186,7 +190,9 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val binDir = Files.createDirectories(runDir.resolve("bin"))
         val oldFiles = Files.newDirectoryStream(binDir).use { it.toCollection(HashSet()) }
 
-        val osDistributionBuilder = getOsDistributionBuilder(request.os, context)
+        val libcImpl = LibcImpl.current(OsFamily.currentOs)
+
+        val osDistributionBuilder = getOsDistributionBuilder(request.os, libcImpl, context)
         if (osDistributionBuilder != null) {
           oldFiles.remove(osDistributionBuilder.writeVmOptions(binDir))
           // the file cannot be placed right into the distribution as it throws off home dir detection in `PathManager#getHomeDirFor`
@@ -296,7 +302,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       spanBuilder("scramble platform").use{
         request.scrambleTool?.scramble(platformLayout.await(), context)
       }
-      copyDistFiles(context = context, newDir = runDir, os = request.os, arch = JvmArchitecture.currentJvmArch)
+      copyDistFiles(context = context, newDir = runDir, os = request.os, arch = JvmArchitecture.currentJvmArch, libcImpl = LibcImpl.current(OsFamily.currentOs))
     }
   }.invokeOnCompletion {
     // close debug logging to prevent locking of the output directory on Windows

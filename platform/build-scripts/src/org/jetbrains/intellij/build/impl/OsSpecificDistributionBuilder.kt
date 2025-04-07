@@ -11,6 +11,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.runProcess
@@ -28,6 +29,7 @@ import kotlin.io.path.name
 interface OsSpecificDistributionBuilder {
   val context: BuildContext
   val targetOs: OsFamily
+  val targetLibcImpl: LibcImpl
 
   suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
 
@@ -35,11 +37,11 @@ interface OsSpecificDistributionBuilder {
 
   suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
 
-  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> = emptySequence()
+  fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> = emptySequence()
 
-  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture): Map<PathMatcher, String> {
+  fun generateExecutableFilesMatchers(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl = targetLibcImpl): Map<PathMatcher, String> {
     val fileSystem = FileSystems.getDefault()
-    return generateExecutableFilesPatterns(includeRuntime, arch)
+    return generateExecutableFilesPatterns(includeRuntime, arch, libc)
       .distinct()
       .map(FileUtil::toSystemIndependentName)
       .associateBy {
@@ -47,9 +49,9 @@ interface OsSpecificDistributionBuilder {
       }
   }
 
-  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture) {
+  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl) {
     spanBuilder("Permissions check for ${distribution.name}").use {
-      val patterns = generateExecutableFilesMatchers(includeRuntime, arch)
+      val patterns = generateExecutableFilesMatchers(includeRuntime, arch, libc)
       val matchedFiles = when {
         patterns.isEmpty() -> return@use
         SystemInfoRt.isWindows && distribution.isDirectory() -> return@use

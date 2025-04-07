@@ -24,6 +24,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LibraryLicense
 import org.jetbrains.intellij.build.LibraryUpstream
 import org.jetbrains.intellij.build.OsFamily
@@ -242,7 +243,7 @@ class SoftwareBillOfMaterialsImpl(
         }
         document.documentDescribes.add(rootPackage)
         val runtimePackage = if (distribution.builder.isRuntimeBundled(it.path)) {
-          document.runtimePackage(distribution.builder.targetOs, distribution.arch)
+          document.runtimePackage(distribution.builder.targetOs, distribution.arch, libc = distribution.libc)
         }
         else {
           null
@@ -261,17 +262,17 @@ class SoftwareBillOfMaterialsImpl(
    * Used until external document reference for Runtime is supplied,
    * then should be replaced with [addRuntimeDocumentRef]
    */
-  private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
-    val checksums = Checksums(context.bundledRuntime.findArchive(os = os, arch = arch))
+  private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl): SpdxPackage {
+    val checksums = Checksums(context.bundledRuntime.findArchive(os = os, arch = arch, libc = libc))
     val version = context.bundledRuntime.build
     val runtimeArchivePackage = spdxPackageForFile(
       this,
-      name = context.bundledRuntime.archiveName(os = os, arch = arch),
+      name = context.bundledRuntime.archiveName(os = os, arch = arch, libc = libc),
       sha256sum = checksums.sha256sum,
       sha1sum = checksums.sha1sum
     ) {
       setVersionInfo(version)
-      setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
+      setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch, libc = libc))
     }
     claimContainedFiles(spdxPackage = runtimeArchivePackage, document = this, license = license)
     /**
@@ -358,8 +359,8 @@ class SoftwareBillOfMaterialsImpl(
   private suspend fun generateFromContentReport(): List<Path> {
     return SUPPORTED_DISTRIBUTIONS
       .filter { (os, arch) -> context.shouldBuildDistributionForOS(os, arch) }
-      .map { (os, arch) ->
-        val distributionDir = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, context = context)
+      .map { (os, arch, libc ) ->
+        val distributionDir = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, libc = libc, context = context)
         val name = context.productProperties.getBaseArtifactName(context) + "-${distributionDir.name}"
         val document = spdxDocument(name)
         val rootPackage = spdxPackage(document, name) {
@@ -371,7 +372,7 @@ class SoftwareBillOfMaterialsImpl(
         generate(
           document = document,
           rootPackage = rootPackage,
-          runtimePackage = document.runtimePackage(os, arch),
+          runtimePackage = document.runtimePackage(os, arch, libc),
           distributionDir = distributionDir,
           // distributions weren't built
           claimContainedFiles = false,

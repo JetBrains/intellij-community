@@ -23,7 +23,7 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 }
 
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
-  zipFileWriter.uncompressedData("platform.yaml", buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null)))
+  zipFileWriter.uncompressedData("platform.yaml", buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null, libcImpl = null)))
   zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))
   zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
 }
@@ -135,6 +135,7 @@ private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths:
     writer.writeStringField("name", item.relativePath)
     item.os?.let { writer.writeStringField("os", it.osId) }
     item.arch?.let { writer.writeStringField("arch", it.dirName) }
+    item.libcImpl?.let { writer.writeStringField("libc", it.toString()) }
 
     writer.writeEndObject()
   }

@@ -28,10 +28,12 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.LibcImpl
+import org.jetbrains.intellij.build.LinuxLibcImpl
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
-import org.jetbrains.intellij.build.dependencies.LinuxLibcImpl
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
@@ -1132,7 +1134,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     args += "-classpath"
 
-    val classpathForTests = if (LinuxLibcImpl.isLinuxMusl) {
+    val classpathForTests = if (LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
       prepareMuslClassPath(classpath)
     } else {
       classpath

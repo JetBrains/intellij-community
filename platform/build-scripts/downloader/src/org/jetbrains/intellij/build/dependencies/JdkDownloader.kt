@@ -3,9 +3,11 @@ package org.jetbrains.intellij.build.dependencies
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
 /**
@@ -20,7 +22,7 @@ object JdkDownloader {
   }
 
   suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
-    val isMusl = LinuxLibcImpl.isLinuxMusl
+    val isMusl = isLinuxMusl()
     return getJdkHome(
       communityRoot = communityRoot,
       os = OS.current,
@@ -148,6 +150,39 @@ object JdkDownloader {
           if ("aarch64" == arch || "arm64" == arch) return ARM64
           throw IllegalStateException("Only X86_64 and ARM64 are supported, current arch: $arch")
         }
+    }
+  }
+
+  @ApiStatus.Internal
+  fun isLinuxMusl() : Boolean = isRunOnLinuxMusl
+
+  private val isRunOnLinuxMusl: Boolean by lazy {
+    if (OS.current != OS.LINUX) {
+      false
+    }
+    else {
+      runCatching {
+        val process = ProcessBuilder()
+          .command("ldd", "--version")
+          .redirectErrorStream(true)
+          .start()
+
+        val output = process.inputStream.bufferedReader().use { it.readText().lowercase() }
+
+        val lddOutputContainsMusl = if (!process.waitFor(5, TimeUnit.SECONDS)) {
+          process.destroyForcibly()
+          false
+        }
+        else {
+          // Check for musl in output
+          output.contains("musl")
+        }
+        Logger.getLogger(JdkDownloader::class.java.name).info("Linux 'ldd --version': ${output}")
+        lddOutputContainsMusl
+      }.getOrElse {
+        Logger.getLogger(JdkDownloader::class.java.name).info("Failed to detect musl libc: ${it.message}")
+        false
+      }
     }
   }
 }
