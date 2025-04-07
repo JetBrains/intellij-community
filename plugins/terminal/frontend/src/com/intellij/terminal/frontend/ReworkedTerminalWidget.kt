@@ -37,10 +37,6 @@ internal class ReworkedTerminalWidget(
   init {
     Disposer.register(parentDisposable, this)
     Disposer.register(this, view)
-    Disposer.register(this) {
-      // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
-      sessionFuture.complete(null)
-    }
   }
 
   override fun connectToSession(session: TerminalSession) {
