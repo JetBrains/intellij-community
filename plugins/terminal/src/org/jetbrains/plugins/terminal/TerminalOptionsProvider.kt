@@ -4,14 +4,12 @@ package org.jetbrains.plugins.terminal
 import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
-import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION")
@@ -65,6 +63,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
+    var myCopyOnSelection: Boolean = false
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
@@ -77,9 +76,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
     @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
     var myShellPath: String? = null
-
-    @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
-    var myCopyOnSelection: Boolean = SystemInfo.isLinux
   }
 
   private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
@@ -154,13 +150,15 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       }
     }
 
-  @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
+  /**
+   * Enables emulation of Linux-like system selection clipboard behavior on Windows and macOS.
+   * Makes no sense on Linux, because system selection clipboard is enabled by default there.
+   */
   var copyOnSelection: Boolean
-    get() = TerminalOsSpecificOptions.getInstance().copyOnSelection
+    get() = state.myCopyOnSelection
     set(value) {
-      val options = TerminalOsSpecificOptions.getInstance()
-      if (options.copyOnSelection != value) {
-        options.copyOnSelection = value
+      if (state.myCopyOnSelection != value) {
+        state.myCopyOnSelection = value
         fireSettingsChanged()
       }
     }
