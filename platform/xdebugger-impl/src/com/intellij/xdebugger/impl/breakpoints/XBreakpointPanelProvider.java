@@ -32,17 +32,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider {
   }
 
   @Override
-  public GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint) {
-    if (breakpoint instanceof XLineBreakpointImpl) {
-      RangeHighlighter highlighter = ((XLineBreakpointImpl<?>)breakpoint).getHighlighter();
-      if (highlighter != null) {
-        return highlighter.getGutterIconRenderer();
-      }
-    }
-    return null;
-  }
-
-  @Override
   public void onDialogClosed(final Project project) {
   }
 

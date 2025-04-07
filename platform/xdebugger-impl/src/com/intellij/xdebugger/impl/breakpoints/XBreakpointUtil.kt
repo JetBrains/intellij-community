@@ -80,7 +80,7 @@ object XBreakpointUtil {
 
     val breakpoint = findBreakpoint(project, editorDocument, offset)
     if (breakpoint != null) {
-      return Pair.create(PANEL_PROVIDER.getBreakpointGutterIconRenderer(breakpoint), breakpoint)
+      return Pair.create(getBreakpointGutterIconRenderer(breakpoint), breakpoint)
     }
 
     val session = XDebuggerManager.getInstance(project).currentSession as XDebugSessionImpl?
@@ -99,6 +99,17 @@ object XBreakpointUtil {
     }
 
     return Pair.create(null, null)
+  }
+
+  @ApiStatus.Internal
+  fun getBreakpointGutterIconRenderer(breakpoint: Any): GutterIconRenderer? {
+    if (breakpoint is XLineBreakpointImpl<*>) {
+      val highlighter = breakpoint.highlighter
+      if (highlighter != null) {
+        return highlighter.getGutterIconRenderer()
+      }
+    }
+    return null
   }
 
   private fun findBreakpoint(project: Project, document: Document, offset: Int): XBreakpoint<*>? {
@@ -130,12 +141,14 @@ object XBreakpointUtil {
    */
   @Deprecated("use {@link #toggleLineBreakpoint(Project, XSourcePosition, boolean, Editor, boolean, boolean, boolean)}")
   @JvmStatic
-  fun toggleLineBreakpoint(project: Project,
-                           position: XSourcePosition,
-                           editor: Editor?,
-                           temporary: Boolean,
-                           moveCaret: Boolean,
-                           canRemove: Boolean): Promise<XLineBreakpoint<*>?> =
+  fun toggleLineBreakpoint(
+    project: Project,
+    position: XSourcePosition,
+    editor: Editor?,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+  ): Promise<XLineBreakpoint<*>?> =
     toggleLineBreakpoint(project, position, true, editor, temporary, moveCaret, canRemove)
 
   /**
@@ -144,13 +157,15 @@ object XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @JvmStatic
-  fun toggleLineBreakpoint(project: Project,
-                           position: XSourcePosition,
-                           selectVariantByPositionColumn: Boolean,
-                           editor: Editor?,
-                           temporary: Boolean,
-                           moveCaret: Boolean,
-                           canRemove: Boolean): Promise<XLineBreakpoint<*>?> {
+  fun toggleLineBreakpoint(
+    project: Project,
+    position: XSourcePosition,
+    selectVariantByPositionColumn: Boolean,
+    editor: Editor?,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+  ): Promise<XLineBreakpoint<*>?> {
     val info = getAvailableLineBreakpointInfo(project, position, selectVariantByPositionColumn, editor)
     val typeWinner = info.first
     val lineWinner = info.second
@@ -175,22 +190,28 @@ object XBreakpointUtil {
   }
 
   @JvmStatic
-  fun getAvailableLineBreakpointTypes(project: Project,
-                                      linePosition: XSourcePosition,
-                                      editor: Editor?): List<XLineBreakpointType<*>> =
+  fun getAvailableLineBreakpointTypes(
+    project: Project,
+    linePosition: XSourcePosition,
+    editor: Editor?,
+  ): List<XLineBreakpointType<*>> =
     getAvailableLineBreakpointTypes(project, linePosition, false, editor)
 
   @JvmStatic
-  fun getAvailableLineBreakpointTypes(project: Project,
-                                      position: XSourcePosition,
-                                      selectTypeByPositionColumn: Boolean,
-                                      editor: Editor?): List<XLineBreakpointType<*>> =
+  fun getAvailableLineBreakpointTypes(
+    project: Project,
+    position: XSourcePosition,
+    selectTypeByPositionColumn: Boolean,
+    editor: Editor?,
+  ): List<XLineBreakpointType<*>> =
     getAvailableLineBreakpointInfo(project, position, selectTypeByPositionColumn, editor).first
 
-  private fun getAvailableLineBreakpointInfo(project: Project,
-                                             position: XSourcePosition,
-                                             selectTypeByPositionColumn: Boolean,
-                                             editor: Editor?): Pair<List<XLineBreakpointType<*>>, Int> {
+  private fun getAvailableLineBreakpointInfo(
+    project: Project,
+    position: XSourcePosition,
+    selectTypeByPositionColumn: Boolean,
+    editor: Editor?,
+  ): Pair<List<XLineBreakpointType<*>>, Int> {
     val lineStart = position.line
     val file = position.file
 

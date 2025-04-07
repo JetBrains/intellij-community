@@ -19,8 +19,6 @@ public abstract class BreakpointPanelProvider {
 
   public abstract int getPriority();
 
-  public abstract @Nullable GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint);
-
   public abstract void onDialogClosed(final Project project);
 
   public abstract void provideBreakpointItems(Project project, Collection<? super BreakpointItem> items);
