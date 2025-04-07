@@ -18109,6 +18109,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/privateOperatorUsed.kt");
             }
 
+            @TestMetadata("privateOperatorUsed2.kt")
+            public void testPrivateOperatorUsed2() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/privateOperatorUsed2.kt");
+            }
+
             @TestMetadata("privateProperty.kt")
             public void testPrivateProperty() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/privateProperty.kt");
