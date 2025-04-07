@@ -1409,6 +1409,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/Semicolon.after.kt");
             }
 
+            @TestMetadata("SemicolonNoSpace.after.kt")
+            public void testSemicolonNoSpace() throws Exception {
+                runTest("testData/formatter/SemicolonNoSpace.after.kt");
+            }
+
             @TestMetadata("SingleLineFunctionLiteral.after.kt")
             public void testSingleLineFunctionLiteral() throws Exception {
                 runTest("testData/formatter/SingleLineFunctionLiteral.after.kt");
