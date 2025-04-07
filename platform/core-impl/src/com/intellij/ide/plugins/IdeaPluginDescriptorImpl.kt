@@ -583,6 +583,10 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
 
+    // FIXME sorting is likely unnecessary.
+    //  Instead, users of ExtensionPoint change listeners must not touch other services/extension points.
+    //  Only clear up some caches and/or launch coroutines.
+    //  `com.intellij.ide.plugins.DynamicPluginsTest.registry access of key from same plugin` has a reproducer
     private fun sortExtensions(rawMap: Map<String, List<ExtensionDescriptor>>): Map<String, List<ExtensionDescriptor>> {
       if (rawMap.size < 2 || !rawMap.containsKey(REGISTRY_EP_NAME)) {
         return rawMap
