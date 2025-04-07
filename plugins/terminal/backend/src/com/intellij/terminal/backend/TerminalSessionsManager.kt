@@ -4,9 +4,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
@@ -47,7 +47,8 @@ internal class TerminalSessionsManager {
 
     val sessionId = storeSession(stateAwareSession, scope)
 
-    val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, scope.asDisposable())
+    val portForwardingScope = scope.childScope("PortForwarding")
+    val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, portForwardingScope)
 
     return TerminalSessionStartResult(
       configuredOptions,
