@@ -3,15 +3,8 @@ package com.intellij.compilation.charts.ui
 
 import com.intellij.compilation.charts.CompilationChartsBundle
 import com.intellij.compilation.charts.impl.ModuleKey
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -101,15 +94,12 @@ class ShowModuleDependenciesAction(
   @Suppress("DialogTitleCapitalization", "UNCHECKED_CAST")
   override fun draw(row: Row) {
     row.link(action?.templateText ?: "") {
-      val context = object : ActionDataContext {
-        private val module = ModuleManager.getInstance(project).findModuleByName(name)
-        override fun <T : Any?> getData(key: DataKey<T?>): T? = when (key) {
-          CommonDataKeys.PROJECT -> project as T
-          LangDataKeys.MODULE_CONTEXT_ARRAY -> notNullArrayOf(module) as T
-          PlatformCoreDataKeys.CONTEXT_COMPONENT -> component as T
-          else -> null
-        }
-      }
+      val module = ModuleManager.getInstance(project).findModuleByName(name)
+      val context =  SimpleDataContext.builder()
+          .add(CommonDataKeys.PROJECT, project)
+          .add(LangDataKeys.MODULE_CONTEXT_ARRAY, notNullArrayOf(module))
+          .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, component)
+          .build()
       close()
       action.actionPerformed(AnActionEvent.createEvent(action, context, null, ActionPlaces.POPUP, ActionUiKind.TOOLBAR, null))
     }
@@ -130,32 +120,15 @@ class ShowMatrixDependenciesAction(
   @Suppress("DialogTitleCapitalization", "UNCHECKED_CAST")
   override fun draw(row: Row) {
     row.link(action?.templateText ?: "") {
-      val context = object : ActionDataContext {
-        val module = ModuleManager.getInstance(project).findModuleByName(name)
-        override fun <T : Any?> getData(key: DataKey<T?>): T? = when (key) {
-          CommonDataKeys.PROJECT -> project as T
-          LangDataKeys.MODULE -> module as T?
-          PlatformCoreDataKeys.CONTEXT_COMPONENT -> component as T
-          else -> null
-        }
-      }
-
+      val module = ModuleManager.getInstance(project).findModuleByName(name)
+      val context =  SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, project)
+        .add(LangDataKeys.MODULE, module)
+        .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, component)
+        .build()
       close()
-
       action.actionPerformed(AnActionEvent.createEvent(action, context, null, ActionPlaces.POPUP, ActionUiKind.TOOLBAR, null))
     }
-  }
-}
-
-
-@Suppress("removal", "OVERRIDE_DEPRECATION")
-private interface ActionDataContext : DataContext {
-  override fun getData(dataId: String): Any? {
-    if (CommonDataKeys.PROJECT.`is`(dataId)) return getData(CommonDataKeys.PROJECT)
-    if (LangDataKeys.MODULE.`is`(dataId)) return getData(LangDataKeys.MODULE)
-    if (LangDataKeys.MODULE_CONTEXT_ARRAY.`is`(dataId)) return getData(LangDataKeys.MODULE_CONTEXT_ARRAY)
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) return getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-    return null
   }
 }
 
