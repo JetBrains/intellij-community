@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.merge.ChangesViewConflictsBanner
 import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -86,6 +87,9 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
       }
       else {
         conflictsBanner.close()
+      }
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) {
+        project.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
       }
     }
   }
