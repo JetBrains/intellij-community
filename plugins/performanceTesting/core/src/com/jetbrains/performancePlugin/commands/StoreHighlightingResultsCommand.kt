@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.writeIntentReadAction
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.NonNls
 import java.io.File
 import kotlin.io.path.div
 
+@Suppress("MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT")
 class StoreHighlightingResultsCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
 
 
@@ -42,11 +42,13 @@ class StoreHighlightingResultsCommand(text: String, line: Int) : PlaybackCommand
       writeIntentReadAction {
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
         require(psiFile != null)
-        for (severity in SeverityRegistrar.getSeverityRegistrar(project).allSeverities) {
-          val highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.document, severity, project)
-          highlights.forEach { highlight ->
-            fileForStoringHighlights.appendText("${severity}☆${highlight.description}☆${editor.document.getLineNumber(highlight.actualStartOffset)}" + "\n")
+        val highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.document, null, project)
+        highlights.forEach { highlight ->
+          assert(editor.document.textLength > highlight.actualStartOffset) {
+            "Highlight start offset ${editor.document.textLength} less than document text length ${highlight.actualStartOffset}"
           }
+          fileForStoringHighlights
+            .appendText("${highlight.severity}☆${highlight.description}☆${editor.document.getLineNumber(highlight.actualStartOffset)}☆${highlight.toolId}" + "\n")
         }
       }
     }
