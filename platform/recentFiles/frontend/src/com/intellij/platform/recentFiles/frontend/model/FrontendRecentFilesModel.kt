@@ -93,8 +93,15 @@ class FrontendRecentFilesModel(private val project: Project) {
         val itemsToMergeWithExisting = change.batch.map(::convertSwitcherDtoToViewModel).associateBy { it }
         LOG.debug("Updating items ${change.batch} in $targetFilesKind frontend model")
         targetModel.update { oldList ->
-          val effectiveModelsToInsert = oldList.entries.map { oldItem -> itemsToMergeWithExisting[oldItem] ?: oldItem }
-          RecentFilesState(effectiveModelsToInsert + (oldList.entries - effectiveModelsToInsert.toSet()))
+          if (change.putOnTop) {
+            val newValuesToPutIntoFirstPosition = oldList.entries.mapNotNull { oldItem -> itemsToMergeWithExisting[oldItem] }
+            val restOfExistingValues = oldList.entries - newValuesToPutIntoFirstPosition.toSet()
+            RecentFilesState(newValuesToPutIntoFirstPosition + restOfExistingValues)
+          }
+          else {
+            val effectiveModelsToInsert = oldList.entries.map { oldItem -> itemsToMergeWithExisting[oldItem] ?: oldItem }
+            RecentFilesState(effectiveModelsToInsert)
+          }
         }
       }
       is RecentFilesEvent.ItemsRemoved -> {

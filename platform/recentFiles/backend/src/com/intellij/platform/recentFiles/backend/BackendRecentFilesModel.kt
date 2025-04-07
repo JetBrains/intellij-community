@@ -15,7 +15,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl.RecentFileHistoryOrderListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.registry.Registry
@@ -62,7 +62,7 @@ internal class BackendRecentFilesModel(private val project: Project, private val
     // maybe by cancelling project service scope' children during temporary dispose phase
     if (!ApplicationManager.getApplication().isUnitTestMode && project is ProjectEx) {
       project.messageBus.connect(coroutineScope).apply {
-        subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, ChangedFilesVfsListener(project))
+        subscribe(RecentFileHistoryOrderListener.TOPIC, ChangedIdeHistoryFileHistoryOrderListener(project))
         subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, RecentFilesDaemonAnalyserListener(project))
         subscribe(FileStatusListener.TOPIC, RecentFilesVcsStatusListener(project))
       }
@@ -84,7 +84,7 @@ internal class BackendRecentFilesModel(private val project: Project, private val
         .filter { virtualFile -> virtualFile.isValid }
         .map { frontendFile -> createRecentFileViewModel(frontendFile, project) }
     }
-    targetFlow.emit(RecentFilesEvent.ItemsUpdated(metadata))
+    targetFlow.emit(RecentFilesEvent.ItemsUpdated(metadata, false))
   }
 
   suspend fun emitRecentFiles(searchRequest: RecentFilesBackendRequest.FetchFiles) {
@@ -118,7 +118,13 @@ internal class BackendRecentFilesModel(private val project: Project, private val
           val models = readAction {
             files.map { createRecentFileViewModel(it, project) }
           }
-          RecentFilesEvent.ItemsUpdated(models)
+          RecentFilesEvent.ItemsUpdated(models, false)
+        }
+        FileChangeKind.UPDATED_AND_PUT_ON_TOP -> {
+          val models = readAction {
+            files.map { createRecentFileViewModel(it, project) }
+          }
+          RecentFilesEvent.ItemsUpdated(models, true)
         }
         FileChangeKind.REMOVED -> {
           RecentFilesEvent.ItemsRemoved(files.map { it.rpcId() })
@@ -188,5 +194,5 @@ internal class BackendRecentFilesModel(private val project: Project, private val
 }
 
 internal enum class FileChangeKind {
-  REMOVED, ADDED, UPDATED
+  REMOVED, ADDED, UPDATED, UPDATED_AND_PUT_ON_TOP
 }

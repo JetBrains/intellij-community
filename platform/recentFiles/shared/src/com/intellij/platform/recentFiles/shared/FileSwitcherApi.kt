@@ -73,7 +73,7 @@ sealed interface SwitcherRpcDto {
 @Serializable
 sealed interface RecentFilesEvent {
   @Serializable
-  class ItemsUpdated(val batch: List<SwitcherRpcDto>) : RecentFilesEvent
+  class ItemsUpdated(val batch: List<SwitcherRpcDto>, val putOnTop: Boolean) : RecentFilesEvent
 
   @Serializable
   class ItemsAdded(val batch: List<SwitcherRpcDto>) : RecentFilesEvent

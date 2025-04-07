@@ -36,22 +36,9 @@ internal class RemovedRecentFilesListener : AsyncFileListener {
             recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, projectFilesToRemove)
           }
 
-          val projectFilesToRename = renamedFiles.filter { file ->
-            file.isValid && ProjectFileIndex.getInstance(project).isInContent(file)
-          }
-          if (projectFilesToRename.isNotEmpty()) {
-            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.REMOVED, projectFilesToRemove)
-          }
-        }
-      }
-
-      override fun afterVfsChange() {
-        for (project in ProjectManager.getInstance().openProjects) {
-          val recentFilesModel = BackendRecentFilesModel.getInstance(project)
-
           val projectFilesToRename = filterProjectFiles(renamedFiles, project)
           if (projectFilesToRename.isNotEmpty()) {
-            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.ADDED, projectFilesToRename)
+            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, projectFilesToRemove)
           }
         }
       }
