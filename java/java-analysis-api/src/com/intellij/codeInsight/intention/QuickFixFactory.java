@@ -342,7 +342,7 @@ public abstract class QuickFixFactory {
   public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(@NotNull PsiReferenceExpression methodRef,
                                                                                                         @NotNull JavaResolveResult result);
 
-  public abstract @NotNull IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression);
+  public abstract @NotNull ModCommandAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 
   public abstract @Nullable IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName);
 

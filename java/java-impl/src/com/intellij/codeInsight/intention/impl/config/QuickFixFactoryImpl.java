@@ -821,7 +821,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+  public @NotNull ModCommandAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return new WrapWithAdapterMethodCallFix(type, expression, null);
   }
 
