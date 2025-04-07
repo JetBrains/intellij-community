@@ -2,6 +2,8 @@ package com.intellij.settingsSync.jba.auth
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -13,6 +15,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.ui.ExitActionType
@@ -31,6 +34,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.awt.Component
 import java.awt.Dimension
+import java.util.ServiceLoader
 import java.util.concurrent.CancellationException
 import javax.swing.Action
 import javax.swing.JComponent
@@ -191,7 +195,15 @@ internal class JBAAuthService() : SettingsSyncAuthService {
     if (ApplicationManagerEx.isInIntegrationTest() || System.getProperty("settings.sync.test.auth") == "true") {
       return DummyJBAccountInfoService
     }
-    return JBAccountInfoService.getInstance()
+    var instance = JBAccountInfoService.getInstance()
+    if (instance == null && !AppMode.isRemoteDevHost()) {
+      LOG.info("Attempting to load info service from plugin...")
+      val descriptorImpl = PluginManagerCore.findPlugin(PluginId.getId("com.intellij.marketplace")) ?: return null
+      val accountInfoService = ServiceLoader.load(JBAccountInfoService::class.java, descriptorImpl.classLoader).findFirst().orElse(null)
+      LOG.info("Found info service!")
+      return accountInfoService
+    }
+    return instance
   }
 }
 
