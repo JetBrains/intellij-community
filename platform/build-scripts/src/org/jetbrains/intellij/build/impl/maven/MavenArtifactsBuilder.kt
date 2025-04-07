@@ -472,7 +472,11 @@ private suspend fun layoutMavenArtifacts(
         buildJar(
           targetFile = jar,
           sources = modulesWithSources.map {
-            DirSource(dir = context.getModuleOutputDir(it), excludes = commonModuleExcludes)
+            val moduleOutput = context.getModuleOutputDir(it)
+            check(Files.exists(moduleOutput)) {
+              "$it module output directory doesn't exist: $moduleOutput"
+            }
+            DirSource(dir = moduleOutput, excludes = commonModuleExcludes)
           },
         )
         artifacts.add(jar)
