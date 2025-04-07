@@ -209,7 +209,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <configurationType implementation="com.jetbrains.python.run.FlaskServerLockedRunConfigurationType" order="first"/>
     <configurationType implementation="com.jetbrains.python.run.DbtRunLockedConfigurationType" order="first"/>
     <configurationType implementation="com.jetbrains.python.run.FastAPILockedRunConfigurationType" order="first"/>
-    <!--<facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>-->
+    <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
 
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>

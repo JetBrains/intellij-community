@@ -8,6 +8,8 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction
+import com.intellij.facet.impl.invalid.FacetIgnorer
+import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
@@ -161,6 +163,6 @@ private class FlaskServerLockedRunConfigurationType : PythonLockedRunConfigurati
 private class DbtRunLockedConfigurationType : PythonLockedRunConfigurationTypeBase("DbtRunConfiguration", "dbt")
 private class FastAPILockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FastAPI", "FastAPI")
 
-//private class DjangoFacetIgnorer : FacetIgnorer {
-//  override fun isIgnored(facet: InvalidFacet): Boolean = facet.name == "Django"
-//}
+private class DjangoFacetIgnorer : FacetIgnorer {
+  override fun isIgnored(facet: InvalidFacet): Boolean = facet.name == "Django"
+}
