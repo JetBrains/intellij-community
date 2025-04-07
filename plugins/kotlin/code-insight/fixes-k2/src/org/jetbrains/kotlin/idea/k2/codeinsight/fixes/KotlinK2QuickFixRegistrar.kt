@@ -185,6 +185,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddSemicolonBeforeLambdaExpressionFixFactory.addSemicolonBeforeLambdaExpressionFixFactory)
         registerFactory(AbstractSuperCallFixFactories.errorFixFactory)
         registerFactory(AbstractSuperCallFixFactories.warningFactory)
+        registerFactory(JavaClassOnCompanionFixFactories.factory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

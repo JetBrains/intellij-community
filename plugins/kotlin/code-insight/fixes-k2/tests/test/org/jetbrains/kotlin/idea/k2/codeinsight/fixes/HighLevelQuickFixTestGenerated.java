@@ -10845,7 +10845,72 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/javaClassOnCompanion")
+    public abstract static class JavaClassOnCompanion extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithClassJava")
+        public static class ReplaceWithClassJava extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasType.kt")
+            public void testHasType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithClassJava/hasType.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithClassJava/simple.kt");
+            }
+
+            @TestMetadata("withName.kt")
+            public void testWithName() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithClassJava/withName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava")
+        public static class ReplaceWithCompanionClassJava extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasType.kt")
+            public void testHasType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/hasType.kt");
+            }
+
+            @TestMetadata("namedCompanion.kt")
+            public void testNamedCompanion() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/namedCompanion.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/simple.kt");
+            }
+
+            @TestMetadata("withName.kt")
+            public void testWithName() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/withName.kt");
+            }
+        }
+    }
 
 
 
