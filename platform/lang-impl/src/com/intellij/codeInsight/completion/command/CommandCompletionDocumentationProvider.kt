@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowManager
@@ -90,23 +89,10 @@ private class CommandCompletionDocumentationTarget(
   }
 
   override fun computeDocumentation(): DocumentationResult? {
-    val command = completionLookupElement.command
-    if (command !is CompletionCommandWithPreview) return null
+    if (!completionLookupElement.hasPreview) return null
     return DocumentationResult.asyncDocumentation {
       readAction {
-        val computed = command.getUserData(CACHED_COMPUTED_PREVIEW_KEY)
-        val previewResult = if (computed == true) {
-          val previewInfo = command.getUserData(CACHED_COMPUTED_PREVIEW) ?: return@readAction null
-          previewInfo
-        }
-        else {
-          val
-            preview = command.getPreview()
-          command.putUserData(CACHED_COMPUTED_PREVIEW_KEY, true)
-          command.putUserData(CACHED_COMPUTED_PREVIEW, preview)
-          if (preview == null) return@readAction null
-          preview
-        }
+        val previewResult = completionLookupElement.preview ?: return@readAction null
         render(postprocess(previewResult))
       }
     }
@@ -354,9 +340,6 @@ fun combineFragments(
   return combinedFragments
 }
 
-private val CACHED_COMPUTED_PREVIEW_KEY: Key<Boolean> = Key.create("completion.command.cached.computed.preview.key")
-private val CACHED_COMPUTED_PREVIEW: Key<IntentionPreviewInfo?> = Key.create("completion.command.cached.computed.preview.key")
-
 /**
  * Installs a listener on the provided lookup that enables preview functionality for intentions
  * if certain user settings allow it. The preview displays additional context or suggestions
@@ -376,9 +359,8 @@ internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
       },
       Function { element ->
         val commandElement = element.`as`(CommandCompletionLookupElement::class.java)
-        if (commandElement != null &&
-            commandElement.command is CompletionCommandWithPreview) {
-          commandElement.command.getPreview()
+        if (commandElement != null && commandElement.hasPreview) {
+          commandElement.preview
         }
         else {
           IntentionPreviewInfo.EMPTY
