@@ -5,9 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
 internal class CopyOnSelectionHandler private constructor(private val settings: JBTerminalSystemSettingsProviderBase) {
@@ -22,15 +20,17 @@ internal class CopyOnSelectionHandler private constructor(private val settings: 
   }
 
   private fun copyToSystemSelectionClipboard(text: String): Boolean {
-    try {
-      if (!SystemInfo.isLinux) return false
-      val clipboard = Toolkit.getDefaultToolkit().systemSelection ?: return false
-      clipboard.setContents(StringSelection(text), null)
-      return true
+    return try {
+      val copyPasteManager = CopyPasteManager.getInstance()
+      if (copyPasteManager.isSystemSelectionSupported) {
+        copyPasteManager.setSystemSelectionContents(StringSelection(text))
+        true
+      }
+      else false
     }
     catch (e: Exception) {
       LOG.warn("Failed to copy to the system selection clipboard, falling back to the regular one", e)
-      return false
+      false
     }
   }
 
