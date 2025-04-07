@@ -1,11 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
@@ -14,6 +21,17 @@ class BreakpointsDialogFactory(private val project: Project) {
   private var balloonToHide: Balloon? = null
   private var breakpointFromBalloon: Any? = null
   private var showingDialog: BreakpointsDialog? = null
+
+  private val showDialogEvents = MutableSharedFlow<Any?>(extraBufferCapacity = 1)
+
+  // should be used only by backend RPC, so frontend will handle backend requests
+  fun subscribeToShowDialogEvents(cs: CoroutineScope, onShowDialogRequest: suspend (breakpoint: Any?) -> Unit) {
+    cs.launch(Dispatchers.EDT) {
+      showDialogEvents.collectLatest {
+        onShowDialogRequest(it)
+      }
+    }
+  }
 
   fun setBalloonToHide(balloon: Balloon, breakpoint: Any?) {
     balloonToHide = balloon
@@ -34,6 +52,16 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   fun showDialog(initialBreakpoint: Any?) {
+    if (useFeProxy()) {
+      hideBalloon()
+      showDialogEvents.tryEmit(initialBreakpoint)
+      return
+    }
+    showDialogImpl(initialBreakpoint)
+  }
+
+  @ApiStatus.Internal
+  fun showDialogImpl(initialBreakpoint: Any?) {
     if (selectInDialogShowing(initialBreakpoint)) return
 
     val dialog = object : BreakpointsDialog(project, initialBreakpoint ?: breakpointFromBalloon) {
@@ -45,15 +73,19 @@ class BreakpointsDialogFactory(private val project: Project) {
       }
     }
 
+    hideBalloon()
+    showingDialog = dialog
+
+    dialog.show()
+  }
+
+  private fun hideBalloon() {
     if (balloonToHide != null) {
       if (!balloonToHide!!.isDisposed()) {
         balloonToHide!!.hide()
       }
       balloonToHide = null
     }
-    showingDialog = dialog
-
-    dialog.show()
   }
 
   private fun selectInDialogShowing(initialBreakpoint: Any?): Boolean {
