@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.maven.model` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
-jvm_resources(
-  name = "maven-model_resources",
-  files = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "maven-model",
@@ -13,7 +7,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  deps = ["@lib//:jetbrains-annotations-java5"],
-  runtime_deps = [":maven-model_resources"]
+  deps = ["@lib//:jetbrains-annotations-java5"]
 )
 ### auto-generated section `build intellij.maven.model` end

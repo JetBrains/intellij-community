@@ -11,7 +11,7 @@ jvm_library(
   name = "emojipicker",
   module_name = "intellij.emojipicker",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
