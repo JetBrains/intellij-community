@@ -30,6 +30,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -171,20 +172,24 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private void updateThreadDumpItemList() {
     String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
     Object selection = myThreadList.getSelectedValue();
-    DefaultListModel<DumpItem> model = (DefaultListModel<DumpItem>)myThreadList.getModel();
-    model.clear();
     int selectedIndex = 0;
     int index = 0;
+    ArrayList<DumpItem> filteredThreadStates = new ArrayList<>();
     List<DumpItem> threadStates = UISettings.getInstance().getState().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
     for (DumpItem state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-        model.addElement(state);
+        filteredThreadStates.add(state);
         if (selection == state) {
           selectedIndex = index;
         }
         index++;
       }
     }
+
+    // Add all of them in a single call, otherwise it works too slow recalculating UI layout.
+    DefaultListModel<DumpItem> model = (DefaultListModel<DumpItem>)myThreadList.getModel();
+    model.clear();
+    model.addAll(filteredThreadStates);
     if (!model.isEmpty()) {
       myThreadList.setSelectedIndex(selectedIndex);
     }

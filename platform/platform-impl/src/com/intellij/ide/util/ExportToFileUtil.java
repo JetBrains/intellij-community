@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -165,6 +166,7 @@ public final class ExportToFileUtil {
       EditorEx editorEx = (EditorEx)myTextArea;
       editorEx.setBackgroundColor(UIUtil.getInactiveTextFieldBackgroundColor());
       editorEx.setColorsScheme(EditorColorsManager.getInstance().getSchemeForCurrentUITheme());
+      editorEx.setHighlighter(new EmptyEditorHighlighter());
 
       myTextArea.getComponent().setPreferredSize(new Dimension(700, 400));
       return myTextArea.getComponent();
