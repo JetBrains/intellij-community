@@ -7,6 +7,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
@@ -62,7 +63,7 @@ internal class RemovedRecentFilesListener : AsyncFileListener {
     project: Project,
   ): List<VirtualFile> {
     return files.filter { file ->
-      file.isValid && ProjectFileIndex.getInstance(project).isInContent(file)
+      file.isFile && file.isValid && ProjectFileIndex.getInstance(project).isInContent(file)
     }
   }
 
