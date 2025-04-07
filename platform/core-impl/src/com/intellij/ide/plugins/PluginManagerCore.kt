@@ -482,11 +482,11 @@ object PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         descriptor.isEnabled = false
-        errors.put(descriptor.getPluginId(), PluginLoadingError(
+        errors[descriptor.getPluginId()] = PluginLoadingError(
           descriptor,
           message("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
           message("plugin.loading.error.short.plugin.loading.disabled")
-        ))
+        )
       }
     }
 
@@ -640,11 +640,11 @@ object PluginManagerCore {
     val pluginsToEnable = HashMap<PluginId, String>()
     
     fun registerLoadingError(loadingError: PluginLoadingError) {
-      pluginErrorsById.put(loadingError.plugin.pluginId, loadingError)
-      pluginsToDisable.put(loadingError.plugin.pluginId, loadingError.plugin.name)
+      pluginErrorsById[loadingError.plugin.pluginId] = loadingError
+      pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
       val disabledDependencyId = loadingError.disabledDependency
       if (disabledDependencyId != null && context.disabledPlugins.contains(disabledDependencyId)) {
-        pluginsToEnable.put(disabledDependencyId, idMap[disabledDependencyId]!!.getName())
+        pluginsToEnable[disabledDependencyId] = idMap[disabledDependencyId]!!.getName()
       }
     }
 
@@ -856,7 +856,7 @@ object PluginManagerCore {
     val list = ArrayList<IdeaPluginDescriptorImpl>()
     list.add(existingDescriptor)
     list.add(descriptor)
-    duplicateMap.put(id, list)
+    duplicateMap[id] = list
     return duplicateMap
   }
 
