@@ -312,6 +312,11 @@ public final class PsiClassImplUtil {
       if (aPackage != null) {
         SearchScope scope = PackageScope.packageScope(aPackage, false);
         scope = scope.intersectWith(maximalUseScope);
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null && !scope.contains(virtualFile)) {
+          // If the current declaration is in a scratch file, it's not included to package scope, so let's add it
+          scope = scope.union(new LocalSearchScope(file));
+        }
         return scope;
       }
 
