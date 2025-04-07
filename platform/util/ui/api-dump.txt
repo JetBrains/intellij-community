@@ -4433,6 +4433,7 @@ com.intellij.util.ui.JBUI$CurrentTheme$List$Tag
 - sf:FOREGROUND:java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$MainToolbar
 - <init>():V
+- s:borderColor():java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$MainToolbar$Button
 - <init>():V
 - s:hoverArc():com.intellij.util.ui.JBValue
@@ -4675,6 +4676,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow
 - s:hoverInactiveBackground():java.awt.Color
 - s:inactiveUnderlineColor():java.awt.Color
 - s:overrideHeaderFontSizeOffset():F
+- s:stripeBackground():java.awt.Color
 - s:stripeSeparatorColor(Z):java.awt.Color
 - s:underlineColor():java.awt.Color
 - s:underlineHeight():I
@@ -4710,6 +4712,8 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:horizontalToolbarInsets():java.awt.Insets
 - s:mainToolbarButtonInsets():java.awt.Insets
 - s:mainToolbarButtonInsetsKey():java.lang.String
+- s:recentProjectAvatarIconSize():I
+- s:recentProjectAvatarIconSizeKey():java.lang.String
 - s:stripeToolbarButtonIconPadding(Z,Z):java.awt.Insets
 - s:stripeToolbarButtonIconPaddingKey():java.lang.String
 - s:stripeToolbarButtonIconSize():I

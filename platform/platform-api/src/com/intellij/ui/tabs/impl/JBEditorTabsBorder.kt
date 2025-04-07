@@ -73,7 +73,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
 
     if (ExperimentalUI.isNewUI()) {
       g.paint2DLine(Point(x, y), Point(x + width, y), LinePainter2D.StrokeType.INSIDE,
-                    thickness.toDouble(), JBUI.CurrentTheme.EditorTabs.borderColor())
+                    thickness.toDouble(), JBUI.CurrentTheme.MainToolbar.borderColor())
     }
     else {
       tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))

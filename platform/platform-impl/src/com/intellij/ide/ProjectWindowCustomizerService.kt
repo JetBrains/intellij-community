@@ -77,7 +77,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project, cor
 
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
-    val size = JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize()
+    val size = JBUI.CurrentTheme.Toolbar.recentProjectAvatarIconSize()
     return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)
   }
 }
