@@ -21,14 +21,13 @@ val byteBufferAllocator: ByteBufAllocator = run {
 }
 
 // not thread-safe, intended only for single thread for one time use
-internal class ByteBufferAllocator() : AutoCloseable {
+internal class SingleByteBufferAllocator() : AutoCloseable {
   private var byteBuffer: ByteBuffer? = null
 
   @Synchronized
   fun allocate(size: Int): ByteBuffer {
     var result = byteBuffer
     if (result != null && result.capacity() < size) {
-      // clear references to object to make sure that it can be collected by GC
       byteBuffer = null
       unmapBuffer(result)
       result = null

@@ -78,7 +78,7 @@ internal inline fun readCentralDirectory(
   centralDirPosition: Int,
   centralDirSize: Int,
   entryProcessor: EntryProcessor,
-  byteBufferAllocator: ByteBufferAllocator,
+  byteBufferAllocator: SingleByteBufferAllocator,
 ) {
   var offset = centralDirPosition
 
@@ -137,7 +137,7 @@ private fun getByteBuffer(
   headerOffset: Int,
   nameLengthInBytes: Int,
   method: Byte,
-  byteBufferAllocator: ByteBufferAllocator,
+  byteBufferAllocator: SingleByteBufferAllocator,
 ): ByteBuffer {
   if (uncompressedSize < 0) {
     throw IOException("no data")
@@ -250,7 +250,7 @@ private inline fun readZipEntries(buffer: ByteBuffer, fileSize: Int, entryProces
     centralDirPosition = buffer.getInt(offset + 16)
   }
 
-  ByteBufferAllocator().use { byteBufferAllocator ->
+  SingleByteBufferAllocator().use { byteBufferAllocator ->
     readCentralDirectory(
       buffer = buffer,
       centralDirPosition = centralDirPosition,
