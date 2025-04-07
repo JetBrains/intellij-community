@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -68,6 +69,11 @@ open class ProjectRootManagerImpl(
           projectSdkName = jdk.getName()
           projectSdkType = jdk.getSdkType().getName()
         }
+      }
+    })
+    project.messageBus.simpleConnect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
+      override fun moduleRemoved(project: Project, module: Module) {
+        moduleRootManagerInstances.remove(module)
       }
     })
   }
