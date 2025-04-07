@@ -431,7 +431,7 @@ public final class PluginInstaller {
       if (installedDependencies.contains(pluginId) ||
           model.isLoaded(pluginId) ||
           PluginManagerCore.isPlatformModule(pluginId) ||
-          PluginManagerCore.INSTANCE.findPluginByPlatformModuleId(pluginId) != null) {
+          PluginManagerCore.findPluginByPlatformModuleId(pluginId) != null) {
         continue;
       }
 
