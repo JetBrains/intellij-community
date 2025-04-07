@@ -6,7 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class BreakpointsDialogFactory(private val myProject: Project) {
   private var myBalloonToHide: Balloon? = null
   private var myBreakpoint: Any? = null
