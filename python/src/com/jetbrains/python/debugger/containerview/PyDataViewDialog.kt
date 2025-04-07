@@ -93,8 +93,8 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
   override fun createCenterPanel(): JPanel = mainPanel
 
   private fun createJupyterSuggestionPanel(): JPanel? {
-    if (PlatformUtils.isCommunityEdition()) return null
-    if (!isJupyterSuggestionEnabled(myProject)) return null
+    if (!isRichTableAndJupyterCanBeEnabled()) return null
+
     val requiredPluginIds = listOf(PluginId.getId("Pythonid"), PluginId.getId("intellij.jupyter"))
 
     var needToInstallPlugin = false
@@ -147,6 +147,24 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     }
 
     return panel
+  }
+
+  /**
+   * Determines if enhanced table features can be enabled.
+   *
+   * Checks three conditions:
+   * 1. Running Ultimate Edition
+   * 2. Jupyter suggestion is enabled
+   * 3. Ultimate plugin is active
+   */
+  private fun isRichTableAndJupyterCanBeEnabled(): Boolean {
+    val isUltimateEdition = !PlatformUtils.isCommunityEdition()
+    val isJupyterEnabled = isJupyterSuggestionEnabled(myProject)
+    val isUltimatePluginEnabled = !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
+
+    return isUltimateEdition
+           && isJupyterEnabled
+           && isUltimatePluginEnabled
   }
 
   private fun hideJupyterSuggestionPanel() {
