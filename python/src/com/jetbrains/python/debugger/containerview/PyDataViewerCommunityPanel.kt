@@ -121,22 +121,34 @@ class PyDataViewerCommunityPanel(
 
   private fun createAndSetupTopToolbar(): JPanel {
     val actionManager = ActionManager.getInstance()
-    val leftActionGroup = DefaultActionGroup(actionManager.getAction("ToggleDataViewColoring"))
-    val leftActionToolbar = actionManager.createActionToolbar("PyDataView", leftActionGroup, true)
-    leftActionToolbar.setTargetComponent(panelWithTable)
 
-    val rightActionGroup = DefaultActionGroup()
-    rightActionGroup.add(actionManager.getAction("OpenInEditorAction"))
-    rightActionGroup.add(actionManager.getAction("ExportTableAction"))
-    rightActionGroup.add(actionManager.getAction("SwitchBetweenTableModesAction"))
+    /* Create the left toolbar */
+    val leftActionGroup = DefaultActionGroup().apply {
+      actionManager.getAction("ToggleDataViewColoring")?.let { add(it) }
+    }
+    val leftActionToolbar = actionManager.createActionToolbar("PyDataView", leftActionGroup, true).apply {
+      targetComponent = panelWithTable
+    }
+
+    /* Create the right toolbar */
+    val rightActionGroup = DefaultActionGroup().apply {
+      listOf(
+        "OpenInEditorAction",
+        "ExportTableAction",
+        "SwitchBetweenTableModesAction"
+      ).forEach { actionId ->
+        actionManager.getAction(actionId)?.let { add(it) }
+      }
+    }
 
     val rightActionToolbar = actionManager.createActionToolbar("PyDataView", rightActionGroup, true).apply {
       layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY // For removing the empty space on the right of the toolbar.
+      targetComponent = panelWithTable
     }
-    rightActionToolbar.setTargetComponent(panelWithTable)
 
     val twoSideComponent = TwoSideComponent(leftActionToolbar.component, rightActionToolbar.component)
     add(twoSideComponent, BorderLayout.BEFORE_FIRST_LINE)
+
     topToolbar = twoSideComponent
 
     return twoSideComponent
