@@ -2000,6 +2000,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/AutoIndentInWhenClauseWithoutCondition.after.kt");
             }
 
+            @TestMetadata("BeforeEnumEntries.after.kt")
+            public void testBeforeEnumEntries() throws Exception {
+                runTest("testData/editor/enterHandler/BeforeEnumEntries.after.kt");
+            }
+
             @TestMetadata("BeforePropertyGetter.after.kt")
             public void testBeforePropertyGetter() throws Exception {
                 runTest("testData/editor/enterHandler/BeforePropertyGetter.after.kt");
