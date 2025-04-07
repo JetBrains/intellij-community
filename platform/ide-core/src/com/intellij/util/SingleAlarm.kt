@@ -391,7 +391,11 @@ class SingleAlarm @Internal constructor(
       }
 
       currentJob = taskCoroutineScope.launch {
-        prevCurrentJob?.join()
+        // see similar behavior in `request`
+        // We do not have a test here because the current usages of `scheduleTask` are running on single-threaded executor
+        withContext(NonCancellable) {
+          prevCurrentJob?.join()
+        }
         prevCurrentJob = null
 
         delay(delay)
