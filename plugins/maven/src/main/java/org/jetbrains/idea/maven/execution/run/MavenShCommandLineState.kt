@@ -12,7 +12,11 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.PatchedRunnableState
+import com.intellij.execution.configurations.RemoteConnection
+import com.intellij.execution.configurations.RemoteState
+import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -31,16 +35,30 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal
+import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor
-import org.jetbrains.idea.maven.execution.*
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
+import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
-import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.project.BundledMaven3
+import org.jetbrains.idea.maven.project.BundledMaven4
+import org.jetbrains.idea.maven.project.MavenHomeType
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
+import org.jetbrains.idea.maven.project.MavenWrapper
+import org.jetbrains.idea.maven.server.DaemonedMavenDistribution
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenServerEmbedder
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.isMaven4
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Function
@@ -227,7 +245,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     args.addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess())
     args.addProperty(
       MavenServerEmbedder.MAVEN_EXT_CLASS_PATH,
-      transferContentsIfNonLocal(eel, MavenServerManager.getInstance().getMavenEventListener().toPath()).asEelPath().toString()
+      transferLocalContentToRemote(
+        source = MavenServerManager.getInstance().getMavenEventListener().toPath(),
+        target = TransferTarget.Temporary(eel.descriptor)
+      ).asEelPath().toString()
     )
   }
 
@@ -264,7 +285,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     var mavenHome = distribution.mavenHome
 
     if (type is BundledMaven3 || type is BundledMaven4) {
-      mavenHome = transferContentsIfNonLocal(eel, mavenHome)
+      mavenHome = transferLocalContentToRemote(mavenHome, TransferTarget.Temporary(eel.descriptor))
     }
 
     if (distribution is DaemonedMavenDistribution) {

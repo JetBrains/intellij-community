@@ -24,7 +24,8 @@ import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal
+import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
@@ -163,7 +164,10 @@ private class EelMavenCmdState(
     eelParams.charset = parameters.charset
     eelParams.vmParametersList.add("-classpath")
     eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull {
-      transferContentsIfNonLocal(eel, Path(it)).asEelPath().toString()
+      transferLocalContentToRemote(
+        source = Path(it),
+        target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
+      ).asEelPath().toString()
     }.joinToString(eel.fs.pathSeparator))
 
     return eelParams
@@ -175,7 +179,10 @@ private class EelMavenCmdState(
         for (part in item.parts) {
           when (part) {
             is ParameterTargetValuePart.Const -> append(part.localValue)
-            is ParameterTargetValuePart.Path -> append(transferContentsIfNonLocal(eel, Path.of(part.localValue)).asEelPath().toString())
+            is ParameterTargetValuePart.Path -> append(transferLocalContentToRemote(
+              source = Path.of(part.localValue),
+              target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
+            ).asEelPath().toString())
             ParameterTargetValuePart.PathSeparator -> append(eel.fs.pathSeparator)
             is ParameterTargetValuePart.PromiseValue -> append(part.localValue) // todo?
           }

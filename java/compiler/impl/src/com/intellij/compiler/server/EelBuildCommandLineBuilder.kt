@@ -79,7 +79,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
       return path
     }
     val remotePath = workingDirectory.resolve(path.name)
-    return EelPathUtils.transferContentsIfNonLocal(eel, path, remotePath)
+    return EelPathUtils.transferLocalContentToRemote(path, EelPathUtils.TransferTarget.Explicit(remotePath))
   }
 
   override fun copyProjectSpecificPathToTargetIfRequired(project: Project, path: Path): Path {
@@ -88,7 +88,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     }
     val cacheFileName = project.getProjectCacheFileName()
     val target = cacheDirectory.resolve(cacheFileName).resolve(path.name)
-    return EelPathUtils.transferContentsIfNonLocal(eel, path, target)
+    return EelPathUtils.transferLocalContentToRemote(path, EelPathUtils.TransferTarget.Explicit(target))
   }
 
   override fun getYjpAgentPath(yourKitProfilerService: YourKitProfilerService?): String? {

@@ -105,7 +105,10 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
       val eel = python.getEelDescriptor().upgrade()
       val localHelper = PythonHelpersLocator.findPathInHelpers(helper)
                         ?: error("No ${helper} found: installation broken?")
-      val remoteHelper = EelPathUtils.transferContentsIfNonLocal(eel, localHelper).asEelPath().toString()
+      val remoteHelper = EelPathUtils.transferLocalContentToRemote(
+        source = localHelper,
+        target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
+      ).asEelPath().toString()
       Triple(eel, python.pathString, listOf(remoteHelper) + args)
     }
     is WhatToExec.Command -> Triple(eel, command, args)

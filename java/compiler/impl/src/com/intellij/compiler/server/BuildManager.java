@@ -127,8 +127,11 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
-import java.awt.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
+import java.awt.GraphicsEnvironment;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -140,7 +143,6 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -153,8 +155,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -921,8 +922,7 @@ public final class BuildManager implements Disposable {
         String optionsPath = PathManager.getOptionsPath();
 
         if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-          final var eel = upgradeBlocking(eelDescriptor);
-          optionsPath = asEelPath(transferContentsIfNonLocal(eel, Path.of(optionsPath), null)).toString();
+          optionsPath = asEelPath(transferLocalContentToRemote(Path.of(optionsPath), new EelPathUtils.TransferTarget.Temporary(eelDescriptor))).toString();
         }
         else {
           optionsPath = pathMapper.apply(optionsPath);

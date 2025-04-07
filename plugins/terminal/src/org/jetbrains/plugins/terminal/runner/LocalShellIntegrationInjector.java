@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isBlockTerminalSupported;
 
@@ -204,9 +205,8 @@ public final class LocalShellIntegrationInjector {
                                         String rcFilePath, String rcfileOption, @Nullable EelDescriptor eelDescriptor) {
     result.add(rcfileOption);
     if (eelDescriptor != null) {
-      final var eelApi = EelProviderUtil.upgradeBlocking(eelDescriptor);
       final var rcFile = Path.of(rcFilePath);
-      final var bashSupportDir = transferContentsIfNonLocal(eelApi, rcFile.getParent());
+      final var bashSupportDir = transferLocalContentToRemote(rcFile.getParent(), new EelPathUtils.TransferTarget.Temporary(eelDescriptor));
       result.add(asEelPath(bashSupportDir.resolve(rcFile.getFileName().toString())).toString());
     }
     else {
