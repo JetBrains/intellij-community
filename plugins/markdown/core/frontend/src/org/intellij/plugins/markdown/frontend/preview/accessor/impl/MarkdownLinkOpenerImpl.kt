@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
@@ -21,7 +22,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.findProject
-import com.intellij.platform.project.projectId
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.isLocalHost
@@ -31,11 +31,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
-import org.intellij.plugins.markdown.service.MarkdownFrontendService
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpenerUtil
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpenerUtil.Companion.findVirtualFile
 import org.intellij.plugins.markdown.util.MarkdownDisposable
 import java.net.URI
 import java.net.URISyntaxException
@@ -71,11 +72,11 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
         }
         return@launch
       }
-      processHeaders(fileToOpen, anchor, project, data.headers)
+      processHeaders(anchor, project, data.headers)
     }
   }
 
-  private suspend fun processHeaders(file: VirtualFile, anchor: String, project: Project, headers: List<MarkdownHeaderInfo>?){
+  private suspend fun processHeaders(anchor: String, project: Project, headers: List<MarkdownHeaderInfo>?){
     if (headers == null) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
         message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
@@ -86,7 +87,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     if (headers.size == 1) {
       withContext(Dispatchers.EDT) {
         runReadAction {
-          MarkdownFrontendService.getInstance().navigateToHeader(project.projectId(), headers.first())
+          MarkdownLinkOpenerUtil.navigateToHeader(project, headers.first())
         }
       }
       return
@@ -183,17 +184,17 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
   }
 
   private fun actuallyOpenInEditorDeprecated(project: Project?, uri: URI): Boolean {
-    val service = MarkdownFrontendService.getInstance()
+    val targetFile = uri.findVirtualFile() ?: return false
     @Suppress("NAME_SHADOWING")
-    val project = project ?: service.guessProjectForUri(uri) ?: return false
+    val project = project ?: guessProjectForFile(targetFile) ?: return false
     val anchor = uri.fragment
     if (anchor == null){
       coroutineScope.launch(Dispatchers.EDT) {
-        service.openFile(project.projectId(), uri)
+        OpenFileAction.openFile(targetFile, project)
       }
       return true
     }
-    val headers = service.collectHeaders(project.projectId(), uri)
+    val headers = MarkdownLinkOpenerUtil.collectHeaders(project, anchor, targetFile)
     if (headers == null) {
       coroutineScope.launch {
         DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
@@ -206,7 +207,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     }
     if (headers.size == 1) {
       coroutineScope.launch(Dispatchers.EDT) {
-        service.navigateToHeader(project.projectId(), headers.first())
+        MarkdownLinkOpenerUtil.navigateToHeader(project, headers.first())
       }
       return true
     }
@@ -277,7 +278,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
       override fun onChosen(selectedValue: MarkdownHeaderInfo, finalChoice: Boolean): PopupStep<*> {
         return doFinalStep {
-          MarkdownFrontendService.getInstance().navigateToHeader(project.projectId(), selectedValue)
+          MarkdownLinkOpenerUtil.navigateToHeader(project, selectedValue)
         }
       }
     }

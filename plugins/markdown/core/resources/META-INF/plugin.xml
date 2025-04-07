@@ -186,9 +186,6 @@
     <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
                         serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
 
-    <applicationService serviceInterface="org.intellij.plugins.markdown.service.MarkdownFrontendService"
-                        serviceImplementation="org.intellij.plugins.markdown.service.MarkdownFrontendServiceImpl"/>
-
     <search.optionContributor implementation="org.intellij.plugins.markdown.extensions.ExtensionSearchableOptionContributor"/>
 
     <projectConfigurable id="Settings.Markdown"
