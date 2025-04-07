@@ -101,7 +101,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
-    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />
