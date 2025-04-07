@@ -69,17 +69,17 @@ class IdeaPluginDescriptorImpl private constructor(
      *
      * `descriptorPath`, `moduleName`, `moduleLoadingRule` properties are `null`.
      */
-    MainDescriptor,
+    PluginMainDescriptor,
 
     /**
-     * Descriptor instantiated as a sub-descriptor of some [MainDescriptor] using a content module info. See [createSub].
+     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] using a content module info. See [createSub].
      *
      * `descriptorPath`, `moduleName`, `moduleLoadingRule` properties are _not_ `null`.
      */
     ContentModuleDescriptor,
 
     /**
-     * Descriptor instantiated as a sub-descriptor of some [MainDescriptor] _or_ another [DependsSubDescriptor] in [initializeV1Dependencies]. See [createSub].
+     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [initializeV1Dependencies]. See [createSub].
      *
      * `descriptorPath` is _not_ null, `moduleName` and `moduleLoadingRule` properties are `null`.
      */
@@ -171,7 +171,7 @@ class IdeaPluginDescriptorImpl private constructor(
     return when {
       moduleName != null -> Type.ContentModuleDescriptor
       descriptorPath != null -> Type.DependsSubDescriptor
-      else -> Type.MainDescriptor
+      else -> Type.PluginMainDescriptor
     }
   }
 
@@ -512,7 +512,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private fun checkTypeInvariants() {
     when (type) {
-      Type.MainDescriptor -> {
+      Type.PluginMainDescriptor -> {
         assert(moduleName == null && moduleLoadingRule == null && descriptorPath == null) { this }
       }
       Type.ContentModuleDescriptor -> {
