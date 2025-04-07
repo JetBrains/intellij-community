@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
@@ -280,17 +280,21 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     return isZero(expression) || (CommonDataflow.computeValue(expression) instanceof Number number && number.doubleValue() == 0.0d);
   }
 
-  boolean isZero(PsiExpression expression) {
-    if (m_ignoreExpressionsContainingConstants && PsiUtil.deparenthesizeExpression(expression) instanceof PsiReferenceExpression) {
+  boolean isZero(@NotNull PsiExpression expression) {
+    if (m_ignoreExpressionsContainingConstants && containsReference(expression)) {
       return false;
     }
     return ExpressionUtils.isZero(expression);
   }
 
-  boolean isOne(PsiExpression expression) {
-    if (m_ignoreExpressionsContainingConstants && PsiUtil.deparenthesizeExpression(expression) instanceof PsiReferenceExpression) {
+  boolean isOne(@NotNull PsiExpression expression) {
+    if (m_ignoreExpressionsContainingConstants && containsReference(expression)) {
       return false;
     }
     return ExpressionUtils.isOne(expression);
+  }
+
+  private static boolean containsReference(@NotNull PsiExpression expression) {
+    return PsiTreeUtil.findChildOfType(expression, PsiReferenceExpression.class, false) != null;
   }
 }

@@ -16,8 +16,8 @@ class PointlessArithmetic {
         int j2 = <warning descr="'TWO - TWO' can be replaced with '0'">TWO - TWO</warning>;
         int j3 = TWO - TWO_TOO;
         int j4 = <warning descr="'TWO - TWO_TOO - 0' can be replaced with 'TWO - TWO_TOO'">TWO - TWO_TOO - 0</warning>;
-        int j5 = <warning descr="'TWO - TWO_TOO + a' can be replaced with 'a'">TWO - TWO_TOO + a</warning>; // Case from IDEA-364437
-        int j6 = <warning descr="'TWO - 2 + a' can be replaced with 'a'">TWO - 2 + a</warning>;
+        int j5 = TWO - TWO_TOO + a; // Case from IDEA-364437
+        int j6 = TWO - 2 + a;
     }
 
     public void add(int a) {
@@ -40,8 +40,8 @@ class PointlessArithmetic {
       int a1 = someVar - ZERO;
       int a2 = someVar - (ZERO);
       int a3 = ((someVar)) - (ZERO);
-      int a4 = <warning descr="'TWO - 2 + someVar' can be replaced with 'someVar'">TWO - 2 + someVar</warning>;
-      int a5 = <warning descr="'MINUS_TWO + 2 - someVar' can be replaced with '- someVar'">MINUS_TWO + 2 - someVar</warning>;
+      int a4 = TWO - 2 + someVar;
+      int a5 = MINUS_TWO + 2 - someVar;
       int a6 = MINUS_TWO + ZERO - someVar;
       int a7 = someVar - ONE;
       int a8 = someVar - ONE - TWO;
