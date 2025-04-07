@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.backend
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
@@ -18,6 +19,7 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.RecentFileKind
@@ -59,8 +61,11 @@ internal class BackendRecentFilesModel(private val project: Project, private val
     // `already disposed` and alike exceptions. It needs to be fixed on the platform side,
     // maybe by cancelling project service scope' children during temporary dispose phase
     if (!ApplicationManager.getApplication().isUnitTestMode && project is ProjectEx) {
-      project.messageBus.connect(coroutineScope)
-        .subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, ChangedFilesVfsListener(project))
+      project.messageBus.connect(coroutineScope).apply {
+        subscribe(IdeDocumentHistoryImpl.RecentPlacesListener.TOPIC, ChangedFilesVfsListener(project))
+        subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, RecentFilesDaemonAnalyserListener(project))
+        subscribe(FileStatusListener.TOPIC, RecentFilesVcsStatusListener(project))
+      }
     }
   }
 

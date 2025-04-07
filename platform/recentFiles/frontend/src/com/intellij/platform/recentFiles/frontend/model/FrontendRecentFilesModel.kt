@@ -33,12 +33,14 @@ private val LOG by lazy { fileLogger() }
 class FrontendRecentFilesModel(private val project: Project) {
   private val modelUpdateScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope.childScope("RecentFilesModel updates")
 
-  private val recentlyOpenedFilesState = MutableStateFlow(listOf<SwitcherVirtualFile>())
-  private val recentlyEditedFilesState = MutableStateFlow(listOf<SwitcherVirtualFile>())
-  private val recentlyOpenedPinnedFilesState = MutableStateFlow(listOf<SwitcherVirtualFile>())
+  private val recentlyOpenedFilesState = MutableStateFlow(RecentFilesState())
+  private val recentlyEditedFilesState = MutableStateFlow(RecentFilesState())
+  private val recentlyOpenedPinnedFilesState = MutableStateFlow(RecentFilesState())
 
   fun getRecentFiles(fileKind: RecentFileKind): List<SwitcherVirtualFile> {
-    return chooseState(fileKind).value
+    val capturedModelState = chooseState(fileKind).value.entries
+    LOG.debug("Return requested $fileKind list: ${capturedModelState.joinToString { it.virtualFile?.name ?: "null" }}")
+    return capturedModelState
   }
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, isAdded: Boolean) {
@@ -48,13 +50,12 @@ class FrontendRecentFilesModel(private val project: Project) {
 
       frontendStateToUpdate.update { oldList ->
         if (isAdded) {
-          val maybeItemsWithRichMetadata = oldList.associateBy { it }
+          val maybeItemsWithRichMetadata = oldList.entries.associateBy { it }
           val effectiveModelsToInsert = fileModels.map { fileModel -> maybeItemsWithRichMetadata[fileModel] ?: fileModel }
-
-          effectiveModelsToInsert + (oldList - effectiveModelsToInsert)
+          RecentFilesState(effectiveModelsToInsert + (oldList.entries - effectiveModelsToInsert.toSet()))
         }
         else {
-          oldList - fileModels
+          RecentFilesState(oldList.entries - fileModels.toSet())
         }
       }
 
@@ -73,43 +74,44 @@ class FrontendRecentFilesModel(private val project: Project) {
 
   suspend fun subscribeToBackendRecentFilesUpdates(targetFilesKind: RecentFileKind) {
     LOG.debug("Started collecting recent files updates for kind: $targetFilesKind")
-    val targetModel = chooseState(targetFilesKind)
     FileSwitcherApi.getInstance()
       .getRecentFileEvents(targetFilesKind, project.projectId())
-      .collect { update -> applyChangesFromBackendToModel(update, targetModel) }
+      .collect { update -> applyChangesFromBackendToModel(update, targetFilesKind) }
   }
 
-  private suspend fun applyChangesFromBackendToModel(change: RecentFilesEvent, targetModel: MutableStateFlow<List<SwitcherVirtualFile>>) {
+  private suspend fun applyChangesFromBackendToModel(change: RecentFilesEvent, targetFilesKind: RecentFileKind) {
+    val targetModel = chooseState(targetFilesKind)
     when (change) {
       is RecentFilesEvent.ItemsAdded -> {
         val toAdd = change.batch.map(::convertSwitcherDtoToViewModel)
+        LOG.debug("Adding items ${change.batch} to $targetFilesKind frontend model")
         targetModel.update { oldList ->
-          LOG.debug("Adding items ${change.batch} to frontend model")
-          toAdd + (oldList - toAdd)
+          RecentFilesState(toAdd + (oldList.entries - toAdd.toSet()))
         }
       }
       is RecentFilesEvent.ItemsUpdated -> {
         val itemsToMergeWithExisting = change.batch.map(::convertSwitcherDtoToViewModel).associateBy { it }
+        LOG.debug("Updating items ${change.batch} in $targetFilesKind frontend model")
         targetModel.update { oldList ->
-          LOG.debug("Updating items ${change.batch} in frontend model")
-          oldList.map { oldItem -> itemsToMergeWithExisting[oldItem] ?: oldItem }
+          val effectiveModelsToInsert = oldList.entries.map { oldItem -> itemsToMergeWithExisting[oldItem] ?: oldItem }
+          RecentFilesState(effectiveModelsToInsert + (oldList.entries - effectiveModelsToInsert.toSet()))
         }
       }
       is RecentFilesEvent.ItemsRemoved -> {
-        LOG.debug("Removing items ${change.batch} from frontend model")
+        LOG.debug("Removing items ${change.batch} from $targetFilesKind frontend model")
         val toRemove = change.batch.mapNotNull { virtualFileId -> convertVirtualFileIdToViewModel(virtualFileId, project) }
         targetModel.update { oldList ->
-          oldList - toRemove
+          RecentFilesState(oldList.entries - toRemove.toSet())
         }
       }
       is RecentFilesEvent.AllItemsRemoved -> {
-        LOG.debug("Removing all items from frontend model")
-        targetModel.update { listOf() }
+        LOG.debug("Removing all items from $targetFilesKind frontend model")
+        targetModel.update { RecentFilesState(listOf()) }
       }
     }
   }
 
-  private fun chooseState(filesKind: RecentFileKind): MutableStateFlow<List<SwitcherVirtualFile>> {
+  private fun chooseState(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState> {
     return when (filesKind) {
       RecentFileKind.RECENTLY_EDITED -> recentlyEditedFilesState
       RecentFileKind.RECENTLY_OPENED -> recentlyOpenedFilesState
@@ -143,3 +145,5 @@ class FrontendRecentFilesModel(private val project: Project) {
     }
   }
 }
+
+private class RecentFilesState(val entries: List<SwitcherVirtualFile> = listOf())
