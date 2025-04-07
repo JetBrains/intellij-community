@@ -1,35 +1,33 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui
 
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class BreakpointsDialogFactory(private val myProject: Project) {
-  private var myBalloonToHide: Balloon? = null
-  private var myBreakpoint: Any? = null
-  private var myDialogShowing: BreakpointsDialog? = null
+class BreakpointsDialogFactory(private val project: Project) {
+  private var balloonToHide: Balloon? = null
+  private var breakpointFromBalloon: Any? = null
+  private var showingDialog: BreakpointsDialog? = null
 
-
-  fun setBalloonToHide(balloonToHide: Balloon?, breakpoint: Any?) {
-    myBalloonToHide = balloonToHide
-    myBreakpoint = breakpoint
-    Disposer.register(myBalloonToHide!!, object : Disposable {
-      override fun dispose() {
-        if (myBalloonToHide === balloonToHide) {
-          myBalloonToHide = null
-          myBreakpoint = null
-        }
+  fun setBalloonToHide(balloon: Balloon, breakpoint: Any?) {
+    balloonToHide = balloon
+    breakpointFromBalloon = breakpoint
+    Disposer.register(balloon) {
+      if (balloonToHide === balloon) {
+        balloonToHide = null
+        breakpointFromBalloon = null
       }
-    })
+    }
   }
 
   fun popupRequested(breakpoint: Any?): Boolean {
-    if (myBalloonToHide != null && !myBalloonToHide!!.isDisposed()) {
+    if (balloonToHide != null && !balloonToHide!!.isDisposed()) {
       return true
     }
     return selectInDialogShowing(breakpoint)
@@ -38,33 +36,32 @@ class BreakpointsDialogFactory(private val myProject: Project) {
   fun showDialog(initialBreakpoint: Any?) {
     if (selectInDialogShowing(initialBreakpoint)) return
 
-    val dialog: BreakpointsDialog = object : BreakpointsDialog(myProject,
-                                                               if (initialBreakpoint != null) initialBreakpoint else myBreakpoint) {
+    val dialog = object : BreakpointsDialog(project, initialBreakpoint ?: breakpointFromBalloon) {
       override fun dispose() {
-        myBreakpoint = null
-        myDialogShowing = null
+        breakpointFromBalloon = null
+        showingDialog = null
 
         super.dispose()
       }
     }
 
-    if (myBalloonToHide != null) {
-      if (!myBalloonToHide!!.isDisposed()) {
-        myBalloonToHide!!.hide()
+    if (balloonToHide != null) {
+      if (!balloonToHide!!.isDisposed()) {
+        balloonToHide!!.hide()
       }
-      myBalloonToHide = null
+      balloonToHide = null
     }
-    myDialogShowing = dialog
+    showingDialog = dialog
 
     dialog.show()
   }
 
   private fun selectInDialogShowing(initialBreakpoint: Any?): Boolean {
-    if (myDialogShowing != null) {
-      val window = myDialogShowing!!.getWindow()
-      if (window != null && window.isDisplayable()) { // workaround for IDEA-197804
-        myDialogShowing!!.selectBreakpoint(initialBreakpoint, true)
-        myDialogShowing!!.toFront()
+    if (showingDialog != null) {
+      val window = showingDialog!!.window
+      if (window != null && window.isDisplayable) { // workaround for IDEA-197804
+        showingDialog!!.selectBreakpoint(initialBreakpoint, true)
+        showingDialog!!.toFront()
         return true
       }
     }

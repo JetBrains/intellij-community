@@ -62,8 +62,6 @@
     <projectService serviceImplementation="com.intellij.xdebugger.impl.inline.DebuggerInlayListener"/>
     <projectService serviceImplementation="com.intellij.xdebugger.impl.XDebuggerLineChangeIconProvider"/>
 
-    <projectService serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory"/>
-
     <pathMacroFilter implementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager$XDebuggerHistoryPathMacroFilter"/>
 
     <applicationConfigurable groupId="build" dynamic="true" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle"
