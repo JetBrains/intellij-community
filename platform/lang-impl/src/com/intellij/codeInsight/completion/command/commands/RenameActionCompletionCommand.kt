@@ -16,7 +16,8 @@ import com.intellij.psi.PsiNamedElement
 internal class RenameActionCommandProvider : ActionCommandProvider(actionId = IdeActions.ACTION_RENAME,
                                                                    name = "Rename",
                                                                    i18nName = ActionsBundle.message("action.RenameElement.text"),
-                                                                   previewText = ActionsBundle.message("action.RenameElement.description")) {
+                                                                   previewText = ActionsBundle.message("action.RenameElement.description"),
+                                                                   synonyms = listOf("Rename", "Change name")) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false
     val result = getTargetElement(editor, offset)

@@ -45,6 +45,7 @@
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
 - getPriority():java.lang.Integer
+- getSynonyms():java.util.List
 *f:com.intellij.codeInsight.completion.command.CompletionCommandKt
 - sf:getCommandContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *:com.intellij.codeInsight.completion.command.CompletionCommandWithPreview

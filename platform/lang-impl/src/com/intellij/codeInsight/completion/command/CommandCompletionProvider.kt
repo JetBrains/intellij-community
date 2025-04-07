@@ -1,15 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
-import com.intellij.codeInsight.completion.CompletionLocation
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.CompletionService
-import com.intellij.codeInsight.completion.CompletionSorter
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.PrefixMatcher
-import com.intellij.codeInsight.completion.PrioritizedLookupElement
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
@@ -21,11 +13,7 @@ import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorSettings
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.SoftWrapModel
-import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.impl.EmptySoftWrapModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.project.DumbService
@@ -184,6 +172,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
                                                                   .withLookupString(i18nName.trim())
                                                                   .withLookupString(lookupString)
+                                                                  .withLookupStrings(command.synonyms)
                                                                   .withPresentableText(lookupString)
                                                                   .withTypeText(tailText)
                                                                   .withIcon(command.icon ?: Lightning)

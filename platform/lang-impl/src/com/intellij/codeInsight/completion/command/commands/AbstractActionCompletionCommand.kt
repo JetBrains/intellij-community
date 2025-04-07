@@ -1,21 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandProvider
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.HighlightInfoLookup
-import com.intellij.codeInsight.completion.command.getDataContext
-import com.intellij.codeInsight.completion.command.getTargetContext
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
@@ -47,6 +36,7 @@ open class ActionCommandProvider(
   val icon: Icon? = null,
   val priority: Int? = null,
   val previewText: @Nls String?,
+  val synonyms: List<String> = emptyList()
 ) : CommandProvider, DumbAware {
 
   /**
@@ -78,7 +68,8 @@ open class ActionCommandProvider(
                             i18nName = i18nName,
                             icon = icon,
                             priority = priority,
-                            previewText = previewText)
+                            previewText = previewText,
+                            synonyms = synonyms)
 
   /**
    * Checks whether the action associated with this provider is applicable in the current context.
@@ -91,12 +82,12 @@ open class ActionCommandProvider(
   protected open fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     val action: AnAction? = ActionManager.getInstance().getAction(actionId)
     if (action == null || editor == null) return false
-    if (!DumbService.Companion.getInstance(psiFile.project).isUsableInCurrentContext(action)) return false
+    if (!DumbService.getInstance(psiFile.project).isUsableInCurrentContext(action)) return false
     val context = getTargetContext(offset, editor)
     val dataContext = getDataContext(psiFile, editor, context)
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
-                                          ActionUiKind.Companion.NONE, null)
+                                          ActionUiKind.NONE, null)
     if (ActionUtil.performDumbAwareUpdate(action, event, false)) {
       return false
     }
@@ -137,6 +128,7 @@ open class ActionCompletionCommand(
   override val icon: Icon? = null,
   override val priority: Int? = null,
   override val highlightInfo: HighlightInfoLookup? = null,
+  override val synonyms: List<String> = emptyList()
 ) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
   private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
 
@@ -155,7 +147,7 @@ open class ActionCompletionCommand(
     val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
-                                          ActionUiKind.Companion.NONE, null)
+                                          ActionUiKind.NONE, null)
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event)
     }

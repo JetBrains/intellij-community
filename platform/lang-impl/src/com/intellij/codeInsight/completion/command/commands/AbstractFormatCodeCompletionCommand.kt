@@ -2,11 +2,7 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandProvider
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
@@ -39,7 +35,8 @@ abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), Comple
 
   final override val i18nName: @Nls String
     get() = ActionsBundle.message("action.ReformatCode.text")
-
+  override val synonyms: List<String>
+    get() = listOf("Reformat")
   final override val icon: Icon
     get() = AllIcons.Actions.ReformatCode // Use the reformat icon
 

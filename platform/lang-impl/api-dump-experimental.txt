@@ -155,6 +155,12 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - a:findChangeSignatureOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractCopyClassCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- a:findMoveClassOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractCopyFQNCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
@@ -162,6 +168,21 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - pf:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - a:placeIsApplicable(com.intellij.psi.PsiElement,I):Z
 - f:supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractExtractConstantCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- a:findOffsetToCall(I,com.intellij.psi.PsiFile):java.lang.Integer
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractExtractFieldCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- a:findOffsetToCall(I,com.intellij.psi.PsiFile):java.lang.Integer
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractExtractParameterCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- a:findOffsetToCall(I,com.intellij.psi.PsiFile):java.lang.Integer
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
@@ -172,6 +193,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - f:getIcon():javax.swing.Icon
 - f:getName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- getSynonyms():java.util.List
 *a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - <init>():V
@@ -211,6 +233,18 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractInlineMethodCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- a:findOffsetToCall(I,com.intellij.psi.PsiFile):java.lang.Integer
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractMoveCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- a:findMoveClassOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractShowUsagesActionCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
@@ -221,8 +255,8 @@ c:com.intellij.codeInsight.actions.VcsFacade
 *c:com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - com.intellij.openapi.project.DumbAware
-- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - f:getActionId():java.lang.String
 - getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
@@ -231,6 +265,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - f:getName():java.lang.String
 - f:getPreviewText():java.lang.String
 - f:getPriority():java.lang.Integer
+- f:getSynonyms():java.util.List
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - pf:isApplicableToProject(I,com.intellij.psi.PsiFile):Z
 - f:setActionId(java.lang.String):V
@@ -238,8 +273,8 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - com.intellij.codeInsight.completion.command.CompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 - com.intellij.openapi.project.DumbAware
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,com.intellij.codeInsight.completion.command.HighlightInfoLookup,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - f:getActionId():java.lang.String
 - getAdditionalInfo():java.lang.String
@@ -249,6 +284,7 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - getName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getPriority():java.lang.Integer
+- getSynonyms():java.util.List
 - f:setActionId(java.lang.String):V
 *:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion

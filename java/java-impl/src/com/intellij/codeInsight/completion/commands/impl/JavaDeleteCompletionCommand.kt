@@ -2,12 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandProvider
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.HighlightInfoLookup
-import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.java.JavaBundle
@@ -15,13 +10,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.DumbAware
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiStatement
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -38,7 +27,24 @@ internal class JavaDeleteCompletionCommandProvider : CommandProvider {
   }
 
   private fun createCommand(highlightInfo: HighlightInfoLookup, psiElement: PsiElement): CompletionCommand {
-    return JavaDeleteCompletionCommand(highlightInfo, psiElement.text)
+    val preview = if (psiElement is PsiClass) {
+      IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, null, "", psiElement.text, false)
+    }
+    else {
+      val copy = psiElement.containingFile.copy() as PsiFile
+      val previewBefore = copy.text
+      val elementToDelete = PsiTreeUtil.findSameElementInCopy(psiElement, copy)
+      elementToDelete.delete()
+      val previewAfter = copy.text
+      IntentionPreviewInfo.CustomDiff(
+        JavaFileType.INSTANCE,
+        null,
+        previewBefore,
+        previewAfter,
+        true
+      )
+    }
+    return JavaDeleteCompletionCommand(highlightInfo, preview)
   }
 }
 
@@ -54,7 +60,7 @@ private fun getTopWithTheSameOffset(psiElement: PsiElement, offset: Int): PsiEle
 
 private class JavaDeleteCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
-  private val originalText: String,
+  private val preview: IntentionPreviewInfo,
 ) : CompletionCommand(), CompletionCommandWithPreview, DumbAware {
   override val name: String
     get() = "Delete element"
@@ -78,6 +84,6 @@ private class JavaDeleteCompletionCommand(
   }
 
   override fun getPreview(): IntentionPreviewInfo? {
-    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, originalText, "")
+    return preview
   }
 }

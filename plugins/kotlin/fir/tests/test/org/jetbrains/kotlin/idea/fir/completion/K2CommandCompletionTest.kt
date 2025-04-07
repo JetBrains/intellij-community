@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
@@ -227,6 +228,77 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             }
             """.trimIndent()
         )
+    }
+
+    fun testIntroduceParameter() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+            
+                val a = "1".<caret>
+            }""".trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Introduce parameter", ignoreCase = true) })
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+        myFixture.checkResult(
+            """
+            fun foo(string: String) {
+            
+                val a = string
+            }""".trimIndent()
+        )
+    }
+
+    fun testInlineMethod() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            fun foo() {
+            
+                val a = "1"
+            }
+            
+            fun bar(){
+                foo().<caret>
+            }
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Inline method", ignoreCase = true) })
+        myFixture.checkResult(
+            """
+            fun bar() {
+                val a = "1"
+            }""".trimIndent()
+        )
+    }
+
+    fun testMoveMethod() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Main {
+      
+          fun a(a2: String): String {
+              System.out.println(a2)
+              return "1"
+          }.<caret>
+      
+      }
+      """.trimIndent())
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.equals("Move element", ignoreCase = true) })
+    }
+
+    fun testCopyClass() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(JavaFileType.INSTANCE, """
+      public class Main.<caret> {
+      }
+      """.trimIndent())
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.equals("Copy class", ignoreCase = true) })
     }
 
     fun testCreateFromUsages() {

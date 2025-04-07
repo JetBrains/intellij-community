@@ -28,9 +28,21 @@ internal class KotlinDeleteCompletionCommandProvider : CommandProvider {
     return listOf(createCommand(highlightInfo, psiElement))
   }
 
-  private fun createCommand(highlightInfo: HighlightInfoLookup, psiElement: PsiElement): CompletionCommand {
-    return KotlinDeleteCompletionCommand(highlightInfo, psiElement.text)
-  }
+    private fun createCommand(highlightInfo: HighlightInfoLookup, psiElement: PsiElement): CompletionCommand {
+        val copy = psiElement.containingFile.copy() as PsiFile
+        val previewBefore = copy.text
+        val elementToDelete = PsiTreeUtil.findSameElementInCopy(psiElement, copy)
+        elementToDelete.delete()
+        val previewAfter = copy.text
+        val preview: IntentionPreviewInfo = IntentionPreviewInfo.CustomDiff(
+            KotlinFileType.INSTANCE,
+            null,
+            previewBefore,
+            previewAfter,
+            true
+        )
+        return KotlinDeleteCompletionCommand(highlightInfo, preview)
+    }
 }
 
 private fun getTopWithTheSameOffset(psiElement: KtExpression, offset: Int): KtExpression {
@@ -45,7 +57,7 @@ private fun getTopWithTheSameOffset(psiElement: KtExpression, offset: Int): KtEx
 
 private class KotlinDeleteCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
-  private val originalText: String,
+  private val preview: IntentionPreviewInfo,
 ) : CompletionCommand(), CompletionCommandWithPreview, DumbAware {
   override val name: String
     get() = "Delete element"
@@ -69,6 +81,6 @@ private class KotlinDeleteCompletionCommand(
   }
 
   override fun getPreview(): IntentionPreviewInfo? {
-    return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, originalText, "")
+    return preview
   }
 }

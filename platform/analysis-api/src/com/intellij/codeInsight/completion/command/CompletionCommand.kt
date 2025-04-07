@@ -82,6 +82,14 @@ abstract class CompletionCommand : UserDataHolderBase() {
    * @return the custom PrefixMatcher for completion command or null if not available.
    */
   open fun customPrefixMatcher(prefix: String): PrefixMatcher? = null
+
+
+  /**
+   * Retrieves a list of synonyms.
+   * They are used for lookup search, but are not shown in the lookup list.
+   * @return a list of strings representing synonyms. If no synonyms are found, returns an empty list.
+   */
+  open val synonyms: List<String> = emptyList()
 }
 
 /**

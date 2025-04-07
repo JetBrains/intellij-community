@@ -6,32 +6,18 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
-abstract class AbstractChangeSignatureCompletionCommandProvider : ActionCommandProvider(
-  actionId = "ChangeSignature",
-  name = "Change signature",
-  i18nName = ActionsBundle.message("action.ChangeSignature.text"),
-  icon = null,
-  priority = -100,
-  previewText = ActionsBundle.message("action.ChangeSignature.description"),
-  synonyms = listOf("Change definition", "Change parameters")
-) {
-
+abstract class AbstractInlineMethodCompletionCommandProvider :
+  ActionCommandProvider(actionId = "Inline",
+                        name = "Inline method",
+                        i18nName = ActionsBundle.message("action.Inline.text"),
+                        icon = null,
+                        priority = -150,
+                        previewText = null) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    val offset = findChangeSignatureOffset(offset, psiFile) ?: return false
-    editor?.caretModel?.moveToOffset(offset)
-    return super.isApplicable(offset, psiFile, editor)
+    if (!super.isApplicable(offset, psiFile, editor)) return false
+    return findOffsetToCall(offset, psiFile) != null
   }
 
-
-  /**
-   * Finds and identifies a potential "Change Signature" action at the specified position
-   * within the given file.
-   *
-   * @param offset The position within the file where the "Change Signature" action may be applicable.
-   * @param file The PsiFile instance representing the file being analyzed for the "Change Signature" action.
-   * @return An integer value representing a place to call "Change Signature".
-   */
-  abstract fun findChangeSignatureOffset(offset: Int, file: PsiFile): Int?
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     return object : ActionCompletionCommand(actionId = super.actionId,
@@ -42,7 +28,7 @@ abstract class AbstractChangeSignatureCompletionCommandProvider : ActionCommandP
                                             previewText = super.previewText) {
 
       override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-        val targetOffset = findChangeSignatureOffset(offset, psiFile) ?: return
+        val targetOffset = findOffsetToCall(offset, psiFile) ?: return
         val fileDocument = psiFile.fileDocument
         val rangeMarker = fileDocument.createRangeMarker(offset, offset)
         editor?.caretModel?.moveToOffset(targetOffset)
@@ -53,4 +39,6 @@ abstract class AbstractChangeSignatureCompletionCommandProvider : ActionCommandP
       }
     }
   }
+
+  abstract fun findOffsetToCall(offset: Int, psiFile: PsiFile): Int?
 }
