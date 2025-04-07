@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.wsl.ijent.nio.toggle
+package com.intellij.platform.ide.impl.wsl.ijent.nio.toggle
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.*
-import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler.WslEelProvider
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -15,6 +14,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler.WslEelProvider
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly

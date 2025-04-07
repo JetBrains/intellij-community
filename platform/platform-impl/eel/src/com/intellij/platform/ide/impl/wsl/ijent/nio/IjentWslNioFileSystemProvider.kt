@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.wsl.ijent.nio
+package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.execution.ijent.nio.getCachedFileAttributesAndWrapToDosAttributesAdapter
 import com.intellij.execution.ijent.nio.readAttributesUsingDosAttributesAdapter
@@ -12,6 +12,7 @@ import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.io.sanitizeFileName
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
@@ -36,12 +37,13 @@ import kotlin.io.path.ExperimentalPathApi
  * Also, this wrapper delegates calls to the default file system [originalFsProvider]
  * for the methods not implemented in [ijentFsProvider] yet.
  *
- * Normally, there's no need to create this filesystem manually because [com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler]
+ * Normally, there's no need to create this filesystem manually because [com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler]
  * does this job automatically.
  * It should be used even for manual creation of filesystems.
  * Nevertheless, in case when this filesystem should be accessed directly,
  * an instance of [IjentWslNioFileSystem] can be obtained with a URL like "ijent://wsl/distribution-name".
  */
+@ApiStatus.Internal
 class IjentWslNioFileSystemProvider(
   private val wslDistribution: WSLDistribution,
   private val ijentFsProvider: FileSystemProvider,
