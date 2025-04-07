@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,7 +28,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
-import java.util.regex.Pattern;
 
 /**
  * @author Bas Leijdekkers
@@ -124,22 +122,14 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
         if (!isEscape) {
           continue;
         }
-        int nextChar = i + 1;
-        while (nextChar < length && text.charAt(nextChar) == 'u') {
-          nextChar++; // \uuuuFFFD is a legal Unicode escape
-        }
-        if (nextChar == i + 1 || nextChar + 3 >= length) {
-          continue;
-        }
-        if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        final int nextChar = isEscapedEscape(i, length, text);
+        if (nextChar != -1) {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
-          if (d == '\uFFFD') {
+          if (d == '\uFFFD' || (d == '\\' && isEscapedEscape(escapeEnd - 1, length, text) != -1)) {
             // this character is used as a replacement when a unicode character can't be displayed
             // replacing the escape with the character may cause confusion, so ignore it.
+            // skip if another escape sequence follows '\' without being properly escaped.
             continue;
           }
           final int type = Character.getType(d);
@@ -168,11 +158,6 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           if (element == null) {
             return;
           }
-          final Pattern pattern = Pattern.compile("\\\\u+005C(?!\\\\)u+[0-9A-Fa-f]{4}");
-          if (element.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA &&
-              pattern.matcher(element.getText()).find()) {
-            continue;
-          }
           final RangeMarker rangeMarker = document.createRangeMarker(i, escapeEnd);
           TextRange range = element.getTextRange();
           while (escapeEnd > range.getEndOffset()) {
@@ -182,6 +167,23 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           registerErrorAtOffset(element, i - range.getStartOffset(), escapeEnd - i, Character.valueOf(d), rangeMarker);
         }
       }
+    }
+
+    private static int isEscapedEscape(int escapeStart, int length, String text) {
+      int nextChar = escapeStart + 1;
+      while (nextChar < length && text.charAt(nextChar) == 'u') {
+        nextChar++; // \uuuuFFFD is a legal Unicode escape
+      }
+      if (nextChar == escapeStart + 1 || nextChar + 3 >= length) {
+        return -1;
+      }
+      if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        return nextChar;
+      }
+      return -1;
     }
   }
 }
