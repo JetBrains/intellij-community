@@ -14,8 +14,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import org.jetbrains.intellij.build.DirSource
-import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.SourceAndCacheStrategy
 import org.jetbrains.intellij.build.ZipSource
@@ -34,7 +32,7 @@ import kotlin.time.Duration.Companion.days
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 15
+private const val cacheVersion: Byte = 16
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
@@ -52,7 +50,7 @@ internal class LocalDiskJarCacheManager(
   }
 
   override suspend fun computeIfAbsent(
-    sources: List<Source>,
+    sources: Collection<Source>,
     targetFile: Path,
     nativeFiles: MutableMap<ZipSource, List<String>>?,
     span: Span,
@@ -75,8 +73,16 @@ internal class LocalDiskJarCacheManager(
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
-    if (checkCache(cacheMetadataFile = cacheMetadataFile, cacheFile = cacheFile, sources = sources, items = items, span = span, nativeFiles = nativeFiles)) {
-      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
+    if (checkCache(
+        cacheMetadataFile = cacheMetadataFile,
+        cacheFile = cacheFile,
+        sources = sources,
+        items = items,
+        span = span,
+        nativeFiles = nativeFiles,
+        producer = producer,
+      )) {
+      // update file modification time to maintain FIFO caches, i.e., in a persistent cache folder on TeamCity agent and for CacheDirCleanup
       try {
         Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
       }
@@ -136,37 +142,20 @@ internal class LocalDiskJarCacheManager(
 
     Files.write(cacheMetadataFile, ProtoBuf.encodeToByteArray(JarCacheItem(sources = sourceCacheItems)))
 
-    notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles)
+    notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles, producer = producer)
 
     return if (producer.useCacheAsTargetFile) cacheFile else targetFile
-  }
-
-  override fun validateHash(source: Source) {
-    if (source.hash != 0L) {
-      return
-    }
-
-    if (source is InMemoryContentSource && source.relativePath == "META-INF/plugin.xml") {
-      // plugin.xml is not being packed - it is a part of dist meta-descriptor
-      return
-    }
-
-    if (source is DirSource && Files.notExists(source.dir)) {
-      // not existent dir is not packed
-      return
-    }
-
-    Span.current().addEvent("zero hash for $source")
   }
 }
 
 private fun checkCache(
   cacheMetadataFile: Path,
   cacheFile: Path,
-  sources: List<Source>,
+  sources: Collection<Source>,
   items: List<SourceAndCacheStrategy>,
   nativeFiles: MutableMap<ZipSource, List<String>>?,
   span: Span,
+  producer: SourceBuilder,
 ): Boolean {
   if (Files.notExists(cacheMetadataFile) || Files.notExists(cacheFile)) {
     return false
@@ -195,11 +184,11 @@ private fun checkCache(
     return false
   }
 
-  notifyAboutMetadata(sources = metadata.sources, items = items, nativeFiles = nativeFiles)
+  notifyAboutMetadata(sources = metadata.sources, items = items, nativeFiles = nativeFiles, producer = producer)
   return true
 }
 
-private fun checkSavedAndActualSources(metadata: JarCacheItem, sources: List<Source>, items: List<SourceAndCacheStrategy>): Boolean {
+private fun checkSavedAndActualSources(metadata: JarCacheItem, sources: Collection<Source>, items: List<SourceAndCacheStrategy>): Boolean {
   if (metadata.sources.size != sources.size) {
     return false
   }
@@ -216,11 +205,11 @@ private fun notifyAboutMetadata(
   sources: List<SourceCacheItem>,
   items: List<SourceAndCacheStrategy>,
   nativeFiles: MutableMap<ZipSource, List<String>>?,
+  producer: SourceBuilder,
 ) {
   for ((index, sourceCacheItem) in sources.withIndex()) {
     val source = items.get(index).source
-    source.size = sourceCacheItem.size
-    source.hash = sourceCacheItem.hash
+    producer.consumeInfo(source, sourceCacheItem.size, sourceCacheItem.hash)
     if (sourceCacheItem.nativeFiles.isNotEmpty()) {
       nativeFiles?.put(source as ZipSource, sourceCacheItem.nativeFiles)
     }

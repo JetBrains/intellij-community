@@ -16,28 +16,15 @@ private val USER_HOME = Path.of(System.getProperty("user.home"))
 internal val MAVEN_REPO: Path = USER_HOME.resolve(".m2/repository")
 
 sealed interface Source {
-  var size: Int
-  var hash: Long
-
   val filter: ((String) -> Boolean)?
     get() = null
 }
 
 class LazySource(
   @JvmField internal val name: String,
-  private val precomputedHash: Long,
+  @JvmField val precomputedHash: Long,
   private val sourceSupplier: suspend () -> Sequence<Source>,
 ) : Source {
-  override var size: Int
-    get() = 0
-    set(_) {
-    }
-
-  override var hash: Long
-    get() = precomputedHash
-    set(_) {
-    }
-
   suspend fun getSources(): Sequence<Source> = sourceSupplier()
 
   override fun toString(): String = "LazySource(name=$name, precomputedHash=$precomputedHash)"
@@ -53,9 +40,6 @@ data class ZipSource(
   init {
     assert(Files.isRegularFile(file)) { "'$file' is not a file" }
   }
-
-  override var size: Int = 0
-  override var hash: Long = 0
 
   override fun compareTo(other: ZipSource): Int {
     return if (isWindows) file.toString().compareTo(other.file.toString()) else file.compareTo(other.file)
@@ -98,11 +82,6 @@ data class DirSource(
     assert(!Files.isRegularFile(dir)) { "'$dir' should not be a file" }
   }
 
-  override var size: Int = 0
-  override var hash: Long = 0
-
-  var exist: Boolean? = null
-
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) "~/${USER_HOME.relativize(dir)}" else dir.toString()
     return "dir(dir=$shortPath, excludes=${excludes.size})"
@@ -128,9 +107,6 @@ data class DirSource(
 }
 
 data class InMemoryContentSource(@JvmField val relativePath: String, @JvmField val data: ByteArray) : Source {
-  override var size: Int = 0
-  override var hash: Long = 0
-
   override fun toString(): String = "InMemory(relativePath=$relativePath)"
 
   override fun equals(other: Any?): Boolean {

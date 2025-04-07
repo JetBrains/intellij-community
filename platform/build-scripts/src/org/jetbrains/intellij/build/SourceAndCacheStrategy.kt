@@ -20,20 +20,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
 private const val UNMODIFIED_MARK_FILE_NAME: String = ".unmodified"
 
-fun createMarkFile(file: Path): Boolean {
-  try {
-    Files.newByteChannel(file, TOUCH_OPTIONS)
-    return true
-  }
-  catch (_: NoSuchFileException) {
-    return false
-  }
-  catch (_: FileAlreadyExistsException) {
-    return true
-  }
-}
-
-internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionClassOutDir: Path): List<SourceAndCacheStrategy> {
+internal fun createSourceAndCacheStrategyList(sources: Collection<Source>, productionClassOutDir: Path): List<SourceAndCacheStrategy> {
   return sources
     .map { source ->
       when (source) {
@@ -92,13 +79,13 @@ private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : S
 }
 
 private class LazySourceAndCacheStrategy(override val source: LazySource) : SourceAndCacheStrategy {
-  override fun getHash() = source.hash
+  override fun getHash() = source.precomputedHash
 
   override fun getSize() = 0L
 
   override fun updateAssetDigest(digest: HashStream64) {
     digest.putString(source.name)
-    digest.putLong(source.hash)
+    digest.putLong(source.precomputedHash)
   }
 }
 
@@ -183,13 +170,11 @@ internal fun computeHashForModuleOutput(source: DirSource): Long {
     return Files.getLastModifiedTime(markFile).toMillis()
   }
   catch (_: NoSuchFileException) {
-    if (createMarkFile(markFile)) {
-      return Files.getLastModifiedTime(markFile).toMillis()
+    try {
+      Files.newByteChannel(markFile, TOUCH_OPTIONS)
     }
-    else {
-      source.exist = false
-      // module doesn't exist at all
-      return 0
+    catch (_: FileAlreadyExistsException) {
     }
+    return Files.getLastModifiedTime(markFile).toMillis()
   }
 }

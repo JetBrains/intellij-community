@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.dynatrace.hash4j.hashing.HashStream64
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
@@ -37,10 +36,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.buildJar
-import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeAppInfoXml
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
@@ -48,7 +44,6 @@ import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
-import org.jetbrains.intellij.build.jarCache.SourceBuilder
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.productRunner.ModuleBasedProductRunner
 import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
@@ -432,29 +427,6 @@ class BuildContextImpl internal constructor(
   }
 
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
-
-  override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
-    jarCacheManager.computeIfAbsent(
-      sources = sources,
-      targetFile = targetFile,
-      nativeFiles = null,
-      span = Span.current(),
-      producer = object : SourceBuilder {
-        override val useCacheAsTargetFile: Boolean
-          get() = false
-
-        override fun updateDigest(digest: HashStream64) {
-          digest.putInt(-1)
-        }
-
-        override suspend fun produce(targetFile: Path) {
-          checkForNoDiskSpace(this@BuildContextImpl) {
-            buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
-          }
-        }
-      },
-    )
-  }
 
   override val appInfoXml: String by lazy {
     computeAppInfoXml(context = this, appInfo = applicationInfo)

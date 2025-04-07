@@ -5,13 +5,14 @@ package org.jetbrains.intellij.build
 
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
-import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.ByteArrayOutputStream
@@ -95,28 +96,27 @@ internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescrip
         continue
       }
 
-      if (!uniqueGuard.add(entry.path)) {
+      val file = entry.path
+      if (!uniqueGuard.add(file)) {
         continue
       }
 
-      files.add(entry.path)
+      files.add(file)
 
-      check(!entry.path.startsWith(pluginDir) || pluginDir.relativize(entry.path).nameCount == 2) {
-        "plugin entry is not specified correctly: ${entry.path}"
+      check(!file.startsWith(pluginDir) || pluginDir.relativize(file).nameCount == 2) {
+        "plugin entry is not specified correctly: $file"
       }
     }
 
     if (files.size > 1) {
       // always sort
-      putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
+      putMoreLikelyPluginJarsFirst(pluginDirName = pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
     }
 
     var pluginDescriptorContent: ByteArray? = null
     for (file in files) {
       if (file.toString().endsWith(".jar")) {
-        pluginDescriptorContent = HashMapZipFile.load(file).use { zip ->
-          zip.getRawEntry("META-INF/plugin.xml")?.getData(zip)
-        }
+        pluginDescriptorContent = readPluginXml(file)
         if (pluginDescriptorContent != null) {
           break
         }
@@ -132,6 +132,23 @@ internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescrip
 
   out.close()
   return byteOut.toByteArray()
+}
+
+private fun readPluginXml(file: Path): ByteArray? {
+  var result: ByteArray? = null
+  readZipFile(file) { name, dataProvider ->
+    if (name == "META-INF/plugin.xml") {
+      val byteBuffer = dataProvider()
+      val bytes = ByteArray(byteBuffer.remaining())
+      byteBuffer.get(bytes, 0, bytes.size)
+      result = bytes
+      ZipEntryProcessorResult.STOP
+    }
+    else {
+      ZipEntryProcessorResult.CONTINUE
+    }
+  }
+  return result
 }
 
 private fun writeEntry(out: DataOutputStream, files: Collection<Path>, pluginDir: Path, pluginDescriptorContent: ByteArray) {
@@ -168,10 +185,7 @@ internal fun generatePluginClassPathFromPrebuiltPluginFiles(pluginEntries: List<
 
 private fun reorderPluginClassPath(files: MutableList<Path>): ByteArray {
   for ((index, file) in files.withIndex()) {
-    val pluginDescriptorContent = HashMapZipFile.load(file).use { zip ->
-      zip.getRawEntry("META-INF/plugin.xml")?.getData(zip)
-    }
-
+    val pluginDescriptorContent = readPluginXml(file)
     if (pluginDescriptorContent != null) {
       files.add(0, files.removeAt(index))
       return pluginDescriptorContent

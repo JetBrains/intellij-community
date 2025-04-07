@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build
@@ -24,8 +24,8 @@ import java.nio.file.Path
 @Serializable
 data class FileSource(
   @JvmField val relativePath: String,
-  override var size: Int,
-  override var hash: Long,
+  @JvmField val size: Int,
+  @JvmField val hash: Long,
   @JvmField  @Contextual val file: Path,
 ) : Source {
   init {

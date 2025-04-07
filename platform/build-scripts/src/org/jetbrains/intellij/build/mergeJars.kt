@@ -45,9 +45,8 @@ suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean 
 
 internal suspend fun buildJar(
   targetFile: Path,
-  sources: List<Source>,
+  sources: Collection<Source>,
   compress: Boolean = false,
-  notify: Boolean = true,
   nativeFileHandler: NativeFileHandler? = null,
   addDirEntries: Boolean = false,
 ) {
@@ -62,7 +61,6 @@ internal suspend fun buildJar(
     val filesToMerge = mutableListOf<CharSequence>()
 
     for (source in sources) {
-      val positionBefore = zipCreator.channelPosition
       writeSource(
         source = source,
         zipCreator = zipCreator,
@@ -74,11 +72,6 @@ internal suspend fun buildJar(
         compress = compress,
         filesToMerge = filesToMerge,
       )
-
-      if (notify) {
-        source.size = (zipCreator.channelPosition - positionBefore).toInt()
-        source.hash = 0
-      }
     }
 
     if (filesToMerge.isNotEmpty()) {
@@ -93,7 +86,7 @@ private suspend fun writeSource(
   uniqueNames: HashMap<String, Path>,
   packageIndexBuilder: PackageIndexBuilder?,
   targetFile: Path,
-  sources: List<Source>,
+  sources: Collection<Source>,
   nativeFileHandler: NativeFileHandler?,
   compress: Boolean,
   filesToMerge: MutableList<CharSequence>,
@@ -199,7 +192,7 @@ private suspend fun handleZipSource(
   sourceFile: Path,
   nativeFileHandler: NativeFileHandler?,
   uniqueNames: MutableMap<String, Path>,
-  sources: List<Source>,
+  sources: Collection<Source>,
   packageIndexBuilder: PackageIndexBuilder?,
   zipCreator: ZipFileWriter,
   compress: Boolean,
@@ -279,7 +272,7 @@ private suspend fun handleZipSource(
 }
 
 /**
- * Coverage agent uses the Boot-Class-Path jar attribute to instrument class from any class loader.
+ * Coverage agent uses the Boot-Class-Path jar attribute to an instrument class from any class loader.
  * For the correct work, it is required that the attribute value is the same as the simple jar name.
  * Here the attribute value is replaced with the target jar name.
  */
@@ -378,8 +371,8 @@ private fun getIgnoredNames(): Set<String> {
   set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
   set.add("kotlin/coroutines/jvm/internal/DebugProbesKt.class")
   /**
-   * merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way, so it's better
-   * to provide a correctly merged version in plugin.
+   * A merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way, so it's better
+   * to provide a correctly merged version in the plugin.
    */
   set.add("META-INF/services/com.oracle.truffle.api.provider.TruffleLanguageProvider")
   return java.util.Set.copyOf(set)
@@ -440,6 +433,6 @@ fun defaultLibrarySourcesNamesFilter(name: String): Boolean {
          !name.startsWith("licenses/") &&
          !name.startsWith("META-INF/INDEX.LIST") &&
          (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
-         // we replace lib class by our own patched version
+         // we replace lib class with our own patched version
          !name.startsWith("net/sf/cglib/core/AbstractClassGenerator")
 }

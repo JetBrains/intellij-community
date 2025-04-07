@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.ByteBufferDataWriter
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.ZipIndexWriter
 import org.jetbrains.intellij.build.io.compressedData
 import org.jetbrains.intellij.build.io.readZipFile
@@ -478,8 +479,10 @@ class ZipTest {
       for (item in list) {
         if (name == item.name) {
           assertThat(dataProvider().remaining()).isEqualTo(item.size.toLong())
+          return@readZipFile ZipEntryProcessorResult.STOP
         }
       }
+      ZipEntryProcessorResult.CONTINUE
     }
 
     java.util.zip.ZipFile(archiveFile.toFile()).use { jdkZipFile ->
@@ -596,6 +599,7 @@ class ZipTest {
 internal fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
   readZipFile(file) { name, dataProvider ->
     dataProvider()
+    ZipEntryProcessorResult.CONTINUE
   }
   HashMapZipFile.load(file).use { zipFile ->
     checker(zipFile)

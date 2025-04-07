@@ -16,6 +16,7 @@ internal class ZipReaderTest {
     val names = ArrayList<String>()
     readZipFile(archive) { name, _ ->
       names.add(name)
+      ZipEntryProcessorResult.CONTINUE
     }
     assertThat(names).isEmpty()
   }

@@ -44,9 +44,6 @@ class ZipFileWriter(
 ) : AutoCloseable {
   private val crc32: CRC32? = if (useCrc) CRC32() else null
 
-  val channelPosition: Long
-    get() = resultStream.getChannelPosition()
-
   @Suppress("DuplicatedCode")
   fun file(nameString: String, file: Path) {
     if (crc32 == null) {

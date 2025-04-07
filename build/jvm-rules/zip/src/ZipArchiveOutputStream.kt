@@ -217,8 +217,6 @@ class ZipArchiveOutputStream(
     }
   }
 
-  internal fun getChannelPosition(): Long = flushBufferIfNeeded(0)
-
   @Synchronized
   internal fun transferFromFileChannel(path: ByteArray, source: FileChannel, size: Int, crc32: CRC32?) {
     if (size == 0) {

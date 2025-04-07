@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.http2Client.Http2ClientConnectionFactory
 import org.jetbrains.intellij.build.http2Client.ZstdDecompressContextPool
 import org.jetbrains.intellij.build.http2Client.checkMirrorAndConnect
 import org.jetbrains.intellij.build.http2Client.download
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -155,6 +156,7 @@ private fun unpackTrustedArchive(archiveFile: Path, outDir: Path) {
         currentPosition += fileChannel.write(data, currentPosition)
       }
       while (data.hasRemaining())
+      ZipEntryProcessorResult.CONTINUE
     }
   }
 }

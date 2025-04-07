@@ -714,8 +714,8 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
         path = antTargetFile,
         data = libraryData,
         libraryFile = source.file,
-        hash = source.hash,
-        size = source.size,
+        hash = 0,
+        size = 0,
         relativeOutputFile = "dist/ant.jar",
       )
     }

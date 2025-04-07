@@ -14,7 +14,13 @@ import java.util.zip.Inflater
 import java.util.zip.ZipException
 import kotlin.experimental.and
 
-typealias EntryProcessor = (String, () -> ByteBuffer) -> Unit
+typealias EntryProcessor = (String, () -> ByteBuffer) -> ZipEntryProcessorResult
+
+
+enum class ZipEntryProcessorResult {
+  CONTINUE,
+  STOP,
+}
 
 // only files are processed
 fun readZipFile(file: Path, entryProcessor: EntryProcessor) {
@@ -36,6 +42,7 @@ suspend fun suspendAwareReadZipFile(file: Path, entryProcessor: suspend (String,
   mapFileAndUse(file) { buffer, fileSize ->
     readZipEntries(buffer = buffer, fileSize = fileSize, entryProcessor = { it, name ->
       entryProcessor(it, name)
+      ZipEntryProcessorResult.CONTINUE
     })
   }
 }
@@ -67,7 +74,7 @@ private inline fun mapFileAndUse(file: Path, consumer: (ByteBuffer, fileSize: In
   }
   finally {
     if (mappedBuffer.isDirect) {
-      // on Windows memory-mapped file cannot be deleted without clearing in-memory buffer first
+      // on Windows, a memory-mapped file cannot be deleted without clearing the in-memory buffer first
       unmapBuffer(mappedBuffer)
     }
   }
@@ -82,7 +89,7 @@ internal inline fun readCentralDirectory(
 ) {
   var offset = centralDirPosition
 
-  // assume that file name is not greater than ~2 KiB
+  // assume that the file name is not greater than ~2 KiB
   // JDK impl cheats — it uses jdk.internal.misc.JavaLangAccess.newStringUTF8NoRepl (see ZipCoder.UTF8)
   // StandardCharsets.UTF_8.decode doesn't benefit from using direct buffer
   // and introduces char buffer allocation for each decode operation
@@ -112,7 +119,7 @@ internal inline fun readCentralDirectory(
     buffer.get(tempNameBytes, 0, nameLengthInBytes)
     val name = String(tempNameBytes, 0, nameLengthInBytes, Charsets.UTF_8)
     if (name != INDEX_FILENAME) {
-      entryProcessor(name) {
+      val zipEntryProcessorResult = entryProcessor(name) {
         getByteBuffer(
           buffer = buffer,
           compressedSize = compressedSize,
@@ -122,6 +129,10 @@ internal inline fun readCentralDirectory(
           method = method,
           byteBufferAllocator = byteBufferAllocator,
         )
+      }
+
+      if (zipEntryProcessorResult == ZipEntryProcessorResult.STOP) {
+        return
       }
     }
   }
@@ -206,7 +217,7 @@ private fun computeDataOffset(mappedBuffer: ByteBuffer, headerOffset: Int, nameL
   // read actual extra field length
   val extraFieldLength = (mappedBuffer.getShort(start) and 0xffff.toShort()).toInt()
   if (extraFieldLength > 128) {
-    // assert just to be sure that we don't read a lot of data in case of some error in zip file or our impl
+    // assert just to be sure that we don't read a lot of data in case of some error in a zip file or our impl
     throw UnsupportedOperationException("extraFieldLength expected to be less than 128 bytes but $extraFieldLength")
   }
 

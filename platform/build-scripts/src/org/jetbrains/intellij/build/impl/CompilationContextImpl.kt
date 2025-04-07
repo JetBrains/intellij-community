@@ -34,6 +34,7 @@ import org.jetbrains.intellij.build.impl.compilation.reuseOrCompile
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -576,6 +577,10 @@ suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePa
     readZipFile(output) { name, _ ->
       if (name == relativePath) {
         found = true
+        ZipEntryProcessorResult.STOP
+      }
+      else {
+        ZipEntryProcessorResult.CONTINUE
       }
     }
     return found
@@ -612,6 +617,10 @@ suspend fun CompilationContext.getModuleOutputFileContent(module: JpsModule, rel
         val array = ByteArray(buffer.remaining())
         buffer.get(array)
         content = array
+        ZipEntryProcessorResult.STOP
+      }
+      else {
+        ZipEntryProcessorResult.CONTINUE
       }
     }
     return content
