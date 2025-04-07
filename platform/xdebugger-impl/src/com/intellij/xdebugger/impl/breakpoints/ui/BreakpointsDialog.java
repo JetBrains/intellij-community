@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -58,7 +58,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
 
   private final Object myInitialBreakpoint;
-  private final List<BreakpointPanelProvider<?>> myBreakpointsPanelProviders;
+  private final List<BreakpointPanelProvider> myBreakpointsPanelProviders;
 
   private BreakpointItemsTreeController myTreeController;
 
@@ -97,7 +97,7 @@ public class BreakpointsDialog extends DialogWrapper {
     return (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider<?>> providers) {
+  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider> providers) {
     super(project);
     myProject = project;
     myBreakpointsPanelProviders = providers;
