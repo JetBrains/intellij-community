@@ -50,6 +50,10 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
 
+  fun closeProject() {
+    driver.invokeAction("CloseProject")
+  }
+
   fun maximize() = driver.withContext(OnDispatcher.EDT) {
     ideaFrameComponent.setExtendedState(ideaFrameComponent.getExtendedState().or(JFrame.MAXIMIZED_BOTH))
   }
