@@ -2786,6 +2786,7 @@
 
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
 
+    <threadDumpProvider implementation="com.intellij.execution.impl.JstackThreadDumpProvider"/>
     <threadDumpProvider implementation="com.intellij.execution.impl.AttachAPIThreadDumpProvider" order="last"/>
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
