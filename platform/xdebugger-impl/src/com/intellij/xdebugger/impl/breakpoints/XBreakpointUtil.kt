@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -77,7 +78,7 @@ object XBreakpointUtil {
       offset = textLength
     }
 
-    val breakpoint = PANEL_PROVIDER.findBreakpoint(project, editorDocument, offset)
+    val breakpoint = findBreakpoint(project, editorDocument, offset)
     if (breakpoint != null) {
       return Pair.create(PANEL_PROVIDER.getBreakpointGutterIconRenderer(breakpoint), breakpoint)
     }
@@ -100,9 +101,26 @@ object XBreakpointUtil {
     return Pair.create(null, null)
   }
 
+  private fun findBreakpoint(project: Project, document: Document, offset: Int): XBreakpoint<*>? {
+    val breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager()
+    val line = document.getLineNumber(offset)
+    val file = FileDocumentManager.getInstance().getFile(document)
+    if (file == null) {
+      return null
+    }
+    for (type in XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
+      val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line)
+      if (breakpoint != null) {
+        return breakpoint
+      }
+    }
+
+    return null
+  }
+
   @ApiStatus.Internal
   @JvmField
-  val PANEL_PROVIDER: BreakpointPanelProvider<*> = XBreakpointPanelProvider()
+  val PANEL_PROVIDER: BreakpointPanelProvider = XBreakpointPanelProvider()
 
   /**
    * Toggle line breakpoint with editor support:
