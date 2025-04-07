@@ -103,7 +103,7 @@ private suspend fun prepareFiles(root: Path, moduleName: String): ModuleFiles = 
   val resources = moduleRoot.resolve("resources").createDirectories().also { resources ->
     resources.resolve("$moduleName.xml").writeText("<idea-plugin>\n</idea-plugin>\n")
   }
-  ModuleFiles(moduleRoot, resources, src)
+  ModuleFiles(moduleRoot, src, resources)
 }
 
 private class ModuleFiles(
