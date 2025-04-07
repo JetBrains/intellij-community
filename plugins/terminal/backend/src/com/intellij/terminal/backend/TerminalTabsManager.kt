@@ -12,7 +12,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalCloseEvent
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
@@ -142,7 +141,8 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       sessionEntity.delete()
     }
 
-    val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, scope.asDisposable())
+    val portForwardingScope = scope.childScope("PortForwarding")
+    val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, portForwardingScope)
 
     return TerminalSessionStartResult(
       sessionId = TerminalSessionId(sessionEntity.id),
