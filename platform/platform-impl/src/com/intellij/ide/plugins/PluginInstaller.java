@@ -430,7 +430,7 @@ public final class PluginInstaller {
       var pluginId = dependency.getPluginId();
       if (installedDependencies.contains(pluginId) ||
           model.isLoaded(pluginId) ||
-          PluginManagerCore.isModuleDependency(pluginId) ||
+          PluginManagerCore.isPlatformModule(pluginId) ||
           PluginManagerCore.INSTANCE.findPluginByModuleDependency(pluginId) != null) {
         continue;
       }

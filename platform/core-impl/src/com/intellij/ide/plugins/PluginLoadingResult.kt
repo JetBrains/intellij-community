@@ -172,7 +172,7 @@ private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
         PluginManagerCore.JAVA_MODULE_ID == dependencyPluginId ||
-        PluginManagerCore.isModuleDependency(dependencyPluginId)) {
+        PluginManagerCore.isPlatformModule(dependencyPluginId)) {
       return true
     }
   }

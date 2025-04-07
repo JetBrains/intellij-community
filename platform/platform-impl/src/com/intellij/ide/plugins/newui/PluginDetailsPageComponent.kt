@@ -14,7 +14,7 @@ import com.intellij.ide.plugins.PluginManagerCore.buildPluginIdMap
 import com.intellij.ide.plugins.PluginManagerCore.findPlugin
 import com.intellij.ide.plugins.PluginManagerCore.getIncompatibleOs
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
-import com.intellij.ide.plugins.PluginManagerCore.isModuleDependency
+import com.intellij.ide.plugins.PluginManagerCore.isPlatformModule
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -1682,7 +1682,7 @@ private fun loadDependencyNames(marketplace: MarketplaceRequests, resultNode: Pl
 }
 
 private fun isNotPlatformModule(pluginId: PluginId): Boolean {
-  return if ("com.intellij" == pluginId.idString) false else !isModuleDependency(pluginId)
+  return if ("com.intellij" == pluginId.idString) false else !isPlatformModule(pluginId)
 }
 
 private fun updateUrlComponent(panel: LinkPanel?, messageKey: String, url: String?) {

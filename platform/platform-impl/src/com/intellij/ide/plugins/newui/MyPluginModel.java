@@ -989,7 +989,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     for (PluginId pluginId : requiredPluginIds) {
       IdeaPluginDescriptor result = ContainerUtil.find(view, d -> pluginId.equals(d.getPluginId()));
-      if (result == null && PluginManagerCore.isModuleDependency(pluginId)) {
+      if (result == null && PluginManagerCore.isPlatformModule(pluginId)) {
         result = ContainerUtil.find(view, d -> {
           return d instanceof IdeaPluginDescriptorEx && ((IdeaPluginDescriptorEx)d).getPluginAliases().contains(pluginId);
         });
@@ -1310,7 +1310,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
 
       for (PluginId dependencyPluginId : entry.getValue()) {
-        if (PluginManagerCore.isModuleDependency(dependencyPluginId)) {
+        if (PluginManagerCore.isPlatformModule(dependencyPluginId)) {
           continue;
         }
 
@@ -1342,7 +1342,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       .stream()
       .map(requiredPluginId -> {
         IdeaPluginDescriptorImpl requiredDescriptor = pluginIdMap.get(requiredPluginId);
-        return Pair.create(requiredPluginId, requiredDescriptor == null && PluginManagerCore.isModuleDependency(requiredPluginId) ?
+        return Pair.create(requiredPluginId, requiredDescriptor == null && PluginManagerCore.isPlatformModule(requiredPluginId) ?
                                              PluginManagerCore.INSTANCE.findPluginByModuleDependency(requiredPluginId) :
                                              requiredDescriptor);
       });
