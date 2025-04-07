@@ -3,9 +3,11 @@ package com.intellij.notebooks.visualization.ui.cellsDnD
 
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.getCell
+import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.EditorCellInput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.NlsSafe
@@ -179,6 +181,12 @@ class EditorCellDragAssistant(
     wasFolded = false
   }
 
+  private fun deleteDropIndicator() = when(currentlyHighlightedCell) {
+    is CellDropTarget.TargetCell -> deleteDropIndicatorForTargetCell((currentlyHighlightedCell as CellDropTarget.TargetCell).cell)
+    CellDropTarget.BelowLastCell -> removeHighlightAfterLastCell()
+    else -> { }
+  }
+
   private fun updateDropIndicator(targetCell: CellDropTarget) {
     deleteDropIndicator()
     currentlyHighlightedCell = targetCell
@@ -194,6 +202,13 @@ class EditorCellDragAssistant(
 
   private fun removeHighlightAfterLastCell() = inlayManager?.belowLastCellPanel?.removeDropHighlight()
 
+  private fun deleteDropIndicatorForTargetCell(cell: EditorCell) = try {
+    cell.view?.removeDropHighlightIfPresent()
+  } catch (e: NullPointerException) {
+    // cell.view? uses !! to get inlay manager, it may be already disposed - so nothing to delete here anyway
+    thisLogger().warn("Error removing drop highlight, NotebookCellInlayManager is already disposed", e)
+  }
+
   private fun clearDragState() {
     isDragging = false
     deleteDropIndicator()
@@ -202,12 +217,6 @@ class EditorCellDragAssistant(
   private fun deleteDragPreview() {
     dragPreview?.dispose()
     dragPreview = null
-  }
-
-  private fun deleteDropIndicator() = when(currentlyHighlightedCell) {
-    is CellDropTarget.TargetCell -> (currentlyHighlightedCell as CellDropTarget.TargetCell).cell.view?.removeDropHighlightIfPresent()
-    CellDropTarget.BelowLastCell -> removeHighlightAfterLastCell()
-    else -> { }
   }
 
   override fun dispose() {
