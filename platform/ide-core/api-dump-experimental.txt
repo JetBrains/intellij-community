@@ -63,9 +63,7 @@ f:com.intellij.openapi.vfs.FilePermissionsKt
 *:com.intellij.openapi.wm.WidgetPresentation
 - getClickConsumer():kotlin.jvm.functions.Function1
 - getShortcutText(kotlin.coroutines.Continuation):java.lang.Object
-- bs:getShortcutText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
 - getTooltipText(kotlin.coroutines.Continuation):java.lang.Object
-- bs:getTooltipText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.openapi.wm.WidgetPresentationDataContext
 - a:getCurrentFileEditor():kotlinx.coroutines.flow.StateFlow
 - a:getProject():com.intellij.openapi.project.Project

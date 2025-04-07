@@ -1224,7 +1224,6 @@ com.intellij.ide.warmup.WarmupConfigurator
 - sf:Companion:com.intellij.ide.warmup.WarmupConfigurator$Companion
 - a:getConfiguratorPresentableName():java.lang.String
 - prepareEnvironment(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
-- bs:prepareEnvironment$suspendImpl(com.intellij.ide.warmup.WarmupConfigurator,java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 - a:runWarmup(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.warmup.WarmupConfigurator$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
@@ -5182,7 +5181,6 @@ com.intellij.openapi.wm.ToolWindowFactory
 - init(com.intellij.openapi.wm.ToolWindow):V
 - isApplicable(com.intellij.openapi.project.Project):Z
 - isApplicableAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- bs:isApplicableAsync$suspendImpl(com.intellij.openapi.wm.ToolWindowFactory,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - isDoNotActivateOnStart():Z
 - shouldBeAvailable(com.intellij.openapi.project.Project):Z
 a:com.intellij.openapi.wm.ToolWindowManager

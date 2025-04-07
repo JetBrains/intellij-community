@@ -1290,7 +1290,6 @@ com.intellij.openapi.application.ApplicationStarter
 - main(java.util.List):V
 - premain(java.util.List):V
 - processExternalCommandLine(java.util.List,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:processExternalCommandLine$suspendImpl(com.intellij.openapi.application.ApplicationStarter,java.util.List,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.application.ApplicationStarter$Companion
 - sf:ANY_MODALITY:I
 - sf:NON_MODAL:I
