@@ -159,7 +159,7 @@ public class BreakpointsDialog extends DialogWrapper {
   void collectItems() {
     disposeItems();
     myBreakpointItems.clear();
-    XBreakpointUtil.PANEL_PROVIDER.provideBreakpointItems(myProject, myBreakpointItems);
+    myBreakpointItems.addAll(XBreakpointUtil.getAllBreakpointItems(myProject));
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {

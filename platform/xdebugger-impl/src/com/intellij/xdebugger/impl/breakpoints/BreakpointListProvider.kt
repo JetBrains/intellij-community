@@ -110,8 +110,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
       val breakpoints = mutableMapOf<Any, Any>()
       ReadAction.run<Exception> {
-        val items = mutableListOf<BreakpointItem>()
-        XBreakpointUtil.PANEL_PROVIDER.provideBreakpointItems(project, items)
+        val items = XBreakpointUtil.getAllBreakpointItems(project)
 
         val manager = XDebuggerManager.getInstance(project).breakpointManager as? XBreakpointManagerImpl
         val selectedRules = manager?.breakpointsDialogSettings?.selectedGroupingRules

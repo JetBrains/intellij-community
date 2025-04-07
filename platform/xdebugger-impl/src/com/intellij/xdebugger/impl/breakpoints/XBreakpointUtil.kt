@@ -20,7 +20,7 @@ import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -149,8 +149,12 @@ object XBreakpointUtil {
   }
 
   @ApiStatus.Internal
-  @JvmField
-  val PANEL_PROVIDER: BreakpointPanelProvider = XBreakpointPanelProvider()
+  @JvmStatic
+  fun getAllBreakpointItems(project: Project): List<BreakpointItem> {
+    return XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints().map {
+      XBreakpointItem(it)
+    }
+  }
 
   /**
    * Toggle line breakpoint with editor support:
