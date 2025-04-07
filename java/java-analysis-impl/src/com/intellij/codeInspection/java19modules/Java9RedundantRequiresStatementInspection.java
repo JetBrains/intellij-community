@@ -113,9 +113,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
   private static class DeleteRedundantRequiresStatementFix extends PsiUpdateModCommandQuickFix {
     private final String myRequiredModuleName;
-    @SafeFieldForPreview
     private final Set<String> myImportedPackages;
-    @SafeFieldForPreview
     private final Set<String> myDependencies;
 
     DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages,
