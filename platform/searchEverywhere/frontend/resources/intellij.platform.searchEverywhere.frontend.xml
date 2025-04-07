@@ -4,9 +4,9 @@
     <module name="intellij.platform.searchEverywhere"/>
   </dependencies>
   <actions>
-    <action id="SeInitiatorAction"
-            class="com.intellij.platform.searchEverywhere.frontend.actions.SeInitiatorAction"
-            text="Search Actions in SE 2.0"
+    <action id="SeNewSearchToggleAction"
+            class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"
+            text="Toggle Search Everywhere Implementation"
             internal="true"/>
   </actions>
 
