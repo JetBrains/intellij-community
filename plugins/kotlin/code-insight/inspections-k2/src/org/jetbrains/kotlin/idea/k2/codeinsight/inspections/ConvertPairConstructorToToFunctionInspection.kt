@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.*
 
 private val PAIR_FQ_NAME = FqName("kotlin.Pair")
 
-class ConvertPairConstructorToToFunctionInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
+internal class ConvertPairConstructorToToFunctionInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
