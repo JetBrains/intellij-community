@@ -87,7 +87,7 @@ class GradleScriptRefinedConfigurationProvider(
         val result = MutableEntityStorage.create()
 
         val urlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-        val virtualFileCache = ScriptClassPathUtil.getInstance()
+        val virtualFileCache = ScriptVirtualFileCache()
         val dependencyFactory = ScriptDependencyFactory(result, configurations, virtualFileCache)
 
         for ((scriptFile, configurationWithSdk) in configurations) {
@@ -179,7 +179,7 @@ class GradleScriptRefinedConfigurationProvider(
     inner class ScriptDependencyFactory(
         private val entityStorage: MutableEntityStorage,
         scripts: Map<VirtualFile, ScriptConfigurationWithSdk>,
-        virtualFileCache: ScriptClassPathUtil,
+        virtualFileCache: ScriptVirtualFileCache,
     ) {
         private val nameCache = HashMap<String, Set<VirtualFile>>()
 

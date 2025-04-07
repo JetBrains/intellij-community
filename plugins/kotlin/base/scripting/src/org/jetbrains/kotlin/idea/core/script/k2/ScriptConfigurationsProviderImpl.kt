@@ -33,22 +33,8 @@ private class ScriptDependenciesData(
 ) {
     operator fun plus(other: ScriptDependenciesData): ScriptDependenciesData {
         return ScriptDependenciesData(
-            this.classes + other.classes,
-            this.sources + other.sources,
-            this.sdks + other.sdks
+            this.classes + other.classes, this.sources + other.sources, this.sdks + other.sdks
         )
-    }
-
-    companion object {
-        fun from(configuration: ScriptConfigurationWithSdk): ScriptDependenciesData {
-            val cache = ScriptClassPathUtil.getInstance()
-            return ScriptDependenciesData(
-                configuration.scriptConfiguration.valueOrNull()?.dependenciesClassPath?.mapNotNull { cache.findVirtualFile(it.path) }
-                    ?.toSet() ?: emptySet(),
-                configuration.scriptConfiguration.valueOrNull()?.dependenciesSources?.mapNotNull { cache.findVirtualFile(it.path) }
-                    ?.toSet() ?: emptySet(),
-            )
-        }
     }
 }
 
@@ -57,8 +43,20 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
     private val allDependencies = AtomicReference(ScriptDependenciesData())
 
     fun store(configurations: Collection<ScriptConfigurationWithSdk>) {
+        val cache = ScriptVirtualFileCache()
+
         val dataToAdd = configurations.fold(ScriptDependenciesData()) { left, right ->
-            left + ScriptDependenciesData.from(right)
+            val configurationWrapper = right.scriptConfiguration.valueOrNull()
+
+            if (configurationWrapper == null) {
+                left
+            } else {
+                left + ScriptDependenciesData(
+                    configurationWrapper.dependenciesClassPath.mapNotNull { cache.findVirtualFile(it.path) }.toSet(),
+                    configurationWrapper.dependenciesSources.mapNotNull { cache.findVirtualFile(it.path) }.toSet(),
+                    setOfNotNull(right.sdk)
+                )
+            }
         }
         allDependencies.accumulateAndGet(dataToAdd) { left, right -> left + right }
     }

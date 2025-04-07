@@ -16,18 +16,7 @@ import kotlin.script.experimental.api.ScriptDependency
 import kotlin.script.experimental.jvm.JvmDependency
 
 class ScriptClassPathUtil {
-    private constructor()
-
-    private val cache = mutableMapOf<String, VirtualFile?>()
-
-    fun findVirtualFile(pathString: String): VirtualFile? =
-        cache.computeIfAbsent(pathString) {
-            ScriptClassPathUtil.findVirtualFile(pathString)
-        }
-
     companion object {
-        fun getInstance(): ScriptClassPathUtil = ScriptClassPathUtil()
-
         fun List<ScriptDependency>?.findVirtualFiles(): List<VirtualFile> {
             this ?: return emptyList()
             return this
@@ -39,7 +28,7 @@ class ScriptClassPathUtil {
 
         fun findVirtualFile(pathString: String): VirtualFile? {
             val path = pathString.toNioPathOrNull()
-            val resultFile = when {
+            return when {
                 path == null -> {
                     scriptingWarnLog("Invalid classpath entry '$pathString'")
                     null
@@ -63,8 +52,6 @@ class ScriptClassPathUtil {
                     null
                 }
             }
-
-            return resultFile
         }
 
         private fun VirtualFileSystem.refreshIfNeededAndFindFileByPath(path: String): VirtualFile? {
@@ -79,5 +66,18 @@ class ScriptClassPathUtil {
 
             return null
         }
+    }
+}
+
+class ScriptVirtualFileCache() {
+    private val cache = mutableMapOf<String, Result<VirtualFile>>()
+
+    fun findVirtualFile(pathString: String): VirtualFile? {
+        val result = cache.computeIfAbsent(pathString) {
+            val resultFile = ScriptClassPathUtil.findVirtualFile(pathString)
+            resultFile?.let { Result.success(it) } ?: Result.failure(Throwable())
+        }
+
+        return result.getOrNull()
     }
 }

@@ -90,16 +90,15 @@ fun MutableEntityStorage.getOrCreateDefinitionDependency(
     val libraryId = LibraryId(".${definition.fileExtension} definition dependencies", LibraryTableId.ProjectLibraryTableId)
     if (!this.contains(libraryId)) {
         val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-        val virtualFileCache = ScriptClassPathUtil.getInstance()
 
         val classes = definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies]
             .toClassPathOrEmpty()
-            .mapNotNull { virtualFileCache.findVirtualFile(it.path) }
+            .mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
             .sortedBy { it.name }
 
         val sources = definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources]
             .toClassPathOrEmpty()
-            .mapNotNull { virtualFileCache.findVirtualFile(it.path) }
+            .mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
             .sortedBy { it.name }
 
         val classRoots = classes.map {
