@@ -38,6 +38,10 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
       // Unblock `getNextEvent()` in case it's blocked.
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
     }
+    dumpJob.invokeOnCompletion {
+      // Unblock `getNextEvent()` in case it's blocked.
+      SwingUtilities.invokeLater(EmptyRunnable.INSTANCE)
+    }
     IdeEventQueue.getInstance().pumpEventsForHierarchy {
       containerJob.isCompleted
       // This means container job is still not completed,
