@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
-import com.intellij.openapi.util.NlsSafe
-import git4idea.branch.GitBranchUtil
+import com.intellij.vcs.git.shared.ref.GitRefUtil
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.NonNls
  * are considered equal. But in this case an error if logged, because it means that one of this GitBranch instances is out-of-date, and
  * it is required to use an [git4idea.repo.GitRepository.update] updated version.
  */
-abstract class GitBranch protected constructor(name: String) : GitReference(GitBranchUtil.stripRefsPrefix(name)) {
+abstract class GitBranch protected constructor(name: String) : GitReference(GitRefUtil.stripRefsPrefix(name)) {
   /**
    * Set to true if the branch is remote
    */

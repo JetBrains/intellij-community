@@ -2,15 +2,15 @@
 package git4idea
 
 import com.intellij.openapi.util.NlsSafe
-import git4idea.branch.GitBranchUtil
+import com.intellij.vcs.git.shared.ref.GitRefUtil
 import git4idea.repo.GitRemote
 
 class GitStandardRemoteBranch(remote: GitRemote, nameAtRemote: String) :
-  GitRemoteBranch("${remote.name}/${GitBranchUtil.stripRefsPrefix(nameAtRemote)}", remote) {
+  GitRemoteBranch("${remote.name}/${GitRefUtil.stripRefsPrefix(nameAtRemote)}", remote) {
   override val fullName: @NlsSafe String
     get() = REFS_REMOTES_PREFIX + name
 
-  override val nameForRemoteOperations: String = GitBranchUtil.stripRefsPrefix(nameAtRemote)
+  override val nameForRemoteOperations: String = GitRefUtil.stripRefsPrefix(nameAtRemote)
 
   override val nameForLocalOperations: String = name
 
