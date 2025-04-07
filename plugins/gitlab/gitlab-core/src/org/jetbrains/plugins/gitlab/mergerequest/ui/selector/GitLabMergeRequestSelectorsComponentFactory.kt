@@ -6,11 +6,13 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.asSafely
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
@@ -54,7 +56,7 @@ object GitLabMergeRequestSelectorsComponentFactory {
       }
     )
 
-    cs.launch {
+    cs.launch(Dispatchers.EDT) {
       selectorVm.loginRequestsFlow.collect { req ->
         val account = req.account
         if (account == null) {

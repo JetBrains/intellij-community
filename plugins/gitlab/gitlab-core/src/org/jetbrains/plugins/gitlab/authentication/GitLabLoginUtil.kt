@@ -89,6 +89,7 @@ object GitLabLoginUtil {
     return LoginResult.Failure
   }
 
+  @RequiresEdt
   private fun showLoginDialog(
     project: Project,
     parentComponent: JComponent?,
