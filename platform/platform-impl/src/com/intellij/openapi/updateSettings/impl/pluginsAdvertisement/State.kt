@@ -136,12 +136,16 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       return false
     }
 
-    withContext(Dispatchers.IO) {
-      val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
-      updateCache(extensionOrFileName, compatiblePlugins)
-    }
+    updateCache(extensionOrFileName, emptySet()) // if network fails we will have empty results here and do not ask again for the same file
 
-    return true
+    return withContext(Dispatchers.IO) {
+      val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
+      if (compatiblePlugins.isEmpty()) return@withContext false
+
+      updateCache(extensionOrFileName, compatiblePlugins)
+
+      return@withContext true
+    }
   }
 
   @VisibleForTesting
@@ -161,6 +165,9 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       if (!force && cache.getIfPresent(h.id) != null) continue // already filled cache in this session
 
       val implementationName = "${FILE_HANDLER_KIND}:${h.id}"
+
+      // if network fails we will have empty results here and do not ask again for the same file
+      cache.put(implementationName, PluginAdvertisedByFileContent(h, emptySet()))
 
       withContext(Dispatchers.IO) {
         val compatiblePlugins = requestCompatiblePlugins(implementationName, knownDependencies.get(implementationName))

@@ -25,6 +25,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -63,8 +64,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
                                              activeProductCode = service<ApplicationInfo>().build.productCode,
                                              file = file)
 
-    // If no advertisement suggestions are found, schedule an advertiser update so we make sure that
-    // plugin/IDE information is up to date next time the file is opened.
+    // If no advertisement suggestions are found, schedule an update so we make sure that
+    // plugin/IDE information is up to date the next time the file is opened.
     if (suggestionChoice.isError) {
       project.service<AdvertiserInfoUpdateService>().scheduleAdvertiserUpdate(file)
     }
@@ -96,7 +97,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
     foundPlugins: Set<PluginData>,
     allJetBrainsPluginsMarketplaceIds: Set<PluginId>,
     val suggestedIdes: List<SuggestedIde>,
-    val overrideSuggestionText: String? = null,
+    val overrideSuggestionText: @NlsContexts.Label String? = null,
     val unknownFeature: UnknownFeature? = null,
   ) : Function<FileEditor, EditorNotificationPanel?> {
 
