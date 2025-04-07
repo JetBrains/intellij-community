@@ -216,13 +216,11 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
 
     output_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
 
-    outputs_struct = None
-
     transitiveInputs = [compile_deps.compile_jars]
     _collect_runtime_jars(perTargetPlugins, transitiveInputs)
     _collect_runtime_jars(ctx.attr.deps, transitiveInputs)
 
-    outputs_struct = _run_jvm_builder(
+    compile_jar = _run_jvm_builder(
         ctx = ctx,
         output_jar = output_jar,
         rule_kind = rule_kind,
@@ -234,15 +232,11 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
         plugins = plugins,
     )
 
-    compile_jar = outputs_struct.compile_jar
-    generated_src_jars = outputs_struct.generated_src_jars
-    annotation_processing = outputs_struct.annotation_processing
-
     source_jar = java_common.pack_sources(
         ctx.actions,
         output_source_jar = ctx.outputs.srcjar,
         sources = srcs.kt + srcs.java,
-        source_jars = srcs.src_jars + generated_src_jars,
+        source_jars = srcs.src_jars,
         java_toolchain = toolchains.java,
     )
 
@@ -276,8 +270,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
             ),
             transitive_compile_time_jars = java_info.transitive_compile_time_jars,
             transitive_source_jars = java_info.transitive_source_jars,
-            annotation_processing = annotation_processing,
-            additional_generated_source_jars = generated_src_jars,
             all_output_jars = [output_jar],
         ),
     )
@@ -292,10 +284,10 @@ def _run_jvm_builder(
         compile_deps,
         transitiveInputs,
         plugins):
-    """Runs the necessary JpsBuilder actions to compile a jar
+    """Runs the necessary JvmBuilder actions to compile a jar
 
     Returns:
-        A struct containing the a list of output_jars and a struct annotation_processing jars
+        ABI jar
     """
 
     kotlin_inc_threshold = ctx.attr._kotlin_inc_threshold[BuildSettingInfo].value
@@ -324,7 +316,7 @@ def _run_jvm_builder(
     javaCount = len(srcs.java)
     args.add("--java-count", javaCount)
     ctx.actions.run(
-        mnemonic = "JpsCompile",
+        mnemonic = "JvmCompile",
         env = {
             "MALLOC_ARENA_MAX": "2",
         },
@@ -343,11 +335,7 @@ def _run_jvm_builder(
         progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),
     )
 
-    return struct(
-        compile_jar = abi_jar,
-        generated_src_jars = [],
-        annotation_processing = None,
-    )
+    return abi_jar
 
 def _collect_runtime_jars(targets, transitive):
     for t in targets:

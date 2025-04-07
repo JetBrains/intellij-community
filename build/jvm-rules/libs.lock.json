@@ -3,9 +3,9 @@
     "70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341",
     "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3"
   ],
-  "com.dynatrace.hash4j:hash4j:0.20.0": [
-    "0181873ba85684d119134f5598432f5b63109a03adc455767a1500b2145df8a2",
-    "63ddb785e1691849d571a78dfca9c311f2646d148fd7cbf1a60999e7e93a54bc"
+  "com.dynatrace.hash4j:hash4j:0.21.0": [
+    "77290461b41542171cc8d1e1a33b54c98358e3124fdbd49bd2222555df1281f3",
+    "c6c18138cd9754fbc75c59e79e44b26d0afd721fd90b4701d5b46efa459288bc"
   ],
   "com.fasterxml.jackson.core:jackson-annotations:2.17.2": [
     "873a606e23507969f9bbbea939d5e19274a88775ea5a169ba7e2d795aa5156e1",
@@ -43,73 +43,73 @@
     "c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2",
     "614806dd73810c80a4751daf28bffc5eb641d6026ee58c71f4a28354e06a7dc8"
   ],
-  "io.netty:netty-buffer:4.2.0.RC4": [
-    "070f8f5dd3993ff9feb129425de6b0963f3d6e64a57c35eef8c40c9ea74113d7",
-    "8dc8ae3e60fc111f6e536bfb4122d9422886e0e093584ab000b2e525307036fe"
+  "io.netty:netty-buffer:4.2.0.Final": [
+    "c01926017be0d96711845852a2646de4bf00a92542b02ed915f5bee54822fe0d",
+    "ff1e9f04410a8ad6e1c1200f93b4f3093131cc6c4e8846acaee1ae051309c863"
   ],
-  "io.netty:netty-common:4.2.0.RC4": [
-    "10c73d2ce41cec0d88d312c07d286abce1ea7640afec5191594b7d5f367e122e",
-    "e5216c285076c10753259ac43f5801f0a92f0c6c4e8d2754ec89424f1d5646cd"
+  "io.netty:netty-common:4.2.0.Final": [
+    "52370b6c131f536b60c9b1e643e9a9b6e7ffecf787d5d3453b1689afbd894886",
+    "49c34b8bb551c0df48342dea94429568b1be4b65fd35f7d28bdef043fa08540f"
   ],
   "io.opentelemetry.semconv:opentelemetry-semconv:1.30.0": [
     "99c2478a9b803b7d385d1624d5c1ab6f9a64cac5a2dc00f44a350744a1d858ac",
     "96bf3ea26a26276d3d877782a0f5c00f7b4d133cea409d08f04b31bbc38ec872"
   ],
-  "io.opentelemetry:opentelemetry-api:1.48.0": [
-    "8d3781bda58892f7d14216908fc0d1faf6f4e6b806e6e73e23489e41c0ecf012",
-    "a961b41ba59fe039d875ca0f1e0c651fe00c5de54aa631da98f873dfe7ceb16b"
+  "io.opentelemetry:opentelemetry-api:1.49.0": [
+    "a813c9a92b82a4ffa3a62e88216a9e9ef9a407fcd41614fe596b2895167ed638",
+    "45ce4df9b8157e57e07dbd68784d3877474bd2fc2291954ef32b5666845d5c7f"
   ],
-  "io.opentelemetry:opentelemetry-context:1.48.0": [
-    "1fcccff0f8171fe2001a17b99da229c12d0c4edcca617e453460344e92249d42",
-    "3ace383ef17cc4c52580de82a39eaacad84cf81c46f6e88a8143379e4782ed15"
+  "io.opentelemetry:opentelemetry-context:1.49.0": [
+    "17de3c85b341240b3b216c43adbd244c9fbd39c9e5448306d56460f80599a76b",
+    "d51f02535781654be13ca245bc09d1ddddf54c19788be8b3f8d833701c292a8b"
   ],
-  "io.opentelemetry:opentelemetry-exporter-common:1.48.0": [
-    "bc7af4f3c4ba1a23c20a6e1945f3e17fd3f5719f6f17d62961b3167d939a18e2",
-    "aaa85452dd8235f212a891782d8418bc42ec2cae2f855fcc1fc88b705f945652"
+  "io.opentelemetry:opentelemetry-exporter-common:1.49.0": [
+    "06d08af00b9fec8e99b6a4fda2eb201facbe2fe38a89eb11cbbfbe4183b73141",
+    "fc6b8455e51702a007008b05eb3570a13aaefb5775704bf1c101044297b85444"
   ],
-  "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.48.0": [
-    "3dc8bb3d060477a3fc3be3f7ea84eea161de9c70bd263b9023bc3767388e2abe",
-    "ef9c5e0e4a2ba3e2c1166a2682c73c8ac9cf0006f7083e67c2d3895f1ec0542d"
+  "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.49.0": [
+    "032a9e66f767fa1b978222c794de4c6d2c98313606e707d3eef01b80a95bc186",
+    "a09e34dd625268d3e3123b5a18e89e4444dbacc954d6556701f6dfef810a8bc0"
   ],
-  "io.opentelemetry:opentelemetry-exporter-otlp-common:1.48.0": [
-    "9b3211ad7f1508f6453d16922aad6c7dce5b2f9a88b7e272171f63875ee78efd",
-    "ac28aa04c6b29e7dbb298d9f9e321a31871b9077a8865583288cdd0bf4a0950d"
+  "io.opentelemetry:opentelemetry-exporter-otlp-common:1.49.0": [
+    "be16d6802be0eb2d08389fc9af1e801fc98f96061fe6bcda2562dcb7e2e0dd5b",
+    "6de2fa295ad8c362d40b6590888a7ee35d59fc8e82dd094b92e2d5cec45376c5"
   ],
-  "io.opentelemetry:opentelemetry-exporter-otlp:1.48.0": [
-    "b66cfe7da3afc1274f93e4c0faa5a7ac52b5f2a4d9567fc27ac84397f03f83c1",
-    "170cabc77bac7d9778e6a7d078b2d772684ab8d8ccaf75814e4eb7cdcaea1d8b"
+  "io.opentelemetry:opentelemetry-exporter-otlp:1.49.0": [
+    "b69c1664dbd75e7a4c5ab2e187766e7e4fcdb208c94dc569f1453c388d595812",
+    "6d32e29962e51677931393b668ba7972572a48dd802854d13900d8337f81a4ca"
   ],
-  "io.opentelemetry:opentelemetry-exporter-sender-jdk:1.48.0": [
-    "a8e33b293554a46f69ffbb97d0e108ef8c6475f4fcf812b38e8c3bc47fa3b581",
-    "c5f13e26357b6753361267dab43cd38e9438dd70b08300d225e04f83e715ca70"
+  "io.opentelemetry:opentelemetry-exporter-sender-jdk:1.49.0": [
+    "e1753890e33406de0d4d100f43ceba1666db0b0f82f440fa2b42a6d132614aa0",
+    "a2bdb8901e2b6f8b2a27e03f65e04bd194b3558cce940a3ee08c1016e8ac9ceb"
   ],
-  "io.opentelemetry:opentelemetry-sdk-common:1.48.0": [
-    "d8cfbfe6403965f68fc5efca0c9cb85c2cafd5facda9238cd83468692bc00109",
-    "60d2f30d0427bc070c0ddd540c33a48695b022f60910596ce8becb37892b7a41"
+  "io.opentelemetry:opentelemetry-sdk-common:1.49.0": [
+    "b06214ccf3cda749edcd426c1492483e201e1fcfadb9f9cba8ecb439ff5c5d0f",
+    "dec98f91b60152b5c17c46aa30f0d763ee78fc672e3f006ce731077c7ba563bb"
   ],
-  "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.48.0": [
-    "c2f95d66182b71e852a97b9bcb6e545ecf6c3e155a0e3d5faf2dbf96deb1a9df",
-    "2591926439711fe69fbbbae8250827d50ee20a53797352349e993f063fcf4312"
+  "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.49.0": [
+    "b3091033e5b4b4b49334709707858d993afb92fe5c32d4a0b27e02d2e956c5b7",
+    "7dd3b2e3ed4d2e91839c3f957b3a57d727284f2f1cfb6d51fbeb5e4e4db1aed0"
   ],
-  "io.opentelemetry:opentelemetry-sdk-logs:1.48.0": [
-    "3cb8107e3d142fb990ce7f7198cd051a3364fc9d254daa22d248215246857567",
-    "b97b398607adffd1701cd703755c036451d0d9c2dfdedd7e2f4070dd6e7f2bd9"
+  "io.opentelemetry:opentelemetry-sdk-logs:1.49.0": [
+    "edf7f2411d5180099efebc5a5e2f01378f647897671aa9819f2064e24b6f7e9f",
+    "0d6d296d7380257727935c9235a5619dc9c981700d6f18e840cc0b72ca12d906"
   ],
-  "io.opentelemetry:opentelemetry-sdk-metrics:1.48.0": [
-    "70622ff3bbeee435fba5c49d9ff6b056511a0f9982080aa5959ccfccb8650fd9",
-    "e24b8afa735bd83dfe3454f97d463936800dc31d5c57cabb975f17cd2a95aeb0"
+  "io.opentelemetry:opentelemetry-sdk-metrics:1.49.0": [
+    "cf28ea29fcfd4577a4a3bda388ac08cbbb86e4b1b534822848ea5c5554bfd603",
+    "08868596a4e0cce486df12b09dcfd5dd13a7582f98bee75bdecbf7432df20f3e"
   ],
-  "io.opentelemetry:opentelemetry-sdk-trace:1.48.0": [
-    "d575e493f6c2e89d3100b3e73d3a2ae720bb8f3ee2fa0f70a7d0da81d048c87a",
-    "e021625bce93f70e73f320ad2fedbc0bb3cf88004877130871f103aaf276cf64"
+  "io.opentelemetry:opentelemetry-sdk-trace:1.49.0": [
+    "483bf21dde1df1a2c9875ba7dff1e3c8c1a63789cd45ad58223ec64b5951318e",
+    "f370df177c08982ca20e0525adc94f995503e74d611c1240cd2cc616624277be"
   ],
-  "io.opentelemetry:opentelemetry-sdk:1.48.0": [
-    "668e78642d50709dd147406a197cfdd256b1d5931023a23f4a25ed88154c8089",
-    "25fe09663801e6987bc35e1b2b810bbd16ba8ea4b03cc47eb1c6778333256366"
+  "io.opentelemetry:opentelemetry-sdk:1.49.0": [
+    "d6fdaf0f04724d5c9362db2f809fd21f36e95c9c039d22fe695692d606107bff",
+    "dd827c172d20f046d5bf6a9df772290b0eaafb59589b6b98fd742c6bc78c2d37"
   ],
-  "jetbrains.fleet:expects-compiler-plugin:2.1.20-RC2-0.3": [
-    "4096da4a8c381527240a2c3e7ea892f1695793adf6582d9ed1fd8fdf276cdbdd",
-    "394eea5f3888db43618550776a7f20c8c10b8eaa56842ee2c66cda9f8d3f2477"
+  "jetbrains.fleet:expects-compiler-plugin:2.1.20-0.1": [
+    "577642d0d6dbfa29305a97421c95157dcc62183044d312666979c3888dc43ec7",
+    "8a6573bf3f41894a7011d3394402e658d35e6a6962994642c06dcdd59257fd05"
   ],
   "org.apache.arrow:arrow-format:18.2.0": [
     "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",
@@ -143,40 +143,40 @@
     "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",
     "a880ed438e15111a8ef4cdd450fa529cf80541da515261d24241520dbc4b220b"
   ],
-  "org.jetbrains.kotlin:kotlin-build-tools-api:2.1.20-RC3": [
-    "6a68444b624432e23268df01450895fc67c042ef6da3ee0eda343fbd1f8eecea",
+  "org.jetbrains.kotlin:kotlin-build-tools-api:2.1.20": [
+    "533c36cb362e6ed2d15f58732e7f4c6d2bed5c9d5179b897bc4b09d16d605377",
     "fe86558db8dc6b7712ef376b92de40f3573dd844f2529424fb8162309b97d7f6"
   ],
-  "org.jetbrains.kotlin:kotlin-build-tools-impl:2.1.20-RC3": [
-    "7574eeeaa26197e6571f64823e504590e7a3fe9ae20d5da4fd96182a3800fc0a",
+  "org.jetbrains.kotlin:kotlin-build-tools-impl:2.1.20": [
+    "6e94896e321603e3bfe89fef02478e44d1d64a3d25d49d0694892ffc01c60acf",
     "8f8f11d1078d1a4ee7c5c3a61c3df74e0b3c1820e97a95b9e3a81ea4f70f6101"
   ],
-  "org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.1.20-RC3": [
-    "2773373a2a20a502e668209c629f2aa7904212c2f9e745dab4d9a0d644caaeae",
+  "org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.1.20": [
+    "88d98aed9ae9facb1eb3591a263b2273ece23af699438c8fb4f63cc428bfc479",
     "b1cc37d9883f388e1e5abfa6405c9d524baf0408262bc63e1d0592c2c876d747"
   ],
-  "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20-RC3": [
-    "eb8e24b704fb08763429f8345c28abf5f1be5146e1cfe098cfe27412500d4811",
+  "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20": [
+    "5643bff0038180e747948025cf9df59b9827d333396f8c4443bea24a6fc6ceb4",
     "436e0321408b8e8558d410c2ce13799797e668e78caa11fd9d154e0a11455199"
   ],
-  "org.jetbrains.kotlin:kotlin-metadata-jvm:2.1.20-RC3": [
-    "5281f7b5465edbdfcc973811d1ee1fdd50614e65dbc7bfcd7b5edc98b1f4c3fa",
+  "org.jetbrains.kotlin:kotlin-metadata-jvm:2.1.20": [
+    "bc1c21410ec79513915db05746dded6cb4d205920814f894ff5c46e36caac51b",
     "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18"
   ],
-  "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin:2.1.20-RC3": [
-    "9003ae6a622526eb5db18f7c7c8b2a6e37af52cd8a7475377051f0f68e663601",
+  "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin:2.1.20": [
+    "777ccc24b6b0c79527ac642cbe292d2c7bbd86d9ca5150237a4f86ac1c3cc449",
     "941b3bf2b6b366f6b6d066b8d17daf4ec974ec9a419888aa3448716b15fde8e9"
   ],
   "org.jetbrains.kotlin:kotlin-stdlib:2.1.20": [
     "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a",
     "6f0c26b17398e3e4be3b82d9ef1e92d941a755d16faf9703109f208f9aac7480"
   ],
-  "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.1.20-RC3": [
-    "2946fcea4c435df7172c3738dc3640ae27e4075a5f683f9350cfff152c678cad",
+  "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.1.20": [
+    "f2d5e684715b920b6084968e6c33c8bb05b0b6b97919800e2f221d9418240c7d",
     "8c09123a01414e2e8b7b691aecb3e96b36d993f0101de8566f62f5ff6a1e8d3f"
   ],
-  "org.jetbrains.kotlin:kotlin-util-klib:2.1.20-RC3": [
-    "10f3ede931aaf79358543f744852869614542cdd7ecaa87931a7613d9b1dab11",
+  "org.jetbrains.kotlin:kotlin-util-klib:2.1.20": [
+    "ff79c5b0e6e42d920ebb1c76ba10cc2ddbf224e805645a8eeacade4916e2aace",
     "4aa4da6df01507c0fe9b48ff4f3d2a5eb5edf5f894850169c90efc89330a9d8b"
   ],
   "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.8": [
@@ -191,8 +191,8 @@
     "0a7e032bf5bcdd5b2bf8bf2e5cf02c5646f2aa6fee66933b8150dbe84e651e8a",
     "10ab6331a4802934a02b4d22e81d5006c67d5923c1c88d4f63077e4f02b6ed7c"
   ],
-  "org.slf4j:slf4j-api:2.0.13": [
-    "e7c2a48e8515ba1f49fa637d57b4e2f590b3f5bd97407ac699c3aa5efb1204a9",
-    "84f366caa66ddaa9d204e5525580b562271663c05970f056815a1be8489e8b52"
+  "org.slf4j:slf4j-api:2.0.17": [
+    "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832",
+    "db0d08d8efa05ad19d174d747bd9d8e68dbb02b596812fe7b3a681656e346694"
   ]
 }
