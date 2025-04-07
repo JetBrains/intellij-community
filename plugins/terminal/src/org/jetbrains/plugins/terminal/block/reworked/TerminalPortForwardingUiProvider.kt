@@ -9,7 +9,11 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface TerminalPortForwardingUiProvider {
-  fun createComponent(id: TerminalPortForwardingId, disposable: Disposable): JComponent?
+  /**
+   * Returns the UI component that allows configuring the port forwarding for the session with [id].
+   * Can suspend until the port forwarding session with this ID is created.
+   */
+  suspend fun createComponent(id: TerminalPortForwardingId, disposable: Disposable): JComponent?
 
   companion object {
     fun getInstance(project: Project): TerminalPortForwardingUiProvider = project.service()
@@ -17,7 +21,7 @@ interface TerminalPortForwardingUiProvider {
 }
 
 internal class TerminalNoPortForwardingUiProvider : TerminalPortForwardingUiProvider {
-  override fun createComponent(id: TerminalPortForwardingId, disposable: Disposable): JComponent? {
+  override suspend fun createComponent(id: TerminalPortForwardingId, disposable: Disposable): JComponent? {
     return null
   }
 }
