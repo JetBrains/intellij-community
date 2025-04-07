@@ -191,6 +191,10 @@ object PluginManagerCore {
     return pluginId.idString.startsWith(PLATFORM_MODULE_DEPENDENCY_PREFIX)
   }
 
+  @Internal
+  fun findPluginByModuleDependency(id: PluginId): IdeaPluginDescriptorImpl? =
+    getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
+
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link PluginManager#getPluginByClass}.")
   @JvmStatic
@@ -897,10 +901,6 @@ object PluginManagerCore {
     val pluginSet = nullablePluginSet ?: return null
     return pluginSet.findEnabledPlugin(id) ?: pluginSet.findInstalledPlugin(id)
   }
-
-  @Internal
-  fun findPluginByModuleDependency(id: PluginId): IdeaPluginDescriptorImpl? =
-    getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
 
   @JvmStatic
   fun isPluginInstalled(id: PluginId): Boolean {
