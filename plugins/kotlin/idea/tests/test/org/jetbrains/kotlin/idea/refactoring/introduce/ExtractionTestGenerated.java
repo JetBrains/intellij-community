@@ -1324,6 +1324,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/destructuringEntry.kt");
             }
 
+            @TestMetadata("emptySpaces.kt")
+            public void testEmptySpaces() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/emptySpaces.kt");
+            }
+
             @TestMetadata("enumQualifier.kt")
             public void testEnumQualifier() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/enumQualifier.kt");
