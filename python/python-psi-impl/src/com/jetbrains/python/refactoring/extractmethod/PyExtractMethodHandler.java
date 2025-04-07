@@ -41,16 +41,15 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       // Find PsiElement at caret
       PsiElement element = file.findElementAt(caretOffset);
 
-      // Check if the element or its parent is a keyword argument
-      if (element != null && (isPartOfKeywordArgument(element))) {
-        // Find the whole expression the keyword argument belongs to
-        PsiElement expressionElement = findContainingExpression(element);
-        if (expressionElement != null) {
-          int startOffset = expressionElement.getTextRange().getStartOffset();
-          int endOffset = expressionElement.getTextRange().getEndOffset();
+      if (element != null) {
+        PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, false, PyCallExpression.class);
+        if (callExpression != null) {
+          int startOffset = callExpression.getTextRange().getStartOffset();
+          int endOffset = callExpression.getTextRange().getEndOffset();
           editor.getSelectionModel().setSelection(startOffset, endOffset);
         }
-      } else {
+      }
+      else {
         // Default behavior: select the line at caret
         editor.getSelectionModel().selectLineAtCaret();
       }
@@ -136,53 +135,6 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorHint(project, editor,
                                         PyPsiBundle.message("refactoring.extract.method.error.bad.selection"),
                                         RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
-  }
-
-  /**
-   * Checks if the given element is a Python keyword argument or part of it
-   */
-  private static boolean isPartOfKeywordArgument(PsiElement element) {
-    if (element instanceof PyKeywordArgument || element instanceof PsiWhiteSpace) {
-      return true;
-    }
-
-    // If the element itself is not a keyword argument, check if it's part of one
-    PsiElement parent = element.getParent();
-    while (parent != null) {
-      if (parent instanceof PyKeywordArgument|| parent instanceof PyCallExpression) {
-        return true;
-      }
-      // Only check immediate parents to avoid going too far up the tree
-      if (parent.getParent() == null || parent instanceof PyCallExpression) {
-        break;
-      }
-      parent = parent.getParent();
-    }
-
-    return false;
-  }
-
-  /**
-   * Finds the containing call expression for a Python keyword argument element
-   */
-  private static PsiElement findContainingExpression(PsiElement keywordArgElement) {
-    PsiElement current = keywordArgElement;
-
-    while (current != null) {
-      if (current instanceof PyCallExpression) {
-        return current;
-      }
-
-      // Check if we've already reached a complete expression or the root
-      if (current instanceof PyStatement &&
-          !(current instanceof PyExpressionStatement)) {
-        break;
-      }
-
-      current = current.getParent();
-    }
-
-    return current;
   }
 
   private static boolean rangeBelongsToSameClassBody(@NotNull PsiElement element1, @NotNull PsiElement element2) {
