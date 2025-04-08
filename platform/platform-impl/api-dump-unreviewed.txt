@@ -8736,7 +8736,6 @@ f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 - <init>():V
 - accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - acceptRequiresReadAction():Z
-- createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
 - getEditorTypeId():java.lang.String
 - getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
 - sf:openEditor(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request):com.intellij.openapi.fileEditor.FileEditor

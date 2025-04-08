@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
+import org.jetbrains.annotations.ApiStatus
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
   @Suppress("CompanionObjectInExtension")
@@ -45,9 +46,23 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
+  @ApiStatus.Internal
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     return file.getUserData(EDITOR_KEY)
            ?: HTMLFileEditor(project, file as LightVirtualFile, REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
+  }
+
+  @ApiStatus.Internal
+  override fun disposeEditor(editor: FileEditor) {
+    try {
+      editor.file?.let { file ->
+        file.putUserData(EDITOR_KEY, null)
+        file.putUserData(REQUEST_KEY, null)
+      }
+    }
+    finally {
+      super.disposeEditor(editor)
+    }
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean = JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
