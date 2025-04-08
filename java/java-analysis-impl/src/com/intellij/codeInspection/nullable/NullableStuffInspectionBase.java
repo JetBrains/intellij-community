@@ -703,11 +703,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
       NullabilityAnnotationInfo notNullInfo = manager.findNullabilityAnnotationInfo(owner, Collections.singleton(Nullability.NOT_NULL));
       NullabilityAnnotationInfo nullableInfo = manager.findNullabilityAnnotationInfo(owner, Collections.singleton(Nullability.NULLABLE));
-      PsiAnnotation nullableAnno = notNullInfo == null || (notNullInfo.isContainer() && nullableInfo != null && !nullableInfo.isContainer()) 
+      PsiAnnotation notNullAnno = notNullInfo == null || (notNullInfo.isContainer() && nullableInfo != null && !nullableInfo.isContainer()) 
                                    ? null : notNullInfo.getAnnotation();
-      PsiAnnotation notNullAnno = nullableInfo == null || (nullableInfo.isContainer() && notNullInfo != null && !notNullInfo.isContainer())  
+      PsiAnnotation nullableAnno = nullableInfo == null || (nullableInfo.isContainer() && notNullInfo != null && !notNullInfo.isContainer())  
                                   ? null : nullableInfo.getAnnotation();
-      return new Annotated(nullableAnno, notNullAnno);
+      return new Annotated(notNullAnno, nullableAnno);
     }
   }
 
