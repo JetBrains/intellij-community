@@ -757,7 +757,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
       layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
     }
     for (layout in layouts) {
-      check(layout.mainModule == "kotlin-ultimate.kmm-plugin" || result.add(layout)) {
+      check(result.add(layout)) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
       }
     }
