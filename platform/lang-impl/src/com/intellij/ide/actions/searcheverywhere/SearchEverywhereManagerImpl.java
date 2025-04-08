@@ -80,8 +80,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
     List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project);
     SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
-    SearchEverywhereSpellingCorrector spellingCorrector = SearchEverywhereSpellingCorrector.getInstance();
-    mySearchEverywhereUI = createView(myProject, contributors, spellingCorrector, SearchFieldStatisticsCollector.getStartMoment(initEvent));
+    mySearchEverywhereUI = createView(myProject, contributors, SearchFieldStatisticsCollector.getStartMoment(initEvent));
     contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
 
     // Handle SE on the Welcome Screen
@@ -277,12 +276,11 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   }
 
   private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
-                                        @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
                                         @Nullable StartMoment startMoment) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }
-    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, spellingCorrector, startMoment);
+    SearchEverywhereUI view = new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get, startMoment);
 
     view.setSearchFinishedHandler(() -> {
       if (isShown()) {

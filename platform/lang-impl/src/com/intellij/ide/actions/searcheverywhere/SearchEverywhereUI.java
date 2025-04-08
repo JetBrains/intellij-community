@@ -149,7 +149,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private final HintHelper myHintHelper;
   private final SearchEverywhereMlService myMlService;
   private final SearchPerformanceTracker mySearchPerformanceTracker;
-  private final @Nullable SearchEverywhereSpellingCorrector mySpellingCorrector;
   private JComponent myExtendedInfoPanel;
   private @Nullable ExtendedInfoComponent myExtendedInfoComponent;
   private final SearchListener topicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(SEARCH_EVENTS);
@@ -173,20 +172,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     this(project, contributors, shortcutSupplier, null);
   }
 
-  public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
-                            @NotNull Function<? super String, String> shortcutSupplier,
-                            @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
-    this(project, contributors, shortcutSupplier, spellingCorrector, null);
-  }
-
   @ApiStatus.Internal
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
                             @NotNull Function<? super String, String> shortcutSupplier,
-                            @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
                             @Nullable StartMoment startMoment) {
     super(project);
-
-    mySpellingCorrector = spellingCorrector;
 
     Runnable scopeChangedCallback = () -> {
       updateSearchFieldAdvertisement();
@@ -895,8 +885,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       }
     }
 
-    addSpellingCorrectionSuggestionIfAvailable(tabId, rawPattern);
-
     myHintHelper.setSearchInProgress(StringUtil.isNotEmpty(getSearchPattern()));
     mySearchProgressIndicator = mySearcher.search(contributorsMap, rawPattern);
   }
@@ -1124,26 +1112,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
           }
         })
         .submit(AppExecutorUtil.getAppExecutorService());
-    }
-  }
-
-  private void addSpellingCorrectionSuggestionIfAvailable(@NotNull String tabId, @NotNull String query) {
-    if (mySpellingCorrector == null || !mySpellingCorrector.isAvailableInTab(tabId)) return;
-
-    var spellCheckResult = mySpellingCorrector.checkSpellingOf(query);
-    if (spellCheckResult instanceof SearchEverywhereSpellCheckResult.Correction correction) {
-      SearchEverywhereFoundElementInfo elementInfo;
-      if (myMlService != null) {
-        elementInfo = myMlService.createFoundElementInfo(new SearchEverywhereSpellingCorrectorContributor(mySearchField),
-                                                         correction,
-                                                         Integer.MAX_VALUE);
-      }
-      else {
-        elementInfo = new SearchEverywhereFoundElementInfo(correction,
-                                                           Integer.MAX_VALUE,
-                                                           new SearchEverywhereSpellingCorrectorContributor(mySearchField));
-      }
-      myListModel.addElements(Collections.singletonList(elementInfo));
     }
   }
 

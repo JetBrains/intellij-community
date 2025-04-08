@@ -7,7 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrap
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.SearchListModel
 import com.intellij.ide.actions.searcheverywhere.SearchListener
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
@@ -58,8 +58,9 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   override fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
                                       element: Any,
-                                      priority: Int): SearchEverywhereFoundElementInfo {
-    val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor)
+                                      priority: Int,
+                                      correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo {
+    val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor, correction)
 
     if (!isEnabled()) return foundElementInfoWithoutMl
 
@@ -67,20 +68,18 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
     val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
-    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo)
+    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo, correction)
 
     val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) contributor.getEffectiveContributor() else contributor
     val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null
 
-    return if (isShowDiff()) SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features)
-    else SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features)
+    return if (isShowDiff()) SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+    else SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
   }
 
   private fun shouldCalculateMlWeight(contributor: SearchEverywhereContributor<*>,
                                       searchState: SearchEverywhereMlSearchState,
                                       element: Any): Boolean {
-    // Don't calculate ML weight for typo fix, as otherwise it will affect the ranking priority, which is meant to be Int.MAX_VALUE
-    if (contributor is SearchEverywhereSpellingCorrectorContributor) return false
     // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
     if (searchState.tab == SearchEverywhereTab.Actions && searchState.searchQuery.isEmpty()) return false
     // Do not calculate machine learning weight for semantic items until the ranking models know how to treat them
