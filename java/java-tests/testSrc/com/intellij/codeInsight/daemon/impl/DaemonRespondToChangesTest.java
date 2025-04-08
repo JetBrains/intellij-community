@@ -2172,14 +2172,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private static @NotNull List<HighlightInfo> getErrorsFromMarkup(MarkupModel model) {
+  private static @NotNull List<HighlightInfo> getErrorsFromMarkup(@NotNull MarkupModel model) {
     return Arrays.stream(model.getAllHighlighters())
       .map(m -> HighlightInfo.fromRangeHighlighter(m))
       .filter(Objects::nonNull)
       .filter(h -> h.getSeverity() == HighlightSeverity.ERROR)
       .toList();
   }
-  private static void assertNoDuplicateInfosFromMarkup(MarkupModel model) {
+  private static void assertNoDuplicateInfosFromMarkup(@NotNull MarkupModel model) {
     List<HighlightInfo> infos = Arrays.stream(model.getAllHighlighters())
           .map(m -> HighlightInfo.fromRangeHighlighter(m))
           .filter(Objects::nonNull)
