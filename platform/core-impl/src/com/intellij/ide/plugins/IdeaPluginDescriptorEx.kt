@@ -19,6 +19,10 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
 
   val actions: List<ActionElement>
 
+  val appContainerDescriptor: ContainerDescriptor
+  val projectContainerDescriptor: ContainerDescriptor
+  val moduleContainerDescriptor: ContainerDescriptor
+
   /**
    * Qualified extension point name -> list of extension descriptors.
    *

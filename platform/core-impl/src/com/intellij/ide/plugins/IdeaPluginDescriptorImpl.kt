@@ -130,9 +130,9 @@ class IdeaPluginDescriptorImpl private constructor(
   override val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
   val packagePrefix: String? = raw.`package`
 
-  val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
-  val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
-  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
+  override val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
+  override val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
+  override val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
   override val extensions: Map<String, List<ExtensionDescriptor>> = raw.extensions
     .let(::convertExtensions)
