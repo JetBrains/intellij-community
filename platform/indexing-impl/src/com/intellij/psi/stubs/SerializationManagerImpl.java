@@ -256,13 +256,13 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       ) {}
 
       StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
-      List<TypeAndSerializer> stubElementTypes = IElementType.mapNotNull(type -> {
+      List<TypeAndSerializer> stubElementTypes = new ArrayList<>(IElementType.mapNotNull(type -> {
         ObjectStubSerializer<?, @NotNull Stub> serializer = stubElementRegistryService.getStubSerializer(type);
         if (serializer == null) {
           return null;
         }
         return new TypeAndSerializer(type, serializer);
-      });
+      }));
 
       stubElementTypes.sort(
         comparing((TypeAndSerializer tas) -> tas.type.getLanguage().getID())
