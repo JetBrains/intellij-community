@@ -20,7 +20,7 @@ interface XBreakpointManagerProxy {
   fun getAllBreakpointTypes(): List<XBreakpointType<*, *>>
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
-    override val breakpointsDialogSettings: XBreakpointsDialogState
+    override val breakpointsDialogSettings: XBreakpointsDialogState?
       get() = breakpointManager.breakpointsDialogSettings
 
     override val allGroups: Set<String>
