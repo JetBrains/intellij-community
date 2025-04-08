@@ -520,17 +520,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   final override fun createProject(name: String?, path: String): Project {
     @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt {
-      val file = toCanonicalName(path)
-      prepareNewProject(
-        file,
-        name,
-        beforeInit = null,
-        useDefaultProjectAsTemplate = true,
-        preloadServices = true,
-        markAsNew = false
-      ).also { project ->
-        TrustedProjects.setProjectTrusted(project, true)
-      }
+      newProjectAsync(toCanonicalName(path), OpenProjectTask {
+        projectName = name
+        beforeInit = null
+        useDefaultProjectAsTemplate = true
+        preloadServices = true
+      })
     }
   }
 
@@ -809,8 +804,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project =
-    prepareNewProject(
+  override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
+    TrustedProjects.setProjectTrusted(file, true)
+    return prepareNewProject(
       file,
       options.projectName,
       options.beforeInit,
@@ -820,6 +816,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     ).also { project ->
       TrustedProjects.setProjectTrusted(project, true)
     }
+  }
 
   protected open fun handleErrorOnNewProject(t: Throwable) {
     LOG.warn(t)
@@ -861,7 +858,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     preloadServices: Boolean,
     markAsNew: Boolean = true,
   ): Project {
-    TrustedProjects.setProjectTrusted(projectStoreBaseDir, true)
     return coroutineScope {
       val templateAsync = if (useDefaultProjectAsTemplate) {
         async {
