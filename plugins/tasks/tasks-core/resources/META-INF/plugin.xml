@@ -17,7 +17,7 @@
     <plugin id="com.intellij.modules.xml" />
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
-  <depends optional="true" config-file="java-contexts.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
   <!--
     Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog
     see com.intellij.tasks.generic.ResponseType.XML
