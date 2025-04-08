@@ -96,10 +96,9 @@ enum class CommonExperiments(
   CompletionPerformanceEarlyML(id = 17, useMLRanking = true, showArrows = false, calculateFeatures = true, logElementFeatures = true),
   CompletionPerformanceEarlyLookup(id = 18, useMLRanking = false, showArrows = false, calculateFeatures = true, logElementFeatures = true),
   CompletionPerformance(id = 19, useMLRanking = false, showArrows = false, calculateFeatures = true, logElementFeatures = true),
-  FullLineLlama1536ctx(id = 22, useMLRanking = false, showArrows = false, calculateFeatures = true, logElementFeatures = true),
 
-  ControlA(id = 50),
-  ControlB(id = 51),
+  ControlA(id = 50, useMLRanking = true),
+  ControlB(id = 51, useMLRanking = false),
   ;
 
   override val targetLanguageId: String? = null
