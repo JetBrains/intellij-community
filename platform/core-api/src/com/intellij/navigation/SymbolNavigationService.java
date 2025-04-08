@@ -9,10 +9,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 
@@ -31,6 +28,7 @@ public interface SymbolNavigationService {
   }
 
   @NotNull
+  @Unmodifiable
   Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project, @NotNull Symbol symbol);
 
   @Contract("_ -> new")

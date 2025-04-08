@@ -210,8 +210,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     List<InspectionSuppressor> elementLanguageSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguageOrAny(elementLanguage);
     Language baseLanguage = viewProvider.getBaseLanguage();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-      Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
-      suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
+      Set<InspectionSuppressor> suppressors = new LinkedHashSet<>(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
       for (Language language : viewProvider.getLanguages()) {
         suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(language));
       }
@@ -471,7 +470,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return myUseNewSerializer;
   }
 
-  private static @NotNull Set<String> loadBlackList() {
+  private static @NotNull @Unmodifiable Set<String> loadBlackList() {
     Set<String> blackList = new HashSet<>();
 
     URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
@@ -495,7 +494,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return Collections.unmodifiableSet(blackList);
   }
 
-  static @NotNull Collection<String> getBlackList() {
+  static @NotNull @Unmodifiable Collection<String> getBlackList() {
     Set<String> blackList = ourBlackList;
     if (blackList == null) {
       synchronized (BLACK_LIST_LOCK) {

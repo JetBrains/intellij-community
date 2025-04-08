@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -18,7 +19,7 @@ public abstract class DetectedFrameworkDescription {
   /**
    * @return files accepted by {@link FrameworkDetector} which belong to detected framework
    */
-  public abstract @NotNull Collection<? extends VirtualFile> getRelatedFiles();
+  public abstract @NotNull @Unmodifiable Collection<? extends VirtualFile> getRelatedFiles();
 
   /**
    * @return text to show in 'Setup Frameworks' dialog when this framework is selected

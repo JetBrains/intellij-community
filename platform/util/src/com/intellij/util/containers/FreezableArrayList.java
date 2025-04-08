@@ -30,7 +30,7 @@ public class FreezableArrayList<T> extends ArrayList<T> {
   }
 
   @NotNull
-  List<T> freeze() {
+  @Unmodifiable List<T> freeze() {
     modCount = -1;
     return this;
   }

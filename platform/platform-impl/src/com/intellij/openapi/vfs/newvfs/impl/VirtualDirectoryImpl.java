@@ -850,7 +850,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public @NotNull List<VirtualFile> getCachedChildren() {
+  public @NotNull @Unmodifiable List<VirtualFile> getCachedChildren() {
     return Arrays.asList(getArraySafely(false));
   }
 

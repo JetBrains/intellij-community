@@ -220,7 +220,7 @@ public interface Configurable extends UnnamedConfigurable {
     /**
      * @return EPName-s that affect the configurable or configurable provider
      */
-    @NotNull Collection<BaseExtensionPointName<?>> getDependencies();
+    @NotNull @Unmodifiable Collection<BaseExtensionPointName<?>> getDependencies();
   }
 
   /**

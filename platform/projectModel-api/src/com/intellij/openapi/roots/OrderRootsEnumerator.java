@@ -6,6 +6,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -27,7 +28,8 @@ public interface OrderRootsEnumerator {
    * @return all roots processed by this enumerator
    */
   @ApiStatus.Internal
-  @NotNull Collection<RootEntry> getRootEntries();
+  @NotNull @Unmodifiable
+  Collection<RootEntry> getRootEntries();
 
   /**
    * @return urls of all roots processed by this enumerator

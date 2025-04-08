@@ -19,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -286,7 +287,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   @Override
-  public @NotNull <F extends Facet> Collection<F> getFacetsByType(final Module module, final FacetTypeId<F> type) {
+  public @NotNull @Unmodifiable <F extends Facet> Collection<F> getFacetsByType(final Module module, final FacetTypeId<F> type) {
     return getFacetModel(module).getFacetsByType(type);
   }
 

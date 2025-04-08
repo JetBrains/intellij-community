@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +39,7 @@ public interface ArrangementUiComponent {
   ArrangementSettingsToken getToken();
 
   @NotNull
+  @Unmodifiable
   Set<ArrangementSettingsToken> getAvailableTokens();
 
   void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException;

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -48,5 +49,6 @@ public interface CustomUncommenter {
    * @return list of couples: [commentPrefix-start,commentPrefix-end], [commentSuffix-start,commentSuffix-end]
    */
   @NotNull
+  @Unmodifiable
   Collection<? extends Couple<TextRange>> getCommentRangesToDelete(@NotNull CharSequence text);
 }

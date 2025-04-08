@@ -3,6 +3,7 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -28,5 +29,5 @@ public abstract class Interner<T> {
 
   public abstract void clear();
 
-  public abstract @NotNull Set<T> getValues();
+  public abstract @NotNull @Unmodifiable Set<T> getValues();
 }

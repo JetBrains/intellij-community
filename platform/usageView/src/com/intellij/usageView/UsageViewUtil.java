@@ -29,6 +29,7 @@ import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -148,7 +149,7 @@ public final class UsageViewUtil {
     }
   }
 
-  public static @NotNull Set<UsageInfo> getNotExcludedUsageInfos(@NotNull UsageView usageView) {
+  public static @NotNull @Unmodifiable Set<UsageInfo> getNotExcludedUsageInfos(@NotNull UsageView usageView) {
     Set<Usage> excludedUsages = usageView.getExcludedUsages();
 
     Set<UsageInfo> usageInfos = new LinkedHashSet<>();

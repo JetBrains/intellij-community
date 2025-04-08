@@ -834,7 +834,7 @@ public class HighlightInfo implements Segment {
 
   public static final class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private volatile List<? extends IntentionAction> myOptions; // null means not initialized yet
+    private volatile @Unmodifiable List<? extends IntentionAction> myOptions; // null means not initialized yet
     private final @Nullable HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
@@ -852,7 +852,7 @@ public class HighlightInfo implements Segment {
      */
     @Deprecated
     public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable List<? extends IntentionAction> options,
+                                     @Nullable @Unmodifiable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
@@ -862,7 +862,7 @@ public class HighlightInfo implements Segment {
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable List<? extends IntentionAction> options,
+                                     @Nullable @Unmodifiable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
@@ -962,7 +962,7 @@ public class HighlightInfo implements Segment {
       }
 
       IntentionManager intentionManager = IntentionManager.getInstance();
-      List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
+      List<IntentionAction> newOptions = new ArrayList<>(intentionManager.getStandardIntentionOptions(key, element));
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
       InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.getShortName(), element);
       if (toolWrapper != null) {

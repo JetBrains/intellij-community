@@ -156,7 +156,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return ModuleManager.getInstance(Objects.requireNonNull(getProject())).getUnloadedModuleDescriptions();
     }
 

@@ -5,6 +5,7 @@ import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -225,7 +226,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     return super.removeAll(c);
   }
 
-  public @NotNull List<@NotNull T> toStrongList() {
+  public @NotNull @Unmodifiable List<@NotNull T> toStrongList() {
     if (myList.isEmpty()) {
       return Collections.emptyList();
     }

@@ -480,6 +480,6 @@ class UnindexedFilesScannerTest {
       return VfsUtilCore.iterateChildrenRecursively(vfile, { true }, fileIterator)
     }
 
-    override fun getRootUrls(project: Project): MutableSet<String> = mutableSetOf(url)
+    override fun getRootUrls(project: Project): Set<String> = setOf(url)
   }
 }

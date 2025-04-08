@@ -45,7 +45,7 @@ internal enum class ApiSourceArchive(
  */
 internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
-  override fun getActions(orderEntries: MutableList<out LibraryOrderEntry>, psiFile: PsiFile) =
+  override fun getActions(orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile) =
     orderEntries
       .mapNotNull { it.library?.getMavenCoordinates() }
       .firstNotNullOfOrNull { coordinates -> createAction(coordinates, psiFile) }

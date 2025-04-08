@@ -18,6 +18,7 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -367,7 +368,7 @@ public final class VfsUtil extends VfsUtilCore {
     return parent.createChildDirectory(fileSystem, dirName);
   }
 
-  public static @NotNull List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
+  public static @NotNull @Unmodifiable List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
     List<VirtualFile> result = new ArrayList<>();
     visitChildrenRecursively(root, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
@@ -411,7 +412,7 @@ public final class VfsUtil extends VfsUtilCore {
     return children == null ? VirtualFile.EMPTY_ARRAY : children;
   }
 
-  public static @NotNull List<VirtualFile> getChildren(@NotNull VirtualFile dir, @NotNull VirtualFileFilter filter) {
+  public static @NotNull @Unmodifiable List<VirtualFile> getChildren(@NotNull VirtualFile dir, @NotNull VirtualFileFilter filter) {
     var result = (List<VirtualFile>)null;
     for (var child : dir.getChildren()) {
       if (filter.accept(child)) {
@@ -440,7 +441,7 @@ public final class VfsUtil extends VfsUtilCore {
     return index < 0 ? null : urlOrPath.substring(index+1);
   }
 
-  public static @NotNull List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
+  public static @NotNull @Unmodifiable List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     var result = new ArrayList<VirtualFile>(files.length);
 
     for (var file : files) {

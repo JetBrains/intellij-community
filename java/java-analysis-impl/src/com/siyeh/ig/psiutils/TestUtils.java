@@ -36,6 +36,7 @@ import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -113,7 +114,7 @@ public final class TestUtils {
   /**
    * @param frameworks to check matching with {@link TestFramework#getName}
    */
-  public static boolean isExecutableTestMethod(@Nullable PsiMethod method, List<String> frameworks) {
+  public static boolean isExecutableTestMethod(@Nullable PsiMethod method, @Unmodifiable List<String> frameworks) {
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;

@@ -15,7 +15,6 @@ c:com.intellij.analysis.AnalysisScope
 - sf:VIRTUAL_FILES:I
 - p:myElement:com.intellij.psi.PsiElement
 - p:myModule:com.intellij.openapi.module.Module
-- p:myModules:java.util.List
 - pf:myScope:com.intellij.psi.search.SearchScope
 - p:myType:I
 - <init>(com.intellij.openapi.module.Module):V

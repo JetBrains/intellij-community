@@ -274,7 +274,7 @@ public final class ObjectNode {
     void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer);
 
     @NotNull
-    Collection<ObjectNode> getAllNodes();
+    @Unmodifiable Collection<ObjectNode> getAllNodes();
   }
 
   private static final NodeChildren EMPTY = new NodeChildren() {

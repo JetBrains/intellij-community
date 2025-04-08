@@ -4,6 +4,7 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -13,5 +14,6 @@ public interface SyntheticConfigurationTypeProvider {
   ExtensionPointName<SyntheticConfigurationTypeProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.execution.syntheticConfigurationTypeProvider");
 
-  @NotNull Collection<? extends ConfigurationType> getConfigurationTypes();
+  @NotNull @Unmodifiable
+  Collection<? extends ConfigurationType> getConfigurationTypes();
 }

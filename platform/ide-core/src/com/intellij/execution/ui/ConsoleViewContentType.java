@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -113,7 +114,7 @@ public class ConsoleViewContentType {
     return SYSTEM_OUTPUT;
   }
 
-  public static synchronized @NotNull Collection<ConsoleViewContentType> getRegisteredTypes() {
+  public static synchronized @NotNull @Unmodifiable Collection<ConsoleViewContentType> getRegisteredTypes() {
     return ourRegisteredTypes.values();
   }
 

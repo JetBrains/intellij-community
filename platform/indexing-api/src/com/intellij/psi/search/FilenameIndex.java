@@ -17,6 +17,7 @@ import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -58,29 +59,29 @@ public final class FilenameIndex {
   /** @deprecated Use {@link FilenameIndex#getVirtualFilesByName(String, GlobalSearchScope)} */
   @SuppressWarnings("unused")
   @Deprecated
-  public static @NotNull Collection<VirtualFile> getVirtualFilesByName(Project project,
-                                                                       @NotNull String name,
-                                                                       @NotNull GlobalSearchScope scope) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(Project project,
+                                                                                     @NotNull String name,
+                                                                                     @NotNull GlobalSearchScope scope) {
     return getVirtualFilesByName(name, scope);
   }
 
-  public static @NotNull Collection<VirtualFile> getVirtualFilesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     return getVirtualFilesByNames(Set.of(name), scope, null);
   }
 
   /** @deprecated Use {@link FilenameIndex#getVirtualFilesByName(String, boolean, GlobalSearchScope)} */
   @SuppressWarnings("unused")
   @Deprecated
-  public static @NotNull Collection<VirtualFile> getVirtualFilesByName(Project project,
-                                                                       @NotNull String name,
-                                                                       boolean caseSensitively,
-                                                                       @NotNull GlobalSearchScope scope) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(Project project,
+                                                                                     @NotNull String name,
+                                                                                     boolean caseSensitively,
+                                                                                     @NotNull GlobalSearchScope scope) {
     return getVirtualFilesByName(name, caseSensitively, scope);
   }
 
-  public static @NotNull Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
-                                                                       boolean caseSensitively,
-                                                                       @NotNull GlobalSearchScope scope) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getVirtualFilesByName(@NotNull String name,
+                                                                                     boolean caseSensitively,
+                                                                                     @NotNull GlobalSearchScope scope) {
     if (caseSensitively) return getVirtualFilesByName(name, scope);
     return getVirtualFilesByNamesIgnoringCase(Set.of(name), scope, null);
   }
@@ -142,9 +143,9 @@ public final class FilenameIndex {
     return ContainerUtil.process(files, processor);
   }
 
-  private static @NotNull Set<VirtualFile> getVirtualFilesByNamesIgnoringCase(@NotNull Set<String> names,
-                                                                              @NotNull GlobalSearchScope scope,
-                                                                              @Nullable IdFilter idFilter) {
+  private static @NotNull @Unmodifiable Set<VirtualFile> getVirtualFilesByNamesIgnoringCase(@NotNull Set<String> names,
+                                                                                            @NotNull GlobalSearchScope scope,
+                                                                                            @Nullable IdFilter idFilter) {
     Set<String> nameSet = CollectionFactory.createCustomHashingStrategySet(HashingStrategy.caseInsensitive());
     nameSet.addAll(names);
     Set<String> keys = CollectionFactory.createSmallMemoryFootprintSet();
@@ -182,13 +183,13 @@ public final class FilenameIndex {
    * @return all files with provided extension
    * @author Konstantin Bulenkov
    */
-  public static @NotNull Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getAllFilesByExt(@NotNull Project project, @NotNull String ext) {
     return getAllFilesByExt(project, ext, GlobalSearchScope.allScope(project));
   }
 
-  public static @NotNull Collection<VirtualFile> getAllFilesByExt(@NotNull Project project,
-                                                                  @NotNull String ext,
-                                                                  @NotNull GlobalSearchScope searchScope) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getAllFilesByExt(@NotNull Project project,
+                                                                                @NotNull String ext,
+                                                                                @NotNull GlobalSearchScope searchScope) {
     if (ext.isEmpty()) {
       return Java11Shim.Companion.getINSTANCE().listOf();
     }
@@ -207,9 +208,9 @@ public final class FilenameIndex {
     return getVirtualFilesByNames(names, searchScope, null);
   }
 
-  private static @NotNull Set<VirtualFile> getVirtualFilesByNames(@NotNull Set<String> names,
-                                                                  @NotNull GlobalSearchScope scope,
-                                                                  @Nullable IdFilter filter) {
+  private static @NotNull @Unmodifiable Set<VirtualFile> getVirtualFilesByNames(@NotNull Set<String> names,
+                                                                                @NotNull GlobalSearchScope scope,
+                                                                                @Nullable IdFilter filter) {
     Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
     FileBasedIndex.getInstance().processFilesContainingAnyKey(
       NAME, names, scope, filter, null,

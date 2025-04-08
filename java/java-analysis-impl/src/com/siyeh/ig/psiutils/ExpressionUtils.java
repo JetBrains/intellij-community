@@ -26,10 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,12 +38,12 @@ import static com.intellij.psi.CommonClassNames.*;
 public final class ExpressionUtils {
   private static final @NonNls Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
     Set.of("append", "format", "print", "printf", "println", "valueOf");
-  private static final @NonNls Set<String> convertableBoxedClassNames = new HashSet<>(3);
+  private static final @NonNls @Unmodifiable Set<String> convertableBoxedClassNames;
 
   static {
-    convertableBoxedClassNames.add(JAVA_LANG_BYTE);
-    convertableBoxedClassNames.add(JAVA_LANG_CHARACTER);
-    convertableBoxedClassNames.add(JAVA_LANG_SHORT);
+    convertableBoxedClassNames = Set.of(JAVA_LANG_BYTE,
+    JAVA_LANG_CHARACTER,
+    JAVA_LANG_SHORT);
   }
 
   private static final CallMatcher KNOWN_SIMPLE_CALLS =

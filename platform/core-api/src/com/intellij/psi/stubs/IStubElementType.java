@@ -9,10 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,7 +64,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
+  public static @NotNull @Unmodifiable List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
 
     Logger logger = Logger.getInstance(IStubElementType.class);

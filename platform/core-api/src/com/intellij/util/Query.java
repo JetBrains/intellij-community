@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +25,7 @@ public interface Query<Result> extends Iterable<Result> {
    * @return results in a collection or empty collection if no results found.
    */
   @NotNull
+  @Unmodifiable
   Collection<Result> findAll();
 
   /**
