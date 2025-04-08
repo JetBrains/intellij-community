@@ -16,21 +16,24 @@
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.performDebuggerActionAsync
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
+import com.intellij.xdebugger.impl.rpc.toRpc
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class XDebuggerRunToCursorActionHandler(private val myIgnoreBreakpoints: Boolean) : XDebuggerSuspendedActionHandler() {
-  override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
-    return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext) != null
+  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+    return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) != null
   }
 
-  override fun perform(session: XDebugSession, dataContext: DataContext) {
-    val position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext)
-    if (position != null) {
-      session.runToPosition(position, myIgnoreBreakpoints)
+  override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
+    val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
+    performDebuggerActionAsync(session.project, dataContext, updateInlays = true) {
+      XDebugSessionApi.getInstance().runToPosition(session.id, position.toRpc(), myIgnoreBreakpoints)
     }
   }
 }

@@ -262,6 +262,7 @@ a:com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
 c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.ForceStepIntoAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
@@ -297,6 +298,7 @@ c:com.intellij.xdebugger.impl.actions.ResumeAction
 c:com.intellij.xdebugger.impl.actions.RunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.StepIntoAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
@@ -307,8 +309,8 @@ c:com.intellij.xdebugger.impl.actions.StepOutAction
 - <init>():V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.StepOverAction
-- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - com.intellij.openapi.project.DumbAware
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler

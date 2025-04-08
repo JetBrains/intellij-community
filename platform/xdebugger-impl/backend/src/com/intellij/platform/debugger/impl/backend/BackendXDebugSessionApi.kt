@@ -95,6 +95,13 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
+  override suspend fun runToPosition(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto, ignoreBreakpoints: Boolean) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.runToPosition(sourcePositionDto.sourcePosition(), ignoreBreakpoints)
+    }
+  }
+
   override suspend fun triggerUpdate(sessionId: XDebugSessionId) {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
