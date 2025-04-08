@@ -305,7 +305,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
       val actionRequired = SettingsSyncStatusTracker.getInstance().currentStatus as SettingsSyncStatusTracker.SyncStatus.ActionRequired
       runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), actionRequired.actionTitle) {
-        actionRequired.execute()
+        actionRequired.execute(syncConfigPanel)
       }
       return
     }
@@ -328,7 +328,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           return@runWithModalProgressBlocking
         }
         if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
-          triggerUpdateConfigurable()
+          withContext(Dispatchers.EDT) {
+            triggerUpdateConfigurable()
+          }
+          cellDropDownLink.comment?.text = message("sync.status.will.enable")
         } else {
           enableCheckbox.isSelected = false
         }
@@ -338,6 +341,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       val syncDisableOption = showDisableSyncDialog()
       if (syncDisableOption != DisableSyncType.DONT_DISABLE) {
         disableSyncOption.set(syncDisableOption)
+        cellDropDownLink.comment?.text = message("sync.status.will.disable")
       } else {
         enableCheckbox.isSelected = true
       }
@@ -589,7 +593,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           //statusLabel.icon = AllIcons.General.Error
         }
         is SettingsSyncStatusTracker.SyncStatus.ActionRequired -> {
-          actionRequiredAction = { currentStatus.execute() }
+          actionRequiredAction = { currentStatus.execute(syncConfigPanel) }
           actionRequiredLabel.text = currentStatus.message
           actionRequiredButton.text = currentStatus.actionTitle
           //actionRequiredData = Pair(currentStatus.message, currentStatus.actionTitle)
@@ -609,6 +613,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   // triggers fake action, which causes SettingEditor to update and check if configurable was modified
+  // must be called on EDT
   private fun triggerUpdateConfigurable() {
     val dumbAwareAction = DumbAwareAction.create(Consumer { _: AnActionEvent? ->
       // do nothing
