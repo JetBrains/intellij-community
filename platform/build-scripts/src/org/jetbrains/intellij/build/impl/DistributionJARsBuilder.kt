@@ -293,19 +293,16 @@ private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): 
 suspend fun buildBundledPlugins(
   state: DistributionBuilderState,
   plugins: Collection<PluginLayout>,
-  isUpdateFromSources: Boolean,
-  buildPlatformJob: Job?,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
-  moduleOutputPatcher: ModuleOutputPatcher,
   context: BuildContext,
 ) {
   doBuildBundledPlugins(
     state = state,
     plugins = plugins,
-    isUpdateFromSources = isUpdateFromSources,
-    buildPlatformJob = buildPlatformJob,
+    isUpdateFromSources = false,
+    buildPlatformJob = null,
     searchableOptionSet = searchableOptionSetDescriptor,
-    moduleOutputPatcher = moduleOutputPatcher,
+    moduleOutputPatcher = ModuleOutputPatcher(),
     context = context,
   )
 }
