@@ -6,6 +6,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecApiHelpers
+import com.intellij.platform.eel.execute
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -32,7 +34,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
   /**
    * Execute `main` method
    */
-  fun createBuilderToExecuteMain(): EelExecApi.ExecuteProcessOptions.Builder = EelExecApi.ExecuteProcessOptions.Builder(exe).env(env).args(args)
+  fun createBuilderToExecuteMain(exec: EelExecApi): EelExecApiHelpers.Execute = exec.execute(exe).env(env).args(args)
 
   private companion object {
     private fun getClassPathForClass(clazz: Class<*>): String {

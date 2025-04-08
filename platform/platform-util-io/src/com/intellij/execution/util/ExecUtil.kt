@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -216,14 +217,14 @@ object ExecUtil {
     val env = builder.environment()
     val workingDir = builder.directory()?.toPath()?.asEelPath()
 
-    @Suppress("DEPRECATION") val options = EelExecApi.ExecuteProcessOptions.Builder(exe)
+    val options = execute(exe)
       .args(rest)
       .workingDirectory(workingDir)
       .env(env)
       .ptyOrStdErrSettings(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
 
     return runBlockingMaybeCancellable {
-      execute(options.build()).getOrThrow().convertToJavaProcess()
+      options.getOrThrow().convertToJavaProcess()
     }
   }
 }

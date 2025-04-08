@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
@@ -138,13 +139,12 @@ class PyVirtualEnvTerminalCustomizerTest {
     val exe = command[0]
     val args = if (command.size == 1) emptyList() else command.subList(1, command.size)
 
-    val execOptions = EelExecApi.ExecuteProcessOptions.Builder(exe)
+    val execOptions = localEel.exec.execute(exe)
       .args(args)
       .env(shellOptions.envVariables + mapOf(Pair("TERM", "dumb")))
       // Unix shells do not activate with out tty
       .ptyOrStdErrSettings(if (SystemInfo.isWindows) null else EelExecApi.Pty(100, 100, true))
-      .build()
-    val process = localEel.exec.execute(execOptions).getOrThrow()
+    val process = execOptions.getOrThrow()
     try {
       val stderr = async {
         process.stderr.readWholeText().getOrThrow()

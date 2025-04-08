@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
@@ -202,12 +203,12 @@ private class EelMavenCmdState(
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
       val exe = Path.of(cmd.exePath).asEelPath()
-      val builder = EelExecApi.ExecuteProcessOptions.Builder(exe.toString())
+      val builder = eel.exec.execute(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
         .workingDirectory(EelPath.parse(getWorkingDirectory(), eel.descriptor))
 
-      eel.exec.execute(builder.build()).getOrThrow()
+      builder.getOrThrow()
     }
 
     return object : KillableColoredProcessHandler(eelProcess.convertToJavaProcess(), cmd) {

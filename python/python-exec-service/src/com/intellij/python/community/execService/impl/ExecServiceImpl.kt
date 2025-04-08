@@ -126,11 +126,10 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
 @CheckReturnValue
 private suspend fun EelExecutableProcess.run(): Result<EelProcess, ExecException> {
   val workDirectoryEelPath = workingDirectory?.let { EelPath.parse(it.toString(), eel.descriptor) }
-  val executionResult = eel.exec.execute(exe) {
-    args(args)
-    env(env)
-    workingDirectory(workDirectoryEelPath)
-  }
+  val executionResult = eel.exec.execute(exe)
+    .args(args)
+    .env(env)
+    .workingDirectory(workDirectoryEelPath).eelIt()
 
   val process = executionResult.getOr { err ->
     return failAsCantStart(err.error)

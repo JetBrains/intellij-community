@@ -32,6 +32,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -72,7 +73,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
       val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
 
-      val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (isWindows()) "cmd.exe" else "/bin/sh")
+      val processOptions = eelApi.exec.execute(if (isWindows()) "cmd.exe" else "/bin/sh")
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
         .workingDirectory(Path(myConfiguration.runnerParameters.workingDirPath).asEelPath())
         .args(getArgs(eelApi)).let {
@@ -80,9 +81,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
             it.ptyOrStdErrSettings(Pty(-1, -1, true))
           }
           else it
-        }.build()
+        }
 
-      val result = eelApi.exec.execute(processOptions)
+      val result = processOptions.eelIt()
 
       return@runWithModalProgressBlocking when (result) {
         is EelResult.Error -> {

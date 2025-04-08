@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.executeProcess
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.readWholeText
@@ -48,7 +48,7 @@ class SystemPythonServiceShowCaseTest {
     for (systemPython in SystemPythonService().findSystemPythons(forceRefresh = true)) {
       fileLogger().info("Python found: $systemPython")
       val eelApi = systemPython.pythonBinary.getEelDescriptor().upgrade()
-      val process = eelApi.exec.executeProcess(systemPython.pythonBinary.pathString, "--version").getOrThrow()
+      val process = eelApi.exec.execute(systemPython.pythonBinary.pathString, "--version").getOrThrow()
       val output = async {
         (if (systemPython.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText().getOrThrow()
       }

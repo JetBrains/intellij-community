@@ -56,7 +56,7 @@ class EelLocalExecApiTest {
 
   @Test
   fun testExitCode(): Unit = timeoutRunBlocking {
-    when (val r = localEel.exec.executeProcess("something that doesn't exist for sure")) {
+    when (val r = localEel.exec.execute("something that doesn't exist for sure").eelIt()) {
       is EelResult.Error ->
         // **nix: ENOENT 2 No such file or directory
         // win: ERROR_FILE_NOT_FOUND 2 winerror.h
@@ -74,13 +74,13 @@ class EelLocalExecApiTest {
     @CartesianTest.Enum ptyManagement: PTYManagement,
   ): Unit = timeoutRunBlocking(1.minutes) {
 
-    val builder = executor.createBuilderToExecuteMain()
+    val builder = executor.createBuilderToExecuteMain(localEel.exec)
     builder.ptyOrStdErrSettings(when (ptyManagement) {
                                   PTYManagement.NO_PTY -> null
                                   PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
                                   PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
                                 })
-    when (val r = localEel.exec.execute(builder.build())) {
+    when (val r = builder.eelIt()) {
       is EelResult.Error -> Assertions.fail(r.error.message)
       is EelResult.Ok -> {
         val process = r.value
