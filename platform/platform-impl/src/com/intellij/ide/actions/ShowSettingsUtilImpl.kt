@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperDialog
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.navigation.Place
 import com.intellij.util.ui.UIUtil
@@ -67,7 +68,10 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
           ModalityState.current() == ModalityState.nonModal()) {
         runWithModalProgressBlocking(project, IdeBundle.message("settings.modal.opening.message")) {
           val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect) {
-            createDialogWrapper(project, groups, toSelect, filter, false) as SettingsDialog
+            (createDialogWrapper(project, groups, toSelect, filter, false) as SettingsDialog).apply {
+              peer.rootPane.isFocusCycleRoot = true
+              peer.rootPane.focusTraversalPolicy = IdeFocusTraversalPolicy()
+            }
           }
           val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx;
           val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
