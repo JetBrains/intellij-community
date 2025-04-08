@@ -43,8 +43,11 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -53,7 +56,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.XDebuggerUtil.INLINE_BREAKPOINTS_KEY;
+import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
+import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 
 @ApiStatus.Internal
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
@@ -62,6 +68,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private final @Nullable P myProperties;
   protected final S myState;
   private final XBreakpointManagerImpl myBreakpointManager;
+  private final CoroutineScope myCoroutineScope;
+  private final XBreakpointId myId;
   private Icon myIcon;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
   private boolean myConditionEnabled = true;
@@ -75,6 +83,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myType = type;
     myProperties = properties;
     myBreakpointManager = breakpointManager;
+    myCoroutineScope = childScope(breakpointManager.getCoroutineScope(), "XBreakpoint", EmptyCoroutineContext.INSTANCE, true);
+    myId = storeGlobally(this, myCoroutineScope);
     initExpressions();
   }
 
@@ -82,6 +92,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myState = breakpointState;
     myType = type;
     myBreakpointManager = breakpointManager;
+    myCoroutineScope = childScope(breakpointManager.getCoroutineScope(), "XBreakpoint", EmptyCoroutineContext.INSTANCE, true);
+    myId = storeGlobally(this, myCoroutineScope);
     myProperties = type.createProperties();
     if (myProperties != null) {
       ComponentSerializationUtil.loadComponentState(myProperties, myState.getPropertiesElement());
@@ -104,6 +116,16 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   protected XBreakpointManagerImpl getBreakpointManager() {
     return myBreakpointManager;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull XBreakpointId getBreakpointId() {
+    return myId;
   }
 
   public final void fireBreakpointChanged() {
@@ -317,6 +339,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public final void dispose() {
     myDisposed = true;
+    cancel(myCoroutineScope, null);
     doDispose();
   }
 

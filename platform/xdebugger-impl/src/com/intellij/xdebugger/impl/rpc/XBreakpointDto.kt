@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Serializable
 data class XBreakpointDto(
+  val id: XBreakpointId,
   val displayText: String,
   val iconId: IconId,
   val sourcePosition: XSourcePositionDto?,
@@ -38,6 +39,7 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   val breakpointState = state
 
   return XBreakpointDto(
+    id = breakpointId,
     displayText = XBreakpointUtil.getShortText(this),
     iconId = getIcon().rpcId(),
     sourcePosition = sourcePosition?.toRpc(),

@@ -65,6 +65,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private final Project myProject;
   private final XDebuggerManagerImpl myDebuggerManager;
   private final XDependentBreakpointManager myDependentBreakpointManager;
+  @NotNull private final CoroutineScope myCoroutineScope;
   private long myTime;
   private volatile String myDefaultGroup;
   private RemovedBreakpointData myLastRemovedBreakpoint = null;
@@ -76,6 +77,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                 @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myDebuggerManager = debuggerManager;
+    myCoroutineScope = coroutineScope;
     myDependentBreakpointManager = new XDependentBreakpointManager(this, messageBusConnection);
     myLineBreakpointManager = new XLineBreakpointManager(project, coroutineScope);
 
@@ -153,6 +155,11 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   public Project getProject() {
     return myProject;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
   }
 
   @Override

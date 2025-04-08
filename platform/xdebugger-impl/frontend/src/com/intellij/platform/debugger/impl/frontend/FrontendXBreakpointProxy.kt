@@ -9,6 +9,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.rpc.xExpression
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,8 @@ class FrontendXBreakpointProxy(
   private val cs: CoroutineScope,
   private val dto: XBreakpointDto,
 ) : XBreakpointProxy {
+  val id: XBreakpointId = dto.id
+
   val enabled: StateFlow<Boolean> = dto.enabledState.toFlow()
     .stateIn(cs, SharingStarted.Eagerly, dto.initialEnabled)
 
