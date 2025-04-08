@@ -67,6 +67,10 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun toolwindowIsPresented(): Boolean {
+    return button.getToolWindow().isVisible()
+  }
+
   fun close() {
     driver.withContext(OnDispatcher.EDT) {
       button.getToolWindow().hide()
