@@ -2319,7 +2319,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void executeDelete(@NotNull VFileDeleteEvent event) {
     VirtualFile file = event.getFile();
     if (!file.exists()) {
-      LOG.error("Deleting a file which does not exist: " + ((VirtualFileWithId)file).getId() + " " + file.getPath());
+      LOG.error("Deleting a file which does not exist in VFS: #" + ((VirtualFileWithId)file).getId() + ", path: " + file.getPath());
       return;
     }
 
