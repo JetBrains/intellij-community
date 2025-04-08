@@ -9,10 +9,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.client.ClientSystemInfo;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -31,8 +28,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.KeyStroke;
-import java.awt.Font;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -76,7 +73,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     });
   }
 
-  @NotNull EditorColorsScheme getColorsScheme() {
+  private @NotNull EditorColorsScheme getColorsScheme() {
     return myUiSettingsManager.getEditorColorsScheme();
   }
 
@@ -253,6 +250,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   @Override
   public @NotNull TextStyle getDefaultStyle() {
     return new TextStyle(getDefaultForeground(), getDefaultBackground());
+  }
+
+  @ApiStatus.Internal
+  public FontPreferences getFontPreferences() {
+    return getColorsScheme().getFontPreferences();
   }
 
   @Override
