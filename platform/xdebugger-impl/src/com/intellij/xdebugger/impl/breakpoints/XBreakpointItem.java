@@ -233,8 +233,7 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public Object getBreakpoint() {
-    // TODO: Return proxy object instead of underlying breakpoint for frontend implementation
-    return getUnderlyingBreakpoint();
+    return myBreakpointProxy.getBreakpoint();
   }
 
   @Override

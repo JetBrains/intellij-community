@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.Disposable
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import org.jetbrains.annotations.ApiStatus
@@ -18,6 +19,8 @@ interface XBreakpointManagerProxy {
   fun getAllBreakpointItems(): List<BreakpointItem>
 
   fun getAllBreakpointTypes(): List<XBreakpointType<*, *>>
+
+  fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit)
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -40,6 +43,12 @@ interface XBreakpointManagerProxy {
 
     override fun getAllBreakpointTypes(): List<XBreakpointType<*, *>> {
       return XBreakpointUtil.breakpointTypes().toList()
+    }
+
+    override fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit) {
+      XBreakpointUtil.subscribeOnBreakpointsChanges(breakpointManager.project, disposable, onBreakpointChange = {
+        listener()
+      })
     }
   }
 }

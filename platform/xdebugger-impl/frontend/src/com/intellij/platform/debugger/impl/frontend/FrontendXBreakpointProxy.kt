@@ -12,8 +12,11 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -24,8 +27,11 @@ class FrontendXBreakpointProxy(
   private val project: Project,
   private val cs: CoroutineScope,
   private val dto: XBreakpointDto,
+  private val onEnabledChange: () -> Unit,
 ) : XBreakpointProxy {
   val id: XBreakpointId = dto.id
+
+  override val breakpoint: Any = id
 
   private val _enabled = MutableStateFlow(dto.initialEnabled)
   val enabled: StateFlow<Boolean> = _enabled.asStateFlow()

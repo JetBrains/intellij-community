@@ -12,6 +12,8 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 interface XBreakpointProxy {
+  val breakpoint: Any
+
   fun getDisplayText(): @NlsSafe String
   fun getUserDescription(): @NlsSafe String?
   fun getIcon(): Icon
@@ -29,7 +31,7 @@ interface XBreakpointProxy {
   fun getConditionExpression(): XExpression?
 
 
-  class Monolith(val breakpoint: XBreakpoint<*>) : XBreakpointProxy {
+  class Monolith(override val breakpoint: XBreakpoint<*>) : XBreakpointProxy {
     override fun getDisplayText(): String = XBreakpointUtil.getShortText(breakpoint)
 
     override fun getUserDescription(): String? = (breakpoint as XBreakpointBase<*, *, *>).userDescription

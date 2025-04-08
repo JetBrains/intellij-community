@@ -1,8 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.attachAsChildTo
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
@@ -11,11 +16,16 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
+  private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
   val breakpoints: StateFlow<Set<XBreakpointProxy>> = channelFlow {
     XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).collectLatest { breakpointDtos ->
       // TODO: do we need to reuse breakpoint coroutine scopes?
@@ -24,10 +34,14 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
           FrontendXBreakpointProxy(
             project = project,
             cs = this,
-            dto = it
+            dto = it,
+            onEnabledChange = {
+              breakpointsChanged.tryEmit(Unit)
+            }
           )
         }
         send(breakpointProxies)
+        breakpointsChanged.tryEmit(Unit)
       }
       awaitCancellation()
     }
@@ -54,5 +68,16 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
   override fun getAllBreakpointTypes(): List<XBreakpointType<*, *>> {
     return listOf() // TODO: implement breakpoint types
+  }
+
+  override fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit) {
+    val scope = cs.childScope("BreakpointsChangesListener")
+    val childDisposable = Disposable { scope.cancel("disposed") }
+    Disposer.register(disposable, childDisposable)
+    scope.launch(Dispatchers.EDT) {
+      breakpointsChanged.collect {
+        listener()
+      }
+    }
   }
 }

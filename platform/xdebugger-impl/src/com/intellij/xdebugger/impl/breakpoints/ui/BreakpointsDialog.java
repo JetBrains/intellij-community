@@ -51,8 +51,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.subscribeOnBreakpointsChanges;
-
 @ApiStatus.Internal
 public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
@@ -346,7 +344,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     initSelection(myBreakpointItems);
 
-    subscribeOnBreakpointsChanges(myProject, myListenerDisposable, breakpoint -> {
+    myBreakpointManager.subscribeOnBreakpointsChanges(myListenerDisposable, () -> {
       myRebuildAlarm.cancelAndRequest();
       return Unit.INSTANCE;
     });
