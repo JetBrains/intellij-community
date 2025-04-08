@@ -284,6 +284,7 @@
   - name: kotlin.jsr223
   - name: kotlin.k2.internal
   - name: kotlin-ultimate.common-native
+  - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs
   - name: kotlin-ultimate.ultimate-plugin
