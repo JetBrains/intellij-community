@@ -173,7 +173,7 @@ class IndexUpdateRunner(
 
     val filesToIndexCount = fileSet.size()
     TRACER.spanBuilder("doIndexFiles").setAttribute("files", filesToIndexCount.toLong()).useWithScope {
-      withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash}")) {
+      withContext(Dispatchers.Default + CoroutineName("Indexing(${project.locationHash}")) {
         //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
         // of distributing the load across available CPUs.
         // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
@@ -198,7 +198,7 @@ class IndexUpdateRunner(
                     processRequestTask(fileIndexingRequest)
                   }
 
-                ensureActive()
+                yield()
               }
             }
             //FIXME RC: for profiling, remove afterwards
