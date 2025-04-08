@@ -2,26 +2,31 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.files
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
+import com.intellij.ide.ui.colors.color
+import com.intellij.ide.ui.icons.icon
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.ide.util.scopeChooser.ScopeSeparator
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeFilterState
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import com.intellij.platform.searchEverywhere.providers.files.SeFilesFilterData
-import com.intellij.psi.search.ProjectScope
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.platform.searchEverywhere.providers.files.SeFilesFilter
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.Processor
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
-import javax.swing.JComponent
+import org.jetbrains.annotations.Nls
+import java.awt.Color
+import javax.swing.Icon
 
 @Internal
-class SeFilesTab(private val delegate: SeTabDelegate): SeTab {
+class SeFilesTab(private val delegate: SeTabDelegate, private val scopeInfo: SeSearchScopesInfo?): SeTab {
   override val name: String get() = IdeBundle.message("search.everywhere.group.name.files")
   override val shortName: String get() = name
   override val id: String get() = "FileSearchEverywhereContributor"
@@ -29,7 +34,7 @@ class SeFilesTab(private val delegate: SeTabDelegate): SeTab {
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)
 
-  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState> = SeFilesFilterEditor()
+  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState>? = scopeInfo?.let { SeFilesFilterEditor(scopeInfo) }
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
@@ -41,30 +46,60 @@ class SeFilesTab(private val delegate: SeTabDelegate): SeTab {
 }
 
 @Internal
-class SeFilesFilterEditor : ObservableOptionEditor<SeFilterState> {
-  private var current: SeFilesFilterData? = null
+class SeFilesFilterEditor(val scopesInfo: SeSearchScopesInfo) : SeFilterEditor<SeFilesFilter>(
+  SeFilesFilter(scopesInfo.selectedScopeId)
+) {
+  private val descriptors: Map<String, ScopeDescriptor> = scopesInfo.scopes.associate {
+    val descriptor =
+      if (it.isSeparator) ScopeSeparator(it.name)
+      else object : ScopeDescriptor(object : GlobalSearchScope() {
+        override fun contains(file: VirtualFile): Boolean = throw IllegalStateException("Should not be called")
+        override fun isSearchInModuleContent(aModule: Module): Boolean = throw IllegalStateException("Should not be called")
+        override fun isSearchInLibraries(): Boolean = throw IllegalStateException("Should not be called")
+      }) {
+        override fun getColor(): Color? = it.colorId?.color()
+        override fun getDisplayName(): @Nls(capitalization = Nls.Capitalization.Sentence) String = it.name
+        override fun getIcon(): Icon? = it.iconId?.icon()
+      }
 
-  private val _resultFlow: MutableStateFlow<SeFilterState?> = MutableStateFlow(current?.toFilterData())
-  override val resultFlow: StateFlow<SeFilterState?> = _resultFlow.asStateFlow()
+    it.scopeId to descriptor
+  }
 
-  override fun getComponent(): JComponent {
-    return panel {
-      row {
-        @Suppress("DialogTitleCapitalization")
-        val checkBox = checkBox(ProjectScope.getProjectFilesScopeName())
+  override fun getActions(): List<AnAction> = listOf(
+    object : ScopeChooserAction() {
+      val canToggleEverywhere = scopesInfo.canToggleEverywhere
 
-        checkBox.component.model.isSelected = current?.isProjectOnly ?: false
-        checkBox.onChanged {
-          if (current?.isProjectOnly != it.isSelected) {
-            current = SeFilesFilterData(it.isSelected)
-            _resultFlow.value = current?.toFilterData()
-          }
+      override fun onScopeSelected(o: ScopeDescriptor) {
+        scopesInfo.scopes.firstOrNull { it.name == o.displayName }?.let {
+          SeFilesFilter(it.scopeId)
+        }?.let {
+          filterValue = it
         }
       }
-    }
-  }
 
-  override fun result(): SeFilterState {
-    return resultFlow.value ?: SeFilterState.Empty
-  }
+      override fun getSelectedScope(): ScopeDescriptor = filterValue.selectedScopeId?.let { descriptors[it] }
+                                                         ?: ScopeDescriptor(GlobalSearchScope.EMPTY_SCOPE)
+
+      override fun onProjectScopeToggled() {
+        isEverywhere = filterValue.selectedScopeId != scopesInfo.everywhereScopeId
+      }
+
+      override fun processScopes(processor: Processor<in ScopeDescriptor>): Boolean {
+        return descriptors.values.all { processor.process(it) }
+      }
+
+      override fun isEverywhere(): Boolean = filterValue.selectedScopeId == scopesInfo.everywhereScopeId
+
+      override fun setEverywhere(everywhere: Boolean) {
+        val targetScope = if (everywhere) scopesInfo.everywhereScopeId else scopesInfo.projectScopeId ?: return
+        filterValue = SeFilesFilter(targetScope)
+      }
+
+      override fun canToggleEverywhere(): Boolean {
+        if (!canToggleEverywhere) return false
+        return filterValue.selectedScopeId != scopesInfo.everywhereScopeId ||
+               filterValue.selectedScopeId != scopesInfo.projectScopeId
+      }
+    }
+  )
 }

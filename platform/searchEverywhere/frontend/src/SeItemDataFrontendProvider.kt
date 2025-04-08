@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class SeItemDataFrontendProvider(private val projectId: ProjectId,
                                  override val id: SeProviderId,
                                  private val sessionRef: DurableRef<SeSessionEntity>,
-                                 private val dataContextId: DataContextId?): SeItemDataProvider {
+                                 private val dataContextId: DataContextId): SeItemDataProvider {
   override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
       val channel = Channel<Int>(capacity = 1, onBufferOverflow = BufferOverflow.SUSPEND)
@@ -44,6 +44,10 @@ class SeItemDataFrontendProvider(private val projectId: ProjectId,
                                     modifiers: Int,
                                     searchText: String): Boolean {
     return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText)
+  }
+
+  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+    return SeRemoteApi.getInstance().getSearchScopesInfoForProvider(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
   }
 
   override fun dispose() {}

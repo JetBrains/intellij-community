@@ -14,4 +14,6 @@ interface SeItemDataProvider: Disposable {
   suspend fun itemSelected(itemData: SeItemData,
                            modifiers: Int,
                            searchText: String): Boolean
+
+  suspend fun getSearchScopesInfo(): SeSearchScopesInfo?
 }

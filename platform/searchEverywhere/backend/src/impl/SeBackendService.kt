@@ -132,6 +132,13 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 
+  suspend fun getSearchScopesInfoForProvider(sessionRef: DurableRef<SeSessionEntity>,
+                                             dataContextId: DataContextId,
+                                             providerId: SeProviderId): SeSearchScopesInfo? {
+    val provider = getProviders(sessionRef, dataContextId)[providerId] ?: return null
+    return provider.getSearchScopesInfo()
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): SeBackendService = project.service<SeBackendService>()

@@ -17,7 +17,7 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 abstract class SeFilterEditor<T: SeFilter>(initialFilter: T) : ObservableOptionEditor<SeFilterState> {
-  protected var current: T = initialFilter
+  protected var filterValue: T = initialFilter
     set(value) {
       field = value
       _resultFlow.value = value.toState()

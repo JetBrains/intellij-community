@@ -51,11 +51,11 @@ private class SeAllFilterEditor : SeFilterEditor<SeEverywhereFilter>(SeEverywher
     IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items")
   ) {
     override fun isEverywhere(): Boolean {
-      return current.isEverywhere
+      return filterValue.isEverywhere
     }
 
     override fun setEverywhere(state: Boolean) {
-      current = SeEverywhereFilter(state)
+      filterValue = SeEverywhereFilter(state)
     }
   });
 }

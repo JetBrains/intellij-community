@@ -4,10 +4,7 @@ package com.intellij.platform.searchEverywhere.impl
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.*
 import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -43,6 +40,11 @@ interface SeRemoteApi: RemoteApi<Unit> {
                            searchText: String): Boolean
 
   suspend fun getAvailableProviderIds(): List<SeProviderId>
+
+  suspend fun getSearchScopesInfoForProvider(projectId: ProjectId,
+                                             sessionRef: DurableRef<SeSessionEntity>,
+                                             dataContextId: DataContextId,
+                                             providerId: SeProviderId): SeSearchScopesInfo?
 
   companion object {
     @JvmStatic

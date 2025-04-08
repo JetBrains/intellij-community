@@ -319,7 +319,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
 
     textField.addFocusListener(object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
-        onFocusLost()
+        onFocusLost(e)
       }
     })
   }
@@ -370,7 +370,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     // TODO: Implement description footer
   }
 
-  private fun onFocusLost() {
+  private fun onFocusLost(e: FocusEvent) {
     if (isWaylandToolkit()) {
       // In Wayland focus is always lost when the window is being moved.
       return
@@ -379,7 +379,10 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       return
     }
 
-    closePopup()
+    val oppositeComponent = e.oppositeComponent
+    if (!UIUtil.haveCommonOwner(this, oppositeComponent)) {
+      closePopup()
+    }
   }
 
   private fun closePopup() {

@@ -40,6 +40,10 @@ class SeItemDataLocalProvider(private val provider: SeItemsProvider,
     return provider.itemSelected(item, modifiers, searchText)
   }
 
+  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+    return (provider as? SeSearchScopesProvider)?.getSearchScopesInfo()
+  }
+
   override fun dispose() {
     SeLog.log(LIFE_CYCLE, "Local provider ${id.value} disposed")
     Disposer.dispose(provider)

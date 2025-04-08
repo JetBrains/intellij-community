@@ -20,6 +20,6 @@ class SeFilesTabFactory : SeTabFactory {
                                         listOf(SeProviderId("com.intellij.FileSearchEverywhereItemProvider")),
                                         dataContext,
                                         true)
-    return SeFilesTab(delegate)
+    return SeFilesTab(delegate, delegate.getSearchScopesInfos().firstOrNull())
   }
 }

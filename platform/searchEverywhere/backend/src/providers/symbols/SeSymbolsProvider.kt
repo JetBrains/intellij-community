@@ -9,7 +9,7 @@ import com.intellij.platform.searchEverywhere.providers.util.SeTargetsProviderDe
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeSymbolsProvider(val project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>): SeItemsProvider {
+class SeSymbolsProvider(val project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>): SeItemsProvider, SeSearchScopesProvider {
   override val id: String get() = ID
   private val targetsProviderDelegate = SeTargetsProviderDelegate(contributorWrapper)
 
@@ -24,6 +24,8 @@ class SeSymbolsProvider(val project: Project, private val contributorWrapper: Se
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
   }
+
+  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
 
   companion object {
     const val ID: String = "com.intellij.SymbolSearchEverywhereItemProvider"

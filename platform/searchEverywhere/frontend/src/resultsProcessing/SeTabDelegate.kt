@@ -39,6 +39,10 @@ class SeTabDelegate private constructor(val project: Project,
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
 
+  suspend fun getSearchScopesInfos(): List<SeSearchScopesInfo> {
+    return providers.values.mapNotNull { it.getSearchScopesInfo() }
+  }
+
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
     val provider = providers[itemData.providerId] ?: return false
     return provider.itemSelected(itemData, modifiers, searchText)

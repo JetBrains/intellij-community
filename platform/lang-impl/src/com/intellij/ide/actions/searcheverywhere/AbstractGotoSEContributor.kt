@@ -249,6 +249,9 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       override fun setScopeIsDefaultAndAutoSet(scopeDefaultAndAutoSet: Boolean) {
         isScopeDefaultAndAutoSet = scopeDefaultAndAutoSet
       }
+
+      override fun getEverywhereScopeName(): String = everywhereScope.displayName
+      override fun getProjectScopeName(): String = projectScope.displayName
     })
     result.add(PreviewAction())
     result.add(SearchEverywhereFiltersAction(filter, onChanged, statisticsCollector))

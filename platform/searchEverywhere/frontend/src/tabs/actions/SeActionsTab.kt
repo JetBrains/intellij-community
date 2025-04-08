@@ -39,11 +39,11 @@ private class SeActionsFilterEditor : SeFilterEditor<SeActionsFilter>(SeActionsF
   override fun getActions(): List<AnAction> {
     return listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")) {
       override fun isEverywhere(): Boolean {
-        return current.includeDisabled
+        return filterValue.includeDisabled
       }
 
       override fun setEverywhere(state: Boolean) {
-        current = SeActionsFilter(state)
+        filterValue = SeActionsFilter(state)
       }
     })
   }

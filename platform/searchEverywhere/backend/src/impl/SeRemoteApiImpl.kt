@@ -36,4 +36,11 @@ class SeRemoteApiImpl: SeRemoteApi {
   override suspend fun getAvailableProviderIds(): List<SeProviderId> {
     return SeItemsProviderFactory.EP_NAME.extensionList.map { SeProviderId(it.id) }
   }
+
+  override suspend fun getSearchScopesInfoForProvider(projectId: ProjectId,
+                                                      sessionRef: DurableRef<SeSessionEntity>,
+                                                      dataContextId: DataContextId,
+                                                      providerId: SeProviderId): SeSearchScopesInfo? {
+    return SeBackendService.getInstance(projectId.findProject()).getSearchScopesInfoForProvider(sessionRef, dataContextId, providerId)
+  }
 }
