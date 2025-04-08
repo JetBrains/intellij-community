@@ -2,9 +2,12 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.files
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
@@ -20,7 +23,7 @@ class SeFilesTab(private val delegate: SeTabDelegate, private val scopeInfo: SeS
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)
 
-  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState>? = scopeInfo?.let { SeTargetsFilterEditor(scopeInfo) }
+  override fun getFilterEditor(): SeFilterEditor? = scopeInfo?.let { SeTargetsFilterEditor(scopeInfo) }
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)

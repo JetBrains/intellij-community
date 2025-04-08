@@ -2,8 +2,6 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.options.ObservableOptionEditor
-import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
@@ -27,7 +25,7 @@ interface SeTab: Disposable {
    */
   fun getItems(params: SeParams): Flow<SeResultEvent>
 
-  fun getFilterEditor(): ObservableOptionEditor<SeFilterState>?
+  fun getFilterEditor(): SeFilterEditor?
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
 }

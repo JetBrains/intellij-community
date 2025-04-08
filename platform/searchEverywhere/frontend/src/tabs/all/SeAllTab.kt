@@ -5,14 +5,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
-import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.ui.IdeUICustomization
@@ -30,7 +27,7 @@ class SeAllTab(private val delegate: SeTabDelegate): SeTab {
   override val id: String get() = ID
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
-  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState>? = SeAllFilterEditor()
+  override fun getFilterEditor(): SeFilterEditor? = SeAllFilterEditor()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
@@ -46,16 +43,20 @@ class SeAllTab(private val delegate: SeTabDelegate): SeTab {
   }
 }
 
-private class SeAllFilterEditor : SeFilterEditor<SeEverywhereFilter>(SeEverywhereFilter(false)) {
-  override fun getActions(): List<AnAction> = listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(
-    IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items")
-  ) {
-    override fun isEverywhere(): Boolean {
-      return filterValue.isEverywhere
-    }
+private class SeAllFilterEditor : SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilter(false)) {
+  override fun getPresentation(): SeFilterPresentation {
+    return object : SeFilterActionsPresentation {
+      override fun getActions(): List<AnAction> = listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(
+        IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items")
+      ) {
+        override fun isEverywhere(): Boolean {
+          return filterValue.isEverywhere
+        }
 
-    override fun setEverywhere(state: Boolean) {
-      filterValue = SeEverywhereFilter(state)
+        override fun setEverywhere(state: Boolean) {
+          filterValue = SeEverywhereFilter(state)
+        }
+      });
     }
-  });
+  }
 }

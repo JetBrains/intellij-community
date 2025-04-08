@@ -133,7 +133,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     vm.coroutineScope.launch {
       vm.currentTabFlow.collectLatest {
         withContext(Dispatchers.EDT) {
-          headerPane.setFilterComponent(it.filterEditor?.component)
+          headerPane.setFilterPresentation(it.filterEditor?.getPresentation())
         }
       }
     }

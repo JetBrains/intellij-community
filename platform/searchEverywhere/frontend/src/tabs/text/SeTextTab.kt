@@ -2,12 +2,11 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.FindBundle
-import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +21,7 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)
 
-  override fun getFilterEditor(): ObservableOptionEditor<SeFilterState>? = null
+  override fun getFilterEditor(): SeFilterEditor? = null
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
