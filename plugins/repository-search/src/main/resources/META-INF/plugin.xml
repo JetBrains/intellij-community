@@ -20,8 +20,8 @@
     <registryKey key="maven.packagesearch.enabled" defaultValue="true"
                  description="Enable package search dependency via https://package-search.services.jetbrains.com"/>
 
-      <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
-                 description="Package search service config URL" restartRequired="true"/>
+    <registryKey key="packagesearch.config.url.override" defaultValue="false"
+                 description="Package search service config URL override to maven index labs" restartRequired="true"/>
 
     <registryKey id="org.jetbrains.idea.reposearch.log.debug"
                  key="org.jetbrains.idea.reposearch.log.debug"
