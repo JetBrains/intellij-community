@@ -124,6 +124,12 @@ interface LookupCustomizer {
   fun customizeLookup(lookupImpl: LookupImpl)
 }
 
+/**
+ * Allows overriding LookupImpl for certain editors.
+ * Can be used to customize behavior and look of the lookup, for example,
+ * to display the lookup not as a hint, but using some other UI,
+ * like embed it inside some window, change its position or background color.
+ */
 @ApiStatus.Experimental
 @Internal
 interface LookupProvider {
