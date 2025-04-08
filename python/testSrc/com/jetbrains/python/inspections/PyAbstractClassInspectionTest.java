@@ -91,6 +91,11 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-12132
+  public void testAbstractMethodInNonAbstractClass() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
