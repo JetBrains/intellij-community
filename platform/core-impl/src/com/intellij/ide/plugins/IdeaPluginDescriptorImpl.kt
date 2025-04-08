@@ -160,7 +160,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private var isEnabled = true
   private var _pluginClassLoader: ClassLoader? = null
-  internal var isIncomplete: PluginLoadingError? = null
+  internal var initError: PluginLoadingError? = null
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
 
@@ -307,7 +307,7 @@ class IdeaPluginDescriptorImpl private constructor(
       return
     }
     checkCompatibility(context)
-    if (isIncomplete != null) {
+    if (initError != null) {
       return
     }
     for (dependency in pluginDependencies) {
@@ -323,7 +323,7 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
 
-    if (isIncomplete == null && moduleName == null) {
+    if (initError == null && moduleName == null) {
       initializeV1Dependencies(context, pathResolver, dataLoader, ArrayList(3))
     }
   }
@@ -383,10 +383,10 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private fun checkCompatibility(context: DescriptorListLoadingContext) {
     fun markAsIncompatible(error: PluginLoadingError) {
-      if (isIncomplete != null) {
+      if (initError != null) {
         return
       }
-      isIncomplete = error
+      initError = error
       isEnabled = false
     }
 
@@ -432,15 +432,15 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   private fun markAsIncomplete(disabledDependency: PluginId?, @PropertyKey(resourceBundle = CoreBundle.BUNDLE) shortMessage: String?) {
-    if (isIncomplete != null) {
+    if (initError != null) {
       return
     }
 
     if (shortMessage == null) {
-      isIncomplete = PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED)
+      initError = PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED)
     }
     else {
-      isIncomplete = PluginLoadingError(
+      initError = PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = null,
         shortMessageSupplier = { CoreBundle.message(shortMessage, disabledDependency!!) },
