@@ -14,22 +14,13 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement
-import com.intellij.platform.plugins.parser.impl.elements.ContentElement
-import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.DependsElement
-import com.intellij.platform.plugins.parser.impl.elements.ExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.util.PlatformUtils
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.*
 import java.io.IOException
 import java.nio.file.Path
 import java.time.ZoneOffset
-import java.util.Date
-import java.util.MissingResourceException
+import java.util.*
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -381,19 +372,19 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private fun checkCompatibility(context: DescriptorListLoadingContext) {
-    fun markAsIncompatible(error: PluginLoadingError) {
-      if (initError != null) {
-        return
-      }
-      initError = error
-      isEnabled = false
+  private fun onInitError(error: PluginLoadingError) {
+    if (initError != null) {
+      return
     }
+    initError = error
+    isEnabled = false
+  }
 
+  private fun checkCompatibility(context: DescriptorListLoadingContext) {
     if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
       // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
       val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
-      markAsIncompatible(PluginLoadingError(
+      onInitError(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
@@ -407,7 +398,7 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     if (AppMode.isDisableNonBundledPlugins()) {
-      markAsIncompatible(PluginLoadingError(
+      onInitError(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled") },
@@ -417,13 +408,13 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     PluginManagerCore.checkBuildNumberCompatibility(this, context.productBuildNumber())?.let {
-      markAsIncompatible(it)
+      onInitError(it)
       return
     }
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
     if (context.isBroken(this)) {
-      markAsIncompatible(PluginLoadingError(
+      onInitError(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.marked.as.broken", name, version) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.marked.as.broken") }
