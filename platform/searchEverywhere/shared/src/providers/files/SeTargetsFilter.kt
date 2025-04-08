@@ -6,7 +6,7 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeFilesFilter(val selectedScopeId: String?): SeFilter {
+class SeTargetsFilter(val selectedScopeId: String?): SeFilter {
   override fun toState(): SeFilterState = selectedScopeId?.let {
     SeFilterState.Data(mapOf(SELECTED_SCOPE_ID to it))
   } ?: SeFilterState.Empty
@@ -14,13 +14,13 @@ class SeFilesFilter(val selectedScopeId: String?): SeFilter {
   companion object {
     private const val SELECTED_SCOPE_ID = "SELECTED_SCOPE_ID"
 
-    fun from(state: SeFilterState): SeFilesFilter {
+    fun from(state: SeFilterState): SeTargetsFilter {
       when (state) {
         is SeFilterState.Data -> {
           val map = state.map.toMutableMap()
-          return SeFilesFilter(map[SELECTED_SCOPE_ID])
+          return SeTargetsFilter(map[SELECTED_SCOPE_ID])
         }
-        SeFilterState.Empty -> return SeFilesFilter(null)
+        SeFilterState.Empty -> return SeTargetsFilter(null)
       }
     }
   }

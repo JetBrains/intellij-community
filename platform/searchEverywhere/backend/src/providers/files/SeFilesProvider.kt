@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.util.SeTargetsProviderDelegate
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetsProviderDelegate
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal

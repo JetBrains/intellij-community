@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.providers.util
+package com.intellij.platform.searchEverywhere.providers.target
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
@@ -14,7 +14,7 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
-import com.intellij.platform.searchEverywhere.providers.files.SeFilesFilter
+import com.intellij.platform.searchEverywhere.providers.files.SeTargetsFilter
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
@@ -35,7 +35,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
-    val filter = SeFilesFilter.from(params.filter)
+    val filter = SeTargetsFilter.from(params.filter)
 
     applyScope(filter.selectedScopeId)
 

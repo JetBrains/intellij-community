@@ -24,6 +24,7 @@ class SeItemEntity(override val eid: EID) : Entity {
     private val Session = requiredRef<SeSessionEntity>("session", RefFlags.CASCADE_DELETE_BY)
 
     suspend fun createWith(sessionRef: DurableRef<SeSessionEntity>, item: SeItem): DurableRef<SeItemEntity>? {
+      @Suppress("DEPRECATION")
       return withKernel {
         val session = sessionRef.derefOrNull() ?: return@withKernel null
 

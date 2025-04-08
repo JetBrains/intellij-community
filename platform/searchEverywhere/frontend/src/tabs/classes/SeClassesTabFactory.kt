@@ -20,6 +20,7 @@ class SeClassesTabFactory : SeTabFactory {
                                         listOf(SeProviderId("com.intellij.ClassSearchEverywhereItemProvider")),
                                         dataContext,
                                         true)
-    return SeClassesTab(delegate)
+
+    return SeClassesTab(delegate, delegate.getSearchScopesInfos().firstOrNull())
   }
 }

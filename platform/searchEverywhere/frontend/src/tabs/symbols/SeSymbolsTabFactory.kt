@@ -20,6 +20,7 @@ class SeSymbolsTabFactory : SeTabFactory {
                                         listOf(SeProviderId("com.intellij.SymbolSearchEverywhereItemProvider")),
                                         dataContext,
                                         true)
-    return SeSymbolsTab(delegate)
+
+    return SeSymbolsTab(delegate, delegate.getSearchScopesInfos().firstOrNull())
   }
 }
