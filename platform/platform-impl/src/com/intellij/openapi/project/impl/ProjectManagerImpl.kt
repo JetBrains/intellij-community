@@ -22,7 +22,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject
-import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -521,17 +520,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   final override fun createProject(name: String?, path: String): Project {
     @Suppress("DEPRECATION")
     return runUnderModalProgressIfIsEdt {
-      val file = toCanonicalName(path)
-      prepareNewProject(
-        file,
-        name,
-        beforeInit = null,
-        useDefaultProjectAsTemplate = true,
-        preloadServices = true,
-        markAsNew = false
-      ).apply {
-        setTrusted(true)
-      }
+      newProjectAsync(toCanonicalName(path), OpenProjectTask {
+        projectName = name
+        beforeInit = null
+        useDefaultProjectAsTemplate = true
+        preloadServices = true
+      })
     }
   }
 
@@ -815,17 +809,19 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project =
-    prepareNewProject(
+  override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
+    TrustedProjects.setProjectTrusted(file, true)
+    return prepareNewProject(
       file,
       options.projectName,
       options.beforeInit,
       options.useDefaultProjectAsTemplate,
       options.preloadServices,
       markAsNew = false
-    ).apply {
-      setTrusted(true)
+    ).also { project ->
+      TrustedProjects.setProjectTrusted(project, true)
     }
+  }
 
   protected open fun handleErrorOnNewProject(t: Throwable) {
     LOG.warn(t)
@@ -867,7 +863,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     preloadServices: Boolean,
     markAsNew: Boolean = true,
   ): Project {
-    TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(projectStoreBaseDir, project = null), true)
     return coroutineScope {
       val templateAsync = if (useDefaultProjectAsTemplate) {
         async {
