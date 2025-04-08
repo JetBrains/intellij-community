@@ -499,6 +499,13 @@
                      level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PotentialDeadlockInServiceInitializationInspection"/>
 
+    <localInspection language="UAST" shortName="PathAnnotationInspection"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.path.PathAnnotationInspection"
+                     key="inspection.path.annotation.display.name"/>
+
     <localInspection language="JVM"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
