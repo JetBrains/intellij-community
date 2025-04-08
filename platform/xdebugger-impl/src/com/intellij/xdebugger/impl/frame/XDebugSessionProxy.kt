@@ -52,6 +52,7 @@ interface XDebugSessionProxy {
   val isPaused: Boolean
   val isSuspended: Boolean
   val isReadOnly: Boolean
+  val isPauseActionSupported: Boolean
 
   val environmentProxy: ExecutionEnvironmentProxy?
 
@@ -126,6 +127,8 @@ interface XDebugSessionProxy {
       get() = (session as? XDebugSessionImpl)?.isReadOnly ?: false
     override val isSuspended: Boolean
       get() = session.isSuspended
+    override val isPauseActionSupported: Boolean
+      get() = (session as? XDebugSessionImpl)?.isPauseActionSupported() ?: false
 
     override val currentStateHyperlinkListener: HyperlinkListener?
       get() = session.debugProcess.currentStateHyperlinkListener

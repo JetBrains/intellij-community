@@ -1,11 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
+import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,3 +44,39 @@ internal class XDebugSessionSelectionService(project: Project, scope: CoroutineS
     }
   }
 }
+
+internal fun performDebuggerActionAsync(
+  e: AnActionEvent,
+  updateInlays: Boolean = false,
+  action: suspend () -> Unit,
+) {
+  performDebuggerActionAsync(e.project, e.dataContext, updateInlays, action)
+}
+
+internal fun performDebuggerActionAsync(
+  project: Project?,
+  dataContext: DataContext,
+  updateInlays: Boolean = false,
+  action: suspend () -> Unit,
+) {
+  val coroutineScope = project?.service<FrontendDebuggerActionProjectCoroutineScope>()?.cs
+                       ?: service<FrontendDebuggerActionCoroutineScope>().cs
+
+  coroutineScope.launch {
+    action()
+    if (updateInlays) {
+      val editor = dataContext.getData(CommonDataKeys.EDITOR)
+      if (project != null && editor != null) {
+        withContext(Dispatchers.EDT) {
+          XDebuggerManagerApi.getInstance().reshowInlays(project.projectId(), editor.editorId())
+        }
+      }
+    }
+  }
+}
+
+@Service(Service.Level.APP)
+private class FrontendDebuggerActionCoroutineScope(val cs: CoroutineScope)
+
+@Service(Service.Level.PROJECT)
+private class FrontendDebuggerActionProjectCoroutineScope(val project: Project, val cs: CoroutineScope)

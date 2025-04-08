@@ -99,7 +99,7 @@ class FrontendXDebuggerSession private constructor(
   override val isReadOnly: Boolean
     get() = sessionState.value.isReadOnly
 
-  val isPauseActionSupported: Boolean
+  override val isPauseActionSupported: Boolean
     get() = sessionState.value.isPauseActionSupported
 
   override val isSuspended: Boolean
