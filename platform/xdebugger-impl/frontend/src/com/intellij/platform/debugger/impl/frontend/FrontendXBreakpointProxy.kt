@@ -27,8 +27,8 @@ class FrontendXBreakpointProxy(
 ) : XBreakpointProxy {
   val id: XBreakpointId = dto.id
 
-  val enabled: StateFlow<Boolean> = dto.enabledState.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.initialEnabled)
+  private val _enabled = MutableStateFlow(dto.initialEnabled)
+  val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
 
   val suspendPolicy: StateFlow<SuspendPolicy> = dto.suspendPolicyState.toFlow()
     .stateIn(cs, SharingStarted.Eagerly, dto.initialSuspendPolicy)
@@ -42,6 +42,18 @@ class FrontendXBreakpointProxy(
   val userDescription: StateFlow<String?> = dto.userDescriptionState.toFlow()
     .stateIn(cs, SharingStarted.Eagerly, dto.initialUserDescription)
 
+  init {
+    // TODO: there is a race in changes from server and client,
+    //  so we need to merge this state.
+    //  Otherwise, multiple clicks on the breakpoint in breakpoint dialog may works in a wrong way.
+    cs.launch {
+      dto.enabledState.toFlow().collectLatest {
+        _enabled.value = it
+        onEnabledChange()
+      }
+    }
+  }
+
   override fun getDisplayText(): String = dto.displayText
 
   override fun getUserDescription(): String? = userDescription.value
@@ -51,6 +63,8 @@ class FrontendXBreakpointProxy(
   override fun isEnabled(): Boolean = enabled.value
 
   override fun setEnabled(enabled: Boolean) {
+    _enabled.value = enabled
+    onEnabledChange()
     project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
       XBreakpointApi.getInstance().setEnabled(id, enabled)
     }
