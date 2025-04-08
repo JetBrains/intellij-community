@@ -829,6 +829,100 @@ elements:
                             
                             - `com.example.MyCustomType` must be a subtype of `com.example.ParentType`
                             - `com.example.MyComparable` must be a subtype of `java.lang.Comparable`
+              - element:
+                  name: &xIncludeName xi:include
+                  namespace: &xIncludeNamespace xi="http://www.w3.org/2001/XInclude"
+                  description: |
+                    Allows including extension points of another plugin descriptor in this descriptor with
+                    [XInclude](http://www.w3.org/2001/XInclude) standard.
+                  requirement:
+                    required: no
+                  attributes:
+                    - attribute:
+                        name: href
+                        requirement:
+                          required: no
+                        description: Path of the plugin descriptor file to include `extensionPoints` content from.
+                    - attribute:
+                        name: xpointer
+                        requirement:
+                          required: no
+                        deprecatedSince: '2021.2'
+                        deprecationNote: |
+                          The `xpointer` attribute must be `xpointer(/idea-plugin/extensionPoints/*)` or not defined.
+                        description: Extensions points pointer to include.
+                        defaultValue: |
+                          `xpointer(/idea-plugin/extensionPoints/*)`
+                  examples:
+                    - |
+                      Given `extensionPoints` element:
+                      
+                      ```xml
+                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                        ...
+                        <extensionPoints>
+                          <xi:include href="/META-INF/another-plugin.xml"/>
+                          <extensionPoint
+                              qualifiedName="com.example.extensionPoint"
+                              interface="com.example.ExtensionPoint"/>
+                        </extensionPoints>
+                        ...
+                      </idea-plugin>
+                      ```
+                      
+                      and <path>/META-INF/another-plugin.xml</path>:
+                      
+                      ```xml
+                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                        ...
+                        <extensionPoints>
+                          <extensionPoint
+                              qualifiedName="com.example.another.extensionPoint1"
+                              interface="com.example.another.ExtensionPoint1"/>
+                        </extensionPoints>
+                        ...
+                      </idea-plugin>
+                      ```
+                      
+                      The effective plugin descriptor loaded to memory will contain the following elements:
+                      
+                      ```xml
+                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                        ...
+                        <extensionPoints>
+                          <extensionPoint
+                              qualifiedName="com.example.another.extensionPoint1"
+                              interface="com.example.another.ExtensionPoint1"/>
+                          <extensionPoint
+                              qualifiedName="com.example.extensionPoint"
+                              interface="com.example.ExtensionPoint"/>
+                        </extensionPoints>
+                        ...
+                      </idea-plugin>
+                      ```
+                  children:
+                    - element: &xIncludeFallback
+                        name: xi:fallback
+                        namespace: *xIncludeNamespace
+                        description: |
+                          Indicates that including the specified file is optional.
+
+                          If the file referenced in [`href`](#attribute:idea-plugin__xi:include__href) is not found and the `xi:fallback`
+                          element
+                          is missing, the plugin will fail to load.
+                        requirement:
+                          required: no
+                        examples:
+                          - |
+                              ```xml
+                              <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                                ...
+                                <xi:include href="/META-INF/optional-plugin.xml">
+                                  <xi:fallback/>
+                                </xi:include>
+                                ...
+                              </idea-plugin>
+                              ```
         - element:
             name: resource-bundle
             description: |
@@ -1651,6 +1745,65 @@ elements:
                           if it is required to load a component in the default project.
                         requirement:
                           required: no
+        - element:
+            name: *xIncludeName
+            namespace: *xIncludeNamespace
+            description: |
+              Allows including content of another plugin descriptor in this descriptor with
+              [XInclude](http://www.w3.org/2001/XInclude) standard.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: href
+                  requirement:
+                    required: no
+                  description: Path of the plugin descriptor file to include.
+              - attribute:
+                  name: xpointer
+                  requirement:
+                    required: no
+                  deprecatedSince: '2021.2'
+                  deprecationNote: |
+                    The `xpointer` attribute must be `xpointer(/idea-plugin/*)` or not defined.
+                  description: Elements pointer to include.
+                  defaultValue: |
+                    `xpointer(/idea-plugin/*)`
+            examples:
+              - |
+                Given a plugin descriptor:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <xi:include href="/META-INF/another-plugin.xml"/>
+                  ...
+                </idea-plugin>
+                ```
+                
+                and <path>/META-INF/another-plugin.xml</path>:
+                
+                ```xml
+                <idea-plugin>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                </idea-plugin>
+                ```
+                
+                The effective plugin descriptor loaded to memory will contain the following elements:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                  ...
+                </idea-plugin>
+                ```
+            children:
+              - element: *xIncludeFallback
         - element:
             name: project-components
             deprecatedSince: *componentsDeprecatedSince
