@@ -98,7 +98,6 @@ abstract class CodeExecutionManager {
   fun compileAndExecute(project: Project, code: String, target: String, unitUnderTest: PsiNamedElement?, setupCommands: List<String>): ProcessExecutionLog {
     // Clear collectedInfo
     clear()
-    // -> setup commands -> run-tests.sh % setup_tests.sh
     val basePath = project.basePath
     val sdk: Sdk? = ProjectRootManager.getInstance(project).projectSdk
 
@@ -115,7 +114,7 @@ abstract class CodeExecutionManager {
     val executionLog = executeGeneratedCode(target, basePath, codeFile, sdk, unitUnderTest)
     // Clean the temp file containing the generated code
     codeFile.delete()
-    // delete run-tests.sh % setup_tests.sh
+
     return executionLog
   }
 
