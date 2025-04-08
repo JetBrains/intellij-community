@@ -151,8 +151,10 @@ object XBreakpointUtil {
   @ApiStatus.Internal
   @JvmStatic
   fun getAllBreakpointItems(project: Project): List<BreakpointItem> {
-    return XDebuggerManager.getInstance(project).getBreakpointManager().getAllBreakpoints().map {
-      XBreakpointItem(it)
+    val breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager() as XBreakpointManagerImpl
+    val breakpointManagerProxy = XBreakpointManagerProxy.Monolith(breakpointManager)
+    return breakpointManager.allBreakpoints.map {
+      XBreakpointItem(it, breakpointManagerProxy)
     }
   }
 

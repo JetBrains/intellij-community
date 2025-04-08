@@ -32,11 +32,18 @@ import java.awt.*;
 
 @ApiStatus.Internal
 public class XBreakpointItem extends BreakpointItem {
-  private final XBreakpoint<?> myBreakpoint;
+  private final XBreakpointProxy myBreakpointProxy;
+  private final XBreakpointManagerProxy myBreakpointManagerProxy;
   private XLightBreakpointPropertiesPanel myPropertiesPanel;
 
-  public XBreakpointItem(XBreakpoint<?> breakpoint) {
-    myBreakpoint = breakpoint;
+  public XBreakpointItem(XBreakpoint<?> breakpoint, XBreakpointManagerProxy breakpointManagerProxy) {
+    myBreakpointProxy = new XBreakpointProxy.Monolith(breakpoint);
+    myBreakpointManagerProxy = breakpointManagerProxy;
+  }
+
+  public XBreakpointItem(XBreakpointProxy breakpointProxy, XBreakpointManagerProxy breakpointManagerProxy) {
+    myBreakpointProxy = breakpointProxy;
+    myBreakpointManagerProxy = breakpointManagerProxy;
   }
 
   @Override
@@ -53,7 +60,7 @@ public class XBreakpointItem extends BreakpointItem {
   public void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
     renderer.setIcon(getIcon());
     final SimpleTextAttributes attributes =
-      myBreakpoint.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+      myBreakpointProxy.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
     renderer.append(StringUtil.notNullize(getDisplayText()), attributes);
     String description = getUserDescription();
     if (!StringUtil.isEmpty(description)) {
@@ -63,16 +70,16 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public String getDisplayText() {
-    return XBreakpointUtil.getShortText(myBreakpoint);
+    return myBreakpointProxy.getDisplayText();
   }
 
   private @Nullable @Nls String getUserDescription() {
-    return ((XBreakpointBase<?, ?, ?>)myBreakpoint).getUserDescription();
+    return myBreakpointProxy.getUserDescription();
   }
 
   @Override
   public Icon getIcon() {
-    return ((XBreakpointBase<?, ?, ?>)myBreakpoint).getIcon();
+    return myBreakpointProxy.getIcon();
   }
 
   @Override
@@ -94,21 +101,32 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
-    XBreakpointBase breakpoint = (XBreakpointBase)myBreakpoint;
-    Project project = breakpoint.getProject();
-    //saveState();
+    // TODO: Remove dependency on underlying breakpoint object for frontend implementation
+    XBreakpoint<?> breakpoint = getUnderlyingBreakpoint();
+    if (breakpoint == null) {
+      panel.clearEditor();
+      return;
+    }
+
+    XBreakpointBase breakpointBase = (XBreakpointBase)breakpoint;
+    Project project = breakpointBase.getProject();
+
+    // saveState();
     if (myPropertiesPanel != null) {
       myPropertiesPanel.dispose();
       myPropertiesPanel = null;
     }
     if (!editorOnly) {
-      myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, getManager(), breakpoint, true, false);
-
-      panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
+      // TODO: pass XBreakpointManagerProxy to XLightBreakpointPropertiesPanel and remove this check
+      if (myBreakpointManagerProxy instanceof XBreakpointManagerProxy.Monolith) {
+        XBreakpointManagerImpl manager = ((XBreakpointManagerProxy.Monolith)myBreakpointManagerProxy).getBreakpointManager();
+        myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, manager, breakpointBase, true, false);
+        panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
+      }
     }
 
     panel.clearEditor();
-    ReadAction.nonBlocking(() -> myBreakpoint.getSourcePosition())
+    ReadAction.nonBlocking(() -> myBreakpointProxy.getSourcePosition())
       .finishOnUiThread(ModalityState.defaultModalityState(), sourcePosition -> {
         if (sourcePosition != null && sourcePosition.getFile().isValid()) {
           showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine());
@@ -131,9 +149,10 @@ public class XBreakpointItem extends BreakpointItem {
     TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
-    // null attributes to avoid the new highlighter for a line breakpoints
+    // TODO: Remove dependency on underlying breakpoint object for frontend implementation
+    boolean isLineBreakpoint = getUnderlyingBreakpoint() instanceof XLineBreakpoint;
     DetailView.PreviewEditorState state =
-      DetailView.PreviewEditorState.create(virtualFile, line, myBreakpoint instanceof XLineBreakpoint ? null : attributes);
+      DetailView.PreviewEditorState.create(virtualFile, line, isLineBreakpoint ? null : attributes);
 
     if (state.equals(panel.getEditorState())) {
       return;
@@ -173,7 +192,7 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void navigate(boolean requestFocus) {
-    Navigatable navigatable = myBreakpoint.getNavigatable();
+    Navigatable navigatable = myBreakpointProxy.getNavigatable();
     if (navigatable != null && navigatable.canNavigate()) {
       navigatable.navigate(requestFocus);
     }
@@ -181,58 +200,67 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public boolean canNavigate() {
-    Navigatable navigatable = myBreakpoint.getNavigatable();
-    return navigatable != null && navigatable.canNavigate();
+    return myBreakpointProxy.canNavigate();
   }
 
   @Override
   public boolean canNavigateToSource() {
-    Navigatable navigatable = myBreakpoint.getNavigatable();
-    return navigatable != null && navigatable.canNavigateToSource();
+    return myBreakpointProxy.canNavigateToSource();
   }
 
-  private XBreakpointManagerImpl getManager() {
-    return ((XBreakpointBase<?, ?, ?>)myBreakpoint).getBreakpointManager();
+  // TODO: This method should be removed once all usages are migrated to use the proxy instead
+  @Nullable
+  private XBreakpoint<?> getUnderlyingBreakpoint() {
+    if (myBreakpointProxy instanceof XBreakpointProxy.Monolith) {
+      return ((XBreakpointProxy.Monolith)myBreakpointProxy).getBreakpoint();
+    }
+    return null;
   }
 
   @Override
   public boolean allowedToRemove() {
-    return !getManager().isDefaultBreakpoint(myBreakpoint);
+    return !myBreakpointProxy.isDefaultBreakpoint();
   }
 
   @Override
   public void removed(Project project) {
-    XDebuggerUtil.getInstance().removeBreakpoint(project, myBreakpoint);
+    // TODO: Remove dependency on underlying breakpoint object for frontend implementation
+    XBreakpoint<?> breakpoint = getUnderlyingBreakpoint();
+    if (breakpoint != null) {
+      XDebuggerUtil.getInstance().removeBreakpoint(project, breakpoint);
+    }
   }
 
   @Override
   public Object getBreakpoint() {
-    return myBreakpoint;
+    // TODO: Return proxy object instead of underlying breakpoint for frontend implementation
+    return getUnderlyingBreakpoint();
   }
 
   @Override
   public boolean isEnabled() {
-    return myBreakpoint.isEnabled();
+    return myBreakpointProxy.isEnabled();
   }
 
   @Override
   public void setEnabled(boolean state) {
-    myBreakpoint.setEnabled(state);
+    myBreakpointProxy.setEnabled(state);
   }
 
   @Override
   public boolean isDefaultBreakpoint() {
-    return getManager().isDefaultBreakpoint(myBreakpoint);
+    return myBreakpointProxy.isDefaultBreakpoint();
   }
 
   @Override
   public int compareTo(BreakpointItem breakpointItem) {
-    if (breakpointItem.getBreakpoint() instanceof XBreakpointBase) {
-      return ((XBreakpointBase)myBreakpoint).compareTo((XBreakpoint)breakpointItem.getBreakpoint());
+    // TODO: Implement comparison without depending on underlying breakpoint for frontend implementation
+    XBreakpoint<?> thisBreakpoint = getUnderlyingBreakpoint();
+    Object otherBreakpoint = breakpointItem.getBreakpoint();
+    if (thisBreakpoint instanceof XBreakpointBase && otherBreakpoint instanceof XBreakpoint) {
+      return ((XBreakpointBase)thisBreakpoint).compareTo((XBreakpoint<?>)otherBreakpoint);
     }
-    else {
-      return 0;
-    }
+    return 0;
   }
 
   @Override
