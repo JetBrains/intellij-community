@@ -50,3 +50,20 @@ suspend fun <T> withCoroutineScope(
     job.cancelAndJoin()
   }
 }
+
+/**
+ * Deferred is also implementing Job interface,
+ * but sometimes we are not interested in the wrapped value,
+ * so it might be a good idea to not keep the reference
+ */
+fun <T> Deferred<T>.toJob(): Job {
+  val job = Job()
+  this.invokeOnCompletion { cause ->
+    if (cause != null) {
+      job.completeExceptionally(cause)
+    } else {
+      job.complete()
+    }
+  }
+  return job
+}
