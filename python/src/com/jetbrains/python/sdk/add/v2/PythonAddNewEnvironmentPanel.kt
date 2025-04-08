@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.GotItTooltip
@@ -178,15 +177,18 @@ internal class PythonAddNewEnvironmentPanel(
             return@withLock
           }
 
-          val disposable = Disposer.newDisposable()
-          GotItTooltip("python.uv.promo.tooltip", message("sdk.create.custom.uv.promo.text"), disposable)
+          lateinit var popup: GotItTooltip
+          popup = GotItTooltip("python.uv.promo.tooltip", message("sdk.create.custom.uv.promo.text"))
+            .withShowCount(1)
             .withLink(message("sdk.create.custom.uv.promo.link")) {
               selectedMode.set(CUSTOM)
               custom.newInterpreterManager.set(UV)
-              Disposer.dispose(disposable)
+              popup.gotIt()
+              popup.hidePopup()
             }
             .withTimeout(15_000)
-            .show(customButton, GotItTooltip.BOTTOM_MIDDLE)
+
+          popup.show(customButton, GotItTooltip.BOTTOM_MIDDLE)
         }
       }
     }
