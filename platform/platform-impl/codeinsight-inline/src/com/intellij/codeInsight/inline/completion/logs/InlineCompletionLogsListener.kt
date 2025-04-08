@@ -20,6 +20,7 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TOTAL_INSER
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.WAS_SHOWN
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsUtils.isLoggable
+import com.intellij.codeInsight.inline.completion.logs.StartingLogs.CARET_LANGUAGE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.EDITOR_TYPE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.FILE_LANGUAGE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.INLINE_API_PROVIDER
@@ -33,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.util.PsiUtilCore
 import java.time.Duration
 
 internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionFilteringEventListener(),
@@ -77,7 +79,15 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     container.add(REQUEST_EVENT with event.request.event.javaClass)
     container.add(EDITOR_TYPE with InlineCompletionEditorType.get(event.request.editor))
     container.add(INLINE_API_PROVIDER with event.provider)
-    event.request.event.toRequest()?.file?.language?.let { container.add(FILE_LANGUAGE with it) }
+    val file = event.request.event.toRequest()?.file
+    file?.let {
+      val caretLanguage = PsiUtilCore.getLanguageAtOffset(it, event.request.endOffset)
+      val fileLanguage = it.language
+      container.add(FILE_LANGUAGE with fileLanguage)
+      if (caretLanguage != fileLanguage) {
+        container.add(CARET_LANGUAGE with caretLanguage)
+      }
+    }
     container.addAsync {
       readAction {
         InlineCompletionContextLogs.getFor(event.request)
@@ -216,6 +226,7 @@ private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
   val EDITOR_TYPE = registerBasic(EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor"))
   val INLINE_API_PROVIDER = registerBasic(EventFields.Class("inline_api_provider", "Type of the inline completion provider that was used for the request"))
   val FILE_LANGUAGE = registerBasic(EventFields.Language("file_language", "Language of the file that was opened for the request"))
+  val CARET_LANGUAGE = register(EventFields.Language("caret_language", "Language at the caret position"))
 }
 
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
