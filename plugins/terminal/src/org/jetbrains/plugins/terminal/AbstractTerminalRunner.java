@@ -200,7 +200,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   @RequiresEdt(generateAssertion = false)
-  private void openSession(@NotNull TerminalWidget terminalWidget, @NotNull ShellStartupOptions startupOptions) {
+  protected void openSession(@NotNull TerminalWidget terminalWidget, @NotNull ShellStartupOptions startupOptions) {
     doOpenSession(terminalWidget, initStartupMomentIfNeeded(startupOptions.builder()).widget(terminalWidget).build());
   }
 
