@@ -293,6 +293,7 @@ object KotlinPluginBuilder {
         val ultimateModules = when (kind) {
           KotlinPluginKind.IJ -> persistentListOf(
             "kotlin-ultimate.common-native",
+            "kotlin-ultimate.native-debugger",
             "kotlin-ultimate.javascript.debugger",
             "kotlin-ultimate.javascript.nodeJs",
             "kotlin-ultimate.ultimate-plugin",
@@ -301,6 +302,7 @@ object KotlinPluginBuilder {
           )
           KotlinPluginKind.Fleet -> persistentListOf(
             "kotlin-ultimate.common-native",
+            "kotlin-ultimate.native-debugger",
             "kotlin-ultimate.javascript.debugger",
             "kotlin-ultimate.javascript.nodeJs",
             "kotlin-ultimate.ultimate-fleet-plugin",
@@ -380,7 +382,7 @@ object KotlinPluginBuilder {
             spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
             spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
 
-            spec.withBin("../mobile-ide/common-native/scripts", "scripts")
+            spec.withBin("../mobile-ide/native-debugger/scripts", "scripts")
           }
           else -> {}
         }
