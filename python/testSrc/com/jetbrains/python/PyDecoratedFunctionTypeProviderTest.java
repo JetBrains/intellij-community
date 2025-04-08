@@ -244,7 +244,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
   // PY-60104
   public void testNotAnnotatedClassDecoratorIsIgnored() {
-    doTest("C", "Type[C]", """
+    doTest("C", "type[C]", """
        from typing import reveal_type
                                                                                  
        def changing_interface(cls):

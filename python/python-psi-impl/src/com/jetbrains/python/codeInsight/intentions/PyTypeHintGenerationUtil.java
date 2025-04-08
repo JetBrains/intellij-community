@@ -391,8 +391,7 @@ public final class PyTypeHintGenerationUtil {
       }
 
       private void addTypingTypeIfNeeded(@NotNull PyType type) {
-        // TODO in Python 3.9+ use the builtin "type" instead of "typing.Type"
-        if (type instanceof PyInstantiableType<?> instantiableType && instantiableType.isDefinition()) {
+        if (useGenericAliasFromTyping && type instanceof PyInstantiableType<?> instantiableType && instantiableType.isDefinition()) {
           typingTypes.add("Type");
         }
       }
