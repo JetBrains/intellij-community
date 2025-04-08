@@ -171,6 +171,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendDeprecation(element.deprecatedSince, element.deprecationNote)
     appendSinceUntil(element.since, element.until)
     element.description?.trim()?.let { appendLine("$it\n") }
+    appendNamespace(element.namespace)
     appendRequirement(element.requirement)
     appendDefaultValue(element.defaultValue)
     appendAttributes(element.attributes)
@@ -248,6 +249,12 @@ internal class DocumentationRenderer(private val project: Project) {
       appendLine('_')
       appendLine()
     }
+  }
+
+  private fun StringBuilder.appendNamespace(namespace: String?) {
+    if (namespace == null) return
+    appendLine("$HEADER_LEVEL Namespace")
+    appendLine("`$namespace`")
   }
 
   private fun StringBuilder.appendRequirement(requirement: Requirement?) {

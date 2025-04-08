@@ -44,6 +44,10 @@
             "type": "string"
           }
         },
+        "namespace": {
+          "type": "string",
+          "description": "Element namespace."
+        },
         "since": {
           "type": "string",
           "description": "Version since the element is available."
