@@ -8,6 +8,7 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 
 @ApiStatus.Experimental
 abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
@@ -19,8 +20,10 @@ abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
   abstract suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
   abstract suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
 
+  @Throws(IOException::class)
   abstract suspend fun refreshCaches()
 
+  @Throws(IOException::class)
   abstract suspend fun initCaches()
 
   abstract fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails

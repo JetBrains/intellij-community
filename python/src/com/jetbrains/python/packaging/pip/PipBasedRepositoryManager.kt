@@ -20,6 +20,7 @@ import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.time.Duration
 
 @ApiStatus.Experimental
@@ -117,9 +118,9 @@ internal abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : 
     return versions.getOrNull()
   }
 
-
+  @Throws(IOException::class)
   override suspend fun initCaches() {
-    service<PypiPackageCache>().reloadCache()
+    service<PypiPackageCache>().reloadCache().orThrow()
 
     val repositoryService = service<PyPackageRepositories>()
     val repositoryCache = service<PythonSimpleRepositoryCache>()
@@ -127,9 +128,9 @@ internal abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : 
       repositoryCache.refresh()
     }
   }
-
+  @Throws(IOException::class)
   override suspend fun refreshCaches() {
-    service<PypiPackageCache>().forceReloadCache()
+    service<PypiPackageCache>().reloadCache(force = true).orThrow()
     service<PythonSimpleRepositoryCache>().refresh()
   }
 

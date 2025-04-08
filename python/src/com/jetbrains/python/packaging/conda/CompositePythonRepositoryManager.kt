@@ -18,6 +18,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class CompositePythonRepositoryManager(
@@ -91,7 +92,7 @@ internal class CompositePythonRepositoryManager(
       }
     }
   }
-
+  @Throws(IOException::class)
   override suspend fun initCaches() {
     if (!isInit.compareAndSet(false, true)) return
     mutex.withLock {
