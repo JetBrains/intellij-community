@@ -57,14 +57,14 @@
   module: intellij.maven.server.indexer
   files:
   - name: $MAVEN_REPOSITORY$/org/apache/maven/wagon/wagon-provider-api/3/wagon-provider-api-3.jar
-- name: lib/maven-event-listener.jar
-  modules:
-  - name: intellij.maven.server.eventListener
-- name: lib/maven-indexer-api-rt.jar
+- name: lib/jetbrains.idea.maven.indexer.api.rt.jar
   library: jetbrains.idea.maven.indexer.api.rt
   module: intellij.maven
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023/maven-indexer-api-rt-2023.jar
+- name: lib/maven-event-listener.jar
+  modules:
+  - name: intellij.maven.server.eventListener
 - name: lib/maven-jps.jar
   modules:
   - name: intellij.maven.jps

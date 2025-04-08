@@ -350,7 +350,15 @@ class JarPackager private constructor(
     }
 
     if (layout != null && (layout !is PluginLayout || !layout.modulesWithExcludedModuleLibraries.contains(moduleName))) {
-      computeSourcesForModuleLibs(item = item, layout = layout, module = module, copiedFiles = copiedFiles, asset = jarAsset, withTests = useTestModuleOutput)
+      computeSourcesForModuleLibs(
+        item = item,
+        layout = layout,
+        module = module,
+        copiedFiles = copiedFiles,
+        asset = jarAsset,
+        withTests = useTestModuleOutput,
+        nativeFiles = nativeFiles,
+      )
     }
   }
 
@@ -413,6 +421,7 @@ class JarPackager private constructor(
     copiedFiles: MutableMap<CopiedForKey, CopiedFor>,
     asset: Lazy<AssetDescriptor>,
     withTests: Boolean,
+    nativeFiles: List<String>?,
   ) {
     val moduleName = module.name
     val includeProjectLib = if (layout is PluginLayout) layout.auto else item.reason == ModuleIncludeReasons.PRODUCT_MODULES
@@ -460,24 +469,42 @@ class JarPackager private constructor(
         packLibFilesIntoModuleJar(asset = asset.value, item = item, files = library.getPaths(JpsOrderRootType.COMPILED), projectLibraryData = projectLibraryData, library = library)
       }
       else {
+        fun addLibrary(relativeOutputFile: String, files: List<Path>) {
+          filesToSourceWithMapping(
+            asset = getJarAsset(targetFile = outDir.resolve(relativeOutputFile), relativeOutputFile = relativeOutputFile, nativeFiles = nativeFiles),
+            files = files,
+            library = library,
+            relativeOutputFile = relativeOutputFile,
+            projectLibraryData = projectLibraryData,
+          )
+        }
+
         val targetFile = outDir.resolve(item.relativeOutputFile)
         val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile)
-
-        for (i in (files.size - 1) downTo 0) {
-          val file = files[i]
-          val fileName = file.fileName.toString()
-          if (isSeparateJar(fileName)) {
-            files.removeAt(i)
-            val relativeOutputFile = removeVersionFromJar(fileName)
-            addLibrary(library = library, relativeOutputFile = relativeOutputFile, outputDir = outDir, files = listOf(file), projectLibraryData = projectLibraryData)
-          }
-        }
-
         if (layout is PluginLayout && item.relativeOutputFile == layout.getMainJarName()) {
-          val relativeOutputFile = removeVersionFromJar(nameToJarFileName(getLibraryFileName(library)))
-          addLibrary(library = library, relativeOutputFile = relativeOutputFile, outputDir = outDir, files = files, projectLibraryData = projectLibraryData)
+          if (files.size > 1) {
+            for (i in (files.size - 1) downTo 0) {
+              val file = files[i]
+              val fileName = file.fileName.toString()
+              if (fileName.endsWith("-rt.jar") || fileName.startsWith("maven-")) {
+                files.removeAt(i)
+                addLibrary(relativeOutputFile = removeVersionFromJar(fileName), files = listOf(file))
+              }
+            }
+          }
+
+          addLibrary(relativeOutputFile = removeVersionFromJar(nameToJarFileName(getLibraryFileName(library))), files = files)
         }
         else {
+          for (i in (files.size - 1) downTo 0) {
+            val file = files[i]
+            val fileName = file.fileName.toString()
+            if (isSeparateJar(fileName)) {
+              files.removeAt(i)
+              addLibrary(relativeOutputFile = removeVersionFromJar(fileName), files = listOf(file))
+            }
+          }
+
           packLibFilesIntoModuleJar(asset = asset.value, item = item, files = files, projectLibraryData = projectLibraryData, library = library)
         }
       }
@@ -525,23 +552,17 @@ class JarPackager private constructor(
       val library = context.findRequiredModule(item.moduleName).libraryCollection.libraries
                       .find { getLibraryFileName(it) == item.libraryName }
                     ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in '${item.moduleName}' module")
+
       var relativePath = item.relativeOutputPath
+      val targetFile: Path
       if (relativePath.endsWith(".jar")) {
-        val targetFile = outDir.resolve(relativePath)
+        targetFile = outDir.resolve(relativePath)
         if (!relativePath.contains('/')) {
           relativePath = ""
         }
-        addLibrary(
-          library = library,
-          targetFile = targetFile,
-          relativeOutputFile = relativePath,
-          files = getLibraryFiles(library, copiedFiles, targetFile),
-          projectLibraryData = null,
-        )
       }
       else {
         val fileName = nameToJarFileName(item.libraryName)
-        val targetFile: Path
         if (relativePath.isEmpty()) {
           targetFile = outDir.resolve(fileName)
         }
@@ -549,14 +570,15 @@ class JarPackager private constructor(
           targetFile = outDir.resolve(relativePath).resolve(fileName)
           relativePath += "/$fileName"
         }
-        addLibrary(
-          library = library,
-          targetFile = targetFile,
-          relativeOutputFile = relativePath,
-          files = getLibraryFiles(library, copiedFiles, targetFile),
-          projectLibraryData = null,
-        )
       }
+
+      filesToSourceWithMapping(
+        asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativePath, nativeFiles = null),
+        files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile),
+        library = library,
+        relativeOutputFile = relativePath,
+        projectLibraryData = null,
+      )
     }
   }
 
@@ -649,16 +671,20 @@ class JarPackager private constructor(
         libOutputDir = outDir.resolve(outPath)
       }
 
+      fun addLibrary(targetFile: Path, relativeOutputFile: String, files: List<Path>) {
+        filesToSourceWithMapping(
+          asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativeOutputFile, nativeFiles = null),
+          files = files,
+          library = library,
+          relativeOutputFile = relativeOutputFile,
+          projectLibraryData = libraryData,
+        )
+      }
+
       if (packMode == LibraryPackMode.STANDALONE_MERGED) {
         val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
         val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
-        addLibrary(
-          library = library,
-          targetFile = targetFile,
-          relativeOutputFile = relativeOutputFile,
-          files = getLibraryFiles(library, copiedFiles, targetFile),
-          projectLibraryData = libraryData,
-        )
+        addLibrary(targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = getLibraryFiles(library, copiedFiles, targetFile))
       }
       else {
         for (file in library.getPaths(JpsOrderRootType.COMPILED)) {
@@ -669,13 +695,7 @@ class JarPackager private constructor(
 
           val targetFile = libOutputDir.resolve(fileName)
           val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
-          addLibrary(
-            library = library,
-            targetFile = targetFile,
-            relativeOutputFile = relativeOutputFile,
-            files = listOf(file),
-            projectLibraryData = libraryData,
-          )
+          addLibrary(targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = listOf(file))
         }
       }
     }
@@ -730,26 +750,6 @@ class JarPackager private constructor(
         )
       )
     }
-  }
-
-  private fun addLibrary(library: JpsLibrary, targetFile: Path, relativeOutputFile: String, files: List<Path>, projectLibraryData: ProjectLibraryData?) {
-    filesToSourceWithMapping(
-      asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativeOutputFile, nativeFiles = null),
-      files = files,
-      library = library,
-      relativeOutputFile = relativeOutputFile,
-      projectLibraryData = projectLibraryData,
-    )
-  }
-
-  private fun addLibrary(library: JpsLibrary, relativeOutputFile: String, outputDir: Path, files: List<Path>, projectLibraryData: ProjectLibraryData?) {
-    filesToSourceWithMapping(
-      asset = getJarAsset(targetFile = outputDir.resolve(relativeOutputFile), relativeOutputFile = relativeOutputFile, nativeFiles = null),
-      files = files,
-      library = library,
-      relativeOutputFile = relativeOutputFile,
-      projectLibraryData = projectLibraryData,
-    )
   }
 
   private fun getJarAsset(targetFile: Path, relativeOutputFile: String, nativeFiles: List<String>?): AssetDescriptor {
