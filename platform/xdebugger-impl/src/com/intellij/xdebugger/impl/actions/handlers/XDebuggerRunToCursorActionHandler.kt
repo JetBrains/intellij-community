@@ -13,34 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.actions.handlers;
+package com.intellij.xdebugger.impl.actions.handlers
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public class XDebuggerRunToCursorActionHandler extends XDebuggerSuspendedActionHandler {
-  private final boolean myIgnoreBreakpoints;
-
-  public XDebuggerRunToCursorActionHandler(final boolean ignoreBreakpoints) {
-    myIgnoreBreakpoints = ignoreBreakpoints;
+class XDebuggerRunToCursorActionHandler(private val myIgnoreBreakpoints: Boolean) : XDebuggerSuspendedActionHandler() {
+  override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
+    return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext) != null
   }
 
-  @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext) != null;
-  }
-
-  @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
+  override fun perform(session: XDebugSession, dataContext: DataContext) {
+    val position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext)
     if (position != null) {
-      session.runToPosition(position, myIgnoreBreakpoints);
+      session.runToPosition(position, myIgnoreBreakpoints)
     }
   }
 }
