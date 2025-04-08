@@ -128,7 +128,7 @@ class IdeaPluginDescriptorImpl private constructor(
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
   override val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
-  val packagePrefix: String? = raw.`package`
+  override val packagePrefix: String? = raw.`package`
 
   override val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
   override val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()

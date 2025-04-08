@@ -17,6 +17,8 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
 
   val pluginAliases: List<PluginId>
 
+  val packagePrefix: String?
+
   val actions: List<ActionElement>
 
   val appContainerDescriptor: ContainerDescriptor
