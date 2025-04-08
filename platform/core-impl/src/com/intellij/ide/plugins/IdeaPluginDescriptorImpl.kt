@@ -373,10 +373,7 @@ class IdeaPluginDescriptorImpl private constructor(
       visitedFiles.add(configFile)
       try {
         val subDescriptor = createSub(raw, configFile, context, module = null)
-        assert(subDescriptor.isIncomplete == null) { subDescriptor }
-        if (subDescriptor.isIncomplete == null) {
-          subDescriptor.initializeV1Dependencies(context, pathResolver, dataLoader, visitedFiles)
-        }
+        subDescriptor.initializeV1Dependencies(context, pathResolver, dataLoader, visitedFiles)
         dependency.setSubDescriptor(subDescriptor)
       } finally {
         visitedFiles.removeLast()
