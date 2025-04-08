@@ -310,6 +310,12 @@ class IdeaPluginDescriptorImpl private constructor(
     if (isIncomplete != null) {
       return
     }
+    for (dependency in pluginDependencies) {
+      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
+        markAsIncomplete(dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
+        return
+      }
+    }
     for (pluginDependency in moduleDependencies.plugins) {
       if (context.isPluginDisabled(pluginDependency.id)) {
         markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
@@ -327,14 +333,6 @@ class IdeaPluginDescriptorImpl private constructor(
                                        dataLoader: DataLoader,
                                        visitedFiles: MutableList<String>) {
     for (dependency in pluginDependencies) {
-      // context.isPluginIncomplete must be not checked here as another version of a plugin may be supplied later from another source
-      if (context.isPluginDisabled(dependency.pluginId)) {
-        if (!dependency.isOptional && isIncomplete == null) {
-          markAsIncomplete(dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
-          // TODO: why we don't just return immediately? or at least continue?
-        }
-      }
-
       // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
       val configFile = dependency.configFile ?: continue
       if (pathResolver.isFlat && context.checkOptionalConfigShortName(configFile, this)) {
