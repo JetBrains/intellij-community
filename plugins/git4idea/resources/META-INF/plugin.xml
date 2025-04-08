@@ -28,5 +28,6 @@
     by moving intellij.vcs.git to intellij.vcs.git.backend and making content of this module shared-->
     <module name="intellij.vcs.git.shared" loading="embedded"/>
     <module name="intellij.vcs.git.frontend"/>
+    <module name="intellij.vcs.git.frontend.split"/>
   </content>
 </idea-plugin>
