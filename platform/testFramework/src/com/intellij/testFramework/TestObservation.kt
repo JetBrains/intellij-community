@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
@@ -23,20 +24,16 @@ import kotlin.time.Duration.Companion.milliseconds
 object TestObservation {
 
   @JvmStatic
-  fun waitForConfiguration(timeout: Long, project: Project) {
-    waitForConfiguration(timeout.milliseconds, project)
-  }
-
-  fun waitForConfiguration(timeout: Duration, project: Project) {
+  fun waitForConfiguration(project: Project, timeout: Long = DEFAULT_TEST_TIMEOUT.inWholeMilliseconds) {
     val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     val job = coroutineScope.launch {
-      awaitConfiguration(timeout, project)
+      awaitConfiguration(project, timeout.milliseconds)
     }
     val promise = job.asPromise()
     promise.waitForPromiseAndPumpEdt(Duration.INFINITE)
   }
 
-  suspend fun awaitConfiguration(timeout: Duration, project: Project) {
+  suspend fun awaitConfiguration(project: Project, timeout: Duration = DEFAULT_TEST_TIMEOUT) {
     val operationLog = StringJoiner("\n")
     try {
       withTimeout(timeout) {

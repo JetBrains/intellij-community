@@ -48,14 +48,14 @@ class MultiProjectTestFixtureImpl: MultiProjectTestFixture {
 
   override suspend fun awaitOpenProjectConfiguration(openProject: suspend () -> Project): Project {
     return openProject().withProjectAsync { project ->
-      TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project)
+      TestObservation.awaitConfiguration(project, DEFAULT_SYNC_TIMEOUT)
       IndexingTestUtil.suspendUntilIndexesAreReady(project)
     }
   }
 
   override suspend fun <R> awaitProjectConfiguration(project: Project, action: suspend () -> R): R {
     return project.trackActivity(TestProjectConfigurationActivityKey, action).also {
-      TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project)
+      TestObservation.awaitConfiguration(project, DEFAULT_SYNC_TIMEOUT)
       IndexingTestUtil.suspendUntilIndexesAreReady(project)
     }
   }
