@@ -687,7 +687,6 @@ object PluginManagerCore {
 
     val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = loadingResult.getIncompleteIdMap().values)
     ClassLoaderConfigurator(pluginSet, coreLoader).configure()
-    pluginDescriptorDebugData = context.debugData
     return PluginManagerState(pluginSet, pluginIdsToDisable = pluginsToDisable.keys, pluginIdsToEnable = pluginsToEnable.keys)
   }
 
@@ -881,6 +880,7 @@ object PluginManagerCore {
       shadowedBundledPlugins = loadingResult.shadowedBundledIds
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       nullablePluginSet = initResult.pluginSet
+      pluginDescriptorDebugData = context.debugData
       initResult.pluginSet
     }
   }
