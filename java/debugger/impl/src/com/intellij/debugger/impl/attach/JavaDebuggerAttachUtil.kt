@@ -37,9 +37,27 @@ object JavaDebuggerAttachUtil {
   @JvmStatic
   @Throws(IOException::class, AttachNotSupportedException::class)
   fun attachVirtualMachine(id: String): VirtualMachine {
-    // avoid attaching to 3rd party vms
-    // below is a modified version of sun.tools.attach.HotSpotAttachProvider.testAttachable
-    // original version silently fail and allows attach to openj9 jvms (and crash them)
+    testAttachable(id)
+    return VirtualMachine.attach(id)
+  }
+
+  @JvmStatic
+  fun isAttachable(id: String): Boolean {
+    try {
+      testAttachable(id)
+      return true
+    }
+    catch (_: AttachNotSupportedException) {
+      return false
+    }
+  }
+
+  /**
+   * Modified version of sun.tools.attach.HotSpotAttachProvider.testAttachable
+   * original version silently fails and allows attach to openj9 jvms (and crash them)
+   */
+  @Throws(AttachNotSupportedException::class)
+  private fun testAttachable(id: String) {
     var vm: MonitoredVm? = null
     try {
       val host = MonitoredHost.getMonitoredHost(HostIdentifier(null as String?))
@@ -54,6 +72,5 @@ object JavaDebuggerAttachUtil {
     finally {
       vm?.detach()
     }
-    return VirtualMachine.attach(id)
   }
 }
