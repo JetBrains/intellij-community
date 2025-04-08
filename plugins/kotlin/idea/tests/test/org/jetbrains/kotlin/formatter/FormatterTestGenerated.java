@@ -854,6 +854,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/CommentInFunctionLiteral.after.kt");
             }
 
+            @TestMetadata("ContextParameterModifiers.after.kt")
+            public void testContextParameterModifiers() throws Exception {
+                runTest("testData/formatter/ContextParameterModifiers.after.kt");
+            }
+
             @TestMetadata("ContextParameterMultiline.after.kt")
             public void testContextParameterMultiline() throws Exception {
                 runTest("testData/formatter/ContextParameterMultiline.after.kt");
