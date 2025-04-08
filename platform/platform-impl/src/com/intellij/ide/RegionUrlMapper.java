@@ -140,6 +140,10 @@ public final class RegionUrlMapper {
       if (t instanceof CancellationException || t instanceof ControlFlowException) {
         LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
       }
+      else if (Boolean.valueOf(System.getProperty("force.region.mappings.load")).booleanValue()) {
+        LOG.warn("Failed to load regional URL mappings: " + t);
+        throw new CompletionException(t);
+      }
       else if (t instanceof IOException) {
         // legitimate failure when using the IDE offline; just log it without the stack trace
         LOG.info("Failed to fetch regional URL mappings (using non-regional URL as fallback): " + t);
