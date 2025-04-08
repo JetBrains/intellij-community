@@ -641,7 +641,8 @@ class JarPackager private constructor(
 
 private val agentLibrariesNotForcedInSeparateJars = listOf(
   "ideformer",
-  "code-agents"
+  "code-agents",
+  "code-prompt-agents"
 )
 
 private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
