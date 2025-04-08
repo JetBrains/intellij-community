@@ -32,7 +32,7 @@ fun fetchWeightedElementsMixing(
 
   fetchers.forEach { fetcher -> fetcher(pattern, progressIndicator, adderClosure) }
 
-  itemPool.sortBy { -it.weight }
+  // The by-weight sorting is useless here, it is expected that the contributors return the items as-is
 
   @Suppress("DEPRECATION")
   indicatorRunBlockingCancellable(progressIndicator) {
