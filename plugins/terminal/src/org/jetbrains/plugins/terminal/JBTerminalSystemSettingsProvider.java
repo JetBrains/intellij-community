@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,6 +34,11 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
     // Let's use "Terminal.SelectAll" action with default keyboard shortcut on macOS (Cmd+A). It allows users
     // to configure custom keyboard shortcuts and avoid conflicts with shell key-binding actions.
     return getSelectAllActionPresentation(false);
+  }
+
+  @Override
+  public FontPreferences getFontPreferences() {
+    return TerminalFontOptions.getInstance().getFontPreferences();
   }
 
   @Override

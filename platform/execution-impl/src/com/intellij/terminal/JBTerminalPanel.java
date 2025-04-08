@@ -45,8 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JPopupMenu;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -335,7 +334,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
     FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(
       text, start, end, fontStyle,
-      mySettingsProvider.getColorsScheme().getConsoleFontPreferences(),
+      mySettingsProvider.getFontPreferences(),
       null);
     return fontInfo.getFont().deriveFont(mySettingsProvider.getTerminalFontSize());
   }
