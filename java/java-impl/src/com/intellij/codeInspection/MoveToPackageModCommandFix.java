@@ -55,6 +55,7 @@ public class MoveToPackageModCommandFix extends PsiBasedModCommandAction<PsiFile
     Project project = file.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     PsiDirectory directory = file.getContainingDirectory();
+    if (directory == null) return false;
     VirtualFile sourceRoot = fileIndex.getSourceRootForFile(directory.getVirtualFile());
     return sourceRoot != null && correctPackage(targetPackage, project, sourceRoot) != null;
   }
@@ -62,7 +63,6 @@ public class MoveToPackageModCommandFix extends PsiBasedModCommandAction<PsiFile
   private static @Nullable String correctPackage(@NotNull String targetPackage, @NotNull Project project, @NotNull VirtualFile sourceRoot) {
     String sourceRootPackage = PackageIndex.getInstance(project).getPackageNameByDirectory(sourceRoot);
     if (sourceRootPackage != null && !sourceRootPackage.isEmpty()) {
-      if (!targetPackage.startsWith(sourceRootPackage)) return null;
       if (targetPackage.equals(sourceRootPackage)) return "";
       if (!targetPackage.startsWith(sourceRootPackage + ".")) return null;
       return targetPackage.substring(sourceRootPackage.length() + 1);
