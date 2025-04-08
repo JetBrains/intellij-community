@@ -220,7 +220,7 @@ public final class XFramesView extends XDebugView {
         XDebugSessionProxy session = getSession();
         // TODO there's, ostensibly, a long-living bug: thread list may change over time on a breakpoint with suspend thread policy;
         //  but myThreadsCalculated doesn't address this issue
-        if (session == null || myThreadsCalculated) {
+        if (session == null || !session.hasSuspendContext() || myThreadsCalculated) {
           return;
         }
         session.computeExecutionStacks(ThreadsBuilder::new);
