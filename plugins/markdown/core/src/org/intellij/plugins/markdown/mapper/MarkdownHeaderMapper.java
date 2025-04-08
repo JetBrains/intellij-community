@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.mapper;
 
 import com.intellij.ide.vfs.VirtualFileId;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -13,9 +14,12 @@ import com.intellij.ide.vfs.VirtualFileIdKt;
  * Mapper class for converting a MarkdownHeader into a MarkdownHeaderInfo.
  */
 public final class MarkdownHeaderMapper {
+  private static final Logger logger = Logger.getInstance(MarkdownHeaderMapper.class);
+
   public static MarkdownHeaderInfo map(MarkdownHeader header) {
     if (header == null) {
-      throw new IllegalArgumentException("header cannot be null");
+      logger.warn("Header is null, returning null");
+      return null;
     }
     String headerText = header.getText();
 

@@ -22,6 +22,7 @@ interface MarkdownLinkOpener {
    *
    * Note: it is possible to add custom url handler with [com.intellij.ide.browsers.UrlOpener] EP.
    */
+  @Deprecated("this method lacks remote development support", ReplaceWith("openLink(project, link, sourceFile)"))
   fun openLink(project: Project?, link: String)
 
   fun openLink(project: Project?, link: String, sourceFile: VirtualFile?)

@@ -36,12 +36,13 @@ import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpenerUtil
-import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpenerUtil.Companion.findVirtualFile
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpenerUtil.findVirtualFile
 import org.intellij.plugins.markdown.util.MarkdownDisposable
 import java.net.URI
 import java.net.URISyntaxException
 
 internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : MarkdownLinkOpener {
+  @Deprecated("Use openLink(project, link, sourceFile) instead", replaceWith = ReplaceWith("openLink(project, link, sourceFile)"))
   override fun openLink(project: Project?, link: String) {
     val uri = createUri(link) ?: return
     if (tryOpenInEditorDeprecated(project, uri)) {
@@ -52,16 +53,15 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     }
   }
 
-  override fun openLink(project: Project?, link: String, containingFile: VirtualFile?) {
+  override fun openLink(currentProject: Project?, link: String, containingFile: VirtualFile?) {
     coroutineScope.launch {
       val data = MarkdownLinkOpenerRemoteApi.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
       val uri = createUri(data.uri) ?: return@launch
       if (uri.scheme != "file") {
-        openExternalLink(project, uri)
+        openExternalLink(currentProject, uri)
         return@launch
       }
-      @Suppress("NAME_SHADOWING")
-      val project = project ?: data.projectId?.findProject() ?: return@launch
+      val project = currentProject ?: data.projectId?.findProject() ?: return@launch
       val fileToOpen = data.virtualFileId?.virtualFile() ?: return@launch
       val anchor = uri.fragment
       if (anchor == null) {

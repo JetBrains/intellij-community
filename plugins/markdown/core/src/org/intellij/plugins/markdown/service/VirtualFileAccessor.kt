@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Rpc
-interface ProjectStructureRemoteApi : RemoteApi<Unit> {
-  suspend fun getFileByResourceName(resourceName: String, virtualFileId: VirtualFileId?, projectId: ProjectId?): VirtualFileId?
+interface VirtualFileAccessor : RemoteApi<Unit> {
+  suspend fun getFileByResourceName(resourceName: String, virtualFileId: VirtualFileId, projectId: ProjectId): VirtualFileId?
 
   companion object {
     @JvmStatic
-    suspend fun getInstance(): ProjectStructureRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<ProjectStructureRemoteApi>())
+    suspend fun getInstance(): VirtualFileAccessor {
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<VirtualFileAccessor>())
     }
   }
 }

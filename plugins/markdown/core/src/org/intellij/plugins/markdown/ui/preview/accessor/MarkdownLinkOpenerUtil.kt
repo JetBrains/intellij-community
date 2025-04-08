@@ -25,63 +25,61 @@ import java.net.URISyntaxException
 import java.nio.file.Path
 import com.intellij.openapi.diagnostic.logger
 
-class MarkdownLinkOpenerUtil {
-  companion object{
-    private val  logger = logger<MarkdownLinkOpenerUtil>()
+object MarkdownLinkOpenerUtil {
+  private val  logger = logger<MarkdownLinkOpenerUtil>()
 
-    fun navigateToHeader(project: Project, headerInfo: MarkdownHeaderInfo) {
-      val uri = createFileUri(headerInfo.filePath)
-      if (uri == null) return
-      val file = headerInfo.virtualFileId.virtualFile()
-      if (file == null) return
-      val manager = FileEditorManager.getInstance(project)
-      val openedEditors = manager.getEditorList(file).stream()
-        .filter { editor: FileEditor? -> editor is MarkdownEditorWithPreview }
-        .map<MarkdownEditorWithPreview?> { editor: FileEditor? -> editor as MarkdownEditorWithPreview }
-        .toList()
-      val element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.textOffset)
-      if (element == null) return
-      if (!openedEditors.isEmpty()) {
-        for (editor in openedEditors) {
-          PsiUtilCore.getElementAtOffset(PsiUtilCore.getPsiFile(project, file), element.getTextOffset())
-          PsiNavigateUtil.navigate(element, true)
-        }
-        return
+  fun navigateToHeader(project: Project, headerInfo: MarkdownHeaderInfo) {
+    val uri = createFileUri(headerInfo.filePath)
+    if (uri == null) return
+    val file = headerInfo.virtualFileId.virtualFile()
+    if (file == null) return
+    val manager = FileEditorManager.getInstance(project)
+    val openedEditors = manager.getEditorList(file).stream()
+      .filter { editor: FileEditor? -> editor is MarkdownEditorWithPreview }
+      .map<MarkdownEditorWithPreview?> { editor: FileEditor? -> editor as MarkdownEditorWithPreview }
+      .toList()
+    val element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.textOffset)
+    if (element == null) return
+    if (!openedEditors.isEmpty()) {
+      for (editor in openedEditors) {
+        PsiUtilCore.getElementAtOffset(PsiUtilCore.getPsiFile(project, file), element.getTextOffset())
+        PsiNavigateUtil.navigate(element, true)
       }
-      val descriptor = OpenFileDescriptor(project, file, element.getTextOffset())
-      manager.openEditor(descriptor, true)
+      return
     }
+    val descriptor = OpenFileDescriptor(project, file, element.getTextOffset())
+    manager.openEditor(descriptor, true)
+  }
 
-    fun collectHeaders(project: Project, anchor: String, targetFile: VirtualFile): List<MarkdownHeaderInfo>? {
-      return runReadAction {
-        if (DumbService.isDumb(project)) {
-          return@runReadAction emptyList()
-        }
-        val scope = when (val file = PsiManager.getInstance(project).findFile(targetFile)) {
-          null -> GlobalSearchScope.EMPTY_SCOPE
-          else -> GlobalSearchScope.fileScope(file)
-        }
-        return@runReadAction HeaderAnchorIndex.collectHeaders(project, scope, anchor).map(MarkdownHeaderMapper::map)
+  fun collectHeaders(project: Project, anchor: String, targetFile: VirtualFile): List<MarkdownHeaderInfo>? {
+    return runReadAction {
+      if (DumbService.isDumb(project)) {
+        return@runReadAction emptyList()
       }
+      val scope = when (val file = PsiManager.getInstance(project).findFile(targetFile)) {
+        null -> GlobalSearchScope.EMPTY_SCOPE
+        else -> GlobalSearchScope.fileScope(file)
+      }
+      return@runReadAction HeaderAnchorIndex.collectHeaders(project, scope, anchor).map(MarkdownHeaderMapper::map)
     }
+  }
 
-    fun URI.findVirtualFile(): VirtualFile? {
-      val actualPath = when {
-        SystemInfo.isWindows -> UriUtil.trimLeadingSlashes(path)
-        else -> path
-      }
-      val path = Path.of(actualPath)
-      return VfsUtil.findFile(path, true)
+  fun URI.findVirtualFile(): VirtualFile? {
+    val actualPath = when {
+      SystemInfo.isWindows -> UriUtil.trimLeadingSlashes(path)
+      else -> path
     }
+    val path = Path.of(actualPath)
+    return VfsUtil.findFile(path, true)
+  }
 
-    private fun createFileUri(link: String?): URI? {
-      try {
-        return URI("file", null, link, null)
-      }
-      catch (exception: URISyntaxException) {
-        logger.warn(exception)
-        return null
-      }
+  private fun createFileUri(link: String?): URI? {
+    try {
+      return URI("file", null, link, null)
+    }
+    catch (exception: URISyntaxException) {
+      logger.warn(exception)
+      return null
     }
   }
 }

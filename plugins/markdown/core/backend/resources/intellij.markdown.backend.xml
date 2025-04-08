@@ -5,8 +5,8 @@
     </dependencies>
     <extensions defaultExtensionNs="com.intellij">
       <platform.rpc.backend.remoteApiProvider
-        implementation="org.intellij.plugins.markdown.backend.providers.LinkOpenerApiProvider"/>
+        implementation="org.intellij.plugins.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
       <platform.rpc.backend.remoteApiProvider
-        implementation="org.intellij.plugins.markdown.backend.providers.ProjectStructureProvider"/>
+        implementation="org.intellij.plugins.markdown.backend.providers.VirtualFileAccessorProvider"/>
     </extensions>
 </idea-plugin>
