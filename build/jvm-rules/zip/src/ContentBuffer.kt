@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.ByteBuf
 import java.io.EOFException
+import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
 internal fun writeToFileChannelFully(channel: FileChannel, position: Long, buffer: ByteBuf): Long {
@@ -17,6 +18,14 @@ internal fun writeToFileChannelFully(channel: FileChannel, position: Long, buffe
     currentPosition += n
   }
   return currentPosition
+}
+
+fun writeToFileChannelFully(channel: FileChannel, data: ByteBuffer, position: Long = 0) {
+  var currentPosition = position
+  do {
+    currentPosition += channel.write(data, currentPosition)
+  }
+  while (data.hasRemaining())
 }
 
 inline fun <T> ByteBuf.use(block: (ByteBuf) -> T): T {

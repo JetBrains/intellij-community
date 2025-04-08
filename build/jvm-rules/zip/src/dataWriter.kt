@@ -7,12 +7,13 @@ import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.EnumSet
+import java.util.*
 
 internal val READ = EnumSet.of(StandardOpenOption.READ)
 
 val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
-private val WRITE: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE)
+
+val WRITE_OPEN_OPTION: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE)
 
 private val W_OVERWRITE: EnumSet<StandardOpenOption> = EnumSet.of(
   StandardOpenOption.WRITE,
@@ -52,7 +53,7 @@ internal fun fileDataWriter(file: Path, overwrite: Boolean, isTemp: Boolean): Da
   else {
     val options = when {
       overwrite -> W_OVERWRITE
-      isTemp -> WRITE
+      isTemp -> WRITE_OPEN_OPTION
       else -> W_CREATE_NEW
     }
     return FileChannelDataWriter(FileChannel.open(file, options))
@@ -108,11 +109,7 @@ private class FileChannelDataWriter(
   }
 
   override fun write(data: ByteBuffer, position: Long) {
-    var currentPosition = position
-    do {
-      currentPosition += fileChannel.write(data, currentPosition)
-    }
-    while (data.hasRemaining())
+    writeToFileChannelFully(channel = fileChannel, data = data, position = position)
   }
 
   override fun close(size: Long) {
