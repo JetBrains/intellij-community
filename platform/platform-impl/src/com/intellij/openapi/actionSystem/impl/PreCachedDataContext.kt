@@ -235,7 +235,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
       myCachedData.nullsByRules.set(keyIndex)
     }
     else {
-      myCachedData.bgtComputed.put(dataId, answer)
+      myCachedData.bgtComputed[dataId] = answer
     }
     return answer
   }
@@ -369,7 +369,7 @@ private fun cacheComponentsData(sink: MySink, components: List<Component>, initi
     val dataProvider = if (comp is UiDataProvider) comp else DataManagerImpl.getDataProviderEx(comp)
     cacheProviderData(sink, dataProvider)
     cachedData = CachedData(sink.uiSnapshot?.build() ?: persistentMapOf())
-    ourPrevMaps.put(comp, cachedData)
+    ourPrevMaps[comp] = cachedData
   }
   val time = System.currentTimeMillis() - start
   @Suppress("ControlFlowWithEmptyBody")
@@ -380,12 +380,18 @@ private fun cacheComponentsData(sink: MySink, components: List<Component>, initi
 }
 
 private fun cacheProviderData(sink: MySink, dataProvider: Any?) {
-  DataSink.uiDataSnapshot(sink, dataProvider)
+  sink.closed = false
+  try {
+    DataSink.uiDataSnapshot(sink, dataProvider)
+  }
+  finally {
+    sink.closed = true
+  }
   if (sink.hideEditor) {
     val map = sink.uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { sink.uiSnapshot = it }
-    map.put(CommonDataKeys.EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
-    map.put(CommonDataKeys.HOST_EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
-    map.put(InjectedDataKeys.EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
+    map[CommonDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
+    map[CommonDataKeys.HOST_EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
+    map[InjectedDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
   }
 }
 
@@ -404,6 +410,7 @@ private fun runSnapshotRules(sink: MySink, component: Component?, data: CachedDa
   }
   UiDataRule.forEachRule { rule ->
     val prev = sink.source
+    sink.closed = false
     sink.source = rule
     sink.uiComputed = data.uiComputed
     try {
@@ -412,6 +419,7 @@ private fun runSnapshotRules(sink: MySink, component: Component?, data: CachedDa
     finally {
       sink.uiComputed = null
       sink.source = prev
+      sink.closed = true
     }
   }
 }
@@ -425,7 +433,14 @@ private class MySink : DataSink {
   var keys: Array<DataKey<*>>? = null
   var hideEditor: Boolean = false
 
+  var closed: Boolean = true
+
+  private fun checkClosed() {
+    assert(!closed) { "Closed sink must not be used" }
+  }
+
   override fun <T : Any> set(key: DataKey<T>, data: T?) {
+    checkClosed()
     if (data == null) return
     if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
         key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
@@ -438,15 +453,20 @@ private class MySink : DataSink {
         if (data !is DataProvider) {
           throw IllegalArgumentException("BGT_DATA_PROVIDER must be a DataProvider")
         }
-        val lazyKey = (data as? MyLazyBase<*, *>)?.key
+        @Suppress("UNCHECKED_CAST")
+        val lazyKey = (data as? MyLazyBase<*, *>)?.key as? DataKey<Any>
         if (lazyKey == BGT_DATA_PROVIDER) {
           throw IllegalArgumentException("BGT_DATA_PROVIDER must not be lazy")
         }
-        if (lazyKey != null && uiComputed == null) {
-          uiSnapshot?.remove(lazyKey.name)
-        }
+        // drop the existing value from the snapshot (it would always win)
+        // and combine it as "existing lazy" with the incoming lazy provider
+        val compositeData = if (lazyKey != null && uiComputed == null) {
+          uiSnapshot?.remove(lazyKey.name)?.let { snapshotValue ->
+            CompositeDataProvider.compose(data, MyLazy(lazyKey) { snapshotValue })
+          }
+        } else null
         val existing = (uiComputed?.get(key.name) ?: uiSnapshot?.get(key.name)) as DataProvider?
-        composeKeyedProvider(lazyKey, data, existing, uiComputed == null)
+        composeKeyedProvider(lazyKey, compositeData ?: data, existing, uiComputed == null)
       }
       else -> DataValidators.validOrNull(data, key.name, source!!)
     }
@@ -457,18 +477,21 @@ private class MySink : DataSink {
         return
       }
     }
-    map.put(key.name, validated)
+    map[key.name] = validated
     if (key == CommonDataKeys.EDITOR && validated !== CustomizedDataContext.EXPLICIT_NULL) {
-      map.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.name, validated)
+      map[CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.name] = validated
     }
   }
 
   override fun <T : Any> setNull(key: DataKey<T>) {
-    if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT || key == PlatformCoreDataKeys.IS_MODAL_CONTEXT || key == PlatformDataKeys.MODALITY_STATE) {
+    checkClosed()
+    if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
+        key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+        key == PlatformDataKeys.MODALITY_STATE) {
       return
     }
     val map = uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { uiSnapshot = it }
-    map.put(key.name, CustomizedDataContext.EXPLICIT_NULL)
+    map[key.name] = CustomizedDataContext.EXPLICIT_NULL
   }
 
   override fun <T : Any> lazy(key: DataKey<T>, data: () -> T?) {
