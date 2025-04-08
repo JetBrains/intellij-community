@@ -49,6 +49,16 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       val lastBlock = blocksModel.blocks.lastOrNull() ?: return
 
       val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
+      val commands = listOf("git1", "git2", "git-lala", command + "op", "$command-end", "rm", "ls")
+
+      commands.forEachIndexed { index, command ->
+        val priority = 100.0 - index * 5
+        val lookupElement = PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create(command),
+          priority
+        )
+        result.addElement(lookupElement)
+      }
       val shellSupport = TerminalShellSupport.findByShellType(ShellType.ZSH) ?: return
       val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
       val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
