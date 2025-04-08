@@ -39,7 +39,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.where
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withProgressText

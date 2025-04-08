@@ -112,5 +112,9 @@ interface EelExecApi {
   data object RedirectStdErr : PtyOrStdErrSettings
 }
 
+suspend fun EelExecApi.where(exe: String): EelPath? {
+  return this.findExeFilesInPath(exe).firstOrNull()
+}
+
 fun EelExecApi.execute(exe: String, vararg args: String): EelExecApiHelpers.Execute =
   execute(exe).args(*args)

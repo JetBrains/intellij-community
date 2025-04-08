@@ -4,7 +4,7 @@ package com.intellij.python.junit5Tests.unit.alsoWin
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.where
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.WhatToExec
 import com.intellij.testFramework.common.timeoutRunBlocking

@@ -62,10 +62,6 @@ suspend fun EelProcess.awaitProcessResult(): EelProcessExecutionResult {
   }
 }
 
-suspend fun EelExecApi.where(exe: String): EelPath? {
-  return this.findExeFilesInPath(exe).firstOrNull()
-}
-
 /**
  * Given [this] is a binary, executes it with [args] and returns either [EelExecApi.ExecuteProcessError] (couldn't execute) or
  * [ProcessOutput] as a result of the execution.
