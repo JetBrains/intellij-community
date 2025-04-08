@@ -294,7 +294,7 @@ class IdeaPluginDescriptorImpl private constructor(
   internal fun initialize(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
     assert(moduleName == null) // initialize is only called on main descriptors
     if (context.isPluginDisabled(id)) {
-      markAsIncomplete(disabledDependency = null, shortMessage = null)
+      onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
       return
     }
     checkCompatibility(context)
@@ -422,23 +422,16 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private fun markAsIncomplete(disabledDependency: PluginId?, @PropertyKey(resourceBundle = CoreBundle.BUNDLE) shortMessage: String?) {
+  private fun markAsIncomplete(disabledDependency: PluginId, @PropertyKey(resourceBundle = CoreBundle.BUNDLE) shortMessage: String) {
     if (initError != null) {
       return
     }
-
-    if (shortMessage == null) {
-      initError = PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED)
-    }
-    else {
-      initError = PluginLoadingError(
-        plugin = this,
-        detailedMessageSupplier = null,
-        shortMessageSupplier = { CoreBundle.message(shortMessage, disabledDependency!!) },
-        isNotifyUser = false,
-        disabledDependency)
-    }
-
+    initError = PluginLoadingError(
+      plugin = this,
+      detailedMessageSupplier = null,
+      shortMessageSupplier = { CoreBundle.message(shortMessage, disabledDependency) },
+      isNotifyUser = false,
+      disabledDependency)
     isEnabled = false
   }
 
