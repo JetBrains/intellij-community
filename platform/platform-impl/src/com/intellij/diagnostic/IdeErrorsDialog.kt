@@ -871,16 +871,15 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     }
   }
 
-  private inline fun <reified T : Throwable> Throwable.isBackendInstance() = this is RemoteSerializedThrowable
-                                                                             && classFqn == T::class.qualifiedName
+  private inline fun <reified T : Throwable> Throwable.isBackendInstance() =
+    this is RemoteSerializedThrowable && classFqn == T::class.qualifiedName
 
   private inline fun <reified T : Throwable> Throwable.isInstance() = this is T || isBackendInstance<T>()
 
   // Since we do not handle Freezes/Abstract Methods/JBR Crashes gracefully for now. TODO: IJPL-182368
-  private fun Throwable.isSpecialBackendException() = this is RemoteSerializedThrowable
-                                                      && (isInstance<AbstractMethodError>() || isInstance<Freeze>() ||
-                                                          isInstance<JBRCrash>() || isInstance<KotlinCompilerCrash>())
-
+  private fun Throwable.isSpecialBackendException() =
+    this is RemoteSerializedThrowable &&
+    (isInstance<AbstractMethodError>() || isInstance<Freeze>() || isInstance<JBRCrash>() || isInstance<KotlinCompilerCrash>())
 
   // This is a very hacky method, since no actual cast is done for `RemoteSerializedThrowable``
   private val Throwable.kotlinVersionOrEmpty: String
