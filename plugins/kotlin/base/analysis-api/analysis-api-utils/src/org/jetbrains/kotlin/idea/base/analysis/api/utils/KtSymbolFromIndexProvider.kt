@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
@@ -44,7 +43,7 @@ class KtSymbolFromIndexProvider(
             return true
         }
 
-        if (isExpectDeclaration() && !useSiteModule.targetPlatform.isCommon()) {
+        if (isIgnoredExpectDeclaration()) {
             // filter out expect declarations outside of common modules
             return false
         }
@@ -479,4 +478,15 @@ private fun MutableSet<Name>.createNamesProcessor(
         ?.takeIf(nameFilter)
         ?.let(this@createNamesProcessor::add)
     true
+}
+
+/**
+ * We ignore expect declarations within completion in leaf modules because they will already be filled by their (more relevant)
+ * actual counterpart.
+ */
+context(KaSession)
+private fun KtDeclaration.isIgnoredExpectDeclaration(): Boolean {
+    if (!isExpectDeclaration()) return false
+    // Modules that have multiple targetPlatforms might have expect declarations without actuals, so we cannot ignore them.
+    return useSiteModule.targetPlatform.size <= 1
 }
