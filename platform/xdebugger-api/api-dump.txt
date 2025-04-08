@@ -202,10 +202,14 @@ a:com.intellij.xdebugger.XSourcePositionWrapper
 e:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - java.lang.Enum
 - sf:ALL:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- sf:Companion:com.intellij.xdebugger.breakpoints.SuspendPolicy$Companion
 - sf:NONE:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - sf:THREAD:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.SuspendPolicy
 - s:values():com.intellij.xdebugger.breakpoints.SuspendPolicy[]
+f:com.intellij.xdebugger.breakpoints.SuspendPolicy$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 com.intellij.xdebugger.breakpoints.XBreakpoint
 - com.intellij.openapi.util.UserDataHolder
 - a:getConditionExpression():com.intellij.xdebugger.XExpression
