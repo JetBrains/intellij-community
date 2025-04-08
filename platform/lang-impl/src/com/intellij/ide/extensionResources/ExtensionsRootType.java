@@ -15,6 +15,9 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtil;
+import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -296,41 +299,66 @@ public final class ExtensionsRootType extends RootType {
     FileUtil.rename(file, newName);
   }
 
-  private final Set<IdeaPluginDescriptor> updatingResources = ConcurrentHashMap.newKeySet();
+  private final Map<IdeaPluginDescriptor, Job> updatingResources = new ConcurrentHashMap<>();
 
-  public void updateBundledResources(@NotNull PluginId pluginId) {
-    executeOnPooledIoThread(() -> {
-      updateBundledResourcesImpl(pluginId);
-    });
-  }
-
-  private void updateBundledResourcesImpl(@NotNull PluginId pluginId) {
+  public Job updateBundledResources(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-    if (plugin == null || updatingResources.contains(plugin) || !updatingResources.add(plugin)) {
-      return;
+    if (plugin == null) {
+      CompletableJob job = JobKt.Job(null);
+      job.complete();
+      return job;
     }
 
-    try { // updating lock
-      for (ExternalResourcesUnpackExtensionBean pluginBean : ExternalResourcesUnpackExtensionBean.getPluginsBeUnpackedTo(pluginId)) {
-        updateBundledResourcesImpl(pluginBean.getPluginDescriptor().getPluginId());
+    return updatingResources.computeIfAbsent(plugin, (d) -> executeOnPooledIoThread(() -> {
+      try {
+        updateBundledResourcesImpl(d);
       }
+      finally {
+        updatingResources.remove(d);
+      }
+    }));
+  }
 
+  private void updateBundledResourcesImpl(@NotNull IdeaPluginDescriptor plugin) {
+    for (ExternalResourcesUnpackExtensionBean pluginBean : ExternalResourcesUnpackExtensionBean.getPluginsBeUnpackedTo(plugin.getPluginId())) {
+      updateBundledResourcesWithLock(pluginBean.getPluginDescriptor().getPluginId());
+    }
+
+    try {
       ResourceVersions versions = ResourceVersions.getInstance();
       if (versions.shouldUpdateResourcesOf(plugin)) {
-        extractBundledResources(pluginId, "");
+        extractBundledResources(plugin.getPluginId(), "");
         versions.resourcesUpdated(plugin);
       }
     }
     catch (IOException e) {
       LOG.warn("Failed to extract bundled resources for plugin: " + plugin.getName(), e);
     }
+  }
+
+  private void updateBundledResourcesWithLock(PluginId pluginId) {
+    IdeaPluginDescriptor ideaDesc = PluginManagerCore.getPlugin(pluginId);
+    if (ideaDesc == null || updatingResources.containsKey(ideaDesc)) {
+      return;
+    }
+
+    CompletableJob job = JobKt.Job(null);
+    if (updatingResources.putIfAbsent(ideaDesc, job) != null) {
+      job.complete();
+      return;
+    }
+
+    try { // updating lock
+      updateBundledResourcesImpl(ideaDesc);
+    }
     finally {
-      updatingResources.remove(plugin);
+      updatingResources.remove(ideaDesc);
+      job.complete();
     }
   }
 
   @TestOnly
   public void updatePluginResources(@NotNull PluginId pluginId) {
-    updateBundledResourcesImpl(pluginId);
+    updateBundledResourcesWithLock(pluginId);
   }
 }
