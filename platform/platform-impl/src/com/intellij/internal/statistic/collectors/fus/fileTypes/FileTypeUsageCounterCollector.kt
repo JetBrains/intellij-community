@@ -123,7 +123,8 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
       }
     })
 
-    if (fileTemplate is PluginBundledTemplate) {
+    if (fileTemplate is PluginBundledTemplate
+        && !java.lang.Boolean.getBoolean("ide.skip.plugin.templates.registered.check")) {
       val internalTemplates = FileTemplateManager.getDefaultInstance().getInternalTemplates()
         .map { t -> t.getName() }
         .toSet()
