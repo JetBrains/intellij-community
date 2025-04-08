@@ -3,6 +3,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
+import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.IdeaCommunityProperties
 import org.jetbrains.intellij.build.JewelMavenArtifacts
 import org.jetbrains.intellij.build.impl.BuildContextImpl
@@ -20,11 +21,12 @@ internal object JewelMavenArtifactsBuildTarget {
         projectHome = ULTIMATE_HOME,
         productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
       )
+      CompilationTasks.create(context).compileModules(JewelMavenArtifacts.ALL_MODULES)
       val builder = MavenArtifactsBuilder(context)
       val outputDir = context.paths.artifactDir.resolve("maven-artifacts")
       outputDir.deleteRecursively()
       builder.generateMavenArtifacts(
-        JewelMavenArtifacts.CORE.keys + JewelMavenArtifacts.STANDALONE.keys,
+        JewelMavenArtifacts.ALL_MODULES,
         outputDir = outputDir.name,
         validate = true,
       )
