@@ -96,5 +96,6 @@
     <orderEntry type="module" module-name="intellij.platform.todo" />
     <orderEntry type="module" module-name="intellij.platform.syntax" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>
