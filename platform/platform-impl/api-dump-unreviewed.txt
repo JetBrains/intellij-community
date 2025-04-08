@@ -2283,6 +2283,7 @@ a:com.intellij.ide.actions.SettingsEntryPointAction$UpdateAction
 - p:<init>(java.lang.String):V
 - isIdeUpdate():Z
 - isNewAction():Z
+- isPluginUpdate():Z
 - isRestartRequired():Z
 - markAsRead():V
 f:com.intellij.ide.actions.ShowContentAction
