@@ -342,11 +342,7 @@ private suspend fun doBuildBundledPlugins(
         searchableOptionSet = searchableOptionSet,
       )
 
-      buildPlatformSpecificPluginResources(
-        plugins = pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
-        targetDirs = getPluginDirs(context, isUpdateFromSources),
-        context = context,
-      )
+      buildPlatformSpecificPluginResources(plugins = pluginsToBundle, targetDirs = getPluginDirs(context, isUpdateFromSources), context = context)
 
       entries
     }
@@ -708,7 +704,7 @@ internal suspend fun buildPlugins(
             targetDir = scrambleTask.pluginDir,
             additionalPluginDir = scrambleTask.targetDir,
             layouts = plugins,
-            context,
+            context = context,
           )
         }
       }
@@ -722,22 +718,20 @@ private suspend fun buildPlatformSpecificPluginResources(
   targetDirs: List<Pair<SupportedDistribution, Path>>,
   context: BuildContext,
 ) {
-  plugins.asSequence()
-    .flatMap { plugin ->
-      plugin.platformResourceGenerators.entries.flatMap { (dist, generators) ->
-        generators.map { generator -> Triple(dist, generator, plugin.directoryName) }
+  for (plugin in plugins) {
+    for ((dist, generators) in plugin.platformResourceGenerators) {
+      val targetPath = targetDirs.firstOrNull { it.first == dist }?.second ?: continue
+      val pluginDir = targetPath.resolve(plugin.directoryName)
+      val relativePluginDir = context.paths.buildOutputDir.relativize(pluginDir).toString()
+      for (generator in generators) {
+        spanBuilder("plugin")
+          .setAttribute("path", relativePluginDir)
+          .use {
+            generator(pluginDir, context)
+          }
       }
     }
-    .mapNotNull {
-      (dist, generator, dirName) -> targetDirs.firstOrNull { it.first == dist }?.let { path -> generator to path.second.resolve(dirName) }
-    }
-    .forEach { (generator, pluginDir) ->
-      spanBuilder("plugin")
-        .setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString())
-        .use {
-          generator(pluginDir, context)
-        }
-    }
+  }
 }
 
 private const val PLUGINS_DIRECTORY = "plugins"
