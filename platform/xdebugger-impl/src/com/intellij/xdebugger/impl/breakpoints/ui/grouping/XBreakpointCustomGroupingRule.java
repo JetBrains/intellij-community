@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
@@ -31,7 +31,7 @@ public final class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingR
   }
 
   @Override
-  public XBreakpointCustomGroup getGroup(final @NotNull B breakpoint, final @NotNull Collection<? extends XBreakpointCustomGroup> groups) {
+  public XBreakpointCustomGroup getGroup(final @NotNull B breakpoint) {
     if (!(breakpoint instanceof XBreakpointBase)) {
       return null;
     }

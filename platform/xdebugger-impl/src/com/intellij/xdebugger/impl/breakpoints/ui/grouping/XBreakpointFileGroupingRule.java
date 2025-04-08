@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +25,7 @@ public final class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRul
   }
 
   @Override
-  public XBreakpointFileGroup getGroup(final @NotNull B breakpoint, final @NotNull Collection<? extends XBreakpointFileGroup> groups) {
+  public XBreakpointFileGroup getGroup(final @NotNull B breakpoint) {
     if (!(breakpoint instanceof XLineBreakpoint)) {
       return null;
     }
@@ -34,11 +34,6 @@ public final class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRul
     if (position == null) return null;
 
     VirtualFile file = position.getFile();
-    for (XBreakpointFileGroup group : groups) {
-      if (group.getFile().equals(file)) {
-        return group;
-      }
-    }
 
     return new XBreakpointFileGroup(file);
   }

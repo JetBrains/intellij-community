@@ -386,7 +386,7 @@ a:com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - sf:PRIORITY_COMPARATOR:java.util.Comparator
 - p:<init>(java.lang.String,java.lang.String):V
-- a:getGroup(java.lang.Object,java.util.Collection):com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
+- a:getGroup(java.lang.Object):com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 - getIcon():javax.swing.Icon
 - getId():java.lang.String
 - getPresentableName():java.lang.String
