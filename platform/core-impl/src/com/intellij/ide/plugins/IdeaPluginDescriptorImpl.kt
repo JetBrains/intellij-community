@@ -16,7 +16,10 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.util.PlatformUtils
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.time.ZoneOffset
@@ -301,15 +304,24 @@ class IdeaPluginDescriptorImpl private constructor(
     if (initError != null) {
       return
     }
+
+    fun requiredDependencyIsDisabled(disabledDependency: PluginId) = onInitError(PluginLoadingError(
+      plugin = this,
+      detailedMessageSupplier = null,
+      shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", disabledDependency) },
+      isNotifyUser = false,
+      disabledDependency
+    ))
+
     for (dependency in pluginDependencies) {
       if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
-        markAsIncomplete(dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
+        requiredDependencyIsDisabled(dependency.pluginId)
         return
       }
     }
     for (pluginDependency in moduleDependencies.plugins) {
       if (context.isPluginDisabled(pluginDependency.id)) {
-        markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
+        requiredDependencyIsDisabled(pluginDependency.id)
         return
       }
     }
@@ -420,19 +432,6 @@ class IdeaPluginDescriptorImpl private constructor(
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.marked.as.broken") }
       ))
     }
-  }
-
-  private fun markAsIncomplete(disabledDependency: PluginId, @PropertyKey(resourceBundle = CoreBundle.BUNDLE) shortMessage: String) {
-    if (initError != null) {
-      return
-    }
-    initError = PluginLoadingError(
-      plugin = this,
-      detailedMessageSupplier = null,
-      shortMessageSupplier = { CoreBundle.message(shortMessage, disabledDependency) },
-      isNotifyUser = false,
-      disabledDependency)
-    isEnabled = false
   }
 
   @ApiStatus.Internal
