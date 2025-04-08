@@ -164,10 +164,10 @@ internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescrip
          descriptor.moduleDependencies.plugins.isEmpty() &&
          descriptor.pluginId != PluginManagerCore.CORE_ID &&
          descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
-         !hasModuleDependencies(descriptor)
+         !hasJavaOrPlatformModuleV1Dependency(descriptor)
 }
 
-private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
+private fun hasJavaOrPlatformModuleV1Dependency(descriptor: IdeaPluginDescriptorImpl): Boolean {
   for (dependency in descriptor.dependencies) {
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
