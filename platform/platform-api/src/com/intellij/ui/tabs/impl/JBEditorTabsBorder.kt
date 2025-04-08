@@ -3,8 +3,6 @@
 
 package com.intellij.ui.tabs.impl
 
-import com.intellij.ide.ui.NavBarLocation
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.rd.paint2DLine
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
@@ -74,7 +72,8 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     g as Graphics2D
 
     if (ExperimentalUI.isNewUI()) {
-      g.paint2DLine(Point(x, y), Point(x + width, y), LinePainter2D.StrokeType.INSIDE, thickness.toDouble(), getBorderColor())
+      g.paint2DLine(Point(x, y), Point(x + width, y), LinePainter2D.StrokeType.INSIDE, thickness.toDouble(),
+                    JBUI.CurrentTheme.MainToolbar.borderColor())
     }
     else {
       tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
@@ -125,14 +124,6 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       val selectedLabel = tabs.selectedLabel ?: return
       tabs.tabPainter.paintUnderline(tabs.tabsPosition, selectedLabel.bounds, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
     }
-  }
-
-  private fun getBorderColor(): Color {
-    val uiSettings = UISettings.getInstance()
-    if (uiSettings.showNavigationBar && uiSettings.navBarLocation == NavBarLocation.TOP) {
-      return JBUI.CurrentTheme.EditorTabs.borderColor()
-    }
-    return JBUI.CurrentTheme.MainToolbar.borderColor()
   }
 
   private fun calcRectangle(): Rectangle? {

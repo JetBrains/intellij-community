@@ -3,8 +3,6 @@ package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.NavBarLocation
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.impl.InternalUICustomization
@@ -580,7 +578,7 @@ class InternalDecoratorImpl internal constructor(
       height: Int,
       ) {
       if (insets.top > 0) {
-        g.color = getTopBorderColor()
+        g.color = JBUI.CurrentTheme.MainToolbar.borderColor()
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
                             (y + insets.top - 1).toDouble())
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
@@ -600,14 +598,6 @@ class InternalDecoratorImpl internal constructor(
         LinePainter2D.paint(g, x.toDouble(), (y + height - 1).toDouble(), (x + width).toDouble(), (y + height - 1).toDouble())
         LinePainter2D.paint(g, x.toDouble(), (y + height).toDouble(), (x + width).toDouble(), (y + height).toDouble())
       }
-    }
-
-    private fun getTopBorderColor(): Color {
-      val uiSettings = UISettings.getInstance()
-      if (!toolWindow.toolWindowManager.isNewUi || uiSettings.showNavigationBar && uiSettings.navBarLocation == NavBarLocation.TOP) {
-        return JBColor.border()
-      }
-      return JBUI.CurrentTheme.MainToolbar.borderColor()
     }
 
     private fun doPaintInternalBorder(

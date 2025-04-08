@@ -1336,7 +1336,7 @@ public final class JBUI {
 
     public static final class MainToolbar {
       public static @NotNull Color borderColor() {
-        return JBColor.namedColor("MainToolbar.borderColor", ToolWindow.borderColor());
+        return JBColor.namedColor("MainToolbar.borderColor", JBColor.border());
       }
 
       public static final class Dropdown {

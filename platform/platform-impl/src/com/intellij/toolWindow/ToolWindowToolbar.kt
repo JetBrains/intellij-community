@@ -3,8 +3,6 @@
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.ide.ui.NavBarLocation
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
@@ -15,7 +13,6 @@ import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
@@ -49,7 +46,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
 
     val topWrapper = JBPanel<JBPanel<*>>(BorderLayout()).apply {
-      border = JBUI.Borders.customLineTop(getTopBorderColor())
+      border = JBUI.Borders.customLineTop(JBUI.CurrentTheme.MainToolbar.borderColor())
     }
     border = createBorder()
     topStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
@@ -105,18 +102,6 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
   open fun createBorder():Border = JBUI.Borders.empty()
   open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
-
-  private fun getTopBorderColor(): Color {
-    return JBColor.lazy {
-      val uiSettings = UISettings.getInstance()
-      if (uiSettings.showNavigationBar && uiSettings.navBarLocation == NavBarLocation.TOP) {
-        JBUI.CurrentTheme.ToolWindow.borderColor()
-      }
-      else {
-        JBUI.CurrentTheme.MainToolbar.borderColor()
-      }
-    }
-  }
 
   internal abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 
