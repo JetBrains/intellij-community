@@ -46,7 +46,8 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
   }
 
   private val changesScrollPane = createScrollPane(changesView, true)
-  private val centerPanel = simplePanel(changesScrollPane).andTransparent()
+  private val scrollableBordersPanel = simplePanel(changesScrollPane).andTransparent()
+  private val centerPanel = simplePanel(scrollableBordersPanel).andTransparent()
   private val conflictsBanner =
     ChangesViewConflictsBanner(
       VcsBundle.message("changes.view.conflicts.banner.title"),
@@ -69,12 +70,12 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
     toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      ScrollableContentBorder.setup(changesScrollPane, Side.TOP, centerPanel)
+      ScrollableContentBorder.setup(changesScrollPane, Side.TOP_AND_BOTTOM, scrollableBordersPanel)
       addToTop(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
-      ScrollableContentBorder.setup(changesScrollPane, Side.LEFT, centerPanel)
+      ScrollableContentBorder.setup(changesScrollPane, Side.TOP_AND_BOTTOM, scrollableBordersPanel)
       addToLeft(toolbar.component)
     }
   }
