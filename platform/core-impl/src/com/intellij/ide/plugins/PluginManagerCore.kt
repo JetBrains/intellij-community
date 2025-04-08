@@ -1043,6 +1043,21 @@ object PluginManagerCore {
     return null
   }
 
+  @Internal
+  fun dependsOnUltimateOptionally(pluginDescriptor: IdeaPluginDescriptor?): Boolean {
+    if (pluginDescriptor == null || pluginDescriptor !is IdeaPluginDescriptorImpl || !isDisabled(ULTIMATE_PLUGIN_ID)) return false
+    val idMap = buildPluginIdMap()
+    return pluginDescriptor.content.modules.any {
+      val descriptor = it.descriptor
+      descriptor != null && !it.loadingRule.required && !processAllNonOptionalDependencies(descriptor, idMap) { descriptorImpl ->
+        when (descriptorImpl.pluginId) {
+          ULTIMATE_PLUGIN_ID -> FileVisitResult.TERMINATE
+          else -> FileVisitResult.CONTINUE
+        }
+      }
+    }
+  }
+
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("Use {@link #disablePlugin(PluginId)}", level = DeprecationLevel.ERROR)
   @JvmStatic
@@ -1059,22 +1074,7 @@ object PluginManagerCore {
   fun addDisablePluginListener(listener: Runnable) {
     DisabledPluginsState.addDisablePluginListener(listener)
   }
-
-  @Internal
-  fun dependsOnUltimateOptionally(pluginDescriptor: IdeaPluginDescriptor?): Boolean {
-    if (pluginDescriptor == null || pluginDescriptor !is IdeaPluginDescriptorImpl || !isDisabled(ULTIMATE_PLUGIN_ID)) return false
-    val idMap = buildPluginIdMap()
-    return pluginDescriptor.content.modules.any {
-      val descriptor = it.descriptor
-      descriptor != null && !it.loadingRule.required && !processAllNonOptionalDependencies(descriptor, idMap) { descriptorImpl ->
-        when (descriptorImpl.pluginId) {
-          ULTIMATE_PLUGIN_ID -> FileVisitResult.TERMINATE
-          else -> FileVisitResult.CONTINUE
-        }
-      }
-    }
-  }
-
+  //</editor-fold>
 }
 
 @Synchronized
