@@ -51,6 +51,19 @@ elements:
             internalNote: &plugin_model_v2_internal_note |
               This item is part of the [_Plugin Model v2_](https://youtrack.jetbrains.com/articles/IJPL-A-1037){internal},
               which is not recommended to be used in third-party plugins in the current state.
+        - attribute:
+            name: dependent-on-core
+            renderContexts: [doc_provider]
+            requirement:
+              required: no
+            description: |
+              Determines whether the main classloader of the core plugin is used as the parent classloader for the current content module.
+              If set to `false`, the Java platform classloader is used as the parent classloader.
+  
+              The attribute is effective only for content modules in the core (`com.intellij`) plugin.
+            internalNote: This item is internal and should be used only in modules implemented by JetBrains.
+            defaultValue: |
+              `true`
       children:
         - element:
             name: id
