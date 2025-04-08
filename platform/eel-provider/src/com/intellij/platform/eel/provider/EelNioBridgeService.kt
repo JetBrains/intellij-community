@@ -61,16 +61,6 @@ interface EelNioBridgeService {
    * or have never been registered.
    */
   fun unregister(descriptor: EelDescriptor): Boolean
-
-  /**
-   * Removes the registered NIO File System associated with [descriptor]
-   * @throws IllegalArgumentException if if [descriptor] had already been removed earlier
-   *   or have never been registered.
-   */
-  @Deprecated("Use unregister(descriptor)", ReplaceWith("unregister(descriptor)"))
-  fun deregister(descriptor: EelDescriptor) {
-    require(unregister(descriptor)) { "Attempt to deregister unknown $descriptor" }
-  }
 }
 
 /**
