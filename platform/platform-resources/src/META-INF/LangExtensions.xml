@@ -1888,4 +1888,8 @@
   <actions>
     <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
   </actions>
+
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.facet.impl.invalid.FacetIgnorer" name="facetIgnorer" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>
