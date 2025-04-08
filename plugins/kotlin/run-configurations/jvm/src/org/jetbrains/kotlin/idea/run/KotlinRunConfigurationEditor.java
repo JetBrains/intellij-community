@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.ui.*;
-import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
@@ -23,24 +22,16 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
-import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode;
-import org.jetbrains.kotlin.idea.projectView.KtFileTreeNode;
-import org.jetbrains.kotlin.psi.KtElement;
-import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfiguration> implements PanelWithAnchor {
   private JPanel mainPanel;
@@ -88,34 +79,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
             @Override
             protected TreeClassChooser createClassChooser(ClassFilter.ClassFilterWithScope classFilter) {
                 Project project = getProject();
-                return new TreeJavaClassChooserDialog(myTitle, project, classFilter.getScope(), classFilter, null, null, true) {
-                    @Override
-                    protected @Nullable PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
-                        Object userObject = node.getUserObject();
-                        if (userObject instanceof ClassTreeNode treeNode) {
-                            return treeNode.getPsiClass();
-                        }
-                        KtElement ktElement = null;
-                        if (userObject instanceof KtFileTreeNode treeNode) {
-                            ktElement = treeNode.getKtFile();
-                        }
-                        if (userObject instanceof KtDeclarationTreeNode treeNode) {
-                            ktElement = treeNode.getDeclaration();
-                        }
-
-                        if (ktElement != null) {
-                            List<PsiNamedElement> elements = LightClassUtilsKt.toLightElements(ktElement);
-                            if (!elements.isEmpty()) {
-                                PsiNamedElement element = elements.get(0);
-                                PsiClass parent = PsiUtilsKt.getParentOfTypes(element, false, PsiClass.class);
-                                if (parent != null) {
-                                    return parent;
-                                }
-                            }
-                        }
-                        return null;
-                    }
-                };
+                return new TreeJavaClassChooserDialog(myTitle, project, classFilter.getScope(), classFilter, null, null, true);
             }
         };
     }
