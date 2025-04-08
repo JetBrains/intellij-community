@@ -52,7 +52,7 @@ internal class UnknownSdkEditorNotificationsProvider : EditorNotificationProvide
     file: VirtualFile
   ): Function<in FileEditor, out JComponent?>? {
     return Function { editor: FileEditor ->
-      val sdkService: UnknownSdkEditorNotification = UnknownSdkEditorNotification.Companion.getInstance(project)
+      val sdkService: UnknownSdkEditorNotification = UnknownSdkEditorNotification.getInstance(project)
       val panels: MutableList<EditorNotificationPanel?> = ArrayList()
       for (info in sdkService.getNotifications()) {
         if (info.isRelevantFor(project, file)) {
