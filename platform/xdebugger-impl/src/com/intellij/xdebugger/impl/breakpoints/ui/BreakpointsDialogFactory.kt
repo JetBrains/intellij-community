@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
@@ -56,7 +57,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   fun showDialog(initialBreakpoint: Any?) {
-    if (useFeProxy()) {
+    if (useFeProxy() && Registry.`is`("xdebugger.breakpoints.dialog.split")) {
       hideBalloon()
       showDialogEvents.tryEmit(initialBreakpoint)
       return
