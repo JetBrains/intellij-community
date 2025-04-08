@@ -48,8 +48,7 @@ import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
-import org.jetbrains.idea.maven.project.BundledMaven3
-import org.jetbrains.idea.maven.project.BundledMaven4
+import org.jetbrains.idea.maven.project.BundledMaven
 import org.jetbrains.idea.maven.project.MavenHomeType
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSettingsCache
@@ -284,7 +283,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
     var mavenHome = distribution.mavenHome
 
-    if (type is BundledMaven3 || type is BundledMaven4) {
+    if (type is BundledMaven) {
       mavenHome = transferLocalContentToRemote(mavenHome, TransferTarget.Temporary(eel.descriptor))
     }
 
