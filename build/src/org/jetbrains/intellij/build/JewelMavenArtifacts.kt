@@ -15,7 +15,7 @@ import kotlin.io.path.name
 
 internal object JewelMavenArtifacts {
   private const val GROUP_ID: String = "org.jetbrains.jewel"
-  val CORE: Map<String, String> = mapOf(
+  private val CORE: Map<String, String> = mapOf(
     "intellij.platform.jewel.foundation" to "jewel-foundation",
     "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
     "intellij.platform.jewel.ui" to "jewel-ui",
@@ -28,6 +28,9 @@ internal object JewelMavenArtifacts {
     "intellij.platform.jewel.intUi.standalone" to "jewel-int-ui-standalone",
     "intellij.platform.jewel.decoratedWindow" to "jewel-decorated-window",
   )
+
+  private val ALL: Map<String, String> = CORE + STANDALONE
+  val ALL_MODULES: Set<String> = ALL.keys
 
   fun isJewel(module: JpsModule): Boolean {
     return module.name.startsWith("intellij.platform.jewel.")
@@ -68,8 +71,7 @@ internal object JewelMavenArtifacts {
   }
 
   fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
-    val jewelModules = CORE + STANDALONE
-    jewelModules.keys.asSequence()
+    ALL_MODULES.asSequence()
       .map(context::findRequiredModule)
       .flatMap { it.modulesTree() }
       .distinct().forEach { module ->
@@ -90,7 +92,7 @@ internal object JewelMavenArtifacts {
           validateForMavenCentralPublication(artifact)
         }
       }
-    for ((jewelModuleName, artifactId) in jewelModules) {
+    for ((jewelModuleName, artifactId) in ALL) {
       check(mavenArtifacts.any { (module, mavenCoordinates) ->
         module.name == jewelModuleName &&
         mavenCoordinates.groupId == GROUP_ID &&
