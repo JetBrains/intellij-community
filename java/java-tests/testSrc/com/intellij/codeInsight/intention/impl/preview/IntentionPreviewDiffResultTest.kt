@@ -127,6 +127,26 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
       ---------------------
       4 : println(#!y!#);""".trimIndent(), diffs)
   }
+  
+  @Test
+  fun testResultIsSubstring() {
+    val diffs = createDiffs("""
+      non changed
+      prefix
+      preserved
+      suffix
+    """.trimIndent(), """
+      non changed
+      preserved
+    """.trimIndent(), "Test.txt")
+    assertEquals("""
+      // Test.txt
+      ---------------------
+      1 : #-prefix-#
+      2 : preserved
+      3 : #-suffix-#
+    """.trimIndent(), diffs)
+  }
 
   @Test
   fun testRemoveEscapes() {
