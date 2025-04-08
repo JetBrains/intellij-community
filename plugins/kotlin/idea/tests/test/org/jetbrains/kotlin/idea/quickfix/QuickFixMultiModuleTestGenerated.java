@@ -296,6 +296,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/addDependency/topLevelFunction2/");
         }
 
+        @TestMetadata("topLevelFunctionWithImport")
+        public void testTopLevelFunctionWithImport() throws Exception {
+            runTest("testData/multiModuleQuickFix/addDependency/topLevelFunctionWithImport/");
+        }
+
         @TestMetadata("topLevelProperty")
         public void testTopLevelProperty() throws Exception {
             runTest("testData/multiModuleQuickFix/addDependency/topLevelProperty/");
