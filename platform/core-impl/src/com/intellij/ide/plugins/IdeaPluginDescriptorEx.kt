@@ -33,6 +33,7 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val extensions: Map<String, List<ExtensionDescriptor>>
 
   val useCoreClassLoader: Boolean
+  val isUseIdeaClassLoader: Boolean
 
   /**
    * If false, the classloader of this descriptor uses core (platform) classloader as a fallback, otherwise, the system classloader is used instead.
