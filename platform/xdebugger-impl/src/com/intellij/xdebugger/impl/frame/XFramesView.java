@@ -223,7 +223,8 @@ public final class XFramesView extends XDebugView {
         if (session == null || !session.hasSuspendContext() || myThreadsCalculated) {
           return;
         }
-        session.computeExecutionStacks(ThreadsBuilder::new);
+        myBuilder = new ThreadsBuilder();
+        session.computeExecutionStacks(() -> myBuilder);
       }
     });
 
