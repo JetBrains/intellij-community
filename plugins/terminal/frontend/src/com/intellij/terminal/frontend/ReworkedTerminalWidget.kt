@@ -8,12 +8,10 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
-import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.block.TerminalContentView
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -23,9 +21,7 @@ internal class ReworkedTerminalWidget(
   parentDisposable: Disposable,
 ) : TerminalWidget {
   private val sessionFuture = CompletableFuture<TerminalSession>()
-  private val view: TerminalContentView = ReworkedTerminalView(project, settings, sessionFuture)
-
-  private val panel: BorderLayoutPanel = BorderLayoutPanel()
+  private val view = ReworkedTerminalView(project, settings, sessionFuture)
 
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
@@ -40,8 +36,6 @@ internal class ReworkedTerminalWidget(
   init {
     Disposer.register(parentDisposable, this)
     Disposer.register(this, view)
-
-    panel.addToCenter(view.component)
   }
 
   override fun connectToSession(session: TerminalSession) {
@@ -53,7 +47,7 @@ internal class ReworkedTerminalWidget(
   }
 
   override fun getComponent(): JComponent {
-    return panel
+    return view.component
   }
 
   override fun getPreferredFocusableComponent(): JComponent {
@@ -81,10 +75,7 @@ internal class ReworkedTerminalWidget(
   }
 
   override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
-    panel.addToTop(notificationComponent)
-    Disposer.register(disposable) {
-      panel.remove(notificationComponent)
-    }
+    view.setTopComponent(notificationComponent, disposable)
   }
 
   override fun writePlainMessage(message: @Nls String) {

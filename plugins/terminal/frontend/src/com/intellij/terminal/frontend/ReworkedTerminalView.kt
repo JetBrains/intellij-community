@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
@@ -27,6 +26,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
@@ -66,6 +66,7 @@ internal class ReworkedTerminalView(
 
   private val outputEditor: EditorEx
   private val alternateBufferEditor: EditorEx
+  private val scrollingModel: TerminalOutputScrollingModel
 
   private val terminalPanel: TerminalPanel
 
@@ -101,7 +102,7 @@ internal class ReworkedTerminalView(
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
     val outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
-    val scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
+    scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
     configureOutputEditor(
@@ -173,6 +174,23 @@ internal class ReworkedTerminalView(
 
   override fun isFocused(): Boolean {
     return component.hasFocus()
+  }
+
+  fun setTopComponent(component: JComponent, disposable: Disposable) {
+    val resizeListener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        // Update scroll position on top component size change
+        // to always keep the cursor visible
+        scrollingModel.scrollToCursor(force = false)
+      }
+    }
+    component.addComponentListener(resizeListener)
+    terminalPanel.setTopComponent(component)
+
+    Disposer.register(disposable) {
+      component.removeComponentListener(resizeListener)
+      terminalPanel.remoteTopComponent(component)
+    }
   }
 
   private fun listenSearchController() {
@@ -349,8 +367,12 @@ internal class ReworkedTerminalView(
     terminalPanel.addFocusListener(parentDisposable, listener)
   }
 
-  private inner class TerminalPanel(initialContent: Editor) : JBLayeredPane(), UiDataProvider {
+  private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider {
+    private val layeredPane = TerminalLayeredPane(initialContent)
     private var curEditor: Editor = initialContent
+
+    val preferredFocusableComponent: JComponent
+      get() = layeredPane.preferredFocusableComponent
 
     private val delegatingFocusListener = object : FocusListener {
       override fun focusGained(e: FocusEvent) {
@@ -363,30 +385,69 @@ internal class ReworkedTerminalView(
     }
 
     init {
-      setTerminalContent(initialContent)
-    }
-
-    val preferredFocusableComponent: JComponent
-      get() = curEditor.contentComponent
-
-    fun setTerminalContent(editor: Editor) {
-      val prevEditor = curEditor
-      @Suppress("SENSELESS_COMPARISON") // called from init when curEditor == null
-      if (prevEditor != null) {
-        prevEditor.contentComponent.removeFocusListener(delegatingFocusListener)
-        remove(curEditor.component)
-      }
-      curEditor = editor
-      addToLayer(editor.component, DEFAULT_LAYER)
-      editor.contentComponent.addFocusListener(delegatingFocusListener)
-      revalidate()
-      repaint()
+      addToCenter(layeredPane)
+      updateFocusListeners(initialContent, initialContent)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
       sink[TerminalInput.KEY] = terminalInput
       sink[TerminalSearchController.KEY] = terminalSearchController
+    }
+
+    fun setTerminalContent(editor: Editor) {
+      layeredPane.setTerminalContent(editor)
+      updateFocusListeners(curEditor, editor)
+      curEditor = editor
+    }
+
+    fun installSearchComponent(component: SearchReplaceComponent) {
+      layeredPane.installSearchComponent(component)
+    }
+
+    fun removeSearchComponent(component: SearchReplaceComponent) {
+      layeredPane.removeSearchComponent(component)
+    }
+
+    fun setTopComponent(component: JComponent) {
+      addToTop(component)
+      revalidate()
+      repaint()
+    }
+
+    fun remoteTopComponent(component: JComponent) {
+      remove(component)
+      revalidate()
+      repaint()
+    }
+
+    private fun updateFocusListeners(prevEditor: Editor, newEditor: Editor) {
+      prevEditor.contentComponent.removeFocusListener(delegatingFocusListener)
+      newEditor.contentComponent.addFocusListener(delegatingFocusListener)
+    }
+  }
+
+  private class TerminalLayeredPane(initialContent: Editor) : JBLayeredPane() {
+    private var curEditor: Editor = initialContent
+
+    val preferredFocusableComponent: JComponent
+      get() = curEditor.contentComponent
+
+    init {
+      setTerminalContent(initialContent)
+    }
+
+    fun setTerminalContent(editor: Editor) {
+      val prevEditor = curEditor
+      @Suppress("SENSELESS_COMPARISON") // called from init when curEditor == null
+      if (prevEditor != null) {
+        remove(curEditor.component)
+      }
+      curEditor = editor
+      addToLayer(editor.component, DEFAULT_LAYER)
+
+      revalidate()
+      repaint()
     }
 
     fun installSearchComponent(component: SearchReplaceComponent) {
