@@ -39,6 +39,10 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     component.getRowBounds(row).location
   }
 
+  /**
+   * Collects all paths in the tree component along with their corresponding row indices.
+   * The method does not expand nodes.
+   */
   fun collectExpandedPaths(): TreePathToRowList {
     val result = TreePathToRowList()
     computeOnEdt {
