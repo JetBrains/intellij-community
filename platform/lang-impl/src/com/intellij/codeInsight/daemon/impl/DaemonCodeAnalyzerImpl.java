@@ -909,10 +909,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     cancelAllUpdateProgresses(toRestartAlarm, reason);
     boolean restart = toRestartAlarm && !myDisposed;
-    LOG.debug(
-      "Stopping process: toRestartAlarm ", toRestartAlarm,
-      " myDisposed ", myDisposed,
-      " reason: '", reason, "'");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Stopping process: toRestart:", toRestartAlarm, "; myDisposed:", myDisposed, "; reason: '", reason, "'");
+    }
     if (restart) {
       scheduleIfNotRunning();
     }
@@ -966,7 +965,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos;
     // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
     boolean isDone = myUpdateRunnableFuture.isDone();
-    LOG.debug("Rescheduling highlighting: isDone ", isDone);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Rescheduling highlighting: isDone: ", isDone);
+    }
     if (incrementQueuedRequests()) {
       scheduleUpdateRunnable(autoReparseDelayNanos);
     }
@@ -1292,7 +1293,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             break;
           }
           else {
-            LOG.debug("runUpdate newDelta="+newDelta);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("runUpdate newDelta="+newDelta);
+            }
           }
         }
       }
