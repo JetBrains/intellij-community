@@ -29,9 +29,8 @@ class KotlinIdeDefaultImportProvider {
     }
 
     fun computeDefaultAndExcludedImports(contextFile: KtFile): Pair<List<ImportPath>, List<FqName>> {
-        val languageVersionSettings = contextFile.languageVersionSettings
         val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
-        val allDefaultImports = analyzerServices.getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
+        val allDefaultImports = analyzerServices.getDefaultImports(includeLowPriorityImports = true)
 
         val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->
             val scriptDependencies = ScriptConfigurationsProvider.getInstance(ktFile.project)
