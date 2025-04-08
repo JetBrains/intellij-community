@@ -45,18 +45,13 @@ internal class XDebugSessionSelectionService(project: Project, scope: CoroutineS
   }
 }
 
-internal fun performDebuggerActionAsync(
-  e: AnActionEvent,
-  updateInlays: Boolean = false,
-  action: suspend () -> Unit,
-) {
-  performDebuggerActionAsync(e.project, e.dataContext, updateInlays, action)
+internal fun performDebuggerActionAsync(e: AnActionEvent, action: suspend () -> Unit) {
+  performDebuggerActionAsync(e.project, e.dataContext, action)
 }
 
 internal fun performDebuggerActionAsync(
   project: Project?,
   dataContext: DataContext,
-  updateInlays: Boolean = false,
   action: suspend () -> Unit,
 ) {
   val coroutineScope = project?.service<FrontendDebuggerActionProjectCoroutineScope>()?.cs
@@ -64,12 +59,10 @@ internal fun performDebuggerActionAsync(
 
   coroutineScope.launch {
     action()
-    if (updateInlays) {
-      val editor = dataContext.getData(CommonDataKeys.EDITOR)
-      if (project != null && editor != null) {
-        withContext(Dispatchers.EDT) {
-          XDebuggerManagerApi.getInstance().reshowInlays(project.projectId(), editor.editorId())
-        }
+    val editor = dataContext.getData(CommonDataKeys.EDITOR)
+    if (project != null && editor != null) {
+      withContext(Dispatchers.EDT) {
+        XDebuggerManagerApi.getInstance().reshowInlays(project.projectId(), editor.editorId())
       }
     }
   }

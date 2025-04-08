@@ -32,7 +32,7 @@ class XDebuggerRunToCursorActionHandler(private val myIgnoreBreakpoints: Boolean
 
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     val position = XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) ?: return
-    performDebuggerActionAsync(session.project, dataContext, updateInlays = true) {
+    performDebuggerActionAsync(session.project, dataContext) {
       XDebugSessionApi.getInstance().runToPosition(session.id, position.toRpc(), myIgnoreBreakpoints)
     }
   }

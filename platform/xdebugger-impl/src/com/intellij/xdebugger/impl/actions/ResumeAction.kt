@@ -33,7 +33,7 @@ open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
 
   override fun actionPerformed(e: AnActionEvent) {
     val session = DebuggerUIUtil.getSessionProxy(e) ?: return
-    performDebuggerActionAsync(e, updateInlays = true) {
+    performDebuggerActionAsync(e) {
       XDebugSessionApi.getInstance().resume(session.id)
     }
   }

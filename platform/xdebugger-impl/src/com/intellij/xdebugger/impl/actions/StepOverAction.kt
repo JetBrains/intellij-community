@@ -23,7 +23,7 @@ open class StepOverAction : XDebuggerActionBase(), DumbAware, ActionRemoteBehavi
 
 private val ourHandler: DebuggerActionHandler = object : XDebuggerSuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
-    performDebuggerActionAsync(session.project, dataContext, updateInlays = true) {
+    performDebuggerActionAsync(session.project, dataContext) {
       XDebugSessionApi.getInstance().stepOver(session.id, ignoreBreakpoints = false)
     }
   }

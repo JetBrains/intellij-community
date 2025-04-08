@@ -29,7 +29,7 @@ open class PauseAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Fr
   override fun actionPerformed(e: AnActionEvent) {
     val session = DebuggerUIUtil.getSessionProxy(e)
     if (session != null) {
-      performDebuggerActionAsync(e, updateInlays = true) {
+      performDebuggerActionAsync(e) {
         XDebugSessionApi.getInstance().pause(session.id)
       }
     }
