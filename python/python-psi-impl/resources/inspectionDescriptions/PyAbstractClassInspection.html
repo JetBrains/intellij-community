@@ -38,6 +38,20 @@ class Triangle(Figure):
 
     def do_triangle(self):
         pass
+
+
+Triangle()
+</code></pre>
+
+It also warns you if <code>abc.abstractmethod</code> is used in a class whose metaclass is not <code>abc.ABCMeta</code>:
+<code><pre>
+from abc import abstractmethod
+
+
+class MyClass:
+    @abstractmethod  # 'MyClass' is not abstract
+    def foo(self):
+        ...
 </code></pre>
 </body>
 </html>
