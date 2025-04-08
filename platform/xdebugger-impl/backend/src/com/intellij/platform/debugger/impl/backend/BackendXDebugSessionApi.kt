@@ -95,6 +95,20 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
+  override suspend fun stepOut(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.stepOut()
+    }
+  }
+
+  override suspend fun forceStepInto(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.forceStepInto()
+    }
+  }
+
   override suspend fun runToPosition(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto, ignoreBreakpoints: Boolean) {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
@@ -177,6 +191,13 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val file = virtualFileId.virtualFile() ?: return
     // TODO[IJPL-177087]: collect in batches to optimize throughput?
     session.fileColorsComputer.sendRequest(file)
+  }
+
+  override suspend fun showExecutionPoint(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.showExecutionPoint()
+    }
   }
 }
 

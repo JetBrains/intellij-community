@@ -44,6 +44,10 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun stepOver(sessionId: XDebugSessionId, ignoreBreakpoints: Boolean)
 
+  suspend fun stepOut(sessionId: XDebugSessionId)
+
+  suspend fun forceStepInto(sessionId: XDebugSessionId)
+
   suspend fun runToPosition(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto, ignoreBreakpoints: Boolean)
 
   suspend fun triggerUpdate(sessionId: XDebugSessionId)
@@ -58,6 +62,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto>
   suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId)
+
+  suspend fun showExecutionPoint(sessionId: XDebugSessionId)
 
   companion object {
     @JvmStatic
