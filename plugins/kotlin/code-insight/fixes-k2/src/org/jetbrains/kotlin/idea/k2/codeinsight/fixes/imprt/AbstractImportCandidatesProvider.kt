@@ -64,6 +64,6 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
 
     private val KtClassLikeDeclaration.isInner: Boolean get() = hasModifier(KtTokens.INNER_KEYWORD)
 
-    private fun ImportPositionTypeAndReceiver<*>.acceptsInnerClasses(): Boolean =
+    private fun ImportPositionTypeAndReceiver<*, *>.acceptsInnerClasses(): Boolean =
         this is ImportPositionTypeAndReceiver.TypeReference || this is ImportPositionTypeAndReceiver.KDocNameReference
 }

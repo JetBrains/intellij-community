@@ -7,56 +7,77 @@ import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 /**
+ * N.B. This class is heavily copied from [org.jetbrains.kotlin.idea.util.CallType].
+ * It is currently used only in an auto-import subsystem, so it has a very narrow name.
+ */
+internal sealed interface ImportPositionType {
+    object Unknown : ImportPositionType
+    object DefaultCall : ImportPositionType
+    object DotCall : ImportPositionType
+    object SafeCall : ImportPositionType
+    object SuperMembers : ImportPositionType
+    object InfixCall : ImportPositionType
+    object OperatorCall : ImportPositionType
+    object CallableReference : ImportPositionType
+    object ImportDirective : ImportPositionType
+    object PackageDirective : ImportPositionType
+    object TypeReference : ImportPositionType
+    object Annotation : ImportPositionType
+    object KDocNameReference : ImportPositionType
+}
+
+/**
  * N.B. This class is heavily copied from [org.jetbrains.kotlin.idea.util.CallTypeAndReceiver].
  * It is currently used only in an auto-import subsystem, so it has a very narrow name.
  */
-internal sealed class ImportPositionTypeAndReceiver<out TReceiver : KtElement?>(
+internal sealed class ImportPositionTypeAndReceiver<out TPositionType : ImportPositionType, out TReceiver : KtElement?>(
+    val positionType: TPositionType,
     val receiver: TReceiver,
 ) {
     class Unknown() :
-        ImportPositionTypeAndReceiver<Nothing?>(null)
+        ImportPositionTypeAndReceiver<ImportPositionType.Unknown, Nothing?>(ImportPositionType.Unknown, null)
 
     class DefaultCall() :
-        ImportPositionTypeAndReceiver<Nothing?>(null)
+        ImportPositionTypeAndReceiver<ImportPositionType.DefaultCall, Nothing?>(ImportPositionType.DefaultCall, null)
 
     class DotCall(receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtExpression>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.DotCall, KtExpression>(ImportPositionType.DotCall, receiver)
 
     class SafeCall(receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtExpression>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.SafeCall, KtExpression>(ImportPositionType.SafeCall, receiver)
 
     class SuperMembers(receiver: KtSuperExpression) :
-        ImportPositionTypeAndReceiver<KtSuperExpression>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.SuperMembers, KtSuperExpression>(ImportPositionType.SuperMembers, receiver)
 
     class InfixCall(receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtExpression>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.InfixCall, KtExpression>(ImportPositionType.InfixCall, receiver)
 
     class OperatorCall(receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtExpression>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.OperatorCall, KtExpression>(ImportPositionType.OperatorCall, receiver)
 
     class CallableReference(receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.CallableReference, KtExpression?>(ImportPositionType.CallableReference, receiver)
 
     class ImportDirective(receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.ImportDirective, KtExpression?>(ImportPositionType.ImportDirective, receiver)
 
     class PackageDirective(receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.PackageDirective, KtExpression?>(ImportPositionType.PackageDirective, receiver)
 
     class TypeReference(receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.TypeReference, KtExpression?>(ImportPositionType.TypeReference, receiver)
 
     class Annotation(receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.Annotation, KtExpression?>(ImportPositionType.Annotation, receiver)
 
     /**
      * Important: this position is not detected by [detect] function.
      */
     class KDocNameReference(receiver: KDocName?) :
-        ImportPositionTypeAndReceiver<KDocName?>(receiver)
+        ImportPositionTypeAndReceiver<ImportPositionType.KDocNameReference, KDocName?>(ImportPositionType.KDocNameReference, receiver)
 
     companion object {
-        fun detect(expression: KtElement): ImportPositionTypeAndReceiver<*> {
+        fun detect(expression: KtElement): ImportPositionTypeAndReceiver<*, *> {
             if (expression !is KtSimpleNameExpression) return Unknown()
 
             val parent = expression.parent
