@@ -84,14 +84,14 @@ class FrontendRecentFilesModel(private val project: Project) {
     when (change) {
       is RecentFilesEvent.ItemsAdded -> {
         val toAdd = change.batch.map(::convertSwitcherDtoToViewModel)
-        LOG.debug("Adding items ${change.batch} to $targetFilesKind frontend model")
+        LOG.debug("Adding ${change.batch.size} items to $targetFilesKind frontend model")
         targetModel.update { oldList ->
           RecentFilesState(toAdd + (oldList.entries - toAdd.toSet()))
         }
       }
       is RecentFilesEvent.ItemsUpdated -> {
         val itemsToMergeWithExisting = change.batch.map(::convertSwitcherDtoToViewModel).associateBy { it }
-        LOG.debug("Updating items ${change.batch} in $targetFilesKind frontend model")
+        LOG.debug("Updating ${change.batch.size} items in $targetFilesKind frontend model")
         targetModel.update { oldList ->
           if (change.putOnTop) {
             val newValuesToPutIntoFirstPosition = oldList.entries.mapNotNull { oldItem -> itemsToMergeWithExisting[oldItem] }
@@ -105,7 +105,7 @@ class FrontendRecentFilesModel(private val project: Project) {
         }
       }
       is RecentFilesEvent.ItemsRemoved -> {
-        LOG.debug("Removing items ${change.batch} from $targetFilesKind frontend model")
+        LOG.debug("Removing ${change.batch.size} items from $targetFilesKind frontend model")
         val toRemove = change.batch.mapNotNull { virtualFileId -> convertVirtualFileIdToViewModel(virtualFileId, project) }
         targetModel.update { oldList ->
           RecentFilesState(oldList.entries - toRemove.toSet())

@@ -101,8 +101,9 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   }
 
   fun applyBackendChangesToAllFileKinds(changeKind: FileChangeKind, files: List<VirtualFile>) {
+    val reasonablyLimitedFilesList = files.take(bufferSize)
     for (fileKind in RecentFileKind.entries) {
-      scheduleApplyBackendChanges(fileKind, changeKind, files)
+      scheduleApplyBackendChanges(fileKind, changeKind, reasonablyLimitedFilesList)
     }
   }
 
