@@ -157,6 +157,7 @@
 
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
+    <xdebugger.managerProxy implementation="com.intellij.xdebugger.impl.MonolithXDebugManagerProxy" order="first"/>
 
     <registryKey defaultValue="false"
                  description="Enables remove/disable all but this breakpoint actions"

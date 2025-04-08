@@ -6,6 +6,5 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
       implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerRemoteApiProviders"/>
-    <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.backend.MonolithXDebugManagerProxy" order="first"/>
   </extensions>
 </idea-plugin>

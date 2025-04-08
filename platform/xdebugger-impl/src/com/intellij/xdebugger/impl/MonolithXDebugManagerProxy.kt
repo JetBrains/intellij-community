@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.debugger.impl.backend
+package com.intellij.xdebugger.impl
 
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
@@ -24,7 +24,9 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     return XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(session)
   }
 
-  override fun isEnabled(): Boolean = true
+  override fun isEnabled(): Boolean {
+    return !XDebugSessionProxy.useFeProxy() || FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith
+  }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
     val sessionImpl = (session as XDebugSessionProxy.Monolith).session as XDebugSessionImpl
