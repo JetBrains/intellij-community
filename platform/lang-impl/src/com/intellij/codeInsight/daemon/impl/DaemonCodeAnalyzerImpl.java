@@ -1082,17 +1082,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         boolean includeFixRange,
                                                         boolean highestPriorityOnly,
                                                         @NotNull HighlightSeverity minSeverity) {
-    return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, true);
-  }
-
-  @ApiStatus.Internal
-  public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
-                                                        int offset,
-                                                        boolean includeFixRange,
-                                                        boolean highestPriorityOnly,
-                                                        @NotNull HighlightSeverity minSeverity,
-                                                        boolean includeFileLevel) {
-    return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, includeFileLevel,
+    return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, true,
                                   CodeInsightContexts.anyContext());
   }
 
@@ -1490,7 +1480,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   int @NotNull [] passesToIgnore,
                                   @NotNull DaemonProgressIndicator progress,
                                   @NotNull HighlightingSessionImpl session,
-                                  @NotNull Map<Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
+                                  @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
