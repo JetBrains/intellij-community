@@ -154,16 +154,13 @@ class IdeaPluginDescriptorImpl private constructor(
   private val pluginPath: Path = pluginPath
   private val descriptorPath: String? = descriptorPath
 
-  private var isEnabled = true
-
+  var isDeleted: Boolean = false
   @Transient
   var jarFiles: List<Path>? = null
+
+  private var isEnabled = true
   private var _pluginClassLoader: ClassLoader? = null
-
-  var isDeleted: Boolean = false
-
   internal var isIncomplete: PluginLoadingError? = null
-
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
 
