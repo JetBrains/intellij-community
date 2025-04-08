@@ -18,6 +18,19 @@ import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.PauseData
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDataDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XDebugSessionState
+import com.intellij.xdebugger.impl.rpc.XDebugSessionsList
+import com.intellij.xdebugger.impl.rpc.XDebuggerEditorsProviderDto
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerSessionEvent
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
+import com.intellij.xdebugger.impl.rpc.XExecutionStackDto
+import com.intellij.xdebugger.impl.rpc.XBreakpointDto
+import com.intellij.xdebugger.impl.rpc.XSuspendContextDto
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import fleet.rpc.core.toRpc
@@ -174,5 +187,17 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val session = sessionId.findValue() ?: return
     val managerImpl = XDebuggerManagerImpl.getInstance(session.project) as XDebuggerManagerImpl
     managerImpl.removeSessionNoNotify(session)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override suspend fun getBreakpoints(projectId: ProjectId): Flow<Set<XBreakpointDto>> {
+    val project = projectId.findProject()
+    val breakpointManager = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
+
+    return breakpointManager.breakpointManager.allBreakpointsFlow.mapLatest { breakpoints ->
+      breakpoints.mapTo(LinkedHashSet()) { breakpoint ->
+        breakpoint.toRpc()
+      }
+    }
   }
 }

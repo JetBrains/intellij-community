@@ -40,6 +40,8 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
+  internal val breakpointsManager = FrontendXBreakpointManager(project, cs)
+
   init {
     cs.launch {
       for (event in synchronousExecutor) {

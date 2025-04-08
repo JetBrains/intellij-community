@@ -110,7 +110,9 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   private @NotNull CheckedTreeNode getParentNode(final BreakpointItem breakpoint) {
     CheckedTreeNode parent = myRoot;
     for (int i = 0; i < myGroupingRules.size(); i++) {
-      XBreakpointGroup group = myGroupingRules.get(i).getGroup(breakpoint.getBreakpoint());
+      // TODO: handle nullable itemBreakpoint
+      Object itemBreakpoint = breakpoint.getBreakpoint();
+      XBreakpointGroup group = itemBreakpoint != null ? myGroupingRules.get(i).getGroup(itemBreakpoint) : null;
       if (group != null) {
         parent = getOrCreateGroupNode(parent, group, i);
         if (breakpoint.isEnabled()) {

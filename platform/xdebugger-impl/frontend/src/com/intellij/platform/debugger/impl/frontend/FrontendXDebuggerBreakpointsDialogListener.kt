@@ -4,6 +4,8 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory
@@ -13,13 +15,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private val LOG = fileLogger()
+
 internal fun subscribeOnBreakpointsDialogRequest(project: Project) {
   project.service<FrontendXDebuggerBreakpointsDialogListenerCoroutineScope>().cs.launch {
     XDebuggerBreakpointsDialogApi.getInstance().showDialogRequests(project.projectId()).collect {
       withContext(Dispatchers.EDT) {
         runCatching {
-          BreakpointsDialogFactory.getInstance(project).showDialogImpl(null)
-        }
+          BreakpointsDialogFactory.getInstance(project).showDialogImpl(null, FrontendXDebuggerManager.getInstance(project).breakpointsManager)
+        }.getOrLogException(LOG)
       }
     }
   }
