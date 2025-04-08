@@ -412,6 +412,22 @@
 *:com.intellij.execution.dashboard.RunDashboardChecker
 - a:countUniqueConfigurations(com.intellij.openapi.project.Project):I
 - a:getTypeId():java.lang.String
+*:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+*f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
+- com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+- <init>(java.lang.String,D):V
+- f:component1():java.lang.String
+- f:component2():D
+- f:copy(java.lang.String,D):com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
+- bs:copy$default(com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction,java.lang.String,D,I,java.lang.Object):com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
+- equals(java.lang.Object):Z
+- f:getConfidence():D
+- f:getCorrection():java.lang.String
+- f:getPresentationText():java.lang.String
+- hashCode():I
+*f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$NoCorrection
+- com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+- sf:INSTANCE:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$NoCorrection
 com.intellij.ide.bookmark.BookmarksListProvider
 - *:getDescriptor(com.intellij.ide.util.treeView.AbstractTreeNode):com.intellij.openapi.fileEditor.OpenFileDescriptor
 com.intellij.ide.bookmark.BookmarksManager
