@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -23,6 +24,7 @@ interface XDebugManagerProxy {
   suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T
   fun getCurrentSessionProxy(project: Project): XDebugSessionProxy?
   fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId?
+  fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?>
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")

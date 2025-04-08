@@ -15,6 +15,8 @@ import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
@@ -35,6 +37,14 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     val sessions = XDebuggerManagerImpl.getInstance(project).debugSessions
     val session = sessions.firstOrNull { it.runContentDescriptor === descriptor } ?: return null
     return (session as XDebugSessionImpl).id
+  }
+
+  override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
+    val managerImpl = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
+    return managerImpl.currentSessionFlow.map {
+      if (it == null) return@map null
+      XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(it)
+    }
   }
 }
 

@@ -13,8 +13,11 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -27,13 +30,12 @@ private class XDebugRunContentListener(private val project: Project) : ToolWindo
     if (ToolWindowId.DEBUG !in ids) return
 
     val debugToolWindow = toolWindowManager.getToolWindow(ToolWindowId.DEBUG) ?: return
+    val selectedSessionId = MutableSharedFlow<XDebugSessionId?>(extraBufferCapacity = Int.MAX_VALUE)
     debugToolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
       override fun selectionChanged(event: ContentManagerEvent) {
         val descriptor = getDescriptor(event) ?: return
         val sessionId = XDebugManagerProxy.getInstance().getSessionIdByContentDescriptor(project, descriptor)
-        project.service<XDebugRunContentListenerCoroutineScopeProvider>().cs.launch {
-          XDebuggerManagerApi.getInstance().sessionTabSelected(project.projectId(), sessionId)
-        }
+        selectedSessionId.tryEmit(sessionId)
       }
 
       override fun contentRemoved(event: ContentManagerEvent) {
@@ -49,6 +51,11 @@ private class XDebugRunContentListener(private val project: Project) : ToolWindo
         return RunContentManagerImpl.getRunContentDescriptorByContent(event.content)
       }
     })
+    project.service<XDebugRunContentListenerCoroutineScopeProvider>().cs.launch {
+      selectedSessionId.collectLatest { sessionId ->
+        XDebuggerManagerApi.getInstance().sessionTabSelected(project.projectId(), sessionId)
+      }
+    }
   }
 }
 

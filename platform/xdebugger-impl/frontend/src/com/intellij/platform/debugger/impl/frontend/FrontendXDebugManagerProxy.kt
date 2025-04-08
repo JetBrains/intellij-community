@@ -9,6 +9,7 @@ import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
+import kotlinx.coroutines.flow.Flow
 
 private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun isEnabled(): Boolean = XDebugSessionProxy.useFeProxy()
@@ -23,5 +24,9 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
 
   override fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId? {
     return FrontendXDebuggerManager.getInstance(project).getSessionIdByContentDescriptor(descriptor)
+  }
+
+  override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
+    return FrontendXDebuggerManager.getInstance(project).currentSession
   }
 }
