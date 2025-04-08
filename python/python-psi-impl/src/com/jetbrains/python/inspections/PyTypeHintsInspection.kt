@@ -1553,7 +1553,7 @@ class PyTypeHintsInspection : PyInspection() {
             return type is PyTypingNewType || type is PyTypedDictType
           }
         }
-        is PyTypeParameter, is PyClass -> true
+        is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> true
         is PyFunction -> resolvedElement.qualifiedName?.let {
           it.endsWith("ParamSpec.args") || it.endsWith("ParamSpec.kwargs")
         } == true

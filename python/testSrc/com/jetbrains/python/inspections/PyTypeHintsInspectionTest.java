@@ -2563,6 +2563,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-80248
+  public void testReferenceToTypeStatementIsValidTypeHint() {
+    doTestByText("""
+                type my_type = str
+                
+                def func1(x: my_type) -> str: ...
+                """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
