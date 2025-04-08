@@ -124,7 +124,7 @@ private fun suggestDestructuringNames(
     }
 }
 
-private fun KaSession.suggestNamesForDataClassParameters(
+private fun suggestNamesForDataClassParameters(
     parameterNames: List<String>,
     usedNames: MutableSet<String>,
     validator: (String) -> Boolean,
