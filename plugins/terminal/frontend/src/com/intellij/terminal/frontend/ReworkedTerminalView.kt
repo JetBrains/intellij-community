@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -225,7 +227,7 @@ internal class ReworkedTerminalView(
   }
 
   private fun listenAlternateBufferSwitch() {
-    coroutineScope.launch(Dispatchers.EDT + CoroutineName("Alternate buffer switch listener")) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Alternate buffer switch listener")) {
       var isAlternateScreenBuffer = false
       sessionModel.terminalState.collect { state ->
         if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {

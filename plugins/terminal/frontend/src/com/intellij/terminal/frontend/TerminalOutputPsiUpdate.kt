@@ -1,6 +1,8 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.asDisposable
@@ -28,7 +30,7 @@ internal fun updatePsiOnOutputModelChange(
       updateJob = coroutineScope.launch {
         delay(50)
 
-        withContext(Dispatchers.EDT) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           try {
             PsiDocumentManager.getInstance(project).commitDocument(outputModel.document)
           }

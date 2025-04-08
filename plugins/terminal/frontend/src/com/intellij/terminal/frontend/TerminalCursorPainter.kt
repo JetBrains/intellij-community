@@ -2,6 +2,8 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.codePointAt
 import com.intellij.openapi.editor.colors.EditorColors
@@ -49,14 +51,14 @@ internal class TerminalCursorPainter private constructor(
   init {
     updateCursor(curCursorState)
 
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       outputModel.cursorOffsetState.collect { offset ->
         curCursorState = curCursorState.copy(offset = offset)
         updateCursor(curCursorState)
       }
     }
 
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       sessionModel.terminalState.collect { state ->
         var stateChanged = false
 
@@ -109,7 +111,7 @@ internal class TerminalCursorPainter private constructor(
   @RequiresEdt
   private fun updateCursor(state: CursorState) {
     cursorPaintingJob?.cancel()
-    cursorPaintingJob = coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
+    cursorPaintingJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
       paintCursor(state)
     }
   }
