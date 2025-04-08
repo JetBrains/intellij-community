@@ -9,20 +9,42 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
 
 class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
     override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
         return if (element.language.`is`(KotlinLanguage.INSTANCE)) {
             KotlinDocumentationTarget(element, originalElement).takeUnless {
-                // show documentation based on java presentation
                 val navigationElement = element.navigationElement
-                navigationElement is KtFile && originalElement?.containingFile is PsiJavaFile || navigationElement is KtLightDeclaration<*, *> && navigationElement.kotlinOrigin == null
+
+                // there are cases when documentation viewed from Java files
+                // should NOT be based on Kotlin representation, but on original Java
+                if (originalElement?.containingFile !is PsiJavaFile) {
+                    return@takeUnless false
+                }
+
+                // top level functions and properties are accessible via file-wrapper class
+                // `foo.kt` is represented in Java as `FooKt`.
+                if (navigationElement is KtFile) {
+                    return@takeUnless true
+                }
+
+                // pure synthetic methods (not property accessors) are navigated to the containing class
+                // and should use java representation
+                if (element is KtLightMethod &&
+                    navigationElement !is KtFunction &&
+                    element.lightMemberOrigin?.auxiliaryOriginalElement == null
+                ) {
+                    return@takeUnless true
+                }
+
+                return@takeUnless false
             }
         } else {
             null
