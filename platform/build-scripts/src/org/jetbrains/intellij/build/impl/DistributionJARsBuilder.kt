@@ -331,6 +331,7 @@ private suspend fun doBuildBundledPlugins(
       // doesn't make sense to require passing here a list with a stable order (unnecessary complication, sorting by main module is enough)
       pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
+      val platformSpecificPluginDirs = getPluginDirs(context, isUpdateFromSources)
       val entries = buildPlugins(
         moduleOutputPatcher = moduleOutputPatcher,
         plugins = pluginsToBundle,
@@ -340,9 +341,12 @@ private suspend fun doBuildBundledPlugins(
         context = context,
         buildPlatformJob = buildPlatformJob,
         searchableOptionSet = searchableOptionSet,
+        pluginBuilt = { layout, pluginDirOrFile ->
+          if (layout.hasPlatformSpecificResources) {
+            buildPlatformSpecificPluginResources(plugin = layout, targetDirs = platformSpecificPluginDirs, context = context)
+          }
+        }
       )
-
-      buildPlatformSpecificPluginResources(plugins = pluginsToBundle, targetDirs = getPluginDirs(context, isUpdateFromSources), context = context)
 
       entries
     }
@@ -639,16 +643,16 @@ internal suspend fun buildPlugins(
   val entries = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != BUILT_IN_HELP_MODULE_NAME) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.includedModules, plugin.moduleExcludes, context)
+        checkOutputOfPluginModules(mainPluginModule = plugin.mainModule, includedModules = plugin.includedModules, moduleExcludes = plugin.moduleExcludes, context = context)
         patchPluginXml(
-          moduleOutputPatcher,
-          plugin,
-          context.applicationInfo.majorReleaseDate,
-          context.applicationInfo.releaseVersionForLicensing,
-          state.pluginsToPublish,
+          moduleOutputPatcher = moduleOutputPatcher,
+          plugin = plugin,
+          releaseDate = context.applicationInfo.majorReleaseDate,
+          releaseVersion = context.applicationInfo.releaseVersionForLicensing,
+          pluginsToPublish = state.pluginsToPublish,
           helper = (context as BuildContextImpl).jarPackagerDependencyHelper,
           platformLayout = state.platform,
-          context,
+          context = context,
         )
       }
 
@@ -681,11 +685,11 @@ internal suspend fun buildPlugins(
         }
         else {
           // we cannot start executing right now because the plugin can use other plugins in a scramble classpath
-          scrambleTasks.add(ScrambleTask(plugin, pluginDir, targetDir))
+          scrambleTasks.add(ScrambleTask(plugin = plugin, pluginDir = pluginDir, targetDir = targetDir))
         }
       }
 
-      PluginBuildDescriptor(pluginDir, os, plugin, moduleNames = emptyList()) to task.await()
+      PluginBuildDescriptor(dir = pluginDir, os = os, layout = plugin, moduleNames = emptyList()) to task.await()
     }
   }
 
@@ -714,22 +718,22 @@ internal suspend fun buildPlugins(
 }
 
 private suspend fun buildPlatformSpecificPluginResources(
-  plugins: Collection<PluginLayout>,
+  plugin: PluginLayout,
   targetDirs: List<Pair<SupportedDistribution, Path>>,
   context: BuildContext,
 ) {
-  for (plugin in plugins) {
-    for ((dist, generators) in plugin.platformResourceGenerators) {
-      val targetPath = targetDirs.firstOrNull { it.first == dist }?.second ?: continue
-      val pluginDir = targetPath.resolve(plugin.directoryName)
-      val relativePluginDir = context.paths.buildOutputDir.relativize(pluginDir).toString()
-      for (generator in generators) {
-        spanBuilder("plugin")
-          .setAttribute("path", relativePluginDir)
-          .use {
-            generator(pluginDir, context)
-          }
-      }
+  for ((dist, generators) in plugin.platformResourceGenerators) {
+    val targetPath = targetDirs.firstOrNull { it.first == dist }?.second ?: continue
+    val pluginDir = targetPath.resolve(plugin.directoryName)
+    val relativePluginDir = context.paths.buildOutputDir.relativize(pluginDir).toString()
+    for (generator in generators) {
+      spanBuilder("plugin platform-specific resources")
+        .setAttribute("path", relativePluginDir)
+        .setAttribute("os", dist.os.toString())
+        .setAttribute("arch", dist.arch.toString())
+        .use {
+          generator(pluginDir, context)
+        }
     }
   }
 }
