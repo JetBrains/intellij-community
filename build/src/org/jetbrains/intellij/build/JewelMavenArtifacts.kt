@@ -1,16 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.util.text.SemVer
 import org.apache.maven.model.Developer
 import org.apache.maven.model.License
 import org.apache.maven.model.Model
 import org.apache.maven.model.Scm
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
 import org.jetbrains.intellij.build.impl.maven.GeneratedMavenArtifacts
 import org.jetbrains.intellij.build.impl.maven.MavenCentralPublication
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 internal object JewelMavenArtifacts {
@@ -32,13 +36,24 @@ internal object JewelMavenArtifacts {
   private val ALL: Map<String, String> = CORE + STANDALONE
   val ALL_MODULES: Set<String> = ALL.keys
 
+  private val VERSION: String by lazy {
+    val jewelProperties = COMMUNITY_ROOT.communityRoot.resolve("platform/jewel/gradle.properties")
+    check(jewelProperties.exists()) { "$jewelProperties is missing" }
+    DependenciesProperties(COMMUNITY_ROOT, jewelProperties).property("jewel.release.version")
+  }
+
   fun isJewel(module: JpsModule): Boolean {
     return module.name.startsWith("intellij.platform.jewel.")
   }
 
   fun patchCoordinates(module: JpsModule, coordinates: MavenCoordinates): MavenCoordinates {
     check(isJewel(module))
-    return coordinates.copy(groupId = GROUP_ID)
+    val version = "$VERSION-${coordinates.version}"
+    val patched = coordinates.copy(groupId = GROUP_ID, version = version)
+    checkNotNull(SemVer.parseFromText(version)) {
+      "$patched is expected to match the Semantic Versioning, see https://semver.org"
+    }
+    return patched
   }
 
   fun addPomMetadata(module: JpsModule, model: Model) {
