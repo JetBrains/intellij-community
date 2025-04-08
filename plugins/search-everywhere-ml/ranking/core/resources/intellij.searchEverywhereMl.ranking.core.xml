@@ -91,8 +91,6 @@
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
-      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereTypoFeaturesProvider"/>
-    <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereTextFeaturesProvider"/>
