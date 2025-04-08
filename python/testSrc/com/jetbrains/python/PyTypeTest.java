@@ -4014,7 +4014,7 @@ public class PyTypeTest extends PyTestCase {
   public void testParticularTypeAgainstTypeVarBoundedWithBuiltinType() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("Type[MyClass]",
+      () -> doTest("type[MyClass]",
                    """
                      from typing import TypeVar, Type
 

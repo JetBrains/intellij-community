@@ -868,7 +868,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-24445
   public void testIsSubclassInsideListComprehension() {
-    doTest("list[Type[A]]",
+    doTest("list[type[A]]",
            "class A: pass\n" +
            "expr = [e for e in [] if issubclass(e, A)]");
   }

@@ -221,9 +221,11 @@ public class PyTypeModelBuilder {
 
   static class ClassObjectType extends TypeModel {
     private final TypeModel classType;
+    private final boolean useTypingAlias;
 
-    ClassObjectType(TypeModel classType) {
+    ClassObjectType(TypeModel classType, boolean useTypingAlias) {
       this.classType = classType;
+      this.useTypingAlias = useTypingAlias;
     }
 
     @Override
@@ -300,7 +302,11 @@ public class PyTypeModelBuilder {
         result = NamedType.nameOrAny(type);
       }
       else {
-        result = new ClassObjectType(build(instanceType, allowUnions));
+        boolean useTypingAlias = PythonLanguageLevelPusher
+          .getLanguageLevelForFile(myContext.getOrigin().getOriginalFile())
+          .isOlderThan(LanguageLevel.PYTHON39);
+
+        result = new ClassObjectType(build(instanceType, allowUnions), useTypingAlias);
       }
     }
     else if (type instanceof PyNamedTupleType) {
@@ -357,7 +363,10 @@ public class PyTypeModelBuilder {
       }
       else if (ContainerUtil.all(unionMembers, t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
         final List<TypeModel> instanceTypes = ContainerUtil.map(unionMembers, t -> build(((PyClassType)t).toInstance(), allowUnions));
-        result = new ClassObjectType(new OneOf(instanceTypes, PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext)));
+
+        final var useTypingAlias = LanguageLevel.forElement(myContext.getOrigin().getOriginalFile()).isOlderThan(LanguageLevel.PYTHON39);
+
+        result = new ClassObjectType(new OneOf(instanceTypes, PyTypingTypeProvider.isBitwiseOrUnionAvailable(myContext)), useTypingAlias);
       }
       else {
         result = new OneOf(Collections2.transform(unionMembers, t -> build(t, false)),
@@ -801,7 +810,12 @@ public class PyTypeModelBuilder {
 
     @Override
     public void classObject(ClassObjectType type) {
-      add(escaped("Type")); //NON-NLS
+      if (type.useTypingAlias) {
+        add(escaped("Type")); //NON-NLS
+      }
+      else {
+        add(styled("type", PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
+      }
       add(styled("[", PyHighlighter.PY_BRACKETS));
       type.classType.accept(this);
       add(styled("]", PyHighlighter.PY_BRACKETS));

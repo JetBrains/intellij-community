@@ -1112,12 +1112,12 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        # cls is not specified\s
                        @classmethod
                        def spam3(cls):
-                           <warning descr="The type of self 'int' is not a supertype of its class 'Type[Bar]'"># type: (int) -> None</warning>
+                           <warning descr="The type of self 'int' is not a supertype of its class 'type[Bar]'"># type: (int) -> None</warning>
                            pass
 
                        @classmethod
                        def egg3(cls, a, b):
-                           <warning descr="The type of self 'int' is not a supertype of its class 'Type[Bar]'"># type: (int, str, bool) -> None</warning>
+                           <warning descr="The type of self 'int' is not a supertype of its class 'type[Bar]'"># type: (int, str, bool) -> None</warning>
                            pass
                       \s
                        # cls is specified   \s

@@ -1236,7 +1236,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testClassObjectType() {
-    doTest("Type[MyClass]",
+    doTest("type[MyClass]",
            """
              from typing import Type
 
@@ -1249,7 +1249,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
-    doTest("Type[T]",
+    doTest("type[T]",
            """
              from typing import Type, TypeVar
 
@@ -1275,7 +1275,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testFunctionReturnsTypeOfInstance() {
-    doTest("Type[int]",
+    doTest("type[int]",
            """
              from typing import Type, TypeVar
 
@@ -1319,7 +1319,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testUnionOfClassObjectTypes() {
-    doTest("Type[int | str]",
+    doTest("type[int | str]",
            """
              from typing import Type, Union
 
@@ -1329,7 +1329,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-23053
   public void testUnboundGenericMatchesClassObjectTypes() {
-    doTest("Type[str]",
+    doTest("type[str]",
            """
              from typing import Generic, TypeVar
 
@@ -1348,7 +1348,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-23053
   public void testListContainingClasses() {
-    doTest("Type[str]",
+    doTest("type[str]",
            "xs = [str]\n" +
            "expr = xs.pop()");
   }
@@ -1953,7 +1953,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-44974
   public void testBitwiseOrUnionIsSubclass() {
-    doTest("Type[str | dict | int]",
+    doTest("type[str | dict | int]",
            """
              a = list
              if issubclass(a, str | dict | int):
@@ -4593,7 +4593,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassReference() {
-    doTest("Type[slice[int, int, int | None]]", """
+    doTest("type[slice[int, int, int | None]]", """
       from typing import TypeVar, Generic
       StartT = TypeVar("StartT", default=int)
       StopT = TypeVar("StopT", default=StartT)
@@ -4605,7 +4605,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassReferenceNewSyntax() {
-    doTest("Type[slice[int, int, int | None]]", """
+    doTest("type[slice[int, int, int | None]]", """
       class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
       expr = slice
       """);
@@ -4673,7 +4673,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsListDefault() {
-    doTest("Type[Bar[int, list[int]]]", """
+    doTest("type[Bar[int, list[int]]]", """
       from typing import TypeVar, Generic
       
       T = TypeVar("T")
@@ -4688,7 +4688,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReference() {
-    doTest("Type[Bar[Any, list]]", """
+    doTest("type[Bar[Any, list]]", """
       from typing import TypeVar, Generic
       Z1 = TypeVar("Z1")
       ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
@@ -4700,7 +4700,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReferenceNewSyntax() {
-    doTest("Type[Bar[Any, list]]", """
+    doTest("type[Bar[Any, list]]", """
       from typing import TypeVar, Generic
       class Bar[Z1, ListDefaultT = list[Z1]]:
           def __init__(self, x: Z1, y: ListDefaultT): ...
@@ -4710,7 +4710,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReferenceParameterizedWithOneType() {
-    doTest("Type[Bar[int, list[int]]]", """
+    doTest("type[Bar[int, list[int]]]", """
       from typing import TypeVar, Generic
       Z1 = TypeVar("Z1")
       ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
@@ -4758,7 +4758,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsSubclassedClassReference() {
-    doTest("Type[Bar[str]]", """
+    doTest("type[Bar[str]]", """
       from typing import TypeVar, Generic, TypeAlias
       T1 = TypeVar("T1")
       T2 = TypeVar("T2")
@@ -4814,7 +4814,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testReferenceToTypeVarTupleWithDefaultIsParameterizedType() {
-    doTest("Type[Foo[str, int]]", """
+    doTest("type[Foo[str, int]]", """
       from typing import Generic, TypeVarTuple, Unpack
       DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
       class Foo(Generic[*DefaultTs]): ...
@@ -4864,7 +4864,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testParamSpecWithDefaultsClassReference() {
-    doTest("Type[Foo[[str, int]]]", """
+    doTest("type[Foo[[str, int]]]", """
       from typing import ParamSpec, Generic
       DefaultP = ParamSpec("DefaultP", default=[str, int])
       class Foo(Generic[DefaultP]): ...
@@ -4874,7 +4874,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testParamSpecWithDefaultsClassReferencesNewSyntax() {
-    doTest("Type[Foo[[str, int]]]", """
+    doTest("type[Foo[[str, int]]]", """
       class Foo[**P = [str, int]]: ...
       expr = Foo
       """);
@@ -5095,7 +5095,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testMixedTypeVarsWithDefaultsAndNonDefaultsReferenceType() {
-    doTest("Type[AllTheDefaults[int, complex, str, int, bool]]", """
+    doTest("type[AllTheDefaults[int, complex, str, int, bool]]", """
       from typing import TypeVar, Generic
       T1 = TypeVar("T1")
       T2 = TypeVar("T2")

@@ -1,10 +1,10 @@
-from typing import Union, Type
+from typing import Union
 
 import my
 from my import X, Y
 
 
-def foo(a) -> Type[Union[X, Y]]:
+def foo(a) -> type[Union[X, Y]]:
     if a:
         return my.X
     else:
