@@ -1430,11 +1430,25 @@ kt_jvm_import(
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_import(
+java_library(
   name = "devkit-runtime-module-repository-jps",
-  jar = "@devkit-runtime-module-repository-jps-251_16369_http//file",
-  srcjar = "@devkit-runtime-module-repository-jps-251_16369-sources_http//file",
+  exports = [
+    ":devkit-runtime-module-repository-jps-251_16369_http_import",
+    ":runtime-repository-251_16369_http_import",
+  ],
   visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "devkit-runtime-module-repository-jps-251_16369_http_import",
+  jar = "@devkit-runtime-module-repository-jps-251_16369_http//file",
+  srcjar = "@devkit-runtime-module-repository-jps-251_16369-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "runtime-repository-251_16369_http_import",
+  jar = "@runtime-repository-251_16369_http//file",
+  srcjar = "@runtime-repository-251_16369-sources_http//file"
 )
 
 kt_jvm_import(

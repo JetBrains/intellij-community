@@ -142,6 +142,7 @@ kt_javac_options(
   add_exports = [
     "java.desktop/sun.font=ALL-UNNAMED",
     "java.desktop/sun.awt.image=ALL-UNNAMED",
+    "java.desktop/sun.swing=ALL-UNNAMED",
   ]
 )
 

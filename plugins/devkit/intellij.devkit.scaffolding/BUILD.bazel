@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.devkit.scaffolding` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "scaffolding_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scaffolding",
+  module_name = "intellij.devkit.scaffolding",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-core",
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/service-container:serviceContainer",
+    "//platform/backend/workspace",
+    "//platform/workspace/jps",
+    "//java/java-impl:impl",
+  ],
+  runtime_deps = [":scaffolding_resources"]
+)
+### auto-generated section `build intellij.devkit.scaffolding` end

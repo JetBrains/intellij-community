@@ -1736,10 +1736,24 @@ http_file(
 )
 
 http_file(
+  name = "runtime-repository-251_16369_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369.jar",
+  sha256 = "9c89ef9858148e9f8063adfee151c3e7e99523c2ce5650b2351dcc5a1a01580d",
+  downloaded_file_path = "runtime-repository-251.16369.jar"
+)
+
+http_file(
   name = "devkit-runtime-module-repository-jps-251_16369-sources_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369-sources.jar",
   sha256 = "5354e62938c59e76532cbd8216ebc00adb4ef7f62eb092bc08920411186aa885",
   downloaded_file_path = "devkit-runtime-module-repository-jps-251.16369-sources.jar"
+)
+
+http_file(
+  name = "runtime-repository-251_16369-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369-sources.jar",
+  sha256 = "f2ce4167603a12a52526c68c73c2780afb48bd4de88db65afd10c1eefa9b7d9c",
+  downloaded_file_path = "runtime-repository-251.16369-sources.jar"
 )
 
 http_file(
