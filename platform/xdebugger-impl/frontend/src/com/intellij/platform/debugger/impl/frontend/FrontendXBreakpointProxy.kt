@@ -2,20 +2,20 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointDto
-import com.intellij.xdebugger.impl.rpc.XBreakpointId
-import com.intellij.xdebugger.impl.rpc.sourcePosition
-import com.intellij.xdebugger.impl.rpc.xExpression
+import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -51,7 +51,9 @@ class FrontendXBreakpointProxy(
   override fun isEnabled(): Boolean = enabled.value
 
   override fun setEnabled(enabled: Boolean) {
-    // TODO: implement through RPC
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setEnabled(id, enabled)
+    }
   }
 
   override fun getSourcePosition(): XSourcePosition? = dto.sourcePosition?.sourcePosition()
@@ -74,3 +76,6 @@ class FrontendXBreakpointProxy(
 
   override fun getConditionExpression(): XExpression? = dto.conditionExpression?.xExpression()
 }
+
+@Service(Service.Level.PROJECT)
+private class FrontendXBreakpointProjectCoroutineService(val cs: CoroutineScope)
