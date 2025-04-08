@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -11,28 +11,32 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
+
 @Tag("breakpoint")
 @ApiStatus.Internal
 public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties, T extends XBreakpointType<B,P>> {
   private String myTypeId;
-  private boolean myEnabled;
+  private final MutableStateFlow<Boolean> myEnabledFlow = createMutableStateFlow(false);
   private Element myPropertiesElement;
-  private SuspendPolicy mySuspendPolicy = SuspendPolicy.ALL;
-  private boolean myLogMessage;
-  private boolean myLogStack;
-  private LogExpression myLogExpression;
-  private Condition myCondition;
+  private final MutableStateFlow<SuspendPolicy> mySuspendPolicyFlow = createMutableStateFlow(SuspendPolicy.ALL);
+  private final MutableStateFlow<Boolean> myLogMessageFlow = createMutableStateFlow(false);
+  private final MutableStateFlow<Boolean> myLogStackFlow = createMutableStateFlow(false);
+  private final MutableStateFlow<LogExpression> myLogExpressionFlow = createMutableStateFlow(null);
+  private final MutableStateFlow<Condition> myConditionFlow = createMutableStateFlow(null);
   private XBreakpointDependencyState myDependencyState;
   @Tag("group")
-  private String myGroup;
+  private final MutableStateFlow<String> myGroupFlow = createMutableStateFlow(null);
 
   @Tag("description")
-  private String myDescription;
+  private final MutableStateFlow<String> myDescriptionFlow = createMutableStateFlow(null);
 
   private long myTimeStamp;
 
@@ -40,19 +44,24 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   }
 
   public BreakpointState(final boolean enabled, final String typeId, final long timeStamp, final SuspendPolicy suspendPolicy) {
-    myEnabled = enabled;
+    myEnabledFlow.setValue(enabled);
     myTypeId = typeId;
     myTimeStamp = timeStamp;
-    mySuspendPolicy = suspendPolicy;
+    mySuspendPolicyFlow.setValue(suspendPolicy);
   }
 
   @Attribute("enabled")
   public boolean isEnabled() {
-    return myEnabled;
+    return myEnabledFlow.getValue();
   }
 
   public void setEnabled(final boolean enabled) {
-    myEnabled = enabled;
+    myEnabledFlow.setValue(enabled);
+  }
+
+  @Transient
+  public StateFlow<Boolean> getEnabledFlow() {
+    return myEnabledFlow;
   }
 
   @Attribute("type")
@@ -75,86 +84,123 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
   @Attribute("suspend")
   public String getSuspendPolicyString() {
-    return mySuspendPolicy.name();
+    return mySuspendPolicyFlow.getValue().name();
   }
 
   public void setSuspendPolicyString(final String suspendPolicy) {
-    mySuspendPolicy = SuspendPolicy.valueOf(suspendPolicy);
+    mySuspendPolicyFlow.setValue(SuspendPolicy.valueOf(suspendPolicy));
   }
 
   @Transient
   public SuspendPolicy getSuspendPolicy() {
-    return mySuspendPolicy;
+    return mySuspendPolicyFlow.getValue();
   }
 
   public void setSuspendPolicy(SuspendPolicy suspendPolicy) {
-    mySuspendPolicy = suspendPolicy;
+    mySuspendPolicyFlow.setValue(suspendPolicy);
+  }
+
+  @Transient
+  public StateFlow<SuspendPolicy> getSuspendPolicyFlow() {
+    return mySuspendPolicyFlow;
   }
 
   @Attribute("log-message")
   public boolean isLogMessage() {
-    return myLogMessage;
+    return myLogMessageFlow.getValue();
   }
 
   public void setLogMessage(final boolean logMessage) {
-    myLogMessage = logMessage;
+    myLogMessageFlow.setValue(logMessage);
+  }
+
+  @Transient
+  public StateFlow<Boolean> getLogMessageFlow() {
+    return myLogMessageFlow;
   }
 
   @Attribute("log-stack")
   public boolean isLogStack() {
-    return myLogStack;
+    return myLogStackFlow.getValue();
   }
 
   public void setLogStack(final boolean logStack) {
-    myLogStack = logStack;
+    myLogStackFlow.setValue(logStack);
+  }
+
+  @Transient
+  public StateFlow<Boolean> getLogStackFlow() {
+    return myLogStackFlow;
   }
 
   public @Nullable String getGroup() {
-    return myGroup;
+    return myGroupFlow.getValue();
   }
 
   public void setGroup(String group) {
-    myGroup = group;
+    myGroupFlow.setValue(group);
+  }
+
+  @Transient
+  public StateFlow<String> getGroupFlow() {
+    return myGroupFlow;
   }
 
   public String getDescription() {
-    return myDescription;
+    return myDescriptionFlow.getValue();
   }
 
   public void setDescription(String description) {
-    myDescription = description;
+    myDescriptionFlow.setValue(description);
+  }
+
+  @Transient
+  public StateFlow<String> getDescriptionFlow() {
+    return myDescriptionFlow;
   }
 
   @Property(surroundWithTag = false)
   public @Nullable LogExpression getLogExpression() {
-    return myLogExpression;
+    return myLogExpressionFlow.getValue();
   }
 
   public void setLogExpression(@Nullable LogExpression logExpression) {
     if (logExpression != null) {
       logExpression.checkConverted();
     }
-    myLogExpression = logExpression;
+    myLogExpressionFlow.setValue(logExpression);
+  }
+
+  @Transient
+  public StateFlow<LogExpression> getLogExpressionFlow() {
+    return myLogExpressionFlow;
   }
 
   @Property(surroundWithTag = false)
   public @Nullable Condition getCondition() {
-    return myCondition;
+    return myConditionFlow.getValue();
   }
 
   public void setCondition(@Nullable Condition condition) {
     if (condition != null) {
       condition.checkConverted();
     }
-    myCondition = condition;
+    myConditionFlow.setValue(condition);
+  }
+
+  @Transient
+  public StateFlow<Condition> getConditionFlow() {
+    return myConditionFlow;
   }
 
   public boolean isLogExpressionEnabled() {
-    return myLogExpression == null || !myLogExpression.myDisabled;
+    LogExpression logExpression = myLogExpressionFlow.getValue();
+    return logExpression == null || !logExpression.myDisabled;
   }
 
   public boolean isConditionEnabled() {
-    return myCondition == null || !myCondition.myDisabled;
+    Condition condition = myConditionFlow.getValue();
+    return condition == null || !condition.myDisabled;
   }
 
   @Property(surroundWithTag = false)
@@ -179,7 +225,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   }
 
   void applyDefaults(BreakpointState state) {
-    state.mySuspendPolicy = mySuspendPolicy;
+    state.mySuspendPolicyFlow.setValue(mySuspendPolicyFlow.getValue());
   }
 
   @Tag("condition")

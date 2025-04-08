@@ -11,22 +11,41 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.rpc.xExpression
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
 class FrontendXBreakpointProxy(
   private val project: Project,
+  private val cs: CoroutineScope,
   private val dto: XBreakpointDto,
 ) : XBreakpointProxy {
+  val enabled: StateFlow<Boolean> = dto.enabledState.toFlow()
+    .stateIn(cs, SharingStarted.Eagerly, dto.initialEnabled)
+
+  val suspendPolicy: StateFlow<SuspendPolicy> = dto.suspendPolicyState.toFlow()
+    .stateIn(cs, SharingStarted.Eagerly, dto.initialSuspendPolicy)
+
+  val logMessage: StateFlow<Boolean> = dto.logMessageState.toFlow()
+    .stateIn(cs, SharingStarted.Eagerly, dto.initialLogMessage)
+
+  val logStack: StateFlow<Boolean> = dto.logStackState.toFlow()
+    .stateIn(cs, SharingStarted.Eagerly, dto.initialLogStack)
+
+  val userDescription: StateFlow<String?> = dto.userDescriptionState.toFlow()
+    .stateIn(cs, SharingStarted.Eagerly, dto.initialUserDescription)
 
   override fun getDisplayText(): String = dto.displayText
 
-  override fun getUserDescription(): String? = dto.userDescription
+  override fun getUserDescription(): String? = userDescription.value
 
   override fun getIcon(): Icon = dto.iconId.icon()
 
-  override fun isEnabled(): Boolean = dto.enabled
+  override fun isEnabled(): Boolean = enabled.value
 
   override fun setEnabled(enabled: Boolean) {
     // TODO: implement through RPC
@@ -42,11 +61,11 @@ class FrontendXBreakpointProxy(
 
   override fun isDefaultBreakpoint(): Boolean = dto.isDefault
 
-  override fun getSuspendPolicy(): SuspendPolicy = dto.suspendPolicy
+  override fun getSuspendPolicy(): SuspendPolicy = suspendPolicy.value
 
-  override fun isLogMessage(): Boolean = dto.logMessage
+  override fun isLogMessage(): Boolean = logMessage.value
 
-  override fun isLogStack(): Boolean = dto.logStack
+  override fun isLogStack(): Boolean = logStack.value
 
   override fun getLogExpressionObject(): XExpression? = dto.logExpressionObject?.xExpression()
 

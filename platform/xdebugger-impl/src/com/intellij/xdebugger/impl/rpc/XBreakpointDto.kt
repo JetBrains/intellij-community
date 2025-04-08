@@ -7,6 +7,8 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import fleet.rpc.core.RpcFlow
+import fleet.rpc.core.toRpc
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,31 +16,43 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 data class XBreakpointDto(
   val displayText: String,
-  val userDescription: String?,
   val iconId: IconId,
-  val enabled: Boolean,
   val sourcePosition: XSourcePositionDto?,
   val isDefault: Boolean,
-  val suspendPolicy: SuspendPolicy,
-  val logMessage: Boolean,
-  val logStack: Boolean,
   val logExpressionObject: XExpressionDto?,
   val conditionExpression: XExpressionDto?,
+  val initialEnabled: Boolean,
+  val initialSuspendPolicy: SuspendPolicy,
+  val initialLogMessage: Boolean,
+  val initialLogStack: Boolean,
+  val initialUserDescription: String?,
+  val enabledState: RpcFlow<Boolean>,
+  val suspendPolicyState: RpcFlow<SuspendPolicy>,
+  val logMessageState: RpcFlow<Boolean>,
+  val logStackState: RpcFlow<Boolean>,
+  val userDescriptionState: RpcFlow<String?>,
 )
 
 @ApiStatus.Internal
-fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
+suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
+  val breakpointState = state
+
   return XBreakpointDto(
     displayText = XBreakpointUtil.getShortText(this),
-    userDescription = userDescription,
     iconId = getIcon().rpcId(),
-    enabled = isEnabled,
     sourcePosition = sourcePosition?.toRpc(),
     isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(this),
-    suspendPolicy = suspendPolicy,
-    logMessage = isLogMessage,
-    logStack = isLogStack,
     logExpressionObject = logExpressionObject?.toRpc(),
     conditionExpression = conditionExpression?.toRpc(),
+    initialEnabled = isEnabled,
+    initialSuspendPolicy = suspendPolicy,
+    initialLogMessage = isLogMessage,
+    initialLogStack = isLogStack,
+    initialUserDescription = userDescription,
+    enabledState = breakpointState.enabledFlow.toRpc(),
+    suspendPolicyState = breakpointState.suspendPolicyFlow.toRpc(),
+    logMessageState = breakpointState.logMessageFlow.toRpc(),
+    logStackState = breakpointState.logStackFlow.toRpc(),
+    userDescriptionState = breakpointState.descriptionFlow.toRpc(),
   )
 }

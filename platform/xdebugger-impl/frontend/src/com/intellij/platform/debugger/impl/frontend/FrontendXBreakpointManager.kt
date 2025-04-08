@@ -6,17 +6,30 @@ import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.supervisorScope
 
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
-  val breakpoints: StateFlow<Set<XBreakpointDto>> = channelFlow {
+  val breakpoints: StateFlow<Set<XBreakpointProxy>> = channelFlow {
     XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).collectLatest { breakpointDtos ->
-      send(breakpointDtos)
+      // TODO: do we need to reuse breakpoint coroutine scopes?
+      supervisorScope {
+        val breakpointProxies = breakpointDtos.mapTo(mutableSetOf()) {
+          FrontendXBreakpointProxy(
+            project = project,
+            cs = this,
+            dto = it
+          )
+        }
+        send(breakpointProxies)
+      }
+      awaitCancellation()
     }
   }.stateIn(cs, SharingStarted.Eagerly, emptySet())
 
@@ -34,8 +47,8 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   }
 
   override fun getAllBreakpointItems(): List<BreakpointItem> {
-    return breakpoints.value.map { dto ->
-      XBreakpointItem(FrontendXBreakpointProxy(project, dto), this)
+    return breakpoints.value.map { proxy ->
+      XBreakpointItem(proxy, this)
     }
   }
 
