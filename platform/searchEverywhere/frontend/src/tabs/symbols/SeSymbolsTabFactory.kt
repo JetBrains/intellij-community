@@ -8,7 +8,6 @@ import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import com.intellij.platform.searchEverywhere.providers.symbols.SeSymbolsProvider
 import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus
 
@@ -18,7 +17,7 @@ class SeSymbolsTabFactory : SeTabFactory {
     val delegate = SeTabDelegate.create(project,
                                         sessionRef,
                                         "Symbols",
-                                        listOf(SeProviderId(SeSymbolsProvider.ID)),
+                                        listOf(SeProviderId("com.intellij.SymbolSearchEverywhereItemProvider")),
                                         dataContext,
                                         true)
     return SeSymbolsTab(delegate)

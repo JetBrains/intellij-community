@@ -8,7 +8,6 @@ import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import com.intellij.platform.searchEverywhere.providers.text.SeTextItemsProvider
 import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus
 
@@ -18,7 +17,7 @@ class SeTextTabFactory : SeTabFactory {
     val delegate = SeTabDelegate.create(project,
                                         sessionRef,
                                         "Text",
-                                        listOf(SeProviderId(SeTextItemsProvider.ID)),
+                                        listOf(SeProviderId("com.intellij.TextSearchEverywhereItemProvider")),
                                         dataContext,
                                         true)
     return SeTextTab(delegate)

@@ -8,11 +8,4 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.SeEntityTypeProvider"/>
   </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.files.SeFilesProviderFactory"/>
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.classes.SeClassesProviderFactory"/>
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.symbols.SeSymbolsProviderFactory"/>
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.providers.text.SeTextItemsProviderFactory"/>
-  </extensions>
 </idea-plugin>
