@@ -6,7 +6,6 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -43,7 +42,7 @@ internal fun closeToolWindow(
 
 internal fun openEditorForFile(
   values: List<SwitcherVirtualFile>,
-  mode: FileEditorManagerImpl.OpenMode,
+  defaultMode: FileEditorManagerImpl.OpenMode,
   project: Project,
 ) {
   IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
@@ -52,6 +51,7 @@ internal fun openEditorForFile(
       var splitWindow: EditorWindow? = null
       for (value in values) {
         val file = value.virtualFile ?: continue
+        val mode = RecentFilesNavigator.EP_NAME.computeSafeIfAny { it.getEditorOpenOptions(project, file) } ?: defaultMode
         if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
           if (splitWindow == null) {
             splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
@@ -61,7 +61,7 @@ internal fun openEditorForFile(
           }
         }
         else if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
-          manager.openFileInNewWindow(file)
+          manager.openFileInNewWindow(file, reuseOpen = true)
         }
         else {
           val settings = UISettings.getInstance().state

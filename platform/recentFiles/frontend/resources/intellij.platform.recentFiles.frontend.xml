@@ -4,6 +4,11 @@
     <module name="intellij.platform.recentFiles"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
+                    name="recentFiles.navigator"
+                    dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="switcher.use.fallback.in.monolith" defaultValue="false"
                  description="Use old Switcher/Recent Files implementation in the monolith mode that is not remove dev-native"/>
