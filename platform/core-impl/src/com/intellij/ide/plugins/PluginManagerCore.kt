@@ -601,6 +601,7 @@ object PluginManagerCore {
   @Internal
   var pluginDescriptorDebugData: PluginDescriptorsDebugData? = null
 
+  @Internal
   fun initializePlugins(
     context: DescriptorListLoadingContext,
     loadingResult: PluginLoadingResult,
