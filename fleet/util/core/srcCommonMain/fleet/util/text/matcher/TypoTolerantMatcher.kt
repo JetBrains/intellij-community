@@ -850,7 +850,7 @@ class TypoTolerantMatcher(
     }
 
     private fun prependRange(ranges: PersistentList<TextRange>, range: Range): PersistentList<TextRange> {
-      val head = (ranges.first() as Range?)
+      val head = ranges.firstOrNull() as? Range
       return if (head != null && head.startOffset == range.endOffset) {
         ranges.set(0, Range(range.startOffset, head.endOffset, range.errorCount + head.errorCount))
       }
