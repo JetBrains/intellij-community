@@ -86,7 +86,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
     scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, context, pathResolver, useCoreClassLoader, mainClassLoader, result)
-    result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, context, zipPool))
+    result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, context, zipPool)) // FIXME initialize
     result.addAll(loadBundledPluginDescriptors(scope, context, zipPool)) // FIXME initialize
     return result
   }
@@ -143,7 +143,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
               file = file,
               context = context,
               pool = zipFilePool,
-            )?.apply { initialize(context = context) }
+            )
           })
         }
       }
@@ -195,7 +195,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
             mainGroupResourceRootSet = emptySet(),
             isBundled = false,
             pluginDir = path.parent,
-          )?.apply { initialize(context = context) }
+          )
         }
         catch (t: Throwable) {
           logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load custom plugin '$mainModuleId': $t", t)
