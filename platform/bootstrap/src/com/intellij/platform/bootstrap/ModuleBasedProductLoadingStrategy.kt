@@ -85,7 +85,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       platformPrefix.startsWith("CodeServer") ||
       java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
-    scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, context, pathResolver, useCoreClassLoader, mainClassLoader, result)
+    scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, context, pathResolver, useCoreClassLoader, mainClassLoader, result) // FIXME initialize
     result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, context, zipPool)) // FIXME initialize
     result.addAll(loadBundledPluginDescriptors(scope, context, zipPool)) // FIXME initialize
     return result

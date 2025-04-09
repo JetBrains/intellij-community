@@ -887,7 +887,7 @@ private fun CoroutineScope.loadCoreModules(
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
   val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
-  if (loadCorePlugin(
+  if (loadCorePlugin( // FIXME initialize
       platformPrefix = platformPrefix,
       isInDevServerMode = isInDevServerMode,
       isUnitTestMode = isUnitTestMode,
@@ -940,7 +940,6 @@ fun CoroutineScope.loadCorePlugin(
     result.add(async(Dispatchers.IO) {
       val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
       loadCoreProductPlugin(path = PluginManagerCore.PLUGIN_XML_PATH, context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
-        .apply { initialize(context = context) }
     })
     return true
   }
@@ -949,7 +948,6 @@ fun CoroutineScope.loadCorePlugin(
     val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
     val reader = getResourceReader(path, classLoader) ?: return@async null
     loadCoreProductPlugin(path = path, context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
-      .apply { initialize(context = context) }
   })
   return false
 }
