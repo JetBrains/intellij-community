@@ -109,7 +109,7 @@ fun loadDescriptorFromDir(
       descriptorRelativePath = descriptorRelativePath,
       pool = pool,
       id = id,
-    )
+    ).apply { initialize(context = context) }
     descriptor.jarFiles = Collections.singletonList(dir)
     return descriptor
   }
@@ -153,7 +153,7 @@ fun loadDescriptorFromJar(
       descriptorRelativePath = descriptorRelativePath,
       pool = pool,
       id = id,
-    )
+    ).apply { initialize(context = context) }
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
     return descriptor
   }
@@ -205,7 +205,7 @@ private fun loadDescriptorFromStream(
     pluginDir = pluginDir ?: fileOrDir,
     pool = pool,
   )
-  return descriptor.apply { initialize(context = context) }
+  return descriptor
 }
 
 @VisibleForTesting
