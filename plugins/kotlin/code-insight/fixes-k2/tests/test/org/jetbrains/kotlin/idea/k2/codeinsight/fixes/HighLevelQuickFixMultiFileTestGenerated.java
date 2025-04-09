@@ -837,6 +837,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension_topLevelVal.test");
             }
 
+            @TestMetadata("invokeExtension_unresolvedReceiver.test")
+            public void testInvokeExtension_unresolvedReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension_unresolvedReceiver.test");
+            }
+
             @TestMetadata("iteratorOperator.test")
             public void testIteratorOperator() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/iteratorOperator.test");

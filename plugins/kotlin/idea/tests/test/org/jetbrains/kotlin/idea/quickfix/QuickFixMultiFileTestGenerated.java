@@ -949,6 +949,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/invokeExtension_topLevelVal.test");
             }
 
+            @TestMetadata("invokeExtension_unresolvedReceiver.test")
+            public void testInvokeExtension_unresolvedReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_unresolvedReceiver.test");
+            }
+
             @TestMetadata("iteratorOperator.test")
             public void testIteratorOperator() throws Exception {
                 runTest("testData/quickfix/autoImports/iteratorOperator.test");
