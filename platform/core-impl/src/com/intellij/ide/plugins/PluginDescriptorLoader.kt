@@ -1143,7 +1143,7 @@ fun loadDescriptor(file: Path, isBundled: Boolean, pathResolver: PathResolver): 
 }
 
 @Throws(ExecutionException::class, InterruptedException::class, IOException::class)
-fun loadDescriptorsFromOtherIde(
+fun loadAndInitDescriptorsFromOtherIde(
   customPluginDir: Path,
   bundledPluginDir: Path?,
   brokenPluginVersions: Map<PluginId, Set<String?>>?,

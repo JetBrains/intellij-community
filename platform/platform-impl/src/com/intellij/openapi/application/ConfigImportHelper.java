@@ -1087,7 +1087,7 @@ public final class ConfigImportHelper {
        * in production, if bundledPluginPath is null, the path from our IDE instance (!) bundled plugin path is used instead
        * so it looks like in production we effectively use bundled plugin path from the current IDE, not from the old one
        */
-      oldIdeLoadingResult = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
+      oldIdeLoadingResult = PluginDescriptorLoader.loadAndInitDescriptorsFromOtherIde(
         oldPluginsDir, options.bundledPluginPath, brokenPluginVersions, options.compatibleBuildNumber);
     }
     catch (ExecutionException | InterruptedException e) {
