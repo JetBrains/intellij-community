@@ -28,6 +28,8 @@ class UnnecessaryUnicodeEscape {
    * \u005Cu004C
    * \uuuu005Cuuuu004C
    * some description\u005Cu004Csome description
+   * \u005Cu0041 <warning descr="Unicode escape sequence '\u0041' can be replaced with 'A'">\u0041</warning>
+   * <warning descr="Unicode escape sequence '\u0041' can be replaced with 'A'">\u0041</warning> \u005Cu0041
    */
 
   /// <warning descr="Unicode escape sequence '\u005C' can be replaced with '\'">\u005C</warning>
@@ -37,6 +39,8 @@ class UnnecessaryUnicodeEscape {
   /// \u005Cu004C
   /// \uuuu005Cuuuu004C
   /// some description\u005Cu004Csome description
+  /// \u005Cu0041 <warning descr="Unicode escape sequence '\u0041' can be replaced with 'A'">\u0041</warning>
+  /// <warning descr="Unicode escape sequence '\u0041' can be replaced with 'A'">\u0041</warning> \u005Cu0041
 
 }
 @SuppressWarnings("UnnecessaryUnicodeEscape")
