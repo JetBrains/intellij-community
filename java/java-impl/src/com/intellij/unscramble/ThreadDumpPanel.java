@@ -264,9 +264,9 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setIcon(comparator == DumpItem.BY_INTEREST ? AllIcons.ObjectBrowser.SortByType : AllIcons.ObjectBrowser.Sorted);
-      e.getPresentation().setText(comparator == DumpItem.BY_INTEREST ? JavaBundle.message("sort.threads.by.interest.level") :
-                                  JavaBundle.message("sort.threads.by.name"));
+      e.getPresentation().setIcon(currentComparator == DumpItem.BY_INTEREST ? AllIcons.ObjectBrowser.Sorted : AllIcons.ObjectBrowser.SortByType);
+      e.getPresentation().setText(currentComparator == DumpItem.BY_INTEREST ? JavaBundle.message("sort.threads.by.name") :
+                                  JavaBundle.message("sort.threads.by.interest.level")                                  );
     }
   }
   private static final class CopyToClipboardAction extends DumbAwareAction {
