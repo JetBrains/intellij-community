@@ -86,10 +86,6 @@ class DescriptorListLoadingContext(
     return set.contains(version)
   }
 
-  fun isBroken(descriptor: IdeaPluginDescriptorImpl): Boolean {
-    return isBroken(descriptor.pluginId, descriptor.version)
-  }
-
   override val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!
   override val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
