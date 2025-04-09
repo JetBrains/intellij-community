@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,10 +49,11 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
   /**
    * <code>
-   *   Python 3.11
+   * Python 3.11
    * </code>
    */
-  private static final String PYTHON_VERSION_STRING_PREFIX = "Python ";
+  @ApiStatus.Internal
+  public static final String PYTHON_VERSION_STRING_PREFIX = "Python ";
   /**
    * To prevent log pollution and slowness, we cache every {@link #isFileExecutable(String, TargetEnvironmentConfiguration)} call
    * and only log it once
@@ -65,7 +67,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
   /**
    * <code>
-   *   python --version
+   * python --version
    * </code>
    */
   public static final String PYTHON_VERSION_ARG = "--version";

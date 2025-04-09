@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -26,6 +27,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
@@ -35,7 +37,6 @@ internal abstract class CustomNewEnvironmentCreator(
   model: PythonMutableTargetAddInterpreterModel,
 ) : PythonNewEnvironmentCreator(model) {
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox
-
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
@@ -67,7 +68,11 @@ internal abstract class CustomNewEnvironmentCreator(
   }
 
   override fun onShown() {
-    basePythonComboBox.setItems(model.baseInterpreters)
+    model.scope.launch {
+      model.baseInterpreters.collect {
+        basePythonComboBox.setItems(model.baseInterpreters)
+      }
+    }
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
@@ -114,13 +119,15 @@ internal abstract class CustomNewEnvironmentCreator(
                               InterpreterCreationMode.CUSTOM)
 
   /**
-   * Creates an installation fix for executable (poetry, pipenv).
+   * Creates an installation fix for an executable (poetry, pipenv, uv, hatch).
    *
-   * 1. Checks does a `pythonExecutable` have pip.
-   * 2. If no, checks is pip is installed globally.
-   * 3. If no, downloads and installs pip from "https://bootstrap.pypa.io/get-pip.py"
-   * 4. Runs (pythonExecutable -m) pip install `package_name` --user
-   * 5. Reruns `detectExecutable`
+   * 1. Checks if the installation of the fix requires an undownloaded env.
+   * 2. If it doesn't, downloads the env and selects it.
+   * 3. Checks if `pythonExecutable` has pip.
+   * 4. If it doesn't, checks if pip is installed globally.
+   * 5. If it isn't, downloads and installs pip from "https://bootstrap.pypa.io/get-pip.py".
+   * 6. Runs `(pythonExecutable -m) pip install <package_name> --user`.
+   * 7. Reruns `detectExecutable`.
    */
   @RequiresEdt
   protected fun createInstallFix(errorSink: ErrorSink): ActionLink {
@@ -134,15 +141,31 @@ internal abstract class CustomNewEnvironmentCreator(
   }
 
   /**
-   * Installs the necessary executable in the Python environment.
+   * Downloads the selected downloadable env (if selected), then installs the necessary executable in the Python environment.
    *
    * Initiates a blocking modal progress task to:
-   * 1. Ensure pip is installed.
-   * 2. Install the executable (specified by `name`) using either a custom installation script or via pip.
+   * 1. Ensure that the environment is downloaded (if selected).
+   * 2. Ensure that pip is installed.
+   * 3. Install the executable (specified by `name`) using either a custom installation script or via pip.
    */
   @RequiresEdt
   private fun installExecutable(errorSink: ErrorSink) {
-    val pythonExecutable = model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
+    val baseInterpreter = model.state.baseInterpreter.get()
+
+    val installedSdk = when (baseInterpreter) {
+      is InstallableSelectableInterpreter -> installBaseSdk(baseInterpreter.sdk, model.existingSdks)
+        ?.let {
+          val installed = model.addInstalledInterpreter(it.homePath!!.toNioPathOrNull()!!, baseInterpreter.languageLevel)
+          model.state.baseInterpreter.set(installed)
+          installed
+        }
+      is DetectedSelectableInterpreter, is ExistingSelectableInterpreter, is ManuallyAddedSelectableInterpreter, null -> null
+    }
+
+    // installedSdk is null when the selected sdk isn't downloadable
+    // model.state.baseInterpreter could be null if no SDK was selected
+    val pythonExecutable = installedSdk?.homePath ?: model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
+
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       if (installationScript != null) {
         val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
@@ -168,7 +191,6 @@ internal abstract class CustomNewEnvironmentCreator(
    * If this property is not null, the provided script will be used for installation instead of the default pip installation.
    */
   private val installationScript: Path? = PythonHelpersLocator.findPathInHelpers("pycharm_package_installer.py")
-
 
   /**
    * Saves the provided path to an executable in the properties of the environment
