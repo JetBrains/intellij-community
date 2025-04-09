@@ -32,9 +32,29 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualClassInNonLeafModule")
+        public void testActualClassInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualClassInNonLeafModule/");
+        }
+
+        @TestMetadata("actualClassNotInNonLeafModule")
+        public void testActualClassNotInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualClassNotInNonLeafModule/");
+        }
+
         @TestMetadata("actualFun")
         public void testActualFun() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFun/");
+        }
+
+        @TestMetadata("actualFunInNonLeafModule")
+        public void testActualFunInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFunInNonLeafModule/");
+        }
+
+        @TestMetadata("actualFunNotInNonLeafModule")
+        public void testActualFunNotInNonLeafModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFunNotInNonLeafModule/");
         }
 
         @TestMetadata("actualKeywordFromSeveralFiles")
