@@ -15,6 +15,10 @@ import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
+import java.time.DayOfWeek
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 import java.util.GregorianCalendar
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -536,4 +540,13 @@ private fun computeBuildDateInSeconds(): Long {
     "diverging from modification times specified in .manifest."
   }
   return value
+}
+
+fun getDevModeOrTestBuildDateInSeconds(): Long {
+  val now = OffsetDateTime.now()
+  // licence expired - 30 days
+  return now
+    .with(if (now.dayOfMonth >= 30) TemporalAdjusters.previous(DayOfWeek.MONDAY) else TemporalAdjusters.firstDayOfMonth())
+    .truncatedTo(ChronoUnit.DAYS)
+    .toEpochSecond()
 }

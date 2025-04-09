@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
+import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.buildDistributions
@@ -41,6 +42,7 @@ fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Pat
     cleanOutDir = false,
     useCompiledClassesFromProjectOutput = true,
     jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
+    buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
   )
   customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, testInfo = testInfo)
   return options
@@ -139,7 +141,7 @@ fun runTestBuild(
             build(context)
             onSuccess(context)
             reproducibilityTest.iterationFinished(iterationNumber, context)
-          }
+          },
         )
       }
     }
@@ -159,7 +161,7 @@ fun runTestBuild(
       build = { context ->
         build(context)
         onSuccess(context)
-      }
+      },
     )
   }
 }

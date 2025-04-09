@@ -47,6 +47,7 @@ import org.jetbrains.intellij.build.computeAppClassPath
 import org.jetbrains.intellij.build.excludedLibJars
 import org.jetbrains.intellij.build.generatePluginClassPath
 import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
+import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.ArchivedCompilationContext
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
@@ -86,10 +87,6 @@ import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.time.DayOfWeek
-import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalAdjusters
 import kotlin.io.path.createDirectories
 import kotlin.io.path.moveTo
 import kotlin.time.Duration.Companion.seconds
@@ -478,7 +475,7 @@ private suspend fun createBuildContext(
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val options = BuildOptions(
           jarCacheDir,
-          buildDateInSeconds = getBuildDateInSeconds(),
+          buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
           printFreeSpace = false,
           validateImplicitPlatformModule = false,
           skipDependencySetup = true,
@@ -573,15 +570,6 @@ private suspend fun createBuildContext(
       },
     )
   }
-}
-
-private fun getBuildDateInSeconds(): Long {
-  val now = OffsetDateTime.now()
-  // licence expired - 30 days
-  return now
-    .with(if (now.dayOfMonth >= 30) TemporalAdjusters.previous(DayOfWeek.MONDAY) else TemporalAdjusters.firstDayOfMonth())
-    .truncatedTo(ChronoUnit.DAYS)
-    .toEpochSecond()
 }
 
 private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, context: BuildContext): Boolean {
