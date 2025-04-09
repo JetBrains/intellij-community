@@ -47,6 +47,7 @@ class ChangesViewCommitWorkflowHandler(
 
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
+  private var knownActiveResolvedConflicts: Set<Any> = emptySet()
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
@@ -108,9 +109,11 @@ class ChangesViewCommitWorkflowHandler(
     if (resolvedConflictsInclusion.isNotEmpty()) {
       inclusionModel.addInclusion(resolvedConflictsInclusion)
     }
+    knownActiveResolvedConflicts = resolvedConflictsInclusion
 
-    if (!inclusionModel.isInclusionEmpty()) {
+    if (!isInclusionEmpty()) {
       val possibleInclusion = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
+      possibleInclusion.addAll(resolvedConflictsInclusion)
       possibleInclusion.addAll(changeLists.asSequence().flatMap { it.changes })
       possibleInclusion.addAll(unversionedFiles)
 
@@ -160,9 +163,16 @@ class ChangesViewCommitWorkflowHandler(
       val newChanges = activeChanges - knownActiveChanges
       inclusionModel.addInclusion(newChanges)
 
-      // include all active changes if nothing is included
-      if (inclusionModel.isInclusionEmpty()) inclusionModel.addInclusion(activeChanges)
+      // include all active changes if nothing is included or the current inclusion included by default resolved conflicts
+      if (isInclusionEmpty()) {
+        inclusionModel.addInclusion(activeChanges)
+      }
     }
+  }
+
+  private fun isInclusionEmpty(): Boolean {
+    return inclusionModel.isInclusionEmpty() || (MergeConflictManager.isForceIncludeResolvedConflicts()
+                                                 && inclusionModel.getInclusion().all { it in knownActiveResolvedConflicts })
   }
 
   private fun setSelection(changeList: LocalChangeList) {
