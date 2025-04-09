@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object ArrayAccessorImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         return when (diagnostic) {
             is KaFirDiagnostic.NoGetMethod,
             is KaFirDiagnostic.NoSetMethod -> {

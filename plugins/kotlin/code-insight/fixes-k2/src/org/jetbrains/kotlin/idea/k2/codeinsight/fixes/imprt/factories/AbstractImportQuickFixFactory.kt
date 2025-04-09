@@ -13,7 +13,7 @@ internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.In
     /**
      * Returns the detected [ImportPositionTypeAndReceiver] for the given diagnostic.
      */
-    protected abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
+    protected abstract fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
 
     protected abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name>
 

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object IteratorImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
+    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
         when (diagnostic) {
             is KaFirDiagnostic.IteratorMissing,
             is KaFirDiagnostic.IteratorAmbiguity -> {

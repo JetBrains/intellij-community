@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
+    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
         when (diagnostic) {
             is KaFirDiagnostic.ComponentFunctionMissing,
             is KaFirDiagnostic.ComponentFunctionAmbiguity -> {
