@@ -313,7 +313,7 @@ class IdeaPluginDescriptorImpl private constructor(
       disabledDependency
     ))
 
-    for (dependency in pluginDependencies) {
+    for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
       if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
         requiredDependencyIsDisabled(dependency.pluginId)
         return
