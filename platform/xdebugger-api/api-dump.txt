@@ -743,7 +743,8 @@ a:com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 - a:computeSmartStepVariants(com.intellij.xdebugger.XSourcePosition):java.util.List
 - computeSmartStepVariantsAsync(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
 - computeStepIntoVariants(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
-- a:getPopupTitle(com.intellij.xdebugger.XSourcePosition):java.lang.String
+- getPopupTitle():java.lang.String
+- getPopupTitle(com.intellij.xdebugger.XSourcePosition):java.lang.String
 - startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant):V
 - startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant,com.intellij.xdebugger.frame.XSuspendContext):V
 - stepIntoEmpty(com.intellij.xdebugger.XDebugSession):V
