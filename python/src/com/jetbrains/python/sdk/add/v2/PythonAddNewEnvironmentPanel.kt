@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -45,7 +46,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
@@ -75,7 +75,6 @@ internal class PythonAddNewEnvironmentPanel(
 
   // PY-79134: an anchor to display the promo notification on
   // TODO: remove after promo ends
-  private lateinit var popupAnchor: Cell<*>
   private val promoPopup: GotItTooltip = GotItTooltip("python.uv.promo.tooltip", message("sdk.create.custom.uv.promo.text"))
     .withShowCount(1)
     .withLink(message("sdk.create.custom.uv.promo.link")) {
@@ -85,6 +84,7 @@ internal class PythonAddNewEnvironmentPanel(
       promoPopup.hidePopup()
     }
     .withTimeout(15_000)
+  private lateinit var interpreterTypeButton: SegmentedButton<*>
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
@@ -114,9 +114,8 @@ internal class PythonAddNewEnvironmentPanel(
     with(outerPanel) {
       if (allowedInterpreterTypes.size > 1) { // No need to show control with only one selection
         row(message("sdk.create.interpreter.type")) {
-          segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
+          interpreterTypeButton = segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
             .bind(selectedMode)
-          popupAnchor = label("\u00A0") // nbsp character; empty label to act as an anchor
         }.topGap(TopGap.MEDIUM)
       }
 
@@ -172,13 +171,11 @@ internal class PythonAddNewEnvironmentPanel(
           model.navigator.restoreLastState(allowedInterpreterTypes)
           initialized = true
 
-          val customButton = popupAnchor
+          val customButton = interpreterTypeButton
             .component
-            .parent
-            .components
-            ?.find { it is SegmentedButtonComponent<*> }
-            ?.let { it as JPanel }
-            ?.components[2] as? JComponent
+            ?.let { it as? SegmentedButtonComponent<*> }
+            ?.components
+            ?.find { (it as? ActionButton)?.presentation?.text == message(CUSTOM.nameKey) } as? JComponent
 
           if (customButton == null) {
             return@withLock
