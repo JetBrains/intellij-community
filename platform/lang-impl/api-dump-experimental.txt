@@ -469,8 +469,8 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - s:values():com.intellij.codeInsight.intention.IntentionSource[]
 *:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponentHolder
 - com.intellij.openapi.Disposable
-- a:component():javax.swing.JComponent
 - a:isDisposed():Z
+- a:jComponent():javax.swing.JComponent
 *:com.intellij.codeInsight.navigation.SymbolTypeProvider
 - a:getSymbolTypes(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.List
 f:com.intellij.codeInsight.navigation.UtilKt

@@ -131,7 +131,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
       return
     }
 
-    popup.component().addHierarchyBoundsListener(object : HierarchyBoundsAdapter() {
+    popup.jComponent().addHierarchyBoundsListener(object : HierarchyBoundsAdapter() {
       override fun ancestorMoved(e: HierarchyEvent?) {
         action.invoke()
       }
@@ -139,11 +139,11 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
   }
 
   private fun adjustPosition(originalPopup: IntentionPreviewComponentHolder?, checkResizing: Boolean = false) {
-    if (popup.isDisposed || originalPopup == null || !originalPopup.component().isShowing) {
+    if (popup.isDisposed || originalPopup == null || !originalPopup.jComponent().isShowing) {
       return
     }
 
-    val positionAdjuster = PositionAdjuster(originalPopup.component())
+    val positionAdjuster = PositionAdjuster(originalPopup.jComponent())
     val previousDimension = PopupImplUtil.getPopupSize(popup)
     val bounds: Rectangle = positionAdjuster.adjustBounds(previousDimension, arrayOf(RIGHT, LEFT))
     val popupSize = popup.size
@@ -172,7 +172,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
           val screen = ScreenUtil.getScreenRectangle(location)
 
           var delta = screen.width + screen.x - location.x
-          val content = originalPopup?.component()
+          val content = originalPopup?.jComponent()
           val origLocation = if (content?.isShowing == true) content.locationOnScreen else null
           // On the left side of the original popup: avoid overlap
           if (origLocation != null && location.x < origLocation.x) {
@@ -335,13 +335,13 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
  * ComponentHolder is used to get the component of the popup.
  * It's needed to get the size of the popup and position it correctly.
  *
- * The component can be obtained after the popup is shown by calling [IntentionPreviewComponentHolder.component].
+ * The component can be obtained after the popup is shown by calling [IntentionPreviewComponentHolder.jComponent].
  *
  * The popup can be disposed by calling [ComponentHolder.dispose].
  *
  */
 @ApiStatus.Experimental
 interface IntentionPreviewComponentHolder : Disposable {
-  fun component(): JComponent
+  fun jComponent(): JComponent
   fun isDisposed(): Boolean
 }

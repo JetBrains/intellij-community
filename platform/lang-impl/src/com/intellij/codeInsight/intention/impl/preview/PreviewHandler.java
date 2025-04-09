@@ -55,7 +55,7 @@ public final class PreviewHandler<T> {
     myProcessor = new IntentionPreviewPopupUpdateProcessor(project, obj -> previewGenerator.apply(myClass.cast(obj)));
     myPopup = new IntentionPreviewComponentHolder() {
       @Override
-      public @NotNull JComponent component() {
+      public @NotNull JComponent jComponent() {
         return listPopup.getContent();
       }
 
@@ -69,6 +69,7 @@ public final class PreviewHandler<T> {
         Disposer.dispose(listPopup);
       }
     };
+    Disposer.register(listPopup, myPopup);
     registerShowPreviewAction();
     registerListeners();
   }

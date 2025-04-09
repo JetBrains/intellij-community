@@ -61,7 +61,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
     });
     myPopup = new IntentionPreviewComponentHolder() {
       @Override
-      public @NotNull JComponent component() {
+      public @NotNull JComponent jComponent() {
         return myLookup.getComponent();
       }
 
@@ -75,6 +75,7 @@ public final class LookupPreviewHandler<T> implements LookupListener {
         Disposer.dispose(myLookup);
       }
     };
+    Disposer.register(myLookup, myPopup);
     registerShowPreviewAction();
     registerListeners();
   }
