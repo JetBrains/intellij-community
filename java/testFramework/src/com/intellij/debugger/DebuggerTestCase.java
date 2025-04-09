@@ -54,6 +54,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.sun.jdi.Value;
@@ -212,12 +213,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        XDebuggerManager.getInstance(myProject).startSession(myExecutionEnvironment, new XDebugProcessStarter() {
+        XDebugSessionImpl session =
+          (XDebugSessionImpl)XDebuggerManager.getInstance(myProject).startSession(myExecutionEnvironment, new XDebugProcessStarter() {
           @Override
           public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             return JavaDebugProcess.create(session, myDebuggerSession);
           }
         });
+        session.activateSession(false); // activate the session immediately
       }
       catch (ExecutionException e) {
         LOG.error(e);
