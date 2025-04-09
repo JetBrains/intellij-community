@@ -1,43 +1,43 @@
 // FILE: first.before.kt
-// "Import operator 'Some.invoke'" "true"
-// ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
+// "Import operator 'A.invoke'" "true"
+// ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
 // IGNORE_K2
 
-package testing
+package b
 
-import some.Some
+import a.A
 
-fun testing() {
-    <caret>Some()("str")
+fun main() {
+    val a = A()
+    <caret>a()
 }
 //-----------------------
 
 
 // FILE: second.kt
-// "Import extension function 'Some.invoke'" "true"
-// ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
+// "Import extension function 'A.invoke'" "true"
+// ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
+// IGNORE_K2
 
-package some
+package a
 
-public class Some
-
-operator fun Some.invoke(s: String) {}
+class A
+operator fun A.invoke() = 42
 //-----------------------
 
 
 // FILE: first.after.kt
-// "Import operator 'Some.invoke'" "true"
-// ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
+// "Import operator 'A.invoke'" "true"
+// ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
 // IGNORE_K2
 
-package testing
+package b
 
-import some.Some
-import some.invoke
+import a.A
+import a.invoke
 
-fun testing() {
-    <caret>Some()("str")
+fun main() {
+    val a = A()
+    <caret>a()
 }
 //-----------------------
-
-
