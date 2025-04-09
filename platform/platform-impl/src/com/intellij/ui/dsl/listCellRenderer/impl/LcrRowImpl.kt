@@ -19,6 +19,7 @@ import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.minimumHeight
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -90,6 +91,15 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
+  override fun onOffButton(init: (LcrOnOffButtonInitParams.() -> Unit)?) {
+    val initParams = LcrOnOffButtonInitParams()
+    if (init != null) {
+      initParams.init()
+    }
+
+    add(LcrOnOffButtonImpl(initParams, true, gap))
+  }
+
   override fun separator(init: LcrSeparator.() -> Unit) {
     if (separator != null) {
       throw UiDslException("Separator is defined already")
@@ -159,6 +169,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
           val font = cell.initParams.font
           if (font == null) 0 else component.getFontMetrics(font).height
         }
+        is LcrOnOffButtonImpl -> component.minimumHeight
       }
       minHeight = max(minHeight, cellMinHeight)
     }
@@ -360,6 +371,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
 
     val topOffset = when (cell) {
       is LcrIconImpl -> 0
+      is LcrOnOffButtonImpl -> 0
 
       // Add 1 pixel above, which gives better vertical alignment in case odd row height
       is LcrSimpleColoredTextImpl -> 1

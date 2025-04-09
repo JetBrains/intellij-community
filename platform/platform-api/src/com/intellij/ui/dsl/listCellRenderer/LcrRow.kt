@@ -82,6 +82,12 @@ interface LcrRow<T> {
   fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
 
   /**
+   * Adds a cell with an on-off button
+   */
+  @ApiStatus.Internal
+  fun onOffButton(init: (LcrOnOffButtonInitParams.() -> Unit)?)
+
+  /**
    * Adds separator above the row
    */
   fun separator(init: LcrSeparator.() -> Unit)
