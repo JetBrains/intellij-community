@@ -9,7 +9,7 @@ import a.A
 
 fun main() {
     val a = A()
-    <caret>a()
+    <caret>a {}
 }
 //-----------------------
 
@@ -22,7 +22,7 @@ fun main() {
 package a
 
 class A
-operator fun A.invoke() = 42
+operator fun A.invoke(action: () -> Unit) {}
 //-----------------------
 
 
@@ -38,6 +38,6 @@ import a.invoke
 
 fun main() {
     val a = A()
-    <caret>a()
+    <caret>a {}
 }
 //-----------------------

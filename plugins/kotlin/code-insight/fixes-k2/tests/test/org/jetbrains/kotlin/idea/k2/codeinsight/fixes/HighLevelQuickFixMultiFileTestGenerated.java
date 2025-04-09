@@ -812,14 +812,29 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension.test");
             }
 
-            @TestMetadata("invokeExtension2.test")
-            public void testInvokeExtension2() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension2.test");
+            @TestMetadata("invokeExtensionNoOperator_afterConstructorCall.test")
+            public void testInvokeExtensionNoOperator_afterConstructorCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtensionNoOperator_afterConstructorCall.test");
             }
 
-            @TestMetadata("invokeExtensionNoOperator.test")
-            public void testInvokeExtensionNoOperator() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtensionNoOperator.test");
+            @TestMetadata("invokeExtensionWithLambdaParameter.test")
+            public void testInvokeExtensionWithLambdaParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtensionWithLambdaParameter.test");
+            }
+
+            @TestMetadata("invokeExtensionWithLambdaParameter_qualifiedCall.test")
+            public void testInvokeExtensionWithLambdaParameter_qualifiedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtensionWithLambdaParameter_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall.test")
+            public void testInvokeExtension_afterConstructorCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension_afterConstructorCall.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall.test")
+            public void testInvokeExtension_qualifiedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension_qualifiedCall.test");
             }
 
             @TestMetadata("iteratorOperator.test")
