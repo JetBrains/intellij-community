@@ -8,9 +8,13 @@ import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
@@ -100,6 +104,11 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
+    val resolvedConflictsInclusion = getResolvedConflictsInclusion()
+    if (resolvedConflictsInclusion.isNotEmpty()) {
+      inclusionModel.addInclusion(resolvedConflictsInclusion)
+    }
+
     if (!inclusionModel.isInclusionEmpty()) {
       val possibleInclusion = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
       possibleInclusion.addAll(changeLists.asSequence().flatMap { it.changes })
@@ -115,6 +124,18 @@ class ChangesViewCommitWorkflowHandler(
 
     inclusionModel.changeLists = changeLists
     ui.setCompletionContext(changeLists)
+  }
+
+  private fun getResolvedConflictsInclusion(): Set<Any> {
+    val mergeConflictManager = MergeConflictManager.getInstance(project)
+    val defaultChangeList = ChangeListManager.getInstance(project).defaultChangeList
+
+    val resolvedChanges = defaultChangeList.changes.filter(mergeConflictManager::isResolvedConflict)
+    val changesPaths = resolvedChanges.map { ChangesUtil.getFilePath(it) }.toSet()
+    val resolvedUnchanged = mergeConflictManager.getResolvedConflictPaths().filter { it !in changesPaths }
+    val included = resolvedChanges + resolvedUnchanged
+
+    return included.toSet()
   }
 
   fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
