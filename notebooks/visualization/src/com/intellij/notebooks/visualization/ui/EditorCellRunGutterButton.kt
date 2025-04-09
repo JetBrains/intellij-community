@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.DumbAwareAction
 
 class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: EditorCell)  {
   // PY-72142 & PY-69788 & PY-72701 - adds the "Run cell" button to the gutter
@@ -41,7 +42,7 @@ class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: 
   private fun showRunButton() = try { cell.setGutterAction(currentAction) } catch(_: Exception) {}
   private fun hideRunButton() = cell.setGutterAction(DummyEmptyAction())
 
-  inner class RunCellGutterAction(private val cell: EditorCell) : AnAction(AllIcons.Actions.Execute), ActionRemoteBehaviorSpecification.BackendOnly {
+  inner class RunCellGutterAction(private val cell: EditorCell) : DumbAwareAction(AllIcons.Actions.Execute), ActionRemoteBehaviorSpecification.BackendOnly {
     override fun actionPerformed(e: AnActionEvent) {
       val cellLineOffset = cell.interval.lines.first
       editor.caretModel.moveToOffset(editor.document.getLineStartOffset(cellLineOffset))
@@ -50,12 +51,12 @@ class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: 
     }
   }
 
-  inner class StopCellExecutionGutterAction: AnAction(AllIcons.Run.Stop), ActionRemoteBehaviorSpecification.BackendOnly {
+  inner class StopCellExecutionGutterAction: DumbAwareAction(AllIcons.Run.Stop), ActionRemoteBehaviorSpecification.BackendOnly {
     override fun actionPerformed(e: AnActionEvent) {
       val interruptKernelAction = ActionManager.getInstance().getAction("JupyterInterruptKernelAction")
       interruptKernelAction.actionPerformed(e)
     }
   }
 
-  inner class DummyEmptyAction: AnAction(AllIcons.Empty) { override fun actionPerformed(e: AnActionEvent) { } }
+  inner class DummyEmptyAction: DumbAwareAction(AllIcons.Empty) { override fun actionPerformed(e: AnActionEvent) { } }
 }
