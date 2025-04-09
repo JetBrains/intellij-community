@@ -1201,7 +1201,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
 
 @TestOnly
 @JvmOverloads
-fun testLoadDescriptorsFromClassPath(
+fun testLoadAndInitDescriptorsFromClassPath(
   loader: ClassLoader,
   zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool(),
 ): List<IdeaPluginDescriptor> {
