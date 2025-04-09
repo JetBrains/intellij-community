@@ -9,9 +9,10 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
   fun testFileSystemGetPath() {
     doTest("""
       import com.intellij.platform.eel.annotations.Filename;
-import com.intellij.platform.eel.annotations.NativePath;
-
-s;
+      import com.intellij.platform.eel.annotations.NativePath;
+      
+      import java.nio.file.FileSystems;
+      import java.nio.file.FileSystem;
 
       public class FileSystemGetPath {
           public void testMethod() {
@@ -111,7 +112,7 @@ s;
 
       public class NonAnnotatedStringInPathResolve {
           public void testMethod() {
-              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
+              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get("/base/path")</warning>;
 
               String nonAnnotatedPath = "invalid/path";
               // This should be highlighted as a warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
@@ -138,7 +139,7 @@ s;
 
       public class FilenameAnnotatedStringInPathResolve {
           public void testMethod() {
-              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
+              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get("/base/path")</warning>;
 
               // Non-annotated string should be highlighted
               String nonAnnotatedPath = "invalid/path";
