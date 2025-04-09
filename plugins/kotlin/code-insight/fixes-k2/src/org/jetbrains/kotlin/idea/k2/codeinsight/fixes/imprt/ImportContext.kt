@@ -3,7 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import org.jetbrains.kotlin.psi.KtElement
 
-internal class ImportContext(
-    val position: KtElement,
-    val positionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
-)
+internal interface ImportContext {
+    val position: KtElement
+    val positionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>
+}
+
+internal class DefaultImportContext(
+    override val position: KtElement,
+    override val positionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
+) : ImportContext

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.imports.KtFileWithReplacedImports
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.MismatchedArgumentsImportQuickFixFactory.FILE_WITH_REPLACED_IMPORTS_CACHE
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -39,7 +40,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
                     else -> originalDiagnosticPsi.parentOfType<KtCallExpression>()?.calleeExpression
                 } ?: return null
 
-                ImportContext(adjustedDiagnosticPsi, ImportPositionTypeAndReceiver.detect(adjustedDiagnosticPsi))
+                DefaultImportContext(adjustedDiagnosticPsi, ImportPositionTypeAndReceiver.detect(adjustedDiagnosticPsi))
             }
 
             else -> null
@@ -94,9 +95,9 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             // do not do any filtering, let all candidates pass
             return true
         }
-        
+
         val containingFile = originalCallExpression.containingKtFile
-        
+
         if (containingFile is KtCodeFragment) {
             // KtFileWithReplacedImports does not properly work with KtCodeFragments now,
             // so we do not do actual applicability filtering.
@@ -104,7 +105,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             // Should be implemented in KTIJ-33606
             return true
         }
-        
+
         val candidateFqName = candidate.fqName ?: return false
 
         val fileWithReplacedImports = getFileWithReplacedImportsFor(containingFile)

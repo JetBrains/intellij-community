@@ -20,7 +20,7 @@ internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQui
             is KaFirDiagnostic.UnresolvedReferenceWrongReceiver,
             is KaFirDiagnostic.InvisibleReference -> {
                 val diagnosticPsi = diagnostic.psi.operationReferenceForBinaryExpressionOrThis as? KtElement ?: return null
-                ImportContext(diagnosticPsi, ImportPositionTypeAndReceiver.detect(diagnosticPsi))
+                DefaultImportContext(diagnosticPsi, ImportPositionTypeAndReceiver.detect(diagnosticPsi))
             }
 
             else -> null
