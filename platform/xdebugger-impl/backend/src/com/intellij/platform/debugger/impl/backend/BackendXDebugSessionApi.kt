@@ -14,6 +14,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
@@ -24,6 +25,10 @@ import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
+import com.intellij.xdebugger.impl.rpc.models.storeGlobally
+import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +36,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.await
 import javax.swing.Icon
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
@@ -101,6 +107,63 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.stepOut()
+    }
+  }
+
+  override suspend fun stepInto(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.stepInto()
+    }
+  }
+
+  override suspend fun smartStepIntoEmpty(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.debugProcess.smartStepIntoHandler?.stepIntoEmpty(session)
+    }
+  }
+
+  override suspend fun smartStepInto(smartStepTargetId: XSmartStepIntoTargetId) {
+    val targetModel = smartStepTargetId.findValue() ?: return
+    val session = targetModel.session
+    val handler = session.debugProcess.smartStepIntoHandler ?: return
+    withContext(Dispatchers.EDT) {
+      @Suppress("UNCHECKED_CAST")
+      session.smartStepInto(handler as XSmartStepIntoHandler<XSmartStepIntoVariant?>, targetModel.target)
+    }
+  }
+
+  override suspend fun computeSmartStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto> {
+    return computeTargets(sessionId, sourcePositionDto) { handler, position ->
+      withContext(Dispatchers.EDT) {
+        handler.computeSmartStepVariantsAsync(position).await()
+      }
+    }
+  }
+
+  override suspend fun computeStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto> {
+    return computeTargets(sessionId, sourcePositionDto) { handler, position ->
+      withContext(Dispatchers.EDT) {
+        handler.computeStepIntoVariants(position).await()
+      }
+    }
+  }
+
+  private suspend fun computeTargets(
+    sessionId: XDebugSessionId,
+    sourcePositionDto: XSourcePositionDto,
+    computeVariants: suspend (XSmartStepIntoHandler<*>, XSourcePosition) -> List<XSmartStepIntoVariant>,
+  ): List<XSmartStepIntoTargetDto> {
+    val session = sessionId.findValue() ?: return emptyList()
+    val scope = session.currentSuspendCoroutineScope ?: return emptyList()
+    val handler = session.debugProcess.smartStepIntoHandler ?: return emptyList()
+    val sourcePosition = sourcePositionDto.sourcePosition()
+    return computeVariants(handler, sourcePosition).map { variant ->
+      val id = variant.storeGlobally(scope, session)
+      val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
+      val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
+      XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
     }
   }
 

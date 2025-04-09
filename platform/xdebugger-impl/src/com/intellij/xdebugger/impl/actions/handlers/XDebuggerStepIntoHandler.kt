@@ -1,39 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.xdebugger.impl.actions.handlers;
+package com.intellij.xdebugger.impl.actions.handlers
 
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource;
-import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
-import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
+import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetDto
+import com.intellij.xdebugger.impl.rpc.toRpc
 
-import java.util.List;
-
-@ApiStatus.Internal
-public class XDebuggerStepIntoHandler extends XDebuggerSmartStepIntoHandler {
-
-  @Override
-  protected <V extends XSmartStepIntoVariant> Promise<List<V>> computeVariants(XSmartStepIntoHandler<V> handler, XSourcePosition position) {
-    return handler.computeStepIntoVariants(position);
+internal class XDebuggerStepIntoHandler : XDebuggerSmartStepIntoHandler() {
+  override suspend fun computeTargets(session: XDebugSessionProxy, position: XSourcePosition): List<XSmartStepIntoTargetDto> {
+    return XDebugSessionApi.getInstance().computeStepTargets(session.id, position.toRpc())
   }
 
-  @Override
-  protected <V extends XSmartStepIntoVariant> boolean handleSimpleCases(XSmartStepIntoHandler<V> handler,
-                                                                        List<? extends V> variants,
-                                                                        XDebugSession session) {
-    if (variants.size() == 1) {
-      V singleVariant = variants.get(0);
-      if (singleVariant instanceof ForceSmartStepIntoSource forceSmartStepIntoSource && forceSmartStepIntoSource.needForceSmartStepInto()) {
-        return super.handleSimpleCases(handler, variants, session);
+  override suspend fun handleSimpleCases(targets: List<XSmartStepIntoTarget>, session: XDebugSessionProxy): Boolean {
+    if (targets.size == 1) {
+      val singleTarget = targets[0]
+      if (singleTarget.needsForcedSmartStepInto) {
+        return super.handleSimpleCases(targets, session)
       }
     }
-
-    if (variants.size() < 2) {
-      session.stepInto();
-      return true;
+    if (targets.size < 2) {
+      XDebugSessionApi.getInstance().stepInto(session.id)
+      return true
     }
-    return false;
+    return false
   }
 }

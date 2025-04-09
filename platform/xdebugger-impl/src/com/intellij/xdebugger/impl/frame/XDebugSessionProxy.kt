@@ -60,6 +60,7 @@ interface XDebugSessionProxy {
   val currentStateMessage: String
   val currentStateHyperlinkListener: HyperlinkListener?
   val currentEvaluator: XDebuggerEvaluator?
+  val smartStepIntoHandlerEntry: XSmartStepIntoHandlerEntry?
 
   fun getCurrentPosition(): XSourcePosition?
   fun getTopFramePosition(): XSourcePosition?
@@ -139,6 +140,13 @@ interface XDebugSessionProxy {
     override val currentEvaluator: XDebuggerEvaluator?
       get() = session.debugProcess.evaluator
 
+    override val smartStepIntoHandlerEntry: XSmartStepIntoHandlerEntry? by lazy {
+      val handler = session.debugProcess.smartStepIntoHandler ?: return@lazy null
+      object : XSmartStepIntoHandlerEntry {
+        override val popupTitle: String get() = handler.popupTitle
+      }
+    }
+
     override fun getCurrentPosition(): XSourcePosition? {
       return session.currentPosition
     }
@@ -205,4 +213,9 @@ interface XDebugSessionProxy {
       return XStackFramesListColorsCache.Monolith(session as XDebugSessionImpl, framesList)
     }
   }
+}
+
+@ApiStatus.Internal
+interface XSmartStepIntoHandlerEntry {
+  val popupTitle: String
 }

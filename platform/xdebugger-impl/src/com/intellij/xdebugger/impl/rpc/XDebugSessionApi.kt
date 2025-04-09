@@ -8,6 +8,8 @@ import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Rpc
@@ -45,6 +48,13 @@ interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun stepOver(sessionId: XDebugSessionId, ignoreBreakpoints: Boolean)
 
   suspend fun stepOut(sessionId: XDebugSessionId)
+
+  suspend fun stepInto(sessionId: XDebugSessionId)
+
+  suspend fun smartStepInto(smartStepTargetId: XSmartStepIntoTargetId)
+  suspend fun smartStepIntoEmpty(sessionId: XDebugSessionId)
+  suspend fun computeSmartStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto>
+  suspend fun computeStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto>
 
   suspend fun forceStepInto(sessionId: XDebugSessionId)
 
@@ -92,6 +102,7 @@ data class XDebugSessionDto(
   val sessionDataDto: XDebugSessionDataDto,
   val consoleViewData: XDebuggerConsoleViewData?,
   val processHandlerDto: ProcessHandlerDto,
+  val smartStepIntoHandlerDto: XSmartStepIntoHandlerDto?,
 )
 
 
@@ -181,3 +192,25 @@ data class XSuspendContextDto(
   val id: XSuspendContextId,
   val isStepping: Boolean,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XSmartStepIntoHandlerDto(
+  @NlsContexts.PopupTitle val title: String,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XSmartStepIntoTargetDto(
+  val id: XSmartStepIntoTargetId,
+  val iconId: IconId?,
+  val text: @NlsSafe String,
+  val description: @Nls String?,
+  // TODO serialize TextRange directly
+  val textRange: Pair<Int, Int>?,
+  val needsForcedSmartStepInto: Boolean,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XSmartStepIntoTargetId(override val uid: UID) : Id

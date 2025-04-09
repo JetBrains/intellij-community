@@ -31,10 +31,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
-import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -130,6 +127,13 @@ class FrontendXDebuggerSession private constructor(
     get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
   override val currentStateHyperlinkListener: HyperlinkListener?
     get() = null // TODO
+
+  override val smartStepIntoHandlerEntry: XSmartStepIntoHandlerEntry? = sessionDto.smartStepIntoHandlerDto?.let {
+    object : XSmartStepIntoHandlerEntry {
+      override val popupTitle: String
+        get() = it.title
+    }
+  }
 
   init {
     cs.launch {
