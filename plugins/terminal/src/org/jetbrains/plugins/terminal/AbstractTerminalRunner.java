@@ -199,6 +199,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return dir != null ? dir.getPath() : null;
   }
 
+  @ApiStatus.Internal
   @RequiresEdt(generateAssertion = false)
   protected void openSession(@NotNull TerminalWidget terminalWidget, @NotNull ShellStartupOptions startupOptions) {
     doOpenSession(terminalWidget, initStartupMomentIfNeeded(startupOptions.builder()).widget(terminalWidget).build());
