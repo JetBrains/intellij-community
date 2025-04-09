@@ -155,4 +155,40 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       }      
       """.trimIndent())
   }
+
+  fun testPathOfWithMoreParameters() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.Filename;
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+      import com.intellij.platform.eel.annotations.NativePath;
+
+      import java.nio.file.Path;
+
+      public class PathOfWithMoreParameters {
+          public void testMethod() {
+              // First argument should be annotated with @MultiRoutingFileSystemPath
+              @MultiRoutingFileSystemPath String basePath = "/base/path";
+
+              // Non-annotated string in 'more' parameter should be highlighted
+              String nonAnnotatedMore = "file.txt";
+              Path path1 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nonAnnotatedMore</warning>);
+
+              // @NativePath string in 'more' parameter should be highlighted
+              @NativePath String nativeMore = "subdir";
+              Path path2 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nativeMore</warning>);
+
+              // @Filename string in 'more' parameter should not be highlighted
+              @Filename String filenameMore = "file.txt";
+              Path path3 = Path.of(basePath, filenameMore);
+
+              // @MultiRoutingFileSystemPath string in 'more' parameter should not be highlighted
+              @MultiRoutingFileSystemPath String multiRoutingMore = "subdir";
+              Path path4 = Path.of(basePath, multiRoutingMore);
+
+              // Multiple 'more' parameters should be checked
+              Path path5 = Path.of(basePath, filenameMore, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nonAnnotatedMore</warning>, multiRoutingMore);
+          }
+      }      
+      """.trimIndent())
+  }
 }

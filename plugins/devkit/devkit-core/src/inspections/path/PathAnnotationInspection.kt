@@ -51,26 +51,74 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
       // Check if the method is a Path constructor or factory method
       if (isPathConstructorOrFactory(target)) {
-        // Check if the argument is annotated with @NativePath
         val arguments = node.valueArguments
         if (arguments.isNotEmpty()) {
-          val arg = arguments[0]
-          val argInfo = PathAnnotationInfo.forExpression(arg)
-          if (argInfo is PathAnnotationInfo.Native) {
-            // Report error: @NativePath string used in Path constructor or factory method
-            holder.registerProblem(
-              sourcePsi,
-              DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
-              AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
-            )
+          // Check first argument
+          val firstArg = arguments[0]
+          val firstArgInfo = PathAnnotationInfo.forExpression(firstArg)
+
+          when (firstArgInfo) {
+            is PathAnnotationInfo.Native -> {
+              // Report error: @NativePath string used in Path constructor or factory method
+              holder.registerProblem(
+                sourcePsi,
+                DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
+                AddMultiRoutingAnnotationFix(firstArgInfo.getAnnotationCandidate())
+              )
+            }
+            is PathAnnotationInfo.Unspecified -> {
+              // Report normal warning: non-annotated string used in Path constructor or factory method
+              holder.registerProblem(
+                sourcePsi,
+                DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method"),
+                AddMultiRoutingAnnotationFix(firstArgInfo.getAnnotationCandidate())
+              )
+            }
+            is PathAnnotationInfo.FilenameInfo -> {
+              // Report error: first argument of Path.of() should be annotated with @MultiRoutingFileSystemPath
+              holder.registerProblem(
+                firstArg.sourcePsi ?: sourcePsi,
+                DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath"),
+                AddMultiRoutingAnnotationFix(firstArgInfo.getAnnotationCandidate())
+              )
+            }
+            is PathAnnotationInfo.MultiRouting -> {
+              // This is the correct annotation, no need to report anything
+            }
           }
-          else if (argInfo is PathAnnotationInfo.Unspecified) {
-            // Report normal warning: non-annotated string used in Path constructor or factory method
-            holder.registerProblem(
-              sourcePsi,
-              DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method"),
-              AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
-            )
+
+          // Check remaining arguments
+          if (arguments.size > 1) {
+            for (i in 1 until arguments.size) {
+              val arg = arguments[i]
+              val argInfo = PathAnnotationInfo.forExpression(arg)
+              if (argInfo !is PathAnnotationInfo.MultiRouting && argInfo !is PathAnnotationInfo.FilenameInfo) {
+                // Report error: elements of 'more' parameter should be annotated with either @MultiRoutingFileSystemPath or @Filename
+                when (argInfo) {
+                  is PathAnnotationInfo.Native -> {
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
+                      AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
+                    )
+                  }
+                  is PathAnnotationInfo.Unspecified -> {
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
+                      AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
+                    )
+                  }
+                  else -> {
+                    // This should not happen, but we need to handle all cases
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")
+                    )
+                  }
+                }
+              }
+            }
           }
         }
       }
