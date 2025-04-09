@@ -239,6 +239,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
       val resolver = ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, fallbackResolver)
       loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
+        ?.apply { initialize(context = context) }
         .also { descriptor ->
           descriptor?.content?.modules?.forEach { module ->
             val requireDescriptor = module.requireDescriptor()

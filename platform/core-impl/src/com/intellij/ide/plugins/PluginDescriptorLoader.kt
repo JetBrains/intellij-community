@@ -66,7 +66,7 @@ fun loadForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = Plu
       isBundled = true,
       isEssential = true,
       id = id,
-    )
+    )?.apply { initialize(context = parentContext) }
   }
   else {
     return loadDescriptorFromJar(
@@ -109,7 +109,7 @@ fun loadDescriptorFromDir(
       descriptorRelativePath = descriptorRelativePath,
       pool = pool,
       id = id,
-    ).apply { initialize(context = context) }
+    )
     descriptor.jarFiles = Collections.singletonList(dir)
     return descriptor
   }
@@ -353,7 +353,7 @@ private fun loadFromPluginDir(
           isEssential = isEssential,
           useCoreClassLoader = useCoreClassLoader,
           pluginDir = dir,
-        )
+        )?.apply { initialize(context = parentContext) }
       }?.let {
         if (pluginJarFiles.isNullOrEmpty()) {
           it.jarFiles = Collections.singletonList(classDir)
