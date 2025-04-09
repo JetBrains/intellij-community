@@ -143,7 +143,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
               file = file,
               context = context,
               pool = zipFilePool,
-            )
+            )?.apply { initialize(context = context) }
           })
         }
       }

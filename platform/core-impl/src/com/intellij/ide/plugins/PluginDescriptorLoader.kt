@@ -47,7 +47,7 @@ private val LOG: Logger
 
 @TestOnly
 fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext, pool: ZipEntryResolverPool): IdeaPluginDescriptorImpl? {
-  return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = pool)
+  return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = pool)?.apply { initialize(context = parentContext) }
 }
 
 @ApiStatus.Internal
@@ -257,6 +257,7 @@ fun initMainDescriptorByRaw(
 @TestOnly
 fun loadDescriptorFromFileOrDirInTests(file: Path, context: DescriptorListLoadingContext, isBundled: Boolean): IdeaPluginDescriptorImpl? {
   return loadDescriptorFromFileOrDir(file = file, context = context, pool = NonShareableJavaZipFilePool(), isBundled = isBundled, isEssential = true, isUnitTestMode = true)
+    ?.apply { initialize(context = context) }
 }
 
 @Internal
@@ -281,7 +282,7 @@ fun loadDescriptorFromFileOrDir(
         isEssential = isEssential,
         useCoreClassLoader = useCoreClassLoader,
         isUnitTestMode = isUnitTestMode,
-      )?.apply { initialize(context = context) }
+      )
     }
     file.toString().endsWith(".jar", ignoreCase = true) -> {
       loadDescriptorFromJar(
@@ -292,7 +293,7 @@ fun loadDescriptorFromFileOrDir(
         isBundled = isBundled,
         isEssential = isEssential,
         useCoreClassLoader = useCoreClassLoader,
-      )?.apply { initialize(context = context) }
+      )
     }
     else -> null
   }
@@ -402,6 +403,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
     val file = Paths.get(t.nextToken())
     list.add(async(Dispatchers.IO) {
       loadDescriptorFromFileOrDir(file, context, pool, useCoreClassLoader = useCoreClassLoaderForPluginsFromProperty)
+        ?.apply { initialize(context = context) }
     })
   }
   return list
@@ -1263,6 +1265,7 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
       dirStream.map { file ->
         async(Dispatchers.IO) {
           loadDescriptorFromFileOrDir(file = file, context = context, pool = pool, isBundled = isBundled)
+            ?.apply { initialize(context = context) }
         }
       }
     }
