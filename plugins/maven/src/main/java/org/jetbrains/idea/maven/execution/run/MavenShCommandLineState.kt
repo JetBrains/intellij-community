@@ -61,6 +61,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.isMaven4
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.nio.file.Path
 import java.util.function.Function
 import kotlin.io.path.Path
 
@@ -234,7 +235,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     }
 
     if (generalSettings.userSettingsFile.isNotBlank()) {
-      args.addAll("-s", generalSettings.userSettingsFile)
+      args.addAll("-s", generalSettings.userSettingsFile.asTargetPathString())
     }
     if (generalSettings.localRepository.isNotBlank()) {
       args.addProperty("-Dmaven.repo.local=${MavenSettingsCache.getInstance(myConfiguration.project).getEffectiveUserLocalRepo()}")
@@ -321,4 +322,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     val mavenDistribution = MavenDistributionsCache.getInstance(myConfiguration.project).getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
     return mavenDistribution.isMaven4() || mavenDistribution is DaemonedMavenDistribution
   }
+
+  private fun String.asTargetPathString(): String = Path.of(this).asEelPath().toString()
 }

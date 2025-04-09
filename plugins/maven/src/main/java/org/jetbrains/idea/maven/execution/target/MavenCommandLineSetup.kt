@@ -130,9 +130,7 @@ class MavenCommandLineSetup(
       return targetJavaHome
     }
     val jdk = ProjectRootManager.getInstance(project).getProjectSdk() ?: getJdkForImporter(project)
-    return jdk.homePath?.let { Path.of(it) }
-      ?.asEelPath()
-      ?.toString()
+    return jdk.homePath?.asTargetPathString()
   }
 
   private fun setupMavenExtClassPath() {
@@ -197,7 +195,7 @@ class MavenCommandLineSetup(
     generalSettings.checksumPolicy.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }
 
     if (generalSettings.userSettingsFile.isNotBlank()) {
-      commandLine.addParameters("-s", generalSettings.userSettingsFile)
+      commandLine.addParameters("-s", generalSettings.userSettingsFile.asTargetPathString())
     }
     if (generalSettings.localRepository.isNotBlank()) {
       commandLine.addParameter("-Dmaven.repo.local=${MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()}")
@@ -250,7 +248,7 @@ class MavenCommandLineSetup(
 
   private fun setupTargetProjectDirectories(settings: MavenRunConfiguration.MavenSettings) {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val file = settings.myRunnerParameters?.let { VfsUtil.findFileByIoFile(it.workingDirFile, false) } ?: throw CantRunException(
+    val file = settings.myRunnerParameters?.let { VfsUtil.findFile(Path.of(it.workingDirPath), false) } ?: throw CantRunException(
       message("maven.target.message.unable.to.use.working.directory", name))
     val module = ReadAction.compute<Module?, Throwable> { ProjectFileIndex.getInstance(project).getModuleForFile(file) }
                  ?: throw CantRunException(
@@ -323,4 +321,6 @@ class MavenCommandLineSetup(
     @JvmStatic
     val setupKey = Key.create<MavenCommandLineSetup>("org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup")
   }
+
+  private fun String.asTargetPathString(): String = Path.of(this).asEelPath().toString()
 }
