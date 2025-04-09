@@ -45,7 +45,7 @@ class NotebookVisibleCellsBatchUpdater(
   }
 
   private fun updateCell(cell: EditorCell) {
-    cell.view?.myEditorCellFrameManager?.redrawBorders()
+    cell.view?.cellFrameManager?.redrawBorders()
     cell.view?.input?.cellActionsToolbar?.updateToolbarPosition()
   }
   override fun dispose() {

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import kotlin.reflect.KClass
 
-class EditorNotebook(private val editor: EditorImpl) : Disposable {
+class EditorNotebook(val editor: EditorImpl) : Disposable {
 
   private var _cells = mutableListOf<EditorCell>()
 

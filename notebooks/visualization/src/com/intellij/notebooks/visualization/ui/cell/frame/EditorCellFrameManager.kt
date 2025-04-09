@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.notebooks.visualization.ui
+package com.intellij.notebooks.visualization.ui.cell.frame
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookMarkdownCellLeftBorderRenderer
 import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.notebooks.visualization.ui.EditorCellView
+import com.intellij.notebooks.visualization.ui.EditorLayerController
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.getLayerController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -11,6 +13,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.observable.properties.AtomicProperty
 import java.awt.Color
 import java.awt.geom.Line2D
 
@@ -25,6 +28,8 @@ class EditorCellFrameManager(
 
   private var isSelected = false
   private var isHovered = false
+
+  val state: AtomicProperty<CellFrameState> = AtomicProperty(CellFrameState())
 
   init {
     if (cellType == NotebookCellLines.CellType.CODE) redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
@@ -68,6 +73,7 @@ class EditorCellFrameManager(
     currentColor = color
 
     val layerController = editor.getLayerController()
+    state.set(CellFrameState(true, currentColor))
     view.updateFrameVisibility(true, currentColor)
 
     redrawLeftBorder()
@@ -105,6 +111,7 @@ class EditorCellFrameManager(
   }
 
   private fun clearFrame() {
+    state.set(CellFrameState(false, currentColor))
     view.updateFrameVisibility(false, currentColor)
     removeLeftBorder()
     removeRightBorder(editor.getLayerController())

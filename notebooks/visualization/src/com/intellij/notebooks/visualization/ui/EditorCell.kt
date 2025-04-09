@@ -6,7 +6,6 @@ import com.intellij.notebooks.visualization.NotebookCellLines.CellType
 import com.intellij.notebooks.visualization.NotebookCellLines.Interval
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.execution.ExecutionEvent
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor
 import com.intellij.openapi.Disposable
@@ -26,7 +25,7 @@ private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, EditorCellE
 class EditorCell(
   val notebook: EditorNotebook,
   var intervalPointer: NotebookIntervalPointer,
-  private val editor: EditorImpl,
+  val editor: EditorImpl,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
   val source: AtomicProperty<String> = AtomicProperty(getSource())
@@ -34,6 +33,7 @@ class EditorCell(
   val type: CellType = interval.type
 
   val interval: Interval get() = intervalPointer.get() ?: error("Invalid interval")
+  val intervalOrNull: Interval? get() = intervalPointer.get()
 
   val view: EditorCellView?
     get() = NotebookCellInlayManager.get(editor)!!.views[this]
@@ -117,22 +117,6 @@ class EditorCell(
     outputs.updateOutputs()
   }
 
-  fun onExecutionEvent(event: ExecutionEvent) {
-    when (event) {
-      is ExecutionEvent.ExecutionStarted -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status, startTime = event.startTime))
-      }
-      is ExecutionEvent.ExecutionStopped -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status, endTime = event.endTime, count = event.executionCount))
-      }
-      is ExecutionEvent.ExecutionSubmitted -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status))
-      }
-      is ExecutionEvent.ExecutionReset -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status))
-      }
-    }
-  }
 
   fun requestCaret() {
     view?.requestCaret()

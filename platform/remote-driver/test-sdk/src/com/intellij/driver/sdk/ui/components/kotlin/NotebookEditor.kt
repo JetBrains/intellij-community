@@ -74,7 +74,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='JupyterMarkdownHtmlPane']").list()
 
   val notebookCellExecutionInfos: List<JLabelUiComponent>
-    get() = xx("//div[@class='FullEditorWidthRenderer']/div[@class='NotebookBelowCellDelimiterPanel']/div[@class='JLabel']", JLabelUiComponent::class.java).list()
+    get() = xx("//div[@accessiblename='ExecutionLabel']", JLabelUiComponent::class.java).list()
 
   val notebookTables: List<JTableUiComponent>
     get() = xx("//div[@class='TableResultView']", JTableUiComponent::class.java).list()
