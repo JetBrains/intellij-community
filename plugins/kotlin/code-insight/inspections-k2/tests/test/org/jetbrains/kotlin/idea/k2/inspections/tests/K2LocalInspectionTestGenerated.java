@@ -8307,6 +8307,193 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable")
+    public abstract static class UnnecessaryVariable extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables")
+        public static class ReportImmediatelyReturnedVariables extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ifElse.kt")
+            public void testIfElse() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse.kt");
+            }
+
+            @TestMetadata("ifElse2.kt")
+            public void testIfElse2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse2.kt");
+            }
+
+            @TestMetadata("ifElse3.kt")
+            public void testIfElse3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse3.kt");
+            }
+
+            @TestMetadata("ifElse4.kt")
+            public void testIfElse4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse4.kt");
+            }
+
+            @TestMetadata("ifElse5.kt")
+            public void testIfElse5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse5.kt");
+            }
+
+            @TestMetadata("lambda.kt")
+            public void testLambda() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/lambda.kt");
+            }
+
+            @TestMetadata("lambda2.kt")
+            public void testLambda2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/lambda2.kt");
+            }
+
+            @TestMetadata("simpleReturn.kt")
+            public void testSimpleReturn() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/simpleReturn.kt");
+            }
+
+            @TestMetadata("try.kt")
+            public void testTry() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/try.kt");
+            }
+
+            @TestMetadata("when.kt")
+            public void testWhen() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/when.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable")
+        public static class Uncategorized extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("copyOfVal.kt")
+            public void testCopyOfVal() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/copyOfVal.kt");
+            }
+
+            @TestMetadata("copyOfValInLambda.kt")
+            public void testCopyOfValInLambda() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/copyOfValInLambda.kt");
+            }
+
+            @TestMetadata("copyOfValInLambda2.kt")
+            public void testCopyOfValInLambda2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/copyOfValInLambda2.kt");
+            }
+
+            @TestMetadata("copyOfValInLambda3.kt")
+            public void testCopyOfValInLambda3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/copyOfValInLambda3.kt");
+            }
+
+            @TestMetadata("copyOfValUnused.kt")
+            public void testCopyOfValUnused() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/copyOfValUnused.kt");
+            }
+
+            @TestMetadata("copyOfValWithExplicitType.kt")
+            public void testCopyOfValWithExplicitType() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/copyOfValWithExplicitType.kt");
+            }
+
+            @TestMetadata("copyOfVar.kt")
+            public void testCopyOfVar() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/copyOfVar.kt");
+            }
+
+            @TestMetadata("delegated.kt")
+            public void testDelegated() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/delegated.kt");
+            }
+
+            @TestMetadata("hasAnnotation.kt")
+            public void testHasAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/hasAnnotation.kt");
+            }
+
+            @TestMetadata("hasComment.kt")
+            public void testHasComment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/hasComment.kt");
+            }
+
+            @TestMetadata("hasComment2.kt")
+            public void testHasComment2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/hasComment2.kt");
+            }
+
+            @TestMetadata("hasComment3.kt")
+            public void testHasComment3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/hasComment3.kt");
+            }
+
+            @TestMetadata("it.kt")
+            public void testIt() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/it.kt");
+            }
+
+            @TestMetadata("override.kt")
+            public void testOverride() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/override.kt");
+            }
+
+            @TestMetadata("paramCopy.kt")
+            public void testParamCopy() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/paramCopy.kt");
+            }
+
+            @TestMetadata("parameterWithSameNameBelow.kt")
+            public void testParameterWithSameNameBelow() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/parameterWithSameNameBelow.kt");
+            }
+
+            @TestMetadata("propertyCopy.kt")
+            public void testPropertyCopy() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/propertyCopy.kt");
+            }
+
+            @TestMetadata("simpleReturn.kt")
+            public void testSimpleReturn() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/simpleReturn.kt");
+            }
+
+            @TestMetadata("topLevelCopy.kt")
+            public void testTopLevelCopy() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/topLevelCopy.kt");
+            }
+
+            @TestMetadata("varCopy.kt")
+            public void testVarCopy() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/varCopy.kt");
+            }
+
+            @TestMetadata("whenSubject.kt")
+            public void testWhenSubject() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/whenSubject.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/canBeParameter")
     public static class CanBeParameter extends AbstractK2LocalInspectionTest {
         @java.lang.Override
