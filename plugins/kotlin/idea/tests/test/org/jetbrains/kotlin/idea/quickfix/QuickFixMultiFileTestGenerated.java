@@ -864,11 +864,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importNullableInterfaceWithGenerics.before.Main.kt");
             }
 
-            @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
-            public void testImportOperatorInvokeWithConvention() throws Exception {
-                runTest("testData/quickfix/autoImports/ImportOperatorInvokeWithConvention.before.Main.kt");
-            }
-
             @TestMetadata("indexCallExtensionGet.test")
             public void testIndexCallExtensionGet() throws Exception {
                 runTest("testData/quickfix/autoImports/indexCallExtensionGet.test");
@@ -947,6 +942,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("invokeExtension_qualifiedCall.test")
             public void testInvokeExtension_qualifiedCall() throws Exception {
                 runTest("testData/quickfix/autoImports/invokeExtension_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_topLevelVal.test")
+            public void testInvokeExtension_topLevelVal() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_topLevelVal.test");
             }
 
             @TestMetadata("iteratorOperator.test")
