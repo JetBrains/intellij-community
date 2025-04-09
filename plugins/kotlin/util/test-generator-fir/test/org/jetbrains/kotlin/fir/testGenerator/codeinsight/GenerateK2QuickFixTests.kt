@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelWithPostponedQuickFixMultiModuleTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
@@ -273,7 +274,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
         }
 
         testClass<AbstractHighLevelQuickFixMultiModuleTest> {
-            model("$idea/multiModuleQuickFix", pattern = DIRECTORY, depth = 1)
+            model("$idea/multiModuleQuickFix", pattern = DIRECTORY, depth = 1, excludedDirectories = listOf("addDependency"))
+        }
+
+        testClass<AbstractHighLevelWithPostponedQuickFixMultiModuleTest> {
+            model("$idea/multiModuleQuickFix/addDependency", pattern = DIRECTORY, isRecursive = false)
         }
     }
 }

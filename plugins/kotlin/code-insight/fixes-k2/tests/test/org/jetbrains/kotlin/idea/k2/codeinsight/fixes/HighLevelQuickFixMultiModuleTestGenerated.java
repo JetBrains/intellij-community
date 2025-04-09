@@ -264,55 +264,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addDependency")
-    public static class AddDependency extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("class")
-        public void testClass() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/class/");
-        }
-
-        @TestMetadata("import")
-        public void testImport() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/import/");
-        }
-
-        @TestMetadata("topLevelFunction")
-        public void testTopLevelFunction() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction/");
-        }
-
-        @TestMetadata("topLevelFunction2")
-        public void testTopLevelFunction2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction2/");
-        }
-
-        @TestMetadata("topLevelFunctionWithImport")
-        public void testTopLevelFunctionWithImport() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunctionWithImport/");
-        }
-
-        @TestMetadata("topLevelProperty")
-        public void testTopLevelProperty() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty/");
-        }
-
-        @TestMetadata("topLevelProperty2")
-        public void testTopLevelProperty2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty2/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addMissingActualMembers")
     public static class AddMissingActualMembers extends AbstractHighLevelQuickFixMultiModuleTest {
         @java.lang.Override
