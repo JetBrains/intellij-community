@@ -19,66 +19,51 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.maven.testFramework.MavenExecutionTestCase
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.IOException
-import javax.swing.SwingUtilities
 import kotlin.io.path.exists
 
-class MavenExecutionTest : MavenExecutionTestCase() {
-  
+abstract class MavenExecutionTest : MavenExecutionTestCase() {
+
+  protected fun toggleScriptsRegistryKey(useScripts: Boolean) {
+    Registry.get("maven.use.scripts").setValue(useScripts, testRootDisposable)
+  }
+
   @Test
   fun testExternalExecutor() = runBlocking {
-    edt<IOException> {
-      WriteAction.runAndWait<IOException> { VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}") }
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-
-    WriteAction.computeAndWait<VirtualFile, RuntimeException> {
-      createProjectPom("""
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                           """.trimIndent())
-    }
-
+    createProjectSubFile("src/main/java/A.java", "public class A {}")
+    createProjectPom("""
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                         """.trimIndent())
+    importProjectAsync()
     assertFalse(projectPath.resolve("target").exists())
-
     execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
-
     assertTrue(projectPath.resolve("target").exists())
   }
 
   @Test
   fun testUpdatingExcludedFoldersAfterExecution() = runBlocking {
-    edtWriteAction {
-      createStdProjectFolders()
-    }
-    importProjectAsync("""
+    createStdProjectFolders()
+    createProjectPom("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    edtWriteAction {
-      createProjectSubDirs("target/generated-sources/foo", "target/bar")
-    }
+    importProjectAsync()
+    createProjectSubDirs("target/generated-sources/foo", "target/bar")
 
     assertModules("project")
     assertExcludes("project", "target")
 
     val params = MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList())
     execute(params)
-
-    SwingUtilities.invokeAndWait {}
 
     assertSources("project", "src/main/java")
     assertResources("project", *defaultResources())
