@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtParameter
 
 internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
@@ -15,7 +16,20 @@ internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixF
             is KaFirDiagnostic.ComponentFunctionMissing,
             is KaFirDiagnostic.ComponentFunctionAmbiguity -> {
                 val destructuredExpression = diagnostic.psi as? KtExpression ?: return null
-                DefaultImportContext(destructuredExpression, ImportPositionTypeAndReceiver.OperatorCall(destructuredExpression))
+
+                val destructuredType = when (destructuredExpression) {
+                    // destructuring in lambda parameter position (e.g. `foo { (a, b) -> ... }`)
+                    is KtParameter -> destructuredExpression.returnType
+
+                    // regular assignment destructuring (e.g. `val (a, b) = ...`)
+                    else -> destructuredExpression.expressionType
+                } ?: return null
+
+                ImportContextWithFixedReceiverType(
+                    destructuredExpression,
+                    ImportPositionType.OperatorCall,
+                    explicitReceiverType = destructuredType,
+                )
             }
 
             else -> null

@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import operator 'Some.component2'" "true"
 // IGNORE_K1
-// IGNORE_K2
 
 package testing
 
@@ -26,7 +25,6 @@ operator fun Some.component2() = 3
 // FILE: first.after.kt
 // "Import operator 'Some.component2'" "true"
 // IGNORE_K1
-// IGNORE_K2
 
 package testing
 
