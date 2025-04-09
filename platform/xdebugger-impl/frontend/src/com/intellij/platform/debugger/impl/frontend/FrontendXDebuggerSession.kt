@@ -39,20 +39,8 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.event.HyperlinkListener
@@ -72,18 +60,10 @@ class FrontendXDebuggerSession private constructor(
   override val id: XDebugSessionId = sessionDto.id
 
   val sourcePosition: StateFlow<XSourcePosition?> =
-    channelFlow {
-      XDebugSessionApi.getInstance().currentSourcePosition(id).collectLatest { sourcePositionDto ->
-        if (sourcePositionDto == null) {
-          send(null)
-          return@collectLatest
-        }
-        supervisorScope {
-          send(sourcePositionDto.sourcePosition())
-          awaitCancellation()
-        }
-      }
-    }.stateIn(cs, SharingStarted.Eagerly, null)
+    cs.createPositionFlow { XDebugSessionApi.getInstance().currentSourcePosition(id) }
+
+  private val topSourcePosition: StateFlow<XSourcePosition?> =
+    cs.createPositionFlow { XDebugSessionApi.getInstance().topSourcePosition(id) }
 
   private val sessionState: StateFlow<XDebugSessionState> =
     channelFlow {
@@ -254,6 +234,8 @@ class FrontendXDebuggerSession private constructor(
 
   override fun getCurrentPosition(): XSourcePosition? = sourcePosition.value
 
+  override fun getTopFramePosition(): XSourcePosition? = topSourcePosition.value
+
   override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
     TODO("Not yet implemented")
   }
@@ -345,3 +327,17 @@ class FrontendXDebuggerSession private constructor(
 // TODO pass breakpoints muted flow
 private fun FrontendXDebuggerSession.createFeSessionData(sessionDto: XDebugSessionDto): XDebugSessionData =
   XDebugSessionData(project, sessionDto.sessionDataDto.configurationName)
+
+private fun CoroutineScope.createPositionFlow(dtoFlow: suspend () -> Flow<XSourcePositionDto?>): StateFlow<XSourcePosition?> = channelFlow {
+  dtoFlow().collectLatest { sourcePositionDto ->
+    if (sourcePositionDto == null) {
+      send(null)
+      return@collectLatest
+    }
+    supervisorScope {
+      send(sourcePositionDto.sourcePosition())
+      awaitCancellation()
+    }
+  }
+}.stateIn(this, SharingStarted.Eagerly, null)
+

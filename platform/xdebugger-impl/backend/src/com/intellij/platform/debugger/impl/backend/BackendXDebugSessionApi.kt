@@ -39,6 +39,13 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
+  override suspend fun topSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return session.topFrameFlow.map {
+      session.topFramePosition?.toRpc()
+    }
+  }
+
   override suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState> {
     val session = sessionId.findValue() ?: return emptyFlow()
 

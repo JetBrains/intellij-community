@@ -30,6 +30,8 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?>
 
+  suspend fun topSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?>
+
   suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState>
 
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?

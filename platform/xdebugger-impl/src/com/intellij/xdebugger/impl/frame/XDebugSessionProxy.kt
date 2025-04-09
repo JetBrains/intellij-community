@@ -61,6 +61,7 @@ interface XDebugSessionProxy {
   val currentEvaluator: XDebuggerEvaluator?
 
   fun getCurrentPosition(): XSourcePosition?
+  fun getTopFramePosition(): XSourcePosition?
   fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition?
   fun getCurrentExecutionStack(): XExecutionStack?
   fun getCurrentStackFrame(): XStackFrame?
@@ -137,6 +138,10 @@ interface XDebugSessionProxy {
 
     override fun getCurrentPosition(): XSourcePosition? {
       return session.currentPosition
+    }
+
+    override fun getTopFramePosition(): XSourcePosition? {
+      return session.topFramePosition
     }
 
     override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
