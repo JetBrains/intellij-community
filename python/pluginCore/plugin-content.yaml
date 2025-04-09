@@ -28,26 +28,32 @@
   module: intellij.python.community.impl
   files:
   - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
+- name: lib/python-ce-frontend.jar
+  contentModules:
+  - name: intellij.python.parser
+  - name: intellij.python.ast
+  - name: intellij.python.syntax.core
+  - name: intellij.python.syntax
 - name: lib/python-ce.jar
   modules:
-  - name: intellij.python.community
-  - name: intellij.python.community.core.impl
-  - name: intellij.python.community.impl
-  - name: intellij.python.community.impl.poetry
-  - name: intellij.python.community.impl.installer
-  - name: intellij.python.community.impl.venv
-  - name: intellij.python.community.services.systemPython
-  - name: intellij.python.community.services.shared
-  - name: intellij.python.community.services.internal.impl
-  - name: intellij.python.community.execService
-  - name: intellij.python.psi
-  - name: intellij.python.psi.impl
-  - name: intellij.python.pydev
-  - name: intellij.python.sdk
-  - name: intellij.python.pyproject
-  - name: intellij.python.hatch
   - name: intellij.python.community.plugin
   contentModules:
+  - name: intellij.python.psi
+  - name: intellij.python.psi.impl
+  - name: intellij.python.sdk
+  - name: intellij.python.pyproject
+  - name: intellij.python.community.impl.poetry
+  - name: intellij.python.community.core.impl
+  - name: intellij.python.community
+  - name: intellij.python.community.impl
+  - name: intellij.python.community.execService
+  - name: intellij.python.community.impl.installer
+  - name: intellij.python.pydev
+  - name: intellij.python.community.impl.venv
+  - name: intellij.python.hatch
+  - name: intellij.python.community.services.shared
+  - name: intellij.python.community.services.internal.impl
+  - name: intellij.python.community.services.systemPython
   - name: intellij.python.community.plugin.minor
   - name: intellij.python.community.plugin.minorRider
   - name: intellij.python.community.communityOnly
@@ -62,18 +68,12 @@
   - name: intellij.python.markdown
   - name: intellij.python.ml.features
   - name: intellij.python.terminal
-- name: lib/python-common.jar
-  modules:
-  - name: intellij.python.parser
-  - name: intellij.python.ast
-  - name: intellij.python.syntax
-  - name: intellij.python.syntax.core
 - name: lib/tuweni-toml.jar
   library: tuweni-toml
   files:
   - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
   - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
-  reason: <- intellij.python.community.impl
+  reason: <- intellij.python.pyproject
 - name: lib/xmlrpc.jar
   library: XmlRPC
   files:

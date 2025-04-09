@@ -1,0 +1,1052 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.community"/>
+  </dependencies>
+
+  <resource-bundle>messages.PyBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="TOML" enabledByDefault="true"
+                     implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
+                     key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
+                     suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
+    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.uv.UvPackageVersionsInspection"
+                     key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
+                     suppressId="UvPackageVersions" shortName="UvPackageVersionsInspection"/>
+    <registryKey defaultValue="10" description="How ofter system pythons must be refreshed (minutes)" key="python.system.refresh.minutes"/>
+    <postStartupActivity implementation="com.intellij.python.community.services.systemPython.impl.SystemPythonInitialLoader"/>
+    <fileType name="Requirements.txt"
+              implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
+              fieldName="INSTANCE"
+              language="Requirements"
+              fileNamesCaseInsensitive="requirements.txt"/>
+    <fileTypeOverrider implementation="com.jetbrains.python.requirements.RequirementsFileTypeOverrider"/>
+    <lang.parserDefinition
+      language="Requirements"
+      implementationClass="com.jetbrains.python.requirements.RequirementsParserDefinition"/>
+    <lang.syntaxHighlighterFactory
+      language="Requirements"
+      implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
+    <multiHostInjector implementation="com.jetbrains.python.requirements.RequirementsLanguageInjector"/>
+
+    <!-- Requirements.txt support. Can't extract module due to circular dependency between it and community.impl (RequirementsFile inspection)-->
+    <completion.contributor language="Requirements"
+                            implementationClass="com.jetbrains.python.requirements.RequirementsPackageNameCompletionContributor"/>
+    <completion.contributor language="Requirements"
+                            implementationClass="com.jetbrains.python.requirements.RequirementsVersionCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.poetry.PoetryDependencyPackageNameCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.poetry.PoetryDependencyVersionCompletionContributor"/>
+    <localInspection language="Requirements" shortName="UnsatisfiedRequirementInspection" suppressId="UnsatisfiedRequirement"
+                     bundle="messages.PyBundle"
+                     key="INSP.requirement.uninstalled.name" groupKey="INSP.GROUP.requirements" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.requirements.UnsatisfiedRequirementInspection"/>
+
+    <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
+    <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPostStartupActivity"/>
+
+    <!--Poetry project model-->
+    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.poetry.PoetryOpenProcessor"/>
+    <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.poetry.PoetryUnlinkedProjectAware"/>
+    <postStartupActivity implementation="com.jetbrains.python.projectModel.poetry.PoetryProjectAware$PoetrySyncStartupActivity"/>
+
+    <!--uv project model-->
+    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.uv.UvOpenProcessor"/>
+    <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.uv.UvUnlinkedProjectAware"/>
+    <postStartupActivity implementation="com.jetbrains.python.projectModel.uv.UvProjectAware$UvSyncStartupActivity"/>
+  </extensions>
+
+  <projectListeners>
+    <listener
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
+      topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
+      topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+    <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
+              topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
+    <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.jetbrains.python.projectModel.poetry.PoetryProjectAware$PoetryListener"
+              topic="com.jetbrains.python.projectModel.poetry.PoetrySettingsListener"/>
+    <listener class="com.jetbrains.python.projectModel.uv.UvProjectAware$UvListener"
+              topic="com.jetbrains.python.projectModel.uv.UvSettingsListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="use.python.for.local.conda"
+                 defaultValue="true"
+                 restartRequired="false"
+                 description="Use bare python instead of conda run for conda"/>
+    <registryKey key="python.packaging.conda.chain.installation"
+                 defaultValue="true"
+                 restartRequired="true"
+                 description="When enabled, package managers are tried in sequence until
+                              the package is successfully installed or all attempts fail."/>
+    <iconMapper mappingFile="PythonIconMappings.json"/>
+    <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
+    <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
+    <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
+    <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
+    <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
+
+    <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
+    <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
+    <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
+    <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
+    <lang.surroundDescriptor language="Python"
+                             implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
+    <lang.surroundDescriptor language="Python"
+                             implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
+    <lang.unwrapDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.unwrap.PyUnwrapDescriptor"/>
+    <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
+    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
+    <lang.documentationProvider language="Python"
+                                implementationClass="com.jetbrains.python.documentation.PythonExternalDocumentationProvider"
+                                order="before pythonDocumentationProvider"/>
+    <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
+
+    <enterBetweenBracesDelegate language="Python"
+                                implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
+    <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
+
+    <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
+    <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
+    <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
+    <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
+    <codeInsight.fillParagraph language="Python" implementationClass="com.jetbrains.python.actions.PyFillParagraphHandler"/>
+    <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
+    <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
+
+    <projectService serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
+
+    <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
+    <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
+
+    <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.RemoteFilePathRetrievalService"
+                    serviceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"
+                    testServiceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"/>
+
+    <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
+    <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
+                        serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.sdk.flavors.WinRegistryService"
+                        serviceImplementation="com.jetbrains.python.sdk.flavors.WinRegistryServiceImpl"/>
+    <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
+
+    <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
+    <todoIndexer filetype="Python" implementationClass="com.jetbrains.python.PyTodoIndexer"/>
+    <indexPatternBuilder implementation="com.jetbrains.python.PyIndexPatternBuilder"/>
+
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
+    <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
+                             implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
+
+    <moduleService serviceImplementation="com.jetbrains.python.ReSTService$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.ReSTService$AppService"/>
+
+    <!-- Run/Debug -->
+    <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
+                        serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
+    <applicationService serviceImplementation="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
+    <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
+
+    <!-- Locked configurations should go first to be overwritten by real ones-->
+    <configurationType implementation="com.jetbrains.python.run.DjangoServerLockedRunConfigurationType" order="first"/>
+    <configurationType implementation="com.jetbrains.python.run.FlaskServerLockedRunConfigurationType" order="first"/>
+    <configurationType implementation="com.jetbrains.python.run.DbtRunLockedConfigurationType" order="first"/>
+    <configurationType implementation="com.jetbrains.python.run.FastAPILockedRunConfigurationType" order="first"/>
+    <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
+
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
+    <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
+    <xdebugger.settings implementation="com.jetbrains.python.debugger.settings.PyDebuggerSettings"/>
+    <xdebugger.attachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
+
+    <codeInsight.containerProvider implementation="com.jetbrains.python.codeInsight.PyContainerProvider"/>
+    <registryKey key="python.debugger.use.dispatcher" defaultValue="false" description="Use dispatcher in Python debugger"/>
+    <registryKey key="flask.new.run.config" defaultValue="true" description="Flask Server Run configurations new UI"/>
+    <registryKey key="pytest.new.run.config" defaultValue="true" description="PyTest configurations new UI"/>
+    <registryKey key="python.test.autodetect.new.run.config" defaultValue="true" description="Python test autodetect configuration new UI"/>
+    <registryKey key="python.run.doctest.via.pytest.configuration" defaultValue="true" description="Run doctest via pytest configuration"/>
+
+    <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
+    <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
+
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
+    <advancedSetting id="python.pytest.swapdiff" default="false" groupKey="group.advanced.settings.python"/>
+    <advancedSetting id="python.pytest.show_summary" default="false" groupKey="group.advanced.settings.python"/>
+    <advancedSetting id="python.code.vision.usages.limit" default="500" groupKey="group.advanced.settings.python"/>
+    <advancedSetting id="python.debugger.attach.timeout" default="20000" groupKey="group.advanced.settings.python"/>
+    <runLineMarkerContributor language="Python"
+                              implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
+    <toolWindow id="Python Console" anchor="right" icon="com.jetbrains.python.icons.PythonIcons.Python.PythonConsoleToolWindow"
+                canCloseContents="true"
+                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
+    <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
+    <runLineMarkerContributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyRunLineMarkerContributor"/>
+    <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
+
+    <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
+    <callHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.call.PyCallHierarchyProvider"/>
+    <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
+
+    <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
+
+    <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
+    <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
+
+    <localInspection language="Python" shortName="PyUnresolvedReferencesInspection" suppressId="PyUnresolvedReferences"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.unresolved.refs" groupKey="INSP.GROUP.python" enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection"/>
+    <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrized"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.pytest-parametrized" groupKey="INSP.GROUP.python"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection"/>
+    <localInspection language="Python" shortName="PyTestUnpassedFixtureInspection" suppressId="PyTestUnpassedFixture"
+                     bundle="messages.PyPsiBundle" key="INSP.NAME.pytest.unpassed.fixture" groupKey="INSP.GROUP.python"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.testing.pyTestFixtures.PyTestUnpassedFixtureInspection"/>
+    <localInspection shortName="PyPackageRequirementsInspection" suppressId="PyPackageRequirements" bundle="messages.PyPsiBundle"
+                     key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
+    <localInspection language="Python" shortName="PyPep8Inspection" suppressId="PyPep8" bundle="messages.PyPsiBundle"
+                     key="INSP.pep8.coding.style.violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
+    <localInspection language="Python" shortName="PyInterpreterInspection" suppressId="PyInterpreter" bundle="messages.PyPsiBundle"
+                     key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyInterpreterInspection"/>
+    <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
+                     bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility" groupKey="INSP.GROUP.python"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection"/>
+    <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser"
+                     bundle="messages.PyPsiBundle" key="INSP.stub.packages" groupKey="INSP.GROUP.python" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser"/>
+    <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle"
+                     key="INSP.NAME.relative.import" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
+    <localInspection language="Python" shortName="PyPandasSeriesToListInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle"
+                     key="INSP.pandas.series.values.replace.with.tolist" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPandasSeriesToListInspection"/>
+
+    <listSplitJoinContext language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.PyListSplitJoinContext"/>
+
+    <defaultLiveTemplates file="liveTemplates/Python.xml"/>
+    <liveTemplateContext contextId="Python"
+                         implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
+    <liveTemplateContext contextId="Python_Class" baseContextId="Python"
+                         implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
+    <liveTemplateContext contextId="Python_Top_Level" baseContextId="Python"
+                         implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyIterableVariableMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyVerSpecificSuperSignatureMacro"/>
+
+    <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
+    <codeInsight.implementMethod language="Python"
+                                 implementationClass="com.jetbrains.python.codeInsight.implement.PyImplementMethodsHandler"/>
+    <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.PyRefactoringProvider"/>
+    <lang.refactoringSupport.classMembersRefactoringSupport language="Python"
+                                                            implementationClass="com.jetbrains.python.refactoring.classes.PyMembersRefactoringSupport"/>
+    <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
+    <typeDeclarationProvider implementation="com.jetbrains.python.codeInsight.PyTypeDeclarationProvider"/>
+    <lang.smartEnterProcessor language="Python"
+                              implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
+    <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="pyStatementMover"
+                          order="before line"/>
+
+    <elementDescriptionProvider implementation="com.jetbrains.python.findUsages.PyElementDescriptionProvider"/>
+    <elementDescriptionProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralElementDescriptionProvider"/>
+    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyFunctionGroupingRuleProvider" id="py-function"/>
+    <usageTypeProvider implementation="com.jetbrains.python.findUsages.PyUsageTypeProvider"/>
+    <usageTargetProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralUsageTargetProvider"/>
+    <importFilteringRule implementation="com.jetbrains.python.findUsages.PyImportFilteringRule"/>
+
+    <multiHostInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
+    <lang.parserDefinition language="PythonRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="PythonRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpSyntaxHighlighterFactory"/>
+    <lang.parserDefinition language="PythonVerboseRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="PythonVerboseRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
+    <regExpLanguageHost forClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl"
+                        implementationClass="com.jetbrains.python.codeInsight.PythonRegExpHost"/>
+
+    <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
+
+    <completion.ml.contextFeatures language="Python"
+                                   implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="Python"
+                                   implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyElementFeatureProvider"/>
+    <mlCompletionCorrectnessSupporter
+      implementationClass="com.jetbrains.python.codeInsight.mlcompletion.correctness.PythonMLCompletionCorrectnessSupporter"/>
+    <completion.confidence language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyCompletionConfidence"/>
+    <completion.ml.model implementation="com.jetbrains.python.codeInsight.mlcompletion.PythonMLRankingProvider"/>
+    <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
+                  order="first, before completionAutoPopup"/>
+
+    <referencesSearch implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralReferenceSearcher"/>
+
+    <findUsagesHandlerFactory implementation="com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory" id="Python"
+                              order="last, before default"/>
+    <findUsagesHandlerFactory implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralFindUsagesHandlerFactory"/>
+
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyVariableProcessor" order="last" id="pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFunctionProcessor" order="before pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenameUnsupportedExpressionProcessor"/>
+    <renameHandler implementation="com.jetbrains.python.refactoring.rename.PyMemberInplaceRenameHandler"/>
+
+    <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
+    <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>
+    <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyParametersRenameFactory"/>
+
+    <moveFileHandler implementation="com.jetbrains.python.refactoring.move.PyMoveFileHandler"/>
+    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveSymbolDelegate"/>
+
+    <refactoring.changeSignatureUsageProcessor
+      implementation="com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureUsageProcessor" id="Python"/>
+
+    <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
+    <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PyRemoteAnalyzeStacktraceFilter"/>
+
+    <internalFileTemplate name="Python Script"/>
+    <internalFileTemplate name="Python Stub"/>
+    <internalFileTemplate name="Python Unit Test"/>
+    <internalFileTemplate name="Setup Script"/>
+
+    <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
+
+    <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions" id="editor.preferences.pyOptions"
+                                 bundle="messages.PyBundle"
+                                 key="configurable.PySmartKeysOptions.display.name"/>
+    <codeCompletionConfigurable instance="com.jetbrains.python.codeInsight.completion.PythonCodeCompletionConfigurable"/>
+
+
+    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyConsoleFileReferenceContributor" language="Python"
+                              order="before filePath"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor"
+                              language="Python"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedContributor"
+                              language="Python"/>
+
+    <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             key="external.documentation.python.plugin"/>
+    <applicationConfigurable parentId="project.propDebugger"
+                             instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
+                             id="debugger.dataViews.python.type.renderers"
+                             key="configurable.PyUserTypeRenderersConfigurable.display.name"/>
+    <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyIntegratedToolsModulesConfigurable.display.name"/>
+    <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
+
+    <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
+
+    <projectConfigurable groupId="build" dynamic="true" id="pyconsole" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyConsoleOptionsConfigurable.display.name"/>
+
+    <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
+    <toolWindowExtractorMode id="Python Console" mode="mirror"/>
+
+    <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
+                         instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyDebuggerConfigurable.display.name"/>
+
+    <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
+
+    <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider" id="pyDirectoryDefault"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
+                        serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCustomMemberProvider"
+                        serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
+
+    <projectService serviceInterface="com.jetbrains.python.packaging.management.PythonPackageManagerService"
+                    serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
+
+    <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
+
+    <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
+
+    <additionalTextAttributes scheme="Default" file="colorSchemes/PythonDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
+
+    <postStartupActivity implementation="com.jetbrains.python.sdk.PythonHeadlessSdkUpdater"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdateProjectActivity"/>
+
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator"
+                                  id="integratedTools" order="after sdk"/>
+
+
+    <macro implementation="com.jetbrains.python.sdk.InterpreterDirectoryMacro"/>
+
+    <!-- User skeletons -->
+    <codeInsight.lineMarkerProvider language="Python"
+                                    implementationClass="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsLineMarkerProvider"/>
+
+    <!-- TestRunnerService -->
+    <moduleService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$AppService"/>
+
+    <!-- Packaging -->
+    <moduleService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
+
+    <!-- Namespace packages -->
+    <moduleService serviceImplementation="com.jetbrains.python.namespacePackages.PyNamespacePackagesService"/>
+    <registryKey key="python.create.namespace.package.action" defaultValue="false"
+                 description="Possibility to create namespace packages from New | Python Package"/>
+
+    <!-- asyncio REPL -->
+    <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false"
+                 description="Possibility to write await outside of function"/>
+
+    <registryKey defaultValue="true" description="Enables an experimental low impact monitoring API for Python 3.12"
+                 restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
+
+    <registryKey defaultValue="true" description="Enables the Python debugger Cython speed-ups" restartRequired="false"
+                 key="python.debug.enable.cython.speedups"/>
+
+    <registryKey defaultValue="false" description="Enables the Python debugger diagnostic prints" restartRequired="false"
+                 key="python.debug.enable.diagnostic.prints"/>
+
+    <registryKey defaultValue="true" description="Halt variable resolve threads on step/resume" restartRequired="false"
+                 key="python.debug.halt.variable.resolve.threads.on.step.resume"/>
+
+    <!-- Retaining the feature flag for FL-29868 -->
+    <registryKey defaultValue="false" description="Use a single port for communication between PyCharm and the debugger"
+                 restartRequired="false" key="python.debug.use.single.port"/>
+
+    <registryKey defaultValue="1000" description="Timeout between attempts to connect to remote debugger server"
+                 restartRequired="false" key="python.debugger.remote.connect.retry.timeout.ms"/>
+    <registryKey defaultValue="30" description="Max attempts to connect to remote debugger server"
+                 restartRequired="false" key="python.debugger.remote.connect.max.attempts"/>
+
+    <registryKey defaultValue="false" description="Don't run `lock` before listing dependencies when using Poetry"
+                 restartRequired="false" key="python.poetry.list.packages.without.lock"/>
+
+    <!-- typing -->
+    <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
+
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
+
+    <refactoring.invertBoolean language="Python"
+                               implementationClass="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
+
+    <!--folding-->
+    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
+    <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
+
+    <!-- postfix templates!-->
+    <codeInsight.template.postfixTemplateProvider language="Python"
+                                                  implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
+
+    <breadcrumbsInfoProvider implementation="com.jetbrains.python.breadcrumbs.PyBreadcrumbsInfoProvider"/>
+    <highlightVisitor implementation="com.jetbrains.python.highlighting.PyRainbowVisitor"/>
+
+    <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
+
+    <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
+    <scratch.rootType implementation="com.jetbrains.python.console.PyConsoleRootType"/>
+    <consoleFilterProvider implementation="com.jetbrains.python.run.PyMessageFilterProvider"/>
+
+    <!-- Run Anything -->
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyConsoleRunAnythingProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingFileProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingPipProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCondaProvider"/>
+    <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
+
+    <!-- Statistics -->
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.PyPackagesUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageInEditorUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyProjectTomlUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyCompatibilityInspectionCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.jetbrains.python.newProjectWizard.collector.PyProjectTypeValidationRule"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector"/>
+
+    <!-- Code-insight IDE bridge -->
+    <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
+                        serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonUiService"
+                        serviceImplementation="com.jetbrains.python.PythonUiServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.PyImportCollectorFactory"
+                        serviceImplementation="com.jetbrains.python.codeInsight.imports.CodeStylePyImportCollectorFactory"/>
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser"
+                        serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
+    <applicationService serviceInterface="com.jetbrains.python.refactoring.PyRefactoringUiService"
+                        serviceImplementation="com.jetbrains.python.refactoring.PyRefactoringUiServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonDocumentationHighlightingService"
+                        serviceImplementation="com.jetbrains.python.PythonDocumentationHighlightingServiceImpl"/>
+
+    <registryKey key="python.relative.import.depth" defaultValue="3"
+                 description="Specifies default acceptable number of dots in a relative import statement"/>
+
+    <!-- flake8 -->
+    <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
+    <daemon.changeLocalityDetector implementation="com.jetbrains.python.inspections.flake8.Flake8SuppressingCommentLocalityDetector"/>
+
+    <!-- # type: ignore -->
+    <lang.inspectionSuppressor language="Python"
+                               implementationClass="com.jetbrains.python.inspections.typeignore.TypeIgnoreInspectionSuppressor"/>
+
+    <!-- Pipenv -->
+    <editorFactoryListener implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
+
+    <suggestedRefactoringSupport language="Python"
+                                 implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
+
+    <!-- Poetry -->
+    <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlWatcher"/>
+
+    <!-- Targets API -->
+    <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
+    <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
+                 description="Use project location as a working directory for the packaging tool execution."/>
+    <registryKey key="python.packaging.tool.upload.project" defaultValue="false"
+                 description="Upload project files and use this location as a working directory for the packaging tool execution."/>
+    <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
+                       key="debug.notification.group"/>
+    <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle"
+                       key="python.sdk.updater.notifications.group.title"/>
+    <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
+    <notificationGroup id="CythonWarning" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.cython"/>
+    <notificationGroup id="Python Compatibility Inspection Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
+                       bundle="messages.PyBundle" key="python.compatibility.inspection.advertiser.notifications.group.title"/>
+    <notificationGroup id="Package requirements" displayType="BALLOON" isLogByDefault="false" bundle="messages.PyBundle"
+                       key="notification.group.package.requirements"/>
+    <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.PyBundle"
+                       key="python.sdk.pipenv.pip.file.watcher"/>
+    <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="sdk.has.been.configured.notification.name"/>
+    <notificationGroup id="Packaging" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.packaging"/>
+    <notificationGroup id="PythonPackages" displayType="TOOL_WINDOW" toolWindowId="Python Packages"
+                       bundle="messages.PyBundle" key="notification.group.packaging.toolwindow"/>
+    <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="python.sdk.poetry.pip.file.watcher"/>
+    <notificationGroup id="Python interpreter installation" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="python.sdk.installation.notification.group"/>
+
+    <toolWindow id="Python Packages" anchor="bottom"
+                icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
+                factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
+    <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
+
+    <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
+
+    <executionTargetLanguageRuntimeType implementation="com.jetbrains.python.target.PythonLanguageRuntimeType"/>
+
+    <!--  Code vision -->
+    <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.jetbrains.python.codeInsight.codeVision.PyReferencesCodeVisionProvider"/>
+
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackagesUpdater"/>
+
+    <applicationService
+      serviceInterface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available"
+      serviceImplementation="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory$Available$Default"/>
+
+    <registryKey key="python.new.run.config" defaultValue="true" description="Python Run configurations new UI"/>
+
+    <!-- Black -->
+    <projectConfigurable groupId="tools"
+                         provider="com.jetbrains.python.black.configuration.BlackFormatterConfigurableProvider"
+                         id="com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
+                         bundle="messages.PyBundle"
+                         key="black.configurable.name"
+                         nonDefaultProject="true"/>
+
+    <registryKey key="black.formatter.support.enabled" defaultValue="true"
+                 description="Enable Black formatter support"/>
+
+    <formattingService implementation="com.jetbrains.python.black.BlackFormattingService"/>
+    <actionOnSave id="BlackFormatterActionOnSave"
+                  implementation="com.jetbrains.python.black.BlackFormatterActionOnSave"
+                  order="after FormatOnSaveAction"/>
+
+    <actionOnSaveInfoProvider id="BlackFormatterActionOnSaveInfo"
+                              implementation="com.jetbrains.python.black.configuration.BlackFormatterConfigurable$BlackFormatterActionOnSaveInfoProvider"/>
+
+    <notificationGroup id="Black Formatter Integration" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="black.configurable.name"/>
+
+    <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
+    <lookup.usageDetails implementation="com.jetbrains.python.statistics.PyCompletionStatisticLogger"/>
+    <statistics.collectorExtension implementation="com.jetbrains.python.statistics.PyCompletionUsageExtension"/>
+
+    <!-- Parameter Info -->
+    <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
+                 description="Show type hints for all parameters in parameter info window"/>
+
+    <registryKey key="disable.python.cache.update"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Disables automatic updating of PyPI package cache and ranking on project startup."/>
+
+    <!-- Setting up cross-module dependencies -->
+    <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
+                 description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
+    <registryKey key="python.project.model.poetry" defaultValue="false" restartRequired="true"
+                 description="Automatically set up multi-module Poetry projects"/>
+    <registryKey key="python.project.model.uv" defaultValue="false" restartRequired="true"
+                 description="Automatically set up multi-module uv projects"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonUvSupportSurvey"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.statistics.feedback.PythonFirstLaunchChecker"/>
+
+    <registryKey key="python.prebuilt.skeletons.minor.version.aware" defaultValue="false"
+                 description="When disabled stripes minor version to look for prebuilt skeletons"/>
+    <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
+                 description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.runnerFactory"
+                    interface="com.jetbrains.python.console.PythonConsoleRunnerFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.remoteSdkValidator" interface="com.jetbrains.python.sdk.PyRemoteSdkValidator" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension"
+                    interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"
+                    interface="com.jetbrains.python.testing.PyTestConfigurationSelector" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider"
+                    interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonCommandLineTargetEnvironmentProvider"
+                    interface="com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.magicLiteral"
+                    interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
+                    interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
+                    interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager"
+                    interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.remoteSkeletonGeneratorFactory"
+                    interface="com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.remoteProcessStarterManager" interface="com.jetbrains.python.run.PyRemoteProcessStarterManager"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.remoteConsoleProcessCreator"
+                    interface="com.jetbrains.python.console.PythonConsoleRemoteProcessCreator" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.breakpointHandler"
+                    interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider"
+                    interface="com.jetbrains.python.console.PyConsoleOptionsProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension"
+                    interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider"
+                    interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor"
+                    interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
+                    interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.packageManagerProvider"
+                    interface="com.jetbrains.python.packaging.PyPackageManagerProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.projectSynchronizerProvider"
+                    interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.sshInterpreterManager" interface="com.jetbrains.python.remote.PythonSshInterpreterManager"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.condaSdkCustomizer"
+                    interface="com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.interpreterTargetEnvironmentFactory"
+                    interface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.dataViewPanelFactory"
+                    interface="com.jetbrains.python.debugger.containerview.PyDataViewPanelFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.executeCustomizer"
+                    interface="com.jetbrains.python.console.PyExecuteConsoleCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.numericContainerPopupCustomizer"
+                    interface="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.pyConsoleOutputCustomizer"
+                    interface="com.jetbrains.python.console.PyConsoleOutputCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.console.customizer"
+                    interface="com.jetbrains.python.console.PyConsoleCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.pyDebugAsyncioCustomizer"
+                    interface="com.jetbrains.python.debugger.PyDebugAsyncioCustomizer"
+                    dynamic="true"/>
+
+    <!-- Experimental sdk EP, avoid using it -->
+    <extensionPoint qualifiedName="Pythonid.pySdkProvider"
+                    interface="com.jetbrains.python.sdk.PySdkProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.connectionCredentialsToTargetConfigurationConverter"
+                    interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.PythonPackagingToolwindowActionProvider"
+                    interface="com.jetbrains.python.packaging.toolwindow.actions.PythonPackagingToolwindowActionProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
+                    interface="com.jetbrains.python.packaging.management.PythonPackageManagerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
+                    interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer"
+                    interface="com.jetbrains.python.testing.PyTestLineMarkerContributorCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.configuration.pyIntegratedToolsTestPanelCustomizer"
+                    interface="com.jetbrains.python.configuration.PyIntegratedToolsTestPanelCustomizer"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyLocalVariableAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyTypeParameterListAnnotator"/>
+
+    <!--stdlib-->
+    <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
+
+
+    <!--pytest fixture -->
+    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
+    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
+    <typeProvider implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
+
+    <!-- typing -->
+    <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
+
+    <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
+
+    <!-- NumPy -->
+    <documentationLinkProvider implementation="com.jetbrains.python.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
+
+    <!-- PyDocstring -->
+    <visitorFilter language="Doctest" implementationClass="com.jetbrains.python.documentation.PyDocstringVisitorFilter"/>
+
+    <!-- Console -->
+    <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
+    <inspectionExtension implementation="com.jetbrains.python.console.PyDebuggerConsoleUnresolvedReferenceSkipper"/>
+
+    <!-- Packaging -->
+    <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
+
+    <!-- PyFunctionTypeAnnotation and PyTypeHint -->
+    <visitorFilter language="PyFunctionTypeComment"
+                   implementationClass="com.jetbrains.python.inspections.PyTypeAnnotationVisitorFilter"/>
+    <visitorFilter language="PyTypeHint"
+                   implementationClass="com.jetbrains.python.inspections.PyTypeAnnotationVisitorFilter"/>
+
+    <!-- PyExpressionCodeFragment -->
+    <visitorFilter language="Python"
+                   implementationClass="com.jetbrains.python.inspections.PyExpressionCodeFragmentVisitorFilter"/>
+
+    <!-- Pipenv -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
+
+    <!-- Poetry -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.poetry.PyAddPoetrySdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
+
+    <!-- Uv -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.uv.ui.PyAddUvSdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
+
+    <!-- Hatch -->
+    <pySdkProvider implementation="com.jetbrains.python.hatch.sdk.HatchSdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.hatch.sdk.HatchSdkFlavorProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.hatch.packaging.HatchPackageManagerProvider"/>
+
+    <!-- SDK Flavors -->
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor"/>
+    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
+
+    <!-- Other -->
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
+    <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
+    <inspectionExtension implementation="com.jetbrains.python.inspections.PyThirdPartyInspectionExtension"/>
+
+    <condaSdkCustomizer implementation="com.jetbrains.python.sdk.conda.PyCondaSdkDefaultCustomizer"/>
+
+    <customPackageIdentifier implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageCustomIdentifier"/>
+    <pyRootTypeProvider implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageRootProvider"/>
+    <pep8ProblemSuppressor implementation="com.jetbrains.python.validation.Pep8TypeParameterProblemSuppressor"/>
+
+    <!-- Experimental packaging extensions-->
+    <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
+    <packageManagerProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipenvPackageManagerProvider"/>
+
+    <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
+    <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PoetryPackageManagerProvider"/>
+
+    <pySdkProvider implementation="com.jetbrains.python.sdk.uv.UvSdkProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.uv.UvPackageManagerProvider"/>
+
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
+
+    <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
+
+    <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
+    <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
+
+    <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
+
+    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.pip.PipPackagingToolwindowActionProvider"/>
+    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.PyBundle">
+    <group id="PyPackageToolbarAdditional" icon="AllIcons.General.GearPlain" popup="true" compact="false">
+      <action id="PyInstallFromDiskPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallFromDiskPackageAction"/>
+      <action id="InstallFromVcsPackageAction" class="com.jetbrains.python.packaging.toolwindow.actions.InstallFromVcsPackageAction"/>
+      <separator/>
+      <action id="PyManageReposAction" class="com.jetbrains.python.packaging.toolwindow.actions.PyManageReposAction"/>
+    </group>
+
+    <group id="PyPackageToolwindowContext">
+      <action id="PyInstallPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction"/>
+      <action id="PyInstallWithOptionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallWithOptionsPackageAction"/>
+      <action id="PyChangeVersionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction"/>
+      <action id="PyUpdateToLatestPackage" class="com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction"/>
+      <separator/>
+      <action id="PyDeletePackage" class="com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction"/>
+    </group>
+  </actions>
+
+  <actions>
+    <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"
+            icon="AllIcons.Debugger.ForceStepInto"/>
+
+    <!-- Console -->
+    <action id="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"
+            class="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"
+    >
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
+    <action id="ExecuteInPyConsoleAction"
+            class="com.jetbrains.python.actions.PyExecuteSelectionAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
+
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift E"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift E"/>
+      <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt E" replace-all="true"/>
+      <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt E" replace-all="true"/>
+    </action>
+
+    <action id="PyRunFileInConsole" class="com.jetbrains.python.actions.PyRunFileInConsoleAction">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
+    </action>
+
+    <action id="PyConsoleRenameAction" class="com.jetbrains.python.console.actions.PyConsoleRenameAction">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+
+    <action id="NewPythonFile" class="com.jetbrains.python.actions.CreatePythonFileAction">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+
+    <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
+            icon="AllIcons.Nodes.Package">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+
+    <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
+    </action>
+
+    <action id="CollapsePythonTypeAnnotations" class="com.jetbrains.python.actions.PyCollapseTypeAnnotationsAction"/>
+    <action id="ExpandPythonTypeAnnotations" class="com.jetbrains.python.actions.PyExpandTypeAnnotationsAction"/>
+
+
+    <group id="PyPackagingMenu">
+      <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
+      <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
+      <action id="RunSetupPyTask" class="com.jetbrains.python.packaging.setupPy.SetupTaskChooserAction"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
+
+    <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
+            internal="true">
+      <add-to-group group-id="Internal"/>
+    </action>
+
+    <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
+    </action>
+
+    <action id="PyDebugger.CustomizeDataView"
+            class="com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
+    </action>
+
+    <group id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+    </group>
+
+    <action overrides="true" id="XDebugger.CopyValue" class="com.jetbrains.python.debugger.actions.PyXCopyValueAction"/>
+
+    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
+    >
+      <add-to-group group-id="RefactoringMenu" anchor="last"/>
+    </action>
+
+    <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertPackageToModuleAction"
+    >
+      <add-to-group group-id="RefactoringMenu" anchor="last"/>
+    </action>
+
+    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction"
+            icon="com.jetbrains.python.icons.PythonIcons.Python.Debug.StepIntoMyCode">
+      <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3" relative-to-action="StepInto" anchor="after"/>
+
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="macOS System Shortcuts" first-keystroke="alt shift SEMICOLON" second-keystroke="alt shift F7"
+                         replace-all="true"/>
+    </action>
+
+    <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction">
+      <add-to-group group-id="DebugMainMenu" relative-to-action="ForceRunToCursor" anchor="after"/>
+      <add-to-group group-id="EditorPopupMenuDebug" relative-to-action="ForceRunToCursor" anchor="after"/>
+    </action>
+
+    <action id="MarkNamespacePackageDirectory" class="com.jetbrains.python.namespacePackages.PyMarkAsNamespacePackageAction">
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
+    </action>
+
+    <action id="Python.PoetrySync" class="com.jetbrains.python.projectModel.poetry.PoetrySyncAction"/>
+    <action id="Python.PoetryLink" class="com.jetbrains.python.projectModel.poetry.PoetryLinkAction"/>
+
+    <action id="Python.UvSync" class="com.jetbrains.python.projectModel.uv.UvSyncAction"/>
+    <action id="Python.UvLink" class="com.jetbrains.python.projectModel.uv.UvLinkAction"/>
+
+    <!--suppress PluginXmlI18n -->
+    <group id="Internal.Python" internal="true" popup="true" text="Python">
+      <!--suppress PluginXmlI18n -->
+      <action id="PyUpdateProjectSdk" internal="true" class="com.jetbrains.python.sdk.PyUpdateProjectSdkAction"
+              text="Update Python SDK" description="Forcibly update all configured Python SDKs in the project"/>
+      <action id="PySetPropertyAction" internal="true" class="com.jetbrains.python.sdk.add.v2.PySetPropertyAction"
+              text="Set PropertiesComponent Value" description="Set value in application-level PropertiesComponent"/>
+      <action id="PyShowJobSurvey" internal="true" class="com.jetbrains.python.statistics.feedback.PythonShowJobSurveyAction"
+              text="Show Python Job Survey"/>
+      <action id="PyUvSupportSurvey" internal="true" class="com.jetbrains.python.statistics.feedback.PythonShowUvSupportAction"
+              text="Show uv Support Survey"/>
+
+      <add-to-group group-id="Internal"/>
+    </group>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij.spellchecker">
+    <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
+    <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
+    <dictionary.runtimeDictionaryProvider
+      implementation="com.jetbrains.python.packaging.PyPackagesDictionary$PyPackagesDictionaryProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python.console">
+    <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
+    <pyConsoleOutputCustomizer implementation="com.jetbrains.python.console.PyConsoleOutputCustomizerDefault"/>
+    <customizer id="python" implementation="com.jetbrains.python.console.PythonConsoleCustomizer"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python.debugger">
+    <numericContainerPopupCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizerDefault"/>
+    <pyDebugAsyncioCustomizer implementation="com.jetbrains.python.debugger.PyDebugAsyncioCustomizerDefault"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.systemPythonProvider"
+                    dynamic="true"
+                    interface="com.intellij.python.community.services.systemPython.SystemPythonProvider"/>
+  </extensionPoints>
+</idea-plugin>

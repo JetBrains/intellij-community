@@ -1,4 +1,7 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.python.psi.impl"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.pythonSdkFlavor" interface="com.jetbrains.python.sdk.flavors.PythonSdkFlavor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonFlavorProvider"

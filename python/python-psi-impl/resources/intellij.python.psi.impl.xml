@@ -1,6 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-
-  <xi:include href="/META-INF/PythonSyntaxCore.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <dependencies>
+    <module name="intellij.python.psi"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <readWriteAccessDetector implementation="com.jetbrains.python.findUsages.PyReadWriteAccessDetector"/>
