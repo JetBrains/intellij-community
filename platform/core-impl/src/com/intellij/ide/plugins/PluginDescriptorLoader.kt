@@ -708,7 +708,9 @@ private fun loadFromPluginClasspathDescriptor(
           pluginDescriptorData = pluginDescriptorData,
           context = context,
           pluginDir = pluginDir,
-        )
+        ).apply {
+          initialize(context = context)
+        }
       }
       catch (e: CancellationException) {
         throw e
@@ -798,7 +800,6 @@ private fun loadPluginDescriptor(
     module.descriptor = subDescriptor
   }
 
-  descriptor.initialize(context = context)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
   descriptor.jarFiles = fileItems.map { it.file }
   return descriptor
