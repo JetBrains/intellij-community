@@ -295,15 +295,13 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  internal fun initialize(getBuildNumber: () -> BuildNumber, isPluginDisabled: (PluginId) -> Boolean, isPluginBroken: (PluginId, version: String?) -> Boolean) {
+  internal fun initialize(getBuildNumber: () -> BuildNumber, isPluginDisabled: (PluginId) -> Boolean, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginLoadingError? {
     assert(type == Type.PluginMainDescriptor)
     if (isPluginDisabled(id)) {
-      onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
-      return
+      return onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
     }
-    checkCompatibility(getBuildNumber, isPluginBroken)
-    if (initError != null) {
-      return
+    checkCompatibility(getBuildNumber, isPluginBroken)?.let {
+      return it
     }
 
     fun requiredDependencyIsDisabled(disabledDependency: PluginId) = onInitError(PluginLoadingError(
@@ -316,16 +314,15 @@ class IdeaPluginDescriptorImpl private constructor(
 
     for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
       if (isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
-        requiredDependencyIsDisabled(dependency.pluginId)
-        return
+        return requiredDependencyIsDisabled(dependency.pluginId)
       }
     }
     for (pluginDependency in moduleDependencies.plugins) {
       if (isPluginDisabled(pluginDependency.id)) {
-        requiredDependencyIsDisabled(pluginDependency.id)
-        return
+        return requiredDependencyIsDisabled(pluginDependency.id)
       }
     }
+    return null
   }
 
   internal fun resolvePluginDependencies(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
@@ -384,54 +381,53 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private fun onInitError(error: PluginLoadingError) {
-    if (initError != null) {
-      return
+  private fun onInitError(error: PluginLoadingError): PluginLoadingError {
+    initError?.let {
+      return it
     }
     initError = error
     isEnabled = false
+    return error
   }
 
-  private fun checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean) {
+  private fun checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginLoadingError? {
     if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
       // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
       val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
-      onInitError(PluginLoadingError(
+      return onInitError(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
         isNotifyUser = false,
       ))
-      return
     }
 
     if (isBundled) {
-      return
+      return null
     }
 
     if (AppMode.isDisableNonBundledPlugins()) {
-      onInitError(PluginLoadingError(
+      return onInitError(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled") },
         isNotifyUser = false
       ))
-      return
     }
 
     PluginManagerCore.checkBuildNumberCompatibility(this, getBuildNumber())?.let {
-      onInitError(it)
-      return
+      return onInitError(it)
     }
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
     if (isPluginBroken(id, version)) {
-      onInitError(PluginLoadingError(
+      return onInitError(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.marked.as.broken", name, version) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.marked.as.broken") }
       ))
     }
+    return null
   }
 
   @ApiStatus.Internal
@@ -692,7 +688,7 @@ class IdeaPluginDescriptorImpl private constructor(
 }
 
 @ApiStatus.Internal
-fun IdeaPluginDescriptorImpl.initialize(context: DescriptorListLoadingContext): Unit = initialize(
+fun IdeaPluginDescriptorImpl.initialize(context: DescriptorListLoadingContext): PluginLoadingError? = initialize(
   context.productBuildNumber,
   context::isPluginDisabled,
   context::isBroken,
