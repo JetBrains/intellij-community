@@ -1088,7 +1088,7 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 
 @Throws(IOException::class)
 @RequiresBackgroundThread
-fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
+fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(
     isMissingSubDescriptorIgnored = true,
     productBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },

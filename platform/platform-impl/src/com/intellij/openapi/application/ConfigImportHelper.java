@@ -1222,7 +1222,7 @@ public final class ConfigImportHelper {
       }
 
       try {
-        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(Paths.get(source), null);
+        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(Paths.get(source), null);
         if (descriptor != null) {
           result.add(descriptor.getPluginId());
         }
