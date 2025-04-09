@@ -84,6 +84,7 @@ interface NotebookCellInlayController {
   val inlay: Inlay<*>
 
   val factory: Factory
+    get() = error("It is not used keep with AIA compatibility")
 
   fun onViewportChange(): Unit = Unit
 
