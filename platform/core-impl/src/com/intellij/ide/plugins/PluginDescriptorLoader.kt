@@ -528,7 +528,7 @@ private suspend fun loadDescriptors(
   val zipPool = zipPoolDeferred.await()
   val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
   coroutineScope {
-    listDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors( // FIXME initialize
+    listDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors(
       scope = this,
       context = context,
       customPluginDir = Paths.get(PathManager.getPluginsPath()),
@@ -538,26 +538,30 @@ private suspend fun loadDescriptors(
       zipPool = zipPool,
       mainClassLoader = mainClassLoader,
     )
-    extraListDeferred = loadDescriptorsFromProperty(context, zipPool) // FIXME initialize
+    extraListDeferred = loadDescriptorsFromProperty(context, zipPool)
   }
 
   val buildNumber = context.productBuildNumber()
   val loadingResult = PluginLoadingResult()
 
   val isMainProcess = isMainProcess()
-  loadingResult.addAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
+  loadingResult.addAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber,
+                       isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.addAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber)
+  loadingResult.addAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber,
+                       isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
 
   if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
     // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
     loadingResult.addAll(
       descriptors = toSequence(coroutineScope {
         val dir = Paths.get(PathManager.getPreInstalledPluginsPath())
-        loadDescriptorsFromDir(dir = dir, context = context, isBundled = true, pool = zipPoolDeferred.await()) // FIXME initialize
+        loadDescriptorsFromDir(dir = dir, context = context, isBundled = true, pool = zipPoolDeferred.await())
       }, isMainProcess),
       overrideUseIfCompatible = false,
       productBuildNumber = buildNumber,
+      isPluginDisabled = context::isPluginDisabled,
+      isPluginBroken = context::isBroken
     )
   }
   return loadingResult
@@ -1162,7 +1166,7 @@ fun loadAndInitDescriptorsFromOtherIde(
       descriptors = toSequence(runBlocking {
         val classLoader = DescriptorListLoadingContext::class.java.classLoader
         val pool = NonShareableJavaZipFilePool()
-        loadPluginDescriptorsImpl( // FIXME initialize
+        loadPluginDescriptorsImpl(
           context = context,
           isUnitTestMode = PluginManagerCore.isUnitTestMode,
           isRunningFromSources = PluginManagerCore.isRunningFromSources(),
@@ -1174,6 +1178,8 @@ fun loadAndInitDescriptorsFromOtherIde(
       }, isMainProcess()),
       overrideUseIfCompatible = false,
       productBuildNumber = context.productBuildNumber(),
+      isPluginDisabled = context::isPluginDisabled,
+      isPluginBroken = context::isBroken,
     )
     result
   }
@@ -1185,12 +1191,14 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
     result.addAll(
       descriptors = toSequence(
         list = coroutineScope {
-          loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool()) // FIXME initialize
+          loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
         },
         isMainProcess = isMainProcess(),
       ),
       overrideUseIfCompatible = false,
       productBuildNumber = context.productBuildNumber(),
+      isPluginDisabled = context::isPluginDisabled,
+      isPluginBroken = context::isBroken
     )
     result
   }
@@ -1224,9 +1232,7 @@ fun testLoadAndInitDescriptorsFromClassPath(
               useCoreClassLoader = true,
               pool = zipPool,
               libDir = null,
-            )?.apply {
-              initialize(context = context)
-            }
+            )
           }
         }
       },
@@ -1234,6 +1240,8 @@ fun testLoadAndInitDescriptorsFromClassPath(
     ),
     overrideUseIfCompatible = false,
     productBuildNumber = buildNumber,
+    isPluginDisabled = context::isPluginDisabled,
+    isPluginBroken = context::isBroken
   )
   return result.enabledPlugins
 }

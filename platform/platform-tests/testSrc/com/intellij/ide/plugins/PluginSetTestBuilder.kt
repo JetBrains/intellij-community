@@ -62,9 +62,11 @@ class PluginSetTestBuilder(private val path: Path) {
     context.use {
       runBlocking {
         result.addAll(
-          descriptors = paths.asSequence().mapNotNull { path -> loadDescriptor(path, context, ZipFilePoolImpl()) }, // FIXME initialize
+          descriptors = paths.asSequence().mapNotNull { path -> loadDescriptor(path, context, ZipFilePoolImpl()) },
           overrideUseIfCompatible = false,
           productBuildNumber = context.productBuildNumber(),
+          isPluginDisabled = context::isPluginDisabled,
+          isPluginBroken = context::isBroken,
         )
       }
     }
