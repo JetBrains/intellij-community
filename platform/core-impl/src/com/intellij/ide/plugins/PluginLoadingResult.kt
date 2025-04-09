@@ -76,9 +76,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   @TestOnly
   fun addAll(descriptors: List<IdeaPluginDescriptorImpl>) {
     val productBuildNumber = BuildNumber.fromString("2042.42")!!
-    for (descriptor in descriptors) {
-      add(descriptor = descriptor, overrideUseIfCompatible = false, productBuildNumber = productBuildNumber)
-    }
+    addAll(descriptors = descriptors.asSequence(), overrideUseIfCompatible = false, productBuildNumber = productBuildNumber)
   }
 
   private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
