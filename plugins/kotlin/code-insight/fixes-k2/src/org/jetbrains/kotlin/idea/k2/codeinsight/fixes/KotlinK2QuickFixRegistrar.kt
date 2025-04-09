@@ -306,6 +306,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)
+
+        registerFactory(ImportQuickFixFactories.functionExpectedFactory)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
