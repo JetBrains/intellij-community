@@ -1897,17 +1897,17 @@ http_file(
 )
 
 http_file(
-  name = "expects-compiler-plugin-2_1_20-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.1/expects-compiler-plugin-2.1.20-0.1.jar",
-  sha256 = "577642d0d6dbfa29305a97421c95157dcc62183044d312666979c3888dc43ec7",
-  downloaded_file_path = "expects-compiler-plugin-2.1.20-0.1.jar"
+  name = "expects-compiler-plugin-2_1_20-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.2/expects-compiler-plugin-2.1.20-0.2.jar",
+  sha256 = "53f345b9ec17aa821e8e4acce59b6584f55a2193f5c48dcea9ffc41eaac4add4",
+  downloaded_file_path = "expects-compiler-plugin-2.1.20-0.2.jar"
 )
 
 http_file(
-  name = "expects-compiler-plugin-2_1_20-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.1/expects-compiler-plugin-2.1.20-0.1-sources.jar",
-  sha256 = "8a6573bf3f41894a7011d3394402e658d35e6a6962994642c06dcdd59257fd05",
-  downloaded_file_path = "expects-compiler-plugin-2.1.20-0.1-sources.jar"
+  name = "expects-compiler-plugin-2_1_20-0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.2/expects-compiler-plugin-2.1.20-0.2-sources.jar",
+  sha256 = "a9125f58235ac48fbc657210b43eb2a8a80d2c6cc9538219764d5d64a852c49f",
+  downloaded_file_path = "expects-compiler-plugin-2.1.20-0.2-sources.jar"
 )
 
 http_file(
@@ -4568,48 +4568,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jcraft/jzlib/1.1.3/jzlib-1.1.3-sources.jar",
   sha256 = "35ebd67941ce7024e6e7d80b60a4252a9687fa0f909a7079ac904bef6c1658cf",
   downloaded_file_path = "jzlib-1.1.3-sources.jar"
-)
-
-http_file(
-  name = "kaml-jvm-0_66_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.66.0/kaml-jvm-0.66.0.jar",
-  sha256 = "b7e94d0f2d8a5c4d826cfc31d4a1475e96fc1244228fb41e121bf005bb9f7f28",
-  downloaded_file_path = "kaml-jvm-0.66.0.jar"
-)
-
-http_file(
-  name = "snakeyaml-engine-kmp-jvm-3_0_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.0.3/snakeyaml-engine-kmp-jvm-3.0.3.jar",
-  sha256 = "f1a11e3ad9525cb7f300b4174b74e1fe4a89d619a54a1fba75747f8c854b5856",
-  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.0.3.jar"
-)
-
-http_file(
-  name = "urlencoder-lib-jvm-1_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0.jar",
-  sha256 = "8d0fd2aeb48d19dc49c563ebc00f274947e45f716c107535c12ead63decd688d",
-  downloaded_file_path = "urlencoder-lib-jvm-1.6.0.jar"
-)
-
-http_file(
-  name = "kaml-jvm-0_66_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.66.0/kaml-jvm-0.66.0-sources.jar",
-  sha256 = "37e2c6a800abdbf630e8ab30ab3319a3b6e0f926bf3b1e8a27033b42256ac900",
-  downloaded_file_path = "kaml-jvm-0.66.0-sources.jar"
-)
-
-http_file(
-  name = "snakeyaml-engine-kmp-jvm-3_0_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.0.3/snakeyaml-engine-kmp-jvm-3.0.3-sources.jar",
-  sha256 = "cb69b1223da83915f9fca19a9f0f39989cfd9484c1763a01ed31dc4fb150f214",
-  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.0.3-sources.jar"
-)
-
-http_file(
-  name = "urlencoder-lib-jvm-1_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0-sources.jar",
-  sha256 = "ec107ce47aa4db7ffb9b892cee846dc88ee1cac745b6ecabd7d89de12253edd0",
-  downloaded_file_path = "urlencoder-lib-jvm-1.6.0-sources.jar"
 )
 
 http_file(
@@ -10430,17 +10388,17 @@ http_file(
 )
 
 http_file(
-  name = "noria-compiler-plugin-2_1_20-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.1.20-0.1/noria-compiler-plugin-2.1.20-0.1.jar",
-  sha256 = "4308aaee2a1010801540a0db6e5b6d296f1dc06e4782ca09074f68edc35dfab6",
-  downloaded_file_path = "noria-compiler-plugin-2.1.20-0.1.jar"
+  name = "noria-compiler-plugin-2_1_20-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.1.20-0.2/noria-compiler-plugin-2.1.20-0.2.jar",
+  sha256 = "d186e8009a384ba03d7c06d2fd18a349d3db2a9ebd258aed70e11a9d8cb677bb",
+  downloaded_file_path = "noria-compiler-plugin-2.1.20-0.2.jar"
 )
 
 http_file(
-  name = "noria-compiler-plugin-2_1_20-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.1.20-0.1/noria-compiler-plugin-2.1.20-0.1-sources.jar",
-  sha256 = "a0f761ba847cedef411174d348622025b7518d4da827bdbfd5fa964b848651e7",
-  downloaded_file_path = "noria-compiler-plugin-2.1.20-0.1-sources.jar"
+  name = "noria-compiler-plugin-2_1_20-0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.1.20-0.2/noria-compiler-plugin-2.1.20-0.2-sources.jar",
+  sha256 = "4a11008e4e8f439223382535c3df99b1c88cd4e867ddf7ae20e2109f08eb5844",
+  downloaded_file_path = "noria-compiler-plugin-2.1.20-0.2-sources.jar"
 )
 
 http_file(
@@ -12187,31 +12145,31 @@ http_file(
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_1_20-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.1/rhizomedb-compiler-plugin-2.1.20-0.1.jar",
-  sha256 = "fb626b963aa77179d00860eee928750f3e4286b7ad843f7fe508a986cf0b8e55",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.1.jar"
+  name = "rhizomedb-compiler-plugin-2_1_20-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.2/rhizomedb-compiler-plugin-2.1.20-0.2.jar",
+  sha256 = "423a8816d9b02365dfee9bb7ae4776fcc064d50fb01e25233a92ec497eca365d",
+  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.2.jar"
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_1_20-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.1/rhizomedb-compiler-plugin-2.1.20-0.1-sources.jar",
-  sha256 = "23567a23d095656677c4d2b76c300130e7b4c8976e1beea6953531d567d0a135",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.1-sources.jar"
+  name = "rhizomedb-compiler-plugin-2_1_20-0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.2/rhizomedb-compiler-plugin-2.1.20-0.2-sources.jar",
+  sha256 = "c663c63ca1751e5e1f78fe39aecde1f3317af6f6c7558ce8a154a81b21cd8198",
+  downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.2-sources.jar"
 )
 
 http_file(
-  name = "rpc-compiler-plugin-2_1_20-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.1/rpc-compiler-plugin-2.1.20-0.1.jar",
-  sha256 = "f03cf397edd1bd2f4a5918581b44debc264caa3ff0faf29d8c114f499c1f2b61",
-  downloaded_file_path = "rpc-compiler-plugin-2.1.20-0.1.jar"
+  name = "rpc-compiler-plugin-2_1_20-0_2_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.2/rpc-compiler-plugin-2.1.20-0.2.jar",
+  sha256 = "d4f2a9fe00db855b8dc0ae3475a5d289cdcf83f6f732dfb537065f0dd42cc205",
+  downloaded_file_path = "rpc-compiler-plugin-2.1.20-0.2.jar"
 )
 
 http_file(
-  name = "rpc-compiler-plugin-2_1_20-0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.1/rpc-compiler-plugin-2.1.20-0.1-sources.jar",
-  sha256 = "83976f09d5f209dae637e701ac15fc28589d2e25f11b2caac2adfd12806aa08c",
-  downloaded_file_path = "rpc-compiler-plugin-2.1.20-0.1-sources.jar"
+  name = "rpc-compiler-plugin-2_1_20-0_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.2/rpc-compiler-plugin-2.1.20-0.2-sources.jar",
+  sha256 = "ed7dbd8fe91223852a91e1a9fbbeaf8f09255a458ef8efc919aea535b0089800",
+  downloaded_file_path = "rpc-compiler-plugin-2.1.20-0.2-sources.jar"
 )
 
 http_file(

@@ -1537,8 +1537,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "expects-compiler-plugin",
-  jar = "@expects-compiler-plugin-2_1_20-0_1_http//file",
-  srcjar = "@expects-compiler-plugin-2_1_20-0_1-sources_http//file",
+  jar = "@expects-compiler-plugin-2_1_20-0_2_http//file",
+  srcjar = "@expects-compiler-plugin-2_1_20-0_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3292,34 +3292,6 @@ java_import(
   jars = ["@jzlib-1_1_3_http//file"],
   srcjar = "@jzlib-1_1_3-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kaml",
-  exports = [
-    ":kaml-jvm-0_66_0_http_import",
-    ":snakeyaml-engine-kmp-jvm-3_0_3_http_import",
-    ":urlencoder-lib-jvm-1_6_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "kaml-jvm-0_66_0_http_import",
-  jar = "@kaml-jvm-0_66_0_http//file",
-  srcjar = "@kaml-jvm-0_66_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "snakeyaml-engine-kmp-jvm-3_0_3_http_import",
-  jar = "@snakeyaml-engine-kmp-jvm-3_0_3_http//file",
-  srcjar = "@snakeyaml-engine-kmp-jvm-3_0_3-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "urlencoder-lib-jvm-1_6_0_http_import",
-  jar = "@urlencoder-lib-jvm-1_6_0_http//file",
-  srcjar = "@urlencoder-lib-jvm-1_6_0-sources_http//file"
 )
 
 java_library(
@@ -7377,8 +7349,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "noria-compiler-plugin",
-  jar = "@noria-compiler-plugin-2_1_20-0_1_http//file",
-  srcjar = "@noria-compiler-plugin-2_1_20-0_1-sources_http//file",
+  jar = "@noria-compiler-plugin-2_1_20-0_2_http//file",
+  srcjar = "@noria-compiler-plugin-2_1_20-0_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8461,16 +8433,16 @@ java_import(
 
 kt_jvm_import(
   name = "rhizomedb-compiler-plugin",
-  jar = "@rhizomedb-compiler-plugin-2_1_20-0_1_http//file",
-  srcjar = "@rhizomedb-compiler-plugin-2_1_20-0_1-sources_http//file",
+  jar = "@rhizomedb-compiler-plugin-2_1_20-0_2_http//file",
+  srcjar = "@rhizomedb-compiler-plugin-2_1_20-0_2-sources_http//file",
   exported_compiler_plugins = ["@lib//:rhizomedb-plugin"],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "rpc-compiler-plugin",
-  jar = "@rpc-compiler-plugin-2_1_20-0_1_http//file",
-  srcjar = "@rpc-compiler-plugin-2_1_20-0_1-sources_http//file",
+  jar = "@rpc-compiler-plugin-2_1_20-0_2_http//file",
+  srcjar = "@rpc-compiler-plugin-2_1_20-0_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
