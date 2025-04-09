@@ -529,7 +529,7 @@ private suspend fun loadDescriptors(
   val zipPool = zipPoolDeferred.await()
   val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
   coroutineScope {
-    listDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors(
+    listDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors( // FIXME initialize
       scope = this,
       context = context,
       customPluginDir = Paths.get(PathManager.getPluginsPath()),
