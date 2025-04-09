@@ -10,7 +10,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
     doTest("""
       import com.intellij.platform.eel.annotations.NativePath;
       import java.nio.file.Path;
-      
+
       public class NativePathInPathOf {
           public void testMethod() {
               @NativePath String nativePath = "/usr/local/bin";
@@ -26,20 +26,20 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.NativePath;
       import com.intellij.platform.eel.annotations.NativeContext;
-      
+
       public class MultiRoutingPathInNativeContext {
           public void testMethod() {
               @MultiRoutingFileSystemPath String multiRoutingPath = "/home/user/documents";
-              
+
               // This method expects a @NativePath string
               processNativePath(<warning descr="A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @NativePath">multiRoutingPath</warning>);
           }
-          
+
           public void processNativePath(@NativePath String path) {
               // Process the native path
               System.out.println("Processing native path: " + path);
           }
-          
+
           @NativeContext
           public void nativeContextMethod() {
               @MultiRoutingFileSystemPath String multiRoutingPath = "/home/user/documents";
@@ -47,6 +47,48 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
               String processedPath = multiRoutingPath + "/file.txt";
           }
       }
+      """.trimIndent())
+  }
+
+  fun testNonAnnotatedStringInPathOf() {
+    doTest("""
+      import java.nio.file.Path;
+
+      public class NonAnnotatedStringInPathOf {
+          public void testMethod() {
+              String nonAnnotatedPath = "/usr/local/bin";
+              // This should be highlighted as a normal warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
+              Path path = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of(nonAnnotatedPath)</warning>;
+
+              // Direct string literal should also be highlighted
+              Path directPath = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/another/path"</warning>)</warning>;
+          }
+      }      
+      """.trimIndent())
+  }
+
+  fun testNonAnnotatedStringInPathResolve() {
+    doTest("""
+      import java.nio.file.Path;
+      import java.nio.file.Paths;
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+
+      public class NonAnnotatedStringInPathResolve {
+          public void testMethod() {
+              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
+
+              String nonAnnotatedPath = "subdir";
+              // This should be highlighted as a warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
+              Path path = <warning descr="String without path annotation is used in Path constructor or factory method">basePath.resolve(nonAnnotatedPath)</warning>;
+
+              // Direct string literal should also be highlighted
+              Path directPath = <warning descr="String without path annotation is used in Path constructor or factory method">basePath.resolve(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"another/subdir"</warning>)</warning>;
+
+              // Annotated string should not be highlighted
+              @MultiRoutingFileSystemPath String annotatedPath = "annotated/subdir";
+              Path correctPath = basePath.resolve(annotatedPath);
+          }
+      }      
       """.trimIndent())
   }
 }

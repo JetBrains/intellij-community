@@ -62,6 +62,33 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
               AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
             )
+          } else if (argInfo is PathAnnotationInfo.Unspecified) {
+            // Report normal warning: non-annotated string used in Path constructor or factory method
+            holder.registerProblem(
+              sourcePsi,
+              "String without path annotation is used in Path constructor or factory method",
+              AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
+            )
+          }
+        }
+      }
+
+      // Check if the method is Path.resolve()
+      if (isPathResolveMethod(target)) {
+        // Check if the argument is annotated with @MultiRoutingFileSystemPath
+        val arguments = node.valueArguments
+        if (arguments.isNotEmpty()) {
+          val arg = arguments[0]
+          val argInfo = PathAnnotationInfo.forExpression(arg)
+          if (argInfo is PathAnnotationInfo.Unspecified) {
+            // Report weak warning: non-annotated string used in Path.resolve()
+            holder.registerProblem(
+              sourcePsi,
+              "String without path annotation is used in Path.resolve() method",
+              com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
+              AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
+            )
+            return true
           }
         }
       }
@@ -200,6 +227,17 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       return false
     }
 
+    private fun isPathResolveMethod(method: PsiElement): Boolean {
+      // Check if the method is Path.resolve()
+      if (method is com.intellij.psi.PsiMethod) {
+        val containingClass = method.containingClass
+        if (containingClass != null && containingClass.qualifiedName == "java.nio.file.Path") {
+          return method.name == "resolve"
+        }
+      }
+      return false
+    }
+
     private fun isPassedToMultiRoutingMethod(
       expression: UExpression,
       nonAnnotatedTargets: MutableSet<PsiModifierListOwner>,
@@ -209,6 +247,20 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       if (parent is UCallExpression) {
         val method = parent.resolve() ?: return false
         if (isPathConstructorOrFactory(method)) {
+          return true
+        }
+      }
+      return false
+    }
+
+    private fun isPassedToPathResolveMethod(
+      expression: UExpression,
+    ): Boolean {
+      // Check if the expression is passed to Path.resolve()
+      val parent = expression.uastParent
+      if (parent is UCallExpression) {
+        val method = parent.resolve() ?: return false
+        if (isPathResolveMethod(method)) {
           return true
         }
       }
