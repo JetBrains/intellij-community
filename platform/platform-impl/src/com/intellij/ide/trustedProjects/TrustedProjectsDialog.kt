@@ -9,7 +9,7 @@ import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
-import com.intellij.ide.trustedProjects.impl.TrustedProjectsStartupDialog
+import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -19,7 +19,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ThreeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -53,19 +52,16 @@ object TrustedProjectsDialog {
       return true
     }
 
-    val pathsToExclude = getDefenderExcludePaths(project, projectRoot)
-    val dialog = withContext(Dispatchers.EDT) {
-      val dialog = TrustedProjectsStartupDialog(
-        project, projectRoot, pathsToExclude, title, message, trustButtonText, distrustButtonText, cancelButtonText
-      )
-      dialog.show()
-      dialog
-    }
-    val openChoice = dialog.getOpenChoice()
+    val dialog = TrustedProjectStartupDialog.showAndGet(
+      project, projectRoot,
+      title, message, trustButtonText, distrustButtonText, cancelButtonText
+    )
+    val pathsToExclude = dialog.defenderExcludePaths
+    val openChoice = dialog.openChoice
 
     if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
-      if (projectRoot.parent != null && dialog.isTrustAll()) {
+      if (projectRoot.parent != null && dialog.isTrustAll) {
         val projectLocationPath = projectRoot.parent.toString()
         TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()
         service<TrustedPathsSettings>().addTrustedPath(projectLocationPath)
@@ -77,10 +73,10 @@ object TrustedProjectsDialog {
 
     if (openChoice != OpenUntrustedProjectChoice.CANCEL && pathsToExclude.isNotEmpty()) {
       val checker = serviceAsync<WindowsDefenderChecker>()
-      val defenderTrustDir = dialog.getDefenderTrustFolder()
+      val defenderTrustDir = dialog.defenderTrustFolder
       if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN && defenderTrustDir != null) {
         checker.markProjectPath(projectRoot, /*skip =*/ false)
-        WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
+        WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll)
         if (defenderTrustDir != projectRoot) {
           (pathsToExclude as MutableList<Path>).apply {
             remove(projectRoot)
@@ -102,23 +98,6 @@ object TrustedProjectsDialog {
     }
 
     return openChoice != OpenUntrustedProjectChoice.CANCEL
-  }
-
-  private suspend fun getDefenderExcludePaths(project: Project?, projectPath: Path): List<Path> {
-    if (SystemInfo.isWindows) {
-      val checker = serviceAsync<WindowsDefenderChecker>()
-      if (
-        !checker.isUntrustworthyLocation(projectPath) &&
-        !checker.isStatusCheckIgnored(project) &&
-        checker.isRealTimeProtectionEnabled == true
-      ) {
-        val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project, projectPath)).toMutableList()
-        if (projectPath in paths) {
-          return paths
-        }
-      }
-    }
-    return emptyList()
   }
 
   suspend fun confirmLoadingUntrustedProjectAsync(
