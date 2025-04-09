@@ -5872,6 +5872,7 @@ c:com.intellij.ui.EditorNotificationPanel
 - f:createActionLabel(java.lang.String,java.lang.String):com.intellij.ui.HyperlinkLabel
 - f:createActionLabel(java.lang.String,java.lang.String,Z):com.intellij.ui.HyperlinkLabel
 - p:executeAction(java.lang.String):V
+- p:executeAction(java.lang.String,javax.swing.event.HyperlinkEvent):V
 - findLabelByName(java.lang.String):com.intellij.ui.HyperlinkLabel
 - p:getActionPlace():java.lang.String
 - getBackground():java.awt.Color
