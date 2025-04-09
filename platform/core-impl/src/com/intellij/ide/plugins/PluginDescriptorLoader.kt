@@ -597,7 +597,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
 
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
   if (isUnitTestMode) {
-    result.addAll(loadCoreModules(
+    result.addAll(loadCoreModules( // FIXME initialize
       context = context,
       platformPrefix = platformPrefix,
       isUnitTestMode = true,
@@ -624,7 +624,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   }
 
   if (bundledPluginClasspathBytes == null) {
-    result.addAll(loadCoreModules(
+    result.addAll(loadCoreModules( // FIXME initialize
       context = context,
       platformPrefix = platformPrefix,
       isUnitTestMode = false,
@@ -887,7 +887,7 @@ private fun CoroutineScope.loadCoreModules(
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
   val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
-  if (loadCorePlugin( // FIXME initialize
+  if (loadCorePlugin(
       platformPrefix = platformPrefix,
       isInDevServerMode = isInDevServerMode,
       isUnitTestMode = isUnitTestMode,
@@ -915,9 +915,7 @@ private fun CoroutineScope.loadCoreModules(
           useCoreClassLoader = useCoreClassLoader,
           pool = pool,
           libDir = libDir,
-        )?.apply {
-          initialize(context = context)
-        }
+        )
       }
     }
   }
