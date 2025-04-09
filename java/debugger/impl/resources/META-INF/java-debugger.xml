@@ -3,8 +3,7 @@
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
   <projectListeners>
-    <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener"
-              topic="com.intellij.execution.ui.RunContentWithExecutorListener"/>
+    <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener" topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener"

@@ -2,6 +2,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.NameMapper;
 import com.intellij.debugger.engine.*;
@@ -9,16 +10,12 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -29,7 +26,6 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
@@ -38,7 +34,8 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManagerListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -366,7 +363,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     }
   }
 
-  public static class DebuggerRunContentWithExecutorListener implements RunContentWithExecutorListener {
+  public static class DebuggerRunContentWithExecutorListener implements XDebuggerManagerListener {
     private final Project myProject;
 
     public DebuggerRunContentWithExecutorListener(Project project) {
@@ -374,26 +371,20 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     }
 
     @Override
-    public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-      if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
-        DebuggerSession session = descriptor == null ? null : getSession(descriptor);
+    public void currentSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
+      if (currentSession != null) {
+        DebuggerSession session =
+          currentSession.getDebugProcess() instanceof JavaDebugProcess javaDebugProcess ? javaDebugProcess.getDebuggerSession() : null;
         DebuggerStateManager manager = getInstanceEx(myProject).getContextManager();
-        if (session != null) {
-          manager.setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.Event.CONTEXT, null);
-        }
-        else {
-          manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
-        }
+        DebuggerInvocationUtil.invokeLater(myProject, () -> {
+          if (session != null) {
+            manager.setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.Event.CONTEXT, null);
+          }
+          else {
+            manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
+          }
+        });
       }
-    }
-
-    private DebuggerSession getSession(RunContentDescriptor descriptor) {
-      for (JavaDebugProcess process : XDebuggerManager.getInstance(myProject).getDebugProcesses(JavaDebugProcess.class)) {
-        if (Comparing.equal(process.getProcessHandler(), descriptor.getProcessHandler())) {
-          return process.getDebuggerSession();
-        }
-      }
-      return null;
     }
   }
 }
