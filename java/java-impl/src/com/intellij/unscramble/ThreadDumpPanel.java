@@ -53,6 +53,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private final JBList<DumpItem> myThreadList;
   private final List<DumpItem> myThreadDump;
   private final List<DumpItem> myMergedThreadDump;
+  private Comparator<DumpItem> currentComparator = DumpItem.BY_INTEREST;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
   private final ExporterToTextFile myExporterToTextFile;
@@ -70,8 +71,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   public void addDumpItems(List<DumpItem> threads) {
     myThreadDump.addAll(threads);
     myMergedThreadDump.addAll(CompoundDumpItem.Companion.mergeThreadDumpItems(threads));
-    myMergedThreadDump.sort(DumpItem.BY_INTEREST);
-    updateThreadDumpItemList();
+    sortAndUpdateThreadDumpItemList();
   }
 
   private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems, boolean fromDumpItems) {
@@ -177,6 +177,12 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myExporterToTextFile);
   }
 
+  private void sortAndUpdateThreadDumpItemList() {
+    myThreadDump.sort(currentComparator);
+    myMergedThreadDump.sort(currentComparator);
+    updateThreadDumpItemList();
+  }
+
   private void updateThreadDumpItemList() {
     String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
     Object selection = myThreadList.getSelectedValue();
@@ -239,7 +245,6 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   }
 
   private final class SortThreadsAction extends DumbAwareAction {
-    private Comparator<DumpItem> comparator = DumpItem.BY_INTEREST;
 
     private SortThreadsAction() {
       super(JavaBundle.message("sort.threads.by.interest.level"));
@@ -247,11 +252,9 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myThreadDump.sort(comparator);
-      myMergedThreadDump.sort(comparator);
-      updateThreadDumpItemList();
-      comparator = comparator == DumpItem.BY_INTEREST ? DumpItem.BY_NAME : DumpItem.BY_INTEREST;
+      currentComparator = currentComparator == DumpItem.BY_INTEREST ? DumpItem.BY_NAME : DumpItem.BY_INTEREST;
       update(e);
+      sortAndUpdateThreadDumpItemList();
     }
 
     @Override

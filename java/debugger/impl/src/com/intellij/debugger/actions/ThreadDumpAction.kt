@@ -120,7 +120,7 @@ class ThreadDumpAction : DumbAwareAction() {
               launch {
                 withBackgroundProgress(context.project, p.progressText) {
                   try {
-                    val items = p.getItems(suspendContext).sortedWith(DumpItem.BY_INTEREST)
+                    val items = p.getItems(suspendContext)
                     dumpItemsChannel.send(items)
                   }
                   catch (e: CancellationException) {
