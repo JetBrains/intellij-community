@@ -11,6 +11,9 @@ import com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAc
 import com.intellij.facet.impl.invalid.FacetIgnorer
 import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -127,6 +130,13 @@ private class PythonLockedRunConfigurationFactory(type: ConfigurationType)
 private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls val name: String)
   : ConfigurationType {
   private val factory: ConfigurationFactory = PythonLockedRunConfigurationFactory(this)
+
+  init {
+    // Do not enable "lock" configs if Python plugin enabled
+    if (PluginManager.getInstance().findEnabledPlugin(PluginId.getId("Pythonid")) != null) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
   override fun getDisplayName(): @Nls(capitalization = Nls.Capitalization.Title) String {
     return name
