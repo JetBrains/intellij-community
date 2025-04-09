@@ -661,7 +661,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
 
     result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool)) // FIXME initialize
 
-    loadFromPluginClasspathDescriptor(
+    loadFromPluginClasspathDescriptor( // FIXME initialize
       input = input,
       jarOnly = bundledPluginClasspathBytes[1] == 1.toByte(),
       context = context,
@@ -709,9 +709,7 @@ private fun loadFromPluginClasspathDescriptor(
           pluginDescriptorData = pluginDescriptorData,
           context = context,
           pluginDir = pluginDir,
-        ).apply {
-          initialize(context = context)
-        }
+        )
       }
       catch (e: CancellationException) {
         throw e
