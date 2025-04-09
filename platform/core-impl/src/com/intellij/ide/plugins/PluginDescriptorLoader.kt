@@ -52,7 +52,7 @@ fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext, pool
 
 @ApiStatus.Internal
 @JvmOverloads
-fun loadForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): IdeaPluginDescriptorImpl? {
+fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val parentContext = DescriptorListLoadingContext()
   val relativePath = "${relativeDir}${fileName}"
