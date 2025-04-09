@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -61,8 +64,8 @@ public abstract class TypedAction {
   ) {
     var handler = bean.handler;
     if (handler != null) {
-       return handler;
-     }
+      return handler;
+    }
 
     try {
       var aClass = ApplicationManager.getApplication().<TypedActionHandler>loadClass(bean.implementationClass, pluginDescriptor);
@@ -172,7 +175,6 @@ public abstract class TypedAction {
    *
    * @param handler the handler to set.
    * @return the previously registered handler.
-   *
    * @see #getRawHandler()
    * @see #getHandler()
    * @see #setupHandler(TypedActionHandler)
