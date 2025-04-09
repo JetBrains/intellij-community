@@ -112,4 +112,43 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
     myFixture.configureByText(filePath, code.trimIndent())
     myFixture.testHighlighting(filePath)
   }
+
+  /**
+   * Test that string literals that denote a filename (without slashes) are allowed in places where @Filename is expected.
+   */
+  fun testStringLiteralFilename() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+      import com.intellij.platform.eel.annotations.NativePath;
+      import com.intellij.platform.eel.annotations.Filename;
+      import java.nio.file.Path;
+      import java.nio.file.FileSystem;
+      import java.nio.file.FileSystems;
+
+      public class StringLiteralFilename {
+          public void testMethod() {
+              // String literals that denote a filename (without slashes) should be allowed in Path.of() more parameters
+              @MultiRoutingFileSystemPath String basePath = "/base/path";
+              Path path1 = Path.of(basePath, "file.txt"); // No warning, "file.txt" is a valid filename
+              Path path2 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">"invalid/filename"</warning>); // Warning, contains slash
+
+              // String literals that denote a filename should be allowed in FileSystem.getPath() more parameters
+              FileSystem fs = FileSystems.getDefault();
+              @NativePath String nativePath = "/usr/local/bin";
+              fs.getPath(nativePath, "file.txt"); // No warning, "file.txt" is a valid filename
+              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">"invalid/filename"</warning>); // Warning, contains slash
+
+              // String constants that denote a filename should also be allowed
+              final String validFilename = "file.txt";
+              final String invalidFilename = "invalid/filename";
+
+              Path path3 = Path.of(basePath, validFilename); // No warning, validFilename is a valid filename
+              Path path4 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">invalidFilename</warning>); // Warning, contains slash
+
+              fs.getPath(nativePath, validFilename); // No warning, validFilename is a valid filename
+              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">invalidFilename</warning>); // Warning, contains slash
+          }
+      }      
+      """.trimIndent())
+  }
 }

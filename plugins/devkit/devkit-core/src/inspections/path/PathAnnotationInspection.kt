@@ -91,6 +91,33 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           if (arguments.size > 1) {
             for (i in 1 until arguments.size) {
               val arg = arguments[i]
+
+              // Check if the argument is a string literal that denotes a valid filename
+              if (arg is UInjectionHost) {
+                val stringValue = arg.evaluateToString()
+                if (stringValue != null && PathAnnotationInfo.isValidFilename(stringValue)) {
+                  // If it's a valid filename, don't register any problems
+                  continue
+                }
+              }
+
+              // Check if the argument is a reference to a variable with a string constant initializer that denotes a valid filename
+              if (arg is UReferenceExpression) {
+                val resolved = arg.resolve()
+                if (resolved is com.intellij.psi.PsiVariable) {
+                  val initializer = resolved.initializer
+                  if (initializer != null) {
+                    // Try to evaluate the initializer as a string constant
+                    val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
+                      .constantEvaluationHelper.computeConstantExpression(initializer)
+                    if (constantValue is String && PathAnnotationInfo.isValidFilename(constantValue)) {
+                      // If it's a valid filename, don't register any problems
+                      continue
+                    }
+                  }
+                }
+              }
+
               val argInfo = PathAnnotationInfo.forExpression(arg)
               if (argInfo !is PathAnnotationInfo.MultiRouting && argInfo !is PathAnnotationInfo.FilenameInfo) {
                 // Report error: elements of 'more' parameter should be annotated with either @MultiRoutingFileSystemPath or @Filename
@@ -188,6 +215,33 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           if (arguments.size > 1) {
             for (i in 1 until arguments.size) {
               val arg = arguments[i]
+
+              // Check if the argument is a string literal that denotes a valid filename
+              if (arg is UInjectionHost) {
+                val stringValue = arg.evaluateToString()
+                if (stringValue != null && PathAnnotationInfo.isValidFilename(stringValue)) {
+                  // If it's a valid filename, don't register any problems
+                  continue
+                }
+              }
+
+              // Check if the argument is a reference to a variable with a string constant initializer that denotes a valid filename
+              if (arg is UReferenceExpression) {
+                val resolved = arg.resolve()
+                if (resolved is com.intellij.psi.PsiVariable) {
+                  val initializer = resolved.initializer
+                  if (initializer != null) {
+                    // Try to evaluate the initializer as a string constant
+                    val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
+                      .constantEvaluationHelper.computeConstantExpression(initializer)
+                    if (constantValue is String && PathAnnotationInfo.isValidFilename(constantValue)) {
+                      // If it's a valid filename, don't register any problems
+                      continue
+                    }
+                  }
+                }
+              }
+
               val argInfo = PathAnnotationInfo.forExpression(arg)
               if (argInfo !is PathAnnotationInfo.Native && argInfo !is PathAnnotationInfo.FilenameInfo) {
                 // Report error: elements of 'more' parameter should be annotated with either @NativePath or @Filename
@@ -261,8 +315,25 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       val stringValue = expression.evaluateToString() ?: return
       if (stringValue.isBlank()) return
 
+      // Skip processing if this is a string literal used in Path.of() or FileSystem.getPath() methods
+      // as those are already handled in visitCallExpression
+      val parent = expression.uastParent
+      if (parent is UCallExpression) {
+        val method = parent.resolve()
+        if (method != null && (isPathConstructorOrFactory(method) || isFileSystemGetPathMethod(method))) {
+          // Skip processing as this will be handled by visitCallExpression
+          return
+        }
+      }
+
       val nonAnnotatedTargets = mutableSetOf<PsiModifierListOwner>()
       val expectedInfo = getExpectedPathAnnotationInfo(expression, nonAnnotatedTargets)
+
+      // Check if the string literal is a valid filename (no forward or backward slashes)
+      if (PathAnnotationInfo.isValidFilename(stringValue)) {
+        // If it's a valid filename, don't register any problems
+        return
+      }
 
       if (expectedInfo is PathAnnotationInfo.MultiRouting) {
         // Check if the string literal is used in a context that expects @MultiRoutingFileSystemPath
@@ -461,6 +532,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
     }
 
     companion object {
+      /**
+       * Checks if the given string is a valid filename (no forward or backward slashes).
+       */
+      internal fun isValidFilename(str: String): Boolean {
+        return !str.contains('/') && !str.contains('\\')
+      }
+
       fun forExpression(expression: UExpression): PathAnnotationInfo {
         // Check if the expression has a path annotation
         val sourcePsi = expression.sourcePsi
@@ -472,9 +550,28 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         if (expression is UReferenceExpression) {
           val resolved = expression.resolve()
           if (resolved is PsiModifierListOwner) {
-            return forModifierListOwner(resolved)
+            val info = forModifierListOwner(resolved)
+            if (info !is Unspecified) {
+              return info
+            }
+
+            // Check if the reference is to a variable with a string constant initializer that denotes a filename
+            if (resolved is com.intellij.psi.PsiVariable) {
+              val initializer = resolved.initializer
+              if (initializer != null) {
+                // Try to evaluate the initializer as a string constant
+                val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
+                  .constantEvaluationHelper.computeConstantExpression(initializer)
+                if (constantValue is String && isValidFilename(constantValue)) {
+                  return FilenameInfo(null)
+                }
+              }
+            }
           }
         }
+
+        // We don't check if the expression is a string literal or constant that denotes a filename here
+        // because we want to handle that in the visitCallExpression method
 
         return Unspecified(null)
       }

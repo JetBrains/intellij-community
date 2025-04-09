@@ -8,10 +8,10 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
   fun testFileSystemGetPath() {
     doTest("""
-      import com.intellij.platform.eel.annotations.NativePath;
       import com.intellij.platform.eel.annotations.Filename;
-      import java.nio.file.FileSystem;
-      import java.nio.file.FileSystems;
+import com.intellij.platform.eel.annotations.NativePath;
+
+s;
 
       public class FileSystemGetPath {
           public void testMethod() {
@@ -19,14 +19,14 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
               // First argument should be annotated with @NativePath
               String nonAnnotatedPath = "/usr/local/bin";
-              fs.getPath(<warning descr="First argument of FileSystem.getPath() should be annotated with @NativePath">nonAnnotatedPath</warning>, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">"file.txt"</warning>);
+              fs.getPath(<warning descr="First argument of FileSystem.getPath() should be annotated with @NativePath">nonAnnotatedPath</warning>, "file.txt");
 
               // First argument with @NativePath is correct
               @NativePath String nativePath = "/usr/local/bin";
-              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">"file.txt"</warning>);
+              fs.getPath(nativePath, "file.txt");
 
               // Elements of 'more' parameter should be annotated with either @NativePath or @Filename
-              String nonAnnotatedMore = "subdir";
+              String nonAnnotatedMore = "invalid/path";
               fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">nonAnnotatedMore</warning>);
 
               // Elements of 'more' parameter with @NativePath is correct
@@ -96,7 +96,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
               Path path = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of(nonAnnotatedPath)</warning>;
 
               // Direct string literal should also be highlighted
-              Path directPath = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/another/path"</warning>)</warning>;
+              Path directPath = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/another/path")</warning>;
           }
       }      
       """.trimIndent())
@@ -113,7 +113,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
           public void testMethod() {
               Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
 
-              String nonAnnotatedPath = "subdir";
+              String nonAnnotatedPath = "invalid/path";
               // This should be highlighted as a warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
               Path path = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve(nonAnnotatedPath)</weak_warning>;
 
@@ -141,7 +141,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
               Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
 
               // Non-annotated string should be highlighted
-              String nonAnnotatedPath = "subdir";
+              String nonAnnotatedPath = "invalid/path";
               Path path = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve(nonAnnotatedPath)</weak_warning>;
 
               // String annotated with @Filename should not be highlighted
@@ -170,11 +170,11 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
               @MultiRoutingFileSystemPath String basePath = "/base/path";
 
               // Non-annotated string in 'more' parameter should be highlighted
-              String nonAnnotatedMore = "file.txt";
+              String nonAnnotatedMore = "invalid/path";
               Path path1 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nonAnnotatedMore</warning>);
 
               // @NativePath string in 'more' parameter should be highlighted
-              @NativePath String nativeMore = "subdir";
+              @NativePath String nativeMore = "invalid/path";
               Path path2 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nativeMore</warning>);
 
               // @Filename string in 'more' parameter should not be highlighted
