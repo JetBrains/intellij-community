@@ -655,7 +655,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
         else {
           createXmlStreamReader(bundledPluginClasspathBytes, descriptorStart, descriptorSize)
         },
-      )
+      ).apply { initialize(context = context) }
     })
 
     result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool))
@@ -939,6 +939,7 @@ fun CoroutineScope.loadCorePlugin(
     result.add(async(Dispatchers.IO) {
       val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
       loadCoreProductPlugin(path = PluginManagerCore.PLUGIN_XML_PATH, context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
+        .apply { initialize(context = context) }
     })
     return true
   }
@@ -947,6 +948,7 @@ fun CoroutineScope.loadCorePlugin(
     val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
     val reader = getResourceReader(path, classLoader) ?: return@async null
     loadCoreProductPlugin(path = path, context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
+      .apply { initialize(context = context) }
   })
   return false
 }
@@ -993,7 +995,6 @@ private fun loadCoreProductPlugin(
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
   loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
-  descriptor.initialize(context = context)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
