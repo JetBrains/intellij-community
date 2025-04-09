@@ -46,11 +46,10 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private final DependencyScope myScope;
   private final boolean myExported;
 
-  <T extends PsiMember>
   AddModuleDependencyFix(@NotNull PsiReference reference,
                          @NotNull Module currentModule,
                          @NotNull DependencyScope scope,
-                         @NotNull List<? extends T> classes) {
+                         @NotNull List<? extends PsiMember> members) {
     super(reference);
     myCurrentModule = currentModule;
     LinkedHashSet<Module> modules = new LinkedHashSet<>();
@@ -59,11 +58,11 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
     PsiElement psiElement = reference.getElement();
     ModuleRootManager rootManager = ModuleRootManager.getInstance(currentModule);
-    for (T aClass : classes) {
-      if (isAccessible(aClass, psiElement)) {
-        Module classModule = ModuleUtilCore.findModuleForFile(aClass.getContainingFile());
-        if (classModule != null && classModule != currentModule && !dependsWithScope(rootManager, classModule, scope)) {
-          modules.add(classModule);
+    for (PsiMember member : members) {
+      if (isAccessible(member, psiElement)) {
+        Module memberModule = ModuleUtilCore.findModuleForFile(member.getContainingFile());
+        if (memberModule != null && memberModule != currentModule && !dependsWithScope(rootManager, memberModule, scope)) {
+          modules.add(memberModule);
         }
       }
     }
@@ -90,7 +89,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
   private static boolean isAccessible(PsiMember member, PsiElement refElement) {
     PsiClass containingClass = member.getContainingClass();
-    return JavaResolveUtil.isAccessible(member, containingClass, member.getModifierList(), refElement, member instanceof PsiClass ? ((PsiClass)member) : containingClass, null);
+    return JavaResolveUtil.isAccessible(member, containingClass, member.getModifierList(), refElement, member instanceof PsiClass m ? m : containingClass, null);
   }
 
   @Override
