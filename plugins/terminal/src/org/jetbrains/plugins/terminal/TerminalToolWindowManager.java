@@ -681,9 +681,8 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
     TerminalTabState state = new TerminalTabState();
-    VirtualFile parentDirectory = fileToOpen != null && !fileToOpen.isDirectory() ? fileToOpen.getParent() : fileToOpen;
-    if (parentDirectory != null) {
-      state.myWorkingDirectory = parentDirectory.getPath();
+    if (fileToOpen != null) {
+      state.myWorkingDirectory = fileToOpen.getPath();
     }
     createNewSession(myTerminalRunner, state);
   }
