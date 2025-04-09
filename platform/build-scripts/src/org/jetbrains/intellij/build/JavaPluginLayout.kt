@@ -11,8 +11,6 @@ object JavaPluginLayout {
       spec.directoryName = "java"
       spec.mainJarName = "java-impl.jar"
 
-      spec.excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
-
       spec.withProjectLibrary("netty-jps", "rt/netty-jps.jar")
 
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
