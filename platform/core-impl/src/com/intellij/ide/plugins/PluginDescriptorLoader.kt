@@ -281,7 +281,7 @@ fun loadDescriptorFromFileOrDir(
         isEssential = isEssential,
         useCoreClassLoader = useCoreClassLoader,
         isUnitTestMode = isUnitTestMode,
-      )
+      )?.apply { initialize(context = context) }
     }
     file.toString().endsWith(".jar", ignoreCase = true) -> {
       loadDescriptorFromJar(
@@ -332,7 +332,7 @@ private fun loadFromPluginDir(
         isEssential = isEssential,
         useCoreClassLoader = useCoreClassLoader,
         pluginDir = dir,
-      )?.apply { initialize(context = parentContext) }?.let {
+      )?.let {
         it.jarFiles = pluginJarFiles
         return it
       }
@@ -353,7 +353,7 @@ private fun loadFromPluginDir(
           isEssential = isEssential,
           useCoreClassLoader = useCoreClassLoader,
           pluginDir = dir,
-        )?.apply { initialize(context = parentContext) }
+        )
       }?.let {
         if (pluginJarFiles.isNullOrEmpty()) {
           it.jarFiles = Collections.singletonList(classDir)
@@ -1127,6 +1127,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
         @Suppress("SSBasedInspection")
         return runBlocking {
           loadFromPluginDir(dir = rootDir, parentContext = context, pool = NonShareableJavaZipFilePool(), isUnitTestMode = PluginManagerCore.isUnitTestMode)
+            ?.apply { initialize(context = context) }
         }
       }
     }
