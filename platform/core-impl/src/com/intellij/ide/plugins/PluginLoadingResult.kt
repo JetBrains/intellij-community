@@ -75,12 +75,12 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     isPluginBroken: (PluginId, version: String?) -> Boolean,
   ) {
     for (descriptor in descriptors) {
-      descriptor.initialize(
+      val initError = descriptor.initialize(
         getBuildNumber = { productBuildNumber },
         isPluginDisabled = isPluginDisabled,
         isPluginBroken = isPluginBroken
       )
-      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = productBuildNumber)
+      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = productBuildNumber, initError = initError)
     }
   }
 
@@ -98,9 +98,9 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
            isPluginBroken = isPluginBroken)
   }
 
-  private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
+  private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber, initError: PluginLoadingError?) {
     val pluginId = descriptor.pluginId
-    descriptor.initError?.let { error ->
+    initError?.let { error ->
       addIncompletePlugin(plugin = descriptor, error = error.takeIf { !it.isDisabledError })
       return
     }
