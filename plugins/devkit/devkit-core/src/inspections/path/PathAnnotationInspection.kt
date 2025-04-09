@@ -108,21 +108,21 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               is PathAnnotationInfo.MultiRouting -> {
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
-                  "First argument of FileSystem.getPath() should be annotated with @NativePath",
+                  DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
                   AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
                 )
               }
               is PathAnnotationInfo.FilenameInfo -> {
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
-                  "First argument of FileSystem.getPath() should be annotated with @NativePath",
+                  DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
                   AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
                 )
               }
               is PathAnnotationInfo.Unspecified -> {
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
-                  "First argument of FileSystem.getPath() should be annotated with @NativePath",
+                  DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
                   AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
                 )
               }
@@ -130,7 +130,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 // This should not happen, but we need to handle all cases
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
-                  "First argument of FileSystem.getPath() should be annotated with @NativePath"
+                  DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")
                 )
               }
             }
@@ -147,14 +147,14 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                   is PathAnnotationInfo.MultiRouting -> {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
-                      "Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename",
+                      DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
                       AddNativePathAnnotationFix(argInfo.getAnnotationCandidate())
                     )
                   }
                   is PathAnnotationInfo.Unspecified -> {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
-                      "Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename",
+                      DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
                       AddNativePathAnnotationFix(argInfo.getAnnotationCandidate())
                     )
                   }
@@ -162,7 +162,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                     // This should not happen, but we need to handle all cases
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
-                      "Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename"
+                      DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")
                     )
                   }
                 }
