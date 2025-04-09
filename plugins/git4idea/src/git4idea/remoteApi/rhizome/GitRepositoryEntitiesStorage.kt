@@ -15,6 +15,7 @@ import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryEntity
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryFavoriteRefsEntity
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryStateEntity
 import com.intellij.vcs.git.shared.rpc.GitReferencesSet
+import com.intellij.vcsUtil.VcsUtil
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.SharedChangeScope
@@ -57,8 +58,6 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
   }.asCompletableFuture()
 
   private suspend fun syncRepo(gitRepository: GitRepository, afterCreation: Boolean) {
-    if (!Registry.isRdBranchWidgetEnabled()) return
-
     val refsSet = GitReferencesSet(
       gitRepository.info.localBranchesWithHashes.keys,
       gitRepository.info.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
@@ -126,7 +125,8 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
     val newStateEntity = GitRepositoryStateEntity.new {
       it[GitRepositoryStateEntity.RepositoryIdValue] = repositoryId
       it[GitRepositoryStateEntity.CurrentRef] = currentRef
-      it[GitRepositoryStateEntity.RefrencesSet] = refs
+      it[GitRepositoryStateEntity.ReferencesSet] = refs
+      it[GitRepositoryStateEntity.RecentBranches] = gitRepository.branches.recentCheckoutBranches
     }
     val newFavoriteRefs = favoriteRefsToInsert?.let {
       GitRepositoryFavoriteRefsEntity.new {
@@ -138,6 +138,7 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
     GitRepositoryEntity.upsert(GitRepositoryEntity.RepositoryIdValue, repositoryId) {
       it[GitRepositoryEntity.Project] = projectEntity
       it[GitRepositoryEntity.State] = newStateEntity
+      it[GitRepositoryEntity.ShortName] = VcsUtil.getShortVcsRootName(project, gitRepository.root)
       if (newFavoriteRefs != null) {
         it[GitRepositoryEntity.FavoriteRefs] = newFavoriteRefs
       }
