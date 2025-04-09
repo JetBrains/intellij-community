@@ -43,7 +43,7 @@ internal class KDocUnresolvedReferenceInspection : AbstractKotlinInspection() {
 
         private fun createQuickFix(kDocName: KDocName): KDocUnresolvedReferenceQuickFix? {
             return analyze(kDocName) {
-                val importContext = ImportContext(kDocName, ImportPositionTypeAndReceiver.KDocNameReference(kDocName.getQualifier()))
+                val importContext = DefaultImportContext(kDocName, ImportPositionTypeAndReceiver.KDocNameReference(kDocName.getQualifier()))
                 val indexProvider = KtSymbolFromIndexProvider(kDocName.containingKtFile)
 
                 val candidates = listOf(
