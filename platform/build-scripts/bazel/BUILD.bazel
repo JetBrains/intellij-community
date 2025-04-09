@@ -1,30 +1,44 @@
-### auto-generated section `build intellij.platform.buildScripts.bazel` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-jvm_library(
-  name = "buildScripts-bazel",
-  module_name = "intellij.platform.buildScripts.bazel",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  deps = [
-    "@lib//:kotlin-stdlib",
-    "//platform/util",
-    "//jps/model-serialization",
-    "//jps/model-api:model",
-    "//platform/projectModel-api:projectModel",
-    "//platform/util/jdom",
-    "@lib//:kotlinc-kotlin-jps-plugin-classpath",
-    "@lib//:fastutil-min",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kaml",
-    "@lib//:hash4j",
-    "@rules_jvm//zip",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
-  ],
-  runtime_deps = [
-    "//jps/model-impl",
-    "@lib//:okhttp",
-  ]
+kt_compiler_plugin(
+    name = "serialization_plugin",
+    compile_phase = True,
+    id = "org.jetbrains.kotlin.serialization",
+    stubs_phase = True,
+    deps = [
+        "@rules_kotlin//kotlin/compiler:kotlinx-serialization-compiler-plugin",
+    ],
 )
-### auto-generated section `build intellij.platform.buildScripts.bazel` end
+
+kt_jvm_library(
+    name = "kotlin_serialization",
+    srcs = [],
+    exported_compiler_plugins = [":serialization_plugin"],
+    exports = [
+        "@j2b_maven//:org_jetbrains_kotlinx_kotlinx_serialization_core_jvm",
+    ],
+)
+
+kt_jvm_library(
+    name = "jps_to_bazel-lib",
+    srcs = glob(["src/**/*.kt"]),
+    deps = [
+        "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_impl",
+        "@j2b_maven//:org_jetbrains_teamcity_serviceMessages",
+        "@j2b_maven//:com_jetbrains_intellij_platform_build_scripts_downloader",
+        "@j2b_maven//:com_jetbrains_intellij_platform_jps_model_serialization",
+        "@j2b_maven//:org_jetbrains_kotlin_kotlin_jps_plugin",
+        ":kotlin_serialization",
+    ],
+    runtime_deps = [],
+)
+
+java_binary(
+    name = "jps-to-bazel",
+    runtime_deps = [ ":jps_to_bazel-lib" ],
+    main_class = "org.jetbrains.intellij.build.bazel.JpsModuleToBazel",
+    jvm_flags = [],
+    visibility = ["//visibility:public"],
+)
