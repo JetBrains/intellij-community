@@ -41,7 +41,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
-import kotlin.Throws
 
 private val LOG = logger<CustomActionsSchema>()
 
@@ -261,6 +260,12 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
           setCustomizationSchemaForCurrentProjects()
         }
       }
+    }
+  }
+
+  override fun noStateLoaded() {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      loadState(Element("State"))
     }
   }
 
