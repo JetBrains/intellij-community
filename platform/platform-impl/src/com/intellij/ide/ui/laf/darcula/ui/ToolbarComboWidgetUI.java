@@ -233,7 +233,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     g.setColor(c.isEnabled() ? c.getForeground() : UIUtil.getLabelDisabledForeground());
 
     int baseline = c.getBaseline(textBounds.width, textBounds.height);
-    String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width, g);
+    String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width, c);
     Rectangle strBounds = metrics.getStringBounds(text, g).getBounds();
     strBounds.setLocation(Math.max(0, (int)(textBounds.getCenterX() - strBounds.getCenterX())), baseline);
 

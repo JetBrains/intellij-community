@@ -39,6 +39,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
@@ -422,7 +423,8 @@ public final class UIUtil {
   }
 
   /**
-   * Helper method that hides dependency on Swing
+   * Helper method that hides dependency on Swing.
+   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations..
    */
   public static int computeStringWidth(@NotNull JComponent c, @NotNull FontMetrics fontMetrics, @Nullable String string) {
     return SwingUtilities2.stringWidth(c, fontMetrics, string);

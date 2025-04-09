@@ -7,14 +7,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
+import com.intellij.util.ui.AATextInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
-import javax.swing.JComponent;
-import javax.swing.JRootPane;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -420,6 +421,9 @@ public final class PaintUtil {
   /**
    * Calculates the width of the specified text string when drawn using the provided Graphics context and FontMetrics.
    * This method provides a more accurate measurement compared to the metrics.stringWidth(...) method, as it takes into account the Graphics context.
+   * <p/>
+   * Note: this method ignores aliasing hints stored in the JComponent and shall NOT be used
+   * in pair with {@link SwingUtilities2#drawString(JComponent, Graphics, String, int, int)}, see {@link AATextInfo}.
    *
    * @param text    The text string whose width needs to be calculated.
    * @param g       The Graphics context used for rendering the text.
