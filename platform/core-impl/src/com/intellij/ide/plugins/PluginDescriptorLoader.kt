@@ -403,7 +403,6 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
     val file = Paths.get(t.nextToken())
     list.add(async(Dispatchers.IO) {
       loadDescriptorFromFileOrDir(file, context, pool, useCoreClassLoader = useCoreClassLoaderForPluginsFromProperty)
-        ?.apply { initialize(context = context) }
     })
   }
   return list
@@ -539,7 +538,7 @@ private suspend fun loadDescriptors(
       zipPool = zipPool,
       mainClassLoader = mainClassLoader,
     )
-    extraListDeferred = loadDescriptorsFromProperty(context, zipPool)
+    extraListDeferred = loadDescriptorsFromProperty(context, zipPool) // FIXME initialize
   }
 
   val buildNumber = context.productBuildNumber()
