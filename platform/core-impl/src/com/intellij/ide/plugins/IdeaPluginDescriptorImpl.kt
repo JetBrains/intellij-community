@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
@@ -294,13 +295,19 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  internal fun initialize(context: DescriptorListLoadingContext) {
+  internal fun initialize(context: DescriptorListLoadingContext) = initialize(
+    context.productBuildNumber,
+    context::isPluginDisabled,
+    context::isBroken,
+  )
+
+  internal fun initialize(getBuildNumber: () -> BuildNumber, isPluginDisabled: (PluginId) -> Boolean, isPluginBroken: (PluginId, version: String?) -> Boolean) {
     assert(type == Type.PluginMainDescriptor)
-    if (context.isPluginDisabled(id)) {
+    if (isPluginDisabled(id)) {
       onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
       return
     }
-    checkCompatibility(context)
+    checkCompatibility(getBuildNumber, isPluginBroken)
     if (initError != null) {
       return
     }
@@ -314,13 +321,13 @@ class IdeaPluginDescriptorImpl private constructor(
     ))
 
     for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
-      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
+      if (isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
         requiredDependencyIsDisabled(dependency.pluginId)
         return
       }
     }
     for (pluginDependency in moduleDependencies.plugins) {
-      if (context.isPluginDisabled(pluginDependency.id)) {
+      if (isPluginDisabled(pluginDependency.id)) {
         requiredDependencyIsDisabled(pluginDependency.id)
         return
       }
@@ -391,7 +398,7 @@ class IdeaPluginDescriptorImpl private constructor(
     isEnabled = false
   }
 
-  private fun checkCompatibility(context: DescriptorListLoadingContext) {
+  private fun checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean) {
     if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
       // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
       val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
@@ -418,13 +425,13 @@ class IdeaPluginDescriptorImpl private constructor(
       return
     }
 
-    PluginManagerCore.checkBuildNumberCompatibility(this, context.productBuildNumber())?.let {
+    PluginManagerCore.checkBuildNumberCompatibility(this, getBuildNumber())?.let {
       onInitError(it)
       return
     }
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
-    if (context.isBroken(this)) {
+    if (isPluginBroken(id, version)) {
       onInitError(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.marked.as.broken", name, version) },
