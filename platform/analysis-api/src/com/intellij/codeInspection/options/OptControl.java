@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Basic interface for all the controls
  */
 public sealed interface OptControl extends OptComponent
-  permits OptCheckbox, OptDropdown, OptExpandableString, OptNumber, OptString, OptStringList, OptTableColumn {
+  permits OptCheckbox, OptDropdown, OptExpandableString, OptMultiSelector, OptNumber, OptString, OptStringList, OptTableColumn {
   /**
    * @return identifier of control, and at the same time the name of the binding variable used by inspection 
    * acceptable by {@link OptionContainer#getOptionController()}

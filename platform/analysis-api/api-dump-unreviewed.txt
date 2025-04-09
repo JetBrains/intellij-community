@@ -2535,8 +2535,6 @@ f:com.intellij.modcommand.ActionContext
 - withElement(com.intellij.psi.PsiElement):com.intellij.modcommand.ActionContext
 - withFile(com.intellij.psi.PsiFile):com.intellij.modcommand.ActionContext
 - withOffset(I):com.intellij.modcommand.ActionContext
-com.intellij.modcommand.MemberChooserElement
-- a:getText():java.lang.String
 f:com.intellij.modcommand.ModChooseAction
 - java.lang.Record
 - com.intellij.modcommand.ModCommand

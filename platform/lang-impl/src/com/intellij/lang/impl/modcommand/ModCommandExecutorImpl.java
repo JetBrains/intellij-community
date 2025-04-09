@@ -13,6 +13,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
@@ -255,7 +256,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   }
 
   private static boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
-    List<? extends @NotNull MemberChooserElement> result;
+    List<? extends OptMultiSelector.@NotNull OptElement> result;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       result = modChooser.defaultSelection();
     }

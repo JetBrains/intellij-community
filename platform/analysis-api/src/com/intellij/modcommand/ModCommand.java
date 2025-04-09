@@ -2,6 +2,9 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.options.OptMultiSelector;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.injected.editor.DocumentWindow;
@@ -368,8 +371,8 @@ public sealed interface ModCommand
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
-                                                   @NotNull List<? extends @NotNull MemberChooserElement> elements,
-                                                   @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
+                                                   @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
     return chooseMultipleMembers(title, elements, elements, nextCommand);
   }
 
@@ -384,10 +387,32 @@ public sealed interface ModCommand
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
-                                                   @NotNull List<? extends @NotNull MemberChooserElement> elements,
-                                                   @NotNull List<? extends @NotNull MemberChooserElement> defaultSelection,
-                                                   @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
+                                                   @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
     return new ModChooseMember(title, elements, defaultSelection, ModChooseMember.SelectionMode.MULTIPLE, nextCommand);
+  }
+
+  /**
+   * A replacement for chooseMultipleMembers; not working yet
+   */
+  @ApiStatus.Internal
+  static @NotNull ModCommand chooseMultipleMembersNew(@NotNull @NlsContexts.PopupTitle String title,
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
+                                                   @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
+    class MemberHolder implements OptionContainer {
+      @SuppressWarnings("FieldMayBeFinal") 
+      @NotNull List<? extends OptMultiSelector.@NotNull OptElement> myElements = new ArrayList<>(defaultSelection);
+      
+      @Override
+      public @NotNull OptPane getOptionsPane() {
+        return OptPane.pane(
+          new OptMultiSelector("myElements", elements, OptMultiSelector.SelectionMode.MULTIPLE)
+        );
+      }
+    }
+    return new ModEditOptions<>(title, MemberHolder::new, true, mh -> nextCommand.apply(mh.myElements));
   }
 
   /**
