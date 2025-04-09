@@ -11,7 +11,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,19 +23,19 @@ import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlo
 @ApiStatus.Internal
 public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties, T extends XBreakpointType<B,P>> {
   private String myTypeId;
-  private final MutableStateFlow<Boolean> myEnabledFlow = createMutableStateFlow(false);
+  private boolean myEnabled;
   private Element myPropertiesElement;
-  private final MutableStateFlow<SuspendPolicy> mySuspendPolicyFlow = createMutableStateFlow(SuspendPolicy.ALL);
-  private final MutableStateFlow<Boolean> myLogMessageFlow = createMutableStateFlow(false);
-  private final MutableStateFlow<Boolean> myLogStackFlow = createMutableStateFlow(false);
-  private final MutableStateFlow<LogExpression> myLogExpressionFlow = createMutableStateFlow(null);
-  private final MutableStateFlow<Condition> myConditionFlow = createMutableStateFlow(null);
+  private SuspendPolicy mySuspendPolicy = SuspendPolicy.ALL;
+  private boolean myLogMessage;
+  private boolean myLogStack;
+  private LogExpression myLogExpression;
+  private Condition myCondition;
   private XBreakpointDependencyState myDependencyState;
   @Tag("group")
-  private final MutableStateFlow<String> myGroupFlow = createMutableStateFlow(null);
+  private String myGroup;
 
   @Tag("description")
-  private final MutableStateFlow<String> myDescriptionFlow = createMutableStateFlow(null);
+  private String myDescription;
 
   private long myTimeStamp;
 
@@ -44,24 +43,25 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   }
 
   public BreakpointState(final boolean enabled, final String typeId, final long timeStamp, final SuspendPolicy suspendPolicy) {
-    myEnabledFlow.setValue(enabled);
+    myEnabled = enabled;
     myTypeId = typeId;
     myTimeStamp = timeStamp;
-    mySuspendPolicyFlow.setValue(suspendPolicy);
+    mySuspendPolicy = suspendPolicy;
   }
 
   @Attribute("enabled")
   public boolean isEnabled() {
-    return myEnabledFlow.getValue();
+    return myEnabled;
   }
 
   public void setEnabled(final boolean enabled) {
-    myEnabledFlow.setValue(enabled);
+    myEnabled = enabled;
   }
 
   @Transient
   public StateFlow<Boolean> getEnabledFlow() {
-    return myEnabledFlow;
+    // TODO: implement proper reactivity taking serialization into account
+    return createMutableStateFlow(myEnabled);
   }
 
   @Attribute("type")
@@ -84,123 +84,116 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
   @Attribute("suspend")
   public String getSuspendPolicyString() {
-    return mySuspendPolicyFlow.getValue().name();
+    return mySuspendPolicy.name();
   }
 
   public void setSuspendPolicyString(final String suspendPolicy) {
-    mySuspendPolicyFlow.setValue(SuspendPolicy.valueOf(suspendPolicy));
+    mySuspendPolicy = SuspendPolicy.valueOf(suspendPolicy);
   }
 
   @Transient
   public SuspendPolicy getSuspendPolicy() {
-    return mySuspendPolicyFlow.getValue();
+    return mySuspendPolicy;
   }
 
   public void setSuspendPolicy(SuspendPolicy suspendPolicy) {
-    mySuspendPolicyFlow.setValue(suspendPolicy);
+    mySuspendPolicy = suspendPolicy;
   }
 
   @Transient
   public StateFlow<SuspendPolicy> getSuspendPolicyFlow() {
-    return mySuspendPolicyFlow;
+    // TODO: implement proper reactivity taking serialization into account
+    return createMutableStateFlow(mySuspendPolicy);
   }
 
   @Attribute("log-message")
   public boolean isLogMessage() {
-    return myLogMessageFlow.getValue();
+    return myLogMessage;
   }
 
   public void setLogMessage(final boolean logMessage) {
-    myLogMessageFlow.setValue(logMessage);
+    myLogMessage = logMessage;
   }
 
   @Transient
   public StateFlow<Boolean> getLogMessageFlow() {
-    return myLogMessageFlow;
+    // TODO: implement proper reactivity taking serialization into account
+    return createMutableStateFlow(myLogMessage);
   }
 
   @Attribute("log-stack")
   public boolean isLogStack() {
-    return myLogStackFlow.getValue();
+    return myLogStack;
   }
 
   public void setLogStack(final boolean logStack) {
-    myLogStackFlow.setValue(logStack);
+    myLogStack = logStack;
   }
 
   @Transient
   public StateFlow<Boolean> getLogStackFlow() {
-    return myLogStackFlow;
+    // TODO: implement proper reactivity taking serialization into account
+    return createMutableStateFlow(myLogStack);
   }
 
   public @Nullable String getGroup() {
-    return myGroupFlow.getValue();
+    return myGroup;
   }
 
   public void setGroup(String group) {
-    myGroupFlow.setValue(group);
+    myGroup = group;
   }
 
   @Transient
   public StateFlow<String> getGroupFlow() {
-    return myGroupFlow;
+    // TODO: implement proper reactivity taking serialization into account
+    return createMutableStateFlow(myGroup);
   }
 
   public String getDescription() {
-    return myDescriptionFlow.getValue();
+    return myDescription;
   }
 
   public void setDescription(String description) {
-    myDescriptionFlow.setValue(description);
+    myDescription = description;
   }
 
   @Transient
   public StateFlow<String> getDescriptionFlow() {
-    return myDescriptionFlow;
+    // TODO: implement proper reactivity taking serialization into account
+    return createMutableStateFlow(myDescription);
   }
 
   @Property(surroundWithTag = false)
   public @Nullable LogExpression getLogExpression() {
-    return myLogExpressionFlow.getValue();
+    return myLogExpression;
   }
 
   public void setLogExpression(@Nullable LogExpression logExpression) {
     if (logExpression != null) {
       logExpression.checkConverted();
     }
-    myLogExpressionFlow.setValue(logExpression);
-  }
-
-  @Transient
-  public StateFlow<LogExpression> getLogExpressionFlow() {
-    return myLogExpressionFlow;
+    myLogExpression = logExpression;
   }
 
   @Property(surroundWithTag = false)
   public @Nullable Condition getCondition() {
-    return myConditionFlow.getValue();
+    return myCondition;
   }
 
   public void setCondition(@Nullable Condition condition) {
     if (condition != null) {
       condition.checkConverted();
     }
-    myConditionFlow.setValue(condition);
-  }
-
-  @Transient
-  public StateFlow<Condition> getConditionFlow() {
-    return myConditionFlow;
+    myCondition = condition;
   }
 
   public boolean isLogExpressionEnabled() {
-    LogExpression logExpression = myLogExpressionFlow.getValue();
-    return logExpression == null || !logExpression.myDisabled;
+    return myLogExpression == null || !myLogExpression.myDisabled;
   }
 
   public boolean isConditionEnabled() {
-    Condition condition = myConditionFlow.getValue();
-    return condition == null || !condition.myDisabled;
+    return myCondition == null || !myCondition.myDisabled;
   }
 
   @Property(surroundWithTag = false)
@@ -225,7 +218,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   }
 
   void applyDefaults(BreakpointState state) {
-    state.mySuspendPolicyFlow.setValue(mySuspendPolicyFlow.getValue());
+    state.mySuspendPolicy = mySuspendPolicy;
   }
 
   @Tag("condition")
