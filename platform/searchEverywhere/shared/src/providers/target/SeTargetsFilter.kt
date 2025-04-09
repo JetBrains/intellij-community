@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.providers.files
+package com.intellij.platform.searchEverywhere.providers.target
 
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
+@ApiStatus.Internal
 class SeTargetsFilter(val selectedScopeId: String?): SeFilter {
   override fun toState(): SeFilterState = selectedScopeId?.let {
     SeFilterState.Data(mapOf(SELECTED_SCOPE_ID to it))
