@@ -19,6 +19,7 @@ import com.intellij.python.community.services.systemPython.UICustomization
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -216,6 +217,13 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
 
   open fun addInterpreter(sdk: Sdk) {
     manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
+  }
+
+  @RequiresEdt
+  internal fun addInstalledInterpreter(homePath: Path, languageLevel: LanguageLevel): DetectedSelectableInterpreter {
+    val installedInterpreter = DetectedSelectableInterpreter(homePath.pathString, languageLevel, true)
+    _detectedInterpreters.value += installedInterpreter
+    return installedInterpreter
   }
 
   /**
