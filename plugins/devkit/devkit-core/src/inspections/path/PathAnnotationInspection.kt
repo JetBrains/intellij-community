@@ -62,11 +62,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
               AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
             )
-          } else if (argInfo is PathAnnotationInfo.Unspecified) {
+          }
+          else if (argInfo is PathAnnotationInfo.Unspecified) {
             // Report normal warning: non-annotated string used in Path constructor or factory method
             holder.registerProblem(
               sourcePsi,
-              "String without path annotation is used in Path constructor or factory method",
+              DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method"),
               AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
             )
           }
@@ -84,7 +85,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report weak warning: non-annotated string used in Path.resolve()
             holder.registerProblem(
               sourcePsi,
-              "String without path annotation is used in Path.resolve() method",
+              DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
               com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
               AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
             )
