@@ -22,7 +22,7 @@ internal fun subscribeOnBreakpointsDialogRequest(project: Project) {
     XDebuggerBreakpointsDialogApi.getInstance().showDialogRequests(project.projectId()).collect {
       withContext(Dispatchers.EDT) {
         runCatching {
-          BreakpointsDialogFactory.getInstance(project).showDialogImpl(null, FrontendXDebuggerManager.getInstance(project).breakpointsManager)
+          BreakpointsDialogFactory.getInstance(project).showDialogImpl(null)
         }.getOrLogException(LOG)
       }
     }

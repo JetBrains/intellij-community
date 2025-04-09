@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -151,11 +152,7 @@ object XBreakpointUtil {
   @ApiStatus.Internal
   @JvmStatic
   fun getAllBreakpointItems(project: Project): List<BreakpointItem> {
-    val breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager() as XBreakpointManagerImpl
-    val breakpointManagerProxy = XBreakpointManagerProxy.Monolith(breakpointManager)
-    return breakpointManager.allBreakpoints.map {
-      XBreakpointItem(it, breakpointManagerProxy)
-    }
+    return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getAllBreakpointItems()
   }
 
   /**

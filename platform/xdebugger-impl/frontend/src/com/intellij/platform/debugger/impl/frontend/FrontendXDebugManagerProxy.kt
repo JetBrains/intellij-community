@@ -5,6 +5,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -28,5 +29,9 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
     return FrontendXDebuggerManager.getInstance(project).currentSession
+  }
+
+  override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
+    return FrontendXDebuggerManager.getInstance(project).breakpointsManager
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.Disposable
+import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import org.jetbrains.annotations.ApiStatus
@@ -38,7 +39,10 @@ interface XBreakpointManagerProxy {
     }
 
     override fun getAllBreakpointItems(): List<BreakpointItem> {
-      return XBreakpointUtil.getAllBreakpointItems(breakpointManager.project)
+      val breakpointManager = XDebuggerManager.getInstance(breakpointManager.project).getBreakpointManager() as XBreakpointManagerImpl
+      return breakpointManager.allBreakpoints.map {
+        XBreakpointItem(it, this)
+      }
     }
 
     override fun getAllBreakpointTypes(): List<XBreakpointType<*, *>> {

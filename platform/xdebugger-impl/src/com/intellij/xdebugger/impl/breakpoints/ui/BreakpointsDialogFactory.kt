@@ -8,9 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,14 +64,10 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   @ApiStatus.Internal
-  fun showDialogImpl(
-    initialBreakpoint: Any?,
-    breakpointManager: XBreakpointManagerProxy? = XBreakpointManagerProxy.Monolith(
-      XDebuggerManager.getInstance(project).getBreakpointManager() as XBreakpointManagerImpl
-    ),
-  ) {
+  fun showDialogImpl(initialBreakpoint: Any?) {
     if (selectInDialogShowing(initialBreakpoint)) return
 
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     val dialog = object : BreakpointsDialog(project, initialBreakpoint ?: breakpointFromBalloon, breakpointManager) {
       override fun dispose() {
         breakpointFromBalloon = null

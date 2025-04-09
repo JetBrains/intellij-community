@@ -7,6 +7,8 @@ import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
@@ -47,6 +49,10 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
       if (it == null) return@map null
       XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(it)
     }
+  }
+
+  override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
+    return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
   }
 }
 
