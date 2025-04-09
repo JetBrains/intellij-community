@@ -36,6 +36,7 @@ import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -630,8 +632,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
       if (node == null) return;
       JComponent c = UIUtil.getParentOfType(JComponent.class, node.getComponent());
       if (c == null) return;
+      var components = JBIterable.<TreeNode>generate(node, o -> o.getParent())
+        .filter(HierarchyTree.ComponentNode.class)
+        .filterMap(o -> o.getComponent())
+        .toList();
 
-      new DataContextDialog(myProject, c).show();
+      new DataContextDialog(myProject, components).show();
     }
   }
 
