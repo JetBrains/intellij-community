@@ -914,7 +914,9 @@ private fun CoroutineScope.loadCoreModules(
           useCoreClassLoader = useCoreClassLoader,
           pool = pool,
           libDir = libDir,
-        )
+        )?.apply {
+          initialize(context = context)
+        }
       }
     }
   }
@@ -1225,7 +1227,9 @@ fun testLoadDescriptorsFromClassPath(
               useCoreClassLoader = true,
               pool = zipPool,
               libDir = null,
-            )
+            )?.apply {
+              initialize(context = context)
+            }
           }
         }
       },
@@ -1336,7 +1340,6 @@ private fun loadDescriptorFromResource(
     else {
       loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
     }
-    descriptor.initialize(context = context)
     descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
     return descriptor
   }
