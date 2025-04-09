@@ -63,6 +63,12 @@
       <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
     </action>
     <action id="Terminal.Escape" class="com.intellij.terminal.frontend.action.TerminalEscapeAction" use-shortcut-of="EditorEscape"/>
+    <action id="Terminal.OpenInReworkedTerminal" class="com.intellij.terminal.frontend.action.RevealFileInReworkedTerminalAction"
+            icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13" use-shortcut-of="Terminal.OpenInTerminal">
+      <add-to-group group-id="RevealGroup" anchor="last"/>
+      <override-text place="RevealInPopup"/>
+      <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
+    </action>
 
     <group id="Terminal.Engine" popup="true">
       <action id="Terminal.UseReworkedEngine" class="com.intellij.terminal.frontend.action.TerminalReworkedEngineAction"/>

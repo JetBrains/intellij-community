@@ -31,6 +31,9 @@ import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalStartupKt;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,8 +65,9 @@ public final class LocalOptionsConfigurer {
 
   @VisibleForTesting
   static @NotNull String getWorkingDirectory(@Nullable String directory, Project project) {
-    if (directory != null && isDirectory(directory)) {
-      return directory;
+    String validDirectory = findValidWorkingDirectory(directory);
+    if (validDirectory != null) {
+      return validDirectory;
     }
     String configuredWorkingDirectory = TerminalProjectOptionsProvider.getInstance(project).getStartingDirectory();
     if (configuredWorkingDirectory != null && isDirectory(configuredWorkingDirectory)) {
@@ -78,6 +82,33 @@ public final class LocalOptionsConfigurer {
       return VfsUtilCore.virtualToIoFile(projectDir).getAbsolutePath();
     }
     return SystemProperties.getUserHome();
+  }
+
+  /**
+   * @param path can be null, incorrect path or path to the valid file or directory.
+   * @return the provided path if it is a valid directory path or parent directory path if provided path points to a valid file.
+   */
+  private static @Nullable String findValidWorkingDirectory(@Nullable String path) {
+    if (path == null) return null;
+
+    Path directoryPath;
+    try {
+      directoryPath = Path.of(path);
+    }
+    catch (InvalidPathException e) {
+      return null;
+    }
+
+    if (Files.isDirectory(directoryPath)) {
+      return directoryPath.toString();
+    }
+
+    Path parentPath = directoryPath.getParent();
+    if (parentPath != null && Files.isDirectory(parentPath)) {
+      return parentPath.toString();
+    }
+
+    return null;
   }
 
   private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
