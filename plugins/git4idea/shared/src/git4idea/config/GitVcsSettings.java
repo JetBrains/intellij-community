@@ -1,18 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
-import com.intellij.dvcs.branch.*;
+import com.intellij.dvcs.branch.DvcsBranchInfo;
+import com.intellij.dvcs.branch.DvcsBranchSettings;
+import com.intellij.dvcs.branch.DvcsCompareSettings;
+import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.vcs.log.VcsUser;
 import git4idea.push.GitPushTagMode;
 import git4idea.reset.GitResetMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +36,6 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   public GitVcsSettings(Project project) {
     super(new GitVcsOptions());
     this.project = project;
-  }
-
-  public GitVcsApplicationSettings getAppSettings() {
-    return GitVcsApplicationSettings.getInstance();
   }
 
   public static GitVcsSettings getInstance(Project project) {
@@ -61,15 +61,15 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   /**
    * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
    *
-   * @param author an author to save
+   * @param authorAsString an author to save
    */
-  public void saveCommitAuthor(@NotNull VcsUser author) {
+  public void saveCommitAuthor(@NotNull String authorAsString) {
     List<String> previousCommitAuthors = getState().getPreviousCommitAuthors();
-    previousCommitAuthors.remove(author.toString());
+    previousCommitAuthors.remove(authorAsString);
     while (previousCommitAuthors.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
       previousCommitAuthors.remove(previousCommitAuthors.size() - 1);
     }
-    previousCommitAuthors.add(0, author.toString());
+    previousCommitAuthors.add(0, authorAsString);
   }
 
   public String[] getCommitAuthors() {
@@ -96,7 +96,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setPathToGit(@Nullable String value) {
     getState().setPathToGit(value);
-    GitExecutableDetector.fireExecutableChanged();
+    project.getMessageBus().syncPublisher(GitVcsSettingsListener.TOPIC).pathToGitChanged();
   }
 
   public boolean autoUpdateIfPushRejected() {
@@ -155,7 +155,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setShowTags(boolean value) {
     getState().setShowTags(value);
-    project.getMessageBus().syncPublisher(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED).showTagsSettingsChanged(value);
+    project.getMessageBus().syncPublisher(GitVcsSettingsListener.TOPIC).showTagsChanged(value);
   }
 
   public boolean filterByActionInPopup() {
@@ -334,5 +334,15 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     public int hashCode() {
       return Objects.hash(super.hashCode(), targetRemoteName, targetBranchName);
     }
+  }
+
+  @ApiStatus.Internal
+  public interface GitVcsSettingsListener {
+    @Topic.ProjectLevel
+    Topic<GitVcsSettingsListener> TOPIC = new Topic<>(GitVcsSettingsListener.class, Topic.BroadcastDirection.NONE);
+
+    void showTagsChanged(boolean value);
+
+    void pathToGitChanged();
   }
 }
