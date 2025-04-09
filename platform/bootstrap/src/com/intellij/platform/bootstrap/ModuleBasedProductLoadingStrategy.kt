@@ -87,7 +87,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
     scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, context, pathResolver, useCoreClassLoader, mainClassLoader, result)
     result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, context, zipPool))
-    result.addAll(loadBundledPluginDescriptors(scope, context, zipPool))
+    result.addAll(loadBundledPluginDescriptors(scope, context, zipPool)) // FIXME initialize
     return result
   }
 
@@ -107,7 +107,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
           loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, serviceModuleMapping, mainGroupResourceRootSet,
                                                 isBundled = true, pluginDir = null)
-            ?.apply { initialize(context = context) }
         }
         else {
           /* todo: intellij.performanceTesting.async plugin has different distributions for different IDEs, in some IDEs it has dependencies 
