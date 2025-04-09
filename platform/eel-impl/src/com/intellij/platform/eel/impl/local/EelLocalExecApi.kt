@@ -3,8 +3,8 @@ package com.intellij.platform.eel.impl.local
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil.getPathDirs
+import com.intellij.execution.process.LocalProcessService
 import com.intellij.execution.process.LocalPtyOptions
-import com.intellij.execution.process.ProcessService
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelDescriptor
@@ -50,7 +50,7 @@ class EelLocalExecApi : EelExecApi {
             if ("TERM" !in environment) {
               environment.getOrPut("TERM") { "xterm" }
             }
-            LocalEelProcess(ProcessService.getInstance().startPtyProcess(
+            LocalEelProcess(LocalProcessService.getInstance().startPtyProcess(
               listOf(builder.exe) + args,
               builder.workingDirectory?.toString(),
               environment,

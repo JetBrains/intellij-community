@@ -173,7 +173,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   protected boolean destroyProcessGracefully() {
-    ProcessService processService = getProcessService();
+    LocalProcessService processService = getProcessService();
     if (SystemInfo.isWindows) {
       if (processService.hasControllingTerminal(myProcess) &&
           WinProcessTerminator.terminateWinProcessGracefully(this, processService, this::sendInterruptToPtyProcess)) {
@@ -224,9 +224,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     return false;
   }
 
-  private static @NotNull ProcessService getProcessService() {
+  private static @NotNull LocalProcessService getProcessService() {
     // Without non-cancelable section "ProcessService.getInstance()" will fail under a canceled progress.
-    return ProgressManager.getInstance().computeInNonCancelableSection(ProcessService::getInstance);
+    return ProgressManager.getInstance().computeInNonCancelableSection(LocalProcessService::getInstance);
   }
 
   /**

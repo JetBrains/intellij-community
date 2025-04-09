@@ -2,7 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.process.LocalPtyOptions;
-import com.intellij.execution.process.ProcessService;
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -148,7 +148,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
     Path workingDirectory = getWorkingDirectory();
     LocalPtyOptions options = getPtyOptions();
-    return ProcessService.getInstance().startPtyProcess(
+    return LocalProcessService.getInstance().startPtyProcess(
       commands,
       workingDirectory != null ? workingDirectory.toString() : null,
       env,

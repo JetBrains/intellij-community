@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local.processKiller
 
-import com.intellij.execution.process.ProcessService
+import com.intellij.execution.process.LocalProcessService
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.KillableProcess
 import com.sun.jna.NativeLibrary
@@ -25,7 +25,7 @@ internal class WinProcessKiller(private val process: Process) : KillableProcess 
 
   override suspend fun interrupt() {
     if (!process.isAlive) return
-    ProcessService.getInstance().sendWinProcessCtrlC(process)
+    LocalProcessService.getInstance().sendWinProcessCtrlC(process)
   }
 
   override suspend fun terminate() {

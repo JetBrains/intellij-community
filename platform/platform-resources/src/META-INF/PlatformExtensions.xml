@@ -566,8 +566,8 @@
     <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
                         serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.execution.process.ProcessService"
-                        serviceImplementation="com.intellij.execution.process.ProcessServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.process.LocalProcessService"
+                        serviceImplementation="com.intellij.execution.process.LocalProcessServiceImpl"/>
     <applicationService serviceInterface="com.intellij.execution.sudo.SudoCommandProvider"
                         serviceImplementation="com.intellij.execution.sudo.LocalSudoCommandProvider"/>
 

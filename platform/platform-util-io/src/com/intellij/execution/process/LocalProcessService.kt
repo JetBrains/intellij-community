@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
 
 @ApiStatus.Internal
-interface ProcessService {
+interface LocalProcessService {
   fun startPtyProcess(
     command: List<String>,
     directory: String?,
@@ -59,6 +59,6 @@ interface ProcessService {
 
   companion object {
     @JvmStatic
-    fun getInstance(): ProcessService = service<ProcessService>()
+    fun getInstance(): LocalProcessService = service<LocalProcessService>()
   }
 }

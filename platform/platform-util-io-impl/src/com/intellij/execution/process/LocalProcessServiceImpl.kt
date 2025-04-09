@@ -14,7 +14,7 @@ import org.jvnet.winp.WinProcess
 import java.io.OutputStream
 
 @ApiStatus.Internal
-class ProcessServiceImpl : ProcessService {
+class LocalProcessServiceImpl : LocalProcessService {
   override fun startPtyProcess(
     command: List<String>,
     directory: String?,
@@ -100,7 +100,7 @@ class ProcessServiceImpl : ProcessService {
           process.info()
         }
         catch (e: UnsupportedOperationException) {
-          logger<ProcessServiceImpl>().debug("Cannot find command line for ${process.javaClass}", e)
+          logger<LocalProcessServiceImpl>().debug("Cannot find command line for ${process.javaClass}", e)
           return listOf()
         }
         processInfo.command().orElse(null)?.let {
