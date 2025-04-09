@@ -41,7 +41,12 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   return XBreakpointDto(
     id = breakpointId,
     displayText = XBreakpointUtil.getShortText(this),
-    iconId = getIcon().rpcId(),
+    iconId = getIcon().rpcId().also {
+      // let's not cache icon while sending it through RPC
+      // TODO: it is better to send all needed icons from BreakpointType
+      //  and then collect it on the frontend (taking XBreakpointBase.updateIcon() method)
+      clearIcon()
+    },
     sourcePosition = sourcePosition?.toRpc(),
     isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(this),
     logExpressionObject = logExpressionObject?.toRpc(),
