@@ -154,7 +154,7 @@ private suspend fun tryInitializeEelOnWsl(path: String) {
 }
 
 
-internal data class WslEelDescriptor(val distribution: WSLDistribution) : EelDescriptor {
+data class WslEelDescriptor(val distribution: WSLDistribution) : EelDescriptor {
   override val operatingSystem: EelPath.OS = EelPath.OS.UNIX
 
 
