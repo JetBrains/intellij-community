@@ -10,6 +10,7 @@ import com.intellij.ide.bookmark.ui.GroupCreateDialog
 import com.intellij.ide.bookmark.ui.GroupSelectDialog
 import com.intellij.ide.bookmarks.BookmarksListener
 import com.intellij.ide.favoritesTreeView.FavoritesManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -24,6 +25,9 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.Invoker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.CancellablePromise
 import java.io.File
@@ -31,7 +35,8 @@ import java.io.File
 private val LOG = Logger.getInstance(BookmarksManager::class.java)
 
 @State(name = "BookmarksManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: Project) : BookmarksManager, PersistentStateComponentWithModificationTracker<ManagerState> {
+class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: Project, private val coroutineScope: CoroutineScope)
+  : BookmarksManager, PersistentStateComponentWithModificationTracker<ManagerState> {
 
   private val invoker = Invoker.forBackgroundThreadWithReadAction(project)
   private val notifier = ModificationNotifier(project)
@@ -177,9 +182,9 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
       if (allGroups.isEmpty()) addOrReuseGroup(project.name)
     }
     val groups = findGroupsToAdd(bookmark) ?: return
-    val group = chooseGroupToAdd(groups) ?: return
-    val description = bookmark.prepareDefaultDescription()
-    group.add(bookmark, type, description)
+    chooseGroupToAdd(groups) { group ->
+      group.add(bookmark, type, bookmark.prepareDefaultDescription())
+    }
   }
 
   private fun findGroupsToAdd(bookmark: Bookmark) = synchronized(notifier) {
@@ -191,10 +196,25 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
     }
   }
 
-  private fun chooseGroupToAdd(groups: List<Group>) = when (groups.size) {
-    1 -> groups[0]
-    0 -> GroupCreateDialog(project, null, this).showAndGetGroup(true) as? Group
-    else -> GroupSelectDialog(project, null, this, groups).showAndGetGroup(true) as? Group
+  private fun chooseGroupToAdd(groups: List<Group>, addHandler: (Group) -> Unit) {
+    if (groups.size == 1) {
+      addHandler(groups[0])
+      return
+    }
+
+    coroutineScope.launch(Dispatchers.EDT) {
+      val group = if (groups.isEmpty()) {
+        GroupCreateDialog(project, null, this@BookmarksManagerImpl).showAndGetGroup(true)
+      }
+      else {
+        GroupSelectDialog(project, null, this@BookmarksManagerImpl, groups).showAndGetGroup(true)
+      }
+      group?.let {
+        coroutineScope.launch {
+          addHandler(it as Group)
+        }
+      }
+    }
   }
 
   override fun remove(bookmark: Bookmark) {
