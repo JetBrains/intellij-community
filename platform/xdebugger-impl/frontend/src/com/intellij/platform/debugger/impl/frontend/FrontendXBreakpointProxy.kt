@@ -51,7 +51,7 @@ class FrontendXBreakpointProxy(
   init {
     // TODO: there is a race in changes from server and client,
     //  so we need to merge this state.
-    //  Otherwise, multiple clicks on the breakpoint in breakpoint dialog may works in a wrong way.
+    //  Otherwise, multiple clicks on the breakpoint in breakpoint dialog will work in a wrong way.
     cs.launch {
       dto.enabledState.toFlow().collectLatest {
         _enabled.value = it

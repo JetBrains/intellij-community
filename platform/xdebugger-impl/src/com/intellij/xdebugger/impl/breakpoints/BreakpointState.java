@@ -8,12 +8,9 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import kotlinx.coroutines.flow.StateFlow;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
 
 @Tag("breakpoint")
 @ApiStatus.Internal
@@ -54,12 +51,6 @@ public class BreakpointState {
     myEnabled = enabled;
   }
 
-  @Transient
-  public StateFlow<Boolean> getEnabledFlow() {
-    // TODO: implement proper reactivity taking serialization into account
-    return createMutableStateFlow(myEnabled);
-  }
-
   @Attribute("type")
   public String getTypeId() {
     return myTypeId;
@@ -96,12 +87,6 @@ public class BreakpointState {
     mySuspendPolicy = suspendPolicy;
   }
 
-  @Transient
-  public StateFlow<SuspendPolicy> getSuspendPolicyFlow() {
-    // TODO: implement proper reactivity taking serialization into account
-    return createMutableStateFlow(mySuspendPolicy);
-  }
-
   @Attribute("log-message")
   public boolean isLogMessage() {
     return myLogMessage;
@@ -109,12 +94,6 @@ public class BreakpointState {
 
   public void setLogMessage(final boolean logMessage) {
     myLogMessage = logMessage;
-  }
-
-  @Transient
-  public StateFlow<Boolean> getLogMessageFlow() {
-    // TODO: implement proper reactivity taking serialization into account
-    return createMutableStateFlow(myLogMessage);
   }
 
   @Attribute("log-stack")
@@ -126,12 +105,6 @@ public class BreakpointState {
     myLogStack = logStack;
   }
 
-  @Transient
-  public StateFlow<Boolean> getLogStackFlow() {
-    // TODO: implement proper reactivity taking serialization into account
-    return createMutableStateFlow(myLogStack);
-  }
-
   public @Nullable String getGroup() {
     return myGroup;
   }
@@ -140,24 +113,12 @@ public class BreakpointState {
     myGroup = group;
   }
 
-  @Transient
-  public StateFlow<String> getGroupFlow() {
-    // TODO: implement proper reactivity taking serialization into account
-    return createMutableStateFlow(myGroup);
-  }
-
   public String getDescription() {
     return myDescription;
   }
 
   public void setDescription(String description) {
     myDescription = description;
-  }
-
-  @Transient
-  public StateFlow<String> getDescriptionFlow() {
-    // TODO: implement proper reactivity taking serialization into account
-    return createMutableStateFlow(myDescription);
   }
 
   @Property(surroundWithTag = false)

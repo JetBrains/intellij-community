@@ -36,7 +36,7 @@ data class XBreakpointDto(
 
 @ApiStatus.Internal
 suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
-  val breakpointState = state
+  val breakpointStateBridge = stateBridge
 
   return XBreakpointDto(
     id = breakpointId,
@@ -56,10 +56,10 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
     initialLogMessage = isLogMessage,
     initialLogStack = isLogStack,
     initialUserDescription = userDescription,
-    enabledState = breakpointState.enabledFlow.toRpc(),
-    suspendPolicyState = breakpointState.suspendPolicyFlow.toRpc(),
-    logMessageState = breakpointState.logMessageFlow.toRpc(),
-    logStackState = breakpointState.logStackFlow.toRpc(),
-    userDescriptionState = breakpointState.descriptionFlow.toRpc(),
+    enabledState = breakpointStateBridge.isEnabledFlow().toRpc(),
+    suspendPolicyState = breakpointStateBridge.suspendPolicyFlow().toRpc(),
+    logMessageState = breakpointStateBridge.logMessageFlow().toRpc(),
+    logStackState = breakpointStateBridge.logStackFlow().toRpc(),
+    userDescriptionState = breakpointStateBridge.descriptionFlow().toRpc(),
   )
 }
