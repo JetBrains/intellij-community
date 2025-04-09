@@ -14,7 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @JvmOverloads
-internal fun loadDescriptorInTest(
+internal fun loadAndInitDescriptorInTest(
   dir: Path,
   isBundled: Boolean = false,
   disabledPlugins: Set<String> = emptySet(),
@@ -65,7 +65,7 @@ internal fun loadPluginWithText(
   path: Path,
   disabledPlugins: Set<String> = emptySet(),
 ): Disposable {
-  val descriptor = loadDescriptorInTest(
+  val descriptor = loadAndInitDescriptorInTest(
     pluginBuilder = pluginBuilder,
     rootPath = path,
     disabledPlugins = disabledPlugins,
@@ -87,7 +87,7 @@ internal fun loadPluginWithText(
   }
 }
 
-internal fun loadDescriptorInTest(
+internal fun loadAndInitDescriptorInTest(
   pluginBuilder: PluginBuilder,
   rootPath: Path,
   disabledPlugins: Set<String> = emptySet(),
@@ -101,7 +101,7 @@ internal fun loadDescriptorInTest(
   val pluginDirectory = path.resolve("plugin")
   pluginBuilder.build(pluginDirectory)
 
-  return loadDescriptorInTest(
+  return loadAndInitDescriptorInTest(
     dir = pluginDirectory,
     disabledPlugins = disabledPlugins,
   )

@@ -145,7 +145,7 @@ class PluginDescriptorTest {
         }
       }
     }.generateInTempDir() // todo maybe make generateIn(path) to use rootPath here instead
-    val descriptor = loadDescriptorInTest(tempDir)
+    val descriptor = loadAndInitDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
     assertThat(descriptor.jarFiles).isNotNull()
@@ -168,7 +168,7 @@ class PluginDescriptorTest {
                |</idea-plugin>""".trimMargin())
       }
     }.generateInTempDir()
-    val descriptor = loadDescriptorInTest(tempDir)
+    val descriptor = loadAndInitDescriptorInTest(tempDir)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("foo.bar")
     assertThat(descriptor.jarFiles).isNotNull()
@@ -203,7 +203,7 @@ class PluginDescriptorTest {
     </component>
   </project-components>
 </idea-plugin>""")
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.projectContainerDescriptor.components[0].options).isEqualTo(Collections.singletonMap("workspace", "true"))
   }
@@ -216,7 +216,7 @@ class PluginDescriptorTest {
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar.module.xml")
       .build(pluginDirPath)
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
       .isMarkedEnabled()
       .hasExactlyEnabledContentModules("bar/module")
@@ -231,7 +231,7 @@ class PluginDescriptorTest {
               moduleFile = "bar/module.xml")
       .build(pluginDirPath)
     assertThatThrownBy {
-      val descriptor = loadDescriptorInTest(pluginDirPath)
+      val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
       assertThat(descriptor).isNotNull
         .isNotMarkedEnabled()
         .doesNotHaveEnabledContentModules()
@@ -247,7 +247,7 @@ class PluginDescriptorTest {
               moduleFile = "bar.module.sub.xml")
       .build(pluginDirPath)
     assertThatThrownBy {
-      val descriptor = loadDescriptorInTest(pluginDirPath)
+      val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
       assertThat(descriptor).isNotNull
         .isNotMarkedEnabled()
         .doesNotHaveEnabledContentModules()
@@ -262,7 +262,7 @@ class PluginDescriptorTest {
               loadingRule = ModuleLoadingRule.REQUIRED,
               moduleFile = "bar/module.sub.xml")
       .build(pluginDirPath)
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
       .isMarkedEnabled()
       .hasExactlyEnabledContentModules("bar/module/sub")
@@ -284,7 +284,7 @@ class PluginDescriptorTest {
         </content>
       </idea-plugin>
     """.trimIndent())
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
       .isMarkedEnabled()
       .hasExactlyEnabledContentModules("foo.module")
@@ -308,7 +308,7 @@ class PluginDescriptorTest {
       )
       .build(pluginDirPath)
 
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")
@@ -335,7 +335,7 @@ class PluginDescriptorTest {
       )
       .build(pluginDirPath)
 
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.name).isEqualTo("Bar")
@@ -356,7 +356,7 @@ class PluginDescriptorTest {
       .module(moduleName = "bar.emb", moduleDescriptor = PluginBuilder.empty(), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(pluginDirPath)
 
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
@@ -373,7 +373,7 @@ class PluginDescriptorTest {
       .module(moduleName = "emb", moduleDescriptor = PluginBuilder.empty().resourceBundle("emb"), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(pluginDirPath)
 
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     assertThat(descriptor.pluginId.idString).isEqualTo("bar")
     assertThat(descriptor.resourceBundleBaseName).isEqualTo("resourceBundle")
@@ -386,7 +386,7 @@ class PluginDescriptorTest {
     PluginBuilder.empty()
       .id("com.intellij")
       .build(pluginDirPath)
-    val descriptor = loadDescriptorInTest(pluginDirPath)
+    val descriptor = loadAndInitDescriptorInTest(pluginDirPath)
     assertThat(descriptor).isNotNull
     val hostIds = IdeaPluginOsRequirement.getHostOsModuleIds()
     if (hostIds.isEmpty()) {
@@ -412,7 +412,7 @@ class PluginDescriptorTest {
                         loadingRule = ModuleLoadingRule.REQUIRED),
               loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath)
-    val (bar, err) = runAndReturnWithLoggedError { loadDescriptorInTest(pluginDirPath) }
+    val (bar, err) = runAndReturnWithLoggedError { loadAndInitDescriptorInTest(pluginDirPath) }
     assertThat(err).hasMessageContainingAll("Unexpected `content` elements in a content module")
     assertThat(bar).isNotNull
       .isMarkedEnabled()
@@ -463,14 +463,14 @@ class PluginDescriptorTest {
   <id>ID</id>
   <name>A</name>
 </idea-plugin>""")
-    val impl1 = loadDescriptorInTest(rootPath)
+    val impl1 = loadAndInitDescriptorInTest(rootPath)
 
     tempFile.write("""
 <idea-plugin>
   <id>ID</id>
   <name>B</name>
 </idea-plugin>""")
-    val impl2 = loadDescriptorInTest(rootPath)
+    val impl2 = loadAndInitDescriptorInTest(rootPath)
 
     assertEquals(impl1, impl2)
     assertEquals(impl1.hashCode(), impl2.hashCode())
@@ -497,7 +497,7 @@ class PluginDescriptorTest {
       dirName: String,
       disabledPlugins: Set<String> = emptySet(),
     ): IdeaPluginDescriptorImpl {
-      return loadDescriptorInTest(
+      return loadAndInitDescriptorInTest(
         dir = Path.of(testDataPath, dirName),
         disabledPlugins = disabledPlugins,
       )

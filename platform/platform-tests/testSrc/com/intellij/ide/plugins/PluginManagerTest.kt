@@ -186,7 +186,7 @@ class PluginManagerTest {
   @Test
   fun testModulePluginIdContract() {
     val pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules")
-    val descriptorBundled = loadDescriptorInTest(pluginsPath, true)
+    val descriptorBundled = loadAndInitDescriptorInTest(pluginsPath, true)
     val pluginSet = PluginSetBuilder(mutableSetOf(descriptorBundled)).createPluginSetWithEnabledModulesMap()
 
     val moduleId = PluginId.getId("foo.bar")
@@ -197,8 +197,8 @@ class PluginManagerTest {
   @Test
   fun testIdentifyPreInstalledPlugins() {
     val pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled")
-    val bundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), true)
-    val updated = loadDescriptorInTest(pluginsPath.resolve("updated"))
+    val bundled = loadAndInitDescriptorInTest(pluginsPath.resolve("bundled"), true)
+    val updated = loadAndInitDescriptorInTest(pluginsPath.resolve("updated"))
     val expectedPluginId = updated.getPluginId()
     Assert.assertEquals(expectedPluginId, bundled.getPluginId())
 
