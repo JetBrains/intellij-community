@@ -57,7 +57,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   private final MultiMap<XBreakpointType, XBreakpointBase<?, ?, ?>> myBreakpoints = MultiMap.createLinkedSet();
   private final Map<XBreakpointType, Set<XBreakpointBase<?, ?, ?>>> myDefaultBreakpoints = new LinkedHashMap<>();
-  private final Map<XBreakpointType, BreakpointState<?, ?, ?>> myBreakpointsDefaults = new LinkedHashMap<>();
+  private final Map<XBreakpointType, BreakpointState> myBreakpointsDefaults = new LinkedHashMap<>();
   private final MutableStateFlow<Set<XBreakpointBase<?, ?, ?>>> myAllBreakpoints = createMutableStateFlow(new LinkedHashSet<>());
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new ConcurrentHashMap<>();
   private volatile XBreakpointsDialogState myBreakpointsDialogSettings;
@@ -183,12 +183,12 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                       T properties, final boolean enabled,
                                                                                       boolean defaultBreakpoint) {
     return withLockMaybeCancellable(myLock, () -> {
-      BreakpointState<?, T, ?> state = new BreakpointState<>(enabled,
+      BreakpointState state = new BreakpointState(enabled,
                                                              type.getId(),
                                                              defaultBreakpoint ? 0 : ++myTime, type.getDefaultSuspendPolicy());
       getBreakpointDefaults(type).applyDefaults(state);
       state.setGroup(myDefaultGroup);
-      return new XBreakpointBase<XBreakpoint<T>, T, BreakpointState<?, T, ?>>(type, this, properties, state);
+      return new XBreakpointBase<>(type, this, properties, state);
     });
   }
 
@@ -341,7 +341,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                          boolean temporary,
                                                                                          boolean initUI) {
     return withLockMaybeCancellable(myLock, () -> {
-      LineBreakpointState<T> state = new LineBreakpointState<>(true, type.getId(), fileUrl, line, temporary,
+      LineBreakpointState state = new LineBreakpointState(true, type.getId(), fileUrl, line, temporary,
                                                                ++myTime, type.getDefaultSuspendPolicy());
       getBreakpointDefaults(type).applyDefaults(state);
       state.setGroup(myDefaultGroup);
@@ -466,7 +466,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     return withLockMaybeCancellable(myLock, () -> {
       myDependentBreakpointManager.saveState();
 
-      List<BreakpointState<?, ?, ?>> defaultBreakpoints = new SmartList<>();
+      List<BreakpointState> defaultBreakpoints = new SmartList<>();
       for (Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints : myDefaultBreakpoints.values()) {
         if (!ContainerUtil.exists(typeDefaultBreakpoints,
                                   breakpoint -> differsFromDefault(defaultBreakpointsMap, breakpoint.getType(), breakpoint.getState()))) {
@@ -478,13 +478,13 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         }
       }
 
-      List<BreakpointState<?, ?, ?>> breakpoints = new SmartList<>();
-      for (XBreakpointBase<?, ?, ?> breakpoint : myBreakpoints.values()) {
+      List<BreakpointState> breakpoints = new SmartList<>();
+      for (XBreakpointBase breakpoint : myBreakpoints.values()) {
         breakpoints.add(breakpoint.getState());
       }
 
-      List<BreakpointState<?, ?, ?>> breakpointsDefaults = new SmartList<>();
-      for (Map.Entry<XBreakpointType, BreakpointState<?, ?, ?>> entry : myBreakpointsDefaults.entrySet()) {
+      List<BreakpointState> breakpointsDefaults = new SmartList<>();
+      for (Map.Entry<XBreakpointType, BreakpointState> entry : myBreakpointsDefaults.entrySet()) {
         if (statesAreDifferent(entry.getValue(), createBreakpointDefaults(entry.getKey()), false)) {
           breakpointsDefaults.add(entry.getValue());
         }
@@ -632,8 +632,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       LOG.warn("Unknown breakpoint type " + breakpointState.getTypeId());
       return null;
     }
-    //noinspection unchecked
-    return breakpointState.createBreakpoint(type, this);
+    return XBreakpointUtil.createBreakpoint(type, breakpointState, this);
   }
 
   public @NotNull BreakpointState getBreakpointDefaults(@NotNull XBreakpointType type) {

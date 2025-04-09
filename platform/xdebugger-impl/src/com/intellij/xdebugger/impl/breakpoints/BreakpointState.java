@@ -7,21 +7,17 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import kotlinx.coroutines.flow.StateFlow;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
 
 @Tag("breakpoint")
 @ApiStatus.Internal
-public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties, T extends XBreakpointType<B,P>> {
+public class BreakpointState {
   private String myTypeId;
   private boolean myEnabled;
   private Element myPropertiesElement;
@@ -203,10 +199,6 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
   public void setDependencyState(final XBreakpointDependencyState dependencyState) {
     myDependencyState = dependencyState;
-  }
-
-  public XBreakpointBase<B,P,?> createBreakpoint(@NotNull T type, @NotNull XBreakpointManagerImpl breakpointManager) {
-    return new XBreakpointBase<B, P, BreakpointState<B,P,?>>(type, breakpointManager, this);
   }
 
   public long getTimeStamp() {

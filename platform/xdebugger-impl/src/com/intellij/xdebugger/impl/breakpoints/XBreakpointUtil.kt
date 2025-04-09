@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.jetbrains.fus.reporting.model.lion3.FusAction.Companion.state
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -209,6 +210,22 @@ object XBreakpointUtil {
       }
     }
     return res
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun <B : XBreakpoint<P>, P : XBreakpointProperties<*>, T : XBreakpointType<B, P>> createBreakpoint(
+    type: T,
+    state: BreakpointState,
+    breakpointManager: XBreakpointManagerImpl,
+  ): XBreakpointBase<B, P, *> {
+    return if (type is XLineBreakpointType<*> && state is LineBreakpointState) {
+      @Suppress("UNCHECKED_CAST")
+      XLineBreakpointImpl(type, breakpointManager, state) as XBreakpointBase<B, P, *>
+    }
+    else {
+      XBreakpointBase(type, breakpointManager, state)
+    }
   }
 
   @JvmStatic

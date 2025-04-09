@@ -49,7 +49,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 @ApiStatus.Internal
-public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
+public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
   private static final Logger LOG = Logger.getInstance(XLineBreakpointImpl.class);
 
@@ -62,14 +62,14 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type,
                              XBreakpointManagerImpl breakpointManager,
-                             final @Nullable P properties, LineBreakpointState<P> state) {
+                             final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
   }
 
   XLineBreakpointImpl(final XLineBreakpointType<P> type,
                       XBreakpointManagerImpl breakpointManager,
-                      final LineBreakpointState<P> breakpointState) {
+                      final LineBreakpointState breakpointState) {
     super(type, breakpointManager, breakpointState);
     myType = type;
   }
