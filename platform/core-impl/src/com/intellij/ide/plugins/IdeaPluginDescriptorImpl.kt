@@ -155,7 +155,6 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private var isEnabled = true
   private var _pluginClassLoader: ClassLoader? = null
-  internal var initError: PluginLoadingError? = null
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
 
@@ -382,10 +381,6 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   private fun onInitError(error: PluginLoadingError): PluginLoadingError {
-    initError?.let {
-      return it
-    }
-    initError = error
     isEnabled = false
     return error
   }
