@@ -179,7 +179,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       ProcessHandler handler = executionResult != null ? executionResult.getProcessHandler() : null;
       if (handler != null) {
         proxy.attach(handler);
-        handler.addProcessListener(new ProcessAdapter() {
+        handler.addProcessListener(new ProcessListener() {
           @Override
           public void processTerminated(@NotNull ProcessEvent event) {
             proxy.destroy();
@@ -217,7 +217,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     final ControlBreakAction controlBreakAction = new ControlBreakAction();
     if (consoleComponent != null) {
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(final @NotNull ProcessEvent event) {
           processHandler.removeProcessListener(this);
@@ -345,7 +345,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       super(ExecutionBundle.message("run.configuration.attach.debugger.action.name"), null, AllIcons.Debugger.AttachToProcess);
 
       myProcessHandler = processHandler;
-      myProcessHandler.addProcessListener(new ProcessAdapter() {
+      myProcessHandler.addProcessListener(new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
