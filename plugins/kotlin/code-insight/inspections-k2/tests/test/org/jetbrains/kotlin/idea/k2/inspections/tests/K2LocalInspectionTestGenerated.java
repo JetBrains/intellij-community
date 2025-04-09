@@ -14787,6 +14787,100 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment")
+    public static class ReplaceWithOperatorAssignment extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("flexibleTypeBug.kt")
+        public void testFlexibleTypeBug() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/flexibleTypeBug.kt");
+        }
+
+        @TestMetadata("illegalMultipleOperators.kt")
+        public void testIllegalMultipleOperators() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/illegalMultipleOperators.kt");
+        }
+
+        @TestMetadata("illegalMultipleOperatorsMiddle.kt")
+        public void testIllegalMultipleOperatorsMiddle() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/illegalMultipleOperatorsMiddle.kt");
+        }
+
+        @TestMetadata("invalidSubtraction.kt")
+        public void testInvalidSubtraction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/invalidSubtraction.kt");
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/list.kt");
+        }
+
+        @TestMetadata("multipleOperators.kt")
+        public void testMultipleOperators() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/multipleOperators.kt");
+        }
+
+        @TestMetadata("multipleOperatorsRightSideRepeat.kt")
+        public void testMultipleOperatorsRightSideRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/multipleOperatorsRightSideRepeat.kt");
+        }
+
+        @TestMetadata("mutableList.kt")
+        public void testMutableList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/mutableList.kt");
+        }
+
+        @TestMetadata("nonCommutativeRepeat.kt")
+        public void testNonCommutativeRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/nonCommutativeRepeat.kt");
+        }
+
+        @TestMetadata("nonRepeatingAssignment.kt")
+        public void testNonRepeatingAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/nonRepeatingAssignment.kt");
+        }
+
+        @TestMetadata("plusAssignConflict.kt")
+        public void testPlusAssignConflict() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/plusAssignConflict.kt");
+        }
+
+        @TestMetadata("rightSideRepeat.kt")
+        public void testRightSideRepeat() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/rightSideRepeat.kt");
+        }
+
+        @TestMetadata("simpleAssign.kt")
+        public void testSimpleAssign() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/simpleAssign.kt");
+        }
+
+        @TestMetadata("validAddition.kt")
+        public void testValidAddition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/validAddition.kt");
+        }
+
+        @TestMetadata("validSubtraction.kt")
+        public void testValidSubtraction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/validSubtraction.kt");
+        }
+
+        @TestMetadata("withReceiver.kt")
+        public void testWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithOperatorAssignment/withReceiver.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
