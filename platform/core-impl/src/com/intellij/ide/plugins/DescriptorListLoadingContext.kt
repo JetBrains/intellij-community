@@ -15,7 +15,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.Arrays
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
@@ -81,13 +81,13 @@ class DescriptorListLoadingContext(
     return PluginManagerCore.CORE_ID != id && disabledPlugins.contains(id)
   }
 
-  fun isBroken(id: PluginId, descriptor: IdeaPluginDescriptorImpl): Boolean {
+  fun isBroken(id: PluginId, version: String?): Boolean {
     val set = brokenPluginVersions.get(id) ?: return false
-    return set.contains(descriptor.version)
+    return set.contains(version)
   }
 
   fun isBroken(descriptor: IdeaPluginDescriptorImpl): Boolean {
-    return (brokenPluginVersions.get(descriptor.pluginId) ?: return false).contains(descriptor.version)
+    return isBroken(descriptor.pluginId, descriptor.version)
   }
 
   override val interner: XmlInterner
