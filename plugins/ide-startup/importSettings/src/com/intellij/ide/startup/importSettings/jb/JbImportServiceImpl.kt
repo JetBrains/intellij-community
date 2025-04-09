@@ -102,6 +102,7 @@ internal data class JbProductInfo(
       def.invokeOnCompletion {
         val descr = def.getCompleted()
         if (descr != null) {
+          descr.initialize(context) // TODO probably can be dropped if isEnabled or initError are indeed never used in this class
           if (disabledPlugins.contains(descr.pluginId)) {
             logger.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
           }

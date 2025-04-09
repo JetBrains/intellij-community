@@ -1241,7 +1241,7 @@ fun testLoadAndInitDescriptorsFromClassPath(
 // do not use it
 @Internal
 fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: DescriptorListLoadingContext): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  return scope.loadDescriptorsFromDir(dir = dir, context = context, isBundled = false, pool = NonShareableJavaZipFilePool()) // FIXME initialize
+  return scope.loadDescriptorsFromDir(dir = dir, context = context, isBundled = false, pool = NonShareableJavaZipFilePool())
 }
 
 internal fun CoroutineScope.loadDescriptorsFromDir(
