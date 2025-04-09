@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.annotations.Filename
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.psi.PsiElement
@@ -76,7 +77,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
       // Check if the method is Path.resolve()
       if (isPathResolveMethod(target)) {
-        // Check if the argument is annotated with @MultiRoutingFileSystemPath
+        // Check if the argument is annotated with @MultiRoutingFileSystemPath or @Filename
         val arguments = node.valueArguments
         if (arguments.isNotEmpty()) {
           val arg = arguments[0]
@@ -312,6 +313,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
     }
 
+    class FilenameInfo(private val annotationCandidate: PsiModifierListOwner? = null) : PathAnnotationInfo() {
+      override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
+
+      fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
+    }
+
     class Unspecified(private val annotationCandidate: PsiModifierListOwner?) : PathAnnotationInfo() {
       override fun getPathAnnotationStatus(): ThreeState = ThreeState.UNSURE
       fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
@@ -343,6 +350,9 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         }
         if (AnnotationUtil.isAnnotated(owner, NativePath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
           return Native(owner)
+        }
+        if (AnnotationUtil.isAnnotated(owner, Filename::class.java.name, AnnotationUtil.CHECK_TYPE)) {
+          return FilenameInfo(owner)
         }
         return Unspecified(owner)
       }

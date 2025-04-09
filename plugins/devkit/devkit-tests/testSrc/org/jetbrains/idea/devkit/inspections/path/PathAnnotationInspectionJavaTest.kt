@@ -73,7 +73,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
       import java.nio.file.Path;
       import java.nio.file.Paths;
-      
+
       public class NonAnnotatedStringInPathResolve {
           public void testMethod() {
               Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
@@ -81,13 +81,41 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
               String nonAnnotatedPath = "subdir";
               // This should be highlighted as a warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
               Path path = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve(nonAnnotatedPath)</weak_warning>;
-      
+
               // Direct string literal should also be highlighted
               Path directPath = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve("another/subdir")</weak_warning>;
 
               // Annotated string should not be highlighted
               @MultiRoutingFileSystemPath String annotatedPath = "annotated/subdir";
               Path correctPath = basePath.resolve(annotatedPath);
+          }
+      }      
+      """.trimIndent())
+  }
+
+  fun testFilenameAnnotatedStringInPathResolve() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.Filename;
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+
+      import java.nio.file.Path;
+      import java.nio.file.Paths;
+
+      public class FilenameAnnotatedStringInPathResolve {
+          public void testMethod() {
+              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
+
+              // Non-annotated string should be highlighted
+              String nonAnnotatedPath = "subdir";
+              Path path = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve(nonAnnotatedPath)</weak_warning>;
+
+              // String annotated with @Filename should not be highlighted
+              @Filename String filenameAnnotatedPath = "file.txt";
+              Path filenameAnnotatedPathResolved = basePath.resolve(filenameAnnotatedPath);
+
+              // String annotated with @MultiRoutingFileSystemPath should not be highlighted
+              @MultiRoutingFileSystemPath String multiRoutingAnnotatedPath = "annotated/subdir";
+              Path multiRoutingAnnotatedPathResolved = basePath.resolve(multiRoutingAnnotatedPath);
           }
       }      
       """.trimIndent())

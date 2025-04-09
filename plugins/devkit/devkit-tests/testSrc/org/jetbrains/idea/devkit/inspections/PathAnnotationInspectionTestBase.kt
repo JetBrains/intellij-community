@@ -66,6 +66,27 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
       """.trimIndent()
     )
 
+    myFixture.addClass(
+      """
+        package com.intellij.platform.eel.annotations;
+
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        import java.lang.annotation.Target;
+        import static java.lang.annotation.ElementType.*;
+
+        /**
+         * Denotes that the annotated element represents a simple filename without any path components.
+         * This annotation is meant to indicate that the corresponding string values must contain only
+         * the bare filename (e.g., "file.txt") without any directory separators, drive letters,
+         * or path components (e.g., not "C:\folder\file.txt" or "/home/user/file.txt").
+         */
+        @Retention(RetentionPolicy.SOURCE)
+        @Target({FIELD, LOCAL_VARIABLE, PARAMETER, METHOD, TYPE_USE})
+        public @interface Filename {}
+      """.trimIndent()
+    )
+
     // Add the NativeContext annotation
     myFixture.addClass(
       """
