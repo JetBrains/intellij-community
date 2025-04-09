@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
-import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluator
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
@@ -298,7 +297,7 @@ object KotlinPluginBuilder {
       }
 
       for (library in COMPILER_PLUGINS) {
-        spec.withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
+        spec.withProjectLibrary(library)
       }
 
       if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
@@ -427,7 +426,7 @@ object KotlinPluginBuilder {
   fun kotlinFrontendPlugin(): PluginLayout {
     return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
       spec.withModules(MODULES_SHARED_WITH_CLIENT)
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-common", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("kotlinc.kotlin-compiler-common")
     }
   }
 
@@ -452,7 +451,7 @@ object KotlinPluginBuilder {
 
 private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
   val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-  spec.withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
+  spec.withProjectLibrary(kotlincKotlinCompilerCommon)
 
   spec.withPatch { patcher, context ->
     val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
