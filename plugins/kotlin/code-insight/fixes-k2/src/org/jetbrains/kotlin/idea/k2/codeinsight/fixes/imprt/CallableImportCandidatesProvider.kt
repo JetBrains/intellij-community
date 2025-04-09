@@ -6,11 +6,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
 internal class CallableImportCandidatesProvider(
@@ -65,11 +63,10 @@ internal class CallableImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
-        val explicitReceiver = importContext.positionTypeAndReceiver.receiver
         val fileSymbol = getFileSymbol()
 
         val candidates = sequence {
-            if (explicitReceiver == null) {
+            if (!importContext.isExplicitReceiver) {
                 yieldAll(indexProvider.getKotlinCallableSymbolsByName(name) { declaration ->
                     // filter out extensions here, because they are added later with the use of information about receiver types
                     acceptsKotlinCallable(declaration) &&  (allowInapplicableExtensions || !declaration.isExtensionDeclaration())
@@ -95,7 +92,7 @@ internal class CallableImportCandidatesProvider(
                 }
 
                 else -> {
-                    val receiverTypes = collectReceiverTypesForElement(importContext.position, explicitReceiver as? KtExpression)
+                    val receiverTypes = importContext.receiverTypes()
                     yieldAll(
                         indexProvider.getExtensionCallableSymbolsByName(name, receiverTypes) { acceptsKotlinCallable(it) }
                             .map { CallableImportCandidate.create(it) }
