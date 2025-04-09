@@ -92,7 +92,7 @@ public final class DirectoryLock {
 
   private volatile @Nullable ServerSocketChannel myServerChannel = null;
 
-  DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
+  public DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
     myPortFile = systemPath.resolve(SpecialConfigFiles.PORT_FILE);
     myLockFile = configPath.resolve(SpecialConfigFiles.LOCK_FILE);
 
@@ -147,7 +147,7 @@ public final class DirectoryLock {
    * Returns {@code null} on successfully locking the directories, a non-null value on successfully activating another instance,
    * or throws a {@link CannotActivateException}.
    */
-  @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException, IOException {
+  public @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException, IOException {
     var configDir = NioFiles.createDirectories(myLockFile.getParent());
     var systemDir = NioFiles.createDirectories(myPortFile.getParent());
     if (Files.isSameFile(systemDir, configDir)) {
