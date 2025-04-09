@@ -44,7 +44,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
     fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         val factories = listOfNotNull(
             UnresolvedNameReferenceImportQuickFixFactory,
-            MismatchedArgumentsImportQuickFixFactory.takeIf { Registry.`is`("kotlin.k2.auto.import.mismatched.arguments.factory.enabled") },
+            MismatchedArgumentsImportQuickFixFactory.takeIf { Registry.`is`("kotlin.k2.auto.import.mismatched.arguments.factory.enabled", true) },
             DelegateMethodImportQuickFixFactory,
             ArrayAccessorImportQuickFixFactory,
             ComponentFunctionImportQuickFixFactory,
