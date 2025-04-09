@@ -797,6 +797,34 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("project.impl", "project.api", DependencyScope.TEST);
   }
 
+  @Test
+  @TargetVersions("5.6+")
+  public void testCustomSourceSetOnTestFixtureDependency() throws Exception {
+    createSettingsFile(including("common", "consumer"));
+    createProjectSubFile("common/build.gradle", createBuildScriptBuilder()
+      .withPlugin("java-library")
+      .withPlugin("java-test-fixtures")
+      .generate());
+
+    createProjectSubFile("consumer/build.gradle", createBuildScriptBuilder()
+      .withPlugin("java-library")
+      .withPlugin("java-test-fixtures")
+      .addPostfix("""
+                    sourceSets { customTest }
+                    dependencies {
+                      customTestImplementation(testFixtures(project(':common')))
+                    }
+                    """)
+      .generate());
+
+    importProject();
+
+    assertModules("project",
+                  "project.common", "project.common.main", "project.common.test", "project.common.testFixtures",
+                  "project.consumer", "project.consumer.main", "project.consumer.test", "project.consumer.testFixtures", "project.consumer.customTest");
+    assertProductionOnTestDependencies("project.consumer.customTest", "project.common.testFixtures");
+  }
+
 
   @Test
   public void testProjectDependencyOnCustomArtifacts() throws Exception {
