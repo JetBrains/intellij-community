@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.bazel
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
@@ -16,10 +15,14 @@ import kotlin.io.path.invariantSeparatorsPathString
  */
 internal class JpsModuleToBazel {
   companion object {
+    const val BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV = "BUILD_WORKSPACE_DIRECTORY"
+
     @JvmStatic
     fun main(args: Array<String>) {
+      val workspaceDir: Path? = System.getenv(BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV)?.let { Path.of(it).normalize() }
+      val projectDir = searchUltimateRootUpwards(workspaceDir ?: Path.of(System.getProperty("user.dir")))
+
       val m2Repo = Path.of(System.getProperty("user.home"), ".m2/repository")
-      val projectDir = Path.of(PathManager.getHomePath())
       val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo.toString()), true)
       val jarRepositories = loadJarRepositories(projectDir)
 
@@ -45,6 +48,17 @@ internal class JpsModuleToBazel {
 
       // save cache only on success. do not surround with try/finally
       urlCache.save()
+    }
+
+    fun searchUltimateRootUpwards(start: Path): Path {
+      var current = start
+      while (true) {
+        if (Files.exists(current.resolve(".ultimate.root.marker"))) {
+          return current
+        }
+
+        current = current.parent ?: throw IllegalStateException("Cannot find ultimate root starting from $start")
+      }
     }
   }
 }
