@@ -40,7 +40,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     pluginDir = path,
     pool = ZipFilePoolImpl(),
   )
-  return result
+  return result.apply { initialize(context = context) }
 }
 
 fun createFromDescriptor(path: Path,
@@ -56,5 +56,5 @@ fun createFromDescriptor(path: Path,
   }
   val result = IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = isBundled)
   initMainDescriptorByRaw(descriptor = result, pathResolver = pathResolver, context = context, dataLoader = dataLoader, pluginDir = path, pool = ZipFilePoolImpl())
-  return result
+  return result.apply { initialize(context = context) }
 }

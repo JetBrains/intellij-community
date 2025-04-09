@@ -205,7 +205,7 @@ private fun loadDescriptorFromStream(
     pluginDir = pluginDir ?: fileOrDir,
     pool = pool,
   )
-  return descriptor
+  return descriptor.apply { initialize(context = context) }
 }
 
 @VisibleForTesting
@@ -251,7 +251,6 @@ fun initMainDescriptorByRaw(
     }
   }
 
-  descriptor.initialize(context = context)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
 }
 

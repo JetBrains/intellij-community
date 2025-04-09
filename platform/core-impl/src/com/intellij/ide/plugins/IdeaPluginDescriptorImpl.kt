@@ -295,7 +295,8 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  internal fun initialize(context: DescriptorListLoadingContext) = initialize(
+  @VisibleForTesting
+  fun initialize(context: DescriptorListLoadingContext) = initialize(
     context.productBuildNumber,
     context::isPluginDisabled,
     context::isBroken,
