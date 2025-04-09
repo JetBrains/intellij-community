@@ -675,6 +675,7 @@ public final class VariableAccessUtils {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
       PsiTypeCastExpression insertedCast = (PsiTypeCastExpression)refCopy.replace(
         factory.createExpressionFromText("(a)"+reference.getReferenceName(), refCopy));
+      if (PsiTypes.nullType().equals(targetType)) return false;
       Objects.requireNonNull(insertedCast.getCastType()).replace(factory.createTypeElement(targetType));
       return callCopy.resolveMethod() == method;
     }
