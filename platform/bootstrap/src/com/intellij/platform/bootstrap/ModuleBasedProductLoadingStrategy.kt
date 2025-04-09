@@ -259,6 +259,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         else ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, defaultResolver)
       val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
       loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
+        ?.apply { initialize(context = context) }
     }
     val modulesWithJarFiles = descriptor?.content?.modules?.flatMap { moduleItem ->
       val jarFiles = moduleItem.requireDescriptor().jarFiles

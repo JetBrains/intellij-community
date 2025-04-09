@@ -78,7 +78,7 @@ fun loadForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = Plu
       isBundled = true,
       isEssential = true,
       id = id,
-    )
+    )?.apply { initialize(context = parentContext) }
   }
 }
 
@@ -153,7 +153,7 @@ fun loadDescriptorFromJar(
       descriptorRelativePath = descriptorRelativePath,
       pool = pool,
       id = id,
-    ).apply { initialize(context = context) }
+    )
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
     return descriptor
   }
@@ -292,7 +292,7 @@ fun loadDescriptorFromFileOrDir(
         isBundled = isBundled,
         isEssential = isEssential,
         useCoreClassLoader = useCoreClassLoader,
-      )
+      )?.apply { initialize(context = context) }
     }
     else -> null
   }
@@ -332,7 +332,7 @@ private fun loadFromPluginDir(
         isEssential = isEssential,
         useCoreClassLoader = useCoreClassLoader,
         pluginDir = dir,
-      )?.let {
+      )?.apply { initialize(context = parentContext) }?.let {
         it.jarFiles = pluginJarFiles
         return it
       }
@@ -1104,6 +1104,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
     @Suppress("SSBasedInspection")
     val descriptor = runBlocking {
       loadDescriptorFromJar(file = file, context = context, pool = NonShareableJavaZipFilePool(), pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)
+        ?.apply { initialize(context = context) }
     }
     if (descriptor != null) {
       return descriptor
