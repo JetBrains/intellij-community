@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.channelFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeItemDataFrontendProvider(private val projectId: ProjectId,
+class SeFrontendItemDataProvider(private val projectId: ProjectId,
                                  override val id: SeProviderId,
                                  private val sessionRef: DurableRef<SeSessionEntity>,
                                  private val dataContextId: DataContextId): SeItemDataProvider {

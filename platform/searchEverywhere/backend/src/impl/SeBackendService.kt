@@ -94,7 +94,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
         provider
       }.toList().associate { provider ->
         val id = SeProviderId(provider.id)
-        id to SeItemDataBackendProvider(id, provider, sessionRef)
+        id to SeBackendItemDataProvider(id, provider, sessionRef)
       }
 
       existingHolderEntities = change {

@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.frontend.SeItemDataFrontendProvider
-import com.intellij.platform.searchEverywhere.frontend.SeItemDataLocalProvider
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvider
+import com.intellij.platform.searchEverywhere.frontend.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
@@ -79,7 +79,7 @@ class SeTabDelegate private constructor(val project: Project,
             null
           }
         }.toList().associate { provider ->
-          SeProviderId(provider.id) to SeItemDataLocalProvider(provider, sessionRef)
+          SeProviderId(provider.id) to SeLocalItemDataProvider(provider, sessionRef)
         }
 
       val remoteProviderIds =
@@ -87,7 +87,7 @@ class SeTabDelegate private constructor(val project: Project,
         else allProviderIds - localProviders.keys.toSet()
 
       val frontendProviders = remoteProviderIds.associateWith { providerId ->
-        SeItemDataFrontendProvider(project.projectId(), providerId, sessionRef, dataContextId)
+        SeFrontendItemDataProvider(project.projectId(), providerId, sessionRef, dataContextId)
       }
 
       val providers = frontendProviders + localProviders

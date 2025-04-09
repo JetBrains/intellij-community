@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.backend.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
@@ -15,16 +15,17 @@ import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeItemDataBackendProvider(override val id: SeProviderId,
-                                private val provider: SeItemsProvider,
-                                private val sessionRef: DurableRef<SeSessionEntity>
-): SeItemDataProvider {
+class SeLocalItemDataProvider(private val provider: SeItemsProvider,
+                              private val sessionRef: DurableRef<SeSessionEntity>): SeItemDataProvider {
+  override val id: SeProviderId
+    get() = SeProviderId(provider.id)
+
   override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
       provider.collectItems(params, object : SeItemsProvider.Collector {
         override suspend fun put(item: SeItem): Boolean {
           val itemData = SeItemData.createItemData(sessionRef, item, id, item.weight(), item.presentation()) ?: return true
-          SeLog.log(ITEM_EMIT) { "Backend provider for ${id.value} sends: ${itemData.presentation.text}" }
+          SeLog.log(ITEM_EMIT) { "Local provider for ${id.value} receives: ${itemData.presentation.text}" }
           send(itemData)
           return coroutineContext.isActive
         }
@@ -44,7 +45,7 @@ class SeItemDataBackendProvider(override val id: SeProviderId,
   }
 
   override fun dispose() {
-    SeLog.log(LIFE_CYCLE, "Backend provider ${id.value} disposed")
+    SeLog.log(LIFE_CYCLE, "Local provider ${id.value} disposed")
     Disposer.dispose(provider)
   }
 }
