@@ -575,6 +575,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/staticUsageFromSuperClass/staticUsageFromSuperClass.test");
     }
 
+    @TestMetadata("kotlin/subclassWithoutUsages/subclassWithoutUsages.test")
+    public void testKotlin_subclassWithoutUsages_SubclassWithoutUsages() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/subclassWithoutUsages/subclassWithoutUsages.test");
+    }
+
     @TestMetadata("kotlin/superReferences/superReferences.test")
     public void testKotlin_superReferences_SuperReferences() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/superReferences/superReferences.test");
