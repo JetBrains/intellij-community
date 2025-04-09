@@ -21,34 +21,33 @@ private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOp
 private const val UNMODIFIED_MARK_FILE_NAME: String = ".unmodified"
 
 internal fun createSourceAndCacheStrategyList(sources: Collection<Source>, productionClassOutDir: Path): List<SourceAndCacheStrategy> {
-  return sources
-    .map { source ->
-      when (source) {
-        is DirSource -> {
-          val dir = source.dir
-          if (dir.startsWith(productionClassOutDir)) {
-            ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.relativize(dir).toString())
-          }
-          else if (dir.startsWith(productionClassOutDir.resolveSibling("test"))) {
-            ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.resolveSibling("test").relativize(dir).toString())
-          }
-          else {
-            throw UnsupportedOperationException("$source is not supported")
-          }
+  return sources.map { source ->
+    when (source) {
+      is DirSource -> {
+        val dir = source.dir
+        if (dir.startsWith(productionClassOutDir)) {
+          ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.relativize(dir).toString())
         }
-        is InMemoryContentSource -> InMemorySourceAndCacheStrategy(source)
-        is FileSource -> FileSourceCacheStrategy(source)
-        is ZipSource -> {
-          if (source.file.startsWith(MAVEN_REPO)) {
-            MavenJarSourceAndCacheStrategy(source)
-          }
-          else {
-            NonMavenJarSourceAndCacheStrategy(source)
-          }
+        else if (dir.startsWith(productionClassOutDir.resolveSibling("test"))) {
+          ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.resolveSibling("test").relativize(dir).toString())
         }
-        is LazySource -> LazySourceAndCacheStrategy(source)
+        else {
+          throw UnsupportedOperationException("$source is not supported")
+        }
       }
+      is InMemoryContentSource -> InMemorySourceAndCacheStrategy(source)
+      is FileSource -> FileSourceCacheStrategy(source)
+      is ZipSource -> {
+        if (source.file.startsWith(MAVEN_REPO)) {
+          MavenJarSourceAndCacheStrategy(source)
+        }
+        else {
+          NonMavenJarSourceAndCacheStrategy(source)
+        }
+      }
+      is LazySource -> LazySourceAndCacheStrategy(source)
     }
+  }
 }
 
 internal sealed interface SourceAndCacheStrategy {
@@ -74,7 +73,7 @@ private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : S
   override fun updateAssetDigest(digest: HashStream64) {
     val relativePath = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
     hash = Hashing.xxh3_64().hashCharsToLong(relativePath)
-    digest.putString(relativePath)
+    digest.putLong(hash).putInt(relativePath.length)
   }
 }
 

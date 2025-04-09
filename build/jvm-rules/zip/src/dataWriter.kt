@@ -9,13 +9,13 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
 
-internal val READ = EnumSet.of(StandardOpenOption.READ)
+val READ_OPEN_OPTION: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.READ)
 
 val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
 val WRITE_OPEN_OPTION: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE)
 
-private val W_OVERWRITE: EnumSet<StandardOpenOption> = EnumSet.of(
+val W_OVERWRITE: EnumSet<StandardOpenOption> = EnumSet.of(
   StandardOpenOption.WRITE,
   StandardOpenOption.CREATE,
   StandardOpenOption.TRUNCATE_EXISTING,

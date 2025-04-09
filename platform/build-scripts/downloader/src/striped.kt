@@ -16,4 +16,8 @@ class StripedMutex(stripeCount: Int = 64) {
   fun getLock(string: String): Mutex {
     return locks[Hashing.xxh3_64().hashBytesToInt(string.toByteArray()) and mask]
   }
+
+  fun getLockByHash(hash: Int): Mutex {
+    return locks[hash and mask]
+  }
 }

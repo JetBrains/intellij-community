@@ -51,7 +51,7 @@ class ZipFileWriter(
       return
     }
 
-    FileChannel.open(file, READ).use { channel ->
+    FileChannel.open(file, READ_OPEN_OPTION).use { channel ->
       val size = channel.size().toInt()
       val isCompressed = size >= compressThreshold && deflater != null && !nameString.endsWith(".png")
       val path = nameString.toByteArray()

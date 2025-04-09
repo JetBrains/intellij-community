@@ -925,7 +925,6 @@ private suspend fun buildAsset(
     return BuildAssetResult(sourceToNativeFiles = emptyMap(), sourceToMetadata = sourceToMetadata)
   }
 
-  val nativeFileHandler = if (isCodesignEnabled) NativeFileHandlerImpl(context, asset) else null
   val sources = if (includedModules.isEmpty()) {
     asset.sources
   }
@@ -952,6 +951,7 @@ private suspend fun buildAsset(
     return emptyBuildJarsResult()
   }
 
+  val nativeFileHandler = if (isCodesignEnabled) NativeFileHandlerImpl(context, asset) else null
   val sourceToMetadata = HashMap<Source, SizeAndHash>(sources.size)
 
   val file = asset.file
@@ -966,7 +966,7 @@ private suspend fun buildAsset(
         span = span,
         producer = object : SourceBuilder {
           override val useCacheAsTargetFile: Boolean
-            get() = useCacheAsTargetFile && !asset.relativePath.contains('/') && asset.useCacheAsTargetFile
+            get() = useCacheAsTargetFile && asset.useCacheAsTargetFile && !asset.relativePath.contains('/')
 
           override fun updateDigest(digest: HashStream64) {
             if (layout is PluginLayout) {

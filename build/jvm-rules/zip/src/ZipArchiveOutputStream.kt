@@ -269,7 +269,7 @@ class ZipArchiveOutputStream(
 
   @Synchronized
   fun fileWithoutCrc(path: ByteArray, file: Path) {
-    FileChannel.open(file, READ).use { sourceChannel ->
+    FileChannel.open(file, READ_OPEN_OPTION).use { sourceChannel ->
       val size = sourceChannel.size()
       if (size > Int.MAX_VALUE) {
         throw IOException("File sizes over 2 GB are not supported: $size")

@@ -6,7 +6,7 @@ import java.io.EOFException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
-internal fun writeToFileChannelFully(channel: FileChannel, position: Long, buffer: ByteBuf): Long {
+fun writeToFileChannelFully(channel: FileChannel, position: Long, buffer: ByteBuf): Long {
   var toWrite = buffer.readableBytes()
   var currentPosition = position
   while (toWrite > 0) {
