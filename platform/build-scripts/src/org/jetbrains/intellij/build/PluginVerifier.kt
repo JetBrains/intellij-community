@@ -1,10 +1,9 @@
-package com.intellij.platform.buildScripts.testFramework
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
-import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.io.runProcess
-import org.junit.jupiter.api.Assertions.assertTrue
 import java.nio.file.Path
 import kotlin.io.path.appendText
 import kotlin.io.path.exists
@@ -13,15 +12,16 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 
-private const val PLUGIN_VERIFIER_VERSION = "1.381"
-private const val PLUGIN_VERIFIER = "https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/$PLUGIN_VERIFIER_VERSION/verifier-cli-$PLUGIN_VERIFIER_VERSION-all.jar"
+private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.381"
 
 suspend fun createPluginVerifier(
+  pluginVerifierVersion: String = DEFAULT_PLUGIN_VERIFIER_VERSION,
   compatibilityExceptions: List<String> = emptyList(),
   exceptionHandler: (exception: String) -> Unit = {},
   errorHandler: (exception: String) -> Unit = {},
 ): PluginVerifier {
-  val verifier = downloadFileToCacheLocation(PLUGIN_VERIFIER, COMMUNITY_ROOT)
+  val url = "https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/$pluginVerifierVersion/verifier-cli-$pluginVerifierVersion-all.jar"
+  val verifier = downloadFileToCacheLocation(url, COMMUNITY_ROOT)
   return PluginVerifier(
     verifierJar = verifier,
     compatibilityExceptions = compatibilityExceptions,
@@ -99,7 +99,7 @@ class PluginVerifier internal constructor(
   ): Boolean {
 
     val pluginReportDir = reportDir.resolve("${ide.productCode}-${ide.productBuild}/plugins/${plugin.pluginId}/${plugin.buildNumber}")
-    assertTrue(pluginReportDir.isDirectory()) {
+    check(pluginReportDir.isDirectory()) {
       "Directory $pluginReportDir does not exist after running plugin verifier"
     }
 
