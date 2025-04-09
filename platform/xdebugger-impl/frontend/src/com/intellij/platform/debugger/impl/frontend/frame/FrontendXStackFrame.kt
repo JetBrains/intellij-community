@@ -24,13 +24,13 @@ import kotlinx.coroutines.CoroutineScope
 internal class FrontendXStackFrame(
   private val frameDto: XStackFrameDto,
   private val project: Project,
-  private val cs: CoroutineScope,
+  private val suspendContextLifetimeScope: CoroutineScope,
 ) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
   private val evaluator by lazy {
-    createFrontendXDebuggerEvaluator(project, cs, frameDto.evaluator, frameDto.stackFrameId)
+    createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, frameDto.evaluator, frameDto.stackFrameId)
   }
 
-  private val xValueContainer = FrontendXValueContainer(project, cs, false) {
+  private val xValueContainer = FrontendXValueContainer(project, suspendContextLifetimeScope, false) {
     XExecutionStackApi.getInstance().computeVariables(frameDto.stackFrameId)
   }
 

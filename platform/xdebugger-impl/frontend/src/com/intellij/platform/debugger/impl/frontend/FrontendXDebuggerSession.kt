@@ -171,21 +171,24 @@ class FrontendXDebuggerSession private constructor(
         val pauseData = pauseData.await()
         if (pauseData != null) {
           val (suspendContextDto, executionStackDto, stackFrameDto) = pauseData
-          suspendContext.value = FrontendXSuspendContext(suspendContextDto, project, cs)
+          val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})")
+          suspendContext.value = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
           executionStackDto?.let {
-            currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, cs).also {
+            currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
               suspendContext.value?.activeExecutionStack = it
             }
           }
           stackFrameDto?.let {
-            currentStackFrame.value = FrontendXStackFrame(it, project, cs)
+            currentStackFrame.value = FrontendXStackFrame(it, project, suspendContextLifetimeScope)
           }
         }
       }
       is XDebuggerSessionEvent.SessionResumed,
       is XDebuggerSessionEvent.BeforeSessionResume,
         -> {
+        val context = suspendContext.value
         suspendContext.value = null
+        context?.cancel()
         currentExecutionStack.value = null
         currentStackFrame.value = null
       }

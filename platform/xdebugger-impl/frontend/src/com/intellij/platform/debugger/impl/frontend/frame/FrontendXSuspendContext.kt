@@ -2,19 +2,19 @@
 package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XExecutionStacksEvent
 import com.intellij.xdebugger.impl.rpc.XSuspendContextDto
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 internal class FrontendXSuspendContext(
   private val suspendContextDto: XSuspendContextDto,
   private val project: Project,
-  private val cs: CoroutineScope,
+  private val lifetimeScope: CoroutineScope,
 ) : XSuspendContext() {
   private val id = suspendContextDto.id
 
@@ -28,7 +28,7 @@ internal class FrontendXSuspendContext(
   }
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
-    cs.launch {
+    lifetimeScope.launch {
       XDebugSessionApi.getInstance().computeExecutionStacks(id).collect { executionStackEvent ->
         when (executionStackEvent) {
           is XExecutionStacksEvent.ErrorOccurred -> {
@@ -39,11 +39,15 @@ internal class FrontendXSuspendContext(
             //  which is the safest-narrowest scope in our possession.
             //  However, maybe it's possible to set up, for example, a scope that ends when another stack is selected from a combobox.
             //  But it requires further investigation.
-            val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, project, cs) }
+            val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, project, lifetimeScope) }
             container.addExecutionStack(feStacks, executionStackEvent.last)
           }
         }
       }
     }
+  }
+
+  fun cancel() {
+    lifetimeScope.cancel()
   }
 }
