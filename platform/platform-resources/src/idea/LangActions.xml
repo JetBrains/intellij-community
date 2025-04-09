@@ -861,7 +861,7 @@
     <group id="TreeNodeExclusion">
       <action id="UsageView.Include" class="com.intellij.ide.actions.exclusion.IncludeTreeNodeAction"/>
       <action id="UsageView.Exclude" class="com.intellij.ide.actions.exclusion.ExcludeTreeNodeAction" use-shortcut-of="$Delete"/>
-    </group>>
+    </group>
 
     <group id="UsageView.Popup">
       <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>
