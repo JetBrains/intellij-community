@@ -11,7 +11,7 @@ import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
 
 
-fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
+fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
   val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet())
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {

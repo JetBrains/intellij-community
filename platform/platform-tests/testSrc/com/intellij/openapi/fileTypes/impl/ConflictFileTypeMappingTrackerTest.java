@@ -73,6 +73,6 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     String input = "<idea-plugin>" +
                    "  <vendor>" + vendor + "</vendor>" +
                    "</idea-plugin>";
-    return PluginDescriptorLoadUtilsKt.readDescriptorForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
+    return PluginDescriptorLoadUtilsKt.readAndInitDescriptorFromBytesForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
   }
 }
