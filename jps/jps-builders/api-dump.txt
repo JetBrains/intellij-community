@@ -1919,6 +1919,12 @@ org.jetbrains.jps.dependency.BaseMaplet
 - a:flush():V
 - a:getKeys():java.lang.Iterable
 - a:remove(java.lang.Object):V
+org.jetbrains.jps.dependency.CompositeBackDependencyIndex
+- org.jetbrains.jps.dependency.BackDependencyIndex
+- s:create(java.lang.String,java.lang.Iterable):org.jetbrains.jps.dependency.CompositeBackDependencyIndex
+org.jetbrains.jps.dependency.CompositeGraph
+- org.jetbrains.jps.dependency.Graph
+- s:create(java.lang.Iterable):org.jetbrains.jps.dependency.CompositeGraph
 f:org.jetbrains.jps.dependency.ConfigurationException
 - java.lang.RuntimeException
 - <init>(java.lang.String):V
@@ -1936,7 +1942,8 @@ org.jetbrains.jps.dependency.DependencyGraph
 - java.io.Closeable
 - org.jetbrains.jps.dependency.Graph
 - a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
-- a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
+- differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
+- a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
 - a:integrate(org.jetbrains.jps.dependency.DifferentiateResult):V
 org.jetbrains.jps.dependency.DifferentiateContext
 - a:affectNodeSource(org.jetbrains.jps.dependency.NodeSource):V
@@ -1957,13 +1964,14 @@ org.jetbrains.jps.dependency.DifferentiateParameters
 - a:isCompiledWithErrors():Z
 - a:isProcessConstantsIncrementally():Z
 org.jetbrains.jps.dependency.DifferentiateResult
-- s:createNonIncremental(java.lang.String,org.jetbrains.jps.dependency.DifferentiateParameters,org.jetbrains.jps.dependency.Delta,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
+- s:createNonIncremental(java.lang.String,org.jetbrains.jps.dependency.DifferentiateParameters,org.jetbrains.jps.dependency.Delta,Z,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
 - a:getAffectedSources():java.lang.Iterable
 - a:getDeletedNodes():java.lang.Iterable
 - a:getDelta():org.jetbrains.jps.dependency.Delta
 - a:getParameters():org.jetbrains.jps.dependency.DifferentiateParameters
 - getSessionName():java.lang.String
 - isIncremental():Z
+- a:isIntegrable():Z
 org.jetbrains.jps.dependency.DifferentiateStrategy
 - a:differentiate(org.jetbrains.jps.dependency.DifferentiateContext,java.lang.Iterable,java.lang.Iterable,java.lang.Iterable):Z
 - isIncremental(org.jetbrains.jps.dependency.DifferentiateContext,org.jetbrains.jps.dependency.Node):Z

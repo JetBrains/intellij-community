@@ -20,8 +20,19 @@ public interface DifferentiateResult {
     return true;
   }
 
-  static DifferentiateResult createNonIncremental(String sessionName, DifferentiateParameters params, Delta delta, Iterable<Node<?, ?>> deletedNodes) {
+  /**
+   * @return true if this result object can be safely integrated into the main graph. 
+   */
+  boolean isIntegrable();
+
+  static DifferentiateResult createNonIncremental(String sessionName, DifferentiateParameters params, Delta delta, boolean isIntegrable, Iterable<Node<?, ?>> deletedNodes) {
     return new DifferentiateResult() {
+
+      @Override
+      public boolean isIntegrable() {
+        return isIntegrable;
+      }
+
       @Override
       public String getSessionName() {
         return sessionName;
