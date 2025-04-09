@@ -58,11 +58,31 @@ interface NotebookCellLines {
 
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
 
+    fun getCellEndOffset(editor: Editor): Int {
+      return getCellEndOffset(editor.document)
+    }
+
+    fun getCellStartOffset(editor: Editor): Int {
+      return getCellStartOffset(editor.document)
+    }
+
     fun getCellRange(editor: Editor): TextRange {
       val document = editor.document
-      val startOffset = document.getLineStartOffset(lines.first)
-      val endOffset = document.getLineEndOffset(lines.last)
+      return getCellRange(document)
+    }
+
+    fun getCellRange(document: Document): TextRange {
+      val startOffset = getCellStartOffset(document)
+      val endOffset = getCellEndOffset(document)
       return TextRange(startOffset, endOffset)
+    }
+
+    fun getCellEndOffset(document: Document): Int {
+      return document.getLineEndOffset(lines.last)
+    }
+
+    fun getCellStartOffset(document: Document): Int {
+      return document.getLineStartOffset(lines.first)
     }
 
     fun getContentRange(editor: Editor): TextRange {
@@ -70,7 +90,7 @@ interface NotebookCellLines {
       return getContentRange(document)
     }
 
-    private fun getContentRange(document: Document): TextRange {
+    fun getContentRange(document: Document): TextRange {
       val startOffset = document.getLineStartOffset(contentLines.first)
       val endOffset = document.getLineEndOffset(contentLines.last)
       return TextRange(startOffset, endOffset)
