@@ -104,7 +104,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private val isLicenseOptional: Boolean = raw.isLicenseOptional
 
   private val rawDescription: @NlsSafe String? = raw.description
-  private val category: String? = raw.category
+  private val category: @NlsSafe String? = raw.category
   private val changeNotes: String? = raw.changeNotes
 
   private val vendor: String? = raw.vendor
@@ -189,11 +189,14 @@ class IdeaPluginDescriptorImpl private constructor(
   override fun isLicenseOptional(): Boolean = isLicenseOptional
 
   override fun getChangeNotes(): String? = changeNotes
-  override fun getCategory(): String? = category
+  override fun getCategory(): @NlsSafe String? = category
 
-  override fun getDisplayCategory(): @Nls String? = getCategory()?.let {
-    val key = "plugin.category.${category?.replace(' ', '.')}"
-    CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, getCategory())
+  override fun getDisplayCategory(): @Nls String? {
+    if (category == null) {
+      return null
+    }
+    val key = "plugin.category.${category.replace(' ', '.')}"
+    return CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, category)
   }
 
   override fun getDescription(): @Nls String? {
