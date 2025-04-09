@@ -217,12 +217,15 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
     }
 
     private fun isPathConstructorOrFactory(method: PsiElement): Boolean {
+      val methods = mapOf(
+        "java.nio.file.Path" to setOf("of", "get"),
+        "java.nio.file.Paths" to setOf("get"),
+      )
       // Check if the method is a Path constructor or factory method like Path.of()
       if (method is PsiModifierListOwner) {
         val containingClass = (method as? com.intellij.psi.PsiMember)?.containingClass
         if (containingClass != null) {
-          val qualifiedName = containingClass.qualifiedName
-          return qualifiedName == "java.nio.file.Path" || qualifiedName == "java.nio.file.Paths"
+          return methods[containingClass.qualifiedName]?.contains(method.name) == true
         }
       }
       return false

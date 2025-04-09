@@ -69,20 +69,21 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
   fun testNonAnnotatedStringInPathResolve() {
     doTest("""
-      import java.nio.file.Path;
-      import java.nio.file.Paths;
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 
+      import java.nio.file.Path;
+      import java.nio.file.Paths;
+      
       public class NonAnnotatedStringInPathResolve {
           public void testMethod() {
               Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"/base/path"</warning>)</warning>;
 
               String nonAnnotatedPath = "subdir";
               // This should be highlighted as a warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = <warning descr="String without path annotation is used in Path constructor or factory method">basePath.resolve(nonAnnotatedPath)</warning>;
-
+              Path path = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve(nonAnnotatedPath)</weak_warning>;
+      
               // Direct string literal should also be highlighted
-              Path directPath = <warning descr="String without path annotation is used in Path constructor or factory method">basePath.resolve(<warning descr="String literal is used in a context that expects @MultiRoutingFileSystemPath">"another/subdir"</warning>)</warning>;
+              Path directPath = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve("another/subdir")</weak_warning>;
 
               // Annotated string should not be highlighted
               @MultiRoutingFileSystemPath String annotatedPath = "annotated/subdir";
