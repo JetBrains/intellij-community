@@ -298,7 +298,7 @@ public class HighlightInfo implements Segment {
     }
     else {
       LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
-    }
+        }
   }
 
   @ApiStatus.Internal
@@ -1117,7 +1117,12 @@ public class HighlightInfo implements Segment {
     myIntentionActionDescriptors = List.copyOf(result);
     updateFields(getIntentionActionDescriptors(), document);
   }
-  synchronized void updateLazyFixesPsiTimeStamp(long psiTimeStamp) {
+
+  /**
+   * only for internal usages
+   */
+  @ApiStatus.Internal
+  public synchronized void updateLazyFixesPsiTimeStamp(long psiTimeStamp) {
     List<LazyFixDescription> newFixes = ContainerUtil.map(myLazyQuickFixes,
                                                      d -> d.psiModificationStamp() == 0
                                                           ? new LazyFixDescription(d.fixesComputer(), psiTimeStamp, d.future())

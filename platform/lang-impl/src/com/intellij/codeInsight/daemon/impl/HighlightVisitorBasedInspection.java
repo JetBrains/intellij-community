@@ -20,6 +20,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,6 +104,21 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
                                                                                 boolean highlightErrorElements,
                                                                                 boolean runAnnotators,
                                                                                 boolean runVisitors) {
+    int startOffset = 0;
+    int endOffset = psiFile.getTextLength();
+    ProperTextRange visibleRange = ProperTextRange.create(psiFile.getTextRange());
+    return runAnnotatorsInGeneralHighlighting(psiFile, startOffset, endOffset, visibleRange, highlightErrorElements, runAnnotators, runVisitors);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static @NotNull List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile psiFile,
+                                                                              int startOffset,
+                                                                              int endOffset,
+                                                                              @NotNull ProperTextRange visibleRange,
+                                                                              boolean highlightErrorElements,
+                                                                              boolean runAnnotators,
+                                                                              boolean runVisitors) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = psiFile.getProject();
@@ -112,13 +128,13 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     // in case the inspection is running in batch mode
     // todo IJPL-339 figure out what is the correct context here
     CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
-    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, ProperTextRange.create(psiFile.getTextRange()),
+    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, daemonProgressIndicator, visibleRange,
                                                            TextRange.EMPTY_RANGE);
     GeneralHighlightingPass ghp =
-      new GeneralHighlightingPass(psiFile, document, 0, psiFile.getTextLength(), true, ProperTextRange.create(psiFile.getTextRange()), null,
-                                  runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
-    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(psiFile, document, null, 0, psiFile.getTextLength(), true,
-                                                                               ProperTextRange.create(psiFile.getTextRange()), null,
+    new GeneralHighlightingPass(psiFile, document, startOffset, endOffset, true, visibleRange, null,
+                                runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
+    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(psiFile, document, null, startOffset, endOffset, true,
+                                                                               visibleRange, null,
                                                                                runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
     ighp.setContext(context);
     String fileName = psiFile.getName();

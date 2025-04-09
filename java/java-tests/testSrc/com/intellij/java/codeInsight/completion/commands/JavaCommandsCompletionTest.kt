@@ -421,6 +421,23 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     }
   }
 
+  fun testRedCodeImport() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    runBlocking {
+      myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          List<String> y = new ArrayList<caret><String>;
+        } 
+      }
+      """.trimIndent())
+      myFixture.doHighlighting()
+      myFixture.type(".")
+      val elements = myFixture.completeBasic()
+      assertTrue(elements.any { element -> element.lookupString.contains("Import", ignoreCase = true) })
+    }
+  }
+
   fun testChangeSignature() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     var text = """

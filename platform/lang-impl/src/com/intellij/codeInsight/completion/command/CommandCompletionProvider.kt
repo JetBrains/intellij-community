@@ -262,35 +262,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       TextRange(hostOffset, originalDocument.textLength))
 
 
-    var file =
-      if (isNonWritten) {
-        val createdFile = originalFile.copy() as PsiFile
-        if (createdFile is PsiFileImpl) {
-          createdFile.setOriginalFile(topFile)
-        }
-        createdFile
-      }
-      else {
-        if (topFile == originalFile) {
-          var createdFile = commandCompletionFactory.createFile(originalFile, adjustedText)
-          if (createdFile == null) {
-            createdFile = PsiFileFactory.getInstance(topEditor.project)
-              .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
-            if (createdFile is PsiFileImpl) {
-              createdFile.setOriginalFile(topFile)
-            }
-          }
-          createdFile
-        }
-        else {
-          val createdFile = PsiFileFactory.getInstance(topEditor.project)
-            .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
-          if (createdFile is PsiFileImpl) {
-            createdFile.setOriginalFile(topFile)
-          }
-          createdFile
-        }
-      }
+    var file = createFile(isNonWritten, originalFile, topFile, commandCompletionFactory, adjustedText, topEditor)
 
     if (file is PsiFileImpl) {
       file.setOriginalFile(topFile)
@@ -301,6 +273,41 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       adjustedOffset = (file.fileDocument as? DocumentWindow)?.hostToInjected(adjustedOffset) ?: 0
     }
     return AdjustedCompletionParameters(file, adjustedOffset, hostAdjustedOffset)
+  }
+
+  private fun createFile(
+    isNonWritten: Boolean,
+    originalFile: PsiFile,
+    topFile: PsiFile,
+    commandCompletionFactory: CommandCompletionFactory,
+    adjustedText: String,
+    topEditor: Editor,
+  ): PsiFile {
+    if (isNonWritten) {
+      val createdFile = originalFile.copy() as PsiFile
+      if (createdFile is PsiFileImpl) {
+        createdFile.setOriginalFile(topFile)
+      }
+      return createdFile
+    }
+
+    if (topFile == originalFile) {
+      var createdFile = commandCompletionFactory.createFile(originalFile, adjustedText)
+      if (createdFile == null) {
+        createdFile = PsiFileFactory.getInstance(topEditor.project)
+          .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
+        if (createdFile is PsiFileImpl) {
+          createdFile.setOriginalFile(topFile)
+        }
+      }
+      return createdFile
+    }
+    val createdFile = PsiFileFactory.getInstance(topEditor.project)
+      .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
+    if (createdFile is PsiFileImpl) {
+      createdFile.setOriginalFile(topFile)
+    }
+    return createdFile
   }
 }
 

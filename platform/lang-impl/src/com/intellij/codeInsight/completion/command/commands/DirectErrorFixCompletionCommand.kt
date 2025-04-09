@@ -12,15 +12,18 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.addAvailableFixes
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.jobToIndicator
+import com.intellij.openapi.util.ProperTextRange
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.util.PsiModificationTracker
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -54,15 +57,35 @@ internal class DirectErrorFixCompletionCommand(
       val indicator = DaemonProgressIndicator()
       readAction {
         jobToIndicator(currentThreadContext().job, indicator) {
-          val highlightings = runAnnotatorsInGeneralHighlighting(topLevelPsiFile, true, true, true)
+          //todo merge with error finder
+          val fileDocument = topLevelPsiFile.fileDocument
+          val lineNumber = fileDocument.getLineNumber(topLevelOffset)
+          val startLineNumber = maxOf(0, lineNumber - 2)
+          val endLineNumber = minOf(fileDocument.lineCount - 1, lineNumber + 2)
+          val startOffset = fileDocument.getLineStartOffset(startLineNumber)
+          val endOffset = fileDocument.getLineEndOffset(endLineNumber)
+          val highlightings = runAnnotatorsInGeneralHighlighting(topLevelPsiFile,
+                                                                 startOffset,
+                                                                 endOffset,
+                                                                 ProperTextRange(startOffset, endOffset),
+                                                                 true, true, true)
+          val lazyQuickFixUpdater = LazyQuickFixUpdater.getInstance(psiFile.project)
           for (info in highlightings) {
+            if (info.hasLazyQuickFixes()) {
+              info.updateLazyFixesPsiTimeStamp(PsiModificationTracker.getInstance(psiFile.project).modificationCount);
+              lazyQuickFixUpdater.waitQuickFixesSynchronously(psiFile, editor, info)
+            }
             if (!(info.startOffset == highlightInfo.range.startOffset && info.endOffset == highlightInfo.range.endOffset)) {
               continue
             }
             val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
             addAvailableFixesForGroups(info, topLevelEditor, topLevelPsiFile, fixes, -1, topLevelOffset, false)
             for (fix in fixes) {
-              if (fix.action.text == name) {
+              var currentName = fix.action.text
+              if (currentName.startsWith("<html>") && currentName.endsWith("</html>")) {
+                currentName = currentName.substring(6, currentName.length - 7)
+              }
+              if (currentName == name) {
                 return@jobToIndicator fix.action
               }
             }

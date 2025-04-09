@@ -47,6 +47,7 @@ internal class DirectInspectionFixCompletionCommand(
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
+    //todo merge with error finder
     val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
     val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)

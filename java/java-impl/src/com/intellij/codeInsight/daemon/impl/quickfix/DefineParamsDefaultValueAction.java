@@ -95,8 +95,10 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     PsiParameterList parameterList = method.getParameterList();
     PsiParameter[] parameters = parameterList.getParameters();
     if (parameters.length == 1) {
-      return ModCommand.psiUpdate(method, (m, updater) -> invoke(context.project(), m, updater,
-                                                                 updater.getWritable(m).getParameterList().getParameters()));
+      return ModCommand.psiUpdate(method, (m, updater) -> {
+        PsiMethod writableMethod = updater.getWritable(m);
+        invoke(context.project(), writableMethod, updater, writableMethod.getParameterList().getParameters());
+      });
     }
     List<ParameterClassMember> members = ContainerUtil.map(parameters, ParameterClassMember::new);
     int idx = getSelectedIndex(element);
