@@ -295,13 +295,6 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  @VisibleForTesting
-  fun initialize(context: DescriptorListLoadingContext) = initialize(
-    context.productBuildNumber,
-    context::isPluginDisabled,
-    context::isBroken,
-  )
-
   internal fun initialize(getBuildNumber: () -> BuildNumber, isPluginDisabled: (PluginId) -> Boolean, isPluginBroken: (PluginId, version: String?) -> Boolean) {
     assert(type == Type.PluginMainDescriptor)
     if (isPluginDisabled(id)) {
@@ -697,6 +690,13 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 }
+
+@ApiStatus.Internal
+fun IdeaPluginDescriptorImpl.initialize(context: DescriptorListLoadingContext): Unit = initialize(
+  context.productBuildNumber,
+  context::isPluginDisabled,
+  context::isBroken,
+)
 
 internal fun IdeaPluginDescriptorImpl.createSub(
   subBuilder: PluginDescriptorBuilder,
