@@ -17,6 +17,7 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -235,7 +236,8 @@ private class CommandCompletionHighlightingListener(
   }
 
   override fun lookupCanceled(event: LookupEvent) {
-    clear(event.lookup.editor)
+    val editor = runReadAction { event.lookup.editor }
+    clear(editor)
     super.lookupCanceled(event)
   }
 
