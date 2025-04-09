@@ -67,16 +67,16 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
     context(KaSession)
     private fun getCandidateProvidersForUnresolvedNameReference(
         importContext: ImportContext,
-    ): Sequence<AbstractImportCandidatesProvider> = when (importContext.positionTypeAndReceiver) {
-        is ImportPositionTypeAndReceiver.DefaultCall -> sequenceOf(
+    ): Sequence<AbstractImportCandidatesProvider> = when (importContext.positionType) {
+        is ImportPositionType.DefaultCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
             ClassifierImportCandidatesProvider(importContext),
         )
 
-        is ImportPositionTypeAndReceiver.DotCall,
-        is ImportPositionTypeAndReceiver.SafeCall,
-        is ImportPositionTypeAndReceiver.InfixCall,
-        is ImportPositionTypeAndReceiver.OperatorCall -> sequenceOf(
+        is ImportPositionType.DotCall,
+        is ImportPositionType.SafeCall,
+        is ImportPositionType.InfixCall,
+        is ImportPositionType.OperatorCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
         )
 

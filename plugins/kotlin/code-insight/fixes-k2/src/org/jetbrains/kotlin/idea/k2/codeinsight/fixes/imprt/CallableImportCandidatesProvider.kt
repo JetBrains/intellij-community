@@ -22,12 +22,12 @@ internal class CallableImportCandidatesProvider(
         acceptsKotlinCallableAtPosition(kotlinCallable) && !kotlinCallable.isImported() && kotlinCallable.canBeImported()
 
     private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
-        when (importContext.positionTypeAndReceiver) {
-            is ImportPositionTypeAndReceiver.InfixCall -> {
+        when (importContext.positionType) {
+            is ImportPositionType.InfixCall -> {
                 kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && kotlinCallable.isExtensionDeclaration()
             }
 
-            is ImportPositionTypeAndReceiver.OperatorCall -> {
+            is ImportPositionType.OperatorCall -> {
                 kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD) && kotlinCallable.isExtensionDeclaration()
             }
 
@@ -38,20 +38,20 @@ internal class CallableImportCandidatesProvider(
         acceptsJavaCallableAtPosition() && !javaCallable.isImported() && javaCallable.canBeImported()
 
     private fun acceptsJavaCallableAtPosition(): Boolean =
-        when (importContext.positionTypeAndReceiver) {
-            is ImportPositionTypeAndReceiver.InfixCall,
-            is ImportPositionTypeAndReceiver.OperatorCall -> false
+        when (importContext.positionType) {
+            is ImportPositionType.InfixCall,
+            is ImportPositionType.OperatorCall -> false
             else -> true
         }
 
     private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
-        when (importContext.positionTypeAndReceiver) {
-            is ImportPositionTypeAndReceiver.InfixCall -> {
+        when (importContext.positionType) {
+            is ImportPositionType.InfixCall -> {
                 val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
                 functionSymbol?.isInfix == true && functionSymbol.isExtension
             }
 
-            is ImportPositionTypeAndReceiver.OperatorCall -> {
+            is ImportPositionType.OperatorCall -> {
                 val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
                 functionSymbol?.isOperator == true && functionSymbol.isExtension
             }
@@ -89,7 +89,7 @@ internal class CallableImportCandidatesProvider(
                 allowInapplicableExtensions -> {
                     // extensions were already provided
                 }
-                importContext.positionTypeAndReceiver is ImportPositionTypeAndReceiver.KDocNameReference -> {
+                importContext.positionType is ImportPositionType.KDocNameReference -> {
                     // we do not try to complete extensions for KDocs for now
                     // TODO consider combining this with allowInapplicableExtensions flag
                 }

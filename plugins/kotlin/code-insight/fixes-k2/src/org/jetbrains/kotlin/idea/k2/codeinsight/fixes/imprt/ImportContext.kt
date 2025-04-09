@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.psi.KtElement
 internal interface ImportContext {
     val position: KtElement
     val positionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>
+    val positionType: ImportPositionType get() = positionTypeAndReceiver.positionType
 }
 
 internal class DefaultImportContext(
