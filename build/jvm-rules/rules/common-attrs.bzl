@@ -30,18 +30,6 @@ def add_dicts(*dictionaries):
     return result
 
 _implicit_deps = {
-    "_singlejar": attr.label(
-        executable = True,
-        cfg = "exec",
-        default = Label("@bazel_tools//tools/jdk:singlejar"),
-        allow_files = True,
-    ),
-    "_zipper": attr.label(
-        executable = True,
-        cfg = "exec",
-        default = Label("@bazel_tools//tools/zip:zipper"),
-        allow_files = True,
-    ),
     "_java_stub_template": attr.label(
         cfg = "exec",
         default = Label("@bazel_tools//tools/java:java_stub_template.txt"),
