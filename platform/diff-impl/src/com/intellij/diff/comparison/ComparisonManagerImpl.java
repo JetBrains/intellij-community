@@ -25,7 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
 import static java.util.Collections.singletonList;
@@ -48,7 +51,6 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                   @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     LineOffsets lineOffsets1 = LineOffsetsUtil.create(text1);
     LineOffsets lineOffsets2 = LineOffsetsUtil.create(text2);
-    if (text2.isEmpty()) return List.of(new LineFragmentImpl(0, lineOffsets1.getLineCount(), 0, 0, 0, text1.length(), 0, 0));
 
     return compareLines(text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
   }
