@@ -401,9 +401,15 @@ public final class SettingsEntryPointAction extends ActionGroup
   private static @NotNull @Nls String getActionTooltip() {
     boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
+      boolean showPluginsUpdates = isShowPluginsUpdates();
+
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
         try {
-          if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
+          Collection<UpdateAction> actions = provider.getUpdateActions(DataContext.EMPTY_CONTEXT);
+          if (!showPluginsUpdates) {
+            actions = actions.stream().filter(action -> !action.isPluginUpdate()).toList();
+          }
+          if (!actions.isEmpty()) {
             updates = true;
             break;
           }
