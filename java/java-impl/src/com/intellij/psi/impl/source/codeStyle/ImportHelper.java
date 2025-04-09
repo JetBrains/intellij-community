@@ -1186,6 +1186,9 @@ public final class ImportHelper {
         }
 
         if (refElement instanceof PsiClass psiClass) {
+          // Implicitly declared classed are not accessible outside the file, so it is not possible to have import statement on them.
+          if (refElement.getParent() instanceof PsiImplicitClass) continue;
+
           String qName = psiClass.getQualifiedName();
           if (qName == null || hasPackage(qName, thisPackageName)) continue;
           imports.add(new Import(qName, false));

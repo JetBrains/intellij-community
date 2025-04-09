@@ -772,6 +772,8 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testUnresolvedReferenceAfterParenthesis() {
     doTest();
   }
+
+  public void testInvalidExtendsList() { doTest(); }
   
   private void doTest() {
     doTest(".java");
