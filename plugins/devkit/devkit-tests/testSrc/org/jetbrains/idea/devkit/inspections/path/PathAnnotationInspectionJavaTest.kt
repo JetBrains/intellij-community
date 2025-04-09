@@ -6,6 +6,41 @@ import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
   override fun getFileExtension(): String = "java"
 
+  fun testFileSystemGetPath() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.NativePath;
+      import com.intellij.platform.eel.annotations.Filename;
+      import java.nio.file.FileSystem;
+      import java.nio.file.FileSystems;
+
+      public class FileSystemGetPath {
+          public void testMethod() {
+              FileSystem fs = FileSystems.getDefault();
+
+              // First argument should be annotated with @NativePath
+              String nonAnnotatedPath = "/usr/local/bin";
+              fs.getPath(<warning descr="First argument of FileSystem.getPath() should be annotated with @NativePath">nonAnnotatedPath</warning>, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">"file.txt"</warning>);
+
+              // First argument with @NativePath is correct
+              @NativePath String nativePath = "/usr/local/bin";
+              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">"file.txt"</warning>);
+
+              // Elements of 'more' parameter should be annotated with either @NativePath or @Filename
+              String nonAnnotatedMore = "subdir";
+              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">nonAnnotatedMore</warning>);
+
+              // Elements of 'more' parameter with @NativePath is correct
+              @NativePath String nativeMore = "subdir";
+              fs.getPath(nativePath, nativeMore);
+
+              // Elements of 'more' parameter with @Filename is also correct
+              @Filename String filenameMore = "file.txt";
+              fs.getPath(nativePath, filenameMore);
+          }
+      }      
+      """.trimIndent())
+  }
+
   fun testNativePathInPathOf() {
     doTest("""
       import com.intellij.platform.eel.annotations.NativePath;

@@ -95,6 +95,83 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         }
       }
 
+      // Check if the method is FileSystem.getPath()
+      if (isFileSystemGetPathMethod(target)) {
+        val arguments = node.valueArguments
+        if (arguments.isNotEmpty()) {
+          // Check first argument (should be annotated with @NativePath)
+          val firstArg = arguments[0]
+          val firstArgInfo = PathAnnotationInfo.forExpression(firstArg)
+          if (firstArgInfo !is PathAnnotationInfo.Native) {
+            // Report error: first argument of FileSystem.getPath() should be annotated with @NativePath
+            when (firstArgInfo) {
+              is PathAnnotationInfo.MultiRouting -> {
+                holder.registerProblem(
+                  firstArg.sourcePsi ?: sourcePsi,
+                  "First argument of FileSystem.getPath() should be annotated with @NativePath",
+                  AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                )
+              }
+              is PathAnnotationInfo.FilenameInfo -> {
+                holder.registerProblem(
+                  firstArg.sourcePsi ?: sourcePsi,
+                  "First argument of FileSystem.getPath() should be annotated with @NativePath",
+                  AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                )
+              }
+              is PathAnnotationInfo.Unspecified -> {
+                holder.registerProblem(
+                  firstArg.sourcePsi ?: sourcePsi,
+                  "First argument of FileSystem.getPath() should be annotated with @NativePath",
+                  AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                )
+              }
+              else -> {
+                // This should not happen, but we need to handle all cases
+                holder.registerProblem(
+                  firstArg.sourcePsi ?: sourcePsi,
+                  "First argument of FileSystem.getPath() should be annotated with @NativePath"
+                )
+              }
+            }
+          }
+
+          // Check remaining arguments (should be annotated with either @NativePath or @Filename)
+          if (arguments.size > 1) {
+            for (i in 1 until arguments.size) {
+              val arg = arguments[i]
+              val argInfo = PathAnnotationInfo.forExpression(arg)
+              if (argInfo !is PathAnnotationInfo.Native && argInfo !is PathAnnotationInfo.FilenameInfo) {
+                // Report error: elements of 'more' parameter should be annotated with either @NativePath or @Filename
+                when (argInfo) {
+                  is PathAnnotationInfo.MultiRouting -> {
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      "Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename",
+                      AddNativePathAnnotationFix(argInfo.getAnnotationCandidate())
+                    )
+                  }
+                  is PathAnnotationInfo.Unspecified -> {
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      "Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename",
+                      AddNativePathAnnotationFix(argInfo.getAnnotationCandidate())
+                    )
+                  }
+                  else -> {
+                    // This should not happen, but we need to handle all cases
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      "Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename"
+                    )
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
       // Check if the method expects a specific path annotation
       for ((index, arg) in node.valueArguments.withIndex()) {
         val parameter = getParameterForArgument(target, index) ?: continue
@@ -238,6 +315,17 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         val containingClass = method.containingClass
         if (containingClass != null && containingClass.qualifiedName == "java.nio.file.Path") {
           return method.name == "resolve"
+        }
+      }
+      return false
+    }
+
+    private fun isFileSystemGetPathMethod(method: PsiElement): Boolean {
+      // Check if the method is FileSystem.getPath()
+      if (method is com.intellij.psi.PsiMethod) {
+        val containingClass = method.containingClass
+        if (containingClass != null && containingClass.qualifiedName == "java.nio.file.FileSystem") {
+          return method.name == "getPath"
         }
       }
       return false
