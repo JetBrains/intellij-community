@@ -17,6 +17,8 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValu
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
+import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
+import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStack
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -171,15 +173,17 @@ class FrontendXDebuggerSession private constructor(
         val pauseData = pauseData.await()
         if (pauseData != null) {
           val (suspendContextDto, executionStackDto, stackFrameDto) = pauseData
-          val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})")
-          suspendContext.value = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
+          val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
+                                                          FrontendXStackFramesStorage())
+          val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
+          suspendContext.value = currentSuspendContext
           executionStackDto?.let {
             currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
               suspendContext.value?.activeExecutionStack = it
             }
           }
           stackFrameDto?.let {
-            currentStackFrame.value = FrontendXStackFrame(it, project, suspendContextLifetimeScope)
+            currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStack(it, project)
           }
         }
       }
