@@ -295,7 +295,7 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   internal fun initialize(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
-    assert(moduleName == null) // initialize is only called on main descriptors
+    assert(type == Type.PluginMainDescriptor)
     if (context.isPluginDisabled(id)) {
       onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
       return
@@ -326,9 +326,7 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
 
-    if (initError == null && moduleName == null) {
-      initializeV1Dependencies(context, pathResolver, dataLoader, ArrayList(3))
-    }
+    initializeV1Dependencies(context, pathResolver, dataLoader, ArrayList(3))
   }
 
   private fun initializeV1Dependencies(context: DescriptorListLoadingContext,
