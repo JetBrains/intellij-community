@@ -257,7 +257,6 @@ fun initMainDescriptorByRaw(
 @TestOnly
 fun loadDescriptorFromFileOrDirInTests(file: Path, context: DescriptorListLoadingContext, isBundled: Boolean): IdeaPluginDescriptorImpl? {
   return loadDescriptorFromFileOrDir(file = file, context = context, pool = NonShareableJavaZipFilePool(), isBundled = isBundled, isEssential = true, isUnitTestMode = true)
-    ?.apply { initialize(context = context) }
 }
 
 @Internal
