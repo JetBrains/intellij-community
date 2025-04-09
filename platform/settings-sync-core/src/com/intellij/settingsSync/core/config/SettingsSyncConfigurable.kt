@@ -2,6 +2,7 @@ package com.intellij.settingsSync.core.config
 
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -120,6 +121,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       rowsRange {
         row {
           label(message("settings.sync.info.message"))
+          SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList.firstOrNull { it.isAvailable() && it.learnMoreLinkPair != null }?.also {
+            val linkPair = it.learnMoreLinkPair!!
+            browserLink(linkPair.first, linkPair.second)
+          }
         }
 
 
@@ -711,7 +716,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               text(message("enable.dialog.source.option.title")).bold()
             }
             row {
-              text(message("enable.dialog.source.option.text"), 50)
+              text(message("enable.dialog.source.option.text", ), 50)
             }
             buttonsGroup ("", false) {
               row {
@@ -748,7 +753,14 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
               text(message("enable.sync.choose.data.provider.title")).bold()
             }
             buttonsGroup (message("enable.sync.choose.data.provider.text"), false) {
-              val availableProviders = RemoteCommunicatorHolder.getAvailableProviders()
+              val availableProviders = RemoteCommunicatorHolder.getAvailableProviders().filter { it.isAvailable() }
+              availableProviders.firstOrNull { it.learnMoreLinkPair2 != null }?.also {
+                row {
+                  val linkPair = it.learnMoreLinkPair2!!
+                  browserLink(linkPair.first, linkPair.second)
+                }
+              }
+
               row {
                 for (provider in availableProviders) {
                   radioButton(provider.authService.providerName, provider.providerCode)
