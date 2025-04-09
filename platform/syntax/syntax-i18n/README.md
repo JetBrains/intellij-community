@@ -1,6 +1,8 @@
 # Syntax i18n Library
 
-Kotlin-multiplatform compatible ResourceBundle implementation for using in syntax implementations
+Kotlin-multiplatform compatible ResourceBundle implementation for using in syntax implementations.
+Only JVM implementation actually depends on `intellij.platform.util` module.
+WasmJs part does not have dependencies.
  
 Example of usage:
 
