@@ -39,6 +39,8 @@ public final class RegionUrlMapper {
   );
 
   private static final Map<Region, String> OVERRIDE_CONFIG_URL_TABLE = new HashMap<>();  // for testing
+  public static final String FORCE_REGION_MAPPINGS_LOAD = "force.region.mappings.load";
+
   static {
     for (Region reg : Region.values()) {
       String propName = "jb.mapper.configuration.url";
@@ -104,8 +106,13 @@ public final class RegionUrlMapper {
     }
     catch (Throwable e) {
       // tryMapUrl() should have already swallowed any failures, so this shouldn't ever happen
-      LOG.warn("Unexpected exception when mapping region-specific url", e);
-      return url;
+      if (Boolean.valueOf(System.getProperty(FORCE_REGION_MAPPINGS_LOAD)).booleanValue()) {
+        throw new RuntimeException(IdeBundle.message("failed.to.load.regional.url.mappings", e.getCause()));
+      }
+      else {
+        LOG.warn("Unexpected exception when mapping region-specific url", e);
+        return url;
+      }
     }
   }
 
@@ -140,7 +147,7 @@ public final class RegionUrlMapper {
       if (t instanceof CancellationException || t instanceof ControlFlowException) {
         LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
       }
-      else if (Boolean.valueOf(System.getProperty("force.region.mappings.load")).booleanValue()) {
+      else if (Boolean.valueOf(System.getProperty(FORCE_REGION_MAPPINGS_LOAD)).booleanValue()) {
         LOG.warn("Failed to load regional URL mappings: " + t);
         throw new CompletionException(t);
       }
