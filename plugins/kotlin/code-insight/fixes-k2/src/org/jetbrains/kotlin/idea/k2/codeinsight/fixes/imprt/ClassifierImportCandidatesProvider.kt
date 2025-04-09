@@ -41,7 +41,7 @@ internal open class ClassifierImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ClassLikeImportCandidate> {
-        if (importContext.positionTypeAndReceiver.receiver != null) return emptyList()
+        if (importContext.isExplicitReceiver) return emptyList()
 
         val fileSymbol = getFileSymbol()
         val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, importContext.position)
