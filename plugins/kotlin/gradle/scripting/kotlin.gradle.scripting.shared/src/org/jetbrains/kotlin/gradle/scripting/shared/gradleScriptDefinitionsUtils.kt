@@ -9,7 +9,10 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.EnvironmentUtil
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.idea.core.script.k2.*
+import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.core.script.k2.configurationResolverDelegate
+import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.idea.core.script.k2.scriptWorkspaceModelManagerDelegate
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
@@ -258,8 +261,6 @@ class GradleKotlinScriptDefinitionWrapper(
 
     override val canDefinitionBeSwitchedOff: Boolean = false
 }
-
-val GradleScriptCompilationConfigurationKeys.external: PropertiesCollection.Key<() -> ScriptRefinedConfigurationResolver> by PropertiesCollection.key()
 
 interface GradleScriptCompilationConfigurationKeys
 

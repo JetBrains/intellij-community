@@ -32,8 +32,7 @@
 
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinScriptLazyResolveProhibitionCondition
-            implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptLazyResolveProhibitionCondition"/>
+    <kotlinScripDeferredResolutionPolicy implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScripDeferredResolvePolicy"/>
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsSource"/>
   </extensions>
 </idea-plugin>

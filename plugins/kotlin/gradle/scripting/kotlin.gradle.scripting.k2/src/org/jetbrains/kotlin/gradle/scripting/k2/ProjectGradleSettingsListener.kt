@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import java.nio.file.Path
-import java.nio.file.Paths
 
 class ProjectGradleSettingsListener(
     private val project: Project,
@@ -51,7 +51,7 @@ class ProjectGradleSettingsListener(
                     buildRootsManager.loadLinkedRoot(it, gradleVersion)
                 }
                 if (newRoot is Imported) {
-                    loadScriptConfigurations(newRoot, it)
+                    loadScriptConfigurations(newRoot.data, it)
                 }
             }
         }
@@ -73,29 +73,26 @@ class ProjectGradleSettingsListener(
     }
 
     private suspend fun loadScriptConfigurations(
-        root: Imported,
+        data: GradleBuildRootData,
         settings: GradleProjectSettings
     ) {
-        val data = root.data
         if (data.models.isEmpty()) return
+        val javaHome = data.javaHome
+        val definitions = loadGradleDefinitions(settings.externalProjectPath, data.gradleHome, javaHome, project)
 
-        val definitions = loadGradleDefinitions(settings.externalProjectPath, data.gradleHome, data.javaHome, project)
-
-        val gradleScripts = data.models.mapNotNull {
-            val path = Paths.get(it.file)
-            VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
-                GradleScriptModel(
-                    virtualFile,
-                    it.classPath,
-                    it.sourcePath,
-                    it.imports,
-                    data.javaHome
-                )
-            }
-        }.toSet()
+        val gradleScripts = data.models.mapNotNullTo(mutableSetOf()) {
+            val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
+            GradleScriptModel(
+                virtualFile,
+                it.classPath,
+                it.sourcePath,
+                it.imports,
+                javaHome
+            )
+        }
 
         GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
-        GradleScriptRefinedConfigurationProvider.getInstance(project).updateConfigurations(gradleScripts)
+        GradleScriptRefinedConfigurationProvider.getInstance(project).processScripts(gradleScripts)
 
         val ktFiles = gradleScripts.mapNotNull {
             readAction { PsiManager.getInstance(project).findFile(it.virtualFile) as? KtFile }

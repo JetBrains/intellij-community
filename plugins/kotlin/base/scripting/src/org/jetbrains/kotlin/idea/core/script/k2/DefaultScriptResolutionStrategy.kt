@@ -47,12 +47,14 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
         val configurationsSupplier = firstDefinition.getConfigurationResolver(project)
         val projectModelUpdater = firstDefinition.getWorkspaceModelManager(project)
 
-        val definitionByVirtualFile = ktFiles.associate {
-            it.alwaysVirtualFile to findScriptDefinition(
-                project,
-                VirtualFileScriptSource(it.alwaysVirtualFile)
-            )
-        }
+        val definitionByVirtualFile = ktFiles
+            .map { it.alwaysVirtualFile }
+            .filterNot { KotlinScripDeferredResolutionPolicy.shouldDeferResolution(project, it) }
+            .associateWith {
+                findScriptDefinition(project, VirtualFileScriptSource(it))
+            }
+
+        if (definitionByVirtualFile.isEmpty()) return Job()
 
         return coroutineScope.launch {
             withBackgroundProgress(project, KotlinBaseScriptingBundle.message("progress.title.processing.scripts")) {

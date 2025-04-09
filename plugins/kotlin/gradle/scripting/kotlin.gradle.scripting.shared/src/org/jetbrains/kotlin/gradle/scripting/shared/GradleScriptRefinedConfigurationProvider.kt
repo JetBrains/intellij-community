@@ -44,7 +44,7 @@ class GradleScriptRefinedConfigurationProvider(
 
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data.get()[virtualFile]
 
-    suspend fun updateConfigurations(scripts: Iterable<GradleScriptModel>) {
+    suspend fun processScripts(scripts: Iterable<GradleScriptModel>, storageToUpdate: MutableEntityStorage? = null) {
         val configurations = scripts.associate { it: GradleScriptModel ->
             val sourceCode = VirtualFileScriptSource(it.virtualFile)
             val definition = findScriptDefinition(project, sourceCode)
@@ -70,16 +70,20 @@ class GradleScriptRefinedConfigurationProvider(
             it.virtualFile to ScriptConfigurationWithSdk(updatedConfiguration, sdk)
         }
 
+        if (storageToUpdate == null) {
+            project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
+                val storageWithGradleScriptModules = getUpdatedStorage(configurations) // under writeAction from workspaceModel.update
+                storage.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, storageWithGradleScriptModules)
+            }
+        } else {
+            val storageWithGradleScriptModules = getUpdatedStorage(configurations) // do not care about the locks here
+            storageToUpdate.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, storageWithGradleScriptModules)
+        }
+
         data.set(configurations)
     }
 
-    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
-        project.workspaceModel.update("updating .gradle.kts scripts") { storage ->
-            val storageWithGradleScriptModules = getUpdatedStorage(configurationPerFile)
-
-            storage.replaceBySource({ it is KotlinGradleScriptModuleEntitySource }, storageWithGradleScriptModules)
-        }
-    }
+    override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
 
     private fun getUpdatedStorage(
         configurations: Map<VirtualFile, ScriptConfigurationWithSdk>,
@@ -138,7 +142,7 @@ class GradleScriptRefinedConfigurationProvider(
                 this.exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
                     this.externalSystem = GradleConstants.SYSTEM_ID.id
                     this.module = this@ModuleEntity
-                    this.rootProjectPath = externalProjectPath
+                    this.rootProjectPath = "kotlin-scripts:$externalProjectPath"
                     this.linkedProjectId = moduleName
                 }
             }

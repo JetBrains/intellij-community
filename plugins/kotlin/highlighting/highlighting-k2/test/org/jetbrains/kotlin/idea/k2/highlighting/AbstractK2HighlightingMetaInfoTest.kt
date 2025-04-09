@@ -10,9 +10,10 @@ import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptConfigurationHandler
-import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.k2.getConfigurationResolver
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import java.io.File
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -49,8 +51,10 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
             DefaultScriptConfigurationHandlerForTests(project), testRootDisposable
         )
 
-        runWithModalProgressBlocking(project, "AbstractK2HighlightingMetaInfoTest§") {
-            DefaultScriptResolutionStrategy(project, this).execute(ktFile).join()
+        runWithModalProgressBlocking(project, "AbstractK2LocalInspectionTest") {
+            ktFile.findScriptDefinition()?.let {
+                it.getConfigurationResolver(project).create(ktFile.alwaysVirtualFile, it)
+            }
         }
     }
 

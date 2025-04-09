@@ -9,14 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile
  * Regular scripts (.kts) do not support external dependencies, so there is no need to postpone resolving.
  * However, certain plugins (e.g., Gradle) may apply their own approach to scripting analysis, which occasionally doesn't imply lazy evaluation.
  */
-interface KotlinScriptLazyResolveProhibitionCondition {
+interface KotlinScripDeferredResolutionPolicy {
     companion object {
-        val EP_NAME: ProjectExtensionPointName<KotlinScriptLazyResolveProhibitionCondition> =
-            ProjectExtensionPointName<KotlinScriptLazyResolveProhibitionCondition>("org.jetbrains.kotlin.kotlinScriptLazyResolveProhibitionCondition")
+        val EP_NAME: ProjectExtensionPointName<KotlinScripDeferredResolutionPolicy> =
+            ProjectExtensionPointName<KotlinScripDeferredResolutionPolicy>("org.jetbrains.kotlin.kotlinScripDeferredResolutionPolicy")
 
-        fun shouldPostponeResolution(project: Project, script: VirtualFile): Boolean =
-            EP_NAME.getExtensions(project).any { it.shouldPostponeResolution(script) }
+        fun shouldDeferResolution(project: Project, script: VirtualFile): Boolean =
+            EP_NAME.getExtensions(project).any { it.shouldDeferResolution(script) }
     }
 
-    fun shouldPostponeResolution(script: VirtualFile): Boolean = false
+    fun shouldDeferResolution(script: VirtualFile): Boolean = false
 }

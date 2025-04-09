@@ -10,9 +10,10 @@ import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
+import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptConfigurationHandler
-import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
+import org.jetbrains.kotlin.idea.core.script.k2.getConfigurationResolver
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import java.io.File
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
@@ -88,7 +90,9 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         )
 
         runWithModalProgressBlocking(project, "AbstractK2LocalInspectionTest") {
-            DefaultScriptResolutionStrategy(project, this).execute(ktFile).join()
+            ktFile.findScriptDefinition()?.let {
+                it.getConfigurationResolver(project).create(ktFile.alwaysVirtualFile, it)
+            }
         }
     }
 
