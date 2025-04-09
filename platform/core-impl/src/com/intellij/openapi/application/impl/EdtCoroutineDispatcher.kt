@@ -108,7 +108,16 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
     if (!ModalityState.current().accepts(contextModality)) {
       return true
     }
-    return false
+    return when (type) {
+      // `Dispatchers.Main.immediate` must look only at the thread where it is executing.
+      // This is needed to support 3rd party libraries which use this dispatcher for getting the UI thread
+      // Relaxed UI dispatcher is indifferent to locks, so it can run in-place.
+      EdtDispatcherKind.MAIN, EdtDispatcherKind.LAX_UI -> false
+      // `Dispatchers.EdtImmediate` must perform dispatch when invoked on a thread without locks, because it needs to get into correct context.
+      EdtDispatcherKind.EDT -> !ApplicationManager.getApplication().isWriteIntentLockAcquired
+      // `Dispatchers.UIImmediate` must perform dispatch when invoked on a thread with locks, because it needs to escape locking and forbid using them inside.
+      EdtDispatcherKind.UI -> ApplicationManager.getApplication().isWriteIntentLockAcquired
+    }
   }
 
   override fun toString(): String {
