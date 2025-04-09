@@ -11,6 +11,7 @@
     <content>
         <module name="intellij.toml.core" loading="embedded"/>
         <module name="intellij.toml.backend"/>
+        <module name="intellij.toml.frontend.split"/>
         <module name="intellij.toml.json"/>
         <module name="intellij.toml.grazie"/>
     </content>
