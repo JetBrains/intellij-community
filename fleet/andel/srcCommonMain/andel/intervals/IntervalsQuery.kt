@@ -59,8 +59,8 @@ fun <K, T> IntervalsQuery<K, T>.adjust(operation: Operation): IntervalsQuery<K, 
     val adjustedEnd = end.transformOnto(invertedOperation, Sticky.RIGHT)
 
     this.query(adjustedStart, adjustedEnd).map { interval ->
-      val newFrom = interval.from.transformOnto(operation, Sticky.LEFT)
-      val newTo = interval.to.transformOnto(operation, Sticky.LEFT)
+      val newFrom = interval.from.transformOnto(operation, if (interval.greedyLeft) Sticky.LEFT else Sticky.RIGHT)
+      val newTo = interval.to.transformOnto(operation, if (interval.greedyRight) Sticky.RIGHT else Sticky.LEFT)
       interval.copy(from = newFrom, to = newTo)
     }
   }
