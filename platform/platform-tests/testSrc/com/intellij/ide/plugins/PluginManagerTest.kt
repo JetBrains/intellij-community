@@ -1,163 +1,159 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins;
+package com.intellij.ide.plugins
 
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.platform.plugins.parser.impl.*;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.TriConsumer;
-import com.intellij.util.xml.dom.XmlDomReader;
-import com.intellij.util.xml.dom.XmlElement;
-import org.easymock.EasyMock;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.Rule;
-import org.junit.Test;
+import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
+import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.TriConsumer
+import com.intellij.util.xml.dom.XmlElement
+import com.intellij.util.xml.dom.readXmlAsModel
+import org.assertj.core.api.Assertions
+import org.easymock.EasyMock
+import org.junit.Assert
+import org.junit.Rule
+import org.junit.Test
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.Map
+import javax.xml.stream.XMLOutputFactory
+import javax.xml.stream.XMLStreamException
+import javax.xml.stream.XMLStreamWriter
 
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-
-import static com.intellij.ide.plugins.DynamicPluginsTestUtil.createPluginLoadingResult;
-import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
-import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.*;
-
-public class PluginManagerTest {
-  private static String getTestDataPath() {
-    return PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort";
-  }
-
-  @Rule public TempDirectory tempDir = new TempDirectory();
+class PluginManagerTest {
+  @Rule
+  @JvmField
+  val tempDir: TempDirectory = TempDirectory()
 
   @Test
-  public void compatibilityBranchBased() {
-    assertCompatible("145.2", null, null);
-    assertCompatible("145.2.2", null, null);
+  fun compatibilityBranchBased() {
+    assertCompatible("145.2", null, null)
+    assertCompatible("145.2.2", null, null)
 
-    assertCompatible("145.2", "145", null);
-    assertCompatible("145.2", null, "146");
-    assertCompatible("145.2.2", "145", null);
-    assertCompatible("145.2.2", null, "146");
-    assertIncompatible("145.2", null, "145");
+    assertCompatible("145.2", "145", null)
+    assertCompatible("145.2", null, "146")
+    assertCompatible("145.2.2", "145", null)
+    assertCompatible("145.2.2", null, "146")
+    assertIncompatible("145.2", null, "145")
 
-    assertIncompatible("145.2", "146", null);
-    assertIncompatible("145.2", null, "144");
-    assertIncompatible("145.2.2", "146", null);
-    assertIncompatible("145.2.2", null, "144");
+    assertIncompatible("145.2", "146", null)
+    assertIncompatible("145.2", null, "144")
+    assertIncompatible("145.2.2", "146", null)
+    assertIncompatible("145.2.2", null, "144")
 
-    assertCompatible("145.2", "145.2", null);
-    assertCompatible("145.2", null, "145.2");
-    assertCompatible("145.2.2", "145.2", null);
-    assertIncompatible("145.2.2", null, "145.2");
+    assertCompatible("145.2", "145.2", null)
+    assertCompatible("145.2", null, "145.2")
+    assertCompatible("145.2.2", "145.2", null)
+    assertIncompatible("145.2.2", null, "145.2")
 
-    assertIncompatible("145.2", "145.3", null);
-    assertIncompatible("145.2", null, "145.1");
-    assertIncompatible("145.2.2", "145.3", null);
-    assertIncompatible("145.2.2", null, "145.1");
+    assertIncompatible("145.2", "145.3", null)
+    assertIncompatible("145.2", null, "145.1")
+    assertIncompatible("145.2.2", "145.3", null)
+    assertIncompatible("145.2.2", null, "145.1")
 
-    assertCompatible("145.2", "140.3", null);
-    assertCompatible("145.2", null, "146.1");
-    assertCompatible("145.2.2", "140.3", null);
-    assertCompatible("145.2.2", null, "146.1");
+    assertCompatible("145.2", "140.3", null)
+    assertCompatible("145.2", null, "146.1")
+    assertCompatible("145.2.2", "140.3", null)
+    assertCompatible("145.2.2", null, "146.1")
 
-    assertIncompatible("145.2", "145.2.0", null);
-    assertIncompatible("145.2", "145.2.1", null);
-    assertCompatible("145.2", null, "145.2.3");
-    assertCompatible("145.2.2", "145.2.0", null);
-    assertCompatible("145.2.2", null, "145.2.3");
+    assertIncompatible("145.2", "145.2.0", null)
+    assertIncompatible("145.2", "145.2.1", null)
+    assertCompatible("145.2", null, "145.2.3")
+    assertCompatible("145.2.2", "145.2.0", null)
+    assertCompatible("145.2.2", null, "145.2.3")
   }
 
   @Test
-  public void ignoredCompatibility() {
-    TriConsumer<String, String, String> checkCompatibility = (String ideVersion, String sinceBuild, String untilBuild) -> {
-      boolean ignoreCompatibility = PluginManagerCore.isIgnoreCompatibility;
+  fun ignoredCompatibility() {
+    val checkCompatibility = TriConsumer { ideVersion: String?, sinceBuild: String?, untilBuild: String? ->
+      val ignoreCompatibility = PluginManagerCore.isIgnoreCompatibility
       try {
-        assertIncompatible(ideVersion, sinceBuild, untilBuild);
+        assertIncompatible(ideVersion, sinceBuild, untilBuild)
 
-        PluginManagerCore.isIgnoreCompatibility = true;
-        assertCompatible(ideVersion, sinceBuild, untilBuild);
+        PluginManagerCore.isIgnoreCompatibility = true
+        assertCompatible(ideVersion, sinceBuild, untilBuild)
       }
       finally {
-        PluginManagerCore.isIgnoreCompatibility = ignoreCompatibility;
+        PluginManagerCore.isIgnoreCompatibility = ignoreCompatibility
       }
-    };
+    }
 
-    checkCompatibility.accept("42", "43", null);
-    checkCompatibility.accept("43", null, "42");
+    checkCompatibility.accept("42", "43", null)
+    checkCompatibility.accept("43", null, "42")
   }
 
   @Test
-  public void compatibilityBranchBasedStar() {
-    assertCompatible("145.10", "144.*", null);
-    assertIncompatible("145.10", "145.*", null);
-    assertIncompatible("145.10", "146.*", null);
-    assertIncompatible("145.10", null, "144.*");
-    assertCompatible("145.10", null, "145.*");
-    assertCompatible("145.10", null, "146.*");
+  fun compatibilityBranchBasedStar() {
+    assertCompatible("145.10", "144.*", null)
+    assertIncompatible("145.10", "145.*", null)
+    assertIncompatible("145.10", "146.*", null)
+    assertIncompatible("145.10", null, "144.*")
+    assertCompatible("145.10", null, "145.*")
+    assertCompatible("145.10", null, "146.*")
 
-    assertCompatible("145.10.1", null, "145.*");
-    assertCompatible("145.10.1", "145.10", "145.10.*");
+    assertCompatible("145.10.1", null, "145.*")
+    assertCompatible("145.10.1", "145.10", "145.10.*")
 
-    assertCompatible("145.SNAPSHOT", null, "145.*");
+    assertCompatible("145.SNAPSHOT", null, "145.*")
   }
 
   @Test
-  public void compatibilitySnapshots() {
-    assertIncompatible("145.SNAPSHOT", "146", null);
-    assertIncompatible("145.2.SNAPSHOT", "145.3", null);
+  fun compatibilitySnapshots() {
+    assertIncompatible("145.SNAPSHOT", "146", null)
+    assertIncompatible("145.2.SNAPSHOT", "145.3", null)
 
-    assertCompatible("145.SNAPSHOT", "145.2", null);
+    assertCompatible("145.SNAPSHOT", "145.2", null)
 
-    assertCompatible("145.SNAPSHOT", null, "146");
-    assertIncompatible("145.SNAPSHOT", null, "145");
-    assertIncompatible("145.SNAPSHOT", null, "144");
-    assertIncompatible("145.2.SNAPSHOT", null, "145");
-    assertIncompatible("145.2.SNAPSHOT", null, "144");
+    assertCompatible("145.SNAPSHOT", null, "146")
+    assertIncompatible("145.SNAPSHOT", null, "145")
+    assertIncompatible("145.SNAPSHOT", null, "144")
+    assertIncompatible("145.2.SNAPSHOT", null, "145")
+    assertIncompatible("145.2.SNAPSHOT", null, "144")
   }
 
   @Test
-  public void compatibilityPlatform() {
-    assertEquals(SystemInfo.isWindows, checkCompatibility("com.intellij.modules.os.windows"));
-    assertEquals(SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.mac"));
-    assertEquals(SystemInfo.isLinux, checkCompatibility("com.intellij.modules.os.linux"));
-    assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.modules.os.freebsd"));
-    assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.modules.os.solaris"));
-    assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.modules.os.unix"));
-    assertEquals(SystemInfo.isUnix && !SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.xwindow"));
+  fun compatibilityPlatform() {
+    Assert.assertEquals(SystemInfo.isWindows, checkCompatibility("com.intellij.modules.os.windows"))
+    Assert.assertEquals(SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.mac"))
+    Assert.assertEquals(SystemInfo.isLinux, checkCompatibility("com.intellij.modules.os.linux"))
+    Assert.assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.modules.os.freebsd"))
+    Assert.assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.modules.os.solaris"))
+    Assert.assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.modules.os.unix"))
+    Assert.assertEquals(SystemInfo.isUnix && !SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.xwindow"))
   }
 
   @Test
-  public void convertExplicitBigNumberInUntilBuildToStar() {
-    assertConvertsTo(null, null);
-    assertConvertsTo("145", "145");
-    assertConvertsTo("145.999", "145.999");
-    assertConvertsTo("145.9999", "145.*");
-    assertConvertsTo("145.99999", "145.*");
-    assertConvertsTo("145.9999.1", "145.9999.1");
-    assertConvertsTo("145.1000", "145.1000");
-    assertConvertsTo("145.10000", "145.*");
-    assertConvertsTo("145.100000", "145.*");
+  fun convertExplicitBigNumberInUntilBuildToStar() {
+    assertConvertsTo(null, null)
+    assertConvertsTo("145", "145")
+    assertConvertsTo("145.999", "145.999")
+    assertConvertsTo("145.9999", "145.*")
+    assertConvertsTo("145.99999", "145.*")
+    assertConvertsTo("145.9999.1", "145.9999.1")
+    assertConvertsTo("145.1000", "145.1000")
+    assertConvertsTo("145.10000", "145.*")
+    assertConvertsTo("145.100000", "145.*")
   }
 
   @Test
-  public void testSimplePluginSort() throws Exception {
-     doPluginSortTest("simplePluginSort", false);
+  @Throws(Exception::class)
+  fun testSimplePluginSort() {
+    doPluginSortTest("simplePluginSort", false)
   }
 
   /*
@@ -176,227 +172,244 @@ public class PluginManagerTest {
    See CachingSemiGraph.getSortedPlugins for a solution.
   */
   @Test
-  public void moduleSort() throws Exception {
-     doPluginSortTest("moduleSort", true);
+  @Throws(Exception::class)
+  fun moduleSort() {
+    doPluginSortTest("moduleSort", true)
   }
 
   @Test
-  public void testUltimatePlugins() throws Exception {
-    doPluginSortTest("ultimatePlugins", true);
+  @Throws(Exception::class)
+  fun testUltimatePlugins() {
+    doPluginSortTest("ultimatePlugins", true)
   }
 
   @Test
-  public void testModulePluginIdContract() {
-    var pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules");
-    var descriptorBundled = loadDescriptorInTest(pluginsPath, true);
-    var pluginSet = new PluginSetBuilder(Set.of(descriptorBundled)).createPluginSetWithEnabledModulesMap();
+  fun testModulePluginIdContract() {
+    val pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules")
+    val descriptorBundled = loadDescriptorInTest(pluginsPath, true)
+    val pluginSet = PluginSetBuilder(mutableSetOf(descriptorBundled)).createPluginSetWithEnabledModulesMap()
 
-    var moduleId = PluginId.getId("foo.bar");
-    var corePlugin = PluginId.getId("my.plugin");
-    assertThat(pluginSet.findEnabledPlugin(moduleId).getPluginId()).isEqualTo(corePlugin);
+    val moduleId = PluginId.getId("foo.bar")
+    val corePlugin = PluginId.getId("my.plugin")
+    Assertions.assertThat(pluginSet.findEnabledPlugin(moduleId)!!.getPluginId()).isEqualTo(corePlugin)
   }
 
   @Test
-  public void testIdentifyPreInstalledPlugins() {
-    var pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
-    var bundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), true);
-    var updated = loadDescriptorInTest(pluginsPath.resolve("updated"));
-    var expectedPluginId = updated.getPluginId();
-    assertEquals(expectedPluginId, bundled.getPluginId());
+  fun testIdentifyPreInstalledPlugins() {
+    val pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled")
+    val bundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), true)
+    val updated = loadDescriptorInTest(pluginsPath.resolve("updated"))
+    val expectedPluginId = updated.getPluginId()
+    Assert.assertEquals(expectedPluginId, bundled.getPluginId())
 
-    assertPluginPreInstalled(expectedPluginId, bundled, updated);
-    assertPluginPreInstalled(expectedPluginId, updated, bundled);
+    assertPluginPreInstalled(expectedPluginId, bundled, updated)
+    assertPluginPreInstalled(expectedPluginId, updated, bundled)
   }
 
   @Test
-  public void testSymlinkInConfigPath() throws IOException {
-    assumeSymLinkCreationIsSupported();
+  @Throws(IOException::class)
+  fun testSymlinkInConfigPath() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
 
-    var configPath = tempDir.getRoot().toPath().resolve("config-link");
-    var target = tempDir.newDirectory("config-target").toPath();
-    Files.createSymbolicLink(configPath, target);
-    DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate(configPath, List.of("a"));
-    assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
+    val configPath = tempDir.root.toPath().resolve("config-link")
+    val target = tempDir.newDirectory("config-target").toPath()
+    Files.createSymbolicLink(configPath, target)
+    saveDisabledPluginsAndInvalidate(configPath, mutableListOf("a"))
+    com.intellij.testFramework.assertions.Assertions.assertThat(configPath.resolve(
+      DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator())
   }
 
-  private static void assertPluginPreInstalled(PluginId expectedPluginId, IdeaPluginDescriptorImpl... descriptors) {
-    var loadingResult = createPluginLoadingResult();
-    loadingResult.addAll(List.of(descriptors));
-    assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId));
-  }
+  companion object {
+    private val testDataPath: String
+      get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort"
 
-  private static void doPluginSortTest(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
-    PluginManagerCore.INSTANCE.getAndClearPluginLoadingErrors();
-    var loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
-    var text = new StringBuilder();
-    for (var descriptor : loadPluginResult.pluginSet.getEnabledModules()) {
-      text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString());
-      if (descriptor.getModuleName() != null) {
-        text.append(" | ").append(descriptor.getModuleName());
-      }
-      text.append('\n');
+    private fun assertPluginPreInstalled(expectedPluginId: PluginId?, vararg descriptors: IdeaPluginDescriptorImpl) {
+      val loadingResult = createPluginLoadingResult()
+      loadingResult.addAll(descriptors.toList())
+      Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
     }
-    text.append("\n\n");
-    for (var html : PluginManagerCore.INSTANCE.getAndClearPluginLoadingErrors()) {
-      text.append(html.get().toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n');
+
+    @Throws(IOException::class, XMLStreamException::class)
+    private fun doPluginSortTest(testDataName: String?, isBundled: Boolean) {
+      PluginManagerCore.getAndClearPluginLoadingErrors()
+      val loadPluginResult: PluginManagerState = loadAndInitializeDescriptors("$testDataName.xml", isBundled)
+      val text = StringBuilder()
+      for (descriptor in loadPluginResult.pluginSet.getEnabledModules()) {
+        text.append(if (descriptor.isEnabled()) "+ " else "  ").append(descriptor.getPluginId().idString)
+        if (descriptor.moduleName != null) {
+          text.append(" | ").append(descriptor.moduleName)
+        }
+        text.append('\n')
+      }
+      text.append("\n\n")
+      for (html in PluginManagerCore.getAndClearPluginLoadingErrors()) {
+        text.append(html.get().toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n')
+      }
+      UsefulTestCase.assertSameLinesWithFile(File(testDataPath, "$testDataName.txt").path, text.toString())
     }
-    UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), text.toString());
-  }
 
-  private static void assertConvertsTo(String untilBuild, String result) {
-    assertEquals(result, PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild));
-  }
+    private fun assertConvertsTo(untilBuild: String?, result: String?) {
+      Assert.assertEquals(result, PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild))
+    }
 
-  private static void assertIncompatible(String ideVersion, @Nullable String sinceBuild, @Nullable String untilBuild) {
-    assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
-  }
+    private fun assertIncompatible(ideVersion: String?, sinceBuild: String?, untilBuild: String?) {
+      Assert.assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild))
+    }
 
-  private static @Nullable PluginLoadingError checkCompatibility(String ideVersion, @Nullable String sinceBuild, @Nullable String untilBuild) {
-    IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
-    expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
-    expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
-    expect(mock.getDependencies()).andReturn(Collections.emptyList()).anyTimes();
-    replay(mock);
+    private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginLoadingError? {
+      val mock = EasyMock.niceMock<IdeaPluginDescriptor>(IdeaPluginDescriptor::class.java)
+      EasyMock.expect<String?>(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes()
+      EasyMock.expect<String?>(mock.getUntilBuild()).andReturn(untilBuild).anyTimes()
+      EasyMock.expect<MutableList<IdeaPluginDependency?>?>(mock.getDependencies()).andReturn(
+        mutableListOf()).anyTimes()
+      EasyMock.replay(mock)
 
-    return PluginManagerCore.checkBuildNumberCompatibility(mock, Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
-  }
+      return PluginManagerCore.checkBuildNumberCompatibility(mock, BuildNumber.fromString(ideVersion)!!)
+    }
 
-  private static boolean checkCompatibility(String platformId) {
-    IdeaPluginDependency platformDependencyMock = EasyMock.niceMock(IdeaPluginDependency.class);
-    expect(platformDependencyMock.getPluginId()).andReturn(PluginId.getId(platformId));
-    replay(platformDependencyMock);
+    private fun checkCompatibility(platformId: String): Boolean {
+      val platformDependencyMock = EasyMock.niceMock<IdeaPluginDependency>(IdeaPluginDependency::class.java)
+      EasyMock.expect(platformDependencyMock.pluginId).andReturn(PluginId.getId(platformId))
+      EasyMock.replay(platformDependencyMock)
 
-    IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
-    expect(mock.getSinceBuild()).andReturn(null).anyTimes();
-    expect(mock.getUntilBuild()).andReturn(null).anyTimes();
-    expect(mock.getDependencies()).andReturn(Collections.singletonList(platformDependencyMock)).anyTimes();
-    replay(mock);
+      val mock = EasyMock.niceMock<IdeaPluginDescriptor>(IdeaPluginDescriptor::class.java)
+      EasyMock.expect<String?>(mock.getSinceBuild()).andReturn(null).anyTimes()
+      EasyMock.expect<String?>(mock.getUntilBuild()).andReturn(null).anyTimes()
+      EasyMock.expect<MutableList<IdeaPluginDependency?>?>(mock.getDependencies()).andReturn(
+        mutableListOf(platformDependencyMock)).anyTimes()
+      EasyMock.replay(mock)
 
-    return PluginManagerCore.checkBuildNumberCompatibility(mock, BuildNumber.fromString("145")) == null;
-  }
+      return PluginManagerCore.checkBuildNumberCompatibility(mock, BuildNumber.fromString("145")!!) == null
+    }
 
-  private static void assertCompatible(String ideVersion, @Nullable String sinceBuild, @Nullable String untilBuild) {
-    assertNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
-  }
+    private fun assertCompatible(ideVersion: String?, sinceBuild: String?, untilBuild: String?) {
+      Assert.assertNull(checkCompatibility(ideVersion, sinceBuild, untilBuild))
+    }
 
-  private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
-    var file = Path.of(getTestDataPath(), testDataName);
-    var buildNumber = BuildNumber.fromString("2042.42");
-    var parentContext = new DescriptorListLoadingContext(Set.of(), Set.of(), Map.of(), List.of(), () -> buildNumber, false, false, false);
+    @Throws(IOException::class, XMLStreamException::class)
+    private fun loadAndInitializeDescriptors(testDataName: String, isBundled: Boolean): PluginManagerState {
+      val file = Path.of(testDataPath, testDataName)
+      val buildNumber = BuildNumber.fromString("2042.42")
+      val parentContext = DescriptorListLoadingContext(mutableSetOf<PluginId>(), mutableSetOf<PluginId>(),
+                                                       Map.of<PluginId, MutableSet<String?>>(), mutableListOf<PluginId>(),
+                                                       { buildNumber!! }, false, false, false)
 
-    var root = XmlDomReader.readXmlAsModel(Files.newInputStream(file));
-    var autoGenerateModuleDescriptor = new Ref<>(false);
-    var moduleMap = new HashMap<String, XmlElement>();
-    var pathResolver = new PathResolver() {
-      @Override
-      public boolean isFlat() {
-        return false;
-      }
+      val root = readXmlAsModel(Files.newInputStream(file))
+      val autoGenerateModuleDescriptor = Ref<Boolean>(false)
+      val moduleMap = HashMap<String?, XmlElement?>()
+      val pathResolver: PathResolver? = object : PathResolver {
+        override val isFlat: Boolean
+          get() = false
 
-      @Override
-      public @Nullable XIncludeLoader.LoadedXIncludeReference loadXIncludeReference(@NotNull DataLoader dataLoader, @NotNull String path) {
-        throw new UnsupportedOperationException();
-      }
+        override fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference? {
+          throw UnsupportedOperationException()
+        }
 
-      @Override
-      public PluginDescriptorBuilder resolvePath(@NotNull ReadModuleContext readContext,
-                                                 @NotNull DataLoader dataLoader,
-                                                 @NotNull String relativePath) {
-        for (var child : root.children) {
-          if (child.name.equals("config-file-idea-plugin")) {
-            var url = Objects.requireNonNull(child.getAttributeValue("url"));
-            if (url.endsWith("/" + relativePath)) {
+        override fun resolvePath(
+          readContext: ReadModuleContext,
+          dataLoader: DataLoader,
+          relativePath: String
+        ): PluginDescriptorBuilder {
+          for (child in root.children) {
+            if (child.name == "config-file-idea-plugin") {
+              val url = child.getAttributeValue("url")!!
+              if (url.endsWith("/$relativePath")) {
+                try {
+                  val reader = PluginDescriptorFromXmlStreamConsumer(readContext, this.toXIncludeLoader(dataLoader))
+                  reader.consume(elementAsBytes(child), null)
+                  return reader.getBuilder()
+                }
+                catch (e: XMLStreamException) {
+                  throw RuntimeException(e)
+                }
+              }
+            }
+          }
+          throw AssertionError("Unexpected: $relativePath")
+        }
+
+        override fun resolveModuleFile(
+          readContext: ReadModuleContext,
+          dataLoader: DataLoader,
+          path: String
+        ): PluginDescriptorBuilder {
+          if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
+            val element = moduleMap.get(path)
+            if (element != null) {
               try {
-                var reader = new PluginDescriptorFromXmlStreamConsumer(readContext, PathResolverKt.toXIncludeLoader(this, dataLoader));
-                PluginXmlStreamConsumerKt.consume(reader, elementAsBytes(child), null);
-                return reader.getBuilder();
+                return readModuleDescriptorForTest(elementAsBytes(element))
               }
-              catch (XMLStreamException e) {
-                throw new RuntimeException(e);
+              catch (e: XMLStreamException) {
+                throw RuntimeException(e)
               }
             }
+            // auto-generate empty descriptor
+            return readModuleDescriptorForTest(("<idea-plugin package=\"$path\"></idea-plugin>").toByteArray(
+              StandardCharsets.UTF_8))
           }
+          return resolvePath(readContext, dataLoader, path)
         }
-        throw new AssertionError("Unexpected: " + relativePath);
       }
 
-      @Override
-      public @NotNull PluginDescriptorBuilder resolveModuleFile(@NotNull ReadModuleContext readContext,
-                                                                @NotNull DataLoader dataLoader,
-                                                                @NotNull String path) {
-        if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
-          var element = moduleMap.get(path);
-          if (element != null) {
-            try {
-              return PluginBuilderKt.readModuleDescriptorForTest(elementAsBytes(element));
-            }
-            catch (XMLStreamException e) {
-              throw new RuntimeException(e);
-            }
+      for (element in root.children) {
+        val moduleFile = element.attributes["moduleFile"]
+        if (moduleFile != null) {
+          moduleMap[moduleFile] = element
+        }
+      }
+
+      val list = ArrayList<IdeaPluginDescriptorImpl>()
+      for (element in root.children) {
+        if (element.name != "idea-plugin") {
+          continue
+        }
+
+        val url = element.getAttributeValue("url")
+        val pluginPath: Path?
+        if (url == null) {
+          val id = element.getChild("id")
+          if (id == null) {
+            assert(element.attributes.containsKey("moduleFile"))
+            continue
           }
-          // auto-generate empty descriptor
-          return PluginBuilderKt.readModuleDescriptorForTest(("<idea-plugin package=\"" + path + "\"></idea-plugin>").getBytes(StandardCharsets.UTF_8));
+
+          pluginPath = Path.of(id.content!!.replace('.', '_') + ".xml")
+          autoGenerateModuleDescriptor.set(true)
         }
-        return resolvePath(readContext, dataLoader, path);
-      }
-    };
-
-    for (var element : root.children) {
-      var moduleFile = element.attributes.get("moduleFile");
-      if (moduleFile != null) {
-        moduleMap.put(moduleFile, element);
-      }
-    }
-
-    var list = new ArrayList<IdeaPluginDescriptorImpl>();
-    for (var element : root.children) {
-      if (!element.name.equals("idea-plugin")) {
-        continue;
-      }
-
-      var url = element.getAttributeValue("url");
-      Path pluginPath;
-      if (url == null) {
-        XmlElement id = element.getChild("id");
-        if (id == null) {
-          assert element.attributes.containsKey("moduleFile");
-          continue;
+        else {
+          pluginPath = Path.of(Strings.trimStart(url, "file://"))
         }
-
-        pluginPath = Path.of(id.content.replace('.', '_') + ".xml");
-        autoGenerateModuleDescriptor.set(true);
+        val descriptor = createFromDescriptor(
+          pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver!!, LocalFsDataLoader(pluginPath))
+        list.add(descriptor)
+        descriptor.jarFiles = mutableListOf<Path>()
       }
-      else {
-        pluginPath = Path.of(Strings.trimStart(Objects.requireNonNull(url), "file://"));
+      parentContext.close()
+      val result = PluginLoadingResult(false)
+      result.addAll(list)
+      return PluginManagerCore.initializePlugins(parentContext, result, PluginManagerTest::class.java.getClassLoader(), false, null)
+    }
+
+    @Throws(XMLStreamException::class)
+    private fun elementAsBytes(child: XmlElement): ByteArray {
+      val byteOut = ByteArrayOutputStream()
+      writeXmlElement(child, XMLOutputFactory.newDefaultFactory().createXMLStreamWriter(byteOut, "utf-8"))
+      return byteOut.toByteArray()
+    }
+
+    @Throws(XMLStreamException::class)
+    private fun writeXmlElement(element: XmlElement, writer: XMLStreamWriter) {
+      writer.writeStartElement(element.name)
+      for (entry in element.attributes.entries) {
+        writer.writeAttribute(entry.key, entry.value)
       }
-      var descriptor = PluginDescriptorLoadUtilsKt.createFromDescriptor(
-        pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
-      list.add(descriptor);
-      descriptor.setJarFiles(List.of());
+      if (element.content != null) {
+        writer.writeCharacters(element.content)
+      }
+      for (child in element.children) {
+        writeXmlElement(child, writer)
+      }
+      writer.writeEndElement()
     }
-    parentContext.close();
-    var result = new PluginLoadingResult(false);
-    result.addAll(list);
-    return PluginManagerCore.INSTANCE.initializePlugins(parentContext, result, PluginManagerTest.class.getClassLoader(), false, null);
-  }
-
-  private static byte[] elementAsBytes(XmlElement child) throws XMLStreamException {
-    var byteOut = new ByteArrayOutputStream();
-    writeXmlElement(child, XMLOutputFactory.newDefaultFactory().createXMLStreamWriter(byteOut, "utf-8"));
-    return byteOut.toByteArray();
-  }
-
-  private static void writeXmlElement(XmlElement element, XMLStreamWriter writer) throws XMLStreamException {
-    writer.writeStartElement(element.name);
-    for (var entry : element.attributes.entrySet()) {
-      writer.writeAttribute(entry.getKey(), entry.getValue());
-    }
-    if (element.content != null) {
-      writer.writeCharacters(element.content);
-    }
-    for (var child : element.children) {
-      writeXmlElement(child, writer);
-    }
-    writer.writeEndElement();
   }
 }
