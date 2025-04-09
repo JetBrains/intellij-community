@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -8,12 +8,14 @@ import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
+import org.jetbrains.intellij.build.BuildOptions.Companion.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA
+import org.jetbrains.intellij.build.BuildOptions.Companion.MAC_DMG_STEP
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
-import java.util.*
+import java.util.GregorianCalendar
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import kotlin.time.Duration
@@ -23,7 +25,7 @@ data class BuildOptions(
   @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
   @ApiStatus.Internal @JvmField val compressZipFiles: Boolean = true,
   /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
-  val buildDateInSeconds: Long = computeBuildDateInSeconds(),
+  @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
   @ApiStatus.Internal @JvmField val printFreeSpace: Boolean = true,
   @ApiStatus.Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
   @JvmField var skipDependencySetup: Boolean = false,
@@ -34,33 +36,30 @@ data class BuildOptions(
    *
    * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity or GitHub Actions).
    */
-  var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
-  var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
+  @JvmField var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
+  @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
-  val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
+  @JvmField val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
 
-  var classOutDir: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY),
+  @JvmField var classOutDir: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY),
 
-  var forceRebuild: Boolean = getBooleanProperty(FORCE_REBUILD_PROPERTY),
+  @JvmField var forceRebuild: Boolean = getBooleanProperty(FORCE_REBUILD_PROPERTY),
   /**
    * If `true` and [ProductProperties.embeddedFrontendRootModule] is not null, the JAR files in the distribution will be adjusted
    * to allow starting JetBrains Client directly from the IDE's distribution.
    */
-  @ApiStatus.Experimental
-  var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
+  @ApiStatus.Experimental @JvmField var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
 
   /**
    * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
    * Use this property to change the output directory.
    */
-  var outRootDir: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() },
+  @JvmField var outRootDir: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() },
 
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
    */
-  var buildStepsToSkip: Set<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
-    .split(',')
-    .dropLastWhile { it.isEmpty() }
+  @JvmField var buildStepsToSkip: Set<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(',').dropLastWhile { it.isEmpty() }
     .filterNot { it.isBlank() }
     .toMutableSet()
     .apply {
@@ -333,31 +332,6 @@ data class BuildOptions(
      * IJPL-176 Download pre-compiled IJent executables.
      */
     const val IJENT_EXECUTABLE_DOWNLOADING: String = "ijent.executable.downloading"
-
-    private fun parseBooleanValue(text: String): Boolean = when {
-      text.toBoolean() -> true
-      text.equals(false.toString(), ignoreCase = true) -> false
-      else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
-    }
-
-    private fun computeBuildDateInSeconds(): Long {
-      val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
-      val minZipTime = GregorianCalendar(1980, 0, 1)
-      val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
-      val value = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
-      require(value >= minZipTimeInSeconds) {
-        ".zip archive cannot store timestamps older than ${minZipTime.time} " +
-        "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
-        "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
-        "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
-        "diverging from modification times specified in .manifest."
-      }
-      return value
-    }
-
-    private val DEPENDENCIES_PROPERTIES: DependenciesProperties by lazy {
-      DependenciesProperties(COMMUNITY_ROOT)
-    }
   }
 
   /**
@@ -538,3 +512,28 @@ data class BuildOptions(
 private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.splitToSequence(',')?.filterTo(LinkedHashSet()) { it.isNotBlank() } ?: emptySet()
 
 internal fun getBooleanProperty(key: String, defaultValue: Boolean = false): Boolean = System.getProperty(key)?.toBoolean() ?: defaultValue
+
+private fun parseBooleanValue(text: String): Boolean = when {
+  text.toBoolean() -> true
+  text.equals(false.toString(), ignoreCase = true) -> false
+  else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
+}
+
+private val DEPENDENCIES_PROPERTIES: DependenciesProperties by lazy {
+  DependenciesProperties(COMMUNITY_ROOT)
+}
+
+private fun computeBuildDateInSeconds(): Long {
+  val sourceDateEpoch = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS)
+  val minZipTime = GregorianCalendar(1980, 0, 1)
+  val minZipTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(minZipTime.timeInMillis)
+  val value = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
+  require(value >= minZipTimeInSeconds) {
+    ".zip archive cannot store timestamps older than ${minZipTime.time} " +
+    "(see specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT) " +
+    "but ${GlobalOptions.BUILD_DATE_IN_SECONDS}=$sourceDateEpoch was supplied. " +
+    "If timestamps aren't stored then .zip content files modification time will be set to extraction time " +
+    "diverging from modification times specified in .manifest."
+  }
+  return value
+}
