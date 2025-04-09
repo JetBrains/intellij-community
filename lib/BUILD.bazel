@@ -8818,27 +8818,18 @@ java_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "tools-api_dump-kotlinx-bcv",
-  exports = [
-    ":binary-compatibility-validator-0_14_0_http_import",
-    ":kotlinx-metadata-jvm-0_6_2_http_import",
-    ":asm-9_6_http_import",
-    ":asm-tree-9_6_http_import",
-  ],
+kt_jvm_import(
+  name = "tools-api_dump-kotlin-metadata-bcv",
+  jar = "@kotlin-metadata-jvm-2_0_0_http//file",
+  srcjar = "@kotlin-metadata-jvm-2_0_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "binary-compatibility-validator-0_14_0_http_import",
-  jar = "@binary-compatibility-validator-0_14_0_http//file",
-  srcjar = "@binary-compatibility-validator-0_14_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "kotlinx-metadata-jvm-0_6_2_http_import",
-  jar = "@kotlinx-metadata-jvm-0_6_2_http//file",
-  srcjar = "@kotlinx-metadata-jvm-0_6_2-sources_http//file"
+  name = "tools-api_dump-kotlinx-bcv",
+  jar = "@binary-compatibility-validator-0_17_0_http//file",
+  srcjar = "@binary-compatibility-validator-0_17_0-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 java_library(

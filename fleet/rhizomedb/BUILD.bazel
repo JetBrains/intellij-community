@@ -12,7 +12,7 @@ jvm_library(
   name = "rhizomedb",
   module_name = "fleet.rhizomedb",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom",
   deps = [
     "//fleet/util/core:fleet-util-core",

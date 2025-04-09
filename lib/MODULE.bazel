@@ -12754,31 +12754,17 @@ http_file(
 )
 
 http_file(
-  name = "binary-compatibility-validator-0_14_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0.jar",
-  sha256 = "bc4224bdfd69330aa9d3f90914f0bd41fa3bb8eb7741d7f65a925404c0e55807",
-  downloaded_file_path = "binary-compatibility-validator-0.14.0.jar"
+  name = "binary-compatibility-validator-0_17_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0.jar",
+  sha256 = "0c8d35914a9094ab7071001c5b789e20d5f80d284c70a915a1ecb8fcecf92031",
+  downloaded_file_path = "binary-compatibility-validator-0.17.0.jar"
 )
 
 http_file(
-  name = "kotlinx-metadata-jvm-0_6_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2.jar",
-  sha256 = "8f5759b435fcbcfdf06c80295013ba953db4ec817b04d7809c61a739a483527b",
-  downloaded_file_path = "kotlinx-metadata-jvm-0.6.2.jar"
-)
-
-http_file(
-  name = "binary-compatibility-validator-0_14_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0-sources.jar",
-  sha256 = "7715223056b15320d869437df5473415d0d958cfb10c958f536d0baba6af68d8",
-  downloaded_file_path = "binary-compatibility-validator-0.14.0-sources.jar"
-)
-
-http_file(
-  name = "kotlinx-metadata-jvm-0_6_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2-sources.jar",
-  sha256 = "9f8a7855566b57fb81e584ca4dff44f986b158b2d9b58abfd6d32b447c8f2454",
-  downloaded_file_path = "kotlinx-metadata-jvm-0.6.2-sources.jar"
+  name = "binary-compatibility-validator-0_17_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/binary-compatibility-validator/0.17.0/binary-compatibility-validator-0.17.0-sources.jar",
+  sha256 = "5257cdca3d1e7ad4b47fdb5b928a364710b792fe134d3feea58ec17813ac5f63",
+  downloaded_file_path = "binary-compatibility-validator-0.17.0-sources.jar"
 )
 
 http_file(

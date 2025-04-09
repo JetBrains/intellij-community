@@ -14,7 +14,7 @@ jvm_library(
   name = "kernel",
   module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
