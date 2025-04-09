@@ -989,13 +989,13 @@ private fun loadCoreProductPlugin(
   val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
-  loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
+  loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
   descriptor.initialize(context = context)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
 
-private fun loadModuleDescriptors(
+private fun loadContentModuleDescriptors(
   descriptor: IdeaPluginDescriptorImpl,
   pathResolver: ClassPathXmlPathResolver,
   libDir: Path,
@@ -1333,7 +1333,7 @@ private fun loadDescriptorFromResource(
       }
     }
     else {
-      loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
+      loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
     }
     descriptor.initialize(context = context)
     descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
