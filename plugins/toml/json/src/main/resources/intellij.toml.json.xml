@@ -1,5 +1,7 @@
 <idea-plugin package="org.toml.ide.json">
     <dependencies>
+        <module name="intellij.toml.core"/>
+        <module name="intellij.platform.backend"/>
         <module name="intellij.json.backend"/>
     </dependencies>
 

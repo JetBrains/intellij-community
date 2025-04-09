@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="intellij.toml.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.json.backend" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

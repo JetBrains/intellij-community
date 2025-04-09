@@ -1,7 +1,6 @@
 - name: lib/toml-frontend.jar
-  modules:
+  contentModules:
   - name: intellij.toml.core
-    reason: <- intellij.toml
 - name: lib/toml.jar
   modules:
   - name: intellij.toml
