@@ -35,7 +35,6 @@ class DynamicPluginEnabler : PluginEnabler {
     }
   }
 
-
   override fun isDisabled(pluginId: PluginId): Boolean =
     PluginEnabler.HEADLESS.isDisabled(pluginId)
 
@@ -46,23 +45,27 @@ class DynamicPluginEnabler : PluginEnabler {
     descriptors: Collection<IdeaPluginDescriptor>,
     project: Project? = null,
   ): Boolean {
+    val compatible = descriptors.filter { descriptor -> PluginManagerCore.isCompatible(descriptor) }
+    if (compatible.isEmpty()) return false
+
     if (LoadingState.APP_STARTED.isOccurred) {
       // no FUS until then, especially during licensing init
-      PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+      PluginManagerUsageCollector.pluginsStateChanged(compatible, enable = true, project)
     }
 
-    PluginEnabler.HEADLESS.enable(descriptors)
-    val installedDescriptors = findInstalledPlugins(descriptors) ?: return false
+    PluginEnabler.HEADLESS.enable(compatible)
+    val installedDescriptors = findInstalledPlugins(compatible) ?: return false
     val pluginsLoaded = DynamicPlugins.loadPlugins(installedDescriptors, project)
 
     for (listener in pluginEnableStateChangedListeners) {
       try {
-        listener.stateChanged(descriptors, true)
+        listener.stateChanged(compatible, true)
       } catch (ex: Exception) {
         LOG.warn("An exception occurred while processing enablePlugins in $listener", ex)
       }
     }
-    return pluginsLoaded
+    // if not all requested plugins loaded better say we need to restart
+    return pluginsLoaded && installedDescriptors.size == descriptors.size
   }
 
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
