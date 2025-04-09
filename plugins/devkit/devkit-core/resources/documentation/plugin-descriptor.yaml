@@ -845,9 +845,12 @@ elements:
               - element:
                   name: &xIncludeName xi:include
                   namespace: &xIncludeNamespace xi="http://www.w3.org/2001/XInclude"
+                  renderContexts: [doc_provider]
                   description: |
                     Allows including extension points of another plugin descriptor in this descriptor with
                     [XInclude](http://www.w3.org/2001/XInclude) standard.
+                    
+                    The inclusion of extension points is supported for internal purposes and shouldn't be used by third party plugins.
                   requirement:
                     required: no
                   attributes:
@@ -866,53 +869,6 @@ elements:
                         description: Extensions points pointer to include.
                         defaultValue: |
                           `xpointer(/idea-plugin/extensionPoints/*)`
-                  examples:
-                    - |
-                      Given `extensionPoints` element:
-                      
-                      ```xml
-                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-                        ...
-                        <extensionPoints>
-                          <xi:include href="/META-INF/another-plugin.xml"/>
-                          <extensionPoint
-                              qualifiedName="com.example.extensionPoint"
-                              interface="com.example.ExtensionPoint"/>
-                        </extensionPoints>
-                        ...
-                      </idea-plugin>
-                      ```
-                      
-                      and <path>/META-INF/another-plugin.xml</path>:
-                      
-                      ```xml
-                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-                        ...
-                        <extensionPoints>
-                          <extensionPoint
-                              qualifiedName="com.example.another.extensionPoint1"
-                              interface="com.example.another.ExtensionPoint1"/>
-                        </extensionPoints>
-                        ...
-                      </idea-plugin>
-                      ```
-                      
-                      The effective plugin descriptor loaded to memory will contain the following elements:
-                      
-                      ```xml
-                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-                        ...
-                        <extensionPoints>
-                          <extensionPoint
-                              qualifiedName="com.example.another.extensionPoint1"
-                              interface="com.example.another.ExtensionPoint1"/>
-                          <extensionPoint
-                              qualifiedName="com.example.extensionPoint"
-                              interface="com.example.ExtensionPoint"/>
-                        </extensionPoints>
-                        ...
-                      </idea-plugin>
-                      ```
                   children:
                     - element: &xIncludeFallback
                         name: xi:fallback
