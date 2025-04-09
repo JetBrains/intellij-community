@@ -8,6 +8,5 @@ import another.invoke
 import another.topVal
 
 fun use() {
-    topVal<selection></selection>()
+    topVal<caret>()
 }
-// IGNORE_K2
