@@ -107,6 +107,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
           loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, serviceModuleMapping, mainGroupResourceRootSet,
                                                 isBundled = true, pluginDir = null)
+            ?.apply { initialize(context = context) }
         }
         else {
           /* todo: intellij.performanceTesting.async plugin has different distributions for different IDEs, in some IDEs it has dependencies 
@@ -195,7 +196,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
             mainGroupResourceRootSet = emptySet(),
             isBundled = false,
             pluginDir = path.parent,
-          )
+          )?.apply { initialize(context = context) }
         }
         catch (t: Throwable) {
           logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load custom plugin '$mainModuleId': $t", t)
@@ -239,7 +240,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
       val resolver = ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, fallbackResolver)
       loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
-        ?.apply { initialize(context = context) }
         .also { descriptor ->
           descriptor?.content?.modules?.forEach { module ->
             val requireDescriptor = module.requireDescriptor()
@@ -259,7 +259,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         else ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, defaultResolver)
       val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
       loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
-        ?.apply { initialize(context = context) }
     }
     val modulesWithJarFiles = descriptor?.content?.modules?.flatMap { moduleItem ->
       val jarFiles = moduleItem.requireDescriptor().jarFiles
