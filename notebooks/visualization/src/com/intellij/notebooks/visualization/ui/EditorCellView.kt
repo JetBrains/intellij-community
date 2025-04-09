@@ -47,7 +47,7 @@ private val fallbackInputFactory = object : InputFactory {
 }
 
 class EditorCellView(
-  private val editor: EditorImpl,
+  val editor: EditorImpl,
   private val intervals: NotebookCellLines,
   var cell: EditorCell,
   private val cellInlayManager: NotebookCellInlayManager,
@@ -63,7 +63,7 @@ class EditorCellView(
   private val intervalPointer: NotebookIntervalPointer
     get() = cell.intervalPointer
 
-  private val interval: NotebookCellLines.Interval
+  val interval: NotebookCellLines.Interval
     get() = intervalPointer.get() ?: error("Invalid interval")
 
   private val cellHighlighters = mutableListOf<RangeHighlighter>()
