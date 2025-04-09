@@ -2,6 +2,7 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
@@ -25,7 +26,7 @@ internal class FuzzyFileSearchExperimentOption : ABExperimentOption {
   companion object {
     @JvmStatic
     val isFuzzyFileSearchEnabled: Boolean
-      get() = `is`("search.everywhere.fuzzy.file.search.enabled", false) ||
+      get() = ApplicationManager.getApplication().isInternal && `is`("search.everywhere.fuzzy.file.search.enabled", false) ||
               ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
   }
 }
