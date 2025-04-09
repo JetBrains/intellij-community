@@ -1,10 +1,4 @@
 <idea-plugin>
-    <dependencies>
-        <plugin id="com.intellij.modules.lang"/>
-    </dependencies>
-
-    <resource-bundle>messages.TomlBundle</resource-bundle>
-
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="TOML"
                   language="TOML"
@@ -21,8 +15,6 @@
         <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral"
                                  implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
 
-        <lang.findUsagesProvider language="TOML" implementationClass="org.toml.ide.search.TomlFindUsagesProvider"/>
-
         <!-- Formatting -->
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider
@@ -34,28 +26,8 @@
         <lang.foldingBuilder language="TOML" implementationClass="org.toml.ide.folding.TomlFoldingBuilder"/>
 
         <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
-        <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
-        <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
-
-        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
-        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
 
         <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
-
-        <psi.referenceContributor language="TOML"
-                                  implementation="org.toml.ide.resolve.TomlReferenceContributor"/>
-
-        <localInspection language="TOML"
-                         groupKey="inspection.group.toml"
-                         key="inspection.toml.unresolved.reference.display.name"
-                         enabledByDefault="true" level="WARNING"
-                         implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
-
-        <intentionAction>
-            <language>TOML</language>
-            <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
-            <categoryKey>intention.category.toml</categoryKey>
-        </intentionAction>
 
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
     </extensions>
