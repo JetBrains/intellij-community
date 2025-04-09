@@ -43,12 +43,14 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
   return result.apply { initialize(context = context) }
 }
 
-fun createFromDescriptor(path: Path,
-                         isBundled: Boolean,
-                         data: ByteArray,
-                         context: DescriptorListLoadingContext,
-                         pathResolver: PathResolver,
-                         dataLoader: DataLoader): IdeaPluginDescriptorImpl {
+fun readAndInitDescriptorFromBytesForTest(
+  path: Path,
+  isBundled: Boolean,
+  data: ByteArray,
+  context: DescriptorListLoadingContext,
+  pathResolver: PathResolver,
+  dataLoader: DataLoader,
+): IdeaPluginDescriptorImpl {
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(data, path.toString())
     context.patchPlugin(it.getBuilder())
