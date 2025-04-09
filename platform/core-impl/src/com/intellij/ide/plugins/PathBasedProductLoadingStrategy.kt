@@ -30,7 +30,7 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-    return scope.loadPluginDescriptorsImpl(
+    return scope.loadPluginDescriptorsImpl( // FIXME initialize
       context = context,
       isUnitTestMode = isUnitTestMode,
       isRunningFromSources = isRunningFromSources,

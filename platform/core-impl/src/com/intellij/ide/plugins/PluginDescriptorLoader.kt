@@ -597,7 +597,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
 
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
   if (isUnitTestMode) {
-    result.addAll(loadCoreModules( // FIXME initialize
+    result.addAll(loadCoreModules(
       context = context,
       platformPrefix = platformPrefix,
       isUnitTestMode = true,
@@ -607,9 +607,9 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       pool = zipPool,
       result = result,
     ))
-    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool)) // FIXME initialize
+    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool))
     bundledPluginDir?.let {
-      result.addAll(loadDescriptorsFromDir(dir = it, context = context, isBundled = true, pool = zipPool)) // FIXME initialize
+      result.addAll(loadDescriptorsFromDir(dir = it, context = context, isBundled = true, pool = zipPool))
     }
     return result
   }
@@ -624,7 +624,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   }
 
   if (bundledPluginClasspathBytes == null) {
-    result.addAll(loadCoreModules( // FIXME initialize
+    result.addAll(loadCoreModules(
       context = context,
       platformPrefix = platformPrefix,
       isUnitTestMode = false,
@@ -634,8 +634,8 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       classLoader = mainClassLoader,
       result = result,
     ))
-    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool)) // FIXME initialize
-    result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipPool)) // FIXME initialize
+    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool))
+    result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipPool))
   }
   else {
     val byteInput = ByteArrayInputStream(bundledPluginClasspathBytes, 2, bundledPluginClasspathBytes.size)
@@ -656,12 +656,12 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
         else {
           createXmlStreamReader(bundledPluginClasspathBytes, descriptorStart, descriptorSize)
         },
-      ).apply { initialize(context = context) }
+      )
     })
 
-    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool)) // FIXME initialize
+    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipPool))
 
-    loadFromPluginClasspathDescriptor( // FIXME initialize
+    loadFromPluginClasspathDescriptor(
       input = input,
       jarOnly = bundledPluginClasspathBytes[1] == 1.toByte(),
       context = context,
@@ -1163,7 +1163,7 @@ fun loadDescriptorsFromOtherIde(
       descriptors = toSequence(runBlocking {
         val classLoader = DescriptorListLoadingContext::class.java.classLoader
         val pool = NonShareableJavaZipFilePool()
-        loadPluginDescriptorsImpl(
+        loadPluginDescriptorsImpl( // FIXME initialize
           context = context,
           isUnitTestMode = PluginManagerCore.isUnitTestMode,
           isRunningFromSources = PluginManagerCore.isRunningFromSources(),
