@@ -47,7 +47,7 @@ private val LOG: Logger
 
 @TestOnly
 fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext, pool: ZipEntryResolverPool): IdeaPluginDescriptorImpl? {
-  return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = pool)?.apply { initialize(context = parentContext) }
+  return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = pool)
 }
 
 @ApiStatus.Internal
