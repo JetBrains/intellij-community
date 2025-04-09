@@ -1116,6 +1116,10 @@ fun <T : CommandChain> T.gitRollbackFile(pathToFile: String): T = apply {
   addCommand("${CMD_PREFIX}gitRollbackFile ${pathToFile}")
 }
 
+fun <T: CommandChain> T.vcsDisableConfirmationPopup(): T = apply {
+  addCommand("${CMD_PREFIX}vcsDisableConfirmationPopup")
+}
+
 fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? = null, newText: String? = null): T = apply {
   val options = StringBuilder()
   if (startOffset != null) {
