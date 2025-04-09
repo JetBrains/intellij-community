@@ -13,6 +13,16 @@ import org.jetbrains.kotlin.psi.KtExpression
 internal interface ImportContext {
     val position: KtElement
     val positionType: ImportPositionType
+
+    /**
+     * Indicates whether the receiver of a call is explicitly applied in the position
+     * represented by this import context.
+     *
+     * Note: If [isExplicitReceiver] is `true`, it does not mean that there
+     * is an explicit PSI expression which can be considered a receiver.
+     * It just means that the type of explicit receiver cannot be ignored
+     * when applying auto-import candidates.
+     */
     val isExplicitReceiver: Boolean
 
     context(KaSession)
