@@ -2,12 +2,12 @@
 package com.intellij.platform.execution.impl.frontend
 
 import com.intellij.execution.KillableProcess
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.rpc.KillableProcessInfo
-import com.intellij.execution.rpc.ProcessHandlerApi
-import com.intellij.execution.rpc.ProcessHandlerDto
-import com.intellij.execution.rpc.ProcessHandlerEvent
-import com.intellij.execution.rpc.ProcessHandlerId
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.rpc.*
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
@@ -15,9 +15,8 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.project.projectId
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
@@ -48,44 +47,24 @@ open class FrontendSessionProcessHandler(
 
   protected val handlerId: ProcessHandlerId = processHandlerDto.processHandlerId
 
-  /**
-   * The wall which prevents events to be sent to listeners before all the listeners are attached
-   * This is like [startNotify] on the backend.
-   *
-   * So, [setReady] should be called to send all the buffered events to the listeners.
-   *
-   * Without that flag listeners may be after we send events to the listeners,
-   * so events like [startNotify] will be missed by the newly attached listeners.
-   */
-  private val isReady = CompletableDeferred<Unit>()
-
   init {
-    val events = Channel<() -> Unit>(capacity = Channel.UNLIMITED)
-    cs.launch {
+    cs.launch(Dispatchers.EDT) {
       processHandlerDto.processHandlerEvents.toFlow().collect { event ->
         when (event) {
           is ProcessHandlerEvent.StartNotified -> {
-            events.trySend {
-              if (!isStartNotified) {
-                startNotify()
-              }
+            if (!isStartNotified) {
+              startNotify()
             }
           }
           is ProcessHandlerEvent.ProcessTerminated -> {
-            events.trySend {
-              destroyProcess()
-            }
+            destroyProcess()
           }
           is ProcessHandlerEvent.ProcessWillTerminate -> {
-            events.trySend {
-              destroyProcess()
-            }
+            destroyProcess()
           }
           is ProcessHandlerEvent.OnTextAvailable -> {
             // TODO: DONT create Key every time
-            events.trySend {
-              notifyTextAvailable(event.eventData.text ?: "", Key.create<Any?>(event.key))
-            }
+            notifyTextAvailable(event.eventData.text ?: "", Key.create<Any?>(event.key))
           }
           ProcessHandlerEvent.ProcessNotStarted -> {
             // TODO: handle this case
@@ -93,17 +72,6 @@ open class FrontendSessionProcessHandler(
         }
       }
     }
-
-    cs.launch {
-      isReady.await()
-      for (event in events) {
-        event()
-      }
-    }
-  }
-
-  fun setReady() {
-    isReady.complete(Unit)
   }
 
   override fun waitFor(): Boolean {
@@ -116,6 +84,26 @@ open class FrontendSessionProcessHandler(
     return runBlockingMaybeCancellable {
       ProcessHandlerApi.getInstance().waitFor(project.projectId(), handlerId, timeoutInMilliseconds).await()
     }
+  }
+
+  private fun triggerInitialEvents(listener: ProcessListener) {
+    // Some process listeners may be added when process is already going
+    if (isStartNotified) {
+      listener.startNotified(ProcessEvent(this))
+    }
+    if (isProcessTerminated) {
+      listener.processTerminated(ProcessEvent(this, exitCode ?: 0))
+    }
+  }
+
+  override fun addProcessListener(listener: ProcessListener) {
+    triggerInitialEvents(listener)
+    super.addProcessListener(listener)
+  }
+
+  override fun addProcessListener(listener: ProcessListener, parentDisposable: Disposable) {
+    triggerInitialEvents(listener)
+    super.addProcessListener(listener, parentDisposable)
   }
 
   override fun destroyProcessImpl() {

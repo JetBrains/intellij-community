@@ -337,9 +337,7 @@ class FrontendXDebuggerSession private constructor(
       val processHandler = createFrontendProcessHandler(project, sessionDto.processHandlerDto)
       val consoleView = sessionDto.consoleViewData?.consoleView(processHandler)
 
-      return FrontendXDebuggerSession(project, scope, sessionDto, processHandler, consoleView).also {
-        processHandler.setReady()
-      }
+      return FrontendXDebuggerSession(project, scope, sessionDto, processHandler, consoleView)
     }
   }
 }
