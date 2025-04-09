@@ -14674,6 +14674,75 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection")
+    public static class IncompleteDestructuringInspection extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/basic.kt");
+        }
+
+        @TestMetadata("basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/basic2.kt");
+        }
+
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/empty.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/hasComment.kt");
+        }
+
+        @TestMetadata("hasSameName.kt")
+        public void testHasSameName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/hasSameName.kt");
+        }
+
+        @TestMetadata("hasTrailingComma.kt")
+        public void testHasTrailingComma() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/hasTrailingComma.kt");
+        }
+
+        @TestMetadata("hasType.kt")
+        public void testHasType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/hasType.kt");
+        }
+
+        @TestMetadata("lambdaParameter.kt")
+        public void testLambdaParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/lambdaParameter.kt");
+        }
+
+        @TestMetadata("loopParameter.kt")
+        public void testLoopParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/loopParameter.kt");
+        }
+
+        @TestMetadata("negative.kt")
+        public void testNegative() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/negative.kt");
+        }
+
+        @TestMetadata("underscore.kt")
+        public void testUnderscore() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/incompleteDestructuringInspection/underscore.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
