@@ -88,19 +88,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     initExpressions();
   }
 
-  protected XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, S breakpointState) {
-    myState = breakpointState;
-    myType = type;
-    myBreakpointManager = breakpointManager;
-    myCoroutineScope = childScope(breakpointManager.getCoroutineScope(), "XBreakpoint", EmptyCoroutineContext.INSTANCE, true);
-    myId = storeGlobally(this, myCoroutineScope);
-    myProperties = type.createProperties();
-    if (myProperties != null) {
-      ComponentSerializationUtil.loadComponentState(myProperties, myState.getPropertiesElement());
-    }
-    initExpressions();
-  }
-
   private void initExpressions() {
     myConditionEnabled = myState.isConditionEnabled();
     BreakpointState.Condition condition = myState.getCondition();

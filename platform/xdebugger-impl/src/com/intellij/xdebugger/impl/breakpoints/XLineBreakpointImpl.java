@@ -67,13 +67,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     myType = type;
   }
 
-  XLineBreakpointImpl(final XLineBreakpointType<P> type,
-                      XBreakpointManagerImpl breakpointManager,
-                      final LineBreakpointState breakpointState) {
-    super(type, breakpointManager, breakpointState);
-    myType = type;
-  }
-
   public void updateUI() {
     getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(this);
   }

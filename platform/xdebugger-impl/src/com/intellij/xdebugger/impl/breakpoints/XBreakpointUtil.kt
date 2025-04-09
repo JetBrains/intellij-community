@@ -3,7 +3,9 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction
+import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -22,7 +24,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.jetbrains.fus.reporting.model.lion3.FusAction.Companion.state
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -221,11 +222,22 @@ object XBreakpointUtil {
   ): XBreakpointBase<B, P, *> {
     return if (type is XLineBreakpointType<*> && state is LineBreakpointState) {
       @Suppress("UNCHECKED_CAST")
-      XLineBreakpointImpl(type, breakpointManager, state) as XBreakpointBase<B, P, *>
+      XLineBreakpointImpl<P>(type as XLineBreakpointType<P>, breakpointManager, createProperties(type, state), state) as XBreakpointBase<B, P, *>
     }
     else {
-      XBreakpointBase(type, breakpointManager, state)
+      XBreakpointBase<B, P, BreakpointState>(type, breakpointManager, createProperties(type, state), state)
     }
+  }
+
+  private fun <P : XBreakpointProperties<*>> createProperties(
+    type: XBreakpointType<*, P>,
+    state: BreakpointState,
+  ): P? {
+    val properties = type.createProperties()
+    if (properties != null) {
+      ComponentSerializationUtil.loadComponentState(properties as PersistentStateComponent<*>, state.propertiesElement)
+    }
+    return properties
   }
 
   @JvmStatic
