@@ -36,6 +36,7 @@
     <module name="intellij.devkit.apiDump"/>
     <module name="intellij.devkit.apiDump.lang"/>
     <module name="intellij.devkit.scaffolding"/>
+    <module name="intellij.devkit.modules"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
