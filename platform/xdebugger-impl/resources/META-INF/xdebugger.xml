@@ -96,21 +96,21 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerStatisticsCollector"/>
 
-    <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
+    <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.UpHandler"
                          id="smart-step-into-up"/>
-    <editorActionHandler action="EditorDown" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$DownHandler"
+    <editorActionHandler action="EditorDown" implementationClass="com.intellij.xdebugger.impl.actions.handlers.DownHandler"
                          id="smart-step-into-down"/>
-    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$LeftHandler"
+    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.LeftHandler"
                          id="smart-step-into-left"/>
-    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$LeftHandler"
+    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.LeftHandler"
                          id="smart-step-into-previous"/>
-    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$RightHandler"
+    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.RightHandler"
                          id="smart-step-into-right"/>
-    <editorActionHandler action="NextParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$RightHandler"
+    <editorActionHandler action="NextParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.RightHandler"
                          id="smart-step-into-next"/>
-    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EnterHandler"
+    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebugSmartStepIntoEnterHandler"
                          order="first" id="smart-step-into-enter"/>
-    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.EscHandler"
                          order="before hide-search" id="smart-step-into-escape"/>
     <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
 
