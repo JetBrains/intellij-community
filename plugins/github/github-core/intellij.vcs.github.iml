@@ -128,5 +128,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
   </component>
 </module>

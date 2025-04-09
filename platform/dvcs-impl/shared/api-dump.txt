@@ -1,2 +1,5 @@
 com.intellij.dvcs.branch.BranchType
 - a:getName():java.lang.String
+f:com.intellij.dvcs.ui.DvcsBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier

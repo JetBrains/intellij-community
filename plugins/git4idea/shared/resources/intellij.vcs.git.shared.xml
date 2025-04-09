@@ -1,11 +1,11 @@
 <idea-plugin>
-  <resource-bundle>messages.GitSharedBundle</resource-bundle>
+  <resource-bundle>messages.GitBundle</resource-bundle>
 
   <dependencies>
     <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
 
-  <actions resource-bundle="messages.GitSharedBundle">
+  <actions resource-bundle="messages.GitBundle">
     <group id="MainToolbarVCSGroup">
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
