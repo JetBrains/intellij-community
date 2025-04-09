@@ -103,7 +103,7 @@ class PyDataView(private val project: Project) : DumbAware {
     val tabsToRemove: MutableList<Content> = ArrayList()
 
     contentManager.contents.forEach {
-      if (ifClose.test(getPanel(it.component).dataViewerModel.frameAccessor)) {
+      if (ifClose.test(getPanel(it.component).component.dataViewerModel.frameAccessor)) {
         tabsToRemove.add(it)
       }
     }
@@ -118,7 +118,7 @@ class PyDataView(private val project: Project) : DumbAware {
   fun updateTabs(handler: ProcessHandler) {
     saveSelectedInfo()
     contentManager.contents.forEach { content ->
-      val panel: PyDataViewerCommunityPanel = getPanel(content.component)
+      val panel: PyDataViewerCommunityPanel = getPanel(content.component).component as PyDataViewerCommunityPanel
       val accessor = panel.dataViewerModel.frameAccessor
       if (accessor !is PyDebugProcess) {
         return@forEach
@@ -144,7 +144,7 @@ class PyDataView(private val project: Project) : DumbAware {
   private fun saveSelectedInfo() {
     val selectedInfo = contentManager.selectedContent
     if (!hasOnlyEmptyTab() && selectedInfo != null) {
-      val accessor: PyFrameAccessor = getPanel(selectedInfo.component).dataViewerModel.frameAccessor
+      val accessor: PyFrameAccessor = getPanel(selectedInfo.component).component.dataViewerModel.frameAccessor
       if (accessor is PyDebugProcess) {
         selectedInfos[accessor.processHandler] = selectedInfo
       }
@@ -221,12 +221,12 @@ class PyDataView(private val project: Project) : DumbAware {
 
   fun changeAutoResize(autoResize: Boolean) {
     contentManager.contents.forEach {
-      getPanel(it.component).resize(autoResize)
+      (getPanel(it.component).component as PyDataViewerCommunityPanel).resize(autoResize)
     }
   }
 
-  fun getPanel(component: JComponent): PyDataViewerCommunityPanel {
-    return component as PyDataViewerCommunityPanel
+  fun getPanel(component: JComponent): PyDataViewerPanel {
+    return component as PyDataViewerPanel
   }
 
   companion object {
