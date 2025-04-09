@@ -63,6 +63,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
@@ -86,6 +87,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final Set<String> myTypes = new HashSet<>();
   private final Set<RunConfiguration> myHiddenConfigurations = new HashSet<>();
   private final Set<RunConfiguration> myShownConfigurations = new HashSet<>();
+  private final Map<RunConfiguration, RunDashboardRunConfigurationStatus> myConfigurationStatuses = new ConcurrentHashMap<>();
   private volatile List<List<RunDashboardServiceImpl>> myServices = new SmartList<>();
   private final ReentrantReadWriteLock myServiceLock = new ReentrantReadWriteLock();
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
@@ -186,6 +188,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         RunConfiguration configuration = settings.getConfiguration();
         myHiddenConfigurations.remove(configuration);
         myShownConfigurations.remove(configuration);
+        myConfigurationStatuses.remove(configuration);
         if (!myUpdateStarted) {
           syncConfigurations();
           updateDashboardIfNeeded(settings);
@@ -222,6 +225,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
                                     @NotNull ExecutionEnvironment env,
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
+        RunConfiguration configuration =
+          env.getRunnerAndConfigurationSettings() != null ? env.getRunnerAndConfigurationSettings().getConfiguration() : null;
+        if (configuration != null && isShowInDashboard(configuration)) {
+          boolean stopped = exitCode == 0 || handler.getUserData(ProcessHandler.TERMINATION_REQUESTED) == Boolean.TRUE;
+          RunDashboardRunConfigurationStatus status =
+            stopped ? RunDashboardRunConfigurationStatus.STOPPED : RunDashboardRunConfigurationStatus.FAILED;
+          myConfigurationStatuses.put(configuration, status);
+        }
+
         updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
       }
     });
@@ -335,6 +347,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myState.excludedNewTypes.retainAll(types);
     myHiddenConfigurations.removeIf(configuration -> !types.contains(configuration.getType().getId()));
     myShownConfigurations.removeIf(configuration -> !types.contains(configuration.getType().getId()));
+    myConfigurationStatuses.entrySet()
+      .removeIf(configuration -> !types.contains(configuration.getKey().getType().getId()));
 
     syncConfigurations();
     if (!removed.isEmpty()) {
@@ -464,6 +478,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         updateDashboard(true);
       }
     }
+  }
+
+  public void clearConfigurationStatus(@NotNull RunConfiguration configuration) {
+    myConfigurationStatuses.remove(configuration);
+    updateDashboardIfNeeded(configuration, false);
+  }
+
+  public @Nullable RunDashboardRunConfigurationStatus getPersistedStatus(@NotNull RunConfiguration configuration) {
+    return myConfigurationStatuses.get(configuration);
   }
 
   private void invert(String typeId, Set<RunConfiguration> from, Set<RunConfiguration> to) {
@@ -900,6 +923,20 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       }
     }
 
+    myState.configurationStatuses.clear();
+    for (Map.Entry<RunConfiguration, RunDashboardRunConfigurationStatus> entry : myConfigurationStatuses.entrySet()) {
+      RunConfiguration configuration = entry.getKey();
+      ConfigurationType type = configuration.getType();
+      if (myTypes.contains(type.getId())) {
+        Map<String, String> configurations = myState.configurationStatuses.get(type.getId());
+        if (configurations == null) {
+          configurations = new HashMap<>();
+          myState.configurationStatuses.put(type.getId(), configurations);
+        }
+        configurations.put(configuration.getName(), entry.getValue().getId());
+      }
+    }
+
     // Maintain both sets so the project could be opened in an old version
     // with configurations hidden in a new one.
     for (String typeId : myState.excludedNewTypes) {
@@ -922,6 +959,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myShownConfigurations.clear();
     myState.excludedNewTypes.retainAll(myTypes);
     if (!myTypes.isEmpty()) {
+      loadStatuses();
       loadHiddenConfigurations();
       initTypes();
     }
@@ -944,6 +982,24 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(type);
     result.addAll(ContainerUtil.filter(configurations, configuration -> configurationNames.contains(configuration.getName())));
+  }
+
+  private void loadStatuses() {
+    myState.configurationStatuses.forEach((typeId, statuses) -> {
+      ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(typeId);
+      if (type == null) return;
+
+      List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(type);
+      statuses.forEach((name, statusId) -> {
+        RunConfiguration configuration = ContainerUtil.find(configurations, it -> it.getName().equals(name));
+        if (configuration == null) return;
+
+        RunDashboardRunConfigurationStatus status = RunDashboardRunConfigurationStatus.getStatusById(statusId);
+        if (status == null) return;
+
+        myConfigurationStatuses.put(configuration, status);
+      });
+    });
   }
 
   private void initTypes() {
@@ -975,6 +1031,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     public final Set<String> excludedTypes = new HashSet<>();
     public final Map<String, Set<String>> hiddenConfigurations = new HashMap<>();
     public final Map<String, Set<String>> shownConfigurations = new HashMap<>();
+    public final Map<String, Map<String, String>> configurationStatuses = new HashMap<>();
     // Run configuration types for which new run configurations will be hidden
     // in the Services tool window by default.
     public final Set<String> excludedNewTypes = new HashSet<>();
