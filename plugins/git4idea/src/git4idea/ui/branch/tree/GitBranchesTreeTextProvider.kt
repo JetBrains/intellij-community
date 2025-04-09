@@ -7,6 +7,9 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.GitReference
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.getCommonText
+import git4idea.ui.branch.getInRepoText
+import git4idea.ui.branch.getText
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 
 internal  object GitBranchesTreeTextProvider {
