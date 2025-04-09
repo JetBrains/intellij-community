@@ -294,7 +294,7 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  internal fun initialize(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
+  internal fun initialize(context: DescriptorListLoadingContext) {
     assert(type == Type.PluginMainDescriptor)
     if (context.isPluginDisabled(id)) {
       onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))

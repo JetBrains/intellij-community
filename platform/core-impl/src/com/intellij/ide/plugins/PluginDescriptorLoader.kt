@@ -251,7 +251,7 @@ fun initMainDescriptorByRaw(
     }
   }
 
-  descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+  descriptor.initialize(context = context)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
 }
 
@@ -798,7 +798,7 @@ private fun loadPluginDescriptor(
     module.descriptor = subDescriptor
   }
 
-  descriptor.initialize(context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
+  descriptor.initialize(context = context)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
   descriptor.jarFiles = fileItems.map { it.file }
   return descriptor
@@ -990,7 +990,7 @@ private fun loadCoreProductPlugin(
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
   loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
-  descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+  descriptor.initialize(context = context)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
@@ -1335,7 +1335,7 @@ private fun loadDescriptorFromResource(
     else {
       loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
     }
-    descriptor.initialize(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+    descriptor.initialize(context = context)
     descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
     return descriptor
   }
