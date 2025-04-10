@@ -3,22 +3,22 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
 import com.intellij.icons.AllIcons
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
 import javax.swing.Icon
 
-private class XBreakpointFileGroupingRule<B : Any>
+internal class XBreakpointFileGroupingRule<B : Any>
   : XBreakpointGroupingRule<B, XBreakpointFileGroup>("by-file", XDebuggerBundle.message("rule.name.group.by.file")) {
   override fun getPriority(): Int {
     return XBreakpointsGroupingPriorities.BY_FILE
   }
 
   override fun getGroup(breakpoint: B): XBreakpointFileGroup? {
-    if (breakpoint !is XLineBreakpoint<*>) {
+    val proxy = breakpoint.asBreakpointProxyOrNull() ?: return null
+    if (!proxy.type.isLineBreakpoint) {
       return null
     }
-    val position = (breakpoint as XLineBreakpoint<*>).getSourcePosition()
+    val position = proxy.getSourcePosition()
 
     if (position == null) return null
 
