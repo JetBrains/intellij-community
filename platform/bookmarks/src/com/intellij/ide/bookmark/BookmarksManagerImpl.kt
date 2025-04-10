@@ -210,7 +210,7 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
         GroupSelectDialog(project, null, this@BookmarksManagerImpl, groups).showAndGetGroup(true)
       }
       group?.let {
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.Default) {
           addHandler(it as Group)
         }
       }
