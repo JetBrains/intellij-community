@@ -22,16 +22,22 @@ import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-fun validatePluginModel(projectPath: Path, skipUnresolvedOptionalContentModules: Boolean = false): PluginValidationResult {
+data class PluginValidationOptions(
+  val skipUnresolvedOptionalContentModules: Boolean = false,
+  val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
+)
+
+fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
   val modules = IntelliJProjectConfiguration.loadIntelliJProject(projectPath.toString())
     .modules
     .map { ModuleWrap(it) }
 
-  return validatePluginModel(modules, skipUnresolvedOptionalContentModules = skipUnresolvedOptionalContentModules)
+  return validatePluginModel(modules, validationOptions)
 }
 
-fun validatePluginModel(sourceModules: List<PluginModelValidator.Module>, skipUnresolvedOptionalContentModules: Boolean = false): PluginValidationResult {
-  return PluginModelValidator(sourceModules, skipUnresolvedOptionalContentModules).validate()
+fun validatePluginModel(sourceModules: List<PluginModelValidator.Module>, 
+                        validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
+  return PluginModelValidator(sourceModules, validationOptions).validate()
 }
 
 class PluginValidationResult internal constructor(
@@ -105,7 +111,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
 )
 
-class PluginModelValidator(private val sourceModules: List<Module>, private val skipUnresolvedOptionalContentModules: Boolean = false) {
+class PluginModelValidator(private val sourceModules: List<Module>, private val validationOptions: PluginValidationOptions) {
   sealed interface Module {
     val name: String
 
@@ -208,7 +214,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
       }
 
       // in the end, after processing content and dependencies
-      if (pluginInfo.packageName != null) {
+      if (validationOptions.reportDependsTagInPluginXmlWithPackageAttribute && pluginInfo.packageName != null) {
         descriptor.children.firstOrNull {
           it.name == "depends" && it.getAttributeValue("optional") == null
         }?.let {
@@ -504,7 +510,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     val containingModuleName = moduleName.substringBefore('/')
     module = sourceModuleNameToFileInfo[containingModuleName]
     if (module == null) {
-      if (moduleLoadingRule == "required" || moduleLoadingRule == "embedded" || !skipUnresolvedOptionalContentModules) {
+      if (moduleLoadingRule == "required" || moduleLoadingRule == "embedded" || !validationOptions.skipUnresolvedOptionalContentModules) {
         registerError("Cannot find module $containingModuleName")
       }
       return null

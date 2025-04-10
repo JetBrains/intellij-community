@@ -12,7 +12,8 @@ class PluginModelTest {
   @TestFactory
   fun check(): List<DynamicTest> {
     val communityPath = PlatformTestUtil.getCommunityPath()
-    val result = validatePluginModel(Path.of(communityPath), skipUnresolvedOptionalContentModules = true)
+    val options = PluginValidationOptions(skipUnresolvedOptionalContentModules = true)
+    val result = validatePluginModel(Path.of(communityPath), options)
     
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
       val out = Path.of(communityPath, System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
