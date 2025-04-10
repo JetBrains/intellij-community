@@ -4205,6 +4205,12 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Profiler {
 	public final fun getRec ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
+public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Promo {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Promo;
+	public final fun getJavaDuke ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+}
+
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Providers {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Providers;

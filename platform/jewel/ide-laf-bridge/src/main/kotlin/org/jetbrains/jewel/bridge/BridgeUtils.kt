@@ -48,6 +48,8 @@ private val logger = Logger.getInstance("JewelBridge")
 
 public fun java.awt.Color.toComposeColor(): Color = Color(red = red, green = green, blue = blue, alpha = alpha)
 
+public fun Color.toAwtColor(): java.awt.Color = java.awt.Color(red, green, blue, alpha)
+
 public fun java.awt.Color?.toComposeColorOrUnspecified(): Color = this?.toComposeColor() ?: Color.Unspecified
 
 public fun retrieveColor(key: String, default: Color): Color = retrieveColorOrNull(key) ?: default
