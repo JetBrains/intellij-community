@@ -25,6 +25,7 @@ import kotlin.collections.component2
 data class PluginValidationOptions(
   val skipUnresolvedOptionalContentModules: Boolean = false,
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
+  val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
 )
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
@@ -298,7 +299,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
           }
 
           val dependency = pluginIdToInfo[id]
-          if (!id.startsWith("com.intellij.modules.") && dependency == null) {
+          if (!id.startsWith("com.intellij.modules.") && id !in validationOptions.referencedPluginIdsOfExternalPlugins && dependency == null) {
             registerError("Plugin not found: $id")
             continue
           }
