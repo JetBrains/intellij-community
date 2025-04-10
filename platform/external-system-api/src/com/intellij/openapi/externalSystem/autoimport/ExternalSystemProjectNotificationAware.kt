@@ -40,8 +40,7 @@ interface ExternalSystemProjectNotificationAware {
   /**
    * Checks that notifications should be shown with defined [systemId].
    */
-  fun isNotificationVisible(systemId: ProjectSystemId): Boolean =
-    systemId in getSystemIds() // fleet compatibility
+  fun isNotificationVisible(systemId: ProjectSystemId): Boolean
 
   /**
    * Gets list of project ids which should be reloaded.

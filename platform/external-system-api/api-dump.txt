@@ -79,7 +79,7 @@ com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotification
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 - a:getSystemIds():java.util.Set
 - a:isNotificationVisible():Z
-- isNotificationVisible(com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
+- a:isNotificationVisible(com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - a:notificationExpire():V
 - a:notificationExpire(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId):V
 - a:notificationNotify(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware):V
