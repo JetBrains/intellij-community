@@ -63,7 +63,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               holder.registerProblem(
                 sourcePsi,
                 DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
-                AddMultiRoutingAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                AddMultiRoutingAnnotationFix()
               )
             }
             is PathAnnotationInfo.Unspecified -> {
@@ -71,7 +71,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               holder.registerProblem(
                 sourcePsi,
                 DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method"),
-                AddMultiRoutingAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                AddMultiRoutingAnnotationFix()
               )
             }
             is PathAnnotationInfo.FilenameInfo -> {
@@ -79,7 +79,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               holder.registerProblem(
                 firstArg.sourcePsi ?: sourcePsi,
                 DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath"),
-                AddMultiRoutingAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                AddMultiRoutingAnnotationFix()
               )
             }
             is PathAnnotationInfo.MultiRouting -> {
@@ -126,14 +126,14 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
                       DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
-                      AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
+                      AddMultiRoutingAnnotationFix()
                     )
                   }
                   is PathAnnotationInfo.Unspecified -> {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
                       DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
-                      AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
+                      AddMultiRoutingAnnotationFix()
                     )
                   }
                   else -> {
@@ -163,7 +163,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
               sourcePsi,
               DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
               com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
-              AddMultiRoutingAnnotationFix(argInfo.getAnnotationCandidate())
+              AddMultiRoutingAnnotationFix()
             )
             return true
           }
@@ -184,21 +184,21 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
                   DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-                  AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                  AddNativePathAnnotationFix()
                 )
               }
               is PathAnnotationInfo.FilenameInfo -> {
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
                   DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-                  AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                  AddNativePathAnnotationFix()
                 )
               }
               is PathAnnotationInfo.Unspecified -> {
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
                   DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-                  AddNativePathAnnotationFix(firstArgInfo.getAnnotationCandidate())
+                  AddNativePathAnnotationFix()
                 )
               }
               else -> {
@@ -250,14 +250,14 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
                       DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
-                      AddNativePathAnnotationFix(argInfo.getAnnotationCandidate())
+                      AddNativePathAnnotationFix()
                     )
                   }
                   is PathAnnotationInfo.Unspecified -> {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
                       DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
-                      AddNativePathAnnotationFix(argInfo.getAnnotationCandidate())
+                      AddNativePathAnnotationFix()
                     )
                   }
                   else -> {
@@ -285,7 +285,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           holder.registerProblem(
             arg.sourcePsi ?: sourcePsi,
             DevKitBundle.message("inspections.message.nativepath.passed.to.multiroutingfilesystempath.method.parameter"),
-            AddMultiRoutingAnnotationFix(actualInfo.getAnnotationCandidate())
+            AddMultiRoutingAnnotationFix()
           )
         }
         else if (expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.MultiRouting) {
@@ -293,7 +293,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           holder.registerProblem(
             arg.sourcePsi ?: sourcePsi,
             DevKitBundle.message("inspections.message.multiroutingfilesystempath.passed.to.nativepath.method.parameter"),
-            AddNativePathAnnotationFix(actualInfo.getAnnotationCandidate())
+            AddNativePathAnnotationFix()
           )
         }
       }
@@ -340,7 +340,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         val fixes = mutableListOf<LocalQuickFix>()
         for (target in nonAnnotatedTargets) {
           if (target is PsiModifierListOwner) {
-            fixes.add(AddMultiRoutingAnnotationFix(target))
+            fixes.add(AddMultiRoutingAnnotationFix())
           }
         }
         if (fixes.isNotEmpty()) {
@@ -356,7 +356,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         val fixes = mutableListOf<LocalQuickFix>()
         for (target in nonAnnotatedTargets) {
           if (target is PsiModifierListOwner) {
-            fixes.add(AddNativePathAnnotationFix(target))
+            fixes.add(AddNativePathAnnotationFix())
           }
         }
         if (fixes.isNotEmpty()) {
@@ -595,12 +595,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   /**
    * Quick fix to add @MultiRoutingFileSystemPath annotation.
    */
-  private class AddMultiRoutingAnnotationFix(private val target: PsiModifierListOwner?) : LocalQuickFix {
+  private class AddMultiRoutingAnnotationFix() : LocalQuickFix {
     override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.multiroutingfilesystempath.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      if (target != null) {
-        val annotationOwner = target.modifierList
+      val element = descriptor.psiElement
+      if (element is PsiModifierListOwner) {
+        val annotationOwner = element.modifierList
         if (annotationOwner != null) {
           AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             MultiRoutingFileSystemPath::class.java.name,
@@ -615,12 +616,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   /**
    * Quick fix to add @NativePath annotation.
    */
-  private class AddNativePathAnnotationFix(private val target: PsiModifierListOwner?) : LocalQuickFix {
+  private class AddNativePathAnnotationFix() : LocalQuickFix {
     override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.nativepath.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      if (target != null) {
-        val annotationOwner = target.modifierList
+      val element = descriptor.psiElement
+      if (element is PsiModifierListOwner) {
+        val annotationOwner = element.modifierList
         if (annotationOwner != null) {
           AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             NativePath::class.java.name,
