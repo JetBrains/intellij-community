@@ -5,16 +5,25 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.util.registry.Registry.Companion.intValue
+import com.intellij.ui.ColorUtil
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import org.jetbrains.jewel.bridge.ScrollbarHelper
 import org.jetbrains.jewel.bridge.retrieveColor
+import org.jetbrains.jewel.bridge.toAwtColor
+import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
 import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.skiko.hostOs
+
+private val useContrastScrollbars: Boolean
+    get() = LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred && UISettings.getInstance().useContrastScrollbars
 
 internal fun readScrollbarStyle(isDark: Boolean): ScrollbarStyle =
     ScrollbarStyle(
@@ -31,64 +40,72 @@ private fun readScrollbarColors(isDark: Boolean) =
         readScrollbarWindowsAndLinuxColors(isDark)
     }
 
-private fun readScrollbarMacColors(isDark: Boolean): ScrollbarColors =
-    ScrollbarColors(
+private fun readScrollbarMacColors(isDark: Boolean): ScrollbarColors {
+    return ScrollbarColors(
         thumbBackground =
             retrieveColor(
-                key = "ScrollBar.Mac.Transparent.thumbColor",
-                isDark = isDark,
-                default = Color(0x00000000),
-                defaultDark = Color(0x00808080),
-            ),
+                    key = "ScrollBar.Mac.Transparent.thumbColor",
+                    isDark = isDark,
+                    default = Color(0x00000000),
+                    defaultDark = Color(0x00808080),
+                )
+                .updateTransparency(isDark),
         thumbBackgroundActive =
             retrieveColor(
-                key = "ScrollBar.Mac.Transparent.hoverThumbColor",
-                isDark = isDark,
-                default = Color(0x80000000),
-                defaultDark = Color(0x8C808080),
-            ),
+                    key = "ScrollBar.Mac.Transparent.hoverThumbColor",
+                    isDark = isDark,
+                    default = Color(0x80000000),
+                    defaultDark = Color(0x8C808080),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBackground =
             retrieveColor(
-                key = "ScrollBar.Mac.thumbColor",
-                isDark = isDark,
-                default = Color(0x33000000),
-                defaultDark = Color(0x59808080),
-            ),
+                    key = "ScrollBar.Mac.thumbColor",
+                    isDark = isDark,
+                    default = Color(0x33000000),
+                    defaultDark = Color(0x59808080),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBackgroundHovered =
             retrieveColor(
-                key = "ScrollBar.Mac.hoverThumbColor",
-                isDark = isDark,
-                default = Color(0x80000000),
-                defaultDark = Color(0x8C808080),
-            ),
+                    key = "ScrollBar.Mac.hoverThumbColor",
+                    isDark = isDark,
+                    default = Color(0x80000000),
+                    defaultDark = Color(0x8C808080),
+                )
+                .updateTransparency(isDark),
         thumbBorder =
             retrieveColor(
-                key = "ScrollBar.Mac.Transparent.thumbBorderColor",
-                isDark = isDark,
-                default = Color(0x00000000),
-                defaultDark = Color(0x00262626),
-            ),
+                    key = "ScrollBar.Mac.Transparent.thumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x00000000),
+                    defaultDark = Color(0x00262626),
+                )
+                .updateTransparency(isDark),
         thumbBorderActive =
             retrieveColor(
-                key = "ScrollBar.Mac.Transparent.hoverThumbBorderColor",
-                isDark = isDark,
-                default = Color(0x80000000),
-                defaultDark = Color(0x8C262626),
-            ),
+                    key = "ScrollBar.Mac.Transparent.hoverThumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x80000000),
+                    defaultDark = Color(0x8C262626),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBorder =
             retrieveColor(
-                key = "ScrollBar.Mac.thumbBorderColor",
-                isDark = isDark,
-                default = Color(0x33000000),
-                defaultDark = Color(0x59262626),
-            ),
+                    key = "ScrollBar.Mac.thumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x33000000),
+                    defaultDark = Color(0x59262626),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBorderHovered =
             retrieveColor(
-                key = "ScrollBar.Mac.hoverThumbBorderColor",
-                isDark = isDark,
-                default = Color(0x80000000),
-                defaultDark = Color(0x8C262626),
-            ),
+                    key = "ScrollBar.Mac.hoverThumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x80000000),
+                    defaultDark = Color(0x8C262626),
+                )
+                .updateTransparency(isDark),
         trackBackground =
             retrieveColor(
                 key = "ScrollBar.Mac.Transparent.trackColor",
@@ -118,65 +135,74 @@ private fun readScrollbarMacColors(isDark: Boolean): ScrollbarColors =
                 defaultDark = Color(0x00808080),
             ),
     )
+}
 
 private fun readScrollbarWindowsAndLinuxColors(isDark: Boolean): ScrollbarColors =
     ScrollbarColors(
         thumbBackground =
             retrieveColor(
-                key = "ScrollBar.Transparent.thumbColor",
-                isDark = isDark,
-                default = Color(0x33737373),
-                defaultDark = Color(0x47A6A6A6),
-            ),
+                    key = "ScrollBar.Transparent.thumbColor",
+                    isDark = isDark,
+                    default = Color(0x33737373),
+                    defaultDark = Color(0x47A6A6A6),
+                )
+                .updateTransparency(isDark),
         thumbBackgroundActive =
             retrieveColor(
-                key = "ScrollBar.Transparent.hoverThumbColor",
-                isDark = isDark,
-                default = Color(0x47737373),
-                defaultDark = Color(0x59A6A6A6),
-            ),
+                    key = "ScrollBar.Transparent.hoverThumbColor",
+                    isDark = isDark,
+                    default = Color(0x47737373),
+                    defaultDark = Color(0x59A6A6A6),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBackground =
             retrieveColor(
-                key = "ScrollBar.thumbColor",
-                isDark = isDark,
-                default = Color(0x33737373),
-                defaultDark = Color(0x47A6A6A6),
-            ),
+                    key = "ScrollBar.thumbColor",
+                    isDark = isDark,
+                    default = Color(0x33737373),
+                    defaultDark = Color(0x47A6A6A6),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBackgroundHovered =
             retrieveColor(
-                key = "ScrollBar.hoverThumbColor",
-                isDark = isDark,
-                default = Color(0x47737373),
-                defaultDark = Color(0x59A6A6A6),
-            ),
+                    key = "ScrollBar.hoverThumbColor",
+                    isDark = isDark,
+                    default = Color(0x47737373),
+                    defaultDark = Color(0x59A6A6A6),
+                )
+                .updateTransparency(isDark),
         thumbBorder =
             retrieveColor(
-                key = "ScrollBar.Transparent.thumbBorderColor",
-                isDark = isDark,
-                default = Color(0x33595959),
-                defaultDark = Color(0x47383838),
-            ),
+                    key = "ScrollBar.Transparent.thumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x33595959),
+                    defaultDark = Color(0x47383838),
+                )
+                .updateTransparency(isDark),
         thumbBorderActive =
             retrieveColor(
-                key = "ScrollBar.Transparent.hoverThumbBorderColor",
-                isDark = isDark,
-                default = Color(0x47595959),
-                defaultDark = Color(0x59383838),
-            ),
+                    key = "ScrollBar.Transparent.hoverThumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x47595959),
+                    defaultDark = Color(0x59383838),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBorder =
             retrieveColor(
-                key = "ScrollBar.thumbBorderColor",
-                isDark = isDark,
-                default = Color(0x33595959),
-                defaultDark = Color(0x47383838),
-            ),
+                    key = "ScrollBar.thumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x33595959),
+                    defaultDark = Color(0x47383838),
+                )
+                .updateTransparency(isDark),
         thumbOpaqueBorderHovered =
             retrieveColor(
-                key = "ScrollBar.hoverThumbBorderColor",
-                isDark = isDark,
-                default = Color(0x47595959),
-                defaultDark = Color(0x59383838),
-            ),
+                    key = "ScrollBar.hoverThumbBorderColor",
+                    isDark = isDark,
+                    default = Color(0x47595959),
+                    defaultDark = Color(0x59383838),
+                )
+                .updateTransparency(isDark),
         trackBackground =
             retrieveColor(
                 key = "ScrollBar.Transparent.trackColor",
@@ -206,6 +232,21 @@ private fun readScrollbarWindowsAndLinuxColors(isDark: Boolean): ScrollbarColors
                 defaultDark = Color(0x00808080),
             ),
     )
+
+private val LIGHT_ALPHA = if (hostOs.isMacOS) 120 else 160
+private val DARK_ALPHA = if (hostOs.isMacOS) 255 else 180
+
+private fun Color.updateTransparency(isDark: Boolean): Color {
+    if (!useContrastScrollbars) return this
+
+    var alpha = intValue("contrast.scrollbars.alpha.level")
+    if (alpha > 0) {
+        alpha = Integer.min(alpha, 255)
+    } else {
+        alpha = if (!isDark) LIGHT_ALPHA else DARK_ALPHA
+    }
+    return ColorUtil.toAlpha(this.toAwtColor(), alpha).toComposeColor()
+}
 
 private fun readScrollbarMetrics(): ScrollbarMetrics =
     if (hostOs.isMacOS) {
