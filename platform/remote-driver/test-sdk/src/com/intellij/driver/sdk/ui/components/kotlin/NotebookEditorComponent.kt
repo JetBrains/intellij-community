@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.kotlin
 
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -54,7 +55,16 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun runCell(): Unit = runAndSelectNext.click()
 
-  fun runAllCellsAndWaitExecuted(timeout: Duration = 30.seconds): Unit = run {
+  fun runCellAndWaitExecuted(timeout: Duration = 30.seconds): Unit = step("Executing cell") {
+    runCell()
+    waitFor(timeout = timeout) {
+      notebookCellExecutionInfos.last().getParent().x {
+        contains(byAttribute("defaulticon", "greenCheckmark.svg"))
+      }.present()
+    }
+  }
+
+  fun runAllCellsAndWaitExecuted(timeout: Duration = 30.seconds): Unit = step("Executing all cells") {
     runAllCells()
     waitFor(timeout = timeout) {
       notebookCellExecutionInfos.all {
@@ -64,8 +74,20 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   }
 
 
-  val notebookCellLines: List<UiComponent>
-    get() = xx("//div[@class='FullEditorWidthRenderer']//div[contains(@class, 'NotebookAboveCellDelimiterPanel')]").list()
+  /**
+   * Use to access text editing area
+   */
+  val notebookCellEditors: List<UiComponent>
+    get() = xx("""
+      //div[@class='FullEditorWidthRenderer']
+      /div[@class='JPanel' and not(
+          .//div[contains(@class, 'NotebookAboveCellDelimiterPanel')] 
+            or 
+          .//div[contains(@class, 'NotebookBelowLastCellPanel')]
+        ) 
+      ]
+    """.trimIndent()
+    ).list()
 
   val notebookCellOutputs: List<UiComponent>
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='EditorComponentImpl']").list()
