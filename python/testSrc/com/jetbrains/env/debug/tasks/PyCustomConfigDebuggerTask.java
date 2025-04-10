@@ -214,7 +214,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
             myDebugProcess =
               new PyDebugProcess(session, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
                                  "localhost", port);
-            myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+            myDebugProcess.getProcessHandler().addProcessListener(new ProcessListener() {
               @Override
               public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 myOutputBuilder.append(event.getText());

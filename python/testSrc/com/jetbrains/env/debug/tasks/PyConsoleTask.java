@@ -4,9 +4,9 @@ package com.jetbrains.env.debug.tasks;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -252,7 +252,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       }
     });
 
-    myProcessHandler.addProcessListener(new ProcessAdapter() {
+    myProcessHandler.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         if (event.getExitCode() != 0 && !myProcessCanTerminate) {

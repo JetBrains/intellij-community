@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.CantRunException;
@@ -224,7 +224,7 @@ public final class ExecutionHandler {
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
     handler.putUserData(AntRunProfileState.MESSAGE_VIEW, errorView);
-    handler.addProcessListener(new ProcessAdapter() {
+    handler.addProcessListener(new ProcessListener() {
       private final @NlsSafe StringBuilder myUnprocessedStdErr = new StringBuilder();
 
       @Override
