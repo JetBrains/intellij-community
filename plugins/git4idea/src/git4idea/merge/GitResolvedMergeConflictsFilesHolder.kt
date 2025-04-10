@@ -64,11 +64,13 @@ class GitResolvedMergeConflictsFilesHolder(private val repository: GitRepository
   private fun update() {
     if (repository.state == Repository.State.NORMAL) {
       clear()
+      notifyListeners()
       return
     }
     val actualResolvedFiles = GitChangeUtils.getResolvedFiles(repository)
     if (actualResolvedFiles.isEmpty()) {
       clear()
+      notifyListeners()
       return
     }
     val actualResolvedFilesSet = RecursiveFilePathSet(repository.root.isCaseSensitive).apply { addAll(actualResolvedFiles) }
@@ -79,6 +81,10 @@ class GitResolvedMergeConflictsFilesHolder(private val repository: GitRepository
       inUpdate = false
     }
 
+    notifyListeners()
+  }
+
+  private fun notifyListeners() {
     val project = repository.project
     ChangeListManagerImpl.getInstanceImpl(project).notifyUnchangedFileStatusChanged()
     BackgroundTaskUtil.syncPublisher(project, VcsManagedFilesHolder.TOPIC).updatingModeChanged()
