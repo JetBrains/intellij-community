@@ -7,16 +7,73 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getHomePath
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import org.jetbrains.jps.model.module.JpsModule
 import org.opentest4j.MultipleFailuresError
 import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.collections.component1
+import kotlin.collections.component2
+
+fun validatePluginModel(projectPath: Path, skipUnresolvedOptionalContentModules: Boolean = false): PluginValidationResult {
+  val modules = IntelliJProjectConfiguration.loadIntelliJProject(projectPath.toString())
+    .modules
+    .map { ModuleWrap(it) }
+
+  return validatePluginModel(modules, skipUnresolvedOptionalContentModules = skipUnresolvedOptionalContentModules)
+}
+
+fun validatePluginModel(sourceModules: List<PluginModelValidator.Module>, skipUnresolvedOptionalContentModules: Boolean = false): PluginValidationResult {
+  return PluginModelValidator(sourceModules, skipUnresolvedOptionalContentModules).validate()
+}
+
+class PluginValidationResult internal constructor(
+  private val validationErrors: List<PluginValidationError>,
+  private val pluginIdToInfo: Map<String, ModuleInfo>,
+) {
+  val errors: List<Throwable>
+    get() = java.util.List.copyOf(validationErrors)
+
+  val namedFailures: List<NamedFailure>
+    get() {
+      return validationErrors.groupBy { it.sourceModule.name }.map { (name, errors) ->
+        NamedFailure(name, errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors))
+      }
+    }
+
+  fun graphAsString(): CharSequence {
+    val stringWriter = StringWriter()
+    val writer = JsonFactory().createGenerator(stringWriter)
+    writer.useDefaultPrettyPrinter()
+    writer.use {
+      writer.obj {
+        val entries = pluginIdToInfo.entries.toMutableList()
+        entries.sortBy { it.value.sourceModule.name }
+        for (entry in entries) {
+          val item = entry.value
+          if (item.packageName == null && !hasContentOrDependenciesInV2Format(item.descriptor)) {
+            continue
+          }
+
+          writer.writeFieldName(item.sourceModule.name)
+          writeModuleInfo(writer, item)
+        }
+      }
+    }
+    return stringWriter.buffer
+  }
+
+  fun writeGraph(outFile: Path) {
+    PluginGraphWriter(pluginIdToInfo).write(outFile)
+  }
+}
 
 private val emptyPath by lazy {
   Path.of("/")
@@ -48,7 +105,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
 )
 
-class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolvedOptionalContentModules: Boolean = false) {
+class PluginModelValidator(private val sourceModules: List<Module>, private val skipUnresolvedOptionalContentModules: Boolean = false) {
   sealed interface Module {
     val name: String
 
@@ -59,17 +116,7 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
 
   private val _errors = mutableListOf<PluginValidationError>()
 
-  val errors: List<Throwable>
-    get() = java.util.List.copyOf(_errors)
-  
-  val namedFailures: List<NamedFailure>
-    get() {
-      return _errors.groupBy { it.sourceModule.name }.map { (name, errors) ->
-        NamedFailure(name, errors.singleOrNull() ?: MultipleFailuresError("${errors.size} failures", errors))
-      } 
-    }
-
-  init {
+  fun validate(): PluginValidationResult {
     // 1. collect plugin and module file info set
     val sourceModuleNameToFileInfo = sourceModules.associate {
       it.name to ModuleDescriptorFileInfo(it)
@@ -211,32 +258,8 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
         }
       }
     }
-  }
-
-  fun graphAsString(): CharSequence {
-    val stringWriter = StringWriter()
-    val writer = JsonFactory().createGenerator(stringWriter)
-    writer.useDefaultPrettyPrinter()
-    writer.use {
-      writer.obj {
-        val entries = pluginIdToInfo.entries.toMutableList()
-        entries.sortBy { it.value.sourceModule.name }
-        for (entry in entries) {
-          val item = entry.value
-          if (item.packageName == null && !hasContentOrDependenciesInV2Format(item.descriptor)) {
-            continue
-          }
-
-          writer.writeFieldName(item.sourceModule.name)
-          writeModuleInfo(writer, item)
-        }
-      }
-    }
-    return stringWriter.buffer
-  }
-
-  fun writeGraph(outFile: Path) {
-    PluginGraphWriter(pluginIdToInfo).write(outFile)
+    
+    return PluginValidationResult(_errors, pluginIdToInfo)
   }
 
   private fun checkDependencies(element: XmlElement,
@@ -738,7 +761,7 @@ private fun writeDependencies(items: List<Reference>, writer: JsonGenerator) {
   }
 }
 
-private class PluginValidationError private constructor(message: String, val sourceModule: PluginModelValidator.Module) : RuntimeException(message) {
+internal class PluginValidationError private constructor(message: String, val sourceModule: PluginModelValidator.Module) : RuntimeException(message) {
   constructor(
     message: String,
     sourceModule: PluginModelValidator.Module,
@@ -816,4 +839,17 @@ private fun mergeContent(main: XmlElement, contentHolder: XmlElement): XmlElemen
 
 internal fun hasContentOrDependenciesInV2Format(descriptor: XmlElement): Boolean {
   return descriptor.children.any { it.name == "content" || it.name == "dependencies" }
+}
+
+private data class ModuleWrap(private val module: JpsModule) : PluginModelValidator.Module {
+  override val name: String
+    get() = module.name
+
+  override val sourceRoots: Sequence<Path>
+    get() {
+      return module.sourceRoots
+        .asSequence()
+        .filter { !it.rootType.isForTests }
+        .map { it.path }
+    }
 }
