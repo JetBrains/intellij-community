@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide
 
 import com.dynatrace.hash4j.hashing.HashStream64
@@ -29,8 +29,8 @@ fun ideFingerprint(debugHelperToken: Int = 0): IdeFingerprint {
 }
 
 /**
- * Fingerprint (=hash) of current IDE installation.
- * It used to skip the scanning/indexing process altogether if nothing has changed from previous IDE session.
+ * Fingerprint (=hash) of the current IDE installation.
+ * It used to skip the scanning/indexing process altogether if nothing has changed from the previous IDE session.
  *
  * The defining property of the fingerprint is:
  * 'if (fingerprint is unchanged) AND (files on disk are not changed) => it should be no reason to update indexes'.
@@ -51,14 +51,14 @@ value class IdeFingerprint(private val value: Long) {
 
   fun asLong(): Long = value
 
-  override fun toString() = asString()
+  override fun toString(): String = asString()
 }
 
 @Internal
 private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
   val startTime = System.currentTimeMillis()
 
-  val hasher = Hashing.komihash5_0().hashStream()
+  val hasher = Hashing.xxh3_64().hashStream()
 
   val appInfo = ApplicationInfoImpl.getShadowInstance()
   if (AppMode.isDevServer()) {
@@ -70,7 +70,7 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
   hasher.putString(appInfo.build.asString())
   hasher.putString(System.getProperty("idea.kotlin.plugin.use.k2") ?: "") // IJPL-156028
 
-  // loadedPlugins list is sorted
+  // the loadedPlugins list is sorted
   val loadedPlugins = PluginManagerCore.loadedPlugins
   hasher.putInt(loadedPlugins.size)
   // Classpath is too huge to calculate its fingerprint. Dev Mode is a preferred way to run IDE from sources.
@@ -88,8 +88,8 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
 
   //RC: we include IDE/plugins versions AND explicit indexes versions into the fingerprint -- because index.version
   //    could change without code change, by sys-properties or other env conditions change.
-  //    E.g. sharding: # shards could be changed with system properties, and could change automatically if #CPU changed.
-  //MAYBE RC: use com.intellij.util.indexing.FbiSnapshot -- it is a 'index version hash' thing developed for other (but similar) purposes?
+  //    E.g., sharding: # shards could be changed with system properties and could change automatically if #CPU changed.
+  //MAYBE RC: use com.intellij.util.indexing.FbiSnapshot -- it is an 'index version hash' thing developed for other (but similar) purposes?
   FileBasedIndexExtension.EXTENSION_POINT_NAME.extensionList.forEach {
     hasher.putInt(it.version)
   }
@@ -129,7 +129,7 @@ private fun hashByFileContent(descriptor: IdeaPluginDescriptorImpl, hasher: Hash
   for (file in files) {
     // if the path is not a directory, only "this" file will be visited
     // if the path is a directory, all the regular files will be visited
-    // note, that symlinks are not followed
+    //  note that symlinks are not followed
     file.walk().sorted().forEach { f ->
       // /tmp/byteBuddyAgent12978532094762450051.jar:1261:2023-09-21T12:46:17.196727952Z <= this file is always different :(
       // see also https://youtrack.jetbrains.com/issue/IJPL-166
