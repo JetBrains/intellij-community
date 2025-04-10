@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -89,10 +88,9 @@ internal class PySetUpCondaFix : LocalQuickFix {
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
     val maxCondaSupportedLanguage = condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
     val envRequest = NewCondaEnvRequest.EmptyNamedEnv(maxCondaSupportedLanguage, project.name)
-    return runCatching {
-      PyCondaCommand(condaPath, null, project)
-        .createCondaSdkAlongWithNewEnv(envRequest, Dispatchers.EDT, existingSdks.toList(), project, reporter)
-    }.mapFlat { it }.reportError(project, "Failed to set up conda sdk", "conda.sdk.setup.failed")
+    return PyCondaCommand(condaPath, null, project)
+      .createCondaSdkAlongWithNewEnv(envRequest, Dispatchers.EDT, existingSdks.toList(), project, reporter)
+      .reportError(project, "Failed to set up conda sdk", "conda.sdk.setup.failed")
   }
 
   private fun installConda(project: Project): FullPathOnTarget? {
