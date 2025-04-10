@@ -153,7 +153,8 @@ public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClas
   private static PsiClass @NotNull [] getOrCalculateDirectSubClasses(@NotNull Project project,
                                                                      @NotNull PsiClass baseClass,
                                                                      @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
-    List<PsiClass> sealedInheritors = DumbService.getInstance(project).runReadActionInSmartMode(() -> processSealed(baseClass));
+    List<PsiClass> sealedInheritors =
+      ReadAction.compute(() -> DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> processSealed(baseClass)));
     if (sealedInheritors != null) {
       if (parameters.restrictSealedHierarchy()) {
         // Do not cache: this list is fast to compute
