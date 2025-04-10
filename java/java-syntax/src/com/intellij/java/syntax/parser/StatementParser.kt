@@ -26,6 +26,7 @@ import com.intellij.pom.java.JavaFeature
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
+import kotlin.jvm.JvmOverloads
 
 class StatementParser(private val myParser: JavaParser) {
   private enum class BraceMode {

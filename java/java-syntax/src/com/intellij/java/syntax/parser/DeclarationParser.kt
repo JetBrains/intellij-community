@@ -24,6 +24,7 @@ import com.intellij.util.text.CharArrayUtilKmp.shiftForward
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
+import kotlin.jvm.JvmOverloads
 
 @ApiStatus.Experimental
 open class DeclarationParser(private val myParser: JavaParser) {
