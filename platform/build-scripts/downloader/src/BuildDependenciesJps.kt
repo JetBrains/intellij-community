@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.google.common.hash.Funnels
-import com.google.common.hash.Hashing
-import com.google.common.io.ByteStreams
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -15,6 +12,8 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getCompon
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getLibraryElement
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getSingleChildElement
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.tryGetSingleChildElement
+import org.jetbrains.intellij.build.dependencies.cloneDigest
+import org.jetbrains.intellij.build.dependencies.sha2_256
 import org.w3c.dom.Element
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,6 +40,7 @@ object BuildDependenciesJps {
     return modulePath
   }
 
+  @OptIn(ExperimentalStdlibApi::class)
   private suspend fun getLibraryRoots(
     library: Element,
     mavenRepositoryUrl: String,
@@ -81,12 +81,19 @@ object BuildDependenciesJps {
 
         // '-SNAPSHOT' versions could be used only locally to test new locally built dependencies
         if (!mavenId.endsWith("-SNAPSHOT")) {
-          val actualSha256checksum = Files.newInputStream(file).use {
-            val hasher = Hashing.sha256().newHasher()
-            ByteStreams.copy(it, Funnels.asOutputStream(hasher))
-            hasher.hash().toString()
+          val digest = cloneDigest(sha2_256)
+          val buffer = ByteArray(512 * 1024)
+          Files.newInputStream(file).use {
+            while (true) {
+              val size = it.read(buffer)
+              if (size <= 0) {
+                break
+              }
+              digest.update(buffer, 0, size)
+            }
           }
 
+          val actualSha256checksum = digest.digest().toHexString()
           val expectedSha256Checksum = sha256sumMap[fileUrl] ?: error("SHA256 checksum is missing for $fileUrl:\n${library.asText}")
           if (expectedSha256Checksum != actualSha256checksum) {
             Files.delete(file)

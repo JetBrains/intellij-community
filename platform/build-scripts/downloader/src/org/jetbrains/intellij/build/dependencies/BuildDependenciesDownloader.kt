@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.dependencies
 
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer
-import com.google.common.hash.Hashing
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import kotlinx.coroutines.runBlocking
@@ -32,25 +31,29 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import java.security.MessageDigest
+import java.security.Provider
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 
+private val LOG = Logger.getLogger(BuildDependenciesDownloader::class.java.name)
+private val fileLocks = StripedMutex(1024)
+private val cleanupFlag = AtomicBoolean(false)
+
+// increment on semantic changes in extract code to invalidate all current caches
+private const val EXTRACT_CODE_VERSION = 5
+
+// increment on semantic changes in download code to invalidate all current caches,
+// e.g., when some issues in extraction code were fixed
+private const val DOWNLOAD_CODE_VERSION = 3
+
+private val extractCount = AtomicInteger()
+
 @ApiStatus.Internal
 object BuildDependenciesDownloader {
   data class Credentials(@JvmField val username: String, @JvmField val password: String)
-
-  private val LOG = Logger.getLogger(BuildDependenciesDownloader::class.java.name)
-  private val fileLocks = StripedMutex(1024)
-  private val cleanupFlag = AtomicBoolean(false)
-
-  // increment on semantic changes in extract code to invalidate all current caches
-  private const val EXTRACT_CODE_VERSION = 5
-
-  // increment on semantic changes in download code to invalidate all current caches,
-  // e.g., when some issues in extraction code were fixed
-  private const val DOWNLOAD_CODE_VERSION = 3
 
   /**
    * Sets a tracer to get telemetry. E.g., it is set for build scripts to get opentelemetry events.
@@ -126,8 +129,6 @@ object BuildDependenciesDownloader {
     extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options)
     return targetDirectory
   }
-
-  private fun hashString(s: String): String = BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
 
   private fun getExpectedFlagFileContent(
     archiveFile: Path,
@@ -288,27 +289,46 @@ options:${getExtractOptionsShortString(options)}
     }
   }
 
-  private fun getExtractOptionsShortString(options: Array<out BuildDependenciesExtractOptions>): String {
-    if (options.isEmpty()) {
-      return ""
-    }
-    val sb = StringBuilder()
-    for (option in options) {
-      if (option === BuildDependenciesExtractOptions.STRIP_ROOT) {
-        sb.append("s")
-      }
-      else {
-        throw IllegalStateException("Unhandled case: $option")
-      }
-    }
-    return sb.toString()
-  }
-
-  private val extractCount = AtomicInteger()
-
   @TestOnly fun getExtractCount(): Int = extractCount.get()
 
   class HttpStatusException(message: String, @JvmField val statusCode: Int, val url: String) : IllegalStateException(message) {
     override fun toString(): String = "HttpStatusException(status=${statusCode}, url=${url}, message=${message})"
+  }
+}
+
+private fun getExtractOptionsShortString(options: Array<out BuildDependenciesExtractOptions>): String {
+  if (options.isEmpty()) {
+    return ""
+  }
+  val sb = StringBuilder()
+  for (option in options) {
+    if (option === BuildDependenciesExtractOptions.STRIP_ROOT) {
+      sb.append("s")
+    }
+    else {
+      throw IllegalStateException("Unhandled case: $option")
+    }
+  }
+  return sb.toString()
+}
+
+internal val sha2_256 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-256") }
+private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
+private fun getMessageDigest(@Suppress("SameParameterValue") algorithm: String): MessageDigest {
+  return MessageDigest.getInstance(algorithm, sunSecurityProvider)
+}
+
+private fun hashString(s: String): String = BigInteger(1, cloneDigest(sha2_256).digest(s.toByteArray())).toString(36)
+
+/**
+ * Digest cloning is faster than requesting a new one from [MessageDigest.getInstance].
+ * This approach is used in Guava as well.
+ */
+internal fun cloneDigest(digest: MessageDigest): MessageDigest {
+  try {
+    return digest.clone() as MessageDigest
+  }
+  catch (_: CloneNotSupportedException) {
+    throw IllegalArgumentException("Message digest is not cloneable: $digest")
   }
 }
