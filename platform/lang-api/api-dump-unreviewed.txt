@@ -4161,9 +4161,6 @@ f:com.intellij.microservices.url.references.UrlPathReference
 - com.intellij.psi.PsiReferenceBase$Poly
 - com.intellij.microservices.url.references.UrlSegmentReference
 - sf:Companion:com.intellij.microservices.url.references.UrlPathReference$Companion
-- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):V
-- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,Z):V
-- <init>(com.intellij.microservices.url.references.UrlPathContext,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z,Z,com.intellij.microservices.url.references.PathSegmentHandler):V
 - sf:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.UrlTargetInfo):com.intellij.psi.NavigatablePsiElement
 - sf:createSearchableElement(com.intellij.openapi.project.Project,com.intellij.microservices.url.references.UrlPathContext):com.intellij.psi.NavigatablePsiElement
 - f:getContext():com.intellij.microservices.url.references.UrlPathContext
