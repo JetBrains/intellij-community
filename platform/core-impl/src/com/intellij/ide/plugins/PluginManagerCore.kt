@@ -469,9 +469,8 @@ object PluginManagerCore {
       selectedPlugins
     }
 
-    val coreDescriptor = idMap[CORE_ID]
     for (descriptor in descriptors) {
-      if (descriptor === coreDescriptor) {
+      if (descriptor.pluginId == CORE_ID) {
         continue
       }
       if (explicitlyEnabled != null) {
