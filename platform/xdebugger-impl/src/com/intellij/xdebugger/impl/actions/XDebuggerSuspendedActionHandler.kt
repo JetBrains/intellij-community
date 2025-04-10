@@ -8,24 +8,37 @@ import com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.annotations.ApiStatus
 
+@Deprecated("Use XDebuggerProxySuspendedActionHandler instead")
 abstract class XDebuggerSuspendedActionHandler : XDebuggerActionHandler() {
-  @ApiStatus.Internal
-  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+  @Deprecated("Deprecated in Java")
+  override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
     return isEnabled(session)
   }
 
   @ApiStatus.Internal
   companion object {
     @JvmStatic
-    @ApiStatus.Internal
-    fun isEnabled(session: XDebugSessionProxy): Boolean {
-      return !session.isReadOnly && session.isSuspended
-    }
-
-    @JvmStatic
-    @Deprecated("Use {@link XDebuggerSuspendedActionHandler#isEnabled(XDebugSessionProxy)} instead")
     fun isEnabled(session: XDebugSession): Boolean {
       return !(session as XDebugSessionImpl).isReadOnly && session.isSuspended
     }
+  }
+}
+
+@ApiStatus.Internal
+abstract class XDebuggerProxySuspendedActionHandler : XDebuggerActionHandler() {
+  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+    return !session.isReadOnly && session.isSuspended
+  }
+
+  @Deprecated("Deprecated in Java")
+  final override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
+    @Suppress("DEPRECATION")
+    return super.isEnabled(session, dataContext)
+  }
+
+  @Deprecated("Deprecated in Java")
+  final override fun perform(session: XDebugSession, dataContext: DataContext) {
+    @Suppress("DEPRECATION")
+    super.perform(session, dataContext)
   }
 }

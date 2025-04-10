@@ -20,7 +20,7 @@ open class StepOutAction : XDebuggerActionBase(), ActionRemoteBehaviorSpecificat
   }
 }
 
-private val ourHandler: XDebuggerSuspendedActionHandler = object : XDebuggerSuspendedActionHandler() {
+private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     performDebuggerActionAsync(session.project, dataContext) {
       XDebugSessionApi.getInstance().stepOut(session.id)

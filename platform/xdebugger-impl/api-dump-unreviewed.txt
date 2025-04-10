@@ -340,6 +340,7 @@ a:com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
 - com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - <init>():V
 - sf:isEnabled(com.intellij.xdebugger.XDebugSession):Z
+- p:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - <init>():V

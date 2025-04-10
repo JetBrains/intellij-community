@@ -47,7 +47,7 @@ import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
+import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
@@ -90,7 +90,7 @@ private fun XSmartStepIntoTargetDto.target(): XSmartStepIntoTarget {
   })
 }
 
-internal open class XDebuggerSmartStepIntoHandler : XDebuggerSuspendedActionHandler() {
+internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActionHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
     return super.isEnabled(session, dataContext) && session.smartStepIntoHandlerEntry != null
   }

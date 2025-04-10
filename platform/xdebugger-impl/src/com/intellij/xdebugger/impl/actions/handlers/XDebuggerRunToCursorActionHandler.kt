@@ -17,7 +17,7 @@ package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
+import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
@@ -25,7 +25,7 @@ import com.intellij.xdebugger.impl.rpc.toRpc
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class XDebuggerRunToCursorActionHandler(private val myIgnoreBreakpoints: Boolean) : XDebuggerSuspendedActionHandler() {
+class XDebuggerRunToCursorActionHandler(private val myIgnoreBreakpoints: Boolean) : XDebuggerProxySuspendedActionHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
     return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.project, dataContext) != null
   }
