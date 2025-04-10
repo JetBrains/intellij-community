@@ -105,6 +105,13 @@ object GHAccountsUtil {
   fun createBrowserLoginAction(
     model: GHLoginModel, project: Project, parentComponent: JComponent
   ): AnAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
+    loginViaBrowser(model, project, parentComponent)
+  }
+
+  @ApiStatus.Internal
+  fun loginViaBrowser(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?
+  ) {
     scopedDialog(project) {
       GHLoginDialog.OAuth(model, project, this, parentComponent).apply {
         setServer(GithubServerPath.DEFAULT_HOST, false)
@@ -114,8 +121,15 @@ object GHAccountsUtil {
 
   @ApiStatus.Internal
   fun createTokenLoginAction(
-    model: GHLoginModel, project: Project, parentComponent: JComponent
+    model: GHLoginModel, project: Project, parentComponent: JComponent,
   ): AnAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+    loginViaToken(model, project, parentComponent)
+  }
+
+  @ApiStatus.Internal
+  fun loginViaToken(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?,
+  ) {
     scopedDialog(project) {
       GHLoginDialog.Token(model, project, this, parentComponent).apply {
         title = GithubBundle.message("dialog.title.add.github.account")
