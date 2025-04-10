@@ -16,6 +16,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -64,10 +66,12 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
 
     @Override
     public @NotNull String getName() {
-      if (c == '\n') {
-        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
-      }
-      return CommonQuickFixBundle.message("fix.replace.with.x", (c == '\t') ? "\\t" : c);
+      return switch (c) {
+        case '\n' -> InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text", 1);
+        case '\t' -> InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text", 2);
+        case ' ' -> InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text", 3);
+        default -> CommonQuickFixBundle.message("fix.replace.with.x", c);
+      };
     }
 
     @Override
@@ -78,7 +82,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       Document document = startElement.getContainingFile().getFileDocument();
-      String replacement = c == '\t' ? "\\t" : String.valueOf(c);
+      String replacement = c == '\t' && PsiUtil.isJavaToken(startElement, ElementType.STRING_LITERALS) ? "\\t" : String.valueOf(c);
       document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), replacement);
     }
   }
@@ -126,7 +130,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
           if (d == '\uFFFD' || (d == '\\' && detectUnicodeEscape(text, escapeEnd - 1, length) != -1)) {
-            // this character is used as a replacement when a unicode character can't be displayed
+            // this character is used as a replacement when a Unicode character can't be displayed
             // replacing the escape with the character may cause confusion, so ignore it.
             // skip if another escape sequence follows '\' without being properly escaped.
             continue;
