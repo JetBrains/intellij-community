@@ -16,6 +16,8 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public final class GroovyConfigUtils extends AbstractConfigUtils {
@@ -40,6 +42,9 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public static final @NlsSafe String GROOVY4_0 = "4.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
+
+  private final Map<String, Map<String, Integer>> versionsCompareMap = new ConcurrentHashMap<>();
+
   private static final @NonNls String LIB = "/lib";
   private static final @NonNls String EMBEDDABLE = "/embeddable";
 
@@ -121,19 +126,27 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public static int compareSdkVersions(@NotNull String leftVersion, @NotNull String rightVersion) {
-    String[] leftVersionParts = leftVersion.split("[.-]");
-    String[] rightVersionParts = rightVersion.split("[.-]");
-    int sizes = Math.max(leftVersionParts.length, rightVersionParts.length);
-    for (int i = 0; i < sizes; ++i) {
-      int leftNumber = getVersionPart(leftVersionParts, i);
-      int rightNumber = getVersionPart(rightVersionParts, i);
-      if (leftNumber < rightNumber) {
-        return -1;
-      } else if (leftNumber > rightNumber) {
-        return 1;
+    return getInstance().compareSdkVersionsInner(leftVersion, rightVersion);
+  }
+
+  private int compareSdkVersionsInner(@NotNull String leftVersion, @NotNull String rightVersion) {
+    Map<String, Integer> rightVersionToResultMap = versionsCompareMap.computeIfAbsent(leftVersion, key -> new ConcurrentHashMap<>());
+
+    return rightVersionToResultMap.computeIfAbsent(rightVersion, key -> {
+      String[] leftVersionParts = leftVersion.split("[.-]");
+      String[] rightVersionParts = rightVersion.split("[.-]");
+      int sizes = Math.max(leftVersionParts.length, rightVersionParts.length);
+      for (int i = 0; i < sizes; ++i) {
+        int leftNumber = getVersionPart(leftVersionParts, i);
+        int rightNumber = getVersionPart(rightVersionParts, i);
+        if (leftNumber < rightNumber) {
+          return -1;
+        } else if (leftNumber > rightNumber) {
+          return 1;
+        }
       }
-    }
-    return 0;
+      return 0;
+    });
   }
 
   public static boolean isUnstable(@NotNull String version) {
