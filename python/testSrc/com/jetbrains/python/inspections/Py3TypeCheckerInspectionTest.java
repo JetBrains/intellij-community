@@ -623,6 +623,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-80195
+  public void testMultiValueEnum() {
+    doMultiFileTest();
+  }
+
   // PY-42418
   public void testParametrizedBuiltinCollectionsAndTheirTypingAliasesAreEquivalent() {
     doTest();

@@ -1236,7 +1236,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testEnumLiteral() {
     doTestByText("""
                    from enum import Enum, member, nonmember
-                   from typing import Literal
+                   from typing import Literal, Any
                    
                    class Color(Enum):
                        R = 1
@@ -1251,6 +1251,25 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class A:
                        X = Color.R
                    
+                   class SuperEnum(Enum):
+                       PINK = "PINK", "hot"
+                       FLOSS = "FLOSS", "sweet"
+                   
+                   tuple = 1, "ab"
+                   o = object()
+                   def get_object() -> object: ...
+                   def get_any() -> Any: ...
+                   
+                   class E(Enum):
+                       FOO = tuple
+                       BAR = o
+                       BUZ = get_object()
+                       QUX = get_any()
+                   
+                       def meth(self): ...
+                   
+                       meth2 = meth
+                   
                    v1: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A.X</warning>]
                    
                    X = Color.R
@@ -1259,7 +1278,20 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    v3: Literal[Color.G]
                    v4: Literal[Color.RED]
                    v5: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">Color.foo</warning>]
-                   v6: Literal[Color.bar]""");
+                   v6: Literal[Color.bar]
+                   
+                   v7: Literal[SuperEnum.PINK]
+                   
+                   v8: Literal[E.FOO]
+                   v9: Literal[E.BAR]
+                   v10: Literal[E.BUZ]
+                   v11: Literal[E.QUX]
+                   v12: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">E.meth2</warning>]""");
+  }
+
+  // PY-79227
+  public void testEnumLiteralMultiFile() {
+    doMultiFileTest();
   }
 
   // PY-35235
