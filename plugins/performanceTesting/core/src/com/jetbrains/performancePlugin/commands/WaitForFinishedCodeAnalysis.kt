@@ -142,7 +142,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       launch {
         while (true) {
           @Suppress("TestOnlyProblems")
-          if (!service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
+          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
             delay(500)
           }
           else {
