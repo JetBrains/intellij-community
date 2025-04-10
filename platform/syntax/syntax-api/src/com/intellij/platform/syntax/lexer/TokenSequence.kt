@@ -16,8 +16,8 @@ internal class TokenSequence(
   override val tokenizedText: CharSequence,
 ) : TokenList {
   init {
-    assert(tokenCount < lexStarts.size)
-    assert(tokenCount < lexTypes.size)
+    require(tokenCount < lexStarts.size)
+    require(tokenCount < lexTypes.size)
   }
 
   fun assertMatches(
@@ -27,10 +27,10 @@ internal class TokenSequence(
     logger: Logger?,
   ) {
     val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
-    assert(tokenCount == sequence.tokenCount)
+    require(tokenCount == sequence.tokenCount)
     for (j in 0..tokenCount) {
       if (sequence.lexStarts[j] != lexStarts[j] || sequence.lexTypes[j] !== lexTypes[j]) {
-        assert(false)
+        require(false)
       }
     }
   }
@@ -86,10 +86,10 @@ internal class TokenListLexerImpl(
   }
 
   override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-    assert(equal(buffer, tokens.tokenizedText))
-    assert(startOffset == 0)
-    assert(endOffset == buffer.length)
-    assert(initialState == 0)
+    require(equal(buffer, tokens.tokenizedText))
+    require(startOffset == 0)
+    require(endOffset == buffer.length)
+    require(initialState == 0)
     state = 0
   }
 
@@ -225,7 +225,7 @@ private fun CharSequence.shortenTextWithEllipsis(
   }
 
   val prefixLength = maxLength - suffixLength - symbol.length
-  assert(prefixLength >= 0)
+  require(prefixLength >= 0)
   return substring(0, prefixLength) + symbol + substring(textLength - suffixLength)
 }
 

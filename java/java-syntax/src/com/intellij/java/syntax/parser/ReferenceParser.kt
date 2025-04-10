@@ -36,7 +36,7 @@ class ReferenceParser(private val myParser: JavaParser) {
     val typeInfo = parseTypeInfo(builder, flags, false)
 
     if (typeInfo != null) {
-      assert(!isSet(flags, DISJUNCTIONS) || !isSet(flags, CONJUNCTIONS)) { "don't set both flags simultaneously" }
+      require(!isSet(flags, DISJUNCTIONS) || !isSet(flags, CONJUNCTIONS)) { "don't set both flags simultaneously" }
       val operator = if (isSet(flags, DISJUNCTIONS)) JavaSyntaxTokenType.OR
       else if (isSet(flags, CONJUNCTIONS)) JavaSyntaxTokenType.AND else null
 

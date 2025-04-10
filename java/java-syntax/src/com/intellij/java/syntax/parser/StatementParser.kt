@@ -708,7 +708,7 @@ class StatementParser(private val myParser: JavaParser) {
   }
 
   fun parseCatchBlock(builder: SyntaxTreeBuilder): Boolean {
-    assert(builder.tokenType === JavaSyntaxTokenType.CATCH_KEYWORD) { builder.tokenType!! }
+    require(builder.tokenType === JavaSyntaxTokenType.CATCH_KEYWORD) { builder.tokenType!! }
     val section = builder.mark()
     builder.advanceLexer()
 

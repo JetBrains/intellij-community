@@ -81,7 +81,7 @@ internal class ParsingTreeBuilder(
     }
 
   internal fun precede(marker: ProductionMarker): SyntaxTreeBuilder.Marker {
-    assert(marker.getStartTokenIndex() >= 0) { "Preceding disposed marker" }
+    require(marker.getStartTokenIndex() >= 0) { "Preceding disposed marker" }
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker)
     }
@@ -274,7 +274,7 @@ internal class ParsingTreeBuilder(
   }
 
   internal fun rollbackTo(marker: CompositeMarker) {
-    assert(marker.getStartTokenIndex() >= 0) { "The marker is already disposed" }
+    require(marker.getStartTokenIndex() >= 0) { "The marker is already disposed" }
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker)
     }
@@ -435,7 +435,7 @@ internal class ParsingTreeBuilder(
       val item = starting ?: pool.get(-id)
 
       val binder = if (item is ErrorMarker) {
-        assert(!done)
+        require(!done)
         WhitespacesBinders.defaultRightBinder()
       }
       else {
@@ -527,7 +527,7 @@ private fun performLexing(
   logger: Logger?,
 ): LexingResult {
   if (cachedLexemes is TokenSequence) {
-    assert(cachedLexemes.lexStarts[cachedLexemes.tokenCount] == text.length)
+    require(cachedLexemes.lexStarts[cachedLexemes.tokenCount] == text.length)
 
     if (doLexingOptimizationCorrectionCheck()) {
       cachedLexemes.assertMatches(text, lexer, cancellationProvider, logger)

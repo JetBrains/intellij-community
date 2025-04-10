@@ -73,7 +73,7 @@ class PatternParser(private val myParser: JavaParser) {
   private fun parseRecordStructurePattern(builder: SyntaxTreeBuilder) {
     val recordStructure = builder.mark()
     val hasLparen = builder.expect(JavaSyntaxTokenType.LPARENTH)
-    assert(hasLparen)
+    require(hasLparen)
 
     var isFirst = true
     while (builder.tokenType !== JavaSyntaxTokenType.RPARENTH) {

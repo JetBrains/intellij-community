@@ -38,7 +38,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     get() = myParser.languageLevel
 
   fun parseClassBodyWithBraces(builder: SyntaxTreeBuilder, isAnnotation: Boolean, isEnum: Boolean) {
-    assert(builder.tokenType === JavaSyntaxTokenType.LBRACE) { builder.tokenType ?: "<null>" }
+    require(builder.tokenType === JavaSyntaxTokenType.LBRACE) { builder.tokenType ?: "<null>" }
     builder.advanceLexer()
 
     val builderWrapper = JavaParserUtil.braceMatchingBuilder(builder)
@@ -78,7 +78,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       }
       keywordTokenType = JavaSyntaxTokenType.RECORD_KEYWORD
     }
-    assert(CLASS_KEYWORD_BIT_SET.contains(keywordTokenType)) { keywordTokenType ?: "<null>" }
+    require(CLASS_KEYWORD_BIT_SET.contains(keywordTokenType)) { keywordTokenType ?: "<null>" }
     builder.advanceLexer()
     val isEnum = (keywordTokenType === JavaSyntaxTokenType.ENUM_KEYWORD)
 
@@ -535,7 +535,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
     val resources = (type == ListType.RESOURCE)
     val elementList = builder.mark()
     val leftParenth = builder.expect(JavaSyntaxTokenType.LPARENTH)
-    assert(lambda || leftParenth) { builder.tokenType ?: "<null>" }
+    require(lambda || leftParenth) { builder.tokenType ?: "<null>" }
 
     val delimiter = if (resources) JavaSyntaxTokenType.SEMICOLON else JavaSyntaxTokenType.COMMA
     val noDelimiterMsg = if (resources) "expected.semicolon" else "expected.comma"
@@ -771,7 +771,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
       Context.CODE_BLOCK -> JavaSyntaxElementType.LOCAL_VARIABLE
       else -> {
         declaration.drop()
-        assert(false) { "Unexpected context: $context" }
+        require(false) { "Unexpected context: $context" }
         return null
       }
     }
@@ -902,7 +902,7 @@ open class DeclarationParser(private val myParser: JavaParser) {
   }
 
   fun parseAnnotation(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker {
-    assert(builder.tokenType === JavaSyntaxTokenType.AT) { builder.tokenType ?: "<null>" }
+    require(builder.tokenType === JavaSyntaxTokenType.AT) { builder.tokenType ?: "<null>" }
     val anno = builder.mark()
     builder.advanceLexer()
 

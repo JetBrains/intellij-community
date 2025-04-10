@@ -421,7 +421,7 @@ class JavaDocParser(
   private fun parseSnippetTagBody() {
     val body = builder.mark()
     body.setCustomEdgeTokenBinders(greedyLeftBinder(), greedyRightBinder())
-    assert(getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON)
+    require(getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON)
     builder.advanceLexer()
     while (true) {
       val tokenType = getTokenType()
@@ -452,7 +452,7 @@ class JavaDocParser(
 
   private fun parseSnippetAttribute() {
     val attribute = builder.mark()
-    assert(builder.tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN)
+    require(builder.tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN)
     builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_TAG_ATTRIBUTE_NAME)
     builder.advanceLexer()
     getTokenType() // skipping spaces
