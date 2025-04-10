@@ -410,11 +410,11 @@ internal class ParsingTreeBuilder(
       get() = tokens
 
     override fun copyTokenStartsToArray(dest: IntArray, srcStart: Int, destStart: Int, length: Int) {
-      System.arraycopy(myLexStarts, srcStart, dest, destStart, length)
+      myLexStarts.copyInto(dest, destStart, srcStart, srcStart + length)
     }
 
     override fun copyTokenTypesToArray(dest: Array<in SyntaxElementType>, srcStart: Int, destStart: Int, length: Int) {
-      System.arraycopy(myLexTypes, srcStart, dest, destStart, length)
+      myLexTypes.copyInto(dest, destStart,  srcStart, srcStart + length)
     }
   }
 
