@@ -40,10 +40,14 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
     volumetricFactory: InlineCompletionVolumetricTextBlockFactory
   ): List<List<VolumetricInlineCompletionTextBlock>>? {
     val softWrapModel = getSoftWrapModelIfEnabled() ?: return null
+    val visibleAreaWidth = softWrapModel.applianceManager.widthProvider.visibleAreaWidth
+    if (!isEditorWideEnough(visibleAreaWidth, volumetricFactory)) {
+      // Can't do anything
+      return null
+    }
 
     val linesToFix = LinkedList(lines)
     val resultLines = mutableListOf<List<VolumetricInlineCompletionTextBlock>>()
-    val visibleAreaWidth = softWrapModel.applianceManager.widthProvider.visibleAreaWidth
     while (linesToFix.isNotEmpty()) {
       val line = linesToFix.first()
       val blocks = line.blocks
@@ -54,9 +58,9 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
       }
 
       val startX = line.startX
-      val editorAvailableLineWidth = visibleAreaWidth - startX // TODO tune
+      val editorAvailableLineWidth = visibleAreaWidth - startX
       val (leftSplitPart, rightSplitPart) = splitByAvailableWidth(blocks, editorAvailableLineWidth, volumetricFactory)
-      // TODO check that line is not empty
+
       if (rightSplitPart.isEmpty()) { // The line completely fits
         resultLines += leftSplitPart
         linesToFix.removeFirst()
@@ -70,10 +74,14 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
           linesToFix.addFirst(RenderedLine(blocks, 0))
         }
         else {
-          // Idk what to do... Idk how to split... TODO
           resultLines.add(blocks)
           linesToFix.removeFirst()
         }
+        continue
+      }
+      if (leftSplitPart.areArrowsOnly()) { // We can't split the line. Just arrows will be added in an infinite loop if we keep going.
+        resultLines.add(blocks)
+        linesToFix.removeFirst()
         continue
       }
       resultLines.add(leftSplitPart)
@@ -85,17 +93,29 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
   }
 
   /**
+   * If [editorWidth] is too small (less than 3 characters), there is no point to try to do anything.
+   */
+  private fun isEditorWideEnough(editorWidth: Int, volumetricFactory: InlineCompletionVolumetricTextBlockFactory): Boolean {
+    val block = InlineCompletionRenderTextBlock("abc", TextAttributes())
+    val volumetricBlock = volumetricFactory.getVolumetric(block)
+    return volumetricBlock.widthInPixels <= editorWidth
+  }
+
+  /**
    * Splits [blocks] into two parts based on the available width for the first part.
    *
    * Split may be done:
    * * By whitespace character. In this case, the whitespace block is visually removed and replaced with the only one split-space.
-   * * TODO [not done] If there is no whitespace character we can split by, we split it by the first non-fitting character.
+   * * If there is no whitespace character we can split by, we split it by the first non-fitting character.
    */
-  fun splitByAvailableWidth(
+  private fun splitByAvailableWidth(
     blocks: List<VolumetricInlineCompletionTextBlock>,
     availableWidth: Int,
     volumetricFactory: InlineCompletionVolumetricTextBlockFactory,
   ): Pair<List<VolumetricInlineCompletionTextBlock>, List<VolumetricInlineCompletionTextBlock>> {
+    if (blocks.isEmpty()) {
+      return blocks to emptyList()
+    }
     var currentIndex = 0 // the first over-width block
     var currentWidth = 0.0
     for ((_, width) in blocks) {
@@ -111,50 +131,177 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
       return blocks to emptyList()
     }
     check(currentIndex < blocks.size)
+
+    // This is for the case if we cannot find a whitespace to split. Then, we split by the first non-fitting character.
+    var potentialResultIfNoWhitespace: Pair<List<VolumetricInlineCompletionTextBlock>, List<VolumetricInlineCompletionTextBlock>>? = null
+
     while (currentIndex >= 0) {
       currentWidth -= blocks[currentIndex].widthInPixels
 
-      val block = blocks[currentIndex].block
-      val text = block.text
-      var currentCharIndex = text.length - 1
-      while (currentCharIndex >= 0) {
-        if (!text[currentCharIndex].isWhitespace()) {
-          currentCharIndex--
-          continue
-        }
-        var splitStart = currentCharIndex
-        while (splitStart >= 0 && text[splitStart].isWhitespace()) {
-          splitStart--
-        }
+      val blocksPrefix = blocks.subList(0, currentIndex)
+      val blocksSuffix = blocks.subList(currentIndex + 1, blocks.size)
+      val currentBlock = blocks[currentIndex]
 
-        val left = text.substring(0, splitStart + 1)
-        val leftBlocks = listOfNotNull(
-          if (left.isNotEmpty()) InlineCompletionRenderTextBlock(left, block.attributes) else null,
-          // TODO the arrow doesn't inherit background of the current caret row
-          getSoftWrapArrow(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED)
-        ).toVolumetric(volumetricFactory)
+      trySplitByWhitespace(
+        blocksPrefix = blocksPrefix,
+        blocksSuffix = blocksSuffix,
+        currentBlock = currentBlock,
+        prefixWidth = currentWidth,
+        availableWidth = availableWidth,
+        volumetricFactory = volumetricFactory,
+      )?.let { return it }
 
-        val leftWidth = accumulatedWidthToInt(leftBlocks.sumOf { it.widthInPixels })
-        if (accumulatedWidthToInt(currentWidth + leftWidth) <= availableWidth) {
-          val right = text.substring(currentCharIndex + 1)
-          val rightBlocks = listOfNotNull(
-            getSoftWrapArrow(SoftWrapDrawingType.AFTER_SOFT_WRAP),
-            if (right.isNotEmpty()) InlineCompletionRenderTextBlock(right, block.attributes) else null,
-          ).toVolumetric(volumetricFactory)
-
-          // TODO handle empty block
-          val finalLeft = blocks.subList(0, currentIndex) + leftBlocks
-          val finalRight = rightBlocks + blocks.subList(currentIndex + 1, blocks.size)
-          return finalLeft to finalRight
-        }
-
-        currentCharIndex = splitStart
+      if (potentialResultIfNoWhitespace == null) {
+        potentialResultIfNoWhitespace = trySplitByAnyCharacter(
+          blocksPrefix = blocksPrefix,
+          blocksSuffix = blocksSuffix,
+          currentBlock = currentBlock,
+          prefixWidth = currentWidth,
+          availableWidth = availableWidth,
+          volumetricFactory = volumetricFactory,
+        )
       }
+
       currentIndex--
     }
 
-    // TODO add arrow to the left
+    if (potentialResultIfNoWhitespace != null) {
+      return potentialResultIfNoWhitespace
+    }
+
     return emptyList<VolumetricInlineCompletionTextBlock>() to blocks
+  }
+
+  /**
+   * Tries to find a whitespace in [currentBlock] that can be used as a split point.
+   *
+   * Criteria of the successful split. Let's say that `currentBlock = left + right`.
+   * Then the successful split is:
+   * `width(blocksPrefix + left) <= availableWidth`.
+   *
+   * We add special arrows to `left` and `right` after splitting to make the result more readable.
+   *
+   * Note: we remove whitespaces around the split point because they only disrupt reading.
+   *
+   * @param prefixWidth the width of [blocksPrefix]
+   *
+   * @return `null` if there is no whitespace that can be split.
+   * Otherwise, returns a pair of the split: ([blocksPrefix] + `left`, `right` + [blocksSuffix]).
+   */
+  private fun trySplitByWhitespace(
+    blocksPrefix: List<VolumetricInlineCompletionTextBlock>,
+    blocksSuffix: List<VolumetricInlineCompletionTextBlock>,
+    currentBlock: VolumetricInlineCompletionTextBlock,
+    prefixWidth: Double,
+    availableWidth: Int,
+    volumetricFactory: InlineCompletionVolumetricTextBlockFactory,
+  ): Pair<List<VolumetricInlineCompletionTextBlock>, List<VolumetricInlineCompletionTextBlock>>? {
+    val text = currentBlock.block.text
+    var currentCharIndex = text.length - 1
+    while (currentCharIndex >= 0) {
+      if (!text[currentCharIndex].isWhitespace()) {
+        currentCharIndex--
+        continue
+      }
+      var splitStart = currentCharIndex
+      while (splitStart >= 0 && text[splitStart].isWhitespace()) {
+        splitStart--
+      }
+
+      val left = InlineCompletionRenderTextBlock(text.substring(0, splitStart + 1), currentBlock.block.attributes)
+      val right = InlineCompletionRenderTextBlock(text.substring(currentCharIndex + 1), currentBlock.block.attributes)
+      trySplit(
+        blocksPrefix = blocksPrefix,
+        blocksSuffix = blocksSuffix,
+        toLeft = left,
+        toRight = right,
+        prefixWidth = prefixWidth,
+        availableWidth = availableWidth,
+        volumetricFactory = volumetricFactory
+      )?.let { return it }
+
+      currentCharIndex = splitStart
+    }
+
+    return null
+  }
+
+  /**
+   * Tries to find a non-whitespace character in [currentBlock] that can be used as a split point.
+   *
+   * Similar to [trySplitByWhitespace], but we split by any character. It is used only in the case we cannot find appropriate whitespace.
+   */
+  private fun trySplitByAnyCharacter(
+    blocksPrefix: List<VolumetricInlineCompletionTextBlock>,
+    blocksSuffix: List<VolumetricInlineCompletionTextBlock>,
+    currentBlock: VolumetricInlineCompletionTextBlock,
+    prefixWidth: Double,
+    availableWidth: Int,
+    volumetricFactory: InlineCompletionVolumetricTextBlockFactory,
+  ): Pair<List<VolumetricInlineCompletionTextBlock>, List<VolumetricInlineCompletionTextBlock>>? {
+    val text = currentBlock.block.text
+
+    // We don't need to check anything after the first whitespace. It's already been checked.
+    val searchLimit = text.indexOfFirst { it.isWhitespace() }.takeIf { it >= 0 } ?: text.length
+
+    // Try to split into [0, charIndex) and [charIndex, text.length)
+    // We cannot use `charIndex = 0`, otherwise we might end up in an endless loop where we add empty lines just with arrows
+    for (currentCharIndex in searchLimit downTo 1) {
+      val left = InlineCompletionRenderTextBlock(text.substring(0, currentCharIndex), currentBlock.block.attributes)
+      val right = InlineCompletionRenderTextBlock(text.substring(startIndex = currentCharIndex), currentBlock.block.attributes)
+      trySplit(
+        blocksPrefix = blocksPrefix,
+        blocksSuffix = blocksSuffix,
+        toLeft = left,
+        toRight = right,
+        prefixWidth = prefixWidth,
+        availableWidth = availableWidth,
+        volumetricFactory = volumetricFactory
+      )?.let { return it }
+    }
+
+    return null
+  }
+
+  /**
+   * Verifies that it's possible to have the next split: ([blocksPrefix] + [toLeft] + `arrow`, `arrow` + [toRight] + [blocksSuffix]).
+   *
+   * @param prefixWidth the width of [blocksPrefix]
+   *
+   * @return `null` if it's impossible to have the next split.
+   * Otherwise, returns a pair of the split: ([blocksPrefix] + [toLeft] + `arrow`, `arrow`, [toRight] + [blocksSuffix]).
+   *
+   * @see [trySplitByWhitespace]
+   * @see [trySplitByAnyCharacter]
+   */
+  private fun trySplit(
+    blocksPrefix: List<VolumetricInlineCompletionTextBlock>,
+    blocksSuffix: List<VolumetricInlineCompletionTextBlock>,
+    toLeft: InlineCompletionRenderTextBlock,
+    toRight: InlineCompletionRenderTextBlock,
+    prefixWidth: Double,
+    availableWidth: Int,
+    volumetricFactory: InlineCompletionVolumetricTextBlockFactory,
+  ): Pair<List<VolumetricInlineCompletionTextBlock>, List<VolumetricInlineCompletionTextBlock>>? {
+    val leftBlocks = listOfNotNull(
+      if (toLeft.text.isNotEmpty()) InlineCompletionRenderTextBlock(toLeft.text, toLeft.attributes) else null,
+      // TODO the arrow doesn't inherit background of the current caret row
+      getSoftWrapArrow(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED)
+    ).toVolumetric(volumetricFactory)
+
+    val leftWidth = accumulatedWidthToInt(leftBlocks.sumOf { it.widthInPixels })
+    if (accumulatedWidthToInt(prefixWidth + leftWidth) <= availableWidth) {
+      val rightBlocks = listOfNotNull(
+        getSoftWrapArrow(SoftWrapDrawingType.AFTER_SOFT_WRAP),
+        if (toRight.text.isNotEmpty()) InlineCompletionRenderTextBlock(toRight.text, toRight.attributes) else null,
+      ).toVolumetric(volumetricFactory)
+
+      val finalLeft = blocksPrefix + leftBlocks
+      val finalRight = rightBlocks + blocksSuffix
+      return finalLeft to finalRight
+    }
+
+    return null
   }
 
   private fun getSoftWrapArrow(type: SoftWrapDrawingType): InlineCompletionRenderTextBlock? {
@@ -164,6 +311,10 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
       SoftWrapDrawingType.AFTER_SOFT_WRAP -> arrows.second
     }
     return InlineCompletionRenderTextBlock(text, getArrowAttributes())
+  }
+
+  private fun List<VolumetricInlineCompletionTextBlock>.areArrowsOnly(): Boolean {
+    return all { it.block.text == arrows?.first || it.block.text == arrows?.second }
   }
 
   override fun dispose() = Unit
