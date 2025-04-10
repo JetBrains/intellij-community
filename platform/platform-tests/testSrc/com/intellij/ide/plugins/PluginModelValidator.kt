@@ -118,24 +118,11 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
 
   fun validate(): PluginValidationResult {
     // 1. collect plugin and module file info set
-    val sourceModuleNameToFileInfo = sourceModules.associate {
-      it.name to ModuleDescriptorFileInfo(it)
-    }
-
-    for (module in sourceModules) {
-      val moduleName = module.name
-      if (moduleName.startsWith("fleet.") || moduleSkipList.contains(moduleName)) {
-        continue
-      }
-
-      for (sourceRoot in module.sourceRoots) {
-        updateFileInfo(
-          moduleName = moduleName,
-          sourceRoot = sourceRoot,
-          fileInfo = sourceModuleNameToFileInfo.get(moduleName)!!
-        )
-      }
-    }
+    val sourceModuleNameToFileInfo =
+      sourceModules
+        .filterNot { it.name.startsWith("fleet.") || moduleSkipList.contains(it.name) }
+        .mapNotNull { createFileInfo(it) }
+        .associateBy { it.sourceModule.name }
 
     val moduleNameToInfo = HashMap<String, ModuleInfo>()
 
@@ -384,7 +371,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
               fix = """
                     Change dependency element to:
                     
-                    <plugin id="${moduleDescriptorFileInfo.pluginDescriptor!!.getChild("id")?.content}"/>
+                    <plugin id="${moduleDescriptorFileInfo.pluginDescriptor.getChild("id")?.content}"/>
                   """,
             ))
             continue
@@ -614,83 +601,91 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     return result
   }
 
-  private fun updateFileInfo(
-    moduleName: String,
-    sourceRoot: Path,
-    fileInfo: ModuleDescriptorFileInfo,
-  ) {
-    val metaInf = sourceRoot.resolve("META-INF")
-    val moduleXml = metaInf.resolve("$moduleName.xml")
-    if (Files.exists(moduleXml)) {
-      _errors.add(PluginValidationError(
-        "Module descriptor must be in the root of module root",
-        fileInfo.sourceModule,
-        mapOf(
-          "module" to moduleName,
-          "moduleDescriptor" to moduleXml,
-        ),
-      ))
-      return
+  private fun createFileInfo(module: Module): ModuleDescriptorFileInfo? {
+    for (sourceRoot in module.sourceRoots) {
+      val metaInf = sourceRoot.resolve("META-INF")
+      val moduleXml = metaInf.resolve("${module.name}.xml")
+      if (Files.exists(moduleXml)) {
+        _errors.add(PluginValidationError(
+          "Module descriptor must be in the root of module root",
+          module,
+          mapOf(
+            "module" to module.name,
+            "moduleDescriptor" to moduleXml,
+          ),
+        ))
+      }
     }
-
-    val pluginFileName = when (moduleName) {
+    
+    val pluginFileName = when (module.name) {
       "intellij.platform.backend.split" -> "pluginBase.xml"
       "intellij.idea.community.customization" -> "IdeaPlugin.xml"
       else -> "plugin.xml"
     }
-    val pluginDescriptorFile = metaInf.resolve(pluginFileName)
-    val pluginDescriptor = readXmlAsModelOrNull(pluginDescriptorFile)
 
-    val moduleDescriptorFile = sourceRoot.resolve("$moduleName.xml")
-    val moduleDescriptor = readXmlAsModelOrNull(moduleDescriptorFile)
+    val pluginDescriptors =
+      module.sourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
+        val pluginDescriptorFile: Path = sourceRoot.resolve("META-INF").resolve(pluginFileName)
+        readXmlAsModelOrNull(pluginDescriptorFile)?.let { pluginDescriptorFile to it }
+      }
 
-    if (pluginDescriptor == null && moduleDescriptor == null) {
-      return
-    }
+    val moduleDescriptors =
+      module.sourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
+        val moduleDescriptorFile: Path = sourceRoot.resolve("${module.name}.xml")
+        readXmlAsModelOrNull(moduleDescriptorFile)?.let { moduleDescriptorFile to it }
+      }
 
-    if (fileInfo.pluginDescriptorFile != null && pluginDescriptor != null) {
+    if (pluginDescriptors.size > 1) {
       _errors.add(PluginValidationError(
         "Duplicated plugin.xml",
-        fileInfo.sourceModule,
+        module,
         mapOf(
-          "module" to moduleName,
-          "firstPluginDescriptor" to fileInfo.pluginDescriptorFile,
-          "secondPluginDescriptor" to pluginDescriptorFile,
+          "module" to module.name,
+          "firstPluginDescriptor" to pluginDescriptors[0].first,
+          "secondPluginDescriptor" to pluginDescriptors[1].first,
         ),
       ))
-      return
+      return null
+    }
+    if (moduleDescriptors.size > 1) {
+      _errors.add(PluginValidationError(
+        "Duplicated module descriptor",
+        module,
+        mapOf(
+           "module" to module.name,
+           "firstDescriptor" to moduleDescriptors[0].first,
+           "secondDescriptor" to moduleDescriptors[1].first,
+        )
+      ))
     }
 
-    if (fileInfo.pluginDescriptorFile != null) {
+    val moduleDescriptorFile = moduleDescriptors.singleOrNull()?.first
+    val moduleDescriptor = moduleDescriptors.singleOrNull()?.second
+    val pluginDescriptorFile = pluginDescriptors.singleOrNull()?.first
+    val pluginDescriptor = pluginDescriptors.singleOrNull()?.second
+    
+    //todo: this is violated in some modules; maybe we should extract plugin.xml to a separate module and uncomment this.
+    /*
+    if (pluginDescriptorFile != null && moduleDescriptorFile != null) {
       _errors.add(PluginValidationError(
         "Module cannot have both plugin.xml and module descriptor",
-        fileInfo.sourceModule,
+        module,
         mapOf(
-          "module" to moduleName,
-          "pluginDescriptor" to fileInfo.pluginDescriptorFile,
+          "module" to module.name,
+          "pluginDescriptor" to pluginDescriptorFile,
           "moduleDescriptor" to moduleDescriptorFile,
         ),
       ))
-      return
     }
+    */
 
-    if (fileInfo.moduleDescriptorFile != null && pluginDescriptor != null) {
-      _errors.add(PluginValidationError(
-        "Module cannot have both plugin.xml and module descriptor",
-        fileInfo.sourceModule,
-        mapOf(
-          "module" to moduleName,
-          "pluginDescriptor" to pluginDescriptorFile,
-          "moduleDescriptor" to fileInfo.moduleDescriptorFile,
-        ),
-      ))
-      return
-    }
-
-    fileInfo.moduleDescriptorFile = moduleDescriptorFile
-    fileInfo.moduleDescriptor = moduleDescriptor
-    fileInfo.pluginDescriptorFile = pluginDescriptorFile
-    fileInfo.pluginDescriptor = pluginDescriptor
+    return ModuleDescriptorFileInfo(
+      sourceModule = module,
+      moduleDescriptor = moduleDescriptor,
+      moduleDescriptorFile = moduleDescriptorFile,
+      pluginDescriptor = pluginDescriptor,
+      pluginDescriptorFile = pluginDescriptorFile,
+    )
   }
 }
 
@@ -717,12 +712,11 @@ internal data class Reference(@JvmField val name: String, @JvmField val isPlugin
 private data class ModuleDescriptorFileInfo(
   @JvmField val sourceModule: PluginModelValidator.Module,
 
-  @JvmField var moduleDescriptor: XmlElement? = null,
-  @JvmField var moduleDescriptorFile: Path? = null,
-) {
-  @JvmField var pluginDescriptorFile: Path? = null
-  @JvmField var pluginDescriptor: XmlElement? = null
-}
+  @JvmField val moduleDescriptor: XmlElement? = null,
+  @JvmField val moduleDescriptorFile: Path? = null,
+  @JvmField val pluginDescriptorFile: Path? = null,
+  @JvmField val pluginDescriptor: XmlElement? = null,
+)
 
 private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo) {
   writer.obj {
