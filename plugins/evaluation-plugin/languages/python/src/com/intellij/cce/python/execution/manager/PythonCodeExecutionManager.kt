@@ -36,7 +36,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     return Path.of(basePath + defaultTestFilePath)
   }
 
-  override fun setupEnvironment(project: Project, sdk: Sdk?) {
+  override fun setupEnvironment(project: Project, sdk: Sdk?, setupCommands: List<String>) {
     if (!shouldSetup) {
       return
     }
@@ -46,6 +46,8 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     val basePath = project.basePath
 
     basePath ?: return
+
+    constructSetupFile(basePath, setupCommands)
 
     if (sdk?.sdkType !is PythonSdkType) return
 
@@ -92,7 +94,8 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     val coverageFilePath = "$basePath/$testName-coverage"
     val junitFilePath = "$basePath/$testName-junit"
     try {
-      val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.toString(), testName, target), sdk)
+      val targetModule = target.dropLast(3).replace('/', '.')
+      val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.toString(), testName, targetModule), sdk)
 
       // Collect success ratio
       val junitFile = Path.of(junitFilePath)
