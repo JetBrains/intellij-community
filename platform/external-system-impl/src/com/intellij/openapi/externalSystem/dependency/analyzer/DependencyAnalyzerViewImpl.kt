@@ -35,6 +35,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -502,11 +503,12 @@ class DependencyAnalyzerViewImpl(
     private const val SPLIT_VIEW_PROPORTION_PROPERTY = "ExternalSystem.DependencyAnalyzerView.splitProportion"
 
     private fun isNotificationVisibleProperty(project: Project, systemId: ProjectSystemId, parentDisposable: Disposable): ObservableProperty<Boolean> {
-      val property = AtomicProperty(ExternalSystemProjectNotificationAware.isNotificationVisible(project, systemId))
-      project.messageBus.connect(parentDisposable)
+      val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
+      val property = AtomicProperty(notificationAware.isNotificationVisible(systemId))
+      application.messageBus.connect(parentDisposable)
         .subscribe(ExternalSystemProjectNotificationAware.TOPIC, object : ExternalSystemProjectNotificationAware.Listener {
           override fun onNotificationChanged(project: Project) {
-            property.set(ExternalSystemProjectNotificationAware.isNotificationVisible(project, systemId))
+            property.set(notificationAware.isNotificationVisible(systemId))
           }
         })
       return property

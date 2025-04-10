@@ -47,6 +47,10 @@ class AutoImportProjectNotificationAware(private val project: Project) : Externa
     return projectsWithNotification.isNotEmpty()
   }
 
+  override fun isNotificationVisible(systemId: ProjectSystemId): Boolean {
+    return projectsWithNotification.any { it.systemId == systemId }
+  }
+
   override fun getSystemIds(): Set<ProjectSystemId> {
     return projectsWithNotification.map { it.systemId }.toSet()
   }

@@ -38,6 +38,12 @@ interface ExternalSystemProjectNotificationAware {
   fun isNotificationVisible(): Boolean
 
   /**
+   * Checks that notifications should be shown with defined [systemId].
+   */
+  fun isNotificationVisible(systemId: ProjectSystemId): Boolean =
+    systemId in getSystemIds() // fleet compatibility
+
+  /**
    * Gets list of project ids which should be reloaded.
    */
   fun getSystemIds(): Set<ProjectSystemId>
@@ -58,14 +64,6 @@ interface ExternalSystemProjectNotificationAware {
     @JvmStatic
     fun getInstance(project: Project): ExternalSystemProjectNotificationAware {
       return project.getService(ExternalSystemProjectNotificationAware::class.java)
-    }
-
-    fun isNotificationVisible(project: Project): Boolean {
-      return getInstance(project).getSystemIds().isNotEmpty()
-    }
-
-    fun isNotificationVisible(project: Project, systemId: ProjectSystemId): Boolean {
-      return systemId in getInstance(project).getSystemIds()
     }
 
     @Deprecated("Use ExternalSystemProjectNotificationAware#TOPIC directly")
@@ -90,7 +88,7 @@ interface ExternalSystemProjectNotificationAware {
     @Deprecated("Use ExternalSystemProjectNotificationAware.isNotificationVisible instead")
     fun isNotificationVisibleProperty(project: Project, systemId: ProjectSystemId): ObservableProperty<Boolean> {
       return object : ObservableProperty<Boolean> {
-        override fun get() = isNotificationVisible(project, systemId)
+        override fun get() = getInstance(project).isNotificationVisible(systemId)
         override fun afterChange(parentDisposable: Disposable?, listener: (Boolean) -> Unit) {
           whenNotificationChanged(project, parentDisposable) {
             listener(get())
