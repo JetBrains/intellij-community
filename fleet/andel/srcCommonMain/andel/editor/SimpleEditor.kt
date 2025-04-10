@@ -2,13 +2,11 @@
 package andel.editor
 
 import andel.intervals.AnchorStorage
-import andel.operation.EditLog
 import andel.intervals.Interval
 import andel.intervals.Intervals
 import andel.intervals.IntervalsQuery
 import andel.lines.*
-import andel.lines.edit
-import andel.lines.offsetOfWidth
+import andel.operation.EditLog
 import andel.operation.Operation
 import andel.operation.Sticky
 import andel.text.Text
@@ -142,14 +140,14 @@ data class SimpleEditorState(
   val guideToSoftWrapBy: Int,
   val scrollCommand: EditorScrollCommand? = null,
   val focusPlace: EditorFocusPlace,
-  val userActionTimestamp: Long = 0,
+  val userActionTimestamp: Map<EditorCommandType, Long> = emptyMap(),
   override val composableTextRange: TextRange? = null,
 ) : Editor {
   override val undoLog: UndoLog get() = document.undoLog
   override val layout: EditorLayout
     get() = editorLayout
 
-  val userActionTimestampGetter: () -> Long = { userActionTimestamp }
+  val userActionTimestampGetter: () -> Map<EditorCommandType, Long> = { userActionTimestamp }
 }
 
 fun SimpleDocumentState.mutate(f: MutableDocument.() -> Unit): SimpleDocumentState {
@@ -278,7 +276,7 @@ class SimpleMutableEditor(
   var focusPlace: EditorFocusPlace,
   override var scrollCommand: EditorScrollCommand?,
   override var composableTextRange: TextRange?,
-  var userActionTimestamp: Long,
+  var userActionTimestamp: Map<EditorCommandType, Long>,
 ) : MutableEditor {
   override val undoLog: UndoLog get() = document.undoLog
   override val components: MutableBoundedOpenMap<MutableEditor, DocumentComponent> = MutableBoundedOpenMap.emptyBounded()
@@ -292,7 +290,8 @@ class SimpleMutableEditor(
   }
 
   override fun command(commandType: EditorCommandType, groupKey: UndoGroupKey, command: UndoScope.() -> Unit) {
-    this.userActionTimestamp.inc()
+    val current = userActionTimestamp.maxOfOrNull { it.value } ?: 0L
+    userActionTimestamp += commandType to current.inc()
 
     val dummyUndoScope = object : UndoScope {
       override fun <T> recordUndoData(operationType: UndoOperationType, data: T) {
