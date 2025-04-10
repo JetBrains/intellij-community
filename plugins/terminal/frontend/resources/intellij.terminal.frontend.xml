@@ -10,7 +10,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
-    <lookup.provider implementation="com.intellij.terminal.frontend.TerminalLookupProvider" id="terminalLookupProvider"/>
 
     <editorActionHandler action="Find" implementationClass="com.intellij.terminal.frontend.action.TerminalFindHandler"
                          id="terminalFind" order="first"/>
@@ -120,4 +119,8 @@
       <reference ref="Terminal.LineDown"/>
     </group>
   </actions>
+  <projectListeners>
+    <listener class="com.intellij.terminal.frontend.TerminalLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </projectListeners>
 </idea-plugin>
