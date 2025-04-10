@@ -865,6 +865,12 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-38169
+  public void testDefinitionWrongInTypeshed() {
+    // TODO: PY-80728, this test contains _some_ invalid output
+    checkHTMLOnly();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";
