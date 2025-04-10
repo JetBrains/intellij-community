@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.time.measureTimedValue
 
 internal class ParsingTreeBuilder(
   val lexer: Lexer,
@@ -534,11 +535,10 @@ private fun performLexing(
     return LexingResult(cachedLexemes, 0)
   }
   // todo do we need to cover a raw TokenList?
-
-  val startTime = System.nanoTime()
-  val sequence = performLexing(text, lexer, cancellationProvider, logger) as TokenSequence
-  val endTime = System.nanoTime()
-  return LexingResult(sequence, endTime - startTime)
+  val (sequence, duration) = measureTimedValue {
+    performLexing(text, lexer, cancellationProvider, logger) as TokenSequence
+  }
+  return LexingResult(sequence, duration.inWholeNanoseconds)
 }
 
 private data class LexingResult(val tokens: TokenSequence, val lexingTimeNs: Long)

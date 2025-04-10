@@ -7,6 +7,7 @@ import com.intellij.platform.syntax.Logger
 import org.jetbrains.annotations.NonNls
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.time.measureTimedValue
 
 internal class TokenSequence(
   internal val lexStarts: IntArray,
@@ -67,9 +68,10 @@ internal class TokenListLexerImpl(
       return
     }
 
-    val start = System.currentTimeMillis()
-    start(buffer, startOffset, endOffset, initialState)
-    val startDuration = System.currentTimeMillis() - start
+    val (_, duration) = measureTimedValue {
+      start(buffer, startOffset, endOffset, initialState)
+    }
+    val startDuration = duration.inWholeNanoseconds
     if (startDuration > LEXER_START_THRESHOLD) {
       logger.debug("Starting lexer took: $startDuration; at $startOffset - $endOffset; state: $initialState; text: ${buffer.shortenTextWithEllipsis(1024, 500)}")
     }
