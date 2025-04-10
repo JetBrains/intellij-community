@@ -32,6 +32,11 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualClassInIntermediateModule")
+        public void testActualClassInIntermediateModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualClassInIntermediateModule/");
+        }
+
         @TestMetadata("actualClassInNonLeafModule")
         public void testActualClassInNonLeafModule() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualClassInNonLeafModule/");
@@ -45,6 +50,11 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
         @TestMetadata("actualFun")
         public void testActualFun() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFun/");
+        }
+
+        @TestMetadata("actualFunInIntermediateModule")
+        public void testActualFunInIntermediateModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFunInIntermediateModule/");
         }
 
         @TestMetadata("actualFunInNonLeafModule")

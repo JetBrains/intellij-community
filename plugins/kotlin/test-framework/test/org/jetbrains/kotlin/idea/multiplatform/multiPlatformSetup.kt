@@ -235,10 +235,14 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
 
             else -> {
                 val commonModuleId = ModuleId(name, CommonPlatforms.defaultCommonPlatform, isTest)
+                val additionalImplementedModules = rootInfos.firstOrNull { it.moduleId == nameAndPlatform }
+                    ?.additionalImplementedModules
+                    ?.map { it.ideaModuleName() }
+                    .orEmpty()
 
                 module.createMultiplatformFacetM1(
                     platform,
-                    implementedModuleNames = listOf(commonModuleId.ideaModuleName()),
+                    implementedModuleNames = listOf(commonModuleId.ideaModuleName()) + additionalImplementedModules,
                     pureKotlinSourceFolders = pureKotlinSourceFolders,
                     additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
@@ -308,12 +312,18 @@ private val platformNames = mapOf(
 
 private fun parseDirName(dir: File): RootInfo {
     val parts = dir.name.split("_")
-    return RootInfo(parseModuleId(parts), parseIsTestRoot(parts), dir, parseDependencies(parts))
+    return RootInfo(parseModuleId(parts), parseIsTestRoot(parts), dir, parseDependencies(parts), parseImplementations(parts))
 }
 
 private fun parseDependencies(parts: List<String>) =
     parts.filter { it.startsWith("dep(") && it.endsWith(")") }.map {
         parseDependency(it)
+    }
+
+private fun parseImplementations(parts: List<String>): List<ModuleId> =
+    parts.filter { it.startsWith("impl(") && it.endsWith(")") }.map {
+        val implString =  it.removePrefix("impl(").removeSuffix(")")
+        parseModuleId(implString.split("-"))
     }
 
 private fun parseDependency(it: String): Dependency {
@@ -385,7 +395,8 @@ private data class RootInfo(
     val moduleId: ModuleId,
     val isTestRoot: Boolean,
     val moduleRoot: File,
-    val dependencies: List<Dependency>
+    val dependencies: List<Dependency>,
+    val additionalImplementedModules: List<ModuleId>,
 )
 
 private sealed class Dependency
