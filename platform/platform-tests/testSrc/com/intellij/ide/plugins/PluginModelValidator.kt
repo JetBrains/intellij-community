@@ -110,6 +110,8 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     val name: String
 
     val sourceRoots: Sequence<Path>
+    
+    val testSourceRoots: Sequence<Path>
   }
 
   private val pluginIdToInfo = LinkedHashMap<String, ModuleInfo>()
@@ -488,7 +490,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     referencingModuleInfo: ModuleInfo,
     sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>
   ): ModuleDescriptorFileInfo? {
-    var module = sourceModuleNameToFileInfo.get(moduleName)
+    var module = sourceModuleNameToFileInfo.get(moduleName.removeSuffix("._test"))
     if (module != null) {
       return module
     }
@@ -598,8 +600,15 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
       ))
     }
 
-    val moduleDescriptorFile = moduleDescriptors.singleOrNull()?.first
-    val moduleDescriptor = moduleDescriptors.singleOrNull()?.second
+    val testModuleDescriptors =
+      module.testSourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
+        val moduleDescriptorFile: Path = sourceRoot.resolve("${module.name}._test.xml")
+        readXmlAsModelOrNull(moduleDescriptorFile)?.let { moduleDescriptorFile to it }
+      }
+
+    val moduleDescriptorWithFile = (moduleDescriptors + testModuleDescriptors).firstOrNull()
+    val moduleDescriptorFile = moduleDescriptorWithFile?.first
+    val moduleDescriptor = moduleDescriptorWithFile?.second
     val pluginDescriptorFile = pluginDescriptors.singleOrNull()?.first
     val pluginDescriptor = pluginDescriptors.singleOrNull()?.second
     
@@ -783,6 +792,14 @@ private data class ModuleWrap(private val module: JpsModule) : PluginModelValida
       return module.sourceRoots
         .asSequence()
         .filter { !it.rootType.isForTests }
+        .map { it.path }
+    }
+
+  override val testSourceRoots: Sequence<Path>
+    get() {
+      return module.sourceRoots
+        .asSequence()
+        .filter { it.rootType.isForTests }
         .map { it.path }
     }
 }

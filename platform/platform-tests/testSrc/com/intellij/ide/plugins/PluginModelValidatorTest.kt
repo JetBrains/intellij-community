@@ -229,7 +229,10 @@ private fun writeIdeaPluginXml(
 private data class PluginModel(
   override val name: String,
   override val sourceRoots: Sequence<Path>,
-) : PluginModelValidator.Module
+) : PluginModelValidator.Module {
+  override val testSourceRoots: Sequence<Path> 
+    get() = emptySequence()
+}
 
 private fun PluginValidationResult.errorsAsString(): CharSequence {
   if (errors.isEmpty()) return ""
