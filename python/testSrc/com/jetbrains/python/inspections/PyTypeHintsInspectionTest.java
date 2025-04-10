@@ -2572,6 +2572,18 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                 """);
   }
 
+  // PY-80278
+  public void testReferenceToNamedTupleIsValidTypeHint() {
+    doTestByText("""
+               from collections import namedtuple
+               
+               Instruction = namedtuple("Instruction", ["register", "op", "value", "base", "check", "limit"])
+               
+               def foo() -> Instruction:  # No warning expected
+                   return Instruction(1, 2, 3, 4, 5, 6)
+               """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

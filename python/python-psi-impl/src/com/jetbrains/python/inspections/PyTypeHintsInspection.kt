@@ -1550,7 +1550,7 @@ class PyTypeHintsInspection : PyInspection() {
           }
           else {
             val type = Ref.deref(PyTypingTypeProvider.getType(referenceExpression, context))
-            return type is PyTypingNewType || type is PyTypedDictType
+            return type is PyClassLikeType
           }
         }
         is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> true
