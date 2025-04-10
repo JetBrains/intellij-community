@@ -198,12 +198,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   @Override
   public int getLine() {
-    return myStateBridge.getState().getLine();
+    return myState.getLine();
   }
 
   @Override
   public String getFileUrl() {
-    return myStateBridge.getState().getFileUrl();
+    return myState.getFileUrl();
   }
 
   @Override
@@ -356,7 +356,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   public void setFileUrl(final String newUrl) {
     if (!Objects.equals(getFileUrl(), newUrl)) {
       var oldFile = getFile();
-      myStateBridge.getState().setFileUrl(newUrl);
+      myState.setFileUrl(newUrl);
       mySourcePosition = null;
       removeHighlighter();
       redrawInlineInlays(oldFile, getLine());
@@ -376,7 +376,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         return;
       }
       var oldLine = getLine();
-      myStateBridge.getState().setLine(line);
+      myState.setLine(line);
       mySourcePosition = null;
 
       if (visualLineMightBeChanged) {
@@ -394,13 +394,13 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   @Override
   public boolean isTemporary() {
-    return myStateBridge.getState().isTemporary();
+    return myState.isTemporary();
   }
 
   @Override
   public void setTemporary(boolean temporary) {
     if (isTemporary() != temporary) {
-      myStateBridge.getState().setTemporary(temporary);
+      myState.setTemporary(temporary);
       fireBreakpointChanged();
     }
   }

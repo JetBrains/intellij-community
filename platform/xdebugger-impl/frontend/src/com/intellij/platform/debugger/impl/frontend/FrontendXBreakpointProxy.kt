@@ -13,11 +13,8 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -27,56 +24,43 @@ class FrontendXBreakpointProxy(
   private val project: Project,
   private val cs: CoroutineScope,
   private val dto: XBreakpointDto,
-  private val onEnabledChange: () -> Unit,
+  private val onBreakpointChange: () -> Unit,
 ) : XBreakpointProxy {
   val id: XBreakpointId = dto.id
 
   override val breakpoint: Any = id
 
-  private val _enabled = MutableStateFlow(dto.initialEnabled)
-  val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
-
-  val suspendPolicy: StateFlow<SuspendPolicy> = dto.suspendPolicyState.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.initialSuspendPolicy)
-
-  val logMessage: StateFlow<Boolean> = dto.logMessageState.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.initialLogMessage)
-
-  val logStack: StateFlow<Boolean> = dto.logStackState.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.initialLogStack)
-
-  val userDescription: StateFlow<String?> = dto.userDescriptionState.toFlow()
-    .stateIn(cs, SharingStarted.Eagerly, dto.initialUserDescription)
+  private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
   init {
-    // TODO: there is a race in changes from server and client,
-    //  so we need to merge this state.
-    //  Otherwise, multiple clicks on the breakpoint in breakpoint dialog will work in a wrong way.
     cs.launch {
-      dto.enabledState.toFlow().collectLatest {
-        _enabled.value = it
-        onEnabledChange()
+      dto.state.toFlow().collectLatest {
+        _state.value = it
+        onBreakpointChange()
       }
     }
   }
 
-  override fun getDisplayText(): String = dto.displayText
+  override fun getDisplayText(): String = _state.value.displayText
 
-  override fun getUserDescription(): String? = userDescription.value
+  override fun getUserDescription(): String? = _state.value.userDescription
 
-  override fun getIcon(): Icon = dto.iconId.icon()
+  override fun getIcon(): Icon = _state.value.iconId.icon()
 
-  override fun isEnabled(): Boolean = enabled.value
+  override fun isEnabled(): Boolean = _state.value.enabled
 
   override fun setEnabled(enabled: Boolean) {
-    _enabled.value = enabled
-    onEnabledChange()
+    // TODO: there is a race in changes from server and client,
+    //  so we need to merge this state.
+    //  Otherwise, multiple clicks on the breakpoint in breakpoint dialog will work in a wrong way.
+    _state.update { it.copy(enabled = enabled) }
+    onBreakpointChange()
     project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
       XBreakpointApi.getInstance().setEnabled(id, enabled)
     }
   }
 
-  override fun getSourcePosition(): XSourcePosition? = dto.sourcePosition?.sourcePosition()
+  override fun getSourcePosition(): XSourcePosition? = _state.value.sourcePosition?.sourcePosition()
 
   override fun getNavigatable(): Navigatable? = getSourcePosition()?.createNavigatable(project)
 
@@ -84,17 +68,17 @@ class FrontendXBreakpointProxy(
 
   override fun canNavigateToSource(): Boolean = getNavigatable()?.canNavigateToSource() ?: false
 
-  override fun isDefaultBreakpoint(): Boolean = dto.isDefault
+  override fun isDefaultBreakpoint(): Boolean = _state.value.isDefault
 
-  override fun getSuspendPolicy(): SuspendPolicy = suspendPolicy.value
+  override fun getSuspendPolicy(): SuspendPolicy = _state.value.suspendPolicy
 
-  override fun isLogMessage(): Boolean = logMessage.value
+  override fun isLogMessage(): Boolean = _state.value.logMessage
 
-  override fun isLogStack(): Boolean = logStack.value
+  override fun isLogStack(): Boolean = _state.value.logStack
 
-  override fun getLogExpressionObject(): XExpression? = dto.logExpressionObject?.xExpression()
+  override fun getLogExpressionObject(): XExpression? = _state.value.logExpressionObject?.xExpression()
 
-  override fun getConditionExpression(): XExpression? = dto.conditionExpression?.xExpression()
+  override fun getConditionExpression(): XExpression? = _state.value.conditionExpression?.xExpression()
 }
 
 @Service(Service.Level.PROJECT)

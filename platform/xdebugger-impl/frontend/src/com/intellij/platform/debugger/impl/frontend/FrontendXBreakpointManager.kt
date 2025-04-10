@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.attachAsChildTo
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
@@ -35,7 +34,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
             project = project,
             cs = this,
             dto = it,
-            onEnabledChange = {
+            onBreakpointChange = {
               breakpointsChanged.tryEmit(Unit)
             }
           )
