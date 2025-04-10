@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.platform.syntax
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.fetchAndIncrement
 
 /**
  * A class defining a token or node type.
@@ -13,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class SyntaxElementType(
   private val debugName: String,
 ) {
-  val index: Int = counter.getAndIncrement()
+  val index: Int = counter.fetchAndIncrement()
 
   override fun toString(): String = debugName
 
@@ -22,4 +26,4 @@ class SyntaxElementType(
   override fun hashCode(): Int = index
 }
 
-private val counter = AtomicInteger(0)
+private val counter = AtomicInt(0)
