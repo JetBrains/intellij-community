@@ -7,16 +7,9 @@ import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
-import org.editorconfig.language.psi.EditorConfigFlatOptionKey
-import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigSection
-import org.editorconfig.language.schema.descriptors.definesSameOption
 
 abstract class EditorConfigSectionBase(node: ASTNode) : ASTWrapperPsiElement(node), EditorConfigSection {
-  final override fun containsKey(key: EditorConfigFlatOptionKey): Boolean = optionList
-    .asSequence()
-    .mapNotNull(EditorConfigOption::getFlatOptionKey)
-    .any { definesSameOption(key, it) }
 
   final override fun getName(): String = header.text
 

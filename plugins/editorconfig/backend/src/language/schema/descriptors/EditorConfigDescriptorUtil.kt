@@ -123,7 +123,17 @@ private fun EditorConfigOptionValueList.getDescriptor(smart: Boolean): EditorCon
   return finder.descriptor
 }
 
-fun definesSameOption(thisKey: EditorConfigFlatOptionKey, otherKey: EditorConfigFlatOptionKey): Boolean {
+fun EditorConfigSection.containsKey(key: EditorConfigFlatOptionKey): Boolean {
+  for (option in optionList) {
+    val flatOptionKey = option.flatOptionKey
+    if (flatOptionKey != null && definesSameOption(flatOptionKey, key)) {
+      return true
+    }
+  }
+  return false
+}
+
+private fun definesSameOption(thisKey: EditorConfigFlatOptionKey, otherKey: EditorConfigFlatOptionKey): Boolean {
   val thisDescriptor = thisKey.option.getDescriptor(false)
   val otherDescriptor = otherKey.option.getDescriptor(false)
   if (otherDescriptor == null && thisDescriptor == null) {

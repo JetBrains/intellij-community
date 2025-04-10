@@ -14,6 +14,4 @@ public interface EditorConfigSection extends NavigatablePsiElement {
   @NotNull
   List<EditorConfigOption> getOptionList();
 
-  boolean containsKey(@NotNull EditorConfigFlatOptionKey key);
-
 }

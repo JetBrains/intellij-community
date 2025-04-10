@@ -33,9 +33,6 @@ section ::= header option* {
   recoverWhile=not_header
   mixin="org.editorconfig.language.psi.base.EditorConfigSectionBase"
   implements="com.intellij.psi.NavigatablePsiElement"
-  methods = [
-    containsKey
-  ]
 }
 
 // ---- ---- Root declaration ---- ----
