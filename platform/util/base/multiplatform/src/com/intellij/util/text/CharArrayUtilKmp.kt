@@ -4,6 +4,8 @@ package com.intellij.util.text
 import fleet.util.multiplatform.linkToActual
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmOverloads
 
 @ApiStatus.Experimental
 object CharArrayUtilKmp {

@@ -6,6 +6,10 @@ package com.intellij.util.lang
 
 import com.intellij.util.currentJavaVersionPlatformSpecific
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 /**
  *

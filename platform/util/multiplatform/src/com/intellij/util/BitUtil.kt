@@ -3,6 +3,7 @@ package com.intellij.util
 
 import org.jetbrains.annotations.Contract
 import kotlin.experimental.inv
+import kotlin.jvm.JvmStatic
 
 object BitUtil {
   @Contract(pure = true)
