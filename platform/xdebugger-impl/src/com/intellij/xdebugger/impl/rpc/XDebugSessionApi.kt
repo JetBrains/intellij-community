@@ -103,6 +103,7 @@ data class XDebugSessionDto(
   val consoleViewData: XDebuggerConsoleViewData?,
   val processHandlerDto: ProcessHandlerDto,
   val smartStepIntoHandlerDto: XSmartStepIntoHandlerDto?,
+  val isLibraryFrameFilterSupported: Boolean,
 )
 
 

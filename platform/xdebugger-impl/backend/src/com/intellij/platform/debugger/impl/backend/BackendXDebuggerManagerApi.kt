@@ -72,6 +72,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       consoleView,
       createProcessHandlerDto(currentSession.coroutineScope, currentSession.debugProcess.processHandler),
       debugProcess.smartStepIntoHandler?.let { XSmartStepIntoHandlerDto(it.popupTitle) },
+      currentSession.debugProcess.isLibraryFrameFilterSupported,
     )
   }
 

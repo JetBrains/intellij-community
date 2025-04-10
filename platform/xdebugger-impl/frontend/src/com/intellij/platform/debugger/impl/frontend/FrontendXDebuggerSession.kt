@@ -111,6 +111,8 @@ class FrontendXDebuggerSession private constructor(
                                           XDebugSessionApi.getInstance().createDocument(frontendDocumentId, id, expression, position, mode)
                                         })
 
+  override val isLibraryFrameFilterSupported: Boolean = sessionDto.isLibraryFrameFilterSupported
+
   override val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 
   private var _sessionTab: XDebugSessionTab? = null
