@@ -137,8 +137,8 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
 
     if (switcherState != null) {
-      //TODO: addOnOffButton(panel, switcherState)
-      text("<button: $switcherState>") {
+      onOffButton {
+        isSelected = switcherState
         align = LcrInitParams.Align.RIGHT
       }
     }
@@ -245,13 +245,6 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
     }
 
     return freeSpace
-  }
-
-  private fun addOnOffButton(panel: IconCompOptionalCompPanel<SimpleColoredComponent>, selected: Boolean) {
-    val button = OnOffButton()
-    button.isSelected = selected
-    panel.right = button
-    panel.border = TOGGLE_BUTTON_BORDER
   }
 
   private fun getName(text: @NlsActions.ActionText String?, groupName: @NlsActions.ActionText String?, toggle: Boolean): @NlsActions.ActionText String {

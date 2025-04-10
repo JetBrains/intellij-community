@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
@@ -28,6 +29,11 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
   override fun getFilterEditor(): SeFilterEditor = SeActionsFilterEditor()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
+    val presentation = item.presentation
+    if (presentation is SeActionItemPresentation ) {
+      presentation.changeStateIfSwitcher()
+    }
+
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
