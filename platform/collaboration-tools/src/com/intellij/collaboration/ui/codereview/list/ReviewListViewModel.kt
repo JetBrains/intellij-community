@@ -7,5 +7,11 @@ package com.intellij.collaboration.ui.codereview.list
  * For now, it contains only necessary for common code functionality since review providers implement their own specific view models
  */
 interface ReviewListViewModel {
+  // May do just a check if everything currently loaded is still up-to-date, rather than actually load new data.
   fun refresh()
+
+  // Must reload the entire list.
+  fun reload() {
+    refresh()
+  }
 }

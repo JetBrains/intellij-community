@@ -68,7 +68,7 @@ internal class GitLabMergeRequestsListController(
     val errorPresenter = GitLabMergeRequestErrorUtil.createErrorStatusPresenter(
       accountVm,
       swingAction(GitLabBundle.message("merge.request.list.reload")) {
-        listVm.refresh()
+        listVm.reload()
       })
     val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.error, errorPresenter)
 

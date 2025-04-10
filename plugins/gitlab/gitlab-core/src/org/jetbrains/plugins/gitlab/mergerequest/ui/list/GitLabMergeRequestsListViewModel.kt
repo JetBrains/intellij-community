@@ -34,8 +34,6 @@ interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val error: Flow<Throwable?>
 
   fun requestMore()
-
-  override fun refresh()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -72,6 +70,12 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override fun refresh() {
     scope.launch {
       loaderFlow.first().refresh()
+    }
+  }
+
+  override fun reload() {
+    scope.launch {
+      loaderFlow.first().reload()
     }
   }
 

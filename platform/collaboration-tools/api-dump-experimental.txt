@@ -1140,6 +1140,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:wrapWithLazyVerticalScroll(kotlinx.coroutines.CoroutineScope,javax.swing.JList,kotlin.jvm.functions.Function0):javax.swing.JScrollPane
 *:com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 - a:refresh():V
+- reload():V
 *:com.intellij.collaboration.ui.codereview.list.TagPresentation
 - a:getColor():java.awt.Color
 - a:getName():java.lang.String

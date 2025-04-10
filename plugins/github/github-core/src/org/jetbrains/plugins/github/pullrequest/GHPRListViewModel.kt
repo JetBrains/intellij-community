@@ -132,8 +132,8 @@ class GHPRListViewModel internal constructor(
     }
   }
 
-  override fun refresh() {
     listLoader.reset()
+  override fun reload() {
     repositoryDataService.resetData()
   }
 

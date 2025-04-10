@@ -86,7 +86,7 @@ internal class GHPRListPanelController(
 
   private fun createErrorStatusPresenter(project: Project, account: GithubAccount): ErrorStatusPresenter.Text<Throwable> {
     val errorHandler = GHApiLoadingErrorHandler(project, account) {
-      listVm.refresh()
+      listVm.reload()
     }
 
     return ErrorStatusPresenter.simple(

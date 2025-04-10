@@ -15,7 +15,7 @@ internal class GitLabMergeRequestListRefreshAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val reviewListVm= e.getData(GitLabMergeRequestsActionKeys.REVIEW_LIST_VM) ?: return
-    reviewListVm.refresh()
+    val reviewListVm = e.getData(GitLabMergeRequestsActionKeys.REVIEW_LIST_VM) ?: return
+    reviewListVm.reload()
   }
 }

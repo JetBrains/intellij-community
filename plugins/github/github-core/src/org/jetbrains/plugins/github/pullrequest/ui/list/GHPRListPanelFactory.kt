@@ -57,7 +57,7 @@ object GHPRListPanelFactory {
       border = JBUI.Borders.empty(4, 0)
       add(JLabel(GithubBundle.message("pull.request.list.outdated")))
       add(ActionLink(GithubBundle.message("pull.request.list.refresh")) {
-        listVm.refresh()
+        listVm.reload()
       })
 
       isVisible = false
