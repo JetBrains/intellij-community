@@ -122,7 +122,7 @@ c:com.intellij.build.output.BuildOutputInstantReaderImpl
 - a:getBuildDescriptor():com.intellij.build.BuildDescriptor
 - a:getTitle():java.lang.String
 c:com.intellij.codeInsight.actions.VcsFacade
-- *:createPatchPreviewComponent(com.intellij.openapi.project.Project,com.intellij.model.ModelPatch):javax.swing.JComponent
+- *:createPatchPreviewComponent(com.intellij.openapi.project.Project,java.util.Map):javax.swing.JComponent
 *:com.intellij.codeInsight.codeVision.CodeVisionProvider
 - *sf:Companion:com.intellij.codeInsight.codeVision.CodeVisionProvider$Companion
 - sf:EP_NAME:java.lang.String
