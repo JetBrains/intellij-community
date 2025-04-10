@@ -397,7 +397,7 @@ public final class KotlinTestUtils {
         return directives;
     }
 
-    public static List<String> loadBeforeAfterText(String filePath) {
+    public static List<TestFile> loadBeforeAfterAndDependenciesText(String filePath) {
         String content;
 
         try {
@@ -406,19 +406,21 @@ public final class KotlinTestUtils {
             throw new RuntimeException(e);
         }
 
-        List<String> files = TestFiles.createTestFiles("", content, new TestFiles.TestFileFactoryNoModules<>() {
+        List<TestFile> files = TestFiles.createTestFiles("", content, new TestFiles.TestFileFactoryNoModules<>() {
             @NotNull
             @Override
-            public String create(@NotNull String fileName, @NotNull String text, @NotNull Directives directives) {
+            public TestFile create(@NotNull String fileName, @NotNull String text, @NotNull Directives directives) {
                 int firstLineEnd = text.indexOf('\n');
-                return StringUtil.trimTrailing(text.substring(firstLineEnd + 1));
+                return new TestFile(fileName, StringUtil.trimTrailing(text.substring(firstLineEnd + 1)));
             }
         });
 
-        Assert.assertEquals("Exactly two files expected: ", 2, files.size());
+        Assert.assertTrue("At least two files expected, actually " + files.size(), files.size() >= 2);
 
         return files;
     }
+
+    public record TestFile(String name, String content) {}
 
     public static String getLastCommentedLines(@NotNull Document document) {
         List<CharSequence> resultLines = new ArrayList<>();
