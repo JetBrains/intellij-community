@@ -501,26 +501,16 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
       )))
     }
 
-    val prefix = referencingModuleInfo.sourceModule.name + "/"
-    if (!moduleName.startsWith(prefix)) {
-      val i = moduleName.indexOf("/")
-      if (moduleLoadingRule != "required" && moduleLoadingRule != "embedded" && skipUnresolvedOptionalContentModules && i == -1) {
-        return null
-      }
-      val message = if (i > -1) "$moduleName can only be accessed from ${moduleName.substring(0, i)}" else  "Cannot find module $moduleName"
-      registerError(message)
-      return null
-    }
-
-    val slashIndex = prefix.length - 1
-    val containingModuleName = moduleName.substring(0, slashIndex)
+    val containingModuleName = moduleName.substringBefore('/')
     module = sourceModuleNameToFileInfo[containingModuleName]
     if (module == null) {
-      registerError("Cannot find module $containingModuleName")
+      if (moduleLoadingRule == "required" || moduleLoadingRule == "embedded" || !skipUnresolvedOptionalContentModules) {
+        registerError("Cannot find module $containingModuleName")
+      }
       return null
     }
 
-    val fileName = "$containingModuleName.${moduleName.substring(slashIndex + 1)}.xml"
+    val fileName = "${moduleName.replace('/', '.')}.xml"
     val result = loadFileInModule(sourceModule = module.sourceModule, fileName = fileName)
     if (result == null) {
       _errors.add(PluginValidationError(
