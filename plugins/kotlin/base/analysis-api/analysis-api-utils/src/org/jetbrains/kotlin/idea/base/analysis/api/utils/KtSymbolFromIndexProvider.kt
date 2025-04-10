@@ -17,9 +17,12 @@ import org.jetbrains.kotlin.analysis.api.components.KaBuiltinTypes
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
@@ -43,7 +46,7 @@ class KtSymbolFromIndexProvider(
             return true
         }
 
-        if (isIgnoredExpectDeclaration()) {
+        if (isIgnoredExpectDeclaration(file)) {
             // filter out expect declarations outside of common modules
             return false
         }
@@ -485,8 +488,10 @@ private fun MutableSet<Name>.createNamesProcessor(
  * actual counterpart.
  */
 context(KaSession)
-private fun KtDeclaration.isIgnoredExpectDeclaration(): Boolean {
+private fun KtDeclaration.isIgnoredExpectDeclaration(contextFile: KtFile): Boolean {
     if (!isExpectDeclaration()) return false
-    // Modules that have multiple targetPlatforms might have expect declarations without actuals, so we cannot ignore them.
-    return useSiteModule.targetPlatform.size <= 1
+    // Modules that have multiple targetPlatforms might have expect declarations without actuals in libraries, so we cannot ignore them.
+    if (useSiteModule.targetPlatform.isMultiPlatform()) return false
+    // We can only safely ignore expect declarations if we are in a leaf module without implementing modules.
+    return contextFile.module?.implementingModules?.isEmpty() == true
 }
