@@ -64,7 +64,7 @@ private fun OutputStreamWriter.printClass(
   appendLine("//   $parametersString ")
   appendLine("internal object $className {")
   appendLine("  val mappings: Map<String, String> = mapOf(")
-  for ((key, value) in mappings.entries) {
+  for ((key, value) in mappings.entries.sortedBy { it.key }) {
     val escapedValue = value
       .replace("\\", "\\\\")
       .replace("\n", "\\n")
