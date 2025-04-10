@@ -5,6 +5,7 @@
 package com.intellij.platform.syntax.psi
 
 import com.intellij.openapi.diagnostic.Logger
+import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

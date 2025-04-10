@@ -6,6 +6,7 @@ package com.intellij.platform.syntax
 import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.impl.util.BitSet
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmName
 
 @ApiStatus.Experimental
 fun Collection<SyntaxElementType>.asSyntaxElementTypeSet(): SyntaxElementTypeSet {

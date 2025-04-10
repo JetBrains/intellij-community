@@ -6,6 +6,7 @@ package com.intellij.openapi.util.text
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
+import kotlin.jvm.JvmName
 
 @Contract(pure = true)
 fun CharSequence.containsLineBreak(): Boolean {

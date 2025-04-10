@@ -8,6 +8,7 @@ import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
+import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
 
 /**

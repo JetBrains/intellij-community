@@ -5,6 +5,7 @@
 package com.intellij.platform.syntax.logger
 
 import com.intellij.platform.syntax.Logger
+import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

@@ -8,6 +8,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.psi.ParsingDiagnostics.ParserDiagnosticsHandler
+import kotlin.jvm.JvmName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
