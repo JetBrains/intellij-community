@@ -119,7 +119,7 @@ internal class InlineCompletionTextRenderManager private constructor(
 
   private inner class UpdateOnResizeListener : VisibleAreaListener {
     override fun visibleAreaChanged(e: VisibleAreaEvent) {
-      if (e.oldRectangle.width != e.newRectangle.width) {
+      if (e.oldRectangle.width != e.newRectangle.width && renderer.isSoftWrappingEnabled()) {
         recreateRenderer()
       }
     }
@@ -150,6 +150,10 @@ internal class InlineCompletionTextRenderManager private constructor(
       check(newLines.isNotEmpty())
       render(newLines, initialOffset)
       return Descriptor(initialOffset)
+    }
+
+    fun isSoftWrappingEnabled(): Boolean {
+      return softWrapManager.getSoftWrapModelIfEnabled() != null
     }
 
     override fun dispose() {
