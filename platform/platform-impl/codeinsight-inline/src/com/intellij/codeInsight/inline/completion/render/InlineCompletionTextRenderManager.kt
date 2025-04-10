@@ -57,7 +57,16 @@ import java.util.*
  *   as usual. If `initialOffset > renderOffset`, then we need to 'skip' some symbols from the folded ones. For that, we trim the folded
  *   range and render the skipped symbols as real ones.
  *
- * Please see [Renderer.foldLineEndIfNotFolded], [Renderer.trimFoldedRangeIfNeeded], [Renderer.renderRealTextBlocks].
+ * Please see [Renderer.foldingManager] [Renderer.foldLineEndIfNotFolded], [Renderer.trimFoldedRangeIfNeeded],
+ * [Renderer.renderRealTextBlocks].
+ *
+ * **Soft wrapping**
+ *
+ * The inline completion renderer supports soft-wrapping as the editor does. It is implemented in a custom way.
+ *
+ * See [Renderer.softWrapManager], [Renderer.applySoftWrapping]
+ *
+ * When the editor is resized, all the completion is re-rendered in such a case. See [recreateRenderer].
  */
 @ApiStatus.Experimental
 internal class InlineCompletionTextRenderManager private constructor(
