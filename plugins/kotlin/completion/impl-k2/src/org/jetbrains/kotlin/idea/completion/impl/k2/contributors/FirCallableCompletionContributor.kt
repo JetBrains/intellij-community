@@ -26,7 +26,9 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesFor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -94,6 +96,7 @@ internal open class FirCallableCompletionContributor(
     protected open fun filter(symbol: KaCallableSymbol): Boolean =
         targetPlatform.isMultiPlatform()
                 || !symbol.isExpect
+                || symbol.psi?.module?.implementingModules?.isNotEmpty() == true
 
     // todo replace with a sealed hierarchy; too many arguments
     protected data class CallableWithMetadataForCompletion(
