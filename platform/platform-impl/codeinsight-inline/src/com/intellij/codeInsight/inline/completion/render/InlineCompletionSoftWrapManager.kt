@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ColorUtil
 import java.awt.Font
+import java.util.*
 
 internal class InlineCompletionSoftWrapManager private constructor(private val editor: Editor) : Disposable {
 
@@ -21,6 +22,62 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
       return null
     }
     return editor.softWrapModel as? SoftWrapModelImpl
+  }
+
+  /**
+   * Formats [lines] to make them fit within editor lines.
+   *
+   * Return `null` if it's impossible to format.
+   * If some line didn't change, it will be added to the result as the same instance of the list.
+   *
+   * **Invariant**: [RenderedLine.startX] may be non-zero only for the first line!
+   *
+   * @see [splitByAvailableWidth]
+   */
+  fun softWrap(lines: List<RenderedLine>): List<List<VolumetricInlineCompletionTextBlock>>? {
+    val softWrapModel = getSoftWrapModelIfEnabled() ?: return null
+
+    val linesToFix = LinkedList(lines)
+    val resultLines = mutableListOf<List<VolumetricInlineCompletionTextBlock>>()
+    val visibleAreaWidth = softWrapModel.applianceManager.widthProvider.visibleAreaWidth
+    while (linesToFix.isNotEmpty()) {
+      val line = linesToFix.first()
+      val blocks = line.blocks
+      if (blocks.isEmpty()) {
+        resultLines.add(blocks)
+        linesToFix.removeFirst()
+        continue
+      }
+
+      val startX = line.startX
+      val editorAvailableLineWidth = visibleAreaWidth - startX // TODO tune
+      val (leftSplitPart, rightSplitPart) = splitByAvailableWidth(blocks, editorAvailableLineWidth)
+      // TODO check that line is not empty
+      if (rightSplitPart.isEmpty()) { // The line completely fits
+        resultLines += leftSplitPart
+        linesToFix.removeFirst()
+        continue
+      }
+      if (leftSplitPart.isEmpty()) { // Not a single part of the line fits
+        if (startX > 0) {
+          // Let's try to put it on the next empty line
+          resultLines.add(emptyList())
+          linesToFix.removeFirst()
+          linesToFix.addFirst(RenderedLine(blocks, 0))
+        }
+        else {
+          // Idk what to do... Idk how to split... TODO
+          resultLines.add(blocks)
+          linesToFix.removeFirst()
+        }
+        continue
+      }
+      resultLines.add(leftSplitPart)
+      linesToFix.removeFirst()
+      linesToFix.addFirst(RenderedLine(rightSplitPart, 0)) // 0 because it's a block inlay, for sure
+    }
+
+    return resultLines
   }
 
   /**
@@ -68,6 +125,7 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
         val left = text.substring(0, splitStart + 1)
         val leftBlocks = listOfNotNull(
           if (left.isNotEmpty()) InlineCompletionRenderTextBlock(left, block.attributes) else null,
+          // TODO the arrow doesn't inherit background of the current caret row
           getSoftWrapArrow(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED)
         ).toVolumetric(editor, roundUp = true)
 
@@ -125,6 +183,8 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
     base.foregroundColor = ColorUtil.withAlpha(color, (color.alpha / 255.0) * 0.8)
     return base
   }
+
+  class RenderedLine(val blocks: List<VolumetricInlineCompletionTextBlock>, val startX: Int)
 
   companion object : InlineCompletionComponentFactory<InlineCompletionSoftWrapManager>() {
     // Reused from `CompositeSoftWrapPainter.java`
