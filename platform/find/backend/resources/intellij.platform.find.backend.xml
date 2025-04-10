@@ -1,0 +1,12 @@
+<idea-plugin package="com.intellij.platform.find.backend">
+  <dependencies>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.find"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.find.backend.FindRemoteApiProvider"/>
+  </extensions>
+</idea-plugin>

@@ -767,6 +767,9 @@
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-api/testFramework/intellij.platform.externalSystem.testFramework.iml" filepath="$PROJECT_DIR$/platform/external-system-api/testFramework/intellij.platform.externalSystem.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.tests.iml" filepath="$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/feedback/intellij.platform.feedback.iml" filepath="$PROJECT_DIR$/platform/feedback/intellij.platform.feedback.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/find/intellij.platform.find.iml" filepath="$PROJECT_DIR$/platform/find/intellij.platform.find.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/find/backend/intellij.platform.find.backend.iml" filepath="$PROJECT_DIR$/platform/find/backend/intellij.platform.find.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/find/frontend/intellij.platform.find.frontend.iml" filepath="$PROJECT_DIR$/platform/find/frontend/intellij.platform.find.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/foldings/intellij.platform.foldings.iml" filepath="$PROJECT_DIR$/platform/foldings/intellij.platform.foldings.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-frontend/intellij.platform.frontend.iml" filepath="$PROJECT_DIR$/platform/platform-frontend/intellij.platform.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" />
