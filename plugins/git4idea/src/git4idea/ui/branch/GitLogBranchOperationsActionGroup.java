@@ -4,6 +4,7 @@ package git4idea.ui.branch;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitBranch;
@@ -138,7 +139,8 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     singleRepoActions.setPopup(false);
     actions.add(singleRepoActions);
 
-    String text = showBranchesPopup ? ref.getName() : GitBundle.message("branches.branch.0", ref.getName());
+    String refPresentation = GitBranchPopupActions.truncateBranchName(ref.getName(), project);
+    String text = showBranchesPopup ? refPresentation : GitBundle.message("branches.branch.0", StringUtil.escapeMnemonics(refPresentation));
     ActionGroup group = new DefaultActionGroup(actions);
     group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);
@@ -152,7 +154,8 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     ActionGroup singleRepoActions = createTagActions(project, Collections.singletonList(repository), ref);
     singleRepoActions.setPopup(false);
 
-    String text = showTagsPopup ? ref.getName() : GitBundle.message("branches.tag.0", ref.getName());
+    String tagPresentation = GitBranchPopupActions.truncateBranchName(ref.getName(), project);
+    String text = showTagsPopup ? tagPresentation : GitBundle.message("branches.tag.0", StringUtil.escapeMnemonics(tagPresentation));
     ActionGroup group = new DefaultActionGroup(singleRepoActions);
     group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);
