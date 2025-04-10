@@ -9,6 +9,7 @@ import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOption
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 import org.editorconfig.language.util.EditorConfigIdentifierUtil
 

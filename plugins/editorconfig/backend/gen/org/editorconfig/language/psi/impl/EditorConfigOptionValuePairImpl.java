@@ -11,7 +11,6 @@ import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 import org.editorconfig.language.psi.base.EditorConfigDescribableElementBase;
 import org.editorconfig.language.psi.*;
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
-import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor;
 
 public class EditorConfigOptionValuePairImpl extends EditorConfigDescribableElementBase implements EditorConfigOptionValuePair {
 
@@ -49,11 +48,6 @@ public class EditorConfigOptionValuePairImpl extends EditorConfigDescribableElem
   @Override
   public @NotNull EditorConfigDescribableElement getSecond() {
     return EditorConfigPsiImplUtils.getSecond(this);
-  }
-
-  @Override
-  public @Nullable EditorConfigDescriptor getDescriptor(boolean smart) {
-    return EditorConfigPsiImplUtils.getDescriptor(this, smart);
   }
 
 }

@@ -2,6 +2,7 @@
 package org.editorconfig.language.util.core
 
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
 import org.editorconfig.language.util.EditorConfigTextMatchingUtil.textMatchesToIgnoreCase

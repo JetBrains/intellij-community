@@ -11,7 +11,6 @@ import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 import org.editorconfig.language.psi.base.EditorConfigOptionBase;
 import org.editorconfig.language.psi.*;
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor;
 
 public class EditorConfigOptionImpl extends EditorConfigOptionBase implements EditorConfigOption {
 

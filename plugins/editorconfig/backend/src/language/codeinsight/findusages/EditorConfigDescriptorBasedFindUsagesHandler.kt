@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.util.EditorConfigVfsUtil
 
 class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {

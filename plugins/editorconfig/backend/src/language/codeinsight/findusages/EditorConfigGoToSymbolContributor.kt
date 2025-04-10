@@ -12,6 +12,7 @@ import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import org.editorconfig.language.index.EDITOR_CONFIG_IDENTIFIER_INDEX_ID
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
 
 internal class EditorConfigGoToSymbolContributor : ChooseByNameContributorEx {

@@ -4,12 +4,9 @@ package org.editorconfig.language.psi.impl;
 import com.intellij.psi.PsiElement;
 import kotlin.text.StringsKt;
 import org.editorconfig.language.psi.EditorConfigCharClassLetter;
-import org.editorconfig.language.psi.EditorConfigOptionValueList;
 import org.editorconfig.language.psi.EditorConfigOptionValuePair;
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
-import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -38,43 +35,6 @@ public final class EditorConfigPsiImplUtils {
     final String text = letter.getText();
     if (text.charAt(0) != '\\') return false;
     return StringsKt.contains(VALID_ESCAPES, text.charAt(1), false);
-  }
-
-  // ---- ---- Value pair utils ---- ----
-
-  public static @Nullable EditorConfigDescriptor getDescriptor(final @NotNull EditorConfigOptionValuePair pair, final boolean smart) {
-    final EditorConfigDescribableElement parent = pair.getDescribableParent();
-    if (parent == null) {
-      return null;
-    }
-
-    final EditorConfigDescriptor parentDescriptor = parent.getDescriptor(smart);
-    if (parentDescriptor == null) {
-      return null;
-    }
-
-    final EditorConfigPairDescriptorFinderVisitor finder = new EditorConfigPairDescriptorFinderVisitor();
-    parentDescriptor.accept(finder);
-    return finder.getDescriptor();
-  }
-
-  // ---- ---- Value list utils ---- ----
-
-
-  public static @Nullable EditorConfigDescriptor getDescriptor(final @NotNull EditorConfigOptionValueList list, final boolean smart) {
-    final EditorConfigDescribableElement parent = list.getDescribableParent();
-    if (parent == null) {
-      return null;
-    }
-
-    final EditorConfigDescriptor parentDescriptor = parent.getDescriptor(smart);
-    if (parentDescriptor == null) {
-      return null;
-    }
-
-    final EditorConfigListDescriptorFinderVisitor finder = new EditorConfigListDescriptorFinderVisitor(list);
-    parentDescriptor.accept(finder);
-    return finder.getDescriptor();
   }
 
   // ---- ---- Value pair utils ---- ----

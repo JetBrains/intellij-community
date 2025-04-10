@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor

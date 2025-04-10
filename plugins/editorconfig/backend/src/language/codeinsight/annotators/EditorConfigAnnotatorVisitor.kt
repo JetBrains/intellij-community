@@ -10,6 +10,7 @@ import org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighter
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.*
 import org.editorconfig.language.psi.impl.EditorConfigPsiImplUtils.VALID_ESCAPES
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 
 class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : EditorConfigVisitor() {

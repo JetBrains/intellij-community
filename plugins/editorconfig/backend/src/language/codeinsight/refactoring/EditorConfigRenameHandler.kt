@@ -9,6 +9,7 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
 

@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 import org.editorconfig.language.psi.base.EditorConfigDescribableElementBase;
 import org.editorconfig.language.psi.*;
-import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor;
 
 public class EditorConfigOptionValueListImpl extends EditorConfigDescribableElementBase implements EditorConfigOptionValueList {
 
@@ -32,11 +31,6 @@ public class EditorConfigOptionValueListImpl extends EditorConfigDescribableElem
   @NotNull
   public List<EditorConfigOptionValueIdentifier> getOptionValueIdentifierList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigOptionValueIdentifier.class);
-  }
-
-  @Override
-  public @Nullable EditorConfigDescriptor getDescriptor(boolean smart) {
-    return EditorConfigPsiImplUtils.getDescriptor(this, smart);
   }
 
 }

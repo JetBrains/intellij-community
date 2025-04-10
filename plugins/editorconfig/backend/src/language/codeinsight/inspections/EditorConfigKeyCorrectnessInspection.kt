@@ -9,6 +9,7 @@ import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.EditorConfigQualifiedOptionKey
 import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 
 class EditorConfigKeyCorrectnessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

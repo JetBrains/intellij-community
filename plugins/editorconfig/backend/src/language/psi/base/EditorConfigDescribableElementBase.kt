@@ -11,6 +11,7 @@ import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.psi.reference.EditorConfigConstantReference
 import org.editorconfig.language.psi.reference.EditorConfigDeclarationReference
 import org.editorconfig.language.psi.reference.EditorConfigIdentifierReference
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor

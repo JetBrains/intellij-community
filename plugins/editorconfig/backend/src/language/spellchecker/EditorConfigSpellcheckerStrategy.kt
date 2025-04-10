@@ -9,6 +9,7 @@ import com.intellij.spellchecker.tokenizer.Tokenizer
 import org.editorconfig.language.psi.EditorConfigCharClassPattern
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 
 class EditorConfigSpellcheckerStrategy : SpellcheckingStrategy(), DumbAware {

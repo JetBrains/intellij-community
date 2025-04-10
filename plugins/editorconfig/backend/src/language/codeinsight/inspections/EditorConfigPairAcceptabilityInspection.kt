@@ -7,6 +7,7 @@ import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOption
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOptionValuePair
 import org.editorconfig.language.psi.EditorConfigVisitor
+import org.editorconfig.language.schema.descriptors.getDescriptor
 
 class EditorConfigPairAcceptabilityInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

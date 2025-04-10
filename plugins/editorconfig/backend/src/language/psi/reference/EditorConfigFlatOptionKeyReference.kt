@@ -7,6 +7,7 @@ import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.isSubcaseOf
 

@@ -5,7 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
-import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor;
 
 public interface EditorConfigOptionValuePair extends EditorConfigDescribableElement {
 
@@ -18,7 +17,5 @@ public interface EditorConfigOptionValuePair extends EditorConfigDescribableElem
   @NotNull EditorConfigDescribableElement getFirst();
 
   @NotNull EditorConfigDescribableElement getSecond();
-
-  @Nullable EditorConfigDescriptor getDescriptor(boolean smart);
 
 }

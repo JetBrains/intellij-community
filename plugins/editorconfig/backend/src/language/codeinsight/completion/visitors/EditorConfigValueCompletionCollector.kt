@@ -9,11 +9,8 @@ import org.editorconfig.language.codeinsight.completion.withSuffix
 import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.psi.EditorConfigOptionValuePair
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
-import org.editorconfig.language.schema.descriptors.EditorConfigDescriptorVisitor
-import org.editorconfig.language.schema.descriptors.collectDescriptorMappings
+import org.editorconfig.language.schema.descriptors.*
 import org.editorconfig.language.schema.descriptors.impl.*
-import org.editorconfig.language.schema.descriptors.isLeftInPair
-import org.editorconfig.language.schema.descriptors.isRightInPair
 import org.editorconfig.language.util.EditorConfigIdentifierUtil
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.hasParentOfType
 

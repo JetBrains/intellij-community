@@ -9,6 +9,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier
 import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.psi.EditorConfigVisitor
+import org.editorconfig.language.schema.descriptors.getDescriptor
 
 class EditorConfigValueCorrectnessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

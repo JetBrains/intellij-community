@@ -8,6 +8,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor
 
 class EditorConfigValueUniquenessInspection : LocalInspectionTool() {

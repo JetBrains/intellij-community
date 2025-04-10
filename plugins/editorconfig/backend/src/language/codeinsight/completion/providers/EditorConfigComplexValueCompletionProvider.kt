@@ -10,6 +10,7 @@ import com.intellij.util.ProcessingContext
 import org.editorconfig.language.codeinsight.completion.visitors.EditorConfigValueCompletionCollectorInitiator
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier
+import org.editorconfig.language.schema.descriptors.getDescriptor
 
 object EditorConfigComplexValueCompletionProvider : EditorConfigCompletionProviderBase() {
   override val destination: PsiElementPattern.Capture<PsiElement> =

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiWhiteSpace
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
+import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 import org.jetbrains.annotations.Nls
 import kotlin.math.max
