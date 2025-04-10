@@ -197,6 +197,26 @@ class AlarmTest {
       delay(20.milliseconds)
     }
   }
+
+  @Test
+  fun `all canceled tasks are awaited 2`() = timeoutRunBlocking {
+    val counter = AtomicInteger()
+    val alarm = SingleAlarm(
+      {
+        assertEquals(1, counter.incrementAndGet())
+        try {
+          Thread.sleep(100)
+        } finally {
+          assertEquals(0, counter.decrementAndGet())
+        }
+      }, 10, null, Alarm.ThreadToUse.POOLED_THREAD, null, null)
+    delay(50)
+    alarm.cancelAndRequest(false)
+    alarm.cancelAndRequest(false)
+    delay(50)
+    alarm.cancelAndRequest(false)
+    alarm.cancelAndRequest(false)
+  }
 }
 
 private fun assertRequestsExecuteSequentially(alarm: Alarm) {
