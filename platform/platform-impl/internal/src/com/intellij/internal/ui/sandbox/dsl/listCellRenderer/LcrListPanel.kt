@@ -49,6 +49,10 @@ internal class LcrListPanel : UISandboxPanel {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text("Item $value")
           })
+          jbList("On-off button", (1..99).toList(), listCellRenderer {
+            onOffButton(index % 2 == 0)
+            text("Item $value")
+          })
 
           val aligns = listOf(LcrInitParams.Align.LEFT, LcrInitParams.Align.CENTER, LcrInitParams.Align.RIGHT)
           jbList("Align", (1..99).toList(), listCellRenderer {
@@ -115,7 +119,7 @@ internal class LcrListPanel : UISandboxPanel {
           }
             .component.viewport.view as JBList<Int>
 
-          jbList("Mixed, tooltips", listOf("Text", "With Icon", "Italic", "Commented"), listCellRenderer {
+          jbList("Mixed, tooltips", listOf("Text", "With Icon", "Italic", "Commented", "With On-Off Button", "With Icon And Button"), listCellRenderer {
             toolTipText = value
 
             when (index) {
@@ -135,17 +139,28 @@ internal class LcrListPanel : UISandboxPanel {
                   foreground = greyForeground
                 }
               }
+              4 -> {
+                text(value)
+                onOffButton(false)
+              }
+              5 -> {
+                icon(AllIcons.General.Information)
+                text(value)
+                onOffButton(true)
+              }
             }
           })
           jbList("FixedCellHeight", (1..99).toList(), listCellRenderer {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text("Item $value")
+            onOffButton(index % 2 == 0)
           }, patchList = { it.fixedCellHeight = JBUIScale.scale(30) })
           jbList("Big font", (1..99).toList(), listCellRenderer {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text("Item ($value)") {
               font = JBFont.h1()
             }
+            onOffButton(index % 2 == 0)
             text("small comment") {
               font = JBFont.small()
               foreground = greyForeground
