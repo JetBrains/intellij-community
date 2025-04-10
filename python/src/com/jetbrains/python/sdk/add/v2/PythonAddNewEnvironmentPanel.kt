@@ -76,6 +76,15 @@ internal class PythonAddNewEnvironmentPanel(
   // PY-79134: an anchor to display the promo notification on
   // TODO: remove after promo ends
   private lateinit var popupAnchor: Cell<*>
+  private val promoPopup: GotItTooltip = GotItTooltip("python.uv.promo.tooltip", message("sdk.create.custom.uv.promo.text"))
+    .withShowCount(1)
+    .withLink(message("sdk.create.custom.uv.promo.link")) {
+      selectedMode.set(CUSTOM)
+      custom.newInterpreterManager.set(UV)
+      promoPopup.gotIt()
+      promoPopup.hidePopup()
+    }
+    .withTimeout(15_000)
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
@@ -175,18 +184,13 @@ internal class PythonAddNewEnvironmentPanel(
             return@withLock
           }
 
-          lateinit var popup: GotItTooltip
-          popup = GotItTooltip("python.uv.promo.tooltip", message("sdk.create.custom.uv.promo.text"))
-            .withShowCount(1)
-            .withLink(message("sdk.create.custom.uv.promo.link")) {
-              selectedMode.set(CUSTOM)
-              custom.newInterpreterManager.set(UV)
-              popup.gotIt()
-              popup.hidePopup()
+          promoPopup.show(customButton, GotItTooltip.BOTTOM_MIDDLE)
+          custom.newInterpreterManager.afterChange(promoPopup) {
+            if (promoPopup.wasCreated()) {
+              promoPopup.gotIt()
+              promoPopup.hidePopup()
             }
-            .withTimeout(15_000)
-
-          popup.show(customButton, GotItTooltip.BOTTOM_MIDDLE)
+          }
         }
       }
     }
