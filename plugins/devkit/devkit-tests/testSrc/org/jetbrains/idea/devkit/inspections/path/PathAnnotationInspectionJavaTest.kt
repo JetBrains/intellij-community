@@ -10,7 +10,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
     doTest("""
       import com.intellij.platform.eel.annotations.Filename;
       import com.intellij.platform.eel.annotations.NativePath;
-      
+
       import java.nio.file.FileSystems;
       import java.nio.file.FileSystem;
 
@@ -116,10 +116,10 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
               String nonAnnotatedPath = "invalid/path";
               // This should be highlighted as a warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve(nonAnnotatedPath)</weak_warning>;
+              Path path = basePath.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">nonAnnotatedPath</weak_warning>);
 
               // Direct string literal should also be highlighted
-              Path directPath = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve("another/subdir")</weak_warning>;
+              Path directPath = basePath.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">"another/subdir"</weak_warning>);
 
               // Annotated string should not be highlighted
               @MultiRoutingFileSystemPath String annotatedPath = "annotated/subdir";
@@ -143,7 +143,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
               // Non-annotated string should be highlighted
               String nonAnnotatedPath = "invalid/path";
-              Path path = <weak_warning descr="String without path annotation is used in Path.resolve() method">basePath.resolve(nonAnnotatedPath)</weak_warning>;
+              Path path = basePath.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">nonAnnotatedPath</weak_warning>);
 
               // String annotated with @Filename should not be highlighted
               @Filename String filenameAnnotatedPath = "file.txt";

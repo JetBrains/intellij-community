@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.annotations.Filename
+import com.intellij.platform.eel.annotations.LocalPath
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.psi.PsiElement
@@ -22,7 +23,7 @@ import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 /**
- * Inspection that checks for proper usage of path annotations ([MultiRoutingFileSystemPath] and [NativePath]).
+ * Inspection that checks for proper usage of path annotations ([MultiRoutingFileSystemPath], [NativePath], and [LocalPath]).
  * It highlights cases where a string annotated with one path annotation is used in a context that expects a string
  * with a different path annotation.
  */
@@ -82,6 +83,14 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 AddMultiRoutingAnnotationFix()
               )
             }
+            is PathAnnotationInfo.LocalPathInfo -> {
+              // Report error: @LocalPath string used in Path constructor or factory method
+              holder.registerProblem(
+                sourcePsi,
+                DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
+                AddMultiRoutingAnnotationFix()
+              )
+            }
             is PathAnnotationInfo.MultiRouting -> {
               // This is the correct annotation, no need to report anything
             }
@@ -123,6 +132,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 // Report error: elements of 'more' parameter should be annotated with either @MultiRoutingFileSystemPath or @Filename
                 when (argInfo) {
                   is PathAnnotationInfo.Native -> {
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
+                      AddMultiRoutingAnnotationFix()
+                    )
+                  }
+                  is PathAnnotationInfo.LocalPathInfo -> {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
                       DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
@@ -194,6 +210,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                   AddMultiRoutingAnnotationFix()
                 )
               }
+              is PathAnnotationInfo.LocalPathInfo -> {
+                holder.registerProblem(
+                  arg.sourcePsi ?: sourcePsi,
+                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
+                  AddMultiRoutingAnnotationFix()
+                )
+              }
               is PathAnnotationInfo.Unspecified -> {
                 holder.registerProblem(
                   arg.sourcePsi ?: sourcePsi,
@@ -225,6 +248,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: first argument of FileSystem.getPath() should be annotated with @NativePath
             when (firstArgInfo) {
               is PathAnnotationInfo.MultiRouting -> {
+                holder.registerProblem(
+                  firstArg.sourcePsi ?: sourcePsi,
+                  DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
+                  AddNativePathAnnotationFix()
+                )
+              }
+              is PathAnnotationInfo.LocalPathInfo -> {
                 holder.registerProblem(
                   firstArg.sourcePsi ?: sourcePsi,
                   DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
@@ -291,6 +321,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 // Report error: elements of 'more' parameter should be annotated with either @NativePath or @Filename
                 when (argInfo) {
                   is PathAnnotationInfo.MultiRouting -> {
+                    holder.registerProblem(
+                      arg.sourcePsi ?: sourcePsi,
+                      DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
+                      AddNativePathAnnotationFix()
+                    )
+                  }
+                  is PathAnnotationInfo.LocalPathInfo -> {
                     holder.registerProblem(
                       arg.sourcePsi ?: sourcePsi,
                       DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename"),
@@ -564,6 +601,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
     }
 
+    class LocalPathInfo(private val annotationCandidate: PsiModifierListOwner? = null) : PathAnnotationInfo() {
+      override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
+
+      fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
+    }
+
     class FilenameInfo(private val annotationCandidate: PsiModifierListOwner? = null) : PathAnnotationInfo() {
       override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
 
@@ -628,6 +671,9 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         if (AnnotationUtil.isAnnotated(owner, NativePath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
           return Native(owner)
         }
+        if (AnnotationUtil.isAnnotated(owner, LocalPath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
+          return LocalPathInfo(owner)
+        }
         if (AnnotationUtil.isAnnotated(owner, Filename::class.java.name, AnnotationUtil.CHECK_TYPE)) {
           return FilenameInfo(owner)
         }
@@ -670,6 +716,27 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         if (annotationOwner != null) {
           AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             NativePath::class.java.name,
+            emptyArray(),
+            annotationOwner
+          )
+        }
+      }
+    }
+  }
+
+  /**
+   * Quick fix to add @LocalPath annotation.
+   */
+  private class AddLocalPathAnnotationFix() : LocalQuickFix {
+    override fun getFamilyName(): String = "Add @LocalPath annotation"
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val element = descriptor.psiElement
+      if (element is PsiModifierListOwner) {
+        val annotationOwner = element.modifierList
+        if (annotationOwner != null) {
+          AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
+            LocalPath::class.java.name,
             emptyArray(),
             annotationOwner
           )

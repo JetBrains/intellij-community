@@ -87,6 +87,25 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
       """.trimIndent()
     )
 
+    myFixture.addClass(
+      """
+        package com.intellij.platform.eel.annotations;
+
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        import java.lang.annotation.Target;
+        import static java.lang.annotation.ElementType.*;
+
+        /**
+         * This annotation should be applied to strings that represent local paths.
+         * These paths are local to the IDE process.
+         */
+        @Retention(RetentionPolicy.SOURCE)
+        @Target({FIELD, LOCAL_VARIABLE, PARAMETER, METHOD, TYPE_USE})
+        public @interface LocalPath {}
+      """.trimIndent()
+    )
+
     // Add the NativeContext annotation
     myFixture.addClass(
       """
@@ -185,6 +204,37 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
 
               Path path5 = base.resolve(validFilename); // No warning, validFilename is a valid filename
               Path path6 = base.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">invalidFilename</weak_warning>); // Warning, contains slash
+          }
+      }      
+      """.trimIndent())
+  }
+
+  /**
+   * Test that @LocalPath annotations are processed correctly.
+   */
+  fun testLocalPath() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+      import com.intellij.platform.eel.annotations.LocalPath;
+      import com.intellij.platform.eel.annotations.NativePath;
+      import java.nio.file.Path;
+      import java.nio.file.FileSystem;
+      import java.nio.file.FileSystems;
+
+      class LocalPathTest {
+          public void testMethod() {
+              // Test @LocalPath in Path.of()
+              @LocalPath String localPath = "/local/path";
+              Path path1 = <warning descr="A string annotated with @NativePath should not be used directly in Path constructor or factory method">Path.of(localPath)</warning>; // Warning, @LocalPath should not be used directly in Path.of()
+
+              // Test @LocalPath in Path.resolve()
+              @MultiRoutingFileSystemPath String basePath = "/base/path";
+              Path base = Path.of(basePath);
+              Path path2 = base.resolve(<warning descr="String without path annotation is used in Path.resolve() method">localPath</warning>); // Warning, @LocalPath should not be used in Path.resolve()
+
+              // Test @LocalPath in FileSystem.getPath()
+              FileSystem fs = FileSystems.getDefault();
+              fs.getPath(<warning descr="First argument of FileSystem.getPath() should be annotated with @NativePath">localPath</warning>, "file.txt"); // Warning, first argument should be @NativePath
           }
       }      
       """.trimIndent())
