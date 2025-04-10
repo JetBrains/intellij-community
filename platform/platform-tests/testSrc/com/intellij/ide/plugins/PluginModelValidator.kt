@@ -263,6 +263,10 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
                                 referencingPluginInfo: ModuleInfo,
                                 moduleNameToInfo: Map<String, ModuleInfo>,
                                 sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>) {
+    val moduleDependenciesCount = element.children.count { 
+      it.name == "module" || it.name == "plugin" && it.getAttributeValue("id")?.startsWith("com.intellij.modules.") == true
+    }
+    
     for (child in element.children) {
 
       fun registerError(message: String, fix: String? = null) {
@@ -290,7 +294,10 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
             continue
           }
           if (id == "com.intellij.modules.platform") {
-            registerError("No need to specify dependency on $id")
+            // todo: remove this check when MP-7413 is fixed in the plugin verifier version used at the Marketplace
+            if (moduleDependenciesCount > 1) {
+              registerError("No need to specify dependency on $id")
+            }
             continue
           }
           if (id == referencingPluginInfo.pluginId) {
