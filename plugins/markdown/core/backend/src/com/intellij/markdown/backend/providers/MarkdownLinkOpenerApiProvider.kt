@@ -1,8 +1,8 @@
-package org.intellij.plugins.markdown.backend.providers
+package com.intellij.markdown.backend.providers
 
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
-import org.intellij.plugins.markdown.backend.services.MarkdownLinkOpenerRemoteApiImpl
+import com.intellij.markdown.backend.services.MarkdownLinkOpenerRemoteApiImpl
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 
 private class MarkdownLinkOpenerApiProvider : RemoteApiProvider {

@@ -1,6 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors.
 // Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.backend.services
+package com.intellij.markdown.backend.services
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.vfs.VirtualFileId

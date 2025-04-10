@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.frontend.preview.accessor.impl
+package com.intellij.markdown.frontend.preview.accessor.impl
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.OpenFileAction
@@ -24,7 +24,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.findProject
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.isLocalHost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,7 +54,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
   override fun openLink(currentProject: Project?, link: String, containingFile: VirtualFile?) {
     coroutineScope.launch {
-      val data = MarkdownLinkOpenerRemoteApi.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
+      val data = MarkdownLinkOpenerRemoteApi.Companion.getInstance().fetchLinkNavigationData(link, containingFile?.rpcId())
       val uri = createUri(data.uri) ?: return@launch
       if (uri.scheme != "file") {
         openExternalLink(currentProject, uri)
@@ -67,7 +66,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       if (anchor == null) {
         withContext(Dispatchers.EDT) {
           runReadAction {
-            OpenFileAction.openFile(fileToOpen, project)
+            OpenFileAction.Companion.openFile(fileToOpen, project)
           }
         }
         return@launch
@@ -78,7 +77,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
   private suspend fun processHeaders(anchor: String, project: Project, headers: List<MarkdownHeaderInfo>?){
     if (headers == null) {
-      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+      DumbService.Companion.getInstance(project).showDumbModeNotificationForFunctionality(
         message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
         functionality = DumbModeBlockedFunctionality.ActionWithoutId
         )
@@ -130,7 +129,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
 
   @RequiresEdt
   private fun showDialog(project: Project?, uri: URI): Boolean {
-    val dialog = MessageDialogBuilder.yesNo(
+    val dialog = MessageDialogBuilder.Companion.yesNo(
       title = MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.title"),
       message = MarkdownBundle.message("markdown.browse.external.link.open.confirmation.dialog.text", uri)
     ).doNotAsk(createDoNotAskOption(project, uri))
@@ -190,14 +189,14 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     val anchor = uri.fragment
     if (anchor == null){
       coroutineScope.launch(Dispatchers.EDT) {
-        OpenFileAction.openFile(targetFile, project)
+        OpenFileAction.Companion.openFile(targetFile, project)
       }
       return true
     }
     val headers = MarkdownLinkOpenerUtil.collectHeaders(project, anchor, targetFile)
     if (headers == null) {
       coroutineScope.launch {
-        DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        DumbService.Companion.getInstance(project).showDumbModeNotificationForFunctionality(
           message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
           functionality = DumbModeBlockedFunctionality.ActionWithoutId
         )
@@ -244,7 +243,7 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       return hostName == null ||
              hostName.startsWith("127.") ||
              hostName.endsWith(":1") ||
-             isLocalHost(hostName, false, false)
+             com.intellij.util.io.isLocalHost(hostName, false, false)
     }
 
     private fun obtainHeadersPopupPosition(project: Project?): RelativePoint? {

@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.backend.services
+package com.intellij.markdown.backend.services
 
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
