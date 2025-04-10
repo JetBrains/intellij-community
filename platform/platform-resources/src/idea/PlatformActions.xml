@@ -1259,6 +1259,8 @@
       <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Vcs.History"/>
     </group>
 
+    <action id="MoveFileToAnotherModule" internal="true" class="com.intellij.ide.actions.MoveFileToAnotherModuleAction"/>
+
     <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
     <action id="CreateAllServicesAndExtensions" internal="true"
             class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"
