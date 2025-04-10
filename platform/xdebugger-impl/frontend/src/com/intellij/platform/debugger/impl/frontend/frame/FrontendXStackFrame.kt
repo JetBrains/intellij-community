@@ -10,7 +10,6 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValu
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.storage.currentPresentation
 import com.intellij.ui.ColoredTextContainer
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
@@ -75,11 +74,7 @@ internal class FrontendXStackFrame(
     component.setIcon(iconId?.icon())
     component.setToolTipText(tooltipText)
     for ((text, attributes) in fragments) {
-      val (bgColor, fgColor, waveColor, style) = attributes
-      component.append(text, SimpleTextAttributes(bgColor?.color(),
-                                                  fgColor?.color(),
-                                                  waveColor?.color(),
-                                                  style))
+      component.append(text, attributes.toSimpleTextAttributes())
     }
   }
 

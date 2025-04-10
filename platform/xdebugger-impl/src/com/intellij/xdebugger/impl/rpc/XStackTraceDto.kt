@@ -2,10 +2,13 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.colors.ColorId
+import com.intellij.ide.ui.colors.color
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.UID
+import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -25,7 +28,7 @@ sealed interface XExecutionStacksEvent {
  */
 @ApiStatus.Internal
 @Serializable
-data class XExecutionStackId(override val uid: UID): Id
+data class XExecutionStackId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
@@ -63,7 +66,7 @@ data class XStackFrameDto(
   val evaluator: XDebuggerEvaluatorDto,
   val initialPresentation: XStackFramePresentation,
   val captionInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo.noInfo,
-  val customBackgroundInfo: XStackFrameCustomBackgroundInfo? = null
+  val customBackgroundInfo: XStackFrameCustomBackgroundInfo? = null,
 )
 
 @ApiStatus.Internal
@@ -106,6 +109,22 @@ data class SerializableSimpleTextAttributes(
   val waveColor: ColorId?,
   val style: Int,
 )
+
+@ApiStatus.Internal
+fun SimpleTextAttributes.toRpc(): SerializableSimpleTextAttributes =
+  SerializableSimpleTextAttributes(bgColor?.rpcId(),
+                                   fgColor?.rpcId(),
+                                   waveColor?.rpcId(),
+                                   style)
+
+@ApiStatus.Internal
+fun SerializableSimpleTextAttributes.toSimpleTextAttributes(): SimpleTextAttributes {
+  val (bgColor, fgColor, waveColor, style) = this
+  return SimpleTextAttributes(bgColor?.color(),
+                              fgColor?.color(),
+                              waveColor?.color(),
+                              style)
+}
 
 @ApiStatus.Internal
 @Serializable

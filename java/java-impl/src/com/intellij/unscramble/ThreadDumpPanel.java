@@ -30,7 +30,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -63,21 +63,21 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   }
 
   @ApiStatus.Internal
-  public static ThreadDumpPanel createFromDumpItems(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems) {
+  public static ThreadDumpPanel createFromDumpItems(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<MergeableDumpItem> dumpItems) {
     return new ThreadDumpPanel(project, consoleView, toolbarActions, dumpItems, true);
   }
 
   @ApiStatus.Internal
-  public void addDumpItems(List<DumpItem> threads) {
-    myThreadDump.addAll(threads);
-    myMergedThreadDump.addAll(CompoundDumpItem.Companion.mergeThreadDumpItems(threads));
+  public void addDumpItems(List<DumpItem> threadDump, List<DumpItem> mergedThreadDump) {
+    myThreadDump.addAll(threadDump);
+    myMergedThreadDump.addAll(mergedThreadDump);
     sortAndUpdateThreadDumpItemList();
   }
 
-  private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems, boolean fromDumpItems) {
+  private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<MergeableDumpItem> dumpItems, boolean fromDumpItems) {
     super(new BorderLayout());
     myThreadDump = new ArrayList<>(dumpItems);
-    myMergedThreadDump = CompoundDumpItem.Companion.mergeThreadDumpItems(myThreadDump);
+    myMergedThreadDump = CompoundDumpItem.mergeThreadDumpItems(dumpItems);
 
     myFilterField = createSearchTextField();
     myFilterPanel = createFilterPanel();

@@ -339,8 +339,3 @@ private fun XStackFrame.initialPresentation(): XStackFramePresentation {
   })
   return XStackFramePresentation(parts, iconId, tooltip)
 }
-
-private fun SimpleTextAttributes.toRpc() = SerializableSimpleTextAttributes(bgColor?.rpcId(),
-                                                                            fgColor?.rpcId(),
-                                                                            waveColor?.rpcId(),
-                                                                            style)

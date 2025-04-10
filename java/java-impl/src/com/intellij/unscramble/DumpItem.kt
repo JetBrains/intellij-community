@@ -22,8 +22,6 @@ interface DumpItem {
 
   val stackTrace: @NlsSafe String
 
-  val mergeableToken: MergeableToken
-
   val interestLevel: Int
 
   val icon: Icon
@@ -52,6 +50,11 @@ interface DumpItem {
       o2.interestLevel - o1.interestLevel
     }
   }
+}
+
+@ApiStatus.Internal
+interface MergeableDumpItem : DumpItem {
+  val mergeableToken: MergeableToken
 }
 
 @ApiStatus.Internal
@@ -84,7 +87,8 @@ class CompoundDumpItem<T : DumpItem>(
   override val name: String = originalItem.name + (if (counter == 1) "" else " [and ${counter - 1} similar]")
 
   companion object {
-    fun mergeThreadDumpItems(originalItems: List<DumpItem>): List<DumpItem> =
+    @JvmStatic
+    fun mergeThreadDumpItems(originalItems: List<MergeableDumpItem>): List<DumpItem> =
       originalItems
         .groupingBy { it.mergeableToken }
         .eachCount()
@@ -96,7 +100,7 @@ class CompoundDumpItem<T : DumpItem>(
 }
 
 @ApiStatus.Internal
-class JavaThreadDumpItem(private val threadState: ThreadState) : DumpItem {
+class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name
 
   override val stateDesc: String

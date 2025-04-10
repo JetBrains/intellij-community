@@ -49,8 +49,8 @@ import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
-import com.intellij.unscramble.DumpItem;
 import com.intellij.unscramble.JavaThreadDumpItem;
+import com.intellij.unscramble.MergeableDumpItem;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
@@ -327,7 +327,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static int myThreadDumpsCount = 0;
 
   @ApiStatus.Internal
-  public static ThreadDumpPanel createThreadDumpPanel(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+  public static ThreadDumpPanel createThreadDumpPanel(Project project, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+    return createThreadDumpPanel(project, Collections.emptyList(), ui, searchScope);
+  }
+
+  private static ThreadDumpPanel createThreadDumpPanel(Project project, List<MergeableDumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
     final ConsoleView consoleView = consoleBuilder.getConsole();
@@ -352,14 +356,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return panel;
   }
 
-  @ApiStatus.Internal
-  public static void addDumpItems(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
-    createThreadDumpPanel(project, dumpItems, ui, searchScope);
-  }
-
   public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
-    List<DumpItem> javaThreadDump = new ArrayList<>(ContainerUtil.map(threads, JavaThreadDumpItem::new));
-    addDumpItems(project, javaThreadDump, ui, searchScope);
+    List<MergeableDumpItem> javaThreadDump = new ArrayList<>(ContainerUtil.map(threads, JavaThreadDumpItem::new));
+    createThreadDumpPanel(project, javaThreadDump, ui, searchScope);
   }
 
   public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {

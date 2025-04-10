@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl
 
-import com.intellij.unscramble.DumpItem
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.unscramble.DumpItem
+import com.intellij.unscramble.MergeableDumpItem
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -30,5 +31,5 @@ interface ThreadDumpItemsProvider {
    *
    * [suspendContext] is guaranteed to be non-null if [requiresEvaluation] is `true`.
    */
-  fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem>
+  fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem>
 }
