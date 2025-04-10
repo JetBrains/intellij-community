@@ -1,49 +1,38 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
+package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.Collection;
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import javax.swing.Icon
 
 /**
  * @author Egor
  */
-public final class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointCustomGroup> {
-  public XBreakpointCustomGroupingRule() {
-    super("by-group", XDebuggerBundle.message("breakpoints.show.user.groups"));
+class XBreakpointCustomGroupingRule<B : Any> : XBreakpointGroupingRule<B, XBreakpointCustomGroup>("by-group", XDebuggerBundle.message(
+  "breakpoints.show.user.groups")) {
+  override fun getPriority(): Int {
+    return 1200
   }
 
-  @Override
-  public int getPriority() {
-    return 1200;
+  override fun isAlwaysEnabled(): Boolean {
+    return true
   }
 
-  @Override
-  public boolean isAlwaysEnabled() {
-    return true;
-  }
-
-  @Override
-  public XBreakpointCustomGroup getGroup(final @NotNull B breakpoint) {
-    if (!(breakpoint instanceof XBreakpointBase)) {
-      return null;
+  override fun getGroup(breakpoint: B): XBreakpointCustomGroup? {
+    if (breakpoint !is XBreakpointBase<*, *, *>) {
+      return null
     }
-    String name = ((XBreakpointBase<?, ?, ?>)breakpoint).getGroup();
+    val name = (breakpoint as XBreakpointBase<*, *, *>).getGroup()
     if (StringUtil.isEmpty(name)) {
-      return null;
+      return null
     }
-    return new XBreakpointCustomGroup(name, ((XBreakpointBase<?, ?, ?>)breakpoint).getProject());
+    return XBreakpointCustomGroup(name!!, (breakpoint as XBreakpointBase<*, *, *>).getProject())
   }
 
-  @Override
-  public @Nullable Icon getIcon() {
-    return AllIcons.Nodes.Folder;
+  override fun getIcon(): Icon? {
+    return AllIcons.Nodes.Folder
   }
 }
