@@ -40,6 +40,8 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
    * TODO seems to be unused currently: there are no production plugin descriptor files with this attribute specified
    */
   val isIndependentFromCoreClassLoader: Boolean
+
+  var isMarkedForLoading: Boolean
 }
 
 internal val IdeaPluginDescriptorEx.isRequiredContentModule: Boolean

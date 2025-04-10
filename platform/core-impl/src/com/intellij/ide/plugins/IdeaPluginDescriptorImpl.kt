@@ -153,7 +153,7 @@ class IdeaPluginDescriptorImpl private constructor(
   @Transient
   var jarFiles: List<Path>? = null
 
-  private var isEnabled = true
+  override var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
@@ -242,10 +242,10 @@ class IdeaPluginDescriptorImpl private constructor(
     _pluginClassLoader = classLoader
   }
 
-  override fun isEnabled(): Boolean = isEnabled
+  override fun isEnabled(): Boolean = isMarkedForLoading
 
   override fun setEnabled(enabled: Boolean) {
-    isEnabled = enabled
+    isMarkedForLoading = enabled
   }
 
   override fun equals(other: Any?): Boolean {
@@ -386,7 +386,7 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   private fun onInitError(error: PluginLoadingError): PluginLoadingError {
-    isEnabled = false
+    isMarkedForLoading = false
     return error
   }
 
