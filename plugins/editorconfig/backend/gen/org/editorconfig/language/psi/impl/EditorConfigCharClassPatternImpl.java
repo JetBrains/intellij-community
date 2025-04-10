@@ -1,20 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi.impl;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.editorconfig.language.psi.EditorConfigCharClassExclamation;
-import org.editorconfig.language.psi.EditorConfigCharClassLetter;
-import org.editorconfig.language.psi.EditorConfigCharClassPattern;
-import org.editorconfig.language.psi.EditorConfigVisitor;
+import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 import org.editorconfig.language.psi.base.EditorConfigHeaderElementBase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+import org.editorconfig.language.psi.*;
 
 public class EditorConfigCharClassPatternImpl extends EditorConfigHeaderElementBase implements EditorConfigCharClassPattern {
 
@@ -33,12 +28,14 @@ public class EditorConfigCharClassPatternImpl extends EditorConfigHeaderElementB
   }
 
   @Override
-  public @Nullable EditorConfigCharClassExclamation getCharClassExclamation() {
+  @Nullable
+  public EditorConfigCharClassExclamation getCharClassExclamation() {
     return findChildByClass(EditorConfigCharClassExclamation.class);
   }
 
   @Override
-  public @NotNull List<EditorConfigCharClassLetter> getCharClassLetterList() {
+  @NotNull
+  public List<EditorConfigCharClassLetter> getCharClassLetterList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigCharClassLetter.class);
   }
 

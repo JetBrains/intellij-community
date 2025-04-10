@@ -9,5 +9,3 @@ import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement;
 public interface EditorConfigPattern extends EditorConfigHeaderElement {
 
 }
-
-// [{}}]   "{}}"
