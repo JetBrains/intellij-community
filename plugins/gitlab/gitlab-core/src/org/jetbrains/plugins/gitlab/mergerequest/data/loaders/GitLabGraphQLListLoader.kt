@@ -24,7 +24,7 @@ fun <K, V> startGitLabGraphQLListLoaderIn(
 
   performRequest: suspend (cursor: String?) -> GraphQLConnectionDTO<V>?
 ): ReloadablePotentiallyInfiniteListLoader<V> {
-  val loader = GitLabGraphQLListLoader(cs, extractKey, shouldTryToLoadAll, isReversed, performRequest)
+  val loader = GitLabGraphQLListLoader(extractKey, shouldTryToLoadAll, isReversed, performRequest)
 
   cs.launchNow { requestReloadFlow?.collect { loader.reload() } }
   cs.launch { requestRefreshFlow?.collect { loader.refresh() } }
@@ -34,8 +34,6 @@ fun <K, V> startGitLabGraphQLListLoaderIn(
 }
 
 private class GitLabGraphQLListLoader<K, V>(
-  cs: CoroutineScope,
-
   extractKey: (V) -> K,
   shouldTryToLoadAll: Boolean = false,
 
