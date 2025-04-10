@@ -9,8 +9,6 @@ import org.editorconfig.language.psi.reference.EditorConfigFlatOptionKeyReferenc
 
 public interface EditorConfigFlatOptionKey extends EditorConfigIdentifierElement {
 
-  boolean definesSameOption(@NotNull EditorConfigFlatOptionKey element);
-
   @NotNull EditorConfigFlatOptionKeyReference getReference();
 
 }

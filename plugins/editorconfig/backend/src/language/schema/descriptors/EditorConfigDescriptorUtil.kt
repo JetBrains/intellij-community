@@ -122,3 +122,12 @@ private fun EditorConfigOptionValueList.getDescriptor(smart: Boolean): EditorCon
   parentDescriptor.accept(finder)
   return finder.descriptor
 }
+
+fun definesSameOption(thisKey: EditorConfigFlatOptionKey, otherKey: EditorConfigFlatOptionKey): Boolean {
+  val thisDescriptor = thisKey.option.getDescriptor(false)
+  val otherDescriptor = otherKey.option.getDescriptor(false)
+  if (otherDescriptor == null && thisDescriptor == null) {
+    return thisKey.textMatches(otherKey)
+  }
+  return thisDescriptor == otherDescriptor
+}
