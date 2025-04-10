@@ -524,8 +524,9 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
     }
 
-    var fields = myIsLibraryMode? Iterators.filter(myFields, f -> !f.isPrivate()) : myFields;
-    var methods = myIsLibraryMode? Iterators.filter(myMethods, m -> !m.isPrivate()) : myMethods;
+    Iterators.BooleanFunction<? super Proto> visibilityFilter = proto -> proto.isPublic() || proto.isProtected();
+    var fields = myIsLibraryMode? Iterators.filter(myFields, visibilityFilter) : myFields;
+    var methods = myIsLibraryMode? Iterators.filter(myMethods, visibilityFilter) : myMethods;
     var usages = myIsLibraryMode? Set.<Usage>of() : myUsages;
     return new JvmClass(
       flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, fields, methods, myAnnotations, myTargets, myRetentionPolicy, usages, myMetadata
