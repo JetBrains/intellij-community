@@ -10,10 +10,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.editor.ex.FoldingModelEx
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.observable.util.whenDisposed
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -144,7 +142,7 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
     lastModificationStamp = null
   }
 
-  companion object {
+  companion object : InlineCompletionComponentFactory<InlineCompletionFoldingManager>() {
     private val KEY = Key<InlineCompletionFoldingManager>("inline.completion.folding.manager")
     private val LOG = thisLogger()
 
@@ -157,19 +155,9 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
       return foldingModel is FoldingModelEx && foldingModel.isFoldingEnabled
     }
 
-    fun get(editor: Editor): InlineCompletionFoldingManager {
-      editor.getUserData(KEY)?.let { return it }
-      if (editor.isDisposed) {
-        error("Editor is disposed. Cannot acquire folding manager for $editor.")
-      }
+    override fun create(editor: Editor) = InlineCompletionFoldingManager(editor)
 
-      return InlineCompletionFoldingManager(editor).also {
-        EditorUtil.disposeWithEditor(editor) {
-          editor.putUserData(KEY, null)
-          Disposer.dispose(it)
-        }
-        editor.putUserData(KEY, it)
-      }
-    }
+    override val key: Key<InlineCompletionFoldingManager>
+      get() = KEY
   }
 }
