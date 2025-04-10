@@ -106,6 +106,12 @@ internal class InlineCompletionTextRenderManager private constructor(
     private val foldingManager = InlineCompletionFoldingManager.get(editor)
     private val softWrapManager = InlineCompletionSoftWrapManager.get(editor)
 
+    // We need to store the initial visual offset to use in soft-wrapping.
+    // We cannot compute it on the fly, because when an inlay is rendered,
+    // the line might be shifted to the bottom => its position is invalid
+    // TODO it doesn't take into account other inlays :(
+    private val initialStartPoint = editor.offsetToXY(renderOffset)
+
     fun append(text: String, attributes: TextAttributes, initialOffset: Int): RenderedInlineCompletionElementDescriptor {
       val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, attributes) }
       check(newLines.isNotEmpty())
@@ -306,78 +312,65 @@ internal class InlineCompletionTextRenderManager private constructor(
     }
 
     // Invariant: all previous lines are correct
-    // TODO take out into softWrapManager
     private fun applySoftWrapping(startingFromLine: Int) {
-      val softWrapModel = softWrapManager.getSoftWrapModelIfEnabled() ?: return
-
-      val applyRange = startingFromLine until blockLineInlays.size + 1
-      val linesToFix = applyRange.mapNotNullTo(LinkedList()) { line ->
-        getInlayForLine(line)?.renderer?.blocks?.map { block ->
-          VolumetricInlineCompletionTextBlock(block, InlineCompletionLineRenderer.widthOf(editor, block) + 1) // TODO +1
-        }
-      }
-
-      // TODO optimize
-      while (blockLineInlays.isNotEmpty() && blockLineInlays.size >= applyRange.first) { // TODO refine the limit >=
-        Disposer.dispose(blockLineInlays.removeLast())
-      }
-      if (startingFromLine == 0) {
-        inlineInlay?.let { Disposer.dispose(it) }
-        inlineInlay = null
-      }
-      val resultLines = LinkedList<List<InlineCompletionRenderTextBlock>>() // TODO optimize
-      var isFirstLineConsidered = (startingFromLine == 0)
-      while (linesToFix.isNotEmpty()) {
-        val line = linesToFix.first()
-        val startX = when (isFirstLineConsidered) {
-          true -> editor.offsetToXY(renderOffset).x // TODO use inlay start
-          false -> 0
-        }
-        isFirstLineConsidered = false
-
-        val editorAvailableLineWidth = softWrapModel.applianceManager.widthProvider.visibleAreaWidth - startX // TODO tune
-        val (leftSplitPart, rightSplitPart) = softWrapManager.splitByAvailableWidth(line, editorAvailableLineWidth)
-        // TODO check that line is not empty
-        if (rightSplitPart.isEmpty()) { // The line completely fits
-          resultLines += leftSplitPart.map { it.block }
-          linesToFix.removeFirst()
-          continue
-        }
-        if (leftSplitPart.isEmpty()) { // Not a single part of the line fits
-          if (startX > 0) {
-            // Let's try to put it on the next empty line
-            resultLines.add(emptyList())
-          }
-          else {
-            // Idk what to do... Idk how to split... TODO
-            resultLines.add(line.map { it.block })
-            linesToFix.removeFirst()
-          }
-          continue
-        }
-        resultLines.add(leftSplitPart.map { it.block })
-        linesToFix.removeFirst()
-        linesToFix.addFirst(rightSplitPart)
-      }
-
-      if (resultLines.isEmpty()) {
+      if (softWrapManager.getSoftWrapModelIfEnabled() == null) {
         return
       }
 
-      if (startingFromLine == 0) {
-        renderInline(resultLines.first())
-        resultLines.removeFirst()
-        if (resultLines.isNotEmpty()) {
-          state = RenderState.RENDERING_BLOCK
-          renderMultiline(resultLines)
+      val initialApplyRange = startingFromLine until blockLineInlays.size + 1
+      val linesToFix = initialApplyRange.mapNotNullTo(LinkedList()) { line ->
+        val inlayForLine = getInlayForLine(line)
+        val blocks = inlayForLine?.renderer?.blocks?.map { block ->
+          VolumetricInlineCompletionTextBlock(block, InlineCompletionLineRenderer.widthOf(editor, block) + 1) // TODO +1
+        } ?: emptyList()
+        // TODO it doesn't take into account other inlays.
+        //  But we cannot use `inlineInlay.x` because the basic editor soft wrap is already applied
+        val startX = if (line == 0) initialStartPoint.x else 0
+        InlineCompletionSoftWrapManager.RenderedLine(blocks, startX)
+      }
+
+      val softWrappedLines = softWrapManager.softWrap(linesToFix) ?: return
+
+      // Some lines at the start didn't change => we don't need to re-render them
+      var skipResultLinesCount = 0
+      while (skipResultLinesCount < softWrappedLines.size && skipResultLinesCount < linesToFix.size) {
+        if (softWrappedLines[skipResultLinesCount] === linesToFix[skipResultLinesCount].blocks) {
+          skipResultLinesCount++
+        } else {
+          break
         }
       }
-      else if (startingFromLine == 1) {
-        renderMultiline(resultLines)
+
+      val actualStartingFromLine = startingFromLine + skipResultLinesCount
+      while (blockLineInlays.isNotEmpty() && blockLineInlays.size >= actualStartingFromLine) {
+        Disposer.dispose(blockLineInlays.removeLast())
+      }
+      if (actualStartingFromLine == 0) {
+        inlineInlay?.let { Disposer.dispose(it) }
+        inlineInlay = null
+      }
+
+      val newLines = softWrappedLines
+        .drop(skipResultLinesCount)
+        .map { blocks -> blocks.map { it.block } }
+
+      if (newLines.isEmpty()) {
+        return
+      }
+
+      if (actualStartingFromLine == 0) {
+        renderInline(newLines.first())
+        if (newLines.size > 1) {
+          state = RenderState.RENDERING_BLOCK
+          renderMultiline(newLines.drop(1))
+        }
+      }
+      else if (actualStartingFromLine == 1) {
+        renderMultiline(newLines)
       }
       else {
-        // TODO explain empty list
-        renderMultiline(listOf(emptyList<InlineCompletionRenderTextBlock>()) + resultLines)
+        // Empty list is to finish the current line and start a new one
+        renderMultiline(listOf(emptyList<InlineCompletionRenderTextBlock>()) + newLines)
       }
     }
 
