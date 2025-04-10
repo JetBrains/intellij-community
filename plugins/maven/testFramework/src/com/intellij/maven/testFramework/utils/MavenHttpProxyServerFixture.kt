@@ -9,12 +9,13 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
-import java.util.Base64
+import java.util.*
 import java.util.concurrent.Executor
 import kotlin.jvm.optionals.getOrDefault
 
@@ -30,6 +31,7 @@ class MavenHttpProxyServerFixture(
 
   private var proxyUsername: String? = null
   private var proxyPassword: String? = null
+  val requestedFiles = ArrayList<String>()
 
   override fun setUp() {
     serverSocket = ServerSocket(port);
@@ -55,6 +57,7 @@ class MavenHttpProxyServerFixture(
       val socket = serverSocket.accept()
       executor.execute { process(socket) }
     }
+    catch (ignore : SocketException){}
     catch (e: IOException) {
       MavenLog.LOG.warn(e)
     }
@@ -113,6 +116,7 @@ class MavenHttpProxyServerFixture(
     val port = portMap[tempUri.host]
     if (port == null) throw IllegalArgumentException("Host ${tempUri.host} is not permitted")
     val clientUri = URI(tempUri.scheme, "$LOCALHOST:$port", tempUri.path, tempUri.query, tempUri.fragment)
+    requestedFiles.add(tempUri.path)
     try {
       val headers = emptyReader(reader)
       if (isAuthInfoCorrect(headers)) {
