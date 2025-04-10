@@ -5,21 +5,21 @@
 package com.intellij.platform.syntax.runtime
 
 import com.intellij.openapi.util.text.StringHash
+import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
+import com.intellij.platform.syntax.i18n.ResourceBundle
+import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
-import com.intellij.platform.syntax.Logger
-import com.intellij.platform.syntax.SyntaxElementTypeSet
-import org.jetbrains.annotations.Contract
-import org.jetbrains.annotations.NonNls
-import com.intellij.platform.syntax.i18n.ResourceBundle;
-import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.util.containers.LimitedPool
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NonNls
 import kotlin.math.min
 
 
@@ -44,24 +44,38 @@ private const val VARIANTS_POOL_SIZE = 10000
 private const val FRAMES_POOL_SIZE = 500
 
 // here's the new section API for compact parsers & less IntelliJ platform API exposure
-@ApiStatus.Experimental @JvmField val _NONE_: Int = 0x0
-@ApiStatus.Experimental @JvmField val _COLLAPSE_: Int = 0x1
-@ApiStatus.Experimental @JvmField val _LEFT_: Int = 0x2
-@ApiStatus.Experimental @JvmField val _LEFT_INNER_: Int = 0x4
-@ApiStatus.Experimental @JvmField val _AND_: Int = 0x8
-@ApiStatus.Experimental @JvmField val _NOT_: Int = 0x10
-@ApiStatus.Experimental @JvmField val _UPPER_: Int = 0x20
+@ApiStatus.Experimental
+@JvmField
+val _NONE_: Int = 0x0
+@ApiStatus.Experimental
+@JvmField
+val _COLLAPSE_: Int = 0x1
+@ApiStatus.Experimental
+@JvmField
+val _LEFT_: Int = 0x2
+@ApiStatus.Experimental
+@JvmField
+val _LEFT_INNER_: Int = 0x4
+@ApiStatus.Experimental
+@JvmField
+val _AND_: Int = 0x8
+@ApiStatus.Experimental
+@JvmField
+val _NOT_: Int = 0x10
+@ApiStatus.Experimental
+@JvmField
+val _UPPER_: Int = 0x20
 
 typealias Parser = (stateHolder: SyntaxGeneratedParserRuntime, level: Int) -> Boolean
 
-@ApiStatus.Experimental 
+@ApiStatus.Experimental
 @JvmField
 val TOKEN_ADVANCER: Parser = ::advanceToken
 
-fun advanceToken(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean { 
-    if (stateHolder.builder.eof()) return false
-    stateHolder.builder.advanceLexer()
-    return true
+fun advanceToken(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean {
+  if (stateHolder.builder.eof()) return false
+  stateHolder.builder.advanceLexer()
+  return true
 }
 
 @ApiStatus.Experimental
@@ -107,7 +121,14 @@ final class SyntaxGeneratedParserRuntime(
   private val braces: Collection<BracePair>?,
 ) {
 
-  internal val bundle get() = ResourceBundle("com.intellij.analysis.AnalysisBundle", "messages.AnalysisBundle", this)
+  internal val bundle
+    get() = ResourceBundle(
+      bundleClass = "com.intellij.analysis.AnalysisBundle",
+      pathToBundle = "messages.AnalysisBundle",
+      self = this,
+      defaultMapping = emptyMap() // todo replace emptyMap with the proper mapping (generate it with `GenerateBundleMapping` run configuration)
+    )
+
   private val error: ErrorState = ErrorState(bundle)
   internal val LOG: Logger = noopLogger()
 

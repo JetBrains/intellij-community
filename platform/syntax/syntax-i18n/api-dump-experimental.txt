@@ -2,4 +2,4 @@
 - a:message(java.lang.String,java.lang.Object[]):java.lang.String
 - a:messagePointer(java.lang.String,java.lang.Object[]):kotlin.jvm.functions.Function0
 *f:com.intellij.platform.syntax.i18n.ResourceBundleKt
-- sf:ResourceBundle(java.lang.String,java.lang.String,java.lang.Object):com.intellij.platform.syntax.i18n.ResourceBundle
+- sf:ResourceBundle(java.lang.String,java.lang.String,java.lang.Object,java.util.Map):com.intellij.platform.syntax.i18n.ResourceBundle

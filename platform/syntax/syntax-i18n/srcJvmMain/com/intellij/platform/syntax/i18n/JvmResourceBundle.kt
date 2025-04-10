@@ -18,6 +18,7 @@ internal fun ResourceBundleJvm(
   bundleClass: String,
   pathToBundle: String,
   self: Any,
+  defaultMapping: Map<String, String>,
 ): ResourceBundle {
   val bundleClazz = self.javaClass.classLoader.loadClass(bundleClass)
   val dynamicBundleClass = tryLoadDynamicBundle() ?: run {

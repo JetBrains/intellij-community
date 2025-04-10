@@ -16,13 +16,16 @@ interface ResourceBundle {
 
 /**
  * see [com.intellij.platform.syntax.i18n.JvmResourceBundleKt.ResourceBundleJvm]
- * @param bundleClass   the class of bundle, usually an object class where the bundle is declared
- * @param pathToBundle  usually, something like `messages.MyBundle`
- * @param self          pass `this` please
+ *
+ * @param bundleClass       the class of bundle, usually an object class where the bundle is declared
+ * @param pathToBundle      usually, something like `messages.MyBundle`
+ * @param self              pass `this` please
+ * @param defaultMapping    default mapping to use. Can be generated from your .properties file with generateBundleMapping.kt
  */
 @Suppress("unused")
 fun ResourceBundle(
   bundleClass: String,
   pathToBundle: String,
   self: Any,
+  defaultMapping: Map<String, String>,
 ): ResourceBundle = linkToActual()

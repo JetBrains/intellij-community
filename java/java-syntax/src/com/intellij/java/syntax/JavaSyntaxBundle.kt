@@ -11,7 +11,15 @@ import org.jetbrains.annotations.PropertyKey
 object JavaSyntaxBundle {
   const val BUNDLE: @NonNls String = "messages.JavaSyntaxBundle"
 
-  val resourceBundle: ResourceBundle = ResourceBundle("com.intellij.java.syntax.JavaSyntaxBundle", BUNDLE, this)
+  val resourceBundle: ResourceBundle = run {
+    val defaultMapping by lazy { DefaultJavaSyntaxResources.mappings }
+    ResourceBundle(
+      bundleClass = "com.intellij.java.syntax.JavaSyntaxBundle",
+      pathToBundle = BUNDLE,
+      self = this,
+      defaultMapping = defaultMapping
+    )
+  }
 
   @JvmStatic
   fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
