@@ -255,11 +255,17 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
                                 moduleNameToInfo: Map<String, ModuleInfo>,
                                 sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>) {
     for (child in element.children) {
-      fun getErrorInfo(): Map<String, Any?> {
-        return mapOf(
-          "entry" to child,
-          "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
-        )
+
+      fun registerError(message: String, fix: String? = null) {
+        _errors.add(PluginValidationError(
+          message,
+          referencingModuleInfo.sourceModule,
+          mapOf(
+            "entry" to child,
+            "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
+          ),
+          fix
+        ))
       }
 
       if (child.name != "module") {
@@ -267,45 +273,25 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
           // todo check that the referenced plugin exists
           val id = child.getAttributeValue("id")
           if (id == null) {
-            _errors.add(PluginValidationError(
-              "Id is not specified for dependency on plugin",
-              referencingModuleInfo.sourceModule,
-              getErrorInfo(),
-            ))
+            registerError("Id is not specified for dependency on plugin")
             continue
           }
           if (id == "com.intellij.modules.java") {
-            _errors.add(PluginValidationError(
-              "Use com.intellij.java id instead of com.intellij.modules.java",
-              referencingModuleInfo.sourceModule,
-              getErrorInfo(),
-            ))
+            registerError("Use com.intellij.java id instead of com.intellij.modules.java")
             continue
           }
           if (id == "com.intellij.modules.platform") {
-            _errors.add(PluginValidationError(
-              "No need to specify dependency on $id",
-              referencingModuleInfo.sourceModule,
-              getErrorInfo(),
-            ))
+            registerError("No need to specify dependency on $id")
             continue
           }
           if (id == referencingPluginInfo.pluginId) {
-            _errors.add(PluginValidationError(
-              "Do not add dependency on a parent plugin",
-              referencingModuleInfo.sourceModule,
-              getErrorInfo(),
-            ))
+            registerError("Do not add dependency on a parent plugin")
             continue
           }
 
           val dependency = pluginIdToInfo[id]
           if (!id.startsWith("com.intellij.modules.") && !id.startsWith("com.intellij.platform.experimental.") && dependency == null) {
-            _errors.add(PluginValidationError(
-              "Plugin not found: $id",
-              referencingModuleInfo.sourceModule,
-              getErrorInfo(),
-            ))
+            registerError("Plugin not found: $id")
             continue
           }
 
@@ -315,11 +301,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
             moduleInfo = dependency
           )
           if (referencingModuleInfo.dependencies.contains(ref)) {
-            _errors.add(PluginValidationError(
-              "Referencing module dependencies contains $id: $id",
-              referencingModuleInfo.sourceModule,
-              getErrorInfo(),
-            ))
+            registerError("Referencing module dependencies contains $id: $id")
             continue
           }
           referencingModuleInfo.dependencies.add(ref)
@@ -327,22 +309,14 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         }
 
         if (referencingModuleInfo.isPlugin) {
-          _errors.add(PluginValidationError(
-            "Unsupported dependency type: ${child.name}",
-            referencingModuleInfo.sourceModule,
-            getErrorInfo(),
-          ))
+          registerError("Unsupported dependency type: ${child.name}")
           continue
         }
       }
 
       val moduleName = child.getAttributeValue("name")
       if (moduleName == null) {
-        _errors.add(PluginValidationError(
-          "Module name is not specified",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo(),
-        ))
+        registerError("Module name is not specified")
         continue
       }
 
@@ -351,11 +325,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
       }
 
       if (child.attributes.size > 1) {
-        _errors.add(PluginValidationError(
-          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo(),
-        ))
+        registerError("Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}")
         continue
       }
 
@@ -364,23 +334,20 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         val moduleDescriptorFileInfo = sourceModuleNameToFileInfo.get(moduleName)
         if (moduleDescriptorFileInfo != null) {
           if (moduleDescriptorFileInfo.pluginDescriptor != null) {
-            _errors.add(PluginValidationError(
+            registerError(
               message = "Dependency on plugin must be specified using `plugin` and not `module`",
-              referencingModuleInfo.sourceModule,
-              params = getErrorInfo(),
               fix = """
                     Change dependency element to:
                     
                     <plugin id="${moduleDescriptorFileInfo.pluginDescriptor.getChild("id")?.content}"/>
                   """,
-            ))
+            )
             continue
           }
         }
         if (!moduleName.startsWith("kotlin.")) {
           // kotlin modules are loaded via conditional includes and the test cannot detect them
-          _errors.add(PluginValidationError("Module not found: $moduleName", referencingModuleInfo.sourceModule,
-                                            getErrorInfo()))
+          registerError("Module not found: $moduleName")
         }
         continue
       }
@@ -393,11 +360,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         }
 
         if (dependsElement.getAttributeValue("config-file")?.removePrefix("/META-INF/") == moduleInfo.descriptorFile.fileName.toString()) {
-          _errors.add(PluginValidationError(
-            "Module, that used as dependency, must be not specified in `depends`",
-            referencingModuleInfo.sourceModule,
-            getErrorInfo(),
-          ))
+          registerError("Module, that used as dependency, must be not specified in `depends`")
           break
         }
       }
@@ -413,57 +376,43 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
                            sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
                            moduleNameToInfo: MutableMap<String, ModuleInfo>) {
     for (child in content.children) {
-      fun getErrorInfo(): Map<String, Any> {
-        return mapOf(
-          "entry" to child,
-          "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
-        )
+
+      fun registerError(message: String, additionalParams: Map<String, Any?> = emptyMap()) {
+        _errors.add(PluginValidationError(
+          message,
+          referencingModuleInfo.sourceModule,
+          mapOf(
+            "entry" to child,
+            "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
+          ) + additionalParams,
+        ))
       }
 
       if (child.name != "module") {
-        _errors.add(PluginValidationError(
-          "Unexpected element: $child",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo(),
-        ))
+        registerError("Unexpected element: $child")
         continue
       }
 
       val moduleName = child.getAttributeValue("name")
       if (moduleName == null) {
-        _errors.add(PluginValidationError(
-          "Module name is not specified",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo(),
-        ))
+        registerError("Module name is not specified",
+          )
         continue
       }
 
       val moduleLoadingRule = child.getAttributeValue("loading")
       if (moduleLoadingRule != null && moduleLoadingRule !in arrayOf("required", "embedded", "optional", "on-demand")) {
-        _errors.add(PluginValidationError(
-          "Unknown value for 'loading' attribute: $moduleLoadingRule. Supported values are 'required', 'embedded', 'optional' and 'on-demand'.",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo(),
-        ))
+        registerError("Unknown value for 'loading' attribute: $moduleLoadingRule. Supported values are 'required', 'embedded', 'optional' and 'on-demand'.")
         continue
       }
 
       if (child.attributes.size > 2) {
-        _errors.add(PluginValidationError(
-          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" || it.key != "loading" }}",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo(),
-        ))
+        registerError("Unknown attributes: ${child.attributes.entries.filter { it.key != "name" || it.key != "loading" }}")
         continue
       }
 
       if (moduleName == "intellij.platform.commercial.verifier") {
-        _errors.add(PluginValidationError(
-          "intellij.platform.commercial.verifier is not supposed to be used as content of plugin",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo(),
-        ))
+        registerError("intellij.platform.commercial.verifier is not supposed to be used as content of plugin")
         continue
       }
 
@@ -480,9 +429,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
 
       val moduleDescriptor = moduleDescriptorFileInfo.moduleDescriptor
       if (moduleDescriptor == null) {
-        _errors.add(PluginValidationError("No module descriptor ($moduleDescriptorFileInfo)",
-                                          referencingModuleInfo.sourceModule,
-                                          getErrorInfo()))
+        registerError("No module descriptor ($moduleDescriptorFileInfo)")
         continue
       }
       val moduleInfo = checkModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo) ?: continue
@@ -495,25 +442,23 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         }
 
         if (dependsElement.getAttributeValue("config-file")?.removePrefix("/META-INF/") == moduleInfo.descriptorFile.fileName.toString()) {
-          _errors.add(PluginValidationError(
+          registerError(
             "Module must be not specified in `depends`.",
-            referencingModuleInfo.sourceModule,
-            getErrorInfo() + mapOf(
+            mapOf(
               "referencedDescriptorFile" to moduleInfo.descriptorFile
             ),
-          ))
+          )
           continue
         }
       }
 
       moduleDescriptor.getChild("content")?.let {
-        _errors.add(PluginValidationError(
+        registerError(
           "Module cannot define content",
-          referencingModuleInfo.sourceModule,
-          getErrorInfo() + mapOf(
+          mapOf(
             "referencedDescriptorFile" to moduleInfo.descriptorFile
-          ),
-        ))
+          )
+        )
       }
     }
   }
@@ -548,10 +493,10 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
       return module
     }
 
-    fun getErrorInfo(): Map<String, Path> {
-      return mapOf(
+    fun registerError(message: String) {
+      _errors.add(PluginValidationError(message, referencingModuleInfo.sourceModule, mapOf(
         "referencingDescriptorFile" to referencingModuleInfo.descriptorFile
-      )
+      )))
     }
 
     val prefix = referencingModuleInfo.sourceModule.name + "/"
@@ -561,9 +506,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         return null
       }
       val message = if (i > -1) "$moduleName can only be accessed from ${moduleName.substring(0, i)}" else  "Cannot find module $moduleName"
-      _errors.add(PluginValidationError(message, referencingModuleInfo.sourceModule,
-        getErrorInfo(),
-      ))
+      registerError(message)
       return null
     }
 
@@ -571,11 +514,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     val containingModuleName = moduleName.substring(0, slashIndex)
     module = sourceModuleNameToFileInfo[containingModuleName]
     if (module == null) {
-      _errors.add(PluginValidationError(
-        "Cannot find module $containingModuleName",
-        referencingModuleInfo.sourceModule,
-        getErrorInfo(),
-      ))
+      registerError("Cannot find module $containingModuleName")
       return null
     }
 
