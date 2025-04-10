@@ -39,7 +39,7 @@ open class CharArrayCharSequence(
   }
 
   override fun toString(): String {
-    return String(myChars, myStart, myEnd - myStart) //TODO StringFactory
+    return myChars.concatToString(myStart, myEnd) //TODO StringFactory
   }
 
   override val chars: CharArray
