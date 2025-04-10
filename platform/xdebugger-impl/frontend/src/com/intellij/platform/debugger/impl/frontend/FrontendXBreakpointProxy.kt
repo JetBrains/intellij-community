@@ -22,7 +22,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 class FrontendXBreakpointProxy(
-  private val project: Project,
+  override val project: Project,
   private val cs: CoroutineScope,
   private val dto: XBreakpointDto,
   private val onBreakpointChange: () -> Unit,
@@ -47,6 +47,8 @@ class FrontendXBreakpointProxy(
   override fun getDisplayText(): String = _state.value.displayText
 
   override fun getUserDescription(): String? = _state.value.userDescription
+
+  override fun getGroup(): String? = _state.value.group
 
   override fun getIcon(): Icon = _state.value.iconId.icon()
 

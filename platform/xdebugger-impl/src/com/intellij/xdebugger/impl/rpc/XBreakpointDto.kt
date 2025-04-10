@@ -43,6 +43,7 @@ data class XBreakpointDtoState(
   val logMessage: Boolean,
   val logStack: Boolean,
   val userDescription: String?,
+  val group: String?,
 )
 
 @ApiStatus.Internal
@@ -110,6 +111,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       logMessage = isLogMessage,
       logStack = isLogStack,
       userDescription = userDescription,
+      group = group,
     )
   }
 }

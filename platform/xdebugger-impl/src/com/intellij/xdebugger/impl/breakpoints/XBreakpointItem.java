@@ -36,7 +36,7 @@ public class XBreakpointItem extends BreakpointItem {
   private final XBreakpointManagerProxy myBreakpointManagerProxy;
   private XLightBreakpointPropertiesPanel myPropertiesPanel;
 
-  public XBreakpointItem(XBreakpoint<?> breakpoint, XBreakpointManagerProxy breakpointManagerProxy) {
+  public XBreakpointItem(XBreakpointBase<?, ?, ?> breakpoint, XBreakpointManagerProxy breakpointManagerProxy) {
     myBreakpointProxy = new XBreakpointProxy.Monolith(breakpoint);
     myBreakpointManagerProxy = breakpointManagerProxy;
   }
