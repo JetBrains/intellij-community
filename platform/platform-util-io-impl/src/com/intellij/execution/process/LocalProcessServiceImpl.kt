@@ -34,7 +34,18 @@ class LocalProcessServiceImpl : LocalProcessService {
       .setWindowsAnsiColorEnabled(!SystemProperties.getBooleanProperty("pty4j.win.disable.ansi.in.console.mode", false))
       .setUnixOpenTtyToPreserveOutputAfterTermination(SystemProperties.getBooleanProperty("pty4j.open.child.tty", SystemInfo.isMac))
       .setSpawnProcessUsingJdkOnMacIntel(Registry.`is`("run.processes.using.pty.helper.on.mac.intel", true))
-    return builder.start()
+
+    if(options.winSuspendedProcessCallback != null) {
+      builder.setWindowsSuspendedProcessCallback(options.winSuspendedProcessCallback!!)
+    }
+
+    val process = builder.start()
+
+    if(options.winSuspendedProcessCallback != null && process !is WinConPtyProcess) {
+      logger<ProcessServiceImpl>().error("Windows suspended process callback is only applicable for a WinConPtyProcess instance")
+    }
+
+    return process
   }
 
   override fun sendWinProcessCtrlC(process: Process): Boolean {

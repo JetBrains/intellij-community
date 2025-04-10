@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 
 /**
  * A flavor of GeneralCommandLine to start processes with Pseudo-Terminal (PTY).
@@ -28,7 +30,7 @@ import java.util.Map;
  * Works for Linux, macOS, and Windows.
  * On Windows, PTY is emulated by creating an invisible console window (see Pty4J and WinPty implementation).
  */
-public class PtyCommandLine extends GeneralCommandLine {
+public class PtyCommandLine extends GeneralCommandLine implements CommandLineWithSuspendedProcessCallback {
   private static final Logger LOG = Logger.getInstance(PtyCommandLine.class);
   private static final String RUN_PROCESSES_WITH_PTY = "run.processes.with.pty";
 
@@ -76,6 +78,16 @@ public class PtyCommandLine extends GeneralCommandLine {
   public PtyCommandLine withOptions(@NotNull LocalPtyOptions options) {
     myOptionsBuilder.set(options);
     return this;
+  }
+
+  @Override
+  public void withWinSuspendedProcessCallback(@NotNull LongConsumer callback) {
+    myOptionsBuilder.winSuspendedProcessCallback(callback);
+  }
+
+  @Override
+  public @Nullable LongConsumer getWinSuspendedProcessCallback() {
+    return myOptionsBuilder.winSuspendedProcessCallback();
   }
 
   /**
