@@ -54,11 +54,7 @@ open class InlineCompletionLineRenderer(
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    val result = blocks.sumOf { block ->
-      val font = getFont(block.attributes, block.text)
-      val fontMetrics = editor.contentComponent.getFontMetrics(font)
-      fontMetrics.stringWidth(block.text)
-    }
+    val result = blocks.sumOf { block -> widthOf(editor, block, roundUp = false) }
     return maxOf(1, result)
   }
 
@@ -82,7 +78,7 @@ open class InlineCompletionLineRenderer(
       if (block.text.isEmpty()) {
         continue
       }
-      g.font = getFont(block.attributes, block.text)
+      g.font = getFont(editor, block.attributes, block.text)
       val textLayout = TextLayout(block.text, g.font, g.fontRenderContext)
       val textWidth = textLayout.advance.toDouble()
       val textHeight = targetRegion.height.toDouble()
@@ -137,13 +133,25 @@ open class InlineCompletionLineRenderer(
     }
   }
 
-  private fun getFont(attributes: TextAttributes, text: String): Font {
-    val original = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(attributes.fontType))
-    return UIUtil.getFontWithFallbackIfNeeded(original, text)
-  }
-
   private fun formatTabs(blocks: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
     val tabSize = editor.settings.getTabSize(editor.project)
     return blocks.filter { it.text.isNotEmpty() }.map { it.copy(text = it.text.formatTabs(tabSize)) }
+  }
+
+  companion object {
+    private fun getFont(editor: Editor, attributes: TextAttributes, text: String): Font {
+      val original = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(attributes.fontType))
+      return UIUtil.getFontWithFallbackIfNeeded(original, text)
+    }
+
+    internal fun widthOf(
+      editor: Editor,
+      block: InlineCompletionRenderTextBlock,
+      roundUp: Boolean = true,
+    ): Int {
+      val font = getFont(editor, block.attributes, block.text)
+      val fontMetrics = editor.contentComponent.getFontMetrics(font)
+      return fontMetrics.stringWidth(block.text) + if (roundUp) 1 else 0
+    }
   }
 }
