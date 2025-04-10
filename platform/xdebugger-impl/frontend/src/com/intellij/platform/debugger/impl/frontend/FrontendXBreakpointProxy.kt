@@ -10,6 +10,7 @@ import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,8 @@ class FrontendXBreakpointProxy(
   val id: XBreakpointId = dto.id
 
   override val breakpoint: Any = id
+
+  override val type: XBreakpointTypeProxy = FrontendXBreakpointType(dto.type)
 
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 

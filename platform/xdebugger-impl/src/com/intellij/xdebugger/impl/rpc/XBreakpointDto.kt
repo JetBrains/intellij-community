@@ -6,6 +6,8 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import fleet.rpc.core.RpcFlow
@@ -23,6 +25,8 @@ data class XBreakpointDto(
   val id: XBreakpointId,
   val initialState: XBreakpointDtoState,
   val state: RpcFlow<XBreakpointDtoState>,
+  // TODO: let's pass XBreakpointTypeId here and have a single place where all types are registered
+  val type: XBreakpointTypeDto,
 )
 
 @ApiStatus.Internal
@@ -42,16 +46,49 @@ data class XBreakpointDtoState(
 )
 
 @ApiStatus.Internal
+@Serializable
+data class XBreakpointTypeDto(
+  val id: XBreakpointTypeId,
+  val index: Int,
+  val title: String,
+  val enabledIcon: IconId,
+  val suspendThreadSupported: Boolean,
+  val lineTypeInfo: XLineBreakpointTypeInfo?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointTypeId(val id: String)
+
+@ApiStatus.Internal
+@Serializable
+data class XLineBreakpointTypeInfo(
+  val priority: Int,
+)
+
+@ApiStatus.Internal
 suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   return XBreakpointDto(
     id = breakpointId,
     initialState = getDtoState(),
+    type = type.toRpc(),
     state = channelFlow {
       breakpointChangedFlow().collectLatest {
         send(getDtoState())
       }
     }.toRpc()
   )
+}
+
+private fun XBreakpointType<*, *>.toRpc(): XBreakpointTypeDto {
+  val lineTypeInfo = if (this is XLineBreakpointType<*>) {
+    XLineBreakpointTypeInfo(priority)
+  }
+  else {
+    null
+  }
+  val index = XBreakpointType.EXTENSION_POINT_NAME.extensionList.indexOf(this)
+  return XBreakpointTypeDto(XBreakpointTypeId(id), index, title, enabledIcon.rpcId(), isSuspendThreadSupported, lineTypeInfo)
 }
 
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState {

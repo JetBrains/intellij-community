@@ -7,12 +7,14 @@ import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointType
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
 interface XBreakpointProxy {
   val breakpoint: Any
+  val type: XBreakpointTypeProxy
 
   fun getDisplayText(): @NlsSafe String
   fun getUserDescription(): @NlsSafe String?
@@ -32,6 +34,8 @@ interface XBreakpointProxy {
 
 
   class Monolith(override val breakpoint: XBreakpoint<*>) : XBreakpointProxy {
+    override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpoint.getType())
+
     override fun getDisplayText(): String = XBreakpointUtil.getShortText(breakpoint)
 
     override fun getUserDescription(): String? = (breakpoint as XBreakpointBase<*, *, *>).userDescription
