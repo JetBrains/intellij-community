@@ -18,12 +18,14 @@ import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import fleet.rpc.core.toRpc
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -201,7 +203,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   }
 }
 
-internal fun createXStackFrameDto(frame: XStackFrame, id: XStackFrameId): XStackFrameDto {
+internal fun createXStackFrameDto(frame: XStackFrame, coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {
+  val id = frame.getOrStoreGlobally(coroutineScope, session)
   val equalityObject = frame.equalityObject
   val serializedEqualityObject = when (equalityObject) {
     is String -> XStackFrameStringEqualityObject(equalityObject)

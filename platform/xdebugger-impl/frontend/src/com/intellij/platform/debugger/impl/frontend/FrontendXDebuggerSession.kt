@@ -187,6 +187,11 @@ class FrontendXDebuggerSession private constructor(
         currentExecutionStack.value = null
         currentStackFrame.value = null
       }
+      is XDebuggerSessionEvent.StackFrameChanged -> {
+        stackFrame?.let {
+          currentStackFrame.value = FrontendXStackFrame(it, project, cs)
+        }
+      }
       else -> {}
     }
   }

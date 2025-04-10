@@ -4,14 +4,8 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XStackFrameDto
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
-import com.intellij.xdebugger.impl.rpc.XStackFramesEvent
-import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -52,8 +46,7 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
           channel.trySend(this@channelFlow.async {
             val session = executionStackModel.session
             val stackDtos = stackFrames.map { frame ->
-              val stackFrameId = frame.getOrStoreGlobally(executionStackModel.coroutineScope, session)
-              createXStackFrameDto(frame, stackFrameId)
+              createXStackFrameDto(frame, executionStackModel.coroutineScope, session)
             }
             XStackFramesEvent.XNewStackFrames(stackDtos, last)
           })

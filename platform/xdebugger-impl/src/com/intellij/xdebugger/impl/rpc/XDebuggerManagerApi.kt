@@ -65,7 +65,7 @@ sealed interface XDebuggerSessionEvent {
   class SessionStopped() : XDebuggerSessionEvent
 
   @Serializable
-  class StackFrameChanged() : XDebuggerSessionEvent
+  class StackFrameChanged(val stackFrame: XStackFrameDto?) : XDebuggerSessionEvent
 
   @Serializable
   class BeforeSessionResume() : XDebuggerSessionEvent

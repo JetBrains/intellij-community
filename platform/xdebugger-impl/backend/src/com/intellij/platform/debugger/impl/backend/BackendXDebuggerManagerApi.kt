@@ -18,19 +18,6 @@ import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.rpc.PauseData
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDataDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionState
-import com.intellij.xdebugger.impl.rpc.XDebugSessionsList
-import com.intellij.xdebugger.impl.rpc.XDebuggerEditorsProviderDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerSessionEvent
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
-import com.intellij.xdebugger.impl.rpc.XExecutionStackDto
-import com.intellij.xdebugger.impl.rpc.XBreakpointDto
-import com.intellij.xdebugger.impl.rpc.XSuspendContextDto
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import fleet.rpc.core.toRpc
@@ -103,8 +90,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
             XExecutionStackDto(activeExecutionStackId, it.displayName, it.icon?.rpcId())
           }
           val stackTraceDto = currentSession.currentStackFrame?.let {
-            val currentStackFrameId = it.getOrStoreGlobally(suspendScope, currentSession)
-            createXStackFrameDto(it, currentStackFrameId)
+            createXStackFrameDto(it, suspendScope, currentSession)
           }
           PauseData(suspendContextDto,
                     executionStackDto,
@@ -126,7 +112,11 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       }
 
       override fun stackFrameChanged() {
-        trySend(XDebuggerSessionEvent.StackFrameChanged())
+        val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
+        val stackTraceDto = currentSession.currentStackFrame?.let {
+          createXStackFrameDto(it, suspendScope, currentSession)
+        }
+        trySend(XDebuggerSessionEvent.StackFrameChanged(stackTraceDto))
       }
 
       override fun settingsChanged() {
