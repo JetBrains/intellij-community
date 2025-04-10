@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.idea.AppMode
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
@@ -349,6 +350,8 @@ fun combineFragments(
  */
 internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
   if (!EditorSettingsExternalizable.getInstance().isShowIntentionPreview) return
+  if (ApplicationManager.getApplication().isHeadlessEnvironment ||
+      AppMode.isRemoteDevHost()) return
   val project = lookup.project
   if (showJavaDocPreview(project)) return
   val previewHandler =
