@@ -34,7 +34,7 @@ class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>() {
 
     override fun handle(project: Project, args: NoArgs): Response {
         val text = runReadAction<String?> {
-            getInstance(project).selectedTextEditor?.document?.text
+            FileEditorManager.getInstance(project).selectedTextEditor?.document?.text
         }
         return Response(text ?: "")
     }
@@ -76,7 +76,7 @@ class GetSelectedTextTool : AbstractMcpTool<NoArgs>() {
 
     override fun handle(project: Project, args: NoArgs): Response {
         val text = runReadAction<String?> {
-            getInstance(project).selectedTextEditor?.selectionModel?.selectedText
+            FileEditorManager.getInstance(project).selectedTextEditor?.selectionModel?.selectedText
         }
         return Response(text ?: "")
     }
@@ -102,7 +102,7 @@ class ReplaceSelectedTextTool : AbstractMcpTool<ReplaceSelectedTextArgs>() {
 
         application.invokeAndWait {
             runWriteCommandAction(project, "Replace Selected Text", null, {
-                val editor = getInstance(project).selectedTextEditor
+                val editor = FileEditorManager.getInstance(project).selectedTextEditor
                 val document = editor?.document
                 val selectionModel = editor?.selectionModel
                 if (document != null && selectionModel != null && selectionModel.hasSelection()) {
@@ -138,7 +138,7 @@ class ReplaceCurrentFileTextTool : AbstractMcpTool<ReplaceCurrentFileTextArgs>()
         var response: Response? = null
         application.invokeAndWait {
             runWriteCommandAction(project, "Replace File Text", null, {
-                val editor = getInstance(project).selectedTextEditor
+                val editor = FileEditorManager.getInstance(project).selectedTextEditor
                 val document = editor?.document
                 if (document != null) {
                     document.setText(args.text)
