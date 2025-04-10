@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.render
 
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionVolumetricTextBlockFactory.Companion.accumulatedWidthToInt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.HighlighterColors
@@ -34,7 +35,10 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
    *
    * @see [splitByAvailableWidth]
    */
-  fun softWrap(lines: List<RenderedLine>): List<List<VolumetricInlineCompletionTextBlock>>? {
+  fun softWrap(
+    lines: List<RenderedLine>,
+    volumetricFactory: InlineCompletionVolumetricTextBlockFactory
+  ): List<List<VolumetricInlineCompletionTextBlock>>? {
     val softWrapModel = getSoftWrapModelIfEnabled() ?: return null
 
     val linesToFix = LinkedList(lines)
@@ -51,7 +55,7 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
 
       val startX = line.startX
       val editorAvailableLineWidth = visibleAreaWidth - startX // TODO tune
-      val (leftSplitPart, rightSplitPart) = splitByAvailableWidth(blocks, editorAvailableLineWidth)
+      val (leftSplitPart, rightSplitPart) = splitByAvailableWidth(blocks, editorAvailableLineWidth, volumetricFactory)
       // TODO check that line is not empty
       if (rightSplitPart.isEmpty()) { // The line completely fits
         resultLines += leftSplitPart
@@ -90,19 +94,20 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
   fun splitByAvailableWidth(
     blocks: List<VolumetricInlineCompletionTextBlock>,
     availableWidth: Int,
+    volumetricFactory: InlineCompletionVolumetricTextBlockFactory,
   ): Pair<List<VolumetricInlineCompletionTextBlock>, List<VolumetricInlineCompletionTextBlock>> {
     var currentIndex = 0 // the first over-width block
-    var currentWidth = 0
+    var currentWidth = 0.0
     for ((_, width) in blocks) {
       currentWidth += width
-      if (currentWidth <= availableWidth) {
+      if (accumulatedWidthToInt(currentWidth) <= availableWidth) {
         currentIndex++
       }
       else {
         break
       }
     }
-    if (currentWidth <= availableWidth) {
+    if (accumulatedWidthToInt(currentWidth) <= availableWidth) {
       return blocks to emptyList()
     }
     check(currentIndex < blocks.size)
@@ -127,15 +132,16 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
           if (left.isNotEmpty()) InlineCompletionRenderTextBlock(left, block.attributes) else null,
           // TODO the arrow doesn't inherit background of the current caret row
           getSoftWrapArrow(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED)
-        ).toVolumetric(editor, roundUp = true)
+        ).toVolumetric(volumetricFactory)
 
-        val leftWidth = leftBlocks.sumOf { it.widthInPixels }
-        if (currentWidth + leftWidth <= availableWidth) {
+        val leftWidth = accumulatedWidthToInt(leftBlocks.sumOf { it.widthInPixels })
+        if (accumulatedWidthToInt(currentWidth + leftWidth) <= availableWidth) {
           val right = text.substring(currentCharIndex + 1)
           val rightBlocks = listOfNotNull(
             getSoftWrapArrow(SoftWrapDrawingType.AFTER_SOFT_WRAP),
             if (right.isNotEmpty()) InlineCompletionRenderTextBlock(right, block.attributes) else null,
-          ).toVolumetric(editor, roundUp = true)
+          ).toVolumetric(volumetricFactory)
+
           // TODO handle empty block
           val finalLeft = blocks.subList(0, currentIndex) + leftBlocks
           val finalRight = rightBlocks + blocks.subList(currentIndex + 1, blocks.size)
