@@ -72,7 +72,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
     layout = GridLayout()
 
     val actionListCellRenderer = SeActionItemPresentationRenderer(resultList).get { textField.text ?: "" }
-    val targetListCellRenderer = SeTargetItemPresentationRenderer().get()
+    val targetListCellRenderer = SeTargetItemPresentationRenderer(resultList).get()
     val textSearchItemListCellRenderer = SeTextSearchItemPresentationRenderer().get()
     val defaultRenderer = SeDefaultListItemRenderer().get()
 
