@@ -20,7 +20,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -49,7 +48,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryUnicodeEscapeFix(((Character) infos[0]).charValue(), (RangeMarker)infos[1]);
   }
 
@@ -136,15 +135,23 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           if (type == Character.CONTROL && d != '\n' && d != '\t') {
             continue;
           }
-          else if (type == Character.FORMAT ||
-                   type == Character.PRIVATE_USE ||
-                   type == Character.SURROGATE ||
-                   type == Character.UNASSIGNED ||
-                   type == Character.LINE_SEPARATOR ||
-                   type == Character.PARAGRAPH_SEPARATOR) {
+          else if (type == Character.SPACE_SEPARATOR && d != ' ') {
             continue;
           }
-          if (type == Character.SPACE_SEPARATOR && d != ' ') {
+          else if (type == Character.FORMAT
+                   || type == Character.PRIVATE_USE
+                   || type == Character.SURROGATE
+                   || type == Character.UNASSIGNED
+                   || type == Character.LINE_SEPARATOR
+                   || type == Character.PARAGRAPH_SEPARATOR) {
+            continue;
+          }
+          Character.UnicodeBlock block = Character.UnicodeBlock.of(d);
+          if (block == Character.UnicodeBlock.COMBINING_DIACRITICAL_MARKS
+              || block == Character.UnicodeBlock.COMBINING_DIACRITICAL_MARKS_EXTENDED
+              || block == Character.UnicodeBlock.COMBINING_DIACRITICAL_MARKS_SUPPLEMENT
+              || block == Character.UnicodeBlock.COMBINING_HALF_MARKS
+              || block == Character.UnicodeBlock.COMBINING_MARKS_FOR_SYMBOLS) {
             continue;
           }
           byteBuffer.clear();
