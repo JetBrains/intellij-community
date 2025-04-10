@@ -248,7 +248,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun withCustomAsset(platform: SupportedDistribution, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
       layout.customAssets += object : CustomAssetDescriptor {
-        override val platformSpecific: SupportedDistribution?
+        override val platformSpecific: SupportedDistribution
           get() = platform
 
         override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {

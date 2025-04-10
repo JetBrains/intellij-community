@@ -66,7 +66,16 @@ internal suspend fun buildPlugins(
       searchableOptionSet = searchableOptionSet,
       os = null,
       pluginBuilt = { layout, pluginDirOrFile ->
-        handleCustomPlatformSpecificAssets(layout = layout, targetPlatform = targetPlatform, context = context, pluginDir = pluginDirOrFile)
+        val distEntries = ArrayList<DistributionFileEntry>()
+        handleCustomPlatformSpecificAssets(
+          layout = layout,
+          targetPlatform = targetPlatform,
+          context = context,
+          pluginDir = pluginDirOrFile,
+          distEntries = distEntries,
+          isDevMode = true,
+        )
+        distEntries
       },
     )
   }

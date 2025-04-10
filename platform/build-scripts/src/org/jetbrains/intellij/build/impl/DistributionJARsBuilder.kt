@@ -342,6 +342,9 @@ private suspend fun doBuildBundledPlugins(
           if (layout.hasPlatformSpecificResources) {
             buildPlatformSpecificPluginResources(plugin = layout, targetDirs = platformSpecificPluginDirs, context = context)
           }
+          else {
+            emptyList()
+          }
         }
       )
 
@@ -479,13 +482,16 @@ internal suspend fun buildNonBundledPlugins(
 
       val targetDirectory = if (context.pluginAutoPublishList.test(plugin)) {
         context.nonBundledPluginsToBePublished
-      } else {
+      }
+      else {
         context.nonBundledPlugins
       }
       val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
       val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
       dirToJar.add(NonBundledPlugin(sourceDir = pluginDirOrFile, targetZip = destFile, optimizedZip = !plugin.enableSymlinksAndExecutableResources))
+
+      emptyList()
     }
 
     archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context = context)
@@ -630,7 +636,7 @@ internal suspend fun buildPlugins(
   context: BuildContext,
   buildPlatformJob: Job?,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
+  pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
@@ -667,8 +673,13 @@ internal suspend fun buildPlugins(
             searchableOptionSet = searchableOptionSet,
             context = context,
           )
-          pluginBuilt?.invoke(plugin, file)
-          entries
+
+          if (pluginBuilt == null) {
+            entries
+          }
+          else {
+            entries + pluginBuilt(plugin, file)
+          }
         }
       }
 

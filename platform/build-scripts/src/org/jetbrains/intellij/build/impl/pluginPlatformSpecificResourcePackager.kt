@@ -3,7 +3,10 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CustomAssetShimSource
 import org.jetbrains.intellij.build.UnpackedZipSource
+import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.W_OVERWRITE
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
@@ -18,10 +21,10 @@ internal suspend fun buildPlatformSpecificPluginResources(
   plugin: PluginLayout,
   targetDirs: List<Pair<SupportedDistribution, Path>>,
   context: BuildContext,
-) {
+): List<DistributionFileEntry> {
   for ((dist, generators) in plugin.platformResourceGenerators) {
-    val targetPath = targetDirs.firstOrNull { it.first == dist }?.second ?: continue
-    val pluginDir = targetPath.resolve(plugin.directoryName)
+    val targetDir = targetDirs.firstOrNull { it.first == dist }?.second ?: continue
+    val pluginDir = targetDir.resolve(plugin.directoryName)
     val relativePluginDir = context.paths.buildOutputDir.relativize(pluginDir).toString()
     for (generator in generators) {
       spanBuilder("plugin platform-specific resources")
@@ -34,9 +37,18 @@ internal suspend fun buildPlatformSpecificPluginResources(
     }
   }
 
-  for ((platform, pluginDir) in targetDirs) {
-    handleCustomPlatformSpecificAssets(layout = plugin, targetPlatform = platform, context = context, pluginDir = pluginDir)
+  val distEntries = ArrayList<DistributionFileEntry>()
+  for ((platform, targetDir) in targetDirs) {
+    handleCustomPlatformSpecificAssets(
+      layout = plugin,
+      targetPlatform = platform,
+      context = context,
+      pluginDir = targetDir.resolve(plugin.directoryName),
+      distEntries = distEntries,
+      isDevMode = false,
+    )
   }
+  return distEntries
 }
 
 @ApiStatus.Internal
@@ -64,7 +76,14 @@ fun unpackTrustedZip(
   }
 }
 
-internal suspend fun handleCustomPlatformSpecificAssets(layout: PluginLayout, targetPlatform: SupportedDistribution, context: BuildContext, pluginDir: Path) {
+internal suspend fun handleCustomPlatformSpecificAssets(
+  layout: PluginLayout,
+  targetPlatform: SupportedDistribution,
+  context: BuildContext,
+  pluginDir: Path,
+  distEntries: MutableList<DistributionFileEntry>,
+  isDevMode: Boolean,
+) {
   for (customAsset in layout.customAssets) {
     val platformSpecific = customAsset.platformSpecific ?: continue
     if (platformSpecific != targetPlatform) {
@@ -76,11 +95,20 @@ internal suspend fun handleCustomPlatformSpecificAssets(layout: PluginLayout, ta
     val createdParents = HashSet<Path>()
     for (lazySource in lazySources) {
       for (source in lazySource.getSources()) {
-        require(source is UnpackedZipSource) {
-          "Only UnpackedZipSource is supported for custom plugin platform-specific assets, got $source for $customAsset"
-        }
+        when (source) {
+          is UnpackedZipSource -> {
+            unpackTrustedZip(source = source, rootDir = rootDir, createdParents = createdParents)
+            distEntries.add(CustomAssetEntry(path = source.file, hash = lazySource.precomputedHash, relativeOutputFile = customAsset.relativePath))
+          }
 
-        unpackTrustedZip(source = source, rootDir = rootDir, createdParents = createdParents)
+          is CustomAssetShimSource -> {
+            if (!isDevMode) {
+              distEntries.addAll(source.task(pluginDir, context))
+            }
+          }
+
+          else -> throw UnsupportedOperationException("Not supported source for custom plugin platform-specific assets, got $source for $customAsset")
+        }
       }
     }
   }

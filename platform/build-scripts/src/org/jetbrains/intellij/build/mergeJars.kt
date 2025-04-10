@@ -188,6 +188,10 @@ private suspend fun writeSource(
     is UnpackedZipSource -> {
       throw UnsupportedOperationException("UnpackedZipSource is not supported")
     }
+
+    is CustomAssetShimSource -> {
+      throw UnsupportedOperationException("CustomAssetShimSource is not supported")
+    }
   }
 }
 

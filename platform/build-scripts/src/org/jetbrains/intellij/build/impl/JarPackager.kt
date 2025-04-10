@@ -1140,7 +1140,6 @@ private fun computeDistributionFileEntries(
 
   for (source in asset.sources) {
     if (source is ZipSource) {
-      //source.distributionFileEntryProducer?.consume(size = source.size, hash = source.hash, targetFile = asset.effectiveFile)?.let(list::add)
       source.distributionFileEntryProducer?.consume(size = 0, hash = 0, targetFile = asset.effectiveFile)?.let(list::add)
     }
     else if (source is LazySource) {

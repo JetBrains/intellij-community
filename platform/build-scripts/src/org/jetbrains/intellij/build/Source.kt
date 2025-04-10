@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
@@ -33,11 +34,7 @@ class LazySource(
 data class UnpackedZipSource(
   @JvmField val file: Path,
   override val filter: ((String) -> Boolean),
-) : Source, Comparable<ZipSource> {
-  override fun compareTo(other: ZipSource): Int {
-    return if (isWindows) file.toString().compareTo(other.file.toString()) else file.compareTo(other.file)
-  }
-
+) : Source {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ZipSource) return false
@@ -54,6 +51,10 @@ data class UnpackedZipSource(
     return result
   }
 }
+
+class CustomAssetShimSource(
+  @JvmField val task: suspend (pluginDir: Path, context: BuildContext) -> List<DistributionFileEntry>,
+) : Source
 
 data class ZipSource(
   @JvmField val file: Path,

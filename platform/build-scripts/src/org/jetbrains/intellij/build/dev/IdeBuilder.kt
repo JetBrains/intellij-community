@@ -200,7 +200,13 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       val platformLayoutAwaited = platformLayout.await()
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
-        layoutPlatform(runDir, platformLayoutAwaited, searchableOptionSet, context, moduleOutputPatcher)
+        layoutPlatform(
+          runDir = runDir,
+          platformLayout = platformLayoutAwaited,
+          searchableOptionSet = searchableOptionSet,
+          context = context,
+          moduleOutputPatcher = moduleOutputPatcher,
+        )
       }
 
       if (request.writeCoreClasspath) {
@@ -266,7 +272,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     launch {
-      computeIdeFingerprint(platformDistributionEntriesDeferred, pluginDistributionEntriesDeferred, runDir, request.projectDir)
+      computeIdeFingerprint(
+        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
+        pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
+        runDir = runDir,
+        homePath = request.projectDir,
+      )
     }
 
     launch(Dispatchers.IO) {
