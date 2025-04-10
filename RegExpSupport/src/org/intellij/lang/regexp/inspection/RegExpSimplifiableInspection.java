@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
@@ -62,7 +62,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
         if (elements.length == 1) {
           final RegExpClassElement element = elements[0];
           if (element instanceof RegExpPosixBracketExpression) return;
-          if (!(element instanceof RegExpCharRange)) {
+          if (!(element instanceof RegExpCharRange) && !(element instanceof RegExpIntersection)) {
             if (!(element instanceof RegExpChar) || !"{}().*+?|$".contains(element.getText())) {
               // [a] -> a
               registerProblem(regExpClass, element.getUnescapedText());
