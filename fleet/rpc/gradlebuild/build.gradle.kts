@@ -31,6 +31,7 @@ kotlin {
     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
     "-opt-in=kotlin.ExperimentalStdlibApi",
     "-Xlambdas=class",
+    "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
   )
   pluginManager.withPlugin("fleet-build-jps-module-plugin") {
     tasks.named("syncCommonMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { destinationDirectory.set(layout.buildDirectory.dir("copiedSources/commonMain")) }

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.async
 
-import fleet.multiplatform.shims.AtomicRef
 import fleet.util.channels.channels
 import fleet.util.channels.use
 import kotlinx.coroutines.*
@@ -10,6 +9,7 @@ import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.select
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -39,18 +39,18 @@ fun <T> Flow<T>.conflateReduce(f: (T, T) -> T): Flow<T> {
       val receive = originalFlow.produceIn(this)
       receive.consume {
         val conflated: ReceiveChannel<T> = produce {
-          val receivedCloseMessage = AtomicRef<Boolean>(false)
+          val receivedCloseMessage = AtomicBoolean(false)
           while (!receive.isClosedForReceive || currentValue != nothing) {
             @Suppress("RemoveExplicitTypeArguments")
             select<Unit> {
-              if (!receivedCloseMessage.get()) {
+              if (!receivedCloseMessage.load()) {
                 receive.onReceiveCatching { channelResult ->
                   if (!channelResult.isClosed) {
                     val value = channelResult.getOrThrow()
                     currentValue = if (currentValue != nothing) f(currentValue as T, value) else value
                   }
                   else {
-                    receivedCloseMessage.set(true)
+                    receivedCloseMessage.store(true)
                   }
                 }
               }

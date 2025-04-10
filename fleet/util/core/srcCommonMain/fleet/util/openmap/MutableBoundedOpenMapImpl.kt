@@ -1,15 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.openmap
 
-import fleet.multiplatform.shims.AtomicRef
+import fleet.util.updateAndGet
 import kotlinx.collections.immutable.PersistentMap
+import kotlin.concurrent.atomics.AtomicReference
 
-internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicRef<PersistentMap<Key<out V, in Domain>, V>>) : MutableBoundedOpenMap<Domain, V> {
+internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicReference<PersistentMap<Key<out V, in Domain>, V>>) : MutableBoundedOpenMap<Domain, V> {
   override fun <T : Any> get(k: Key<T, in Domain>): T? {
-    return map.get().get(k as Key<out V, Domain>) as T?
+    return map.load()[k as Key<out V, Domain>] as T?
   }
 
-  override fun isEmpty() = map.get().size == 0
+  override fun isEmpty() = map.load().size == 0
 
   override fun <T : V> set(k: Key<T, Domain>, v: T) {
     map.updateAndGet { map -> map.put(k, v) }
@@ -28,7 +29,7 @@ internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicRef<Per
   }
 
   override fun persistent(): BoundedOpenMap<Domain, V> {
-    return BoundedOpenMap.from(map.get())
+    return BoundedOpenMap.from(map.load())
   }
 
   override fun <T : V> update(key: Key<T, Domain>, f: (T?) -> T): T {
@@ -59,11 +60,11 @@ internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicRef<Per
   }
 
   override fun toString(): String {
-    return "MutableOpenMap(${map.get()})"
+    return "MutableOpenMap(${map.load()})"
   }
 
   override fun asMap(): PersistentMap<Key<out V, in Domain>, V> {
-    return map.get()
+    return map.load()
   }
 
   override fun dissoc(k: Key<out V, Domain>): BoundedOpenMap<Domain, V> {

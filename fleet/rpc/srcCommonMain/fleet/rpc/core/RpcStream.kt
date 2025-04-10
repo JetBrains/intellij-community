@@ -1,16 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.core
 
-import fleet.multiplatform.shims.AtomicRef
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
+import fleet.util.getAndUpdate
 import fleet.util.logging.logger
+import fleet.util.updateAndGet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.KSerializer
+import kotlin.concurrent.atomics.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resumeWithException
 import kotlin.math.max
@@ -47,7 +49,7 @@ class StreamDescriptor(
 }
 
 class Budget(initial: Int) {
-  private val state = AtomicRef(State(null, initial, null))
+  private val state = AtomicReference(State(null, initial, null))
 
   private data class State(val cancellation: CancellationException?, val budget: Int, val continuation: CancellableContinuation<Unit>?)
 

@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UNCHECKED_CAST")
-
 package fleet.util.openmap
 
-import fleet.multiplatform.shims.AtomicRef
 import kotlinx.collections.immutable.*
+import kotlin.concurrent.atomics.AtomicReference
 
 interface Key<V : Any, in Domain>
 
@@ -112,7 +111,7 @@ interface MutableBoundedOpenMap<Domain, V : Any> : BoundedOpenMap<Domain, V> {
     }
 
     fun <T, V : Any> from(map: PersistentMap<Key<out V, T>, V>): MutableBoundedOpenMap<T, V> {
-      return MutableBoundedOpenMapImpl(AtomicRef(map))
+      return MutableBoundedOpenMapImpl(AtomicReference(map))
     }
   }
 

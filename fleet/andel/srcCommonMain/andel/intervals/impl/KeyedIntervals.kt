@@ -3,10 +3,10 @@ package andel.intervals.impl
 
 import andel.intervals.*
 import andel.operation.Operation
-import fleet.multiplatform.shims.AtomicRef
-import fleet.util.incrementAndGet
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.incrementAndFetch
 
 class KeyedIntervals<K: Any, V>(val intervals: Intervals<Long, Pair<K, V>>,
                                 val keys: PersistentMap<K, Long> = persistentHashMapOf()): Intervals<K, V> {
@@ -20,7 +20,7 @@ class KeyedIntervals<K: Any, V>(val intervals: Intervals<Long, Pair<K, V>>,
       return Interval(i.data.first, i.from, i.to, i.greedyLeft, i.greedyRight, i.data.second)
     }
 
-    val nextId: AtomicRef<Long> = AtomicRef(0)
+    val nextId: AtomicLong = AtomicLong(0)
   }
 
   override fun factory(): IntervalsFactory<K> {
@@ -28,7 +28,7 @@ class KeyedIntervals<K: Any, V>(val intervals: Intervals<Long, Pair<K, V>>,
   }
 
   override fun findById(id: K): Interval<K, V>? {
-    return keys.get(id)?.let { intKey ->
+    return keys[id]?.let { intKey ->
       fromInner(intervals.getById(intKey))
     }
   }
@@ -43,7 +43,7 @@ class KeyedIntervals<K: Any, V>(val intervals: Intervals<Long, Pair<K, V>>,
 
   override fun addIntervals(intervals: Iterable<Interval<K, V>>): Intervals<K, V> {
     val inner = intervals.map { interval ->
-      toInner(nextId.incrementAndGet(), interval)
+      toInner(nextId.incrementAndFetch(), interval)
     }
     return KeyedIntervals(intervals = this.intervals.addIntervals(inner),
                           keys = keys.builder().apply {
@@ -54,7 +54,7 @@ class KeyedIntervals<K: Any, V>(val intervals: Intervals<Long, Pair<K, V>>,
   }
 
   override fun removeByIds(ids: Iterable<K>): Intervals<K, V> {
-    return KeyedIntervals(intervals = this.intervals.removeByIds(ids.mapNotNull { id -> keys.get(id)}),
+    return KeyedIntervals(intervals = this.intervals.removeByIds(ids.mapNotNull { id -> keys[id] }),
                           keys = keys.builder().apply {
                             for (id in ids) {
                               remove(id)

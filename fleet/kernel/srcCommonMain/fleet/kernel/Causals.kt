@@ -38,7 +38,7 @@ suspend fun CompressedVectorClock.await(timeout_millis: Long = 30_000) {
     DbContext.threadBound.set(db)
     yield()
   } ?: run {
-    val rebaseLog = coroutineContext.transactor.meta[RebaseLoopStateDebugKernelMetaKey]?.get()
+    val rebaseLog = coroutineContext.transactor.meta[RebaseLoopStateDebugKernelMetaKey]?.load()
     throw TimedOutWaitingForClockException(
       "$dbSource Timed out waiting for clock $clock, last observed clock: $lastObservedClock".letIf(rebaseLog != null) { message ->
         message + "\n" + rebaseLog!!.rebaseLog.debugString()

@@ -1,16 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
-import fleet.multiplatform.shims.AtomicRef
 import fleet.fastutil.longs.LongArrayList
 import fleet.fastutil.longs.toArray
 import fleet.util.computeShim
+import fleet.util.updateAndGet
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
+import kotlin.concurrent.atomics.AtomicReference
 
-class QueryCache private constructor(private val cache: AtomicRef<QueryCacheData>) {
+class QueryCache private constructor(private val cache: AtomicReference<QueryCacheData>) {
 
   private data class QueryCacheData(
     val patternToQuery: PersistentMap<Long, PersistentSet<CachedQuery<*>>>,
@@ -65,12 +66,12 @@ class QueryCache private constructor(private val cache: AtomicRef<QueryCacheData
 
   companion object {
     fun empty(): QueryCache =
-      QueryCache(AtomicRef(QueryCacheData(persistentHashMapOf(), persistentHashMapOf())))
+      QueryCache(kotlin.concurrent.atomics.AtomicReference(QueryCacheData(persistentHashMapOf(), persistentHashMapOf())))
   }
 
   fun <T> performQuery(query: CachedQuery<T>, compute: () -> CachedQueryResult<T>): CachedQueryResult<T> =
     @Suppress("UNCHECKED_CAST")
-    (cache.get().find(query) as CachedQueryResult<T>?) ?: run {
+    (cache.load().find(query) as CachedQueryResult<T>?) ?: run {
       val res = compute()
       cache.updateAndGet { index ->
         val existing = index.find(query)
@@ -83,7 +84,7 @@ class QueryCache private constructor(private val cache: AtomicRef<QueryCacheData
     }
 
   fun invalidate(novelty: Iterable<Datom>): QueryCache =
-    QueryCache(AtomicRef(cache.get().invalidate(novelty)))
+    QueryCache(AtomicReference(cache.load().invalidate(novelty)))
 }
 
 internal fun <T> DbContext<Q>.cachedQueryImpl(queryCache: QueryCache, query: CachedQuery<T>): CachedQueryResult<T> {

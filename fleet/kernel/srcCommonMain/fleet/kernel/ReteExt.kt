@@ -3,10 +3,10 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.*
-import fleet.multiplatform.shims.AtomicRef
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlin.concurrent.atomics.AtomicReference
 
 /**
  * [f] will be invoked each time when it's return value may be changed.
@@ -46,7 +46,7 @@ fun Entity.onDispose(rete: Rete, action: () -> Unit = {}): DisposableHandle =
         DisposableHandle { }
       }
       else -> {
-        val state = AtomicRef<State11>(State11.Initial)
+        val state = AtomicReference<State11>(State11.Initial)
         val handle = existence().observe(rete = rete,
                                          contextMatches = null,
                                          queryTracingKey = null,

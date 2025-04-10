@@ -2,10 +2,10 @@
 package fleet.kernel.rete.impl
 
 import fleet.kernel.rete.*
-import fleet.multiplatform.shims.AtomicRef
 import fleet.util.causeOfType
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 
 internal class ObservableMatch<T>(
@@ -15,7 +15,7 @@ internal class ObservableMatch<T>(
 
   private val validity: CompletableJob = Job()
 
-  private val invalidated: AtomicRef<Boolean> = AtomicRef(false)
+  private val invalidated: AtomicBoolean = AtomicBoolean(false)
 
   override val value: T
     get() = match.value
@@ -23,7 +23,7 @@ internal class ObservableMatch<T>(
   /*
    * Rete network has already marked this match as invalidated in one of the snapshots it observed
    */
-  val wasInvalidated: Boolean get() = invalidated.get()
+  val wasInvalidated: Boolean get() = invalidated.load()
 
   internal fun onInvalidation(handler: () -> Unit): DisposableHandle =
     validity.invokeOnCompletion {
@@ -32,7 +32,7 @@ internal class ObservableMatch<T>(
 
   internal fun invalidate() {
     validity.complete()
-    invalidated.set(true)
+    invalidated.store(true)
   }
 
   override fun validate(): ValidationResultEnum =

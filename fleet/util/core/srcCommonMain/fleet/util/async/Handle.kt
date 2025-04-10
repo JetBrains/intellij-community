@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.async
 
-import fleet.multiplatform.shims.AtomicRef
+import fleet.util.updateAndGet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
+import kotlin.concurrent.atomics.AtomicReference
 import kotlin.coroutines.CoroutineContext
 
 data class Handle<T>(val value: Deferred<ValueWithContext<T>>,
@@ -77,7 +78,7 @@ suspend fun handleScopeNonSupervising(body: suspend HandleScope.() -> Unit) {
 }
 
 private suspend fun<T> handleScopeImpl(outerScope: CoroutineScope, body: suspend HandleScope.() -> T): T {
-  val handles = AtomicRef(persistentSetOf<Handle<*>>())
+  val handles = AtomicReference(persistentSetOf<Handle<*>>())
   return try {
     coroutineScope {
       val context = coroutineContext
@@ -93,6 +94,6 @@ private suspend fun<T> handleScopeImpl(outerScope: CoroutineScope, body: suspend
     }
   }
   finally {
-    handles.get().forEach { h -> outerScope.launch { h.shutdownAndWait() } }
+    handles.load().forEach { h -> outerScope.launch { h.shutdownAndWait() } }
   }
 }

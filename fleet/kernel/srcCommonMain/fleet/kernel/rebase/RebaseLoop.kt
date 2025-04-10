@@ -2,24 +2,25 @@
 package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
-import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.impl.EidGen
 import com.jetbrains.rhizomedb.impl.generateSeed
+import fleet.fastutil.ints.IntMap
+import fleet.fastutil.ints.partition
 import fleet.kernel.*
 import fleet.kernel.rebase.RebaseLogger.logger
-import fleet.rpc.client.RpcClientDisconnectedException
-import fleet.rpc.client.durable
 import fleet.reporting.shared.tracing.span
 import fleet.reporting.shared.tracing.spannedScope
-import fleet.util.*
+import fleet.rpc.client.RpcClientDisconnectedException
+import fleet.rpc.client.durable
+import fleet.util.CompressedVectorClock
+import fleet.util.UID
+import fleet.util.VectorClock
 import fleet.util.async.conflateReduce
 import fleet.util.async.use
 import fleet.util.channels.channels
 import fleet.util.channels.use
-import fleet.fastutil.ints.IntMap
-import fleet.fastutil.ints.partition
-import fleet.multiplatform.shims.AtomicRef
 import fleet.util.logging.logger
+import fleet.util.withoutCausality
 import kotlinx.collections.immutable.toPersistentHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.whileSelect
 import kotlinx.serialization.builtins.serializer
+import kotlin.concurrent.atomics.AtomicReference
 
 suspend fun withRebaseLoop(
   remoteKernel: RemoteKernel,
@@ -392,7 +394,7 @@ private suspend fun remoteKernelConnection(
   }
 }
 
-internal object RebaseLoopStateDebugKernelMetaKey : KernelMetaKey<AtomicRef<RebaseLoopState?>>
+internal object RebaseLoopStateDebugKernelMetaKey : KernelMetaKey<AtomicReference<RebaseLoopState?>>
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private suspend fun rebaseLoop(
@@ -403,8 +405,8 @@ private suspend fun rebaseLoop(
   frontendTxsSender: SendChannel<Transaction>,
   instructionSet: InstructionSet,
 ) {
-  val rebaseLoopStateDebug = transactor.meta.getOrInit(RebaseLoopStateDebugKernelMetaKey) { AtomicRef(initial) }
-  rebaseLoopStateDebug.set(initial)
+  val rebaseLoopStateDebug = transactor.meta.getOrInit(RebaseLoopStateDebugKernelMetaKey) { AtomicReference(initial) }
+  rebaseLoopStateDebug.store(initial)
   val encoder = instructionSet.encoder()
   val decoder = instructionSet.decoder()
   spannedScope("rebaseLoop") {
@@ -418,7 +420,7 @@ private suspend fun rebaseLoop(
       }
       logger.trace { "[$transactor] rebase loop launched" }
       whileSelect {
-        rebaseLoopStateDebug.set(state)
+        rebaseLoopStateDebug.store(state)
         remoteKernelBroadcastReceiver.onReceiveCatching { broadcastOrClosed ->
           spannedScope("broadcast") {
             if (broadcastOrClosed.isClosed) {
