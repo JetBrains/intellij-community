@@ -39,7 +39,7 @@ import kotlin.time.Duration.Companion.days
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".m"
 
-private val fileLocks = StripedMutex(1024)
+private val fileLocks = StripedMutex(256)
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
@@ -64,43 +64,40 @@ internal class LocalDiskJarCacheManager(
     producer: SourceBuilder,
   ): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, productionClassOutDir = productionClassOutDir)
-
     val hash = Hashing.xxh3_128().hashStream()
     for (source in items) {
       source.updateAssetDigest(hash)
     }
     hash.putInt(items.size)
-    val r = hash.get()
-    val hash1 = longToString(r.leastSignificantBits)
-    val hash2 = longToString(r.mostSignificantBits)
+    val hashValue128 = hash.get()
 
-    val targetFileNamePrefix = targetFile.fileName.toString().removeSuffix(jarSuffix)
-    val cacheName = "$targetFileNamePrefix-16-$hash1-$hash2"
-    val cacheFileName = (cacheName + jarSuffix).takeLast(255)
-    val cacheFile = cacheDir.resolve(cacheFileName)
-    val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
-    if (checkCache(cacheMetadataFile = cacheMetadataFile, cacheFile = cacheFile, sources = sources, items = items, span = span, nativeFiles = nativeFiles, producer = producer)) {
-      // update file modification time to maintain FIFO caches, i.e., in a persistent cache folder on TeamCity agent and for CacheDirCleanup
-      try {
-        Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
-      }
-      catch (e: IOException) {
-        Span.current().addEvent("update cacheFile modification time failed: $e")
-      }
+    fileLocks.getLockByHash(hashValue128.asLong).withLock {
+      val targetFileNamePrefix = targetFile.fileName.toString().removeSuffix(jarSuffix)
+      val cacheName = "$targetFileNamePrefix-16-${longToString(hashValue128.leastSignificantBits)}-${longToString(hashValue128.mostSignificantBits)}"
+      val cacheFileName = (cacheName + jarSuffix).takeLast(255)
+      val cacheFile = cacheDir.resolve(cacheFileName)
+      val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
+      if (checkCache(cacheMetadataFile = cacheMetadataFile, cacheFile = cacheFile, sources = sources, items = items, span = span, nativeFiles = nativeFiles, producer = producer)) {
+        // update file modification time to maintain FIFO caches, i.e., in a persistent cache folder on TeamCity agent and for CacheDirCleanup
+        try {
+          Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
+        }
+        catch (e: IOException) {
+          Span.current().addEvent("update cacheFile modification time failed: $e")
+        }
 
-      span.addEvent("use cache", Attributes.of(AttributeKey.stringKey("file"), targetFile.toString(), AttributeKey.stringKey("cacheFile"), cacheFileName))
+        span.addEvent("use cache", Attributes.of(AttributeKey.stringKey("file"), targetFile.toString(), AttributeKey.stringKey("cacheFile"), cacheFileName))
 
-      if (producer.useCacheAsTargetFile) {
-        return cacheFile
+        if (producer.useCacheAsTargetFile) {
+          return cacheFile
+        }
+        else {
+          Files.createDirectories(targetFile.parent)
+          Files.createLink(targetFile, cacheFile)
+          return targetFile
+        }
       }
       else {
-        Files.createDirectories(targetFile.parent)
-        Files.createLink(targetFile, cacheFile)
-        return targetFile
-      }
-    }
-    else {
-      fileLocks.getLockByHash(r.leastSignificantBits.toInt()).withLock {
         return produceAndCache(
           cacheName = cacheName,
           cacheDir = cacheDir,
