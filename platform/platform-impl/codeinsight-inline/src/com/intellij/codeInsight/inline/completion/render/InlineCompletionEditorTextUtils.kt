@@ -65,7 +65,7 @@ internal object InlineCompletionEditorTextUtils {
   }
 
   private fun HighlighterIterator.getTextAttributesOrDefault(editor: Editor): TextAttributes {
-    return textAttributes ?: editor.getDefaultTextAttributes()
+    return textAttributes?.takeIf { !it.isEmpty } ?: editor.getDefaultTextAttributes()
   }
 
   private fun Editor.getDefaultTextAttributes(): TextAttributes {
