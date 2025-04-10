@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
+import com.intellij.collaboration.async.ComputedListChange
+import com.intellij.collaboration.async.changesFlow
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
@@ -16,6 +18,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.CollectionListModel
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
@@ -37,6 +40,7 @@ import javax.swing.border.Border
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
+import kotlin.collections.forEach
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -523,5 +527,26 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
       Disposer.dispose(it)
     }
     currentConnection = UiNotifyConnector.installOn(component, this, false)
+  }
+}
+
+@ApiStatus.Internal
+fun <T> StateFlow<Iterable<T>>.toListModelIn(cs: CoroutineScope): ListModel<T> =
+  CollectionListModel(value.toList()).also { model ->
+    model.bindChangesIn(cs, this.changesFlow())
+  }
+
+private fun <T> CollectionListModel<T>.bindChangesIn(cs: CoroutineScope, changes: Flow<List<ComputedListChange<T>>>) {
+  val model = this
+  cs.launchNow {
+    model.removeAll()
+    changes.collect { changes ->
+      changes.forEach { change ->
+        when (change) {
+          is ComputedListChange.Remove -> model.removeRange(change.atIndex, change.atIndex + change.length - 1)
+          is ComputedListChange.Insert -> model.addAll(change.atIndex, change.values)
+        }
+      }
+    }
   }
 }

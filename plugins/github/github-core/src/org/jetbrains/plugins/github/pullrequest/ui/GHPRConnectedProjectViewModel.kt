@@ -107,7 +107,7 @@ abstract class GHPRConnectedProjectViewModelBase(
     pullRequestsVms[id].acquireValue(disposable).timelineVm
 
   override fun findDetails(id: GHPRIdentifier): GHPullRequestShort? =
-    dataContext.listLoader.loadedData.find { it.id == id.id }
+    dataContext.listLoader.loadedData.value.find { it.id == id.id }
     ?: dataContext.dataProviderRepository.findDataProvider(id)?.detailsData?.loadedDetails
 
   private val prOnCurrentBranchRefreshSignal =

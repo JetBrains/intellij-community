@@ -3,7 +3,6 @@
 
 package com.intellij.collaboration.async
 
-import com.intellij.collaboration.async.ComputedListChange
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
@@ -12,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.CollectionListModel
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.toArray
@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.ListModel
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 

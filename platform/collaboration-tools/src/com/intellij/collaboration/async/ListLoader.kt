@@ -4,7 +4,8 @@ package com.intellij.collaboration.async
 import com.intellij.collaboration.async.ListLoader.State
 import com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader.PageInfo
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
-import kotlinx.coroutines.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ListLoader<V> {
   data class State<V>(
     val list: List<V>? = null,
-    val error: Throwable? = null
+    val error: Throwable? = null,
   )
 
   /**
@@ -36,7 +37,7 @@ interface ListLoader<V> {
    *
    * Updated and managed dynamically by the updating methods defined here.
    */
-  val stateFlow: Flow<State<V>>
+  val stateFlow: StateFlow<State<V>>
 
   val isBusyFlow: StateFlow<Boolean>
 }
@@ -75,7 +76,7 @@ abstract class MutableListLoader<V> : ListLoader<V> {
    */
   protected val mutableStateFlow: MutableStateFlow<State<V>> = MutableStateFlow(State())
 
-  override val stateFlow: Flow<State<V>> = mutableStateFlow.asStateFlow()
+  override val stateFlow: StateFlow<State<V>> = mutableStateFlow.asStateFlow()
 
   /**
    * Manually updates the list and cancels all running refreshes
@@ -312,3 +313,7 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
       }
     }
 }
+
+@get:ApiStatus.Internal
+val <V : Any> ListLoader<V>.changesFlow: Flow<List<ComputedListChange<V>>>
+  get() = stateFlow.mapState { it.list ?: emptyList() }.changesFlow()

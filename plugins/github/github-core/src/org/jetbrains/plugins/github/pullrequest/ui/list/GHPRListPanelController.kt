@@ -44,7 +44,7 @@ internal class GHPRListPanelController(
       }
     }
     scope.launch {
-      combineAndCollect(listVm.loading, listVm.searchVm.searchState) { isLoading, searchValue ->
+      combineAndCollect(listVm.isLoading, listVm.searchVm.searchState) { isLoading, searchValue ->
         updateEmptyText(isLoading, searchValue)
       }
     }
