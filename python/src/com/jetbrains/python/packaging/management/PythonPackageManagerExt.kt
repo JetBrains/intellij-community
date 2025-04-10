@@ -130,7 +130,7 @@ private val proxyString: String?
   }
 
 fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
-  return repositories.asSequence().map { it to packagesFromRepository(it) }
+  return repositories.asSequence().map { it to it.getPackages() }
 }
 
 fun PythonPackageManager.isInstalled(name: String): Boolean {

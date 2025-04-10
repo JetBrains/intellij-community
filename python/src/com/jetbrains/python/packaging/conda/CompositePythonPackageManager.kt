@@ -19,7 +19,7 @@ internal class CompositePythonPackageManager(
   override var installedPackages: List<PythonPackage> = emptyList()
 
   override var repositoryManager: PythonRepositoryManager =
-    CompositePythonRepositoryManager(project, sdk, managers.map { it.repositoryManager })
+    CompositePythonRepositoryManager(project, managers.map { it.repositoryManager }, sdk)
 
   private val managerNames = managers.joinToString { it.javaClass.simpleName }
 

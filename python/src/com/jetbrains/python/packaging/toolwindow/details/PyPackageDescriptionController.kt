@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.newui.OneLineProgressIndicator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
@@ -24,7 +25,11 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBComboBoxLabel
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -38,19 +43,25 @@ import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Font
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 class PyPackageDescriptionController(val project: Project) : Disposable {
   private val latestText: String
     get() = message("python.toolwindow.packages.latest.version.label")
 
-  val service = project.service<PyPackagingToolWindowService>()
+  val service: PyPackagingToolWindowService = project.service<PyPackagingToolWindowService>()
 
   internal val selectedPackage = AtomicProperty<DisplayablePackage?>(null)
   private val isManagement = AtomicBooleanProperty(false)
@@ -114,23 +125,26 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private val rightPanel = panel {
     row {
       cell(progressIndicatorComponent).gap(RightGap.SMALL).visibleIf(progressEnabledProperty)
-
       versionSelector.apply {
         versionSelector.text = packageVersionProperty.get()
         addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent?) {
-            val versions = listOf(latestText) + (selectedPackageDetails.get()?.availableVersions ?: emptyList())
+            val availableVersions = selectedPackageDetails.get()?.availableVersions ?: emptyList()
+            val latestVersion = availableVersions.first()
+            val versions = listOf(latestText) + availableVersions
             JBPopupFactory.getInstance().createListPopup(
               object : BaseListPopupStep<String>(null, versions) {
                 override fun onChosen(@NlsContexts.Label selectedValue: String, finalChoice: Boolean): PopupStep<*>? {
                   packageVersionProperty.set(selectedValue)
-                  suggestInstallPackage(selectedValue)
+                  val effectiveVersion = if (selectedValue == latestText) latestVersion else selectedValue
+                  suggestInstallPackage(effectiveVersion)
                   return FINAL_CHOICE
                 }
               }, 8).showUnderneathOf(this@apply)
           }
         })
       }
+
       packageVersionProperty.afterChange {
         versionSelector.text = it
       }
@@ -165,7 +179,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     add(htmlPanel.component, BorderLayout.CENTER)
   }
 
-  val wrappedComponent = UiDataProvider.wrapComponent(component, UiDataProvider {})
+  val wrappedComponent: JComponent = UiDataProvider.wrapComponent(component, UiDataProvider {})
 
   override fun dispose() {}
 
@@ -182,6 +196,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   private fun updatePackageVersion(newVersion: String) {
     val details = selectedPackageDetails.get() ?: return
     val newVersionSpec = details.toPackageSpecification(newVersion)
+    println(newVersionSpec.versionSpecs)
     val pyPackagingToolWindowService = PyPackagingToolWindowService.getInstance(project)
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       pyPackagingToolWindowService.installPackage(newVersionSpec)
@@ -218,7 +233,9 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
         actionPerformed()
       }
       finally {
-        progressEnabledProperty.set(false)
+        withContext(Dispatchers.EDT) {
+          progressEnabledProperty.set(false)
+        }
         progressIndicator.stop()
       }
     }
