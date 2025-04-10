@@ -30,6 +30,7 @@ kotlin {
   // KOTLIN__MARKER_START
   compilerOptions.freeCompilerArgs = listOf(
     "-Xjvm-default=all",
+    "-Xlambdas=class",
   )
   pluginManager.withPlugin("fleet-build-jps-module-plugin") {
     tasks.named("syncJvmMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { destinationDirectory.set(layout.buildDirectory.dir("copiedSources/jvmMain")) }
