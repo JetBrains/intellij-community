@@ -350,60 +350,61 @@ internal class InlineCompletionTextRenderManager private constructor(
         return
       }
 
-      val initialApplyRange = startingFromLine until blockLineInlays.size + 1
-      val linesToFix = initialApplyRange.mapNotNullTo(LinkedList()) { line ->
-        val inlayForLine = getInlayForLine(line)
-        val blocks = inlayForLine?.renderer?.blocks?.map { block ->
-          VolumetricInlineCompletionTextBlock(block, InlineCompletionLineRenderer.widthOf(editor, block) + 1) // TODO +1
-        } ?: emptyList()
-        // TODO it doesn't take into account other inlays.
-        //  But we cannot use `inlineInlay.x` because the basic editor soft wrap is already applied
-        val startX = if (line == 0) initialStartPoint.x else 0
-        InlineCompletionSoftWrapManager.RenderedLine(blocks, startX)
-      }
-
-      val softWrappedLines = softWrapManager.softWrap(linesToFix) ?: return
-
-      // Some lines at the start didn't change => we don't need to re-render them
-      var skipResultLinesCount = 0
-      while (skipResultLinesCount < softWrappedLines.size && skipResultLinesCount < linesToFix.size) {
-        if (softWrappedLines[skipResultLinesCount] === linesToFix[skipResultLinesCount].blocks) {
-          skipResultLinesCount++
-        } else {
-          break
+      InlineCompletionVolumetricTextBlockFactory(editor).use { volumetricFactory ->
+        val initialApplyRange = startingFromLine until blockLineInlays.size + 1
+        val linesToFix = initialApplyRange.mapNotNullTo(LinkedList()) { line ->
+          val inlayForLine = getInlayForLine(line)
+          val blocks = inlayForLine?.renderer?.blocks?.map { block -> volumetricFactory.getVolumetric(block) } ?: emptyList()
+          // TODO it doesn't take into account other inlays.
+          //  But we cannot use `inlineInlay.x` because the basic editor soft wrap is already applied
+          val startX = if (line == 0) initialStartPoint.x else 0
+          InlineCompletionSoftWrapManager.RenderedLine(blocks, startX)
         }
-      }
 
-      val actualStartingFromLine = startingFromLine + skipResultLinesCount
-      while (blockLineInlays.isNotEmpty() && blockLineInlays.size >= actualStartingFromLine) {
-        Disposer.dispose(blockLineInlays.removeLast())
-      }
-      if (actualStartingFromLine == 0) {
-        inlineInlay?.let { Disposer.dispose(it) }
-        inlineInlay = null
-      }
+        val softWrappedLines = softWrapManager.softWrap(linesToFix, volumetricFactory) ?: return
 
-      val newLines = softWrappedLines
-        .drop(skipResultLinesCount)
-        .map { blocks -> blocks.map { it.block } }
-
-      if (newLines.isEmpty()) {
-        return
-      }
-
-      if (actualStartingFromLine == 0) {
-        renderInline(newLines.first())
-        if (newLines.size > 1) {
-          state = RenderState.RENDERING_BLOCK
-          renderMultiline(newLines.drop(1))
+        // Some lines at the start didn't change => we don't need to re-render them
+        var skipResultLinesCount = 0
+        while (skipResultLinesCount < softWrappedLines.size && skipResultLinesCount < linesToFix.size) {
+          if (softWrappedLines[skipResultLinesCount] === linesToFix[skipResultLinesCount].blocks) {
+            skipResultLinesCount++
+          }
+          else {
+            break
+          }
         }
-      }
-      else if (actualStartingFromLine == 1) {
-        renderMultiline(newLines)
-      }
-      else {
-        // Empty list is to finish the current line and start a new one
-        renderMultiline(listOf(emptyList<InlineCompletionRenderTextBlock>()) + newLines)
+
+        val actualStartingFromLine = startingFromLine + skipResultLinesCount
+        while (blockLineInlays.isNotEmpty() && blockLineInlays.size >= actualStartingFromLine) {
+          Disposer.dispose(blockLineInlays.removeLast())
+        }
+        if (actualStartingFromLine == 0) {
+          inlineInlay?.let { Disposer.dispose(it) }
+          inlineInlay = null
+        }
+
+        val newLines = softWrappedLines
+          .drop(skipResultLinesCount)
+          .map { blocks -> blocks.map { it.block } }
+
+        if (newLines.isEmpty()) {
+          return
+        }
+
+        if (actualStartingFromLine == 0) {
+          renderInline(newLines.first())
+          if (newLines.size > 1) {
+            state = RenderState.RENDERING_BLOCK
+            renderMultiline(newLines.drop(1))
+          }
+        }
+        else if (actualStartingFromLine == 1) {
+          renderMultiline(newLines)
+        }
+        else {
+          // Empty list is to finish the current line and start a new one
+          renderMultiline(listOf(emptyList<InlineCompletionRenderTextBlock>()) + newLines)
+        }
       }
     }
 
