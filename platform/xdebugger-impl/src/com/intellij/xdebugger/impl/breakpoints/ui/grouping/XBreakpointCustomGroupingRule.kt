@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
@@ -11,8 +10,8 @@ import javax.swing.Icon
 /**
  * @author Egor
  */
-class XBreakpointCustomGroupingRule<B : Any> : XBreakpointGroupingRule<B, XBreakpointCustomGroup>("by-group", XDebuggerBundle.message(
-  "breakpoints.show.user.groups")) {
+private class XBreakpointCustomGroupingRule<B : Any>
+  : XBreakpointGroupingRule<B, XBreakpointCustomGroup>("by-group", XDebuggerBundle.message("breakpoints.show.user.groups")) {
   override fun getPriority(): Int {
     return 1200
   }
@@ -25,11 +24,11 @@ class XBreakpointCustomGroupingRule<B : Any> : XBreakpointGroupingRule<B, XBreak
     if (breakpoint !is XBreakpointBase<*, *, *>) {
       return null
     }
-    val name = (breakpoint as XBreakpointBase<*, *, *>).getGroup()
-    if (StringUtil.isEmpty(name)) {
+    val name = (breakpoint as XBreakpointBase<*, *, *>).group?.takeIf { it.isNotEmpty() }
+    if (name == null) {
       return null
     }
-    return XBreakpointCustomGroup(name!!, (breakpoint as XBreakpointBase<*, *, *>).getProject())
+    return XBreakpointCustomGroup(name, breakpoint.project)
   }
 
   override fun getIcon(): Icon? {
