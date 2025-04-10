@@ -102,7 +102,8 @@ open class EditorComposite internal constructor(
   private val clientId: ClientId = ClientId.current
 
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
-  private var compositePanel: EditorCompositePanel = EditorCompositePanel(composite = this)
+  @Internal // FIXME[khb]
+  protected var compositePanel: EditorCompositePanel = EditorCompositePanel(composite = this)
   private val focusWatcher: FocusWatcher = FocusWatcher().also {
     it.install(compositePanel)
   }
@@ -131,7 +132,8 @@ open class EditorComposite internal constructor(
     private set
 
   @JvmField
-  internal val initDeferred = CompletableDeferred<Unit>()
+  @Internal
+  val initDeferred: CompletableDeferred<Unit> = CompletableDeferred<Unit>()
 
   init {
     EDT.assertIsEdt()
@@ -175,16 +177,10 @@ open class EditorComposite internal constructor(
     fileEditorWithProviders.firstOrNull { it !== INITIAL_EMPTY }
   }
 
-  private suspend fun handleModel(model: EditorCompositeModel) {
+  @Internal
+  protected open suspend fun handleModel(model: EditorCompositeModel) {
     val fileEditorWithProviders = model.fileEditorAndProviderList
-
-    for (editorWithProvider in fileEditorWithProviders) {
-      val editor = editorWithProvider.fileEditor
-      FileEditor.FILE_KEY.set(editor, file)
-      if (!clientId.isLocal) {
-        assignClientId(editor, clientId)
-      }
-    }
+    fileEditorWithProviders.assignEditorProperties()
 
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
@@ -258,17 +254,13 @@ open class EditorComposite internal constructor(
   @RequiresEdt
   private fun blockingHandleModel(model: EditorCompositeModel) {
     val fileEditorWithProviders = model.fileEditorAndProviderList
-    for (editorWithProvider in fileEditorWithProviders) {
-      val editor = editorWithProvider.fileEditor
-      FileEditor.FILE_KEY.set(editor, file)
-      if (!clientId.isLocal) {
-        assignClientId(editor, clientId)
-      }
-    }
+    fileEditorWithProviders.assignEditorProperties()
 
     val states = oldBadForRemoteDevGetStates(fileEditorWithProviders = fileEditorWithProviders, state = model.state)
     applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedFileEditorProvider = null, states = states)
   }
+  @Internal
+  protected fun List<FileEditorWithProvider>.assignEditorProperties(): Unit = forEach { it.fileEditor.assignProperties() }
 
   private fun oldBadForRemoteDevGetStates(
     fileEditorWithProviders: List<FileEditorWithProvider>,
@@ -291,14 +283,7 @@ open class EditorComposite internal constructor(
   @RequiresEdt
   private fun blockingHandleModel2(model: EditorCompositeModel) {
     val fileEditorWithProviders = model.fileEditorAndProviderList
-
-    for (editorWithProvider in fileEditorWithProviders) {
-      val editor = editorWithProvider.fileEditor
-      FileEditor.FILE_KEY.set(editor, file)
-      if (!clientId.isLocal) {
-        assignClientId(editor, clientId)
-      }
-    }
+    fileEditorWithProviders.assignEditorProperties()
 
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
@@ -330,7 +315,8 @@ open class EditorComposite internal constructor(
   }
 
   @RequiresEdt
-  private fun applyFileEditorsInEdt(
+  @Internal
+  protected fun applyFileEditorsInEdt(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     states: List<FileEditorState?>,
     selectedFileEditorProvider: FileEditorProvider?,
@@ -398,7 +384,8 @@ open class EditorComposite internal constructor(
     }
   }
 
-  private suspend fun getEditorState(provider: FileEditorProvider, state: FileEntry?): FileEditorState? {
+  @Internal
+  protected suspend fun getEditorState(provider: FileEditorProvider, state: FileEntry?): FileEditorState? {
     return if (state != null) {
       state.providers.get(provider.editorTypeId)?.let {
         computeOrLogException(
@@ -431,7 +418,8 @@ open class EditorComposite internal constructor(
     )
   }
 
-  private fun setFileEditors(fileEditors: List<FileEditorWithProvider>, selectedEditor: FileEditorWithProvider?) {
+  @Internal // FIXME
+  protected fun setFileEditors(fileEditors: List<FileEditorWithProvider>, selectedEditor: FileEditorWithProvider?) {
     fileEditorWithProviders.value = fileEditors
     _selectedEditorWithProvider.value = selectedEditor
   }
@@ -699,10 +687,7 @@ open class EditorComposite internal constructor(
   fun addEditor(editor: FileEditor, provider: FileEditorProvider) {
     val editorWithProvider = FileEditorWithProvider(editor, provider)
     fileEditorWithProviders.update { it + editorWithProvider }
-    FileEditor.FILE_KEY.set(editor, file)
-    if (!clientId.isLocal) {
-      assignClientId(editor, clientId)
-    }
+    editor.assignProperties()
 
     when {
       fileEditorWithProviders.value.size == 1 -> {
@@ -725,6 +710,13 @@ open class EditorComposite internal constructor(
       preferredFocusedComponent?.requestFocusInWindow()
     }
     dispatcher.multicaster.editorAdded(editorWithProvider)
+  }
+
+  private fun FileEditor.assignProperties() {
+    FileEditor.FILE_KEY.set(this, file)
+    if (!clientId.isLocal) {
+      assignClientId(this, clientId)
+    }
   }
 
   @RequiresEdt
@@ -855,7 +847,8 @@ open class EditorComposite internal constructor(
   override fun toString(): String = "EditorComposite(identityHashCode=${System.identityHashCode(this)}, file=$file)"
 }
 
-internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : JPanel(BorderLayout()), UiDataProvider {
+@Internal
+class EditorCompositePanel(@JvmField val composite: EditorComposite) : JPanel(BorderLayout()), UiDataProvider {
   var focusComponent: () -> JComponent? = { null }
     private set
 
