@@ -185,7 +185,7 @@ object ChooserPopupUtil {
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
     PopupUtil.setPopupToggleComponent(popup, point.component)
-    popup.showAndAwaitSubmissions(list, point, popupConfig.showDirection)
+    popup.showAndAwaitSubmissions(listModel, point, popupConfig.showDirection)
   }
 
   private fun <T> createList(listModel: CollectionListModel<T>, renderer: ListCellRenderer<T>): JBList<T> =
