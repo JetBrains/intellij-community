@@ -4,8 +4,6 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 import com.intellij.icons.AllIcons
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import javax.swing.Icon
 
 /**
@@ -22,10 +20,7 @@ private class XBreakpointCustomGroupingRule<B : Any>
   }
 
   override fun getGroup(breakpoint: B): XBreakpointCustomGroup? {
-    val proxy = (breakpoint as? XBreakpointProxy) ?: (breakpoint as? XBreakpointBase<*, *, *>)?.let { XBreakpointProxy.Monolith(it) }
-    if (proxy == null) {
-      return null
-    }
+    val proxy = breakpoint.asBreakpointProxyOrNull() ?: return null
     val name = proxy.getGroup()?.takeIf { it.isNotEmpty() }
     if (name == null) {
       return null

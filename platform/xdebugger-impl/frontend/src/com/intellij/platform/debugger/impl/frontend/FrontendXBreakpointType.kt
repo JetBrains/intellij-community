@@ -10,8 +10,10 @@ internal class FrontendXBreakpointType(
   private val dto: XBreakpointTypeDto,
 ) : XBreakpointTypeProxy {
   override val id: String = dto.id.id
+  override val index: Int = dto.index
   override val title: String = dto.title
   override val enabledIcon: Icon = dto.enabledIcon.icon()
+  override val isLineBreakpoint: Boolean = dto.lineTypeInfo != null
   override val isSuspendThreadSupported: Boolean = dto.suspendThreadSupported
   override val priority: Int? = dto.lineTypeInfo?.priority
 }

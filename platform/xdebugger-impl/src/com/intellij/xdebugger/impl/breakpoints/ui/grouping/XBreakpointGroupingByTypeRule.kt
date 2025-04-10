@@ -17,8 +17,9 @@ private class XBreakpointGroupingByTypeRule<B : Any>
   }
 
   override fun getGroup(b: B): XBreakpointTypeGroup? {
-    if (b is XBreakpoint<*>) {
-      return XBreakpointTypeGroup(b.getType())
+    val proxy = b.asBreakpointProxyOrNull()
+    if (proxy != null) {
+      return XBreakpointTypeGroup(proxy.type)
     }
     return null
   }
