@@ -293,6 +293,11 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     else o.displayName)
   }
 
+  private val fetchers =
+    (contributorModules?.map2Array<SearchEverywhereContributorModule, (String, ProgressIndicator, Processor<in FoundItemDescriptor<Any>>) -> Unit> {
+      { localPattern, localProgressIndicator, localConsumer -> it.perProductFetchWeightedElements(localPattern, localProgressIndicator, localConsumer) }
+    } ?: emptyArray()) + { localPattern, localProgressIndicator, localConsumer -> performByGotoContributorSearch(localPattern, localProgressIndicator, localConsumer) }
+
   override fun fetchWeightedElements(
     pattern: String,
     progressIndicator: ProgressIndicator,
@@ -301,12 +306,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     fetchWeightedElementsMixing(
       pattern, progressIndicator, consumer,
       // Ordering is important here
-      *(
-        contributorModules?.map2Array<SearchEverywhereContributorModule, (String, ProgressIndicator, Processor<in FoundItemDescriptor<Any>>) -> Unit> {
-          { localPattern, localProgressIndicator, localConsumer -> it.perProductFetchWeightedElements(localPattern, localProgressIndicator, localConsumer) }
-        } ?: emptyArray()
-       ),
-      { localPattern, localProgressIndicator, localConsumer -> performByGotoContributorSearch(localPattern, localProgressIndicator, localConsumer) },
+      *fetchers
     )
   }
 
