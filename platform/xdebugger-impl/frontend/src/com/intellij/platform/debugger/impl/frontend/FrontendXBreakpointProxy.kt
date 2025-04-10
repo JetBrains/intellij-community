@@ -29,7 +29,7 @@ class FrontendXBreakpointProxy(
 ) : XBreakpointProxy {
   val id: XBreakpointId = dto.id
 
-  override val breakpoint: Any = id
+  override val breakpoint: Any = this
 
   override val type: XBreakpointTypeProxy = FrontendXBreakpointType(dto.type)
 
@@ -82,6 +82,20 @@ class FrontendXBreakpointProxy(
   override fun getLogExpressionObject(): XExpression? = _state.value.logExpressionObject?.xExpression()
 
   override fun getConditionExpression(): XExpression? = _state.value.conditionExpression?.xExpression()
+
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is FrontendXBreakpointProxy) return false
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
 }
 
 @Service(Service.Level.PROJECT)
