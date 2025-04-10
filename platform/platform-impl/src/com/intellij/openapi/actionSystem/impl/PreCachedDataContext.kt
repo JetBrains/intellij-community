@@ -54,7 +54,6 @@ private val LOG = Logger.getInstance(PreCachedDataContext::class.java)
 
 private var ourPrevMapEventCount = 0
 private val ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap<Component, CachedData>()
-private val ourComponents = ContainerUtil.createWeakSet<Component>()
 private val ourInstances = UnsafeWeakList<PreCachedDataContext>()
 private val ourDataKeysIndices = ConcurrentHashMap<String, Int>()
 private val ourDataKeysCount = AtomicInteger()
@@ -68,30 +67,35 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
   private val myDataManager: DataManagerImpl
   private val myDataKeysCount: Int
 
-  constructor(component: Component?) {
+  constructor() {
+    myComponentRef = ComponentRef(null)
+    myUserData = AtomicReference(KeyFMap.EMPTY_MAP)
+    myDataManager = DataManager.getInstance() as DataManagerImpl
+    myCachedData = CachedData(false, persistentHashMapOf())
+    myDataKeysCount = DataKey.allKeysCount()
+  }
+
+  constructor(component: Component, forceUseCachesInTests: Boolean) {
     myComponentRef = ComponentRef(component)
     myUserData = AtomicReference(KeyFMap.EMPTY_MAP)
     myDataManager = DataManager.getInstance() as DataManagerImpl
-    if (component == null) {
-      myCachedData = CachedData(persistentHashMapOf())
-      myDataKeysCount = DataKey.allKeysCount()
-      return
-    }
 
     ThreadingAssertions.assertEventDispatchThread()
     ourIsCapturingSnapshot = true
     try {
-      ProhibitAWTEvents.start("getData").use { ignore1 ->
-        SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use { ignore2 ->
+      ProhibitAWTEvents.start("getData").use { _ ->
+        SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use { _ ->
           val count = ActivityTracker.getInstance().count
-          if (ourPrevMapEventCount != count ||
-              ourDataKeysIndices.size != DataKey.allKeysCount() ||
-              ApplicationManager.getApplication().isUnitTestMode()) {
-            ourPrevMaps.clear()
-            ourComponents.clear()
+          if (forceUseCachesInTests) {
+            assert(ourPrevMapEventCount == count) { "Previous event count $ourPrevMapEventCount != $count" }
           }
+          else if (ourPrevMapEventCount != count ||
+                   ApplicationManager.getApplication().isUnitTestMode()) {
+            ourPrevMaps.clear()
+          }
+          val isDisplayable = component.isDisplayable
           val components = generateSequence(component) { UIUtil.getParent(it) }
-            .takeWhile { ourPrevMaps[it] == null || it === component && !ourComponents.contains(it) }
+            .takeWhile { ourPrevMaps[it]?.isDisplayable != isDisplayable }
             .toList().asReversed()
           val topParent = if (components.isEmpty()) component else UIUtil.getParent(components[0])
           val initial = if (topParent == null) null else ourPrevMaps[topParent]!!
@@ -101,16 +105,22 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
           val sink = MySink()
           while (true) {
             sink.keys = null
-            cachedData = cacheComponentsData(sink, components, initial)
-            runSnapshotRules(sink, component, cachedData)
+            sink.uiSnapshot = initial?.uiSnapshot?.builder()
+            cachedData = cacheComponentsData(sink, isDisplayable, components)
+            if (initial?.uiComputed?.isNotEmpty() == true) {
+              cachedData.uiComputed.putAll(initial.uiComputed)
+            }
+            else {
+              runSnapshotRules(sink, component, cachedData)
+            }
             keyCount = sink.keys?.size ?: DataKey.allKeysCount()
             // retry if providers add new keys
+            // drop together with MySink.uiDataSnapshot(DataProvider)
             if (keyCount == DataKey.allKeysCount()) break
           }
           myDataKeysCount = keyCount
           myCachedData = cachedData
           ourInstances.add(this)
-          ourComponents.add(component)
           ourPrevMapEventCount = count
         }
       }
@@ -155,7 +165,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
       sink.hideEditor = hideEditor(component)
       sink.uiSnapshot = myCachedData.uiSnapshot.builder()
       cacheProviderData(sink, dataProvider)
-      cachedData = CachedData(sink.uiSnapshot?.build() ?: persistentMapOf())
+      cachedData = CachedData(myCachedData.isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf())
       // do not provide CONTEXT_COMPONENT in BGT
       runSnapshotRules(sink, if (isEDT) component else null, cachedData)
       keyCount = sink.keys?.size ?: DataKey.allKeysCount()
@@ -284,9 +294,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
   companion object {
     @JvmStatic
     fun clearAllCaches() {
-      ourPrevMaps.values.forEach { it.clear() }
       ourPrevMaps.clear()
-      ourComponents.clear()
       ourInstances.forEach { it.myCachedData.clear() }
       ourInstances.clear()
     }
@@ -359,16 +367,17 @@ private fun getDataKeyIndex(dataId: String): Int {
   return keyIndex
 }
 
-private fun cacheComponentsData(sink: MySink, components: List<Component>, initial: CachedData?): CachedData {
-  if (components.isEmpty()) return CachedData(initial?.uiSnapshot ?: persistentMapOf())
+private fun cacheComponentsData(sink: MySink, isDisplayable: Boolean, components: List<Component>): CachedData {
+  if (components.isEmpty()) {
+    return CachedData(isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf())
+  }
   lateinit var cachedData: CachedData
-  sink.uiSnapshot = initial?.uiSnapshot?.builder()
   val start = System.currentTimeMillis()
   for (comp in components) {
     sink.hideEditor = hideEditor(comp)
     val dataProvider = if (comp is UiDataProvider) comp else DataManagerImpl.getDataProviderEx(comp)
     cacheProviderData(sink, dataProvider)
-    cachedData = CachedData(sink.uiSnapshot?.build() ?: persistentMapOf())
+    cachedData = CachedData(isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf())
     ourPrevMaps[comp] = cachedData
   }
   val time = System.currentTimeMillis() - start
@@ -620,7 +629,10 @@ internal fun wrapUnsafeData(data: Any?): Any? = when {
   else -> data
 }
 
-private class CachedData(uiSnapshot: PersistentMap<String, Any>) : DataProvider, DataValidators.SourceWrapper {
+private class CachedData(
+  val isDisplayable: Boolean,
+  uiSnapshot: PersistentMap<String, Any>
+) : DataProvider, DataValidators.SourceWrapper {
   @Volatile
   var uiSnapshot: PersistentMap<String, Any> = uiSnapshot
     private set
