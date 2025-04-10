@@ -15,6 +15,9 @@ internal class InlineCompletionVolumetricTextBlockFactory(private val editor: Ed
   private val fontToMetrics = mutableMapOf<Font, FontMetrics>()
 
   fun getVolumetric(block: InlineCompletionRenderTextBlock): VolumetricInlineCompletionTextBlock {
+    if (block.text.isEmpty()) {
+      return VolumetricInlineCompletionTextBlock(block, 0.0)
+    }
     val font = InlineCompletionFontUtils.getFont(editor, block.text, block.attributes.fontType)
     val fontMetrics = fontToMetrics.getOrPut(font) { editor.contentComponent.getFontMetrics(font) }
     val width = TextLayout(block.text, font, fontMetrics.fontRenderContext).advance.toDouble()
