@@ -1298,6 +1298,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/forEachParameterNotUsed/normal.kt");
         }
 
+        @TestMetadata("outsideOfApplicableRange.kt")
+        public void testOutsideOfApplicableRange() throws Exception {
+            runTest("../testData/inspectionsLocal/forEachParameterNotUsed/outsideOfApplicableRange.kt");
+        }
+
         @TestMetadata("repeat.kt")
         public void testRepeat() throws Exception {
             runTest("../testData/inspectionsLocal/forEachParameterNotUsed/repeat.kt");
