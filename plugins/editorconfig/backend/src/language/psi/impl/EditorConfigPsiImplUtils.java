@@ -3,7 +3,6 @@ package org.editorconfig.language.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import kotlin.text.StringsKt;
-import org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighter;
 import org.editorconfig.language.psi.EditorConfigCharClassLetter;
 import org.editorconfig.language.psi.EditorConfigOptionValueList;
 import org.editorconfig.language.psi.EditorConfigOptionValuePair;
@@ -17,6 +16,8 @@ import java.util.Optional;
 
 public final class EditorConfigPsiImplUtils {
   private EditorConfigPsiImplUtils() {}
+
+  public static final String VALID_ESCAPES = " \r\n\t\\#;!?*[]{}";
 
   // ---- ---- Charclass utils ---- ----
 
@@ -36,7 +37,7 @@ public final class EditorConfigPsiImplUtils {
 
     final String text = letter.getText();
     if (text.charAt(0) != '\\') return false;
-    return StringsKt.contains(EditorConfigSyntaxHighlighter.VALID_ESCAPES, text.charAt(1), false);
+    return StringsKt.contains(VALID_ESCAPES, text.charAt(1), false);
   }
 
   // ---- ---- Value pair utils ---- ----

@@ -13,7 +13,6 @@ import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.psi.EditorConfigElementTypes
 
 object EditorConfigSyntaxHighlighter : SyntaxHighlighterBase() {
-  const val VALID_ESCAPES: String = " \r\n\t\\#;!?*[]{}"
 
   val SEPARATOR: TextAttributesKey = createTextAttributesKey("EDITORCONFIG_SEPARATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN)
   val BRACE: TextAttributesKey = createTextAttributesKey("EDITORCONFIG_BRACE", DefaultLanguageHighlighterColors.BRACES)

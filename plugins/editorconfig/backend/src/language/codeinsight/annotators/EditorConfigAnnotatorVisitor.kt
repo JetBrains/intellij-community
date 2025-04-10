@@ -9,6 +9,7 @@ import com.intellij.psi.SyntaxTraverser
 import org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighter
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.*
+import org.editorconfig.language.psi.impl.EditorConfigPsiImplUtils.VALID_ESCAPES
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 
 class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : EditorConfigVisitor() {
@@ -94,7 +95,7 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
       if (text[index] == '\\') {
         val range = TextRange(offset + index, offset + index + 2)
         index += 1
-        if (EditorConfigSyntaxHighlighter.VALID_ESCAPES.contains(text[index])) {
+        if (VALID_ESCAPES.contains(text[index])) {
           holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(range).textAttributes(EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE).create()
         }
         else {
