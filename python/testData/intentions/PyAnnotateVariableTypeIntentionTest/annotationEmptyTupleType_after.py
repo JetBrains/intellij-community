@@ -1,3 +1,3 @@
 from typing import Tuple
 
-var: [Tuple] = ()
+var: [Tuple[()]] = ()
