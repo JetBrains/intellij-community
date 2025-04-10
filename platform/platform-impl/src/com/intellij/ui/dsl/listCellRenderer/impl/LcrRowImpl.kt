@@ -91,13 +91,13 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
-  override fun onOffButton(init: (LcrOnOffButtonInitParams.() -> Unit)?) {
+  override fun onOffButton(isButtonSelected: Boolean, init: (LcrOnOffButtonInitParams.() -> Unit)?) {
     val initParams = LcrOnOffButtonInitParams()
     if (init != null) {
       initParams.init()
     }
 
-    add(LcrOnOffButtonImpl(initParams, true, gap))
+    add(LcrOnOffButtonImpl(initParams, true, gap, isButtonSelected))
   }
 
   override fun separator(init: LcrSeparator.() -> Unit) {

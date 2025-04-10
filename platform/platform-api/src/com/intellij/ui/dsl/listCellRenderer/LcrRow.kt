@@ -85,7 +85,7 @@ interface LcrRow<T> {
    * Adds a cell with an on-off button
    */
   @ApiStatus.Internal
-  fun onOffButton(init: (LcrOnOffButtonInitParams.() -> Unit)?)
+  fun onOffButton(isButtonSelected: Boolean, init: (LcrOnOffButtonInitParams.() -> Unit)? = null)
 
   /**
    * Adds separator above the row

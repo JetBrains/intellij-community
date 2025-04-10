@@ -10,7 +10,7 @@ import javax.swing.JComponent
 import javax.swing.JList
 
 @ApiStatus.Internal
-internal class LcrOnOffButtonImpl(initParams: LcrOnOffButtonInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap) :
+internal class LcrOnOffButtonImpl(initParams: LcrOnOffButtonInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap, val isButtonSelected: Boolean) :
   LcrCellBaseImpl<LcrOnOffButtonInitParams>(initParams, baselineAlign, beforeGap) {
 
   override val type = Type.ON_OFF_BUTTON
@@ -19,7 +19,9 @@ internal class LcrOnOffButtonImpl(initParams: LcrOnOffButtonInitParams, baseline
     checkTrue(type.isInstance(component))
 
     component as OnOffButton
-    component.accessibleContext.accessibleName = initParams.accessibleName
-    component.isSelected = initParams.isSelected
+    component.isSelected = isButtonSelected
+    initParams.accessibleName?.let {
+      component.accessibleContext.accessibleName = it
+    }
   }
 }

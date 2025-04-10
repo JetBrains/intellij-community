@@ -5,6 +5,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class LcrOnOffButtonInitParams : LcrInitParams() {
-  var isSelected: Boolean = false
-}
+class LcrOnOffButtonInitParams : LcrInitParams()

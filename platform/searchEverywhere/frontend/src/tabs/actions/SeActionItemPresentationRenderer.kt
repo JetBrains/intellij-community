@@ -137,8 +137,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
 
     if (switcherState != null) {
-      onOffButton {
-        isSelected = switcherState
+      onOffButton(isButtonSelected = switcherState) {
         align = LcrInitParams.Align.RIGHT
       }
     }
@@ -235,9 +234,9 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
   private fun calcFreeSpace(list: JList<*>, font: Font, shortcutText: String?): Int {
     var freeSpace = (list.width
                      - (list.insets.right + list.insets.left))
-                     //- panel.calculateNonResizeableWidth()
-                     //- (insets.right + insets.left)
-                     //- (ipad.right + ipad.left))
+    //- panel.calculateNonResizeableWidth()
+    //- (insets.right + insets.left)
+    //- (ipad.right + ipad.left))
 
     if (StringUtil.isNotEmpty(shortcutText)) {
       val fm = list.getFontMetrics(font.deriveFont(Font.BOLD))
