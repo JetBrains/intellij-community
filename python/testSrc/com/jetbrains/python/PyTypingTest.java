@@ -1235,7 +1235,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-27627
   public void testItemLookupNotResolvedAsParametrizedClassInstance() {
-    doTest("tuple",
+    doTest("tuple[()]",
            """
              d = {
                  int: lambda: ()

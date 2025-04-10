@@ -794,15 +794,18 @@ public class PyTypeModelBuilder {
       else {
         add(styled("tuple", PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
       }
+      add(styled("[", PyHighlighter.PY_BRACKETS));
       if (!type.members.isEmpty()) {
-        add(styled("[", PyHighlighter.PY_BRACKETS));
         processList(type.members);
         if (type.homogeneous) {
           add(styled(", ", PyHighlighter.PY_COMMA));
           add(styled("...", PyHighlighter.PY_DOT));
         }
-        add(styled("]", PyHighlighter.PY_BRACKETS));
       }
+      else {
+        add(styled("()", PyHighlighter.PY_PARENTHS));
+      }
+      add(styled("]", PyHighlighter.PY_BRACKETS));
     }
 
     @Override
