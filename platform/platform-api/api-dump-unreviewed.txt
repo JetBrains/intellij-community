@@ -7478,6 +7478,7 @@ c:com.intellij.ui.components.JBList
 - getScrollableBlockIncrement(java.awt.Rectangle,I,I):I
 - getScrollableUnitIncrement(java.awt.Rectangle,I,I):I
 - installCellRenderer(com.intellij.util.NotNullFunction):V
+- installCellRenderer(java.util.function.Function):V
 - isEmpty():Z
 - p:itemToText(I,java.lang.Object):java.lang.String
 - paint(java.awt.Graphics):V
@@ -7490,6 +7491,7 @@ c:com.intellij.ui.components.JBList
 - setEmptyText(java.lang.String):V
 - setExpandableItemsEnabled(Z):V
 - setOffsetFromElementTopForDnD(com.intellij.util.Function):V
+- setOffsetFromElementTopForDnD(java.util.function.Function):V
 - setPaintBusy(Z):V
 - setUI(javax.swing.plaf.ListUI):V
 - pf:super_getPreferredSize():java.awt.Dimension
