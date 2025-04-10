@@ -14,7 +14,6 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -37,7 +36,6 @@ import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBuildDescriptor
-import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
@@ -54,23 +52,19 @@ import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.collectIncludedPluginModules
 import org.jetbrains.intellij.build.impl.collectPlatformModules
-import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.copyDistFiles
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
 import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBuild
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
-import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.impl.getToolModules
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.postData
 import org.jetbrains.intellij.build.readSearchableOptionIndex
@@ -421,34 +415,6 @@ private suspend fun computeIdeFingerprint(
   Span.current().addEvent("IDE fingerprint: $fingerprint")
 }
 
-private suspend fun buildPlugins(
-  request: BuildRequest,
-  context: BuildContext,
-  runDir: Path,
-  platformLayout: Deferred<PlatformLayout>,
-  artifactTask: Job,
-  searchableOptionSet: SearchableOptionSetDescriptor?,
-  buildPlatformJob: Job,
-  moduleOutputPatcher: ModuleOutputPatcher,
-): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
-  val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
-
-  val pluginRootDir = runDir.resolve("plugins")
-
-  val plugins = getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
-    .filter { isPluginApplicable(bundledMainModuleNames, plugin = it, context) }
-
-  withContext(Dispatchers.IO) {
-    Files.createDirectories(pluginRootDir)
-  }
-
-  artifactTask.join()
-
-  val pluginEntries = buildPlugins(plugins, platformLayout.await(), searchableOptionSet, context, pluginRootDir, buildPlatformJob, moduleOutputPatcher)
-  val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
-  return pluginEntries to additionalPlugins
-}
-
 private suspend fun createBuildContext(
   createProductProperties: suspend (CompilationContext) -> ProductProperties,
   request: BuildRequest,
@@ -458,8 +424,8 @@ private suspend fun createBuildContext(
 ): BuildContext {
   return coroutineScope {
     val buildOptionsTemplate = request.buildOptionsTemplate
-    val useCompiledClassesFromProjectOutput =
-      buildOptionsTemplate == null || (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
+    val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null ||
+                                              (buildOptionsTemplate.useCompiledClassesFromProjectOutput && buildOptionsTemplate.unpackCompiledClassesArchives)
     val classOutDir = if (useCompiledClassesFromProjectOutput) {
       request.productionClassOutput.parent
     }
@@ -572,19 +538,6 @@ private suspend fun createBuildContext(
   }
 }
 
-private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, context: BuildContext): Boolean {
-  if (!bundledMainModuleNames.contains(plugin.mainModule)) {
-    return false
-  }
-
-  if (plugin.bundlingRestrictions == PluginBundlingRestrictions.NONE) {
-    return true
-  }
-
-  return satisfiesBundlingRequirements(plugin = plugin, osFamily = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, context = context) ||
-         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
-}
-
 internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, compilationContext: CompilationContext, request: BuildRequest): ProductProperties {
   val classPathFiles = coroutineScope {
      getBuildModules(productConfiguration).map { async { compilationContext.getModuleOutputDir(compilationContext.findRequiredModule(it)) } }.toList()
@@ -667,14 +620,6 @@ private suspend fun layoutPlatform(
     }
   }
   return entries to sortedClassPath
-}
-
-private suspend fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
-  val bundledPluginModules = context.getBundledPluginModules()
-  val result = LinkedHashSet<String>(bundledPluginModules.size + additionalModules.size)
-  result.addAll(bundledPluginModules)
-  result.addAll(additionalModules)
-  return result
 }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {

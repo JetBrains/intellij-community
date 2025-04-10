@@ -46,6 +46,7 @@ internal fun createSourceAndCacheStrategyList(sources: Collection<Source>, produ
         }
       }
       is LazySource -> LazySourceAndCacheStrategy(source)
+      is UnpackedZipSource -> throw UnsupportedOperationException("UnpackedZipSource is expected to be wrapped into LazySourceAndCacheStrategy")
     }
   }
 }

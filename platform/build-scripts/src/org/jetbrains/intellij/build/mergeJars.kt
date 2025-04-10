@@ -184,6 +184,10 @@ private suspend fun writeSource(
         )
       }
     }
+
+    is UnpackedZipSource -> {
+      throw UnsupportedOperationException("UnpackedZipSource is not supported")
+    }
   }
 }
 

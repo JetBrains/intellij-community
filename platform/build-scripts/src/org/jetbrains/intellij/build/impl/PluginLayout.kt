@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.FileSystemException
@@ -105,7 +104,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   val hasPlatformSpecificResources: Boolean
-    get() = platformResourceGenerators.isNotEmpty()
+    get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
 
   fun getMainJarName(): String = mainJarName
 
@@ -238,7 +237,21 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun withCustomAsset(lazySourceSupplier: (context: BuildContext) -> LazySource?) {
       layout.customAssets += object : CustomAssetDescriptor {
-        override suspend fun getSources(context: BuildContext): Sequence<Source>? {
+        override val platformSpecific: SupportedDistribution?
+          get() = null
+
+        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
+          return sequenceOf(lazySourceSupplier(context) ?: return null)
+        }
+      }
+    }
+
+    fun withCustomAsset(platform: SupportedDistribution, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
+      layout.customAssets += object : CustomAssetDescriptor {
+        override val platformSpecific: SupportedDistribution?
+          get() = platform
+
+        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
           return sequenceOf(lazySourceSupplier(context) ?: return null)
         }
       }

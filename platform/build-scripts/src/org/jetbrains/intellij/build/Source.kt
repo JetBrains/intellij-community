@@ -30,6 +30,31 @@ class LazySource(
   override fun toString(): String = "LazySource(name=$name, precomputedHash=$precomputedHash)"
 }
 
+data class UnpackedZipSource(
+  @JvmField val file: Path,
+  override val filter: ((String) -> Boolean),
+) : Source, Comparable<ZipSource> {
+  override fun compareTo(other: ZipSource): Int {
+    return if (isWindows) file.toString().compareTo(other.file.toString()) else file.compareTo(other.file)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ZipSource) return false
+
+    if (file != other.file) return false
+    if (filter != other.filter) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = file.hashCode()
+    result = 31 * result + filter.hashCode()
+    return result
+  }
+}
+
 data class ZipSource(
   @JvmField val file: Path,
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,

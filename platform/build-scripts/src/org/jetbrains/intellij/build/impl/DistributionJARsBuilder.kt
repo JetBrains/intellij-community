@@ -714,27 +714,6 @@ internal suspend fun buildPlugins(
   return entries
 }
 
-private suspend fun buildPlatformSpecificPluginResources(
-  plugin: PluginLayout,
-  targetDirs: List<Pair<SupportedDistribution, Path>>,
-  context: BuildContext,
-) {
-  for ((dist, generators) in plugin.platformResourceGenerators) {
-    val targetPath = targetDirs.firstOrNull { it.first == dist }?.second ?: continue
-    val pluginDir = targetPath.resolve(plugin.directoryName)
-    val relativePluginDir = context.paths.buildOutputDir.relativize(pluginDir).toString()
-    for (generator in generators) {
-      spanBuilder("plugin platform-specific resources")
-        .setAttribute("path", relativePluginDir)
-        .setAttribute("os", dist.os.toString())
-        .setAttribute("arch", dist.arch.toString())
-        .use {
-          generator(pluginDir, context)
-        }
-    }
-  }
-}
-
 private const val PLUGINS_DIRECTORY = "plugins"
 private const val LIB_DIRECTORY = "lib"
 

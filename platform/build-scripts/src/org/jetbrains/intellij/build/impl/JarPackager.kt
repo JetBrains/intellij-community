@@ -364,6 +364,10 @@ class JarPackager private constructor(
 
   private suspend fun handleCustomAssets(layout: PluginLayout, jarAsset: Lazy<AssetDescriptor>) {
     for (customAsset in layout.customAssets) {
+      if (customAsset.platformSpecific != null) {
+        continue
+      }
+
       val relativePath = customAsset.relativePath
       if (relativePath == null) {
         customAsset.getSources(context)?.let { jarAsset.value.sources.addAll(it) }
