@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerBundle
@@ -17,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<FrontendXDebuggerEvaluator>()
 
@@ -62,6 +64,9 @@ internal open class FrontendXDebuggerEvaluator(
       }
       catch (e: Exception) {
         callback.errorOccurred(e.message ?: XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
+        if (e is CancellationException || e is ControlFlowException) {
+          throw e
+        }
         LOG.error(e)
       }
     }
