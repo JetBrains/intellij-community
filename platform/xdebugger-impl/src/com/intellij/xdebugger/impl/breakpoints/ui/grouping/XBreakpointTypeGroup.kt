@@ -5,30 +5,26 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.breakpointTypes
-import java.lang.Long
 import javax.swing.Icon
-import kotlin.Boolean
-import kotlin.Int
-import kotlin.String
 
-class XBreakpointTypeGroup(val breakpointType: XBreakpointType<*, *>) : XBreakpointGroup() {
+internal class XBreakpointTypeGroup(private val breakpointType: XBreakpointType<*, *>) : XBreakpointGroup() {
   override fun getName(): String {
-    return breakpointType.getTitle()
+    return breakpointType.title
   }
 
   override fun getIcon(isOpen: Boolean): Icon? {
-    return breakpointType.getEnabledIcon()
+    return breakpointType.enabledIcon
   }
 
   override fun compareTo(o: XBreakpointGroup): Int {
-    if (getName() == o.getName()) {
+    if (name == o.getName()) {
       return 0
     }
     if (o is XBreakpointTypeGroup) {
       if (o.breakpointType is XLineBreakpointType<*>) {
-        if (this.breakpointType is XLineBreakpointType<*>) {
-          val res = (o.breakpointType as XLineBreakpointType<*>).getPriority() -
-                    this.breakpointType.getPriority()
+        if (breakpointType is XLineBreakpointType<*>) {
+          val res = o.breakpointType.priority -
+                    breakpointType.priority
           if (res != 0) {
             return res
           }
@@ -38,18 +34,15 @@ class XBreakpointTypeGroup(val breakpointType: XBreakpointType<*, *>) : XBreakpo
           return 1
         }
       }
-      else if (this.breakpointType is XLineBreakpointType<*>) {
+      else if (breakpointType is XLineBreakpointType<*>) {
         return -1
       }
-      return Long.compare(indexOfType(this.breakpointType), indexOfType(
-        o.breakpointType))
+      return indexOfType(breakpointType).compareTo(indexOfType(o.breakpointType))
     }
     return -o.compareTo(this)
   }
 
-  companion object {
-    private fun indexOfType(type: XBreakpointType<*, *>?): kotlin.Long {
-      return breakpointTypes().indexOf(type).orElse(-1)
-    }
+  private fun indexOfType(type: XBreakpointType<*, *>?): Long {
+    return breakpointTypes().indexOf(type).orElse(-1)
   }
 }
