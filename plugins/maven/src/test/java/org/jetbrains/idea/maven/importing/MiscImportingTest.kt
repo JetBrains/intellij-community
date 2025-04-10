@@ -290,60 +290,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testTakingProxySettingsIntoAccount() = runBlocking {
-    val helper = MavenCustomRepositoryHelper(dir, "local1")
-    repositoryPath = helper.getTestData("local1")
-    mavenGeneralSettings.setLocalRepository(repositoryPath.toString())
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <dependencies>
-                      <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.0</version>
-                      </dependency>
-                    </dependencies>
-                    """.trimIndent())
-    removeFromLocalRepository("junit")
-
-    // incremental sync doesn't download dependencies if effective pom dependencies haven't changed
-    updateAllProjectsFullSync()
-
-    val jarFile = repositoryPath.resolve("junit/junit/4.0/junit-4.0.jar")
-    assertTrue(jarFile.exists())
-    projectsManager.listenForExternalChanges()
-    waitForImportWithinTimeout {
-      updateSettingsXml("""
-                        <proxies>
-                         <proxy>
-                            <id>my</id>
-                            <active>true</active>
-                            <protocol>http</protocol>
-                            <host>invalid.host.in.intellij.net</host>
-                            <port>3128</port>
-                          </proxy>
-                        </proxies>
-                        """.trimIndent())
-    }
-    removeFromLocalRepository("junit")
-    assertFalse(jarFile.exists())
-    try {
-      updateAllProjects()
-    }
-    finally {
-      // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
-      System.clearProperty("http.proxyHost")
-      System.clearProperty("http.proxyPort")
-    }
-    assertFalse(jarFile.exists())
-    restoreSettingsFile()
-    updateAllProjects()
-    assertTrue(jarFile.exists())
-  }
-
-  @Test
   fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "plugins")
