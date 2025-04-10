@@ -40,6 +40,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -459,15 +460,13 @@ object DynamicPlugins {
     // hence the user cannot interact with the dialog.
     // We are using an ad-hoc modality here to block any attempts to initiate a modal dialog stemming from a non-modal state.
     // A proper fix would be to transfer the inner write actions to background, and show normal running modal progress dialog instead of Potemkin; see IJPL-182690
-    runWithModalProgressBlocking(modalOwner, IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name)) {
-      withContext(Dispatchers.EDT) {
-        val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
-                                         project,
-                                         parentComponent,
-                                         null)
-        indicator.runInSwingThread {
-          result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
-        }
+    inModalContext(ObjectUtils.sentinel("Unloading of ${pluginDescriptor.name}")) {
+      val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.unloading.plugin.title", pluginDescriptor.name),
+                                       project,
+                                       parentComponent,
+                                       null)
+      indicator.runInSwingThread {
+        result = unloadPluginWithoutProgress(pluginDescriptor, options.withSave(false))
       }
     }
     return result
