@@ -282,7 +282,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     if (processHandler != null) {
       val processAdapter = object : ProcessListener {
         override fun startNotified(event: ProcessEvent) {
-          val pid = (processHandler as? BaseProcessHandler<*>)?.process?.pid()
+          val pid = getPid(processHandler)
           UIUtil.invokeLaterIfNeeded {
             content.icon = getLiveIndicator(descriptor.icon)
             var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
@@ -607,6 +607,15 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
       return askUserAndWait(processHandler, sessionName, task)
     }
+  }
+}
+
+private fun getPid(processHandler: ProcessHandler): Long? {
+  try {
+    return (processHandler as? BaseProcessHandler<*>)?.process?.pid()
+  }
+  catch (_: UnsupportedOperationException) {
+    return null
   }
 }
 
