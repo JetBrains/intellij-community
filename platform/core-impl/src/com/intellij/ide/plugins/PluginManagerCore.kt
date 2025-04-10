@@ -582,6 +582,15 @@ object PluginManagerCore {
   }
 
   private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>, essentialPlugins: List<PluginId>) {
+    val corePlugin = idMap[CORE_ID]
+    if (corePlugin != null) {
+      val disabledModulesOfCorePlugin =
+        corePlugin.content.modules
+          .filter { it.loadingRule.required && !it.requireDescriptor().isEnabled }
+      if (disabledModulesOfCorePlugin.isNotEmpty()) {
+        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.name })
+      }
+    }
     var missing: MutableList<String>? = null
     for (id in essentialPlugins) {
       val descriptor = idMap[id]
@@ -675,15 +684,6 @@ object PluginManagerCore {
     }
 
     if (checkEssentialPlugins) {
-      val corePlugin = idMap[CORE_ID]
-      if (corePlugin != null) {
-        val disabledModulesOfCorePlugin = 
-          corePlugin.content.modules
-            .filter { it.loadingRule.required && !it.requireDescriptor().isEnabled }
-        if (disabledModulesOfCorePlugin.isNotEmpty()) {
-          throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.name })
-        }    
-      }
       checkEssentialPluginsAreAvailable(idMap, context.essentialPlugins)
     }
 
