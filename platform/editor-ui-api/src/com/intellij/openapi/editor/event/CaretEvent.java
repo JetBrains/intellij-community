@@ -5,14 +5,13 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
 public class CaretEvent extends EventObject {
-  private final Caret myCaret;
-  private final LogicalPosition myOldPosition;
-  private final LogicalPosition myNewPosition;
+  private final @NotNull Caret myCaret;
+  private final @NotNull LogicalPosition myOldPosition;
+  private final @NotNull LogicalPosition myNewPosition;
 
   public CaretEvent(@NotNull Caret caret, @NotNull LogicalPosition oldPosition, @NotNull LogicalPosition newPosition) {
     super(caret.getEditor());
@@ -25,7 +24,7 @@ public class CaretEvent extends EventObject {
     return (Editor) getSource();
   }
 
-  public @Nullable Caret getCaret() {
+  public @NotNull Caret getCaret() {
     return myCaret;
   }
 

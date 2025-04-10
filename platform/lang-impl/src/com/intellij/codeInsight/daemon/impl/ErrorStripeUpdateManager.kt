@@ -150,7 +150,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
 }
 
 /**
- * Returns whether `setTrafficLightOnEditorIfNeeded` call is required
+ * Returns true if [TrafficLightRenderer] should be recreated via [setTrafficLightOnEditorIfNeeded]
  */
 private fun refreshErrorStripeRenderer(editorMarkupModel: EditorMarkupModel): Boolean {
   if (!editorMarkupModel.isErrorStripeVisible()) {

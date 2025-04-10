@@ -92,11 +92,11 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
     }
   }
 
-  public List<TextRange> getReadUsages() {
+  public @NotNull List<TextRange> getReadUsages() {
     return myReadUsages;
   }
 
-  public List<TextRange> getWriteUsages() {
+  public @NotNull List<TextRange> getWriteUsages() {
     return myWriteUsages;
   }
 

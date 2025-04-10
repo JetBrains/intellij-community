@@ -106,7 +106,7 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
 
   private static @NotNull List<@NotNull PsiSymbolReference> applyHints(@NotNull List<PsiSymbolReference> references,
                                                                        @NotNull PsiSymbolReferenceHints hints) {
-    if (hints == EMPTY_HINTS) {
+    if (hints == EMPTY_HINTS || references.isEmpty()) {
       return references;
     }
     List<@NotNull PsiSymbolReference> result = references;
