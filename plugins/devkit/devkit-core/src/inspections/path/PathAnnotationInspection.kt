@@ -156,16 +156,60 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         val arguments = node.valueArguments
         if (arguments.isNotEmpty()) {
           val arg = arguments[0]
+
+          // Check if the argument is a string literal that denotes a valid filename
+          if (arg is UInjectionHost) {
+            val stringValue = arg.evaluateToString()
+            if (stringValue != null && PathAnnotationInfo.isValidFilename(stringValue)) {
+              // If it's a valid filename, don't register any problems
+              return true
+            }
+          }
+
+          // Check if the argument is a reference to a variable with a string constant initializer that denotes a valid filename
+          if (arg is UReferenceExpression) {
+            val resolved = arg.resolve()
+            if (resolved is com.intellij.psi.PsiVariable) {
+              val initializer = resolved.initializer
+              if (initializer != null) {
+                // Try to evaluate the initializer as a string constant
+                val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
+                  .constantEvaluationHelper.computeConstantExpression(initializer)
+                if (constantValue is String && PathAnnotationInfo.isValidFilename(constantValue)) {
+                  // If it's a valid filename, don't register any problems
+                  return true
+                }
+              }
+            }
+          }
+
           val argInfo = PathAnnotationInfo.forExpression(arg)
-          if (argInfo is PathAnnotationInfo.Unspecified) {
-            // Report weak warning: non-annotated string used in Path.resolve()
-            holder.registerProblem(
-              sourcePsi,
-              DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
-              com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
-              AddMultiRoutingAnnotationFix()
-            )
-            return true
+          if (argInfo !is PathAnnotationInfo.MultiRouting && argInfo !is PathAnnotationInfo.FilenameInfo) {
+            // Report warning: argument of Path.resolve() should be annotated with either @MultiRoutingFileSystemPath or @Filename
+            when (argInfo) {
+              is PathAnnotationInfo.Native -> {
+                holder.registerProblem(
+                  arg.sourcePsi ?: sourcePsi,
+                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
+                  AddMultiRoutingAnnotationFix()
+                )
+              }
+              is PathAnnotationInfo.Unspecified -> {
+                holder.registerProblem(
+                  arg.sourcePsi ?: sourcePsi,
+                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
+                  com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
+                  AddMultiRoutingAnnotationFix()
+                )
+              }
+              else -> {
+                // This should not happen, but we need to handle all cases
+                holder.registerProblem(
+                  arg.sourcePsi ?: sourcePsi,
+                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")
+                )
+              }
+            }
           }
         }
       }

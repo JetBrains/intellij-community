@@ -151,4 +151,42 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
       }      
       """.trimIndent())
   }
+
+  /**
+   * Test that string literals that denote a filename (without slashes) are allowed in Path.resolve() method.
+   */
+  fun testPathResolve() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+      import com.intellij.platform.eel.annotations.Filename;
+      import java.nio.file.Path;
+      import java.nio.file.Paths;
+
+      public class PathResolve {
+          public void testMethod() {
+              // Create a base path
+              @MultiRoutingFileSystemPath String basePath = "/base/path";
+              Path base = Path.of(basePath);
+
+              // Test with string literals
+              Path path1 = base.resolve("file.txt"); // No warning, "file.txt" is a valid filename
+              Path path2 = base.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">"invalid/filename"</weak_warning>); // Warning, contains slash
+
+              // Test with annotated strings
+              @MultiRoutingFileSystemPath String multiRoutingPath = "some/path";
+              @Filename String filename = "file.txt";
+
+              Path path3 = base.resolve(multiRoutingPath); // No warning, annotated with @MultiRoutingFileSystemPath
+              Path path4 = base.resolve(filename); // No warning, annotated with @Filename
+
+              // Test with string constants
+              final String validFilename = "file.txt";
+              final String invalidFilename = "invalid/filename";
+
+              Path path5 = base.resolve(validFilename); // No warning, validFilename is a valid filename
+              Path path6 = base.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">invalidFilename</weak_warning>); // Warning, contains slash
+          }
+      }      
+      """.trimIndent())
+  }
 }
