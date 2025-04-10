@@ -201,7 +201,14 @@ internal class InlineCompletionTextRenderManager private constructor(
       renderFoldedRange()
       updateDirtyInlays()
 
+      val foldingIsApplied = foldedRange != null
       applySoftWrapping(firstTouchedLine)
+      if (!foldingIsApplied && foldedRange != null) {
+        // Folding wasn't there before soft-wrapping but appeared after.
+        // So, it's the first time the folded range appeared, so we need to actually render it by manually calling it.
+        renderFoldedRange()
+        updateDirtyInlays()
+      }
     }
 
     private fun renderInline(newBlocks: List<InlineCompletionRenderTextBlock>) {
