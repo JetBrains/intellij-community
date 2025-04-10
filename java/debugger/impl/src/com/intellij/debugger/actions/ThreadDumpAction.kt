@@ -2,16 +2,11 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.MethodInvokeUtils.getMethodHandlesImplLookup
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.impl.DebuggerContextImpl
-import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.debugger.impl.DebuggerUtilsImpl
-import com.intellij.debugger.impl.ThreadDumpItemsProvider
-import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
+import com.intellij.debugger.impl.*
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -32,9 +27,8 @@ import com.intellij.unscramble.JavaThreadDumpItem
 import com.intellij.util.lang.JavaVersion
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.jetbrains.annotations.NonNls
 import java.lang.Long as JLong
 import java.util.concurrent.CancellationException
@@ -45,8 +39,13 @@ import kotlin.checkNotNull
 import kotlin.let
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.to
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import com.intellij.debugger.JavaDebuggerBundle
 
 class ThreadDumpAction : DumbAwareAction() {
+
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project == null) {
@@ -58,12 +57,12 @@ class ThreadDumpAction : DumbAwareAction() {
     val managerThread = context.managerThread!!
     if (session != null && session.isAttached) {
       executeOnDMT(managerThread) {
-        val dumpItems = buildThreadDump(context)
-        withContext(Dispatchers.EDT) {
-          val xSession = session.xDebugSession
-          if (xSession != null) {
-            DebuggerUtilsEx.addDumpItems(project, dumpItems, xSession.ui, session.searchScope)
-          }
+        // Pass parts of the dump to the ThreadDumpPanel via a channel as soon as they are computed
+        val dumpItemsChannel = produce(capacity = Channel.BUFFERED) {
+          buildThreadDump(context, channel)
+        }
+        launch(Dispatchers.EDT) {
+          collectAndShowDumpItems(project, session, dumpItemsChannel)
         }
       }
     }
@@ -99,31 +98,46 @@ class ThreadDumpAction : DumbAwareAction() {
              "(" + DebuggerUtilsEx.getSourceName(location, "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")"
     }
 
-    private suspend fun buildThreadDump(context: DebuggerContextImpl): List<DumpItem> {
-      fun fallback() =
-        buildJavaPlatformThreadDump(context).map(::JavaThreadDumpItem)
+    @ApiStatus.Internal
+    suspend fun buildThreadDump(context: DebuggerContextImpl, dumpItemsChannel: SendChannel<List<DumpItem>>) {
+
+      suspend fun fallback() =
+        dumpItemsChannel.send(
+          buildJavaPlatformThreadDump(context).map(::JavaThreadDumpItem)
+        )
 
       if (!Registry.`is`("debugger.thread.dump.extended")) {
-        return fallback()
+        fallback()
+        return
       }
-
-      return try {
+      try {
         val providers = extendedProviders.extensionList.map { it.getProvider(context) }
 
-        suspend fun getAllItems(suspendContext: SuspendContextImpl?) =
-          withBackgroundProgress(context.project, JavaDebuggerBundle.message("thread.dump.extended.progress")) {
-            providers
-              .flatMap { it.getItems(suspendContext) }
-              .sortedWith(DumpItem.BY_INTEREST)
+        suspend fun getAllItems(suspendContext: SuspendContextImpl?) {
+          coroutineScope {
+            // Compute parts of the dump asynchronously
+            providers.map { p ->
+              launch {
+                withBackgroundProgress(context.project, p.progressText) {
+                  try {
+                    val items = p.getItems(suspendContext).sortedWith(DumpItem.BY_INTEREST)
+                    dumpItemsChannel.send(items)
+                  }
+                  catch (e: CancellationException) {
+                    thisLogger().debug("${p.progressText} was cancelled by user.")
+                    throw e
+                  }
+                }
+              }
+            }
           }
+        }
 
         if (providers.any { it.requiresEvaluation }) {
           val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.ms", 500).milliseconds
           try {
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
-              withDebugContext(suspendContext) {
-                getAllItems(suspendContext)
-              }
+              getAllItems(suspendContext)
             }
           }
           catch (_: TimeoutCancellationException) {
@@ -135,7 +149,7 @@ class ThreadDumpAction : DumbAwareAction() {
           val vm = context.debugProcess!!.virtualMachineProxy
           vm.suspend()
           try {
-            return getAllItems(null)
+            getAllItems(null)
           }
           finally {
             vm.resume()
@@ -163,6 +177,17 @@ class ThreadDumpAction : DumbAwareAction() {
       }
       finally {
         vm.resume()
+      }
+    }
+
+    private suspend fun collectAndShowDumpItems(project: Project, session: DebuggerSession, dumpItemsChannel: ReceiveChannel<List<DumpItem>>) {
+      val xSession = session.xDebugSession
+      if (xSession != null) {
+        val threadDumpPanel = DebuggerUtilsEx.createThreadDumpPanel(project, emptyList(), xSession.ui, session.searchScope)
+
+        for (items in dumpItemsChannel) {
+          threadDumpPanel.addDumpItems(items)
+        }
       }
     }
   }
@@ -485,6 +510,10 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
       JavaVersion.parse(vm.version()).feature >= 19 &&
       // Check if VirtualThread class is at least loaded.
       vm.classesByName("java.lang.VirtualThread").isNotEmpty()
+
+    override val progressText: String get() = JavaDebuggerBundle.message(
+      if (shouldDumpVirtualThreads) "thread.dump.platform.and.virtual.threads.progress" else "thread.dump.platform.threads.progress"
+    )
 
     override val requiresEvaluation get() = shouldDumpVirtualThreads
 

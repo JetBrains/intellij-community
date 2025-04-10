@@ -5,8 +5,10 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
@@ -29,8 +31,7 @@ internal suspend fun <R> suspendAllAndEvaluate(
   val suspendContext = context.suspendContext
   return if (suspendContext == null) {
     // Not suspended at all.
-    tryToBreakOnAnyMethodAndEvaluate(context, process, timeToSuspend, action)
-
+    tryToBreakOnAnyMethodAndEvaluate(context, process, null, timeToSuspend, action)
   }
   else if (process.isEvaluationPossible(suspendContext)) {
     if (suspendContext.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD) {
@@ -50,27 +51,36 @@ internal suspend fun <R> suspendAllAndEvaluate(
   }
   else {
     // We are on a pause, cannot evaluate.
-    tryToResumeThenBreakOnAnyMethodAndEvaluate(context, process, suspendContext, timeToSuspend, action)
+    tryToBreakOnAnyMethodAndEvaluate(context, process, suspendContext, timeToSuspend, action)
   }
-
 }
 
-// FIXME: too much copypasted, compare and merge
-private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
+private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate (
   context: DebuggerContextImpl,
   process: DebugProcessImpl,
+  pauseSuspendContext: SuspendContextImpl?,
   timeToSuspend: Duration,
-  action: suspend (SuspendContextImpl) -> R
+  block: suspend (SuspendContextImpl) -> R
 ): R {
-  val evaluatableContextResult = Channel<SuspendContextImpl>(capacity = 1)
+  val onPause = pauseSuspendContext != null
+
+  val actionResult = Channel<R>(capacity = 1)
+  val evaluatableContextObtained = CompletableDeferred<Unit>()
 
   // Create a request which suspends all the threads and gets the suspendContext.
   val requestor = object : FilteredRequestor {
     override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-      process.requestsManager.deleteRequest(this)
-      val evaluatableContext = action.suspendContext!!
-      evaluatableContextResult.trySend(evaluatableContext).also { assert(it.isSuccess) }
-      return true
+      val requestor = this
+      runBlockingCancellable {
+        process.requestsManager.deleteRequest(requestor)
+        val suspendContext = action.suspendContext!!
+        evaluatableContextObtained.complete(Unit)
+        actionResult.send(block(suspendContext))
+      }
+      // Note: in case the context was not originally suspended, return false,
+      // so that suspendContext is resumed when action is computed,
+      // thus no suspension will be visible in the UI
+      return onPause
     }
 
     override fun getSuspendPolicy(): String = DebuggerSettings.SUSPEND_ALL
@@ -80,66 +90,31 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
   request.setSuspendPolicy(EventRequest.SUSPEND_ALL)
   request.isEnabled = true
 
-  val evaluatableContext = try {
-    withTimeout(timeToSuspend) {
-      evaluatableContextResult.receive()
-    }
-  }
-  finally {
-    process.requestsManager.deleteRequest(requestor)
-  }
-
-  try {
-    return action(evaluatableContext)
-  }
-  finally {
+  // If the context was on pause, it should be resume first to hit the breakpoint
+  if (onPause) {
     context.managerThread!!
-      .invokeNow(process.createResumeCommand(evaluatableContext))
-  }
-}
-
-private suspend fun <R> tryToResumeThenBreakOnAnyMethodAndEvaluate(
-  context: DebuggerContextImpl,
-  process: DebugProcessImpl,
-  pauseSuspendContext: SuspendContextImpl,
-  timeToSuspend: Duration,
-  action: suspend (SuspendContextImpl) -> R
-): R {
-  val evaluatableContextResult = Channel<SuspendContextImpl>(capacity = 1)
-
-  // Create a request which suspends all the threads and gets the suspendContext.
-  val requestor = object : FilteredRequestor {
-    override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-      process.requestsManager.deleteRequest(this)
-      val evaluatableContext = action.suspendContext!!
-      evaluatableContextResult.trySend(evaluatableContext).also { assert(it.isSuccess) }
-      return true
-    }
-
-    override fun getSuspendPolicy(): String = DebuggerSettings.SUSPEND_ALL
+      .invokeNow(process.createResumeCommand(pauseSuspendContext))
   }
 
-  val request = process.requestsManager.createMethodEntryRequest(requestor)
-  request.setSuspendPolicy(EventRequest.SUSPEND_ALL)
-  request.isEnabled = true
-
-  context.managerThread!!
-    .invokeNow(process.createResumeCommand(pauseSuspendContext))
-
-  val evaluatableContext = try {
+  // Check that we hit the breakpoint within the specified timeout
+  try {
     withTimeout(timeToSuspend) {
-      evaluatableContextResult.receive()
+      evaluatableContextObtained.await()
     }
   }
   catch (e: TimeoutCancellationException) {
-    // FIXME: get preferred thread from pauseSuspendContext
-    context.managerThread!!
-      .invokeNow(process.createPauseCommand(null))
-    throw e
+    if (onPause) {
+      // FIXME: get preferred thread from pauseSuspendContext
+      // If the context was originally on pause, but after resume did not hit a breakpoint within a timeout,
+      // then it should be paused again
+      context.managerThread!!
+        .invokeNow(process.createPauseCommand(null))
+      throw e
+    }
   }
   finally {
     process.requestsManager.deleteRequest(requestor)
   }
 
-  return action(evaluatableContext)
+  return actionResult.receive()
 }

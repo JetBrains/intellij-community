@@ -72,7 +72,7 @@ object CoroutineBreakpointFacility {
             override fun isRestoreBreakpoints(): Boolean = false
             override fun stopOnlyInBaseClass(): Boolean = true
 
-            override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
+            override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
                 thisLogger().debug { "Hit the resume breakpoint at ${context.location}" }
                 val result = super.processLocatableEvent(action, event)
                 if (result) {

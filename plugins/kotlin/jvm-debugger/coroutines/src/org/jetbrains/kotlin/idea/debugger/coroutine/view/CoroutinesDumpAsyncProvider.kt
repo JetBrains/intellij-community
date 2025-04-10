@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
+import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
@@ -28,6 +29,8 @@ import com.intellij.unscramble.MergeableToken
 @ApiStatus.Internal
 class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     override fun getProvider(context: DebuggerContextImpl): ThreadDumpItemsProvider = object : ThreadDumpItemsProvider {
+        override val progressText: String get() = JavaDebuggerBundle.message("thread.dump.coroutines.progress")
+
         private val vm = context.debugProcess!!.virtualMachineProxy
 
         private val enabled =
