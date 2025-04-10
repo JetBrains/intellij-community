@@ -6,7 +6,7 @@ import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
-import com.intellij.platform.searchEverywhere.providers.files.SeTargetsFilter
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
