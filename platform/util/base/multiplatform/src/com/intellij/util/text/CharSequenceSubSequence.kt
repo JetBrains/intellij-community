@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.CharSequenceWithStringHash
 import com.intellij.openapi.util.text.stringHashCode
 import com.intellij.util.text.CharArrayUtilKmp.fromSequence
 import com.intellij.util.text.CharArrayUtilKmp.getChars
+import kotlin.jvm.Transient
 
 /**
  * `CharSequenceSubSequence` allows to save time and memory in text processing code. It avoids
