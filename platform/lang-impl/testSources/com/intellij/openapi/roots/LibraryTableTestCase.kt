@@ -58,6 +58,7 @@ abstract class LibraryTableTestCase {
     assertThat(libraryTable.getLibraryByName("a")).isSameAs(library)
     
     projectModel.renameLibrary(library, "b")
+    assertThat(library.isDisposed).isFalse()
     assertThat(libraryTable.libraries.single()).isSameAs(library)
     assertThat(libraryTable.getLibraryByName("a")).isNull()
     assertThat(libraryTable.getLibraryByName("b")).isSameAs(library)
@@ -99,6 +100,7 @@ abstract class LibraryTableTestCase {
       val library = createLibrary("a", it)
       assertThat(it.isChanged).isTrue()
       it.removeLibrary(library)
+      assertThat(library.isDisposed).isTrue()
       library
     }
     assertThat(libraryTable.libraries).isEmpty()
