@@ -7,4 +7,5 @@
   modules:
   - name: intellij.editorconfig.plugin
   contentModules:
+  - name: intellij.editorconfig.common
   - name: intellij.editorconfig.backend

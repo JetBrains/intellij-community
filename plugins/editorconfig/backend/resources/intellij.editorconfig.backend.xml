@@ -2,6 +2,7 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.editorconfig.common"/>
   </dependencies>
   <actions resource-bundle="messages.EditorConfigBundle">
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>

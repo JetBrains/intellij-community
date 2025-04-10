@@ -4,6 +4,7 @@ package org.editorconfig.language.parser
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiParser
+import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
@@ -14,14 +15,16 @@ import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal class EditorConfigParserDefinition : ParserDefinition {
-  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter()
+@Internal
+class EditorConfigParserDefinition : ParserDefinition {
+  override fun createLexer(project: Project): Lexer = EditorConfigLexerFactory.getAdapter()
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
   override fun getCommentTokens(): TokenSet = EditorConfigTokenSets.COMMENTS
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
-  override fun getFileNodeType() = FILE
+  override fun getFileNodeType(): IFileElementType = FILE
 
   override fun createFile(viewProvider: FileViewProvider): PsiFile = EditorConfigPsiFile(viewProvider)
   override fun createElement(node: ASTNode): PsiElement = EditorConfigElementTypes.Factory.createElement(node)
