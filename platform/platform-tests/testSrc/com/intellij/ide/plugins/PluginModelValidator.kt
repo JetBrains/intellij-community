@@ -99,7 +99,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.cwm", /* remote-dev/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
   "intellij.osgi", /* no particular package prefix to choose */
   "intellij.hunspell", /* MP-3656 Marketplace doesn't allow uploading plugins without dependencies */
-  "intellij.android.device-explorer", /* android plugin doesn't follow new plugin model yet, $modulename$.xml is not a module descriptor */
+  "intellij.android.device-explorer", /* android plugin doesn't follow the new plugin model yet, $modulename$.xml is not a module descriptor */
   "intellij.bigdatatools.plugin.spark", /* Spark Scala depends on Scala, Scala is not in monorepo*/
   "kotlin.highlighting.shared",
   "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
@@ -142,7 +142,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
 
       val id = descriptor.getChild("id")?.content
                ?: descriptor.getChild("name")?.content
-               // can't specify 'com.intellij', because there is ultimate plugin with the same ID
+               // can't specify 'com.intellij', because there is an ultimate plugin with the same ID
                ?: if (sourceModuleName == "intellij.idea.community.customization") "com.intellij.community" else null
       if (id == null) {
         _errors.add(PluginValidationError(
@@ -435,7 +435,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
       val moduleInfo = checkModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo) ?: continue
       referencingModuleInfo.content.add(moduleInfo)
 
-      // check that not specified using `depends` tag
+      // check that not specified using the "depends" tag
       for (dependsElement in referencingModuleInfo.descriptor.children) {
         if (dependsElement.name != "depends") {
           continue
@@ -745,7 +745,7 @@ private fun readXmlAsModelOrNull(file: Path): XmlElement? {
     }
     return element
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return null
   }
 }
