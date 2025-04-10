@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.actions.handlers;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
@@ -58,6 +59,11 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     if (session instanceof XDebugSessionProxy.Monolith monolith) {
       perform(monolith.getSession(), dataContext);
+    }
+    else {
+      Logger.getInstance(getClass())
+        .warn("Action perform is skipped: isEnabled returned true, " +
+              "but perform method was not adapted for XDebugSessionProxy usage");
     }
   }
 }
