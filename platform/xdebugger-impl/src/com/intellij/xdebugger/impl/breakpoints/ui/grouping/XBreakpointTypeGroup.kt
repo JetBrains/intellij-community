@@ -1,64 +1,55 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.breakpointTypes
+import java.lang.Long
+import javax.swing.Icon
+import kotlin.Boolean
+import kotlin.Int
+import kotlin.String
 
-import javax.swing.*;
-
-public class XBreakpointTypeGroup extends XBreakpointGroup {
-
-  private final XBreakpointType myBreakpointType;
-
-  public XBreakpointTypeGroup(XBreakpointType type) {
-    myBreakpointType = type;
+class XBreakpointTypeGroup(val breakpointType: XBreakpointType<*, *>) : XBreakpointGroup() {
+  override fun getName(): String {
+    return breakpointType.getTitle()
   }
 
-  @Override
-  public @NotNull String getName() {
-    return myBreakpointType.getTitle();
+  override fun getIcon(isOpen: Boolean): Icon? {
+    return breakpointType.getEnabledIcon()
   }
 
-  public XBreakpointType getBreakpointType() {
-    return myBreakpointType;
-  }
-
-  @Override
-  public Icon getIcon(boolean isOpen) {
-    return myBreakpointType.getEnabledIcon();
-  }
-
-  @Override
-  public int compareTo(XBreakpointGroup o) {
-    if (getName().equals(o.getName())) {
-      return 0;
+  override fun compareTo(o: XBreakpointGroup): Int {
+    if (getName() == o.getName()) {
+      return 0
     }
-    if (o instanceof XBreakpointTypeGroup) {
-      if (((XBreakpointTypeGroup)o).myBreakpointType instanceof XLineBreakpointType) {
-        if (myBreakpointType instanceof XLineBreakpointType) {
-          int res = ((XLineBreakpointType<?>)((XBreakpointTypeGroup)o).myBreakpointType).getPriority() -
-                    ((XLineBreakpointType<?>)myBreakpointType).getPriority();
+    if (o is XBreakpointTypeGroup) {
+      if (o.breakpointType is XLineBreakpointType<*>) {
+        if (this.breakpointType is XLineBreakpointType<*>) {
+          val res = (o.breakpointType as XLineBreakpointType<*>).getPriority() -
+                    this.breakpointType.getPriority()
           if (res != 0) {
-            return res;
+            return res
           }
         }
         else {
           // line breakpoints should be on top
-          return 1;
+          return 1
         }
       }
-      else if (myBreakpointType instanceof XLineBreakpointType) {
-        return -1;
+      else if (this.breakpointType is XLineBreakpointType<*>) {
+        return -1
       }
-      return Long.compare(indexOfType(myBreakpointType), indexOfType(((XBreakpointTypeGroup)o).getBreakpointType()));
+      return Long.compare(indexOfType(this.breakpointType), indexOfType(
+        o.breakpointType))
     }
-    return -o.compareTo(this);
+    return -o.compareTo(this)
   }
 
-  private static long indexOfType(XBreakpointType type) {
-    return XBreakpointUtil.breakpointTypes().indexOf(type).orElse(-1);
+  companion object {
+    private fun indexOfType(type: XBreakpointType<*, *>?): kotlin.Long {
+      return breakpointTypes().indexOf(type).orElse(-1)
+    }
   }
 }
