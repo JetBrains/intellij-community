@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.google.common.hash.Funnels
 import com.google.common.hash.Hashing
 import com.google.common.io.ByteStreams
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.asText
@@ -16,7 +16,6 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getLibrar
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getSingleChildElement
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.tryGetSingleChildElement
 import org.w3c.dom.Element
-import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -42,7 +41,7 @@ object BuildDependenciesJps {
     return modulePath
   }
 
-  private fun getLibraryRoots(
+  private suspend fun getLibraryRoots(
     library: Element,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
@@ -76,8 +75,8 @@ object BuildDependenciesJps {
 
         val file = when {
           Files.isRegularFile(localMavenFile) && Files.size(localMavenFile) > 0 -> localMavenFile
-          credentialsProvider != null -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl), credentialsProvider)
-          else -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl))
+          credentialsProvider != null -> downloadFileToCacheLocation(remoteUrl, communityRoot, credentialsProvider)
+          else -> downloadFileToCacheLocation(remoteUrl, communityRoot)
         }
 
         // '-SNAPSHOT' versions could be used only locally to test new locally built dependencies
@@ -98,46 +97,58 @@ object BuildDependenciesJps {
       }
   }
 
-  @JvmStatic
-  fun getModuleLibraryRoots(
+  suspend fun getModuleLibraryRoots(
     iml: Path,
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
     credentialsProvider: (() -> Credentials)?
-  ): List<Path> = try {
-    val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
+  ): List<Path> {
+    return try {
+      val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
 
-    val library = root.getLibraryElement(libraryName, iml)
-    val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider)
+      val library = root.getLibraryElement(libraryName, iml)
+      val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider)
 
-    if (roots.isEmpty()) {
-      error("No library roots for library '$libraryName' in the following iml file at '$iml':\n${Files.readString(iml)}")
+      if (roots.isEmpty()) {
+        error("No library roots for library '$libraryName' in the following iml file at '$iml':\n${Files.readString(iml)}")
+      }
+
+      roots
     }
-
-    roots
-  }
-  catch (t: Throwable) {
-    throw IllegalStateException("Unable to find module library '$libraryName' in '$iml'", t)
+    catch (t: Throwable) {
+      throw IllegalStateException("Unable to find module library '$libraryName' in '$iml'", t)
+    }
   }
 
-  @JvmStatic
-  fun getModuleLibrarySingleRoot(
+  @Deprecated("Use getModuleLibraryRoots instead", ReplaceWith("getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot, null)"), level = DeprecationLevel.ERROR)
+  fun getModuleLibrarySingleRootSync(
     iml: Path,
     libraryName: String,
     mavenRepositoryUrl: String,
-    communityRoot: BuildDependenciesCommunityRoot
-  ) = getModuleLibrarySingleRoot(iml, libraryName, mavenRepositoryUrl, communityRoot, null)
+    communityRoot: BuildDependenciesCommunityRoot,
+  ): Path {
+    return runBlocking {
+      getModuleLibrarySingleRoot(iml = iml, libraryName = libraryName, mavenRepositoryUrl = mavenRepositoryUrl, communityRoot = communityRoot)
+    }
+  }
 
-  @JvmStatic
-  fun getModuleLibrarySingleRoot(
+  suspend fun getModuleLibrarySingleRoot(
+    iml: Path,
+    libraryName: String,
+    mavenRepositoryUrl: String,
+    communityRoot: BuildDependenciesCommunityRoot,
+  ): Path {
+    return getModuleLibrarySingleRoot(iml = iml, libraryName = libraryName, mavenRepositoryUrl = mavenRepositoryUrl, communityRoot = communityRoot, credentialsProvider = null)
+  }
+
+  suspend fun getModuleLibrarySingleRoot(
     iml: Path,
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
     credentialsProvider: (() -> Credentials)?
   ): Path {
-
     val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot, credentialsProvider)
     if (roots.size != 1) {
       error("Expected one and only one library '$libraryName' root in '$iml', but got ${roots.size}: ${roots.joinToString()}")
@@ -146,7 +157,7 @@ object BuildDependenciesJps {
     return roots.single()
   }
 
-  fun getProjectLibraryRoots(
+  suspend fun getProjectLibraryRoots(
     libraryXml: Path,
     libraryName: String,
     mavenRepositoryUrl: String,
