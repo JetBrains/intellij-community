@@ -14,6 +14,7 @@ import com.intellij.platform.syntax.psi.impl.extractCachedLexemes
 import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.text.BlockSupport
 import com.intellij.psi.tree.IElementType
+import kotlin.jvm.JvmStatic
 
 @Service(Service.Level.APP)
 class PsiSyntaxBuilderFactory {

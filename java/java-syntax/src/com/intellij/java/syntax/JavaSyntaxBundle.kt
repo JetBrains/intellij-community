@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import kotlin.jvm.JvmStatic
 
 @ApiStatus.Internal
 object JavaSyntaxBundle {

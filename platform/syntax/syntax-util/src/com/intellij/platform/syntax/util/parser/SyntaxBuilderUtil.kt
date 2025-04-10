@@ -9,6 +9,7 @@ import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.util.text.CharSequenceSubSequence
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 
 @ApiStatus.Experimental
 object SyntaxBuilderUtil {

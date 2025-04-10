@@ -8,6 +8,7 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import org.jetbrains.annotations.PropertyKey
+import kotlin.jvm.JvmStatic
 
 class ExpressionParser(
   private val myNewExpressionParser: PrattExpressionParser,

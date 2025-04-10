@@ -7,6 +7,7 @@ import com.intellij.lang.LanguageExtensionWithAny
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.jvm.JvmStatic
 
 object ElementTypeConverters {
   private val cache = ConcurrentHashMap<Language, ElementTypeConverter>()

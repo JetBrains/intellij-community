@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.JavaVersion.Companion.tryParse
+import kotlin.jvm.JvmStatic
 
 /**
  * Represents a version of Java SDK. Use `JavaSdk#getVersion(Sdk)` method to obtain a version of an `Sdk`.

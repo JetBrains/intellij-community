@@ -8,6 +8,7 @@ import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 
 /**
  * Factory for constructing a [SyntaxTreeBuilder]

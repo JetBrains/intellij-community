@@ -10,6 +10,7 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.pom.java.LanguageLevel
+import kotlin.jvm.JvmStatic
 
 object JavaSyntaxDefinition {
   @JvmStatic

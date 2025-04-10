@@ -8,7 +8,7 @@ import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
 import org.jetbrains.annotations.ApiStatus
-
+import kotlin.jvm.JvmStatic
 
 /**
  * Extension point providing syntax implementation for a given [com.intellij.lang.Language]
