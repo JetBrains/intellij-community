@@ -655,7 +655,9 @@ object PluginManagerCore {
       if (loadingError != null) {
         registerLoadingError(loadingError)
       }
-      descriptor.isEnabled = descriptor.isEnabled() && loadingError == null && !context.expiredPlugins.contains(descriptor.getPluginId())
+      if (loadingError != null || context.expiredPlugins.contains(descriptor.getPluginId())) {
+        descriptor.isEnabled = false
+      }
       !descriptor.isEnabled()
     })
     for (loadingError in additionalErrors) {
