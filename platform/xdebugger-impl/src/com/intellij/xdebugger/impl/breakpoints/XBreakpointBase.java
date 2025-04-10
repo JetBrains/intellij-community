@@ -309,7 +309,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setDependencyState(XBreakpointDependencyState state) {
-    myStateBridge.getState().setDependencyState(state);
+    if (myStateBridge.getState().getDependencyState() != state) {
+      myStateBridge.getState().setDependencyState(state);
+      fireBreakpointChanged();
+    }
   }
 
   public @Nullable String getGroup() {
@@ -317,7 +320,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setGroup(String group) {
-    myStateBridge.setGroup(StringUtil.nullize(group));
+    String newGroup = StringUtil.nullize(group);
+    if (!Objects.equals(newGroup, myStateBridge.getGroup())) {
+      myStateBridge.setGroup(newGroup);
+      fireBreakpointChanged();
+    }
   }
 
   public @NlsSafe String getUserDescription() {
@@ -325,7 +332,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setUserDescription(String description) {
-    myStateBridge.setDescription(StringUtil.nullize(description));
+    String newDescription = StringUtil.nullize(description);
+    if (!Objects.equals(newDescription, myStateBridge.getDescription())) {
+      myStateBridge.setDescription(newDescription);
+      fireBreakpointChanged();
+    }
   }
 
   public final void dispose() {
@@ -548,6 +559,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public void setCustomizedPresentation(CustomizedBreakpointPresentation presentation) {
     myCustomizedPresentation = presentation;
+    // Don't call fireBreakpointChanged() here, since it should be queued outside
+    // See XBreakpointManagerImpl.updateBreakpointPresentation()
   }
 
   public @NotNull GutterIconRenderer createGutterIconRenderer() {
