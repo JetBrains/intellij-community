@@ -18,7 +18,7 @@ class WindsurfTransferSettingsProvider(scope: CoroutineScope) : VSCodeTransferSe
 
   override val id: String = "Windsurf"
 
-  override val processor: VSCodeSettingsProcessor = object : VSCodeSettingsProcessor(scope, "Windsurf") {
+  override val processor: VSCodeSettingsProcessor = object : VSCodeSettingsProcessor(scope, "Windsurf", ".windsurf") {
     override fun getProcessedSettings(): Settings {
       val settings = super.getProcessedSettings()
       PluginMappings.vsCodeAiMapping(settings)
