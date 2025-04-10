@@ -16,7 +16,7 @@ import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
 
-open class VSCodeSettingsProcessor(private val scope: CoroutineScope, appFolder: String = "Code") {
+open class VSCodeSettingsProcessor(private val scope: CoroutineScope, appFolder: String = "Code", pluginFolder: String = ".vscode") {
   private val homeDirectory = System.getProperty("user.home")
 
   internal val vsCodeHome: String = when {
@@ -28,7 +28,7 @@ open class VSCodeSettingsProcessor(private val scope: CoroutineScope, appFolder:
   internal val storageFile: File = File("$vsCodeHome/storage.json")
   internal val keyBindingsFile: File = File("$vsCodeHome/User/keybindings.json")
   internal val generalSettingsFile: File = File("$vsCodeHome/User/settings.json")
-  internal val pluginsDirectory: File = File("$homeDirectory/.vscode/extensions")
+  internal val pluginsDirectory: File = File("$homeDirectory/$pluginFolder/extensions")
   internal val database: File = File("$vsCodeHome/User/globalStorage/state.vscdb")
 
   fun getDefaultSettings(): Settings = Settings(

@@ -18,7 +18,7 @@ class CursorTransferSettingsProvider(scope: CoroutineScope) : VSCodeTransferSett
 
   override val id: String = "Cursor"
 
-  override val processor: VSCodeSettingsProcessor = object : VSCodeSettingsProcessor(scope, "Cursor") {
+  override val processor: VSCodeSettingsProcessor = object : VSCodeSettingsProcessor(scope, "Cursor", ".cursor") {
     override fun getProcessedSettings(): Settings {
       val settings = super.getProcessedSettings()
       PluginMappings.vsCodeAiMapping(settings)
