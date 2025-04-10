@@ -223,25 +223,30 @@ fun <T> Resource<T>.useOn(coroutineScope: CoroutineScope): Deferred<T> {
   return deferred
 }
 
+enum class StopMode {
+  NOPE, STOP, CANCEL
+}
+
 sealed class SharingMode(
   val runImmediately: Boolean,
-  val stopWithoutConsumers: Boolean,
+  val stopWithoutConsumersMode: StopMode,
 ) {
   /**
    * The resource starts immediately and remains active until the scope is canceled.
    */
-  data object Eager : SharingMode(runImmediately = true, stopWithoutConsumers = false)
+  data object Eager : SharingMode(runImmediately = true, stopWithoutConsumersMode = StopMode.NOPE)
 
   /**
    * The resource starts when a consumer appears and remains active until the scope is canceled.
    */
-  data object Lazy : SharingMode(runImmediately = false, stopWithoutConsumers = false)
+  data object Lazy : SharingMode(runImmediately = false, stopWithoutConsumersMode = StopMode.NOPE)
 
   /**
    * The resource starts when a consumer appears and is gracefully shut down when the last consumer leaves.
    * This cycle may repeat multiple times.
    */
-  data object WhileUsed : SharingMode(runImmediately = false, stopWithoutConsumers = true)
+  data class WhileUsed(val graceful: Boolean = true) : SharingMode(runImmediately = false,
+                                                                   stopWithoutConsumersMode = if (graceful) StopMode.STOP else StopMode.CANCEL)
 }
 
 /**
@@ -291,9 +296,21 @@ fun <T> Resource<T>.shareIn(coroutineScope: CoroutineScope, sharing: SharingMode
                 when (val s = state) {
                   is SharedResourceState.Stopping<*>, is SharedResourceState.NotRunning<*> -> error("we are not yet done with the resource, yet it is not running")
                   is SharedResourceState.Running<T> -> {
-                    state = if (s.refCount == 1 && sharing.stopWithoutConsumers) {
-                      s.runnning.termination.complete()
-                      SharedResourceState.Stopping(s.runnning.job)
+                    state = if (s.refCount == 1) {
+                      when (sharing.stopWithoutConsumersMode) {
+                        StopMode.STOP -> {
+                          s.runnning.termination.complete()
+                          SharedResourceState.Stopping(s.runnning.job)
+                        }
+                        StopMode.CANCEL -> {
+                          s.runnning.job.cancel()
+                          s.runnning.termination.complete()
+                          SharedResourceState.Stopping(s.runnning.job)
+                        }
+                        StopMode.NOPE -> {
+                          s.copy(refCount = 0)
+                        }
+                      }
                     }
                     else {
                       s.copy(refCount = s.refCount - 1)
