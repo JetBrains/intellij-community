@@ -3,12 +3,10 @@ package git4idea.actions.branch
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import git4idea.GitBranch
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopupActions.addTooltipText
-import git4idea.ui.branch.GitBranchPopupActions.getSelectedBranchFullPresentation
+import git4idea.ui.branch.GitBranchPopupActions.*
 import git4idea.ui.branch.createOrCheckoutNewBranch
 
 class GitCheckoutAsNewBranch : GitSingleBranchAction(GitBundle.messagePointer("branches.new.branch.from.branch.current")) {
@@ -16,7 +14,7 @@ class GitCheckoutAsNewBranch : GitSingleBranchAction(GitBundle.messagePointer("b
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     with(e.presentation) {
       val branchName = branch.name
-      text = GitBundle.message("branches.new.branch.from.branch", getSelectedBranchFullPresentation(StringUtil.escapeMnemonics(branchName)))
+      text = GitBundle.message("branches.new.branch.from.branch", getSelectedBranchTruncatedPresentation(project, branchName))
       description = GitBundle.message("branches.new.branch.from.branch.description", getSelectedBranchFullPresentation(branchName))
 
       addTooltipText(this, description)
