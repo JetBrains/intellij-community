@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.test
 
 import com.intellij.debugger.DebuggerTestCase
@@ -16,6 +16,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Producer
@@ -45,6 +47,11 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
         return this@TraceExecutionTestCase.replaceAdditionalInOutput(super.replaceAdditionalInOutput(str))
       }
     }
+  }
+
+  override fun setUpModule() {
+    super.setUpModule()
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_16)
   }
 
   protected open fun replaceAdditionalInOutput(str: String): String {
