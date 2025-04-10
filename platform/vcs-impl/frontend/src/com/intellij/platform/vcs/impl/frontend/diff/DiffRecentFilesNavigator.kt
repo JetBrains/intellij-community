@@ -9,9 +9,8 @@ import com.intellij.platform.recentFiles.frontend.RecentFilesNavigator
 
 internal class DiffRecentFilesNavigator : RecentFilesNavigator {
   override fun getEditorOpenOptions(project: Project, file: VirtualFile): FileEditorManagerImpl.OpenMode? {
-    val isDiffFile = file is DiffVirtualFileBase || file.getUserData(DiffFrontendDataKeys.IS_DIFF_SPLIT_VIRTUAL_FILE) != null
     // TODO - "Open Diff as Editor Tab" advanced setting is duplicated on client and host
-    return if (isDiffFile && DiffEditorTabFilesManager.isDiffInWindow)
+    return if (file.isDiffVirtualFile() && DiffEditorTabFilesManager.isDiffInWindow)
       FileEditorManagerImpl.OpenMode.NEW_WINDOW
     else null
   }

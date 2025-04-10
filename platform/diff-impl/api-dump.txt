@@ -483,6 +483,7 @@ f:com.intellij.diff.impl.DiffSettingsHolder
 - f:getSettings(java.lang.String):com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - getState():com.intellij.diff.impl.DiffSettingsHolder$State
 - loadState(com.intellij.diff.impl.DiffSettingsHolder$State):V
+- noStateLoaded():V
 f:com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - sf:Companion:com.intellij.diff.impl.DiffSettingsHolder$DiffSettings$Companion
 - sf:KEY:com.intellij.openapi.util.Key

@@ -11,10 +11,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
-import com.intellij.platform.recentFiles.frontend.SwitcherVirtualFile
-import com.intellij.platform.recentFiles.frontend.createFilesSearchRequestRequest
-import com.intellij.platform.recentFiles.frontend.createFilesUpdateRequest
-import com.intellij.platform.recentFiles.frontend.createHideFilesRequest
+import com.intellij.platform.recentFiles.frontend.*
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
@@ -39,8 +36,26 @@ class FrontendRecentFilesModel(private val project: Project) {
 
   fun getRecentFiles(fileKind: RecentFileKind): List<SwitcherVirtualFile> {
     val capturedModelState = chooseState(fileKind).value.entries
-    LOG.debug("Return requested $fileKind list: ${capturedModelState.joinToString { it.virtualFile?.name ?: "null" }}")
-    return capturedModelState
+    val filteredModel = capturedModelState.filter {  fileModel ->
+      val file = fileModel.virtualFile ?: return@filter true
+      val excluder = RecentFilesExcluder.EP_NAME.findFirstSafe { ext ->
+        when (fileKind) {
+          RecentFileKind.RECENTLY_EDITED -> ext.isExcludedFromRecentlyEdited(project, file)
+          RecentFileKind.RECENTLY_OPENED, RecentFileKind.RECENTLY_OPENED_UNPINNED -> ext.isExcludedFromRecentlyOpened(project, file)
+        }
+      }
+      excluder == null
+    }
+    if (LOG.isDebugEnabled) {
+      LOG.debug(buildString {
+        append("Return requested $fileKind list: ${capturedModelState.joinToString { it.virtualFile?.name ?: "null" }}")
+        if (filteredModel.size != capturedModelState.size) {
+          append("\nAfter filtering: ${filteredModel.joinToString { it.virtualFile?.name ?: "null" }}")
+        }
+      })
+    }
+
+    return filteredModel
   }
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, isAdded: Boolean) {

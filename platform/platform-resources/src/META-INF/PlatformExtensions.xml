@@ -358,6 +358,8 @@
     <applicationService serviceInterface="com.intellij.diff.comparison.ComparisonManager"
                         serviceImplementation="com.intellij.diff.comparison.ComparisonManagerImpl"/>
     <applicationService serviceImplementation="com.intellij.diff.impl.DiffSettingsHolder"/>
+    <applicationSettings service="com.intellij.diff.impl.DiffSettingsHolder"/>
+
     <applicationService serviceImplementation="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
     <applicationService serviceImplementation="com.intellij.diff.tools.external.ExternalDiffSettings"/>
     <applicationService serviceImplementation="com.intellij.diff.DiffApplicationSettings"/>

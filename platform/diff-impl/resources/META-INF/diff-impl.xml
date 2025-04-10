@@ -14,6 +14,8 @@
                          order="before hide-hints"/>
 
     <mergeableGutterIconRendererProvider implementation="com.intellij.diff.util.DiffGutterRendererMergeableRendererProvider" />
+
+    <rdct.remoteSettingProvider implementation="com.intellij.diff.settings.DiffSettingsProvider"/>
   </extensions>
 
   <applicationListeners>

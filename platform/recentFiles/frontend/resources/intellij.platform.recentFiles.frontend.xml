@@ -8,6 +8,9 @@
     <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesNavigator"
                     name="recentFiles.navigator"
                     dynamic="true"/>
+    <extensionPoint interface="com.intellij.platform.recentFiles.frontend.RecentFilesExcluder"
+                    name="recentFiles.excluder"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="switcher.use.fallback.in.monolith" defaultValue="false"

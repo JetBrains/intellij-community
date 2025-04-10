@@ -10,6 +10,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.vcs.impl.frontend.shelf.ShelveContentReplacer"/>
     <recentFiles.navigator implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesNavigator"/>
+    <recentFiles.excluder implementation="com.intellij.platform.vcs.impl.frontend.diff.DiffRecentFilesExcluder"/>
   </extensions>
   <actions>
     <group id="Frontend.Shelve.KeymapGroup" searchable="false">
