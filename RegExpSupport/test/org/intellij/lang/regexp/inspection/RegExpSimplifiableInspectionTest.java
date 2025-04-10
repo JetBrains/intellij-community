@@ -42,6 +42,10 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
     highlightTest("[\\W&&\\S]");
   }
 
+  public void testIncomplete() {
+    highlightTest(".{<EOLError descr=\"Number expected\"></EOLError>");
+  }
+
   public void testSingleElementClass() {
     doTest("[a]", "a");
   }

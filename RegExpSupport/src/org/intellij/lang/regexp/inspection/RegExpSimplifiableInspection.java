@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpTT;
@@ -107,7 +108,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
-      if (!quantifier.isCounted()) {
+      if (!quantifier.isCounted() || quantifier.getLastChild() instanceof PsiErrorElement) {
         return;
       }
       final RegExpNumber minElement = quantifier.getMin();
