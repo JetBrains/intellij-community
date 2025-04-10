@@ -63,7 +63,7 @@ fun performLexing(
       // prevent clients like PsiBuilder from modifying shared token types
       return TokenSequence(
         lexStarts = existing.lexStarts,
-        lexTypes = existing.lexTypes.clone(),
+        lexTypes = existing.lexTypes.copyOf(),
         tokenCount = existing.tokenCount,
         tokenizedText = text
       ) as TokenList
