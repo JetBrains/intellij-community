@@ -38,25 +38,28 @@ public final class CompilerUtil {
     var toRefresh = new HashSet<VirtualFile>();
 
     for (var outputRoot : outputRoots) {
+      var outputPath = (Path)null;
+      var attributes = (BasicFileAttributes)null;
       try {
-        var outputPath = Path.of(outputRoot);
-        var attributes = Files.readAttributes(outputPath, BasicFileAttributes.class);
-        var vFile = fs.findFileByNioFile(outputPath);
-        if (attributes != null && vFile == null) {
-          var parent = fs.refreshAndFindFileByNioFile(outputPath.getParent());
-          if (parent != null && toRefresh.add(parent)) {
-            parent.getChildren();
-          }
-        }
-        else if (
-          attributes == null && vFile != null ||
-          attributes != null && attributes.isDirectory() != vFile.isDirectory()
-        ) {
-          toRefresh.add(vFile);
-        }
+        outputPath = Path.of(outputRoot);
+        attributes = Files.readAttributes(outputPath, BasicFileAttributes.class);
       }
       catch (IOException | InvalidPathException e) {
         LOG.info(e);
+      }
+
+      var vFile = fs.findFileByPath(outputRoot);
+      if (attributes != null && vFile == null) {
+        var parent = fs.refreshAndFindFileByNioFile(outputPath.getParent());
+        if (parent != null && toRefresh.add(parent)) {
+          parent.getChildren();
+        }
+      }
+      else if (
+        attributes == null && vFile != null ||
+        attributes != null && attributes.isDirectory() != vFile.isDirectory()
+      ) {
+        toRefresh.add(vFile);
       }
     }
 
