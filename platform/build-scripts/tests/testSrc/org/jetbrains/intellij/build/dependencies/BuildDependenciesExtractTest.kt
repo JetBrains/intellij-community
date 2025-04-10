@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.archivers.tar.TarConstants
@@ -215,7 +216,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
-  fun `extractFile - extract again on deleting top level file`() {
+  fun `extractFile - extract again on deleting top level file`() = runBlocking {
     val testArchive = createTestFile(archiveType, listOf(TestFile("a"), TestFile("b")))
     val extractRoot = temp.newFolder().toPath()
 
@@ -237,7 +238,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
-  fun `extractFile - normalize path`() {
+  fun `extractFile - normalize path`() = runBlocking {
     val testArchive = createTestFile(archiveType, listOf(TestFile("a"), TestFile("b")))
     val extractRoot = temp.newFolder().toPath()
 
@@ -261,7 +262,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
-  fun `extractFile - extract again on adding top level file`() {
+  fun `extractFile - extract again on adding top level file`() = runBlocking {
     val testArchive = createTestFile(archiveType, emptyList())
     val extractRoot = temp.newFolder().toPath()
 
@@ -279,7 +280,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     }
   }
 
-  private fun assertUpToDate(block: () -> Unit) {
+  private inline fun assertUpToDate(block: () -> Unit) {
     val oldValue = BuildDependenciesDownloader.getExtractCount()
     block()
     val newValue = BuildDependenciesDownloader.getExtractCount()
@@ -288,7 +289,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     }
   }
 
-  private fun assertSomethingWasExtracted(block: () -> Unit) {
+  private inline fun assertSomethingWasExtracted(block: () -> Unit) {
     val oldValue = BuildDependenciesDownloader.getExtractCount()
     block()
     val newValue = BuildDependenciesDownloader.getExtractCount()

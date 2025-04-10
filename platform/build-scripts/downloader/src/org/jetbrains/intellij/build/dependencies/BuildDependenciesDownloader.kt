@@ -3,11 +3,13 @@ package org.jetbrains.intellij.build.dependencies
 
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer
 import com.google.common.hash.Hashing
-import com.google.common.util.concurrent.Striped
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.StripedMutex
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.cleanDirectory
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractTarBz2
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractTarGz
@@ -23,21 +25,24 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
-import kotlin.concurrent.withLock
 
 @ApiStatus.Internal
 object BuildDependenciesDownloader {
-  data class Credentials(val username: String, val password: String)
+  data class Credentials(@JvmField val username: String, @JvmField val password: String)
 
   private val LOG = Logger.getLogger(BuildDependenciesDownloader::class.java.name)
-  private val fileLocks = Striped.lock(1024)
+  private val fileLocks = StripedMutex(1024)
   private val cleanupFlag = AtomicBoolean(false)
 
   // increment on semantic changes in extract code to invalidate all current caches
@@ -56,8 +61,9 @@ object BuildDependenciesDownloader {
   fun getDependencyProperties(communityRoot: BuildDependenciesCommunityRoot): DependenciesProperties = DependenciesProperties(communityRoot)
 
   @JvmStatic
-  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI =
-    getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, classifier = null, packaging)
+  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI {
+    return getUriForMavenArtifact(mavenRepository = mavenRepository, groupId = groupId, artifactId = artifactId, version = version, classifier = null, packaging = packaging)
+  }
 
   @JvmStatic
   fun getUriForMavenArtifact(
@@ -74,8 +80,9 @@ object BuildDependenciesDownloader {
     return URI.create("${base}/${groupStr}/${artifactId}/${version}/${artifactId}-${version}${classifierStr}.${packaging}")
   }
 
-  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path =
-    Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
+  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
+  }
 
   private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
     val path: Path = if (TeamCityHelper.isUnderTeamCity) {
@@ -89,12 +96,14 @@ object BuildDependenciesDownloader {
   }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path =
-    downloadFileToCacheLocationSync(uri.toString(), communityRoot)
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path {
+    return downloadFileToCacheLocationSync(uri.toString(), communityRoot)
+  }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, credentialsProvider: () -> Credentials): Path =
-    downloadFileToCacheLocationSync(uri.toString(), communityRoot, credentialsProvider)
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, credentialsProvider: () -> Credentials): Path {
+    return downloadFileToCacheLocationSync(uri.toString(), communityRoot, credentialsProvider)
+  }
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {
     val lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
@@ -118,8 +127,7 @@ object BuildDependenciesDownloader {
     return targetDirectory
   }
 
-  private fun hashString(s: String): String =
-    BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
+  private fun hashString(s: String): String = BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
 
   private fun getExpectedFlagFileContent(
     archiveFile: Path,
@@ -237,14 +245,21 @@ options:${getExtractOptionsShortString(options)}
     }
   }
 
-  fun extractFile(
+  @Deprecated("Use BuildDependenciesDownloader.extractFile(communityRoot, archiveFile, options)", level = DeprecationLevel.ERROR)
+  fun extractFileSync(archiveFile: Path, target: Path, communityRoot: BuildDependenciesCommunityRoot) {
+    runBlocking {
+      extractFile(archiveFile, target, communityRoot)
+    }
+  }
+
+  suspend fun extractFile(
     archiveFile: Path,
     target: Path,
     communityRoot: BuildDependenciesCommunityRoot,
     vararg options: BuildDependenciesExtractOptions,
   ) {
     cleanUpIfRequired(communityRoot)
-    fileLocks.get(target).withLock {
+    fileLocks.getLock(target.toString()).withLock {
       // Extracting different archive files into the same target should overwrite the target each time.
       // That's why `flagFile` should be dependent only on the target location.
       val hash = hashString(target.toString()).substring(0, 6)
