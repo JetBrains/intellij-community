@@ -11,10 +11,9 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.PathUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -115,15 +114,15 @@ private suspend fun doStartProcess(
   workingDirectory: Path,
   initialTermSize: TermSize,
 ): PtyProcess {
-  val execOptions = eelApi.exec.execute(command.first())
+  val execOptions = eelApi.exec.spawnProcess(command.first())
     .args(command.takeLast(command.size - 1))
     .env(envs)
     .workingDirectory(workingDirectory.asEelPath())
     .ptyOrStdErrSettings(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
-  val processResult = execOptions.eelIt()
-  return when (processResult) {
-    is EelResult.Ok -> processResult.value.convertToJavaProcess() as PtyProcess
-    is EelResult.Error -> throw ErrnoException(processResult.error)
+  return try {
+    execOptions.eelIt().convertToJavaProcess() as PtyProcess
+  } catch (e : EelExecApi.ExecuteProcessException) {
+    throw ErrnoException(e)
   }
 }
 
@@ -131,6 +130,6 @@ internal fun shouldUseEelApi(): Boolean {
   return `is`("terminal.use.EelApi", false)
 }
 
-internal class ErrnoException(val error: ExecuteProcessError): Exception(error.message)
+internal class ErrnoException(val error: EelExecApi.ExecuteProcessException): Exception(error.message)
 
 private val log: Logger = logger<AbstractTerminalRunner<*>>()

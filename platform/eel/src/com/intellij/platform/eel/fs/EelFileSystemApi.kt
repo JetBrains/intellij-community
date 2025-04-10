@@ -642,6 +642,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
+  @CheckReturnValue
   override suspend fun listDirectoryWithAttrs(@GeneratedBuilder args: EelFileSystemApi.ListDirectoryWithAttrsArgs): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
@@ -653,6 +654,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     EelPosixFileInfo,
     StatError>
 
+  @CheckReturnValue
   override suspend fun stat(@GeneratedBuilder args: EelFileSystemApi.StatArgs): EelResult<EelPosixFileInfo, StatError> =
     stat(path = args.path, symlinkPolicy = args.symlinkPolicy)
 
@@ -764,6 +766,7 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
     Collection<Pair<String, EelWindowsFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
+  @CheckReturnValue
   override suspend fun listDirectoryWithAttrs(@GeneratedBuilder args: EelFileSystemApi.ListDirectoryWithAttrsArgs): EelResult<
     Collection<Pair<String, EelWindowsFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
@@ -775,6 +778,7 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
     EelWindowsFileInfo,
     StatError>
 
+  @CheckReturnValue
   override suspend fun stat(@GeneratedBuilder args: EelFileSystemApi.StatArgs): EelResult<EelWindowsFileInfo, StatError> =
     stat(path = args.path, symlinkPolicy = args.symlinkPolicy)
 }

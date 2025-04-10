@@ -430,6 +430,8 @@ private suspend fun fillRequests(
 }
 
 private class BuilderRequest(
+  val shouldCheckReturnValue: Boolean,
+  val deprecatedAnnotation: String?,
   val argsInterfaceFqn: String,
   val clsFqn: String,
   val methodName: String,
@@ -456,6 +458,8 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
           val methodCls = valueParameter.containingClass()?.fqName ?: return
 
           methods += BuilderRequest(
+            shouldCheckReturnValue = fn.annotationEntries.mapNotNull { it.shortName?.asString() }.contains("CheckReturnValue"),
+            deprecatedAnnotation = fn.annotationEntries.find { it.shortName?.asString() == "Deprecated" }?.text?.trim(),
             argsInterfaceFqn = typeFqn,
             clsFqn = methodCls.asString(),
             methodName = methodName,
@@ -606,7 +610,7 @@ private suspend fun writeBuilderFiles(
         }
 
         text += """
-        ${kdoc.renderKdoc()}@GeneratedBuilder.Result
+        ${kdoc.renderKdoc()}@GeneratedBuilder.Result${builderRequest.deprecatedAnnotation ?: ""}
         fun ${builderRequest.clsFqn}.${builderRequest.methodName}(${
           requiredArguments.joinToString("") { prop ->
             "\n${prop.name}: ${prop.typeFqn},"
@@ -655,8 +659,7 @@ private suspend fun writeBuilderFiles(
           /**
           * Complete the builder and call [${builderRequest.clsFqn}.${builderRequest.methodName}] 
           * with an instance of [${builderRequest.argsInterfaceFqn}].
-          */
-          @org.jetbrains.annotations.CheckReturnValue
+          */${if (builderRequest.shouldCheckReturnValue) "@org.jetbrains.annotations.CheckReturnValue" else ""}
           override suspend fun eelIt(): ${builderRequest.returnTypeFqn} =
             owner.${builderRequest.methodName}(${argsInterfaceInfo.name}Impl(
             ${

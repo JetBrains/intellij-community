@@ -14,9 +14,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
@@ -217,14 +217,14 @@ object ExecUtil {
     val env = (if (isPassParentEnvironment) runBlockingMaybeCancellable { fetchLoginShellEnvVariables() } else emptyMap()) + builder.environment()
     val workingDir = builder.directory()?.toPath()?.asEelPath()
 
-    val options = execute(exe)
+    val options = spawnProcess(exe)
       .args(rest)
       .workingDirectory(workingDir)
       .env(env)
       .ptyOrStdErrSettings(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
 
     return runBlockingMaybeCancellable {
-      options.getOrThrow().convertToJavaProcess()
+      options.eelIt().convertToJavaProcess()
     }
   }
 }

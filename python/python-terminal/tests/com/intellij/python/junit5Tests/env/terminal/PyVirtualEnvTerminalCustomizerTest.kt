@@ -4,17 +4,16 @@ package com.intellij.python.junit5Tests.env.terminal
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.provider.utils.sendWholeText
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.python.community.impl.venv.tests.pyVenvFixture
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
@@ -30,7 +29,6 @@ import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
@@ -139,12 +137,12 @@ class PyVirtualEnvTerminalCustomizerTest {
     val exe = command[0]
     val args = if (command.size == 1) emptyList() else command.subList(1, command.size)
 
-    val execOptions = localEel.exec.execute(exe)
+    val execOptions = localEel.exec.spawnProcess(exe)
       .args(args)
       .env(shellOptions.envVariables + mapOf(Pair("TERM", "dumb")))
       // Unix shells do not activate with out tty
       .ptyOrStdErrSettings(if (SystemInfo.isWindows) null else EelExecApi.Pty(100, 100, true))
-    val process = execOptions.getOrThrow()
+    val process = execOptions.eelIt()
     try {
       val stderr = async {
         process.stderr.readWholeText().getOrThrow()

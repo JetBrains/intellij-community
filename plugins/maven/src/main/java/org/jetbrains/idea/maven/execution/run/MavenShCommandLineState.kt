@@ -30,15 +30,16 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
@@ -143,28 +144,24 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     commandLineToShowUser: String,
     onTerminate: (() -> Unit)?,
   ): KillableColoredProcessHandler.Silent {
-    val processOptions = eelApi.exec.execute(exe)
+    val processOptions = eelApi.exec.spawnProcess(exe)
       .env(env)
       .workingDirectory(workingDir)
       .args(args)
 
-    val result = processOptions.eelIt()
-
-    return when (result) {
-      is EelResult.Error -> {
-        MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${result.error.errno}, message:  ${result.error.message}")
-        throw ExecutionException(result.error.message)
-      }
-      is EelResult.Ok -> {
-        KillableColoredProcessHandler.Silent(result.value.convertToJavaProcess(), commandLineToShowUser, Charsets.UTF_8, emptySet())
-          .also {
-            it.addProcessListener(object : ProcessListener {
-              override fun processTerminated(event: ProcessEvent) {
-                onTerminate?.invoke()
-              }
-            })
-          }
-      }
+    try {
+      val result = processOptions.eelIt()
+      return KillableColoredProcessHandler.Silent(result.convertToJavaProcess(), commandLineToShowUser, Charsets.UTF_8, emptySet())
+        .also {
+          it.addProcessListener(object : ProcessListener {
+            override fun processTerminated(event: ProcessEvent) {
+              onTerminate?.invoke()
+            }
+          })
+        }
+    } catch (e: EelExecApi.ExecuteProcessException) {
+      MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${e.errno}, message:  ${e.message}")
+      throw ExecutionException(e.message)
     }
   }
 

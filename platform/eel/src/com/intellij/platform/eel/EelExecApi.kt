@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
+import java.io.IOException
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
@@ -12,6 +12,9 @@ import org.jetbrains.annotations.CheckReturnValue
 sealed interface EelExecApi {
 
   val descriptor: EelDescriptor
+
+  @Throws(ExecuteProcessException::class)
+  suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelProcess
 
   /**
    * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
@@ -23,7 +26,18 @@ sealed interface EelExecApi {
    * See [executeProcessBuilder]
    */
   @CheckReturnValue
-  suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError>
+  @Deprecated("Use spawnProcess instead")
+  suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> {
+    data class Ok<P : EelProcess>(override val value: P) : EelResult.Ok<P>
+    data class Error(override val error: ExecuteProcessError) : EelResult.Error<ExecuteProcessError>
+    data class ExecuteProcessErrorImpl(override val errno: Int, override val message: String) : ExecuteProcessError
+
+    try {
+      return Ok(spawnProcess(generatedBuilder))
+    } catch (e: ExecuteProcessException) {
+      return Error(ExecuteProcessErrorImpl(e.errno, e.message))
+    }
+  }
 
   interface ExecuteProcessOptions {
     val args: List<String> get() = listOf()
@@ -92,10 +106,13 @@ sealed interface EelExecApi {
    */
   suspend fun findExeFilesInPath(binaryName: String): List<EelPath>
 
+  @Deprecated("Use spawnProcess instead")
   interface ExecuteProcessError : EelError {
     val errno: Int
     val message: String
   }
+
+  class ExecuteProcessException(val errno: Int, override val message: String) : EelError, IOException()
 
   sealed interface PtyOrStdErrSettings
 
@@ -114,27 +131,25 @@ sealed interface EelExecApi {
 }
 
 interface EelExecPosixApi : EelExecApi {
-  @CheckReturnValue
-  override suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelPosixProcess, ExecuteProcessError>
+  override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelPosixProcess
 }
 
 interface EelExecWindowsApi : EelExecApi {
-  @CheckReturnValue
-  override suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelWindowsProcess, ExecuteProcessError>
+  override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelWindowsProcess
 }
 
 suspend fun EelExecApi.where(exe: String): EelPath? {
   return this.findExeFilesInPath(exe).firstOrNull()
 }
 
-fun EelExecApi.execute(exe: String, vararg args: String): EelExecApiHelpers.Execute =
-  execute(exe).args(*args)
+fun EelExecApi.spawnProcess(exe: String, vararg args: String): EelExecApiHelpers.SpawnProcess =
+  spawnProcess(exe).args(*args)
 
-fun EelExecPosixApi.execute(exe: String, vararg args: String): EelExecPosixApiHelpers.Execute =
-  execute(exe).args(*args)
+fun EelExecPosixApi.spawnProcess(exe: String, vararg args: String): EelExecPosixApiHelpers.SpawnProcess =
+  spawnProcess(exe).args(*args)
 
-fun EelExecWindowsApi.execute(exe: String, vararg args: String): EelExecWindowsApiHelpers.Execute =
-  execute(exe).args(*args)
+fun EelExecWindowsApi.spawnProcess(exe: String, vararg args: String): EelExecWindowsApiHelpers.SpawnProcess =
+  spawnProcess(exe).args(*args)
 
 /**
  * Path to a shell / command processor: `cmd.exe` on Windows and Bourne Shell (`sh`) on POSIX.

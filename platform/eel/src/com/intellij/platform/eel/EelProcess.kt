@@ -7,7 +7,7 @@ import kotlinx.coroutines.Deferred
 import java.io.IOException
 
 /**
- * Represents some process that was launched via [EelExecApi.execute].
+ * Represents some process that was launched via [EelExecApi.spawnProcess].
  *
  */
 sealed interface EelProcess {

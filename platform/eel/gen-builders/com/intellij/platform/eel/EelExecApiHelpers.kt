@@ -5,7 +5,6 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
@@ -28,10 +27,27 @@ import org.jetbrains.annotations.CheckReturnValue
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
 @GeneratedBuilder.Result
+@Deprecated("Use spawnProcess instead")
 fun EelExecApi.execute(
   exe: String,
 ): EelExecApiHelpers.Execute =
   EelExecApiHelpers.Execute(
+    owner = this,
+    exe = exe,
+  )
+
+/**
+ * @param exe An **absolute** path to the executable.
+ *  TODO Or do relative paths also work?
+ *
+ *  All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
+ *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+ */
+@GeneratedBuilder.Result
+fun EelExecApi.spawnProcess(
+  exe: String,
+): EelExecApiHelpers.SpawnProcess =
+  EelExecApiHelpers.SpawnProcess(
     owner = this,
     exe = exe,
   )
@@ -44,7 +60,7 @@ object EelExecApiHelpers {
   class Execute(
     private val owner: EelExecApi,
     private var exe: String,
-  ) : OwnedBuilder<EelResult<EelProcess, ExecuteProcessError>> {
+  ) : OwnedBuilder<EelResult<EelProcess, EelExecApi.ExecuteProcessError>> {
     private var args: List<String> = listOf()
 
     private var env: Map<String, String> = mapOf()
@@ -105,8 +121,87 @@ object EelExecApiHelpers {
      * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
      */
     @CheckReturnValue
-    override suspend fun eelIt(): EelResult<EelProcess, ExecuteProcessError> =
+    override suspend fun eelIt(): EelResult<EelProcess, EelExecApi.ExecuteProcessError> =
       owner.execute(
+        ExecuteProcessOptionsImpl(
+          args = args,
+          env = env,
+          exe = exe,
+          ptyOrStdErrSettings = ptyOrStdErrSettings,
+          workingDirectory = workingDirectory,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.EelExecApi.spawnProcess].
+   */
+  @GeneratedBuilder.Result
+  class SpawnProcess(
+    private val owner: EelExecApi,
+    private var exe: String,
+  ) : OwnedBuilder<EelProcess> {
+    private var args: List<String> = listOf()
+
+    private var env: Map<String, String> = mapOf()
+
+    private var ptyOrStdErrSettings: PtyOrStdErrSettings? = null
+
+    private var workingDirectory: EelPath? = null
+
+    fun args(arg: List<String>): SpawnProcess = apply {
+      this.args = arg
+    }
+
+    fun args(vararg arg: String): SpawnProcess = apply {
+      this.args = listOf(*arg)
+    }
+
+    /**
+     * By default, environment is always inherited, which may be unwanted. [ExecuteProcessOptions.env] allows
+     * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
+     * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
+     */
+    fun env(arg: Map<String, String>): SpawnProcess = apply {
+      this.env = arg
+    }
+
+    /**
+     * An **absolute** path to the executable.
+     * TODO Or do relative paths also work?
+     *
+     * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
+     * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+     */
+    fun exe(arg: String): SpawnProcess = apply {
+      this.exe = arg
+    }
+
+    /**
+     * When set pty, be sure to accept esc codes for a terminal you are emulating.
+     * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
+     * If not set, `xterm` will be used as a most popular one.
+     *
+     * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
+     */
+    fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): SpawnProcess = apply {
+      this.ptyOrStdErrSettings = arg
+    }
+
+    /**
+     * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
+     * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+     */
+    fun workingDirectory(arg: EelPath?): SpawnProcess = apply {
+      this.workingDirectory = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelExecApi.spawnProcess]
+     * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
+     */
+    override suspend fun eelIt(): EelProcess =
+      owner.spawnProcess(
         ExecuteProcessOptionsImpl(
           args = args,
           env = env,

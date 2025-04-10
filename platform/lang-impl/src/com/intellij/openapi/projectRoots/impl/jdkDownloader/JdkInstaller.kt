@@ -133,10 +133,10 @@ class JdkInstaller : JdkInstallerBase() {
       path.asEelPath().toString()
 
     override fun execute(command: List<String>, dir: String, timeout: Int): ProcessOutput = runBlockingCancellable {
-      val builder = eel.exec.execute(command.first())
+      val builder = eel.exec.spawnProcess(command.first())
         .args(command.drop(1))
         .workingDirectory(EelPath.parse(dir, eel.descriptor))
-      val process = builder.getOrThrow()
+      val process = builder.eelIt()
       try {
         withTimeout(timeout.milliseconds) {
           process.awaitProcessResult().let { ProcessOutput(it.stdoutString, it.stderrString, it.exitCode, false, false) }

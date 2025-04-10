@@ -2,6 +2,7 @@
 @file:JvmName("WslIjentUtil")
 @file:Suppress("RAW_RUN_BLOCKING")  // These functions are called by different legacy code, a ProgressIndicator is not always available.
 @file:ApiStatus.Internal
+
 package com.intellij.platform.ide.impl.wsl
 
 import com.intellij.execution.CommandLineUtil.posixQuote
@@ -18,8 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.execute
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.deploy
@@ -31,7 +31,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 
 internal suspend fun deployAndLaunchIjent(
   parentScope: CoroutineScope,
@@ -170,20 +169,16 @@ fun runProcessBlocking(
   }
 
   val scope = @OptIn(DelicateCoroutinesApi::class) (wslIjentManager.processAdapterScope)
-  when (val processResult = ijentApi.exec.execute(exePath)
+  ijentApi.exec.spawnProcess(exePath)
     .args(args)
     .env(explicitEnvironmentVariables)
     .ptyOrStdErrSettings(ptyOrStdErrSettings)
     .workingDirectory(workingDirectory?.let { EelPath.parse(it, ijentApi.descriptor) })
     .eelIt()
-  ) {
-    is EelResult.Ok ->
-      processResult.value.toProcess(
-        coroutineScope = scope,
-        isPty = ptyOrStdErrSettings != null,
-      )
-    is EelResult.Error -> throw IOException(processResult.error.message)
-  }
+    .toProcess(
+      coroutineScope = scope,
+      isPty = ptyOrStdErrSettings != null,
+    )
 }
 
 private fun EelProcess.toProcess(

@@ -18,17 +18,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelTunnelsApi
-import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.fs.pathSeparator
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -203,12 +201,12 @@ private class EelMavenCmdState(
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
       val exe = Path.of(cmd.exePath).asEelPath()
-      val builder = eel.exec.execute(exe.toString())
+      val builder = eel.exec.spawnProcess(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
         .workingDirectory(EelPath.parse(getWorkingDirectory(), eel.descriptor))
 
-      builder.getOrThrow()
+      builder.eelIt()
     }
 
     return object : KillableColoredProcessHandler(eelProcess.convertToJavaProcess(), cmd) {

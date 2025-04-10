@@ -1,6 +1,7 @@
 package com.jetbrains.python
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -50,15 +51,16 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, @N
  * Executes [this] with [args], returns either output or error (if execution failed or exit code != 0)
  */
 private suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe EelProcessExecutionResult, @NlsSafe String> {
-  val output = exec(*args, timeout = 5.seconds).getOr {
-    val text = it.error?.message ?: message("python.get.version.too.long", pathString)
-    return failure(text)
-  }
-  return if (output.exitCode != 0) {
-    failure(message("python.get.version.error", pathString, "code ${output.exitCode}, ${output.stderrString}"))
-  }
-  else {
-    Result.success(output)
+  try {
+    val output = exec(*args, timeout = 5.seconds)
+    return if (output.exitCode != 0) {
+      failure(message("python.get.version.error", pathString, "code ${output.exitCode}, ${output.stderrString}"))
+    }
+    else {
+      Result.success(output)
+    }
+  } catch (e : EelExecApi.ExecuteProcessException) {
+    return failure(e.message)
   }
 }
 

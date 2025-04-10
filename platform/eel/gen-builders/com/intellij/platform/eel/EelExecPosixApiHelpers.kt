@@ -5,11 +5,9 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
-import org.jetbrains.annotations.CheckReturnValue
 
 
 /**
@@ -20,23 +18,23 @@ import org.jetbrains.annotations.CheckReturnValue
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
 @GeneratedBuilder.Result
-fun EelExecPosixApi.execute(
+fun EelExecPosixApi.spawnProcess(
   exe: String,
-): EelExecPosixApiHelpers.Execute =
-  EelExecPosixApiHelpers.Execute(
+): EelExecPosixApiHelpers.SpawnProcess =
+  EelExecPosixApiHelpers.SpawnProcess(
     owner = this,
     exe = exe,
   )
 
 object EelExecPosixApiHelpers {
   /**
-   * Create it via [com.intellij.platform.eel.EelExecPosixApi.execute].
+   * Create it via [com.intellij.platform.eel.EelExecPosixApi.spawnProcess].
    */
   @GeneratedBuilder.Result
-  class Execute(
+  class SpawnProcess(
     private val owner: EelExecPosixApi,
     private var exe: String,
-  ) : OwnedBuilder<EelResult<EelPosixProcess, ExecuteProcessError>> {
+  ) : OwnedBuilder<EelPosixProcess> {
     private var args: List<String> = listOf()
 
     private var env: Map<String, String> = mapOf()
@@ -45,11 +43,11 @@ object EelExecPosixApiHelpers {
 
     private var workingDirectory: EelPath? = null
 
-    fun args(arg: List<String>): Execute = apply {
+    fun args(arg: List<String>): SpawnProcess = apply {
       this.args = arg
     }
 
-    fun args(vararg arg: String): Execute = apply {
+    fun args(vararg arg: String): SpawnProcess = apply {
       this.args = listOf(*arg)
     }
 
@@ -58,7 +56,7 @@ object EelExecPosixApiHelpers {
      * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
      * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
      */
-    fun env(arg: Map<String, String>): Execute = apply {
+    fun env(arg: Map<String, String>): SpawnProcess = apply {
       this.env = arg
     }
 
@@ -69,7 +67,7 @@ object EelExecPosixApiHelpers {
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
-    fun exe(arg: String): Execute = apply {
+    fun exe(arg: String): SpawnProcess = apply {
       this.exe = arg
     }
 
@@ -80,7 +78,7 @@ object EelExecPosixApiHelpers {
      *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
-    fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): Execute = apply {
+    fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
 
@@ -88,17 +86,16 @@ object EelExecPosixApiHelpers {
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
-    fun workingDirectory(arg: EelPath?): Execute = apply {
+    fun workingDirectory(arg: EelPath?): SpawnProcess = apply {
       this.workingDirectory = arg
     }
 
     /**
-     * Complete the builder and call [com.intellij.platform.eel.EelExecPosixApi.execute]
+     * Complete the builder and call [com.intellij.platform.eel.EelExecPosixApi.spawnProcess]
      * with an instance of [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions].
      */
-    @CheckReturnValue
-    override suspend fun eelIt(): EelResult<EelPosixProcess, ExecuteProcessError> =
-      owner.execute(
+    override suspend fun eelIt(): EelPosixProcess =
+      owner.spawnProcess(
         ExecuteProcessOptionsImpl(
           args = args,
           env = env,

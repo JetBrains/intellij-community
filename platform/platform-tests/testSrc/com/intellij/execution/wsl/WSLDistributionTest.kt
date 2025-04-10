@@ -15,8 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
-import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
@@ -509,7 +507,7 @@ class WSLDistributionTest {
         val err = shouldThrow<ProcessNotCreatedException> {
           sourceCommandLine.createProcess()
         }
-        err.message should be(executeResultMock.error.message)
+        err.message should be(executeResultMock.message)
       }
       adapter
     }
@@ -550,7 +548,7 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
 
   override val descriptor: EelDescriptor get() = throw UnsupportedOperationException()
 
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelPosixProcess, ExecuteProcessError> = executeResultMock.also {
+  override suspend fun spawnProcess(builder: EelExecApi.ExecuteProcessOptions): EelPosixProcess {
     adapter.exePath = builder.exe
     if (rootUser) {
       adapter.putUserData(TEST_ROOT_USER_SET, true)
@@ -558,6 +556,7 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
     adapter.addParameters(builder.args)
     adapter.setWorkDirectory(builder.workingDirectory?.toString())
     adapter.environment.putAll(builder.env)
+    throw executeResultMock
   }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
@@ -568,7 +567,7 @@ private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET
 
 
 private val executeResultMock by lazy {
-  EelProcessResultImpl.createErrorResult(errno = 12345, message = "mock result ${Ksuid.generate()}")
+  EelExecApi.ExecuteProcessException(errno = 12345, message = "mock result ${Ksuid.generate()}")
 }
 
 private class WslTestStrategyExtension

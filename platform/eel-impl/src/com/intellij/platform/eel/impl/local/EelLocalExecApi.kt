@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.EnvironmentUtil
@@ -24,23 +23,15 @@ import kotlin.io.path.*
 
 @ApiStatus.Internal
 class EelLocalExecPosixApi : EelExecPosixApi {
-  override suspend fun execute(
+  override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
-  ): EelResult<EelPosixProcess, EelExecApi.ExecuteProcessError> =
-    when (val r = executeImpl(generatedBuilder)) {
-      is EelResult.Ok -> {
-        val process = r.value
-        val eelProcess =
-          if (process is PtyProcess)
-            LocalEelPosixProcess(process, process::setWinSize)
-          else
-            LocalEelPosixProcess(process, null)
-        object : EelResult.Ok<EelPosixProcess> {
-          override val value: EelPosixProcess = eelProcess
-        }
-      }
-      is EelResult.Error -> r
-    }
+  ): EelPosixProcess {
+    val process = executeImpl(generatedBuilder)
+    return if (process is PtyProcess)
+      LocalEelPosixProcess(process, process::setWinSize)
+    else
+      LocalEelPosixProcess(process, null)
+  }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
@@ -56,23 +47,15 @@ class EelLocalExecPosixApi : EelExecPosixApi {
 
 @ApiStatus.Internal
 class EelLocalExecWindowsApi : EelExecWindowsApi {
-  override suspend fun execute(
+  override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
-  ): EelResult<EelWindowsProcess, EelExecApi.ExecuteProcessError> =
-    when (val r = executeImpl(generatedBuilder)) {
-      is EelResult.Ok -> {
-        val process = r.value
-        val eelProcess =
-          if (process is PtyProcess)
-            LocalEelWindowsProcess(process, process::setWinSize)
-          else
-            LocalEelWindowsProcess(process, null)
-        object : EelResult.Ok<EelWindowsProcess> {
-          override val value: EelWindowsProcess = eelProcess
-        }
-      }
-      is EelResult.Error -> r
-    }
+  ): EelWindowsProcess {
+    val process = executeImpl(generatedBuilder)
+    return if (process is PtyProcess)
+      LocalEelWindowsProcess(process, process::setWinSize)
+    else
+      LocalEelWindowsProcess(process, null)
+  }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
@@ -91,62 +74,57 @@ class EelLocalExecWindowsApi : EelExecWindowsApi {
  */
 private val errorPattern = Regex(".*error=(-?[0-9]{1,9}),.*")
 
-private suspend fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): EelResult<Process, EelExecApi.ExecuteProcessError> {
-  val args = builder.args.toTypedArray()
+private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
   val pty = builder.ptyOrStdErrSettings
 
-    val process: Process = // TODO Wrap into Dispatchers.IO?
-      try {
-        // Inherit env vars because lack of `PATH` might break things
-        val environment = System.getenv().toMutableMap()
-        environment.putAll(builder.env)
-        val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, Platform.current())
-        when (val p = pty) {
-          is EelExecApi.Pty -> {
-            if ("TERM" !in environment) {
-              environment.getOrPut("TERM") { "xterm" }
-            }
-            LocalProcessService.getInstance().startPtyProcess(
-              escapedCommandLine,
-              builder.workingDirectory?.toString(),
-              environment,
-              LocalPtyOptions.defaults().builder().also {
-                it.consoleMode(!p.echo)
-                it.initialColumns(p.columns)
-                it.initialRows(p.rows)
-              }.build(),
-              false,
-            ) as PtyProcess
+  try {
+    // Inherit env vars because lack of `PATH` might break things
+    val environment = System.getenv().toMutableMap()
+    environment.putAll(builder.env)
+    val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, Platform.current())
+    return when (val p = pty) {
+      is EelExecApi.Pty -> {
+        if ("TERM" !in environment) {
+          environment.getOrPut("TERM") { "xterm" }
+        }
+        LocalProcessService.getInstance().startPtyProcess(
+          escapedCommandLine,
+          builder.workingDirectory?.toString(),
+          environment,
+          LocalPtyOptions.defaults().builder().also {
+            it.consoleMode(!p.echo)
+            it.initialColumns(p.columns)
+            it.initialRows(p.rows)
+          }.build(),
+          false,
+        ) as PtyProcess
+      }
+      EelExecApi.RedirectStdErr, null -> {
+        ProcessBuilder(escapedCommandLine).apply {
+          environment().putAll(environment)
+          redirectErrorStream(p != null)
+          builder.workingDirectory?.let {
+            directory(File(it.toString()))
           }
-          EelExecApi.RedirectStdErr, null -> {
-            ProcessBuilder(escapedCommandLine).apply {
-              environment().putAll(environment)
-              redirectErrorStream(p != null)
-              builder.workingDirectory?.let {
-                directory(File(it.toString()))
-              }
-            }.start()
-          }
+        }.start()
+      }
+    }
+  }
+  catch (e: IOException) {
+    val errorCode = errorPattern.find(e.message ?: e.toString())?.let { result ->
+      if (result.groupValues.size == 2) {
+        try {
+          result.groupValues[1].toInt()
+        }
+        catch (_: NumberFormatException) {
+          null
         }
       }
-      catch (e: IOException) {
-        val errorCode = errorPattern.find(e.message ?: e.toString())?.let { result ->
-          if (result.groupValues.size == 2) {
-            try {
-              result.groupValues[1].toInt()
-            }
-            catch (_: NumberFormatException) {
-              null
-            }
-          }
-          else {
-            null
-          }
-        } ?: -3003 // Just a random code which isn't used by any OS and not zero
-        return EelProcessResultImpl.createErrorResult(errorCode, e.toString())
+      else {
+        null
       }
-  return object : EelResult.Ok<Process> {
-    override val value: Process = process
+    } ?: -3003 // Just a random code which isn't used by any OS and not zero
+    throw EelExecApi.ExecuteProcessException(errorCode, e.toString())
   }
 }
 

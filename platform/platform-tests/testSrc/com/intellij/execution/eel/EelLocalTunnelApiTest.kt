@@ -67,7 +67,7 @@ class EelLocalTunnelApiTest {
 
   @Test
   fun testServerListensForConnection(): Unit = timeoutRunBlocking(1.minutes) {
-    val helper = clientExecutor.createBuilderToExecuteMain(localEel.exec).getOrThrow()
+    val helper = clientExecutor.createBuilderToExecuteMain(localEel.exec).eelIt()
     val acceptor = localEel.tunnels.getAcceptorForRemotePort().getOrThrow()
     helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n").getOrThrow()
     val conn = acceptor.incomingConnections.receive()
@@ -123,7 +123,7 @@ class EelLocalTunnelApiTest {
 
   private suspend fun withServer(block: suspend CoroutineScope.(EelTunnelsApi.Connection, EelProcess) -> Unit) {
 
-    val helper = serverExecutor.createBuilderToExecuteMain(localEel.exec).getOrThrow()
+    val helper = serverExecutor.createBuilderToExecuteMain(localEel.exec).eelIt()
     try {
       val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
       val connection = localEel.tunnels.getConnectionToRemotePort().port(port.toUShort()).preferV4().getOrThrow()
