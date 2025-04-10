@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public final class JsonSchemaComplianceChecker {
+public class JsonSchemaComplianceChecker {
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
 
   private final @NotNull JsonSchemaObject myRootSchema;
@@ -94,7 +94,7 @@ public final class JsonSchemaComplianceChecker {
     }
   }
 
-  private void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
+  protected void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
     if (checker == null || checker.isCorrect()) return;
     // compute intersecting ranges - we'll solve warning priorities based on this information
     List<TextRange> ranges = new ArrayList<>();
