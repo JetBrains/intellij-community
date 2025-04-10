@@ -207,7 +207,7 @@ class JavaVersion internal constructor(
       var number = false
       while (p < length) {
         val start = p
-        while (p < length && Character.isDigit(str[p]) == number) p++
+        while (p < length && str[p].isDigit() == number) p++
         val part = str.substring(start, p)
         (if (number) numbers else separators).add(part)
         number = !number
@@ -278,7 +278,7 @@ class JavaVersion internal constructor(
     }
 
     private fun startsWithWord(s: String, word: String): Boolean {
-      return s.startsWith(word) && (s.length == word.length || !Character.isLetterOrDigit(s[word.length]))
+      return s.startsWith(word) && (s.length == word.length || !s[word.length].isLetterOrDigit())
     }
 
     /**
