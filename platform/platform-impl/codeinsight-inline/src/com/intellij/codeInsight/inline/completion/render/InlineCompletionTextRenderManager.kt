@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.event.VisibleAreaEvent
+import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -59,14 +61,24 @@ import java.util.*
  */
 @ApiStatus.Experimental
 internal class InlineCompletionTextRenderManager private constructor(
-  editor: Editor,
-  renderOffset: Int,
+  private val editor: Editor,
+  private val renderOffset: Int,
   private val onDispose: () -> Unit
 ) {
 
-  private val renderer = Renderer(editor, renderOffset)
+  private var renderer = Renderer(editor, renderOffset)
   private var elementsCounter = 0
   private var isActive = true
+
+  // We store all the requests to be able to re-draw everything when the editor is resized
+  // It's almost impossible to do it inside the renderer because the internal state is spoiled by folding and soft-wrapping
+  private val requests = mutableListOf<Request>()
+
+  private val disposable = Disposer.newDisposable("[Inline Completion] text renderer manager")
+
+  init {
+    editor.scrollingModel.addVisibleAreaListener(UpdateOnResizeListener(), disposable)
+  }
 
   private fun append(
     text: String,
@@ -83,13 +95,34 @@ internal class InlineCompletionTextRenderManager private constructor(
         cleanUp()
       }
     }
+    requests += Request(text, attributes, initialOffset)
     return renderer.append(text, attributes, initialOffset)
   }
 
   private fun cleanUp() {
     isActive = false
     Disposer.dispose(renderer)
+    Disposer.dispose(disposable)
+    requests.clear()
     onDispose()
+  }
+
+  private fun recreateRenderer() {
+    Disposer.dispose(renderer)
+    renderer = Renderer(editor, renderOffset)
+    for (request in requests) {
+      renderer.append(request.text, request.attributes, request.initialOffset)
+    }
+  }
+
+  private class Request(val text: String, val attributes: TextAttributes, val initialOffset: Int)
+
+  private inner class UpdateOnResizeListener : VisibleAreaListener {
+    override fun visibleAreaChanged(e: VisibleAreaEvent) {
+      if (e.oldRectangle.width != e.newRectangle.width) {
+        recreateRenderer()
+      }
+    }
   }
 
   private class Renderer(
