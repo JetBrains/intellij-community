@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
+import java.util.*
 
 /**
  * Accumulates all the text to be rendered at one offset and renders them.
@@ -103,6 +104,7 @@ internal class InlineCompletionTextRenderManager private constructor(
     private var foldedRange: TextRange? = null
 
     private val foldingManager = InlineCompletionFoldingManager.get(editor)
+    private val softWrapManager = InlineCompletionSoftWrapManager.get(editor)
 
     fun append(text: String, attributes: TextAttributes, initialOffset: Int): RenderedInlineCompletionElementDescriptor {
       val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, attributes) }
@@ -124,6 +126,8 @@ internal class InlineCompletionTextRenderManager private constructor(
     }
 
     private fun render(newLines: List<InlineCompletionRenderTextBlock>, initialOffset: Int) {
+      val firstTouchedLine = blockLineInlays.size
+
       editor.forceLeanLeft()
 
       removeFoldedBlocksEverywhere()
@@ -134,16 +138,18 @@ internal class InlineCompletionTextRenderManager private constructor(
           renderInline(listOf(newLines[0]))
           if (newLines.size > 1) {
             state = RenderState.RENDERING_BLOCK
-            renderMultiline(newLines.subList(1, newLines.size))
+            renderMultiline(newLines.subList(1, newLines.size).map { listOf(it) })
           }
         }
         RenderState.RENDERING_BLOCK -> {
-          renderMultiline(newLines)
+          renderMultiline(newLines.map { listOf(it) })
         }
       }
 
       renderFoldedRange()
       updateDirtyInlays()
+
+      applySoftWrapping(firstTouchedLine)
     }
 
     private fun renderInline(newBlocks: List<InlineCompletionRenderTextBlock>) {
@@ -168,8 +174,8 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
     }
 
-    private fun renderMultiline(newLines: List<InlineCompletionRenderTextBlock>) {
-      if (newLines.isEmpty()) {
+    private fun renderMultiline(lines: List<List<InlineCompletionRenderTextBlock>>) {
+      if (lines.isEmpty()) {
         return
       }
 
@@ -177,7 +183,7 @@ internal class InlineCompletionTextRenderManager private constructor(
 
       val offset = foldingManager.firstNotFoldedOffset(this.renderOffset)
 
-      var linesToRender = newLines
+      var linesToRender = lines
       val lastInlay = blockLineInlays.lastOrNull()
       if (lastInlay != null) {
         lastInlay.renderer.blocks = lastInlay.renderer.blocks + linesToRender[0]
@@ -185,7 +191,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
 
       for (newLine in linesToRender) {
-        blockLineInlays += renderBlockInlay(editor, offset, listOf(newLine)) ?: break
+        blockLineInlays += renderBlockInlay(editor, offset, newLine) ?: break
       }
     }
 
@@ -286,6 +292,92 @@ internal class InlineCompletionTextRenderManager private constructor(
       val blocks = renderer.blocks.filter { it.data.getUserData(FOLDED_BLOCK_KEY) == null }
       if (blocks.size != renderer.blocks.size) {
         renderer.blocks = blocks
+      }
+    }
+
+    private fun getInlayForLine(line: Int): Inlay<out InlineCompletionLineRenderer>? {
+      if (line < 0 || line > blockLineInlays.size) {
+        LOG.error("Inline Completion: incorrect line number: $line. Expected range: [0, ${blockLineInlays.size}].")
+      }
+      return when (line) {
+        0 -> inlineInlay
+        else -> blockLineInlays.getOrNull(line - 1)
+      }
+    }
+
+    // Invariant: all previous lines are correct
+    // TODO take out into softWrapManager
+    private fun applySoftWrapping(startingFromLine: Int) {
+      val softWrapModel = softWrapManager.getSoftWrapModelIfEnabled() ?: return
+
+      val applyRange = startingFromLine until blockLineInlays.size + 1
+      val linesToFix = applyRange.mapNotNullTo(LinkedList()) { line ->
+        getInlayForLine(line)?.renderer?.blocks?.map { block ->
+          VolumetricInlineCompletionTextBlock(block, InlineCompletionLineRenderer.widthOf(editor, block) + 1) // TODO +1
+        }
+      }
+
+      // TODO optimize
+      while (blockLineInlays.isNotEmpty() && blockLineInlays.size >= applyRange.first) { // TODO refine the limit >=
+        Disposer.dispose(blockLineInlays.removeLast())
+      }
+      if (startingFromLine == 0) {
+        inlineInlay?.let { Disposer.dispose(it) }
+        inlineInlay = null
+      }
+      val resultLines = LinkedList<List<InlineCompletionRenderTextBlock>>() // TODO optimize
+      var isFirstLineConsidered = (startingFromLine == 0)
+      while (linesToFix.isNotEmpty()) {
+        val line = linesToFix.first()
+        val startX = when (isFirstLineConsidered) {
+          true -> editor.offsetToXY(renderOffset).x // TODO use inlay start
+          false -> 0
+        }
+        isFirstLineConsidered = false
+
+        val editorAvailableLineWidth = softWrapModel.applianceManager.widthProvider.visibleAreaWidth - startX // TODO tune
+        val (leftSplitPart, rightSplitPart) = softWrapManager.splitByAvailableWidth(line, editorAvailableLineWidth)
+        // TODO check that line is not empty
+        if (rightSplitPart.isEmpty()) { // The line completely fits
+          resultLines += leftSplitPart.map { it.block }
+          linesToFix.removeFirst()
+          continue
+        }
+        if (leftSplitPart.isEmpty()) { // Not a single part of the line fits
+          if (startX > 0) {
+            // Let's try to put it on the next empty line
+            resultLines.add(emptyList())
+          }
+          else {
+            // Idk what to do... Idk how to split... TODO
+            resultLines.add(line.map { it.block })
+            linesToFix.removeFirst()
+          }
+          continue
+        }
+        resultLines.add(leftSplitPart.map { it.block })
+        linesToFix.removeFirst()
+        linesToFix.addFirst(rightSplitPart)
+      }
+
+      if (resultLines.isEmpty()) {
+        return
+      }
+
+      if (startingFromLine == 0) {
+        renderInline(resultLines.first())
+        resultLines.removeFirst()
+        if (resultLines.isNotEmpty()) {
+          state = RenderState.RENDERING_BLOCK
+          renderMultiline(resultLines)
+        }
+      }
+      else if (startingFromLine == 1) {
+        renderMultiline(resultLines)
+      }
+      else {
+        // TODO explain empty list
+        renderMultiline(listOf(emptyList<InlineCompletionRenderTextBlock>()) + resultLines)
       }
     }
 
