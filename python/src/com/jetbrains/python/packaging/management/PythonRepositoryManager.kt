@@ -8,23 +8,25 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 
 @ApiStatus.Experimental
-abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
-  abstract val repositories: List<PyPackageRepository>
+interface PythonRepositoryManager {
+  @Deprecated("Don't use sdk from here")
+  val sdk: Sdk
+  val project: Project
+  val repositories: List<PyPackageRepository>
 
-  abstract fun allPackages(): Set<String>
+  fun allPackages(): Set<String>
+  fun searchPackages(query: String): Map<PyPackageRepository, List<String>>
+  fun searchPackages(query: String, repository: PyPackageRepository): List<String>
 
-  abstract fun packagesFromRepository(repository: PyPackageRepository): Set<String>
-  abstract suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
-  abstract suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
+  suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
+  suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
+  fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails
 
-  abstract suspend fun refreshCaches()
-
-  abstract suspend fun initCaches()
-
-  abstract fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails
-
-  abstract fun searchPackages(query: String, repository: PyPackageRepository): List<String>
-  abstract fun searchPackages(query: String): Map<PyPackageRepository, List<String>>
+  @Throws(IOException::class)
+  suspend fun refreshCaches()
+  @Throws(IOException::class)
+  suspend fun initCaches()
 }
