@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.ide.util.RunOnceUtil
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
+import com.intellij.util.application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
@@ -18,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
        storages = [Storage(value = "terminal.xml")])
-class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
+class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
   override fun getState(): State = state
@@ -32,6 +38,11 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     }
 
     RunOnceUtil.runOnceForApp("TerminalOptionsProvider.terminalEngine.migration") {
+      // If migration is happened in IDE backend, let's skip it.
+      // Because we should receive the correct terminal engine value from the frontend and use it.
+      // Otherwise, there can be a race when migration is performed both on backend and frontend simultaneously.
+      if (AppMode.isRemoteDevHost()) return@runOnceForApp
+
       // The initial state of the terminal engine value should be composed out of registry values
       // used previously to determine what terminal to use.
       val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
@@ -43,6 +54,13 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
         isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
         isReworkedValue -> TerminalEngine.REWORKED
         else -> TerminalEngine.CLASSIC
+      }
+
+      thisLogger().info("Initialized TerminalOptionsProvider.terminalEngine value from registry to ${state.terminalEngine}")
+
+      // Trigger sending the updated terminal engine value to the backend
+      coroutineScope.launch {
+        saveSettingsForRemoteDevelopment(application)
       }
     }
 
