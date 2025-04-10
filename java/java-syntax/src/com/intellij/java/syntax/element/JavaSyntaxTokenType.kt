@@ -4,6 +4,7 @@ package com.intellij.java.syntax.element
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import kotlin.jvm.JvmField
 
 /**
  * @see com.intellij.psi.JavaTokenType
