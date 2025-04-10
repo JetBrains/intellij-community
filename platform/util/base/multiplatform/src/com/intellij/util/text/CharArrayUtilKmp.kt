@@ -37,7 +37,7 @@ object CharArrayUtilKmp {
   @JvmStatic
   fun fromSequence(seq: CharSequence): CharArray {
     val underlying: CharArray? = fromSequenceWithoutCopying(seq)
-    return underlying?.clone() ?: seq.fromSequence(0, seq.length)
+    return underlying?.copyOf() ?: seq.fromSequence(0, seq.length)
   }
 
   /**
