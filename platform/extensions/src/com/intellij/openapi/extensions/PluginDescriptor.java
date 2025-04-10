@@ -12,6 +12,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Date;
 
+@ApiStatus.NonExtendable
 public interface PluginDescriptor {
   @NotNull PluginId getPluginId();
 
