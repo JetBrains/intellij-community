@@ -68,6 +68,8 @@ private class JavaDeleteCompletionCommand(
     get() = JavaBundle.message("command.completion.delete.element.text")
   override val icon: Icon?
     get() = null
+  override val priority: Int?
+    get() = -100
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val element = getCommandContext(offset, psiFile) ?: return
