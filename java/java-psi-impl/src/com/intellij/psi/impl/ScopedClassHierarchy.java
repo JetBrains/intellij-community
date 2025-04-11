@@ -88,7 +88,7 @@ class ScopedClassHierarchy {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Map<GlobalSearchScope, ScopedClassHierarchy> result =
         ConcurrentFactoryMap.create(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1),
-                                    CollectionFactory::createConcurrentSoftMap);
+                                    () -> ContainerUtil.createConcurrentWeakKeySoftValueMap());
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }).get(resolveScope);
   }
