@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
@@ -97,7 +98,7 @@ internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescrip
       }
 
       val file = entry.path
-      if (!uniqueGuard.add(file)) {
+      if (!uniqueGuard.add(file) || (entry is CustomAssetEntry && !file.toString().endsWith(".jar"))) {
         continue
       }
 
