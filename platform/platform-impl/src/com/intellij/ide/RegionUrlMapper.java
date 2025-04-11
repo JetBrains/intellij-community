@@ -31,7 +31,19 @@ import java.util.concurrent.*;
 public final class RegionUrlMapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.RegionUrlMapper");
 
-  private static final int CACHE_DATA_EXPIRATION_MIN = 2;
+  private static final int CACHE_DATA_EXPIRATION_MIN;
+
+  static {
+    int expiration;
+    try {
+      expiration = Integer.parseInt(System.getProperty("ide.region.url.mapping.expiration.timeout", "2"));
+    }
+    catch (NumberFormatException e) {
+      expiration = 2;
+    }
+    CACHE_DATA_EXPIRATION_MIN = expiration;
+  }
+
   private static final String CONFIG_URL_DEFAULT = "https://www.jetbrains.com/config/JetBrainsResourceMapping.json";
   private static final Map<Region, String> CONFIG_URL_TABLE = Map.of(
     // augment the table with other regions if needed
