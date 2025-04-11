@@ -3,7 +3,6 @@ package com.intellij.terminal.backend
 
 import com.intellij.terminal.backend.util.scrollDown
 import com.intellij.terminal.backend.util.write
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import junit.framework.TestCase.assertEquals
@@ -49,7 +48,7 @@ internal class TerminalContentChangesTrackerTest {
     textBuffer.write("sixth", 3, 0)
 
     // Update will be saved there on the next scroll
-    var update: TerminalContentUpdatedEvent? = null
+    var update: TerminalContentUpdate? = null
     contentChangesTracker.addHistoryOverflowListener {
       update = it
     }
@@ -91,7 +90,7 @@ internal class TerminalContentChangesTrackerTest {
     textBuffer.write("sixth", 3, 0)
 
     // Update will be saved there on the next scroll
-    var update: TerminalContentUpdatedEvent? = null
+    var update: TerminalContentUpdate? = null
     contentChangesTracker.addHistoryOverflowListener {
       update = it
     }

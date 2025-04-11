@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -83,6 +84,11 @@ internal class StateAwareTerminalSession(private val delegate: TerminalSession) 
         val styles = event.styles.map { it.toStyleRange() }
         val model = getCurrentOutputModel()
         model.updateContent(event.startLineLogicalIndex, event.text, styles)
+
+        val latency = event.readTime?.elapsedNow()
+        if (latency != null) {
+          ReworkedTerminalUsageCollector.logBackendOutputLatency(event.id, latency)
+        }
       }
       is TerminalCursorPositionChangedEvent -> {
         val model = getCurrentOutputModel()
