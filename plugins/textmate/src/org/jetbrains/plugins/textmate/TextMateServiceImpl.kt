@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.progress.lockMaybeCancellable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -239,7 +240,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
   private fun ensureInitialized() {
     if (!isInitialized) {
-      registrationLock.lock()
+      registrationLock.lockMaybeCancellable()
       try {
         if (isInitialized) return
         registerBundles(fireEvents = false)
