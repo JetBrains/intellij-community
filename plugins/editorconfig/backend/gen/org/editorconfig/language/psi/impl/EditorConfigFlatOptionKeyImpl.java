@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 import org.editorconfig.language.psi.base.EditorConfigFlatOptionKeyBase;
 import org.editorconfig.language.psi.*;
-import org.editorconfig.language.psi.reference.EditorConfigFlatOptionKeyReference;
 
 public class EditorConfigFlatOptionKeyImpl extends EditorConfigFlatOptionKeyBase implements EditorConfigFlatOptionKey {
 

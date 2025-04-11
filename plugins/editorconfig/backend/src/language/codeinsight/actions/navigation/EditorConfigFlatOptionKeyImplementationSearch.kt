@@ -10,7 +10,7 @@ import org.editorconfig.language.psi.reference.findChildren
 class EditorConfigFlatOptionKeyImplementationSearch : QueryExecutorBase<EditorConfigFlatOptionKey, DefinitionsScopedSearch.SearchParameters>(true) {
   override fun processQuery(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in EditorConfigFlatOptionKey>) {
     val key = queryParameters.element as? EditorConfigFlatOptionKey ?: return
-    key.reference.findChildren().forEach {
+    key.findChildren().forEach {
       if (!consumer.process(it)) return
     }
   }

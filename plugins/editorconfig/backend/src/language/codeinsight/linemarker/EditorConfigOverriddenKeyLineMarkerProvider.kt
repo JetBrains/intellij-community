@@ -22,9 +22,7 @@ class EditorConfigOverriddenKeyLineMarkerProvider : LineMarkerProvider, DumbAwar
       if (element !is EditorConfigFlatOptionKey) continue
       val identifier = element.firstChild ?: continue
       if (identifier.firstChild != null) continue
-      val reference = element.reference
-      val children = reference
-        .findChildren()
+      val children = element.findChildren()
         .toTypedArray()
 
       if (children.isEmpty()) continue

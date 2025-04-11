@@ -170,10 +170,6 @@ qualified_key_part ::= IDENTIFIER {
 flat_option_key ::= IDENTIFIER {
   mixin="org.editorconfig.language.psi.base.EditorConfigFlatOptionKeyBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement"
-  methods=[
-    // Cannot be deleted since it declares a different return type
-    getReference
-  ]
 }
 
 // ---- ---- Value ---- ----

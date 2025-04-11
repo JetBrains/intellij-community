@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.psi.reference
 
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiReferenceBase
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.EditorConfigOption
@@ -16,12 +15,9 @@ class EditorConfigFlatOptionKeyReference(element: EditorConfigFlatOptionKey) : P
   override fun resolve(): EditorConfigFlatOptionKey = element
 }
 
-private val EditorConfigFlatOptionKeyReference.virtualFile: VirtualFile get() = element.containingFile.virtualFile
-private val EditorConfigFlatOptionKeyReference.option get() = element.option
-private val EditorConfigFlatOptionKeyReference.section get() = option.section
-private val EditorConfigFlatOptionKeyReference.psiFile: EditorConfigPsiFile?
+private val EditorConfigFlatOptionKey.psiFile: EditorConfigPsiFile?
   get() {
-    val file = element.containingFile as? EditorConfigPsiFile
+    val file = containingFile as? EditorConfigPsiFile
     return EditorConfigPsiTreeUtil.getOriginalFile(file)
   }
 
@@ -31,7 +27,7 @@ private val EditorConfigFlatOptionKeyReference.psiFile: EditorConfigPsiFile?
  * 2. A is higher in file hierarchy (or in the same file before B)
  * 3. A and B have equal keys
  */
-private fun EditorConfigFlatOptionKeyReference.findPotentialParents(): List<EditorConfigFlatOptionKey> {
+private fun EditorConfigFlatOptionKey.findPotentialParents(): List<EditorConfigFlatOptionKey> {
   val optionDescriptor = option.getDescriptor(false) ?: return emptyList()
   val psiFile = psiFile ?: return emptyList()
   return EditorConfigPsiTreeUtil
@@ -41,7 +37,7 @@ private fun EditorConfigFlatOptionKeyReference.findPotentialParents(): List<Edit
     .flatMap { it.optionList.asSequence() }
     .filter { it.getDescriptor(false) == optionDescriptor }
     .filter { isAllowedToContainParentIn(it.section) }
-    .filter { section.header isSubcaseOf it.section.header }
+    .filter { option.section.header isSubcaseOf it.section.header }
     .mapNotNull(EditorConfigOption::getFlatOptionKey)
     .toList()
 }
@@ -54,10 +50,10 @@ private fun EditorConfigFlatOptionKeyReference.findPotentialParents(): List<Edit
  *
  * (i.e. potential parent that is not potential parent of any other potential parent)
  */
-fun EditorConfigFlatOptionKeyReference.findParents(): List<EditorConfigFlatOptionKey> {
-  val potentialParents = findPotentialParents()
+fun EditorConfigFlatOptionKey.findParents(): List<EditorConfigFlatOptionKey> {
+  val potentialParents = this.findPotentialParents()
   // potentialParentsToPotentialParentsOfPotentialParents - oh well
-  val parentsToParentsOfParents = potentialParents.map { it to it.reference.findPotentialParents() }
+  val parentsToParentsOfParents = potentialParents.map { it to it.findPotentialParents() }
   return potentialParents.filter { particularPotentialParent ->
     parentsToParentsOfParents.all { (potentialParent, potentialParentsOfPotentialParent) ->
       potentialParent === particularPotentialParent || particularPotentialParent !in potentialParentsOfPotentialParent
@@ -68,11 +64,11 @@ fun EditorConfigFlatOptionKeyReference.findParents(): List<EditorConfigFlatOptio
 /**
  * Most importantly, disallows to have parent in same file downwards
  */
-private fun EditorConfigFlatOptionKeyReference.isAllowedToContainParentIn(section: EditorConfigSection) =
-  section.containsKey(element)
-  && (section.containingFile.virtualFile != virtualFile || section.textRange.endOffset < this.section.textRange.startOffset)
+private fun EditorConfigFlatOptionKey.isAllowedToContainParentIn(section: EditorConfigSection) =
+  section.containsKey(this)
+  && (section.containingFile.virtualFile != this.containingFile.virtualFile || section.textRange.endOffset < this.section.textRange.startOffset)
 
-fun EditorConfigFlatOptionKeyReference.findChildren(): List<EditorConfigFlatOptionKey> {
+fun EditorConfigFlatOptionKey.findChildren(): List<EditorConfigFlatOptionKey> {
   val psiFile = psiFile ?: return emptyList()
   val optionDescriptor = option.getDescriptor(false) ?: return emptyList()
   val children = EditorConfigPsiTreeUtil.findAllChildrenFiles(psiFile) + psiFile
@@ -88,14 +84,14 @@ fun EditorConfigFlatOptionKeyReference.findChildren(): List<EditorConfigFlatOpti
     .toList()
 }
 
-private fun EditorConfigFlatOptionKeyReference.canBeDistantParentOf(child: EditorConfigOption) =
+private fun EditorConfigFlatOptionKey.canBeDistantParentOf(child: EditorConfigOption): Boolean =
   child.option.section.header.isSubcaseOf(option.section.header)
 
-private fun EditorConfigFlatOptionKeyReference.isDistantParentOf(child: EditorConfigFlatOptionKey) =
-  child !== element && isDistantParentOfRecursion(child)
+private fun EditorConfigFlatOptionKey.isDistantParentOf(child: EditorConfigFlatOptionKey): Boolean =
+  child !== this && isDistantParentOfRecursion(child)
 
-private fun EditorConfigFlatOptionKeyReference.isDistantParentOfRecursion(child: EditorConfigFlatOptionKey): Boolean {
-  if (child === element) return true
-  val parents = child.reference.findParents()
+private fun EditorConfigFlatOptionKey.isDistantParentOfRecursion(child: EditorConfigFlatOptionKey): Boolean {
+  if (child === this) return true
+  val parents = child.findParents()
   return parents.any(::isDistantParentOfRecursion)
 }

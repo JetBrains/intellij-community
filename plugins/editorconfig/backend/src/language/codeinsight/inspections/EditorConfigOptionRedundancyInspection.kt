@@ -17,7 +17,7 @@ class EditorConfigOptionRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitFlatOptionKey(flatOptionKey: EditorConfigFlatOptionKey) {
       val option = flatOptionKey.option
-      val parents = flatOptionKey.reference.findParents()
+      val parents = flatOptionKey.findParents()
       if (parents.isEmpty()) return
       val parentOptions = parents.map(EditorConfigFlatOptionKey::option)
       if (!parentOptions.all { haveEqualValues(option, it) }) return

@@ -20,8 +20,7 @@ class EditorConfigOverridingKeyLineMarkerProvider : LineMarkerProvider, DumbAwar
   override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
     for (element in elements) {
       if (element !is EditorConfigFlatOptionKey) continue
-      val reference = element.reference
-      val parents = reference
+      val parents = element
         .findParents()
         .toTypedArray()
 
