@@ -157,17 +157,24 @@ final class SyntaxGeneratedParserRuntime(
     }
   }
 
-  internal class MyList<E>(initialCapacity: Int) : ArrayList<E>(initialCapacity) {
-    fun setSize(fromIndex: Int) {
-      removeRange(fromIndex, this.size)
+  internal class MyList<E>(initialCapacity: Int) {
+    private var arrayList: ArrayList<E> = ArrayList(initialCapacity)
+    val size: Int get() = arrayList.size
+
+    fun get(index: Int): E {
+      return arrayList[index]
     }
 
-    override fun add(e: E): Boolean {
+    fun setSize(fromIndex: Int) {
+      arrayList.subList(fromIndex, this.size).clear()
+    }
+
+    fun add(e: E): Boolean {
       val size = this.size
       if (size >= MAX_VARIANTS_SIZE) {
-        removeRange(MAX_VARIANTS_SIZE / 4, size - MAX_VARIANTS_SIZE / 4)
+        setSize(MAX_VARIANTS_SIZE / 4)
       }
-      return super.add(e)
+      return arrayList.add(e)
     }
   }
 
@@ -731,12 +738,12 @@ fun SyntaxGeneratedParserRuntime.exit_section_(
 
 @ApiStatus.Experimental
 fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<T?>?, param: T?) {
-  errorState.hooks = SyntaxGeneratedParserRuntime.Hooks.Companion.concat<T?>(hook, param, errorState.level, errorState.hooks)
+  errorState.hooks = SyntaxGeneratedParserRuntime.Hooks.concat<T?>(hook, param, errorState.level, errorState.hooks)
 }
 
 @ApiStatus.Experimental
 fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<Array<T?>?>?, vararg param: T?) {
-  errorState.hooks = SyntaxGeneratedParserRuntime.Hooks.Companion.concat<Array<T?>?>(hook, arrayOf(param.asIterable()) as Array<T?>, errorState.level, errorState.hooks)
+  errorState.hooks = SyntaxGeneratedParserRuntime.Hooks.concat<Array<T?>?>(hook, arrayOf(param.asIterable()) as Array<T?>, errorState.level, errorState.hooks)
 }
 
 private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: SyntaxGeneratedParserRuntime.ErrorState, elementType: SyntaxElementType?) {
