@@ -62,7 +62,7 @@
   </extensionPoints>
 
   <dependencies>
-    <plugin id="com.intellij.properties"/>
+    <module name="intellij.properties.backend"/>
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.idea.reposearch"/>
   </dependencies>
