@@ -83,21 +83,6 @@ object BuildDependenciesDownloader {
     return URI.create("${base}/${groupStr}/${artifactId}/${version}/${artifactId}-${version}${classifierStr}.${packaging}")
   }
 
-  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
-  }
-
-  private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
-    val path: Path = if (TeamCityHelper.isUnderTeamCity) {
-      TeamCityHelper.persistentCachePath ?: error ("'agent.persistent.cache' system property is required under TeamCity")
-    }
-    else {
-      getProjectLocalDownloadCache(communityRoot)
-    }
-    Files.createDirectories(path)
-    return path
-  }
-
   @JvmStatic
   fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path {
     return downloadFileToCacheLocationSync(uri.toString(), communityRoot)
@@ -128,122 +113,6 @@ object BuildDependenciesDownloader {
     val flagFile = cachePath.resolve("${directoryName}.flag")
     extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options)
     return targetDirectory
-  }
-
-  private fun getExpectedFlagFileContent(
-    archiveFile: Path,
-    targetDirectory: Path,
-    options: Array<out BuildDependenciesExtractOptions>,
-  ): ByteArray {
-    var fileCount = 0L
-    var fileSizeSum = 0L
-
-    Files.walkFileTree(targetDirectory, object : SimpleFileVisitor<Path>() {
-      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-        fileCount++
-        fileSizeSum += attrs.size()
-        return FileVisitResult.CONTINUE
-      }
-    })
-
-    return """$EXTRACT_CODE_VERSION
-${archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS)}
-fileCount:$fileCount
-fileSizeSum:$fileSizeSum
-options:${getExtractOptionsShortString(options)}
-""".toByteArray(StandardCharsets.UTF_8)
-  }
-
-  private fun checkFlagFile(
-    archiveFile: Path,
-    flagFile: Path,
-    targetDirectory: Path,
-    options: Array<out BuildDependenciesExtractOptions>,
-  ): Boolean {
-    if (!Files.isRegularFile(flagFile) || !Files.isDirectory(targetDirectory)) {
-      return false
-    }
-    val existingContent = Files.readAllBytes(flagFile)
-    return existingContent.contentEquals(getExpectedFlagFileContent(archiveFile, targetDirectory, options))
-  }
-
-  // assumes a file at `archiveFile` is immutable
-  private fun extractFileWithFlagFileLocation(
-    archiveFile: Path,
-    targetDirectory: Path,
-    flagFile: Path,
-    options: Array<out BuildDependenciesExtractOptions>,
-  ) {
-    if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      LOG.fine("Skipping extract to $targetDirectory since flag file $flagFile is correct")
-
-      // update file modification time to maintain FIFO caches, i.e., in a persistent cache dir on TeamCity agent
-      val now = FileTime.from(Instant.now())
-
-      try {
-        Files.setLastModifiedTime(targetDirectory, now)
-      } catch (e: IOException) {
-        LOG.fine("Error targetDirectory.setLastModifiedTime: $e")
-      }
-
-      try {
-        Files.setLastModifiedTime(flagFile, now)
-      } catch (e: IOException) {
-        LOG.fine("Error flagFile.setLastModifiedTime: $e")
-      }
-      return
-    }
-    if (Files.exists(targetDirectory)) {
-      check(Files.isDirectory(targetDirectory)) { "Target '$targetDirectory' exists, but it's not a directory. Please delete it manually" }
-      cleanDirectory(targetDirectory)
-    }
-    LOG.info(" * Extracting $archiveFile to $targetDirectory")
-    extractCount.incrementAndGet()
-    Files.createDirectories(targetDirectory)
-    val filesAfterCleaning = listDirectory(targetDirectory)
-    check(filesAfterCleaning.isEmpty()) {
-      "Target directory ${targetDirectory} is not empty after cleaning: ${filesAfterCleaning.joinToString(" ")}"
-    }
-    val start = ByteBuffer.allocate(4)
-    FileChannel.open(archiveFile).use { channel -> channel.read(start, 0) }
-    start.flip()
-    check(start.remaining() == 4) { "File $archiveFile is smaller than 4 bytes, could not be extracted" }
-    val stripRoot = options.any { it == BuildDependenciesExtractOptions.STRIP_ROOT }
-    val magicNumber = start.order(ByteOrder.LITTLE_ENDIAN).getInt(0)
-    if (magicNumber == -0x2d04ad8) {
-      val unwrappedArchiveFile = archiveFile.parent.resolve(archiveFile.fileName.toString() + ".unwrapped")
-      try {
-        Files.newOutputStream(unwrappedArchiveFile).use { out ->
-          ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile)).use {
-            input -> input.transferTo(out)
-          }
-        }
-        extractZip(unwrappedArchiveFile, targetDirectory, stripRoot)
-      }
-      finally {
-        Files.deleteIfExists(unwrappedArchiveFile)
-      }
-    }
-    else if (start[0] == 0x50.toByte() && start[1] == 0x4B.toByte()) {
-      extractZip(archiveFile, targetDirectory, stripRoot)
-    }
-    else if (start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte()) {
-      extractTarGz(archiveFile, targetDirectory, stripRoot)
-    }
-    else if (start[0] == 0x42.toByte() && start[1] == 0x5A.toByte()) {
-      extractTarBz2(archiveFile, targetDirectory, stripRoot)
-    }
-    else {
-      throw IllegalStateException(
-        "Unknown archive format at ${archiveFile}." +
-        " Magic number (little endian hex): ${Integer.toHexString(magicNumber)}." +
-        " Currently only .tar.gz or .zip are supported"
-      )
-    }
-    Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
-    check(checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      "'checkFlagFile' must be true right after extracting the archive. flagFile:${flagFile} archiveFile:${archiveFile} target:${targetDirectory}"
-    }
   }
 
   @Deprecated("Use BuildDependenciesDownloader.extractFile(communityRoot, archiveFile, options)", level = DeprecationLevel.ERROR)
@@ -289,10 +158,144 @@ options:${getExtractOptionsShortString(options)}
     }
   }
 
-  @TestOnly fun getExtractCount(): Int = extractCount.get()
+  @TestOnly
+  fun getExtractCount(): Int = extractCount.get()
 
   class HttpStatusException(message: String, @JvmField val statusCode: Int, val url: String) : IllegalStateException(message) {
     override fun toString(): String = "HttpStatusException(status=${statusCode}, url=${url}, message=${message})"
+  }
+}
+
+private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
+  return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
+}
+
+private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
+  val path: Path = if (TeamCityHelper.isUnderTeamCity) {
+    TeamCityHelper.persistentCachePath ?: error("'agent.persistent.cache' system property is required under TeamCity")
+  }
+  else {
+    getProjectLocalDownloadCache(communityRoot)
+  }
+  Files.createDirectories(path)
+  return path
+}
+
+private fun getExpectedFlagFileContent(
+  archiveFile: Path,
+  targetDirectory: Path,
+  options: Array<out BuildDependenciesExtractOptions>,
+): ByteArray {
+  var fileCount = 0L
+  var fileSizeSum = 0L
+
+  Files.walkFileTree(targetDirectory, object : SimpleFileVisitor<Path>() {
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      fileCount++
+      fileSizeSum += attrs.size()
+      return FileVisitResult.CONTINUE
+    }
+  })
+
+  return """$EXTRACT_CODE_VERSION
+${archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS)}
+fileCount:$fileCount
+fileSizeSum:$fileSizeSum
+options:${getExtractOptionsShortString(options)}
+""".toByteArray(StandardCharsets.UTF_8)
+}
+
+private fun checkFlagFile(
+  archiveFile: Path,
+  flagFile: Path,
+  targetDirectory: Path,
+  options: Array<out BuildDependenciesExtractOptions>,
+): Boolean {
+  if (!Files.isRegularFile(flagFile) || !Files.isDirectory(targetDirectory)) {
+    return false
+  }
+  val existingContent = Files.readAllBytes(flagFile)
+  return existingContent.contentEquals(getExpectedFlagFileContent(archiveFile, targetDirectory, options))
+}
+
+// assumes a file at `archiveFile` is immutable
+private fun extractFileWithFlagFileLocation(
+  archiveFile: Path,
+  targetDirectory: Path,
+  flagFile: Path,
+  options: Array<out BuildDependenciesExtractOptions>,
+) {
+  if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
+    LOG.fine("Skipping extract to $targetDirectory since flag file $flagFile is correct")
+
+    // update file modification time to maintain FIFO caches, i.e., in a persistent cache dir on TeamCity agent
+    val now = FileTime.from(Instant.now())
+
+    try {
+      Files.setLastModifiedTime(targetDirectory, now)
+    }
+    catch (e: IOException) {
+      LOG.fine("Error targetDirectory.setLastModifiedTime: $e")
+    }
+
+    try {
+      Files.setLastModifiedTime(flagFile, now)
+    }
+    catch (e: IOException) {
+      LOG.fine("Error flagFile.setLastModifiedTime: $e")
+    }
+    return
+  }
+  if (Files.exists(targetDirectory)) {
+    check(Files.isDirectory(targetDirectory)) { "Target '$targetDirectory' exists, but it's not a directory. Please delete it manually" }
+    cleanDirectory(targetDirectory)
+  }
+  LOG.info(" * Extracting $archiveFile to $targetDirectory")
+  extractCount.incrementAndGet()
+  Files.createDirectories(targetDirectory)
+  val filesAfterCleaning = listDirectory(targetDirectory)
+  check(filesAfterCleaning.isEmpty()) {
+    "Target directory ${targetDirectory} is not empty after cleaning: ${filesAfterCleaning.joinToString(" ")}"
+  }
+  val start = ByteBuffer.allocate(4)
+  FileChannel.open(archiveFile).use { channel -> channel.read(start, 0) }
+  start.flip()
+  check(start.remaining() == 4) { "File $archiveFile is smaller than 4 bytes, could not be extracted" }
+  val stripRoot = options.any { it == BuildDependenciesExtractOptions.STRIP_ROOT }
+  val magicNumber = start.order(ByteOrder.LITTLE_ENDIAN).getInt(0)
+  if (magicNumber == -0x2d04ad8) {
+    val unwrappedArchiveFile = archiveFile.parent.resolve(archiveFile.fileName.toString() + ".unwrapped")
+    try {
+      Files.newOutputStream(unwrappedArchiveFile).use { out ->
+        ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile)).use { input ->
+          input.transferTo(out)
+        }
+      }
+      extractZip(unwrappedArchiveFile, targetDirectory, stripRoot)
+    }
+    finally {
+      Files.deleteIfExists(unwrappedArchiveFile)
+    }
+  }
+  else if (start[0] == 0x50.toByte() && start[1] == 0x4B.toByte()) {
+    extractZip(archiveFile, targetDirectory, stripRoot)
+  }
+  else if (start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte()) {
+    extractTarGz(archiveFile, targetDirectory, stripRoot)
+  }
+  else if (start[0] == 0x42.toByte() && start[1] == 0x5A.toByte()) {
+    extractTarBz2(archiveFile, targetDirectory, stripRoot)
+  }
+  else {
+    throw IllegalStateException(
+      "Unknown archive format at ${archiveFile}." +
+      " Magic number (little endian hex): ${Integer.toHexString(magicNumber)}." +
+      " Currently only .tar.gz or .zip are supported"
+    )
+  }
+  Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
+  check(checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
+    "'checkFlagFile' must be true right after extracting the archive. flagFile:${flagFile} archiveFile:${archiveFile} target:${targetDirectory}"
   }
 }
 
