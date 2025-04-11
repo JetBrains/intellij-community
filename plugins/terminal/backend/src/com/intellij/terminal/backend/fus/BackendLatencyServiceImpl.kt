@@ -1,16 +1,15 @@
 package com.intellij.terminal.backend.fus
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.rpc.UID
+import com.intellij.terminal.backend.ObservableTtyConnector
+import com.intellij.terminal.backend.TtyConnectorListener
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalWriteBytesEvent
-import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalDataStream
-import com.jediterm.terminal.TtyBasedArrayDataStream
-import com.jediterm.terminal.TtyConnector
 import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.plugins.terminal.fus.BackendLatencyService
-import org.jetbrains.plugins.terminal.fus.BackendLatencyService.Companion.getInstance
 import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 import org.jetbrains.plugins.terminal.fus.BackendTypingActivity
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -37,8 +36,27 @@ internal class BackendLatencyServiceImpl : BackendLatencyService {
   }
 }
 
-internal fun enableFus(ttyConnector: TtyConnector, fusActivity: BackendOutputActivity): TtyConnector =
-  FusAwareTtyConnector(ttyConnector, fusActivity)
+internal fun installFusListener(
+  ttyConnector: ObservableTtyConnector,
+  fusActivity: BackendOutputActivity,
+  parentDisposable: Disposable,
+) {
+  ttyConnector.addListener(parentDisposable, object : TtyConnectorListener {
+    override fun charsRead(buf: CharArray, offset: Int, length: Int) {
+      fusActivity.charsRead(length)
+    }
+
+    override fun bytesWritten(bytes: ByteArray) {
+      val typingActivity = BackendLatencyService.getInstance().getBackendTypingActivityOrNull(bytes) ?: return
+      try {
+        typingActivity.reportDuration()
+      }
+      finally {
+        typingActivity.finishBytesProcessing()
+      }
+    }
+  })
+}
 
 internal fun enableFus(stream: TerminalDataStream, fusActivity: BackendOutputActivity): TerminalDataStream =
   FusAwareTtyBasedDataStream(stream, fusActivity)
@@ -293,43 +311,6 @@ private class BackendOutputActivityImpl : BackendOutputActivity {
     if (latency.max != null) {
       ReworkedTerminalUsageCollector.logBackendMaxOutputLatency(sessionId, latency.max.index, latency.max.duration)
     }
-  }
-}
-
-private class FusAwareTtyConnector(private val original: TtyConnector, private val outputActivity: BackendOutputActivity) : TtyConnector {
-  override fun read(buf: CharArray, offset: Int, length: Int): Int = original.read(buf, offset, length).also { charsRead ->
-    outputActivity.charsRead(charsRead)
-  }
-
-  override fun write(bytes: ByteArray) {
-    val typingActivity = getInstance().getBackendTypingActivityOrNull(bytes)
-    try {
-      original.write(bytes)
-      typingActivity?.reportDuration()
-    }
-    finally {
-      typingActivity?.finishBytesProcessing()
-    }
-  }
-
-  override fun write(string: String) {
-    original.write(string)
-  }
-
-  override fun isConnected(): Boolean = original.isConnected
-
-  override fun waitFor(): Int = original.waitFor()
-
-  override fun ready(): Boolean = original.ready()
-
-  override fun getName(): String? = original.name
-
-  override fun close() {
-    original.close()
-  }
-
-  override fun resize(termSize: TermSize) {
-    original.resize(termSize)
   }
 }
 
