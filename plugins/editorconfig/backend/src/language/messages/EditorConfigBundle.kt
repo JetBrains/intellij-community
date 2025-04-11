@@ -10,7 +10,7 @@ object EditorConfigBundle {
 
   const val BUNDLE: @NonNls String = "messages.EditorConfigBundle"
 
-  internal val instance: DynamicBundle = DynamicBundle(EditorConfigBundle::class.java, BUNDLE)
+  private val instance: DynamicBundle = DynamicBundle(EditorConfigBundle::class.java, BUNDLE)
 
   operator fun get(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): @Nls String {
     return instance.getMessage(key, *params)
@@ -24,5 +24,9 @@ object EditorConfigBundle {
   @JvmStatic
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, param: String): @Nls String {
     return get(key, param)
+  }
+
+  fun messageOrDefault(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): @Nls String? {
+    return instance.messageOrDefault(key, defaultValue = null, params)
   }
 }

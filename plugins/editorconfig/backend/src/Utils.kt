@@ -76,9 +76,8 @@ object Utils {
 
   fun invalidConfigMessage(project: Project, configValue: String?, configKey: String, filePath: String?) {
     val message = if (configValue != null) {
-      EditorConfigBundle.instance.messageOrDefault(
+      EditorConfigBundle.messageOrDefault(
         key = "invalid.config.value",
-        defaultValue = null,
         configValue,
         configKey.ifEmpty { "?" },
         filePath,
