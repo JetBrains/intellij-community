@@ -59,7 +59,7 @@ Your tool implementation should follow these guidelines:
 - Use the Response class appropriately:
   - `Response(result)` for successful operations
   - `Response(error = message)` for error cases
-- Utilize the provided Project instance for accessing IDE services
+- Use the provided Project instance for accessing IDE services
 
 ## How to Publish Update
 1. Update `settings.gradle.kts` to provide a new version 

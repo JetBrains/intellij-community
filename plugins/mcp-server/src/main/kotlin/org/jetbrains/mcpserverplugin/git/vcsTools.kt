@@ -63,7 +63,6 @@ class FindCommitByTextTool : AbstractMcpTool<CommitQuery>() {
             // Handle any errors that occur during the search
             return Response("Error while searching commits: ${e.message}")
         }
-        return Response("Feature not yet implemented")
     }
 }
 
