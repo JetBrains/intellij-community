@@ -83,7 +83,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       ModuleGroupTestsKt.renameModule(getModule(), "mainModule");
 
       Path communityHomePath = Paths.get(PathManager.getHomePathFor(GroovyCompilerTestCase.class), "community");
-      Path javaHomePath = JdkDownloader.getJdkHome(new BuildDependenciesCommunityRoot(communityHomePath), null, null);
+      Path javaHomePath = JdkDownloader.INSTANCE.blockingGetJdkHomeAndLog(new BuildDependenciesCommunityRoot(communityHomePath), null, null);
       String javaHome = javaHomePath.toAbsolutePath().toString();
       javaHome = StringUtil.trimEnd(StringUtil.trimEnd(javaHome, "/"), "/jre");
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), javaHome);

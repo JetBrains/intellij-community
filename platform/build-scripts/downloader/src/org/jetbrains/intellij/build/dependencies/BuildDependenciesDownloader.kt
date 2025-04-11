@@ -26,17 +26,18 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
-import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
 import java.security.Provider
 import java.time.Instant
+import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
@@ -52,6 +53,7 @@ import kotlin.LazyThreadSafetyMode
 import kotlin.String
 import kotlin.Suppress
 import kotlin.Throwable
+import kotlin.arrayOf
 import kotlin.check
 import kotlin.emptyArray
 import kotlin.error
@@ -71,6 +73,8 @@ private const val EXTRACT_CODE_VERSION = 5
 private const val DOWNLOAD_CODE_VERSION = 3
 
 private val extractCount = AtomicInteger()
+
+private val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
 
 @ApiStatus.Internal
 object BuildDependenciesDownloader {
@@ -187,10 +191,7 @@ object BuildDependenciesDownloader {
   }
 }
 
-suspend fun extractFileToCacheLocation(
-  communityRoot: BuildDependenciesCommunityRoot,
-  archiveFile: Path,
-): Path {
+suspend fun extractFileToCacheLocation(archiveFile: Path, communityRoot: BuildDependenciesCommunityRoot, stripRoot: Boolean = false): Path {
   cleanUpIfRequired(communityRoot)
 
   val archivePath = archiveFile.invariantSeparatorsPathString
@@ -202,12 +203,18 @@ suspend fun extractFileToCacheLocation(
     val hasher = Hashing.xxh3_64().hashStream()
       .putLong(archivePathHash)
       .putInt(archivePath.length)
+      .putBoolean(stripRoot)
       .putInt(EXTRACT_CODE_VERSION)
 
     val dirName = "${archiveFile.fileName}.${Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)}.d"
     val targetDir = cachePath.resolve(dirName)
     val flagFile = cachePath.resolve("$dirName.flag")
-    extractFileWithFlagFileLocation(archiveFile = archiveFile, targetDirectory = targetDir, flagFile = flagFile, options = EMPTY_OPTIONS)
+    extractFileWithFlagFileLocation(
+      archiveFile = archiveFile,
+      targetDirectory = targetDir,
+      flagFile = flagFile,
+      options = if (stripRoot) arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT) else EMPTY_OPTIONS,
+    )
     return targetDir
   }
 }
@@ -250,7 +257,7 @@ ${archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS)}
 fileCount:$fileCount
 fileSizeSum:$fileSizeSum
 options:${getExtractOptionsShortString(options)}
-""".toByteArray(StandardCharsets.UTF_8)
+""".encodeToByteArray()
 }
 
 private fun checkFlagFile(
@@ -278,7 +285,6 @@ private fun extractFileWithFlagFileLocation(
 
     // update file modification time to maintain FIFO caches, i.e., in a persistent cache dir on TeamCity agent
     val now = FileTime.from(Instant.now())
-
     try {
       Files.setLastModifiedTime(targetDirectory, now)
     }
@@ -294,10 +300,12 @@ private fun extractFileWithFlagFileLocation(
     }
     return
   }
+
   if (Files.exists(targetDirectory)) {
     check(Files.isDirectory(targetDirectory)) { "Target '$targetDirectory' exists, but it's not a directory. Please delete it manually" }
     cleanDirectory(targetDirectory)
   }
+
   LOG.info(" * Extracting $archiveFile to $targetDirectory")
   extractCount.incrementAndGet()
   Files.createDirectories(targetDirectory)
@@ -305,41 +313,44 @@ private fun extractFileWithFlagFileLocation(
   check(filesAfterCleaning.isEmpty()) {
     "Target directory ${targetDirectory} is not empty after cleaning: ${filesAfterCleaning.joinToString(" ")}"
   }
+
   val start = ByteBuffer.allocate(4)
-  FileChannel.open(archiveFile).use { channel -> channel.read(start, 0) }
+  FileChannel.open(archiveFile, READ_OPERATION).use { it.read(start, 0) }
   start.flip()
   check(start.remaining() == 4) { "File $archiveFile is smaller than 4 bytes, could not be extracted" }
   val stripRoot = options.any { it == BuildDependenciesExtractOptions.STRIP_ROOT }
   val magicNumber = start.order(ByteOrder.LITTLE_ENDIAN).getInt(0)
-  if (magicNumber == -0x2d04ad8) {
-    val unwrappedArchiveFile = archiveFile.parent.resolve(archiveFile.fileName.toString() + ".unwrapped")
-    try {
-      Files.newOutputStream(unwrappedArchiveFile).use { out ->
-        ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile)).use { input ->
-          input.transferTo(out)
+  when {
+    magicNumber == -0x2d04ad8 -> {
+      val unwrappedArchiveFile = archiveFile.parent.resolve(archiveFile.fileName.toString() + ".unwrapped")
+      try {
+        Files.newOutputStream(unwrappedArchiveFile).use { out ->
+          ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile)).use { input ->
+            input.transferTo(out)
+          }
         }
+        extractZip(unwrappedArchiveFile, targetDirectory, stripRoot)
       }
-      extractZip(unwrappedArchiveFile, targetDirectory, stripRoot)
+      finally {
+        Files.deleteIfExists(unwrappedArchiveFile)
+      }
     }
-    finally {
-      Files.deleteIfExists(unwrappedArchiveFile)
+    start[0] == 0x50.toByte() && start[1] == 0x4B.toByte() -> {
+      extractZip(archiveFile, targetDirectory, stripRoot)
     }
-  }
-  else if (start[0] == 0x50.toByte() && start[1] == 0x4B.toByte()) {
-    extractZip(archiveFile, targetDirectory, stripRoot)
-  }
-  else if (start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte()) {
-    extractTarGz(archiveFile, targetDirectory, stripRoot)
-  }
-  else if (start[0] == 0x42.toByte() && start[1] == 0x5A.toByte()) {
-    extractTarBz2(archiveFile, targetDirectory, stripRoot)
-  }
-  else {
-    throw IllegalStateException(
-      "Unknown archive format at ${archiveFile}." +
-      " Magic number (little endian hex): ${Integer.toHexString(magicNumber)}." +
-      " Currently only .tar.gz or .zip are supported"
-    )
+    start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte() -> {
+      extractTarGz(archiveFile, targetDirectory, stripRoot)
+    }
+    start[0] == 0x42.toByte() && start[1] == 0x5A.toByte() -> {
+      extractTarBz2(archiveFile, targetDirectory, stripRoot)
+    }
+    else -> {
+      throw IllegalStateException(
+        "Unknown archive format at ${archiveFile}." +
+        " Magic number (little endian hex): ${Integer.toHexString(magicNumber)}." +
+        " Currently only .tar.gz or .zip are supported"
+      )
+    }
   }
   Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
   check(checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {

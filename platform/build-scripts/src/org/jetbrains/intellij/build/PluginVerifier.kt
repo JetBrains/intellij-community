@@ -57,7 +57,7 @@ class PluginVerifier internal constructor(
     errFile: Path?,
     outFile: Path?,
   ): Boolean {
-    val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHome(COMMUNITY_ROOT))
+    val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHomeAndLog(COMMUNITY_ROOT))
 
     runProcess(
       args = listOf(

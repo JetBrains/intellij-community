@@ -71,7 +71,7 @@ internal suspend fun handleCustomPlatformSpecificAssets(
       for (source in lazySource.getSources()) {
         when (source) {
           is UnpackedZipSource -> {
-            val dir = extractFileToCacheLocation(context.paths.communityHomeDirRoot, source.file)
+            val dir = extractFileToCacheLocation(archiveFile = source.file, communityRoot = context.paths.communityHomeDirRoot)
             val dirPrefix = dir.toString().length + 1
             copyDir(
               sourceDir = dir,

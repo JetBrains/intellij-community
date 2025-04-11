@@ -137,7 +137,7 @@ internal class BuildDependenciesExtractTest(private val archiveType: TestArchive
       TestFile("dir/test.symlink2"),
     ))
 
-    val root = extractFileToCacheLocation(BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
+    val root = extractFileToCacheLocation(testArchive, BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory)
 
     // will be skipped
     assertThat(root.resolve("dir/test.symlink")).doesNotExist()
