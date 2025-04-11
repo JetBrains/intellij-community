@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -14,6 +15,8 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.psi.codeStyle.NameUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -59,7 +62,9 @@ class SeTextItemsProvider(val project: Project, private val contributorWrapper: 
 
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeTextSearchItem)?.item ?: return false
-    return contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
+    return withContext(Dispatchers.EDT) {
+      contributorWrapper.contributor.processSelectedItem (legacyItem, modifiers, searchText)
+    }
   }
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
