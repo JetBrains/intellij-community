@@ -13,6 +13,8 @@ interface XBreakpointManagerProxy {
 
   val allGroups: Set<String>
 
+  val dependentBreakpointManager: XDependentBreakpointManagerProxy
+
   fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState)
 
   fun setDefaultGroup(group: String)
@@ -22,6 +24,7 @@ interface XBreakpointManagerProxy {
   fun getAllBreakpointTypes(): List<XBreakpointType<*, *>>
 
   fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit)
+  fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -29,6 +32,8 @@ interface XBreakpointManagerProxy {
 
     override val allGroups: Set<String>
       get() = breakpointManager.allGroups
+
+    override val dependentBreakpointManager: XDependentBreakpointManagerProxy = XDependentBreakpointManagerProxy.Monolith(breakpointManager.dependentBreakpointManager)
 
     override fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState) {
       breakpointManager.breakpointsDialogSettings = settings
@@ -54,5 +59,7 @@ interface XBreakpointManagerProxy {
         listener()
       })
     }
+
+    override fun getLastRemovedBreakpoint(): XBreakpointProxy? = XBreakpointProxy.Monolith(breakpointManager.lastRemovedBreakpoint as XBreakpointBase<*, *, *>)
   }
 }

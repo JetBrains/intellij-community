@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
@@ -31,7 +32,7 @@ class FrontendXBreakpointProxy(
 
   override val breakpoint: Any = this
 
-  override val type: XBreakpointTypeProxy = FrontendXBreakpointType(dto.type)
+  override val type: XBreakpointTypeProxy = FrontendXBreakpointType(project, dto.type)
 
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
@@ -45,6 +46,15 @@ class FrontendXBreakpointProxy(
   }
 
   override fun getDisplayText(): String = _state.value.displayText
+
+  override fun getShortText(): @NlsSafe String {
+    // TODO: pass it through RPC
+    return getDisplayText()
+  }
+
+  internal fun currentState(): XBreakpointDtoState {
+    return _state.value
+  }
 
   override fun getUserDescription(): String? = _state.value.userDescription
 
@@ -77,13 +87,87 @@ class FrontendXBreakpointProxy(
 
   override fun getSuspendPolicy(): SuspendPolicy = _state.value.suspendPolicy
 
+  override fun setSuspendPolicy(suspendPolicy: SuspendPolicy) {
+    // TODO: there is a race in changes from server and client,
+    //  so we need to merge this state.
+    //  Otherwise, multiple clicks on the breakpoint in breakpoint dialog will work in a wrong way.
+    _state.update { it.copy(suspendPolicy = suspendPolicy) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setSuspendPolicy(id, suspendPolicy)
+    }
+  }
+
   override fun isLogMessage(): Boolean = _state.value.logMessage
 
   override fun isLogStack(): Boolean = _state.value.logStack
 
+  override fun isConditionEnabled(): Boolean {
+    // TODO: pass it through RPC
+    return false
+  }
+
+  override fun setConditionEnabled(enabled: Boolean) {
+    // TODO: implement it through RPC
+  }
+
   override fun getLogExpressionObject(): XExpression? = _state.value.logExpressionObject?.xExpression()
 
   override fun getConditionExpression(): XExpression? = _state.value.conditionExpression?.xExpression()
+
+  override fun setConditionExpression(condition: XExpression?) {
+    // TODO: implement it through RPC
+  }
+
+  override fun getConditionExpressionInt(): XExpression? {
+    // TODO: pass it through RPC
+    return null
+  }
+
+  override fun getGeneralDescription(): String {
+    // TODO: pass it through RPC
+    return getDisplayText()
+  }
+
+  override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
+    if (other !is FrontendXBreakpointProxy) {
+      return false
+    }
+
+    // TODO: support timestamp
+    return currentState() == other.currentState()
+  }
+
+  override fun isLogExpressionEnabled(): Boolean {
+    // TODO: pass it through RPC
+    return false
+  }
+
+  override fun getLogExpression(): XExpression? {
+    // TODO: pass it through RPC
+    return null
+  }
+
+  override fun getLogExpressionObjectInt(): XExpression? {
+    // TODO: pass it through RPC
+    return null
+  }
+
+  override fun setLogMessage(enabled: Boolean) {
+    // TODO: implement it through RPC
+  }
+
+  override fun setLogStack(enabled: Boolean) {
+    // TODO: implement it through RPC
+  }
+
+  override fun setLogExpressionEnabled(enabled: Boolean) {
+    // TODO: implement it through RPC
+  }
+
+  override fun setLogExpressionObject(logExpression: XExpression?) {
+    // TODO: implement it through RPC
+  }
 
 
   override fun equals(other: Any?): Boolean {

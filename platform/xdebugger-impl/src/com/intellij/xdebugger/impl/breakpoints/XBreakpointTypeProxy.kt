@@ -1,10 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.project.Project
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.breakpointTypes
 import org.jetbrains.annotations.ApiStatus
+import java.util.EnumSet
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -18,7 +26,22 @@ interface XBreakpointTypeProxy {
   val isSuspendThreadSupported: Boolean
   val priority: Int?
 
-  class Monolith(val breakpointType: XBreakpointType<*, *>) : XBreakpointTypeProxy {
+  val defaultSuspendPolicy: SuspendPolicy
+
+  fun setDefaultSuspendPolicy(policy: SuspendPolicy)
+  fun getVisibleStandardPanels(): EnumSet<XBreakpointType.StandardPanels>
+  fun getEditorsProvider(breakpoint: XBreakpointProxy, project: Project): XDebuggerEditorsProvider?
+  fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+  fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+  fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+  fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+
+  class Monolith(
+    val project: Project,
+    val breakpointType: XBreakpointType<*, *>,
+  ) : XBreakpointTypeProxy {
+    private val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(breakpointType)
+
     override val id: String
       get() = breakpointType.id
     override val index: Int
@@ -39,5 +62,45 @@ interface XBreakpointTypeProxy {
       else {
         null
       }
+
+    override val defaultSuspendPolicy: SuspendPolicy
+      get() = defaultState.suspendPolicy
+
+    override fun setDefaultSuspendPolicy(policy: SuspendPolicy) {
+      defaultState.suspendPolicy = policy
+    }
+
+    override fun getVisibleStandardPanels(): EnumSet<XBreakpointType.StandardPanels> = breakpointType.visibleStandardPanels
+
+    override fun getEditorsProvider(breakpoint: XBreakpointProxy, project: Project): XDebuggerEditorsProvider? {
+      if (breakpoint !is XBreakpointProxy.Monolith) {
+        return null
+      }
+
+      return getEditorProvider(breakpointType, breakpoint.breakpoint, project)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <B : XBreakpoint<P>, P : XBreakpointProperties<*>> getEditorProvider(
+      breakpointType: XBreakpointType<B, P>,
+      breakpoint: XBreakpoint<*>,
+      project: Project,
+    ): XDebuggerEditorsProvider? = breakpointType.getEditorsProvider(breakpoint as B, project)
+
+    override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
+      return breakpointType.createCustomPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
+    }
+
+    override fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
+      return breakpointType.createCustomConditionsPanel() as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
+    }
+
+    override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
+      return breakpointType.createCustomRightPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
+    }
+
+    override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
+      return breakpointType.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
+    }
   }
 }

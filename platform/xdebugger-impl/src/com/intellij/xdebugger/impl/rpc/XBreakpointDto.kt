@@ -4,11 +4,13 @@ package com.intellij.xdebugger.impl.rpc
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
@@ -55,6 +57,7 @@ data class XBreakpointTypeDto(
   val enabledIcon: IconId,
   val suspendThreadSupported: Boolean,
   val lineTypeInfo: XLineBreakpointTypeInfo?,
+  val defaultSuspendPolicy: SuspendPolicy,
 )
 
 @ApiStatus.Internal
@@ -72,7 +75,7 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   return XBreakpointDto(
     id = breakpointId,
     initialState = getDtoState(),
-    type = type.toRpc(),
+    type = type.toRpc(project),
     state = channelFlow {
       breakpointChangedFlow().collectLatest {
         send(getDtoState())
@@ -81,7 +84,7 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   )
 }
 
-private fun XBreakpointType<*, *>.toRpc(): XBreakpointTypeDto {
+private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
   val lineTypeInfo = if (this is XLineBreakpointType<*>) {
     XLineBreakpointTypeInfo(priority)
   }
@@ -89,7 +92,11 @@ private fun XBreakpointType<*, *>.toRpc(): XBreakpointTypeDto {
     null
   }
   val index = XBreakpointType.EXTENSION_POINT_NAME.extensionList.indexOf(this)
-  return XBreakpointTypeDto(XBreakpointTypeId(id), index, title, enabledIcon.rpcId(), isSuspendThreadSupported, lineTypeInfo)
+  val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(this)
+  // TODO: do we need to subscribe on [defaultState] changes?
+  return XBreakpointTypeDto(
+    XBreakpointTypeId(id), index, title, enabledIcon.rpcId(), isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy
+  )
 }
 
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState {

@@ -101,28 +101,15 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
-    // TODO: Remove dependency on underlying breakpoint object for frontend implementation
-    XBreakpoint<?> breakpoint = getUnderlyingBreakpoint();
-    if (breakpoint == null) {
-      panel.clearEditor();
-      return;
-    }
-
-    XBreakpointBase breakpointBase = (XBreakpointBase)breakpoint;
-    Project project = breakpointBase.getProject();
-
     // saveState();
     if (myPropertiesPanel != null) {
       myPropertiesPanel.dispose();
       myPropertiesPanel = null;
     }
     if (!editorOnly) {
-      // TODO: pass XBreakpointManagerProxy to XLightBreakpointPropertiesPanel and remove this check
-      if (myBreakpointManagerProxy instanceof XBreakpointManagerProxy.Monolith) {
-        XBreakpointManagerImpl manager = ((XBreakpointManagerProxy.Monolith)myBreakpointManagerProxy).getBreakpointManager();
-        myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, manager, breakpointBase, true, false);
-        panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
-      }
+      Project project = myBreakpointProxy.getProject();
+      myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, myBreakpointManagerProxy, myBreakpointProxy, true, false);
+      panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
     }
 
     panel.clearEditor();
