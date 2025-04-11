@@ -31,7 +31,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val CHAR_INDEX = EventFields.Long("char_index")
   private val FIRST_CHAR_INDEX = EventFields.Long("first_char_index")
   private val LAST_CHAR_INDEX = EventFields.Long("last_char_index")
-  private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MICROSECONDS, "duration_micros")
+  private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
   private val REPAINTED_FIELD = EventFields.Boolean("editor_repainted")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
