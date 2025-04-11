@@ -14,7 +14,6 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
-import org.jetbrains.plugins.terminal.fus.BackendLatencyService
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -43,12 +42,10 @@ internal class TerminalSessionsManager {
 
     val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
     val observableTtyConnector = ObservableTtyConnector(ttyConnector)
-    val fusActivity = BackendLatencyService.getInstance().startBackendOutputActivity()
-    val session = createTerminalSession(project, observableTtyConnector, termSize, JBTerminalSystemSettingsProvider(), scope, fusActivity)
-    val stateAwareSession = StateAwareTerminalSession(session, fusActivity)
+    val session = createTerminalSession(project, observableTtyConnector, termSize, JBTerminalSystemSettingsProvider(), scope)
+    val stateAwareSession = StateAwareTerminalSession(session)
 
     val sessionId = storeSession(stateAwareSession, scope)
-    fusActivity.sessionId = sessionId
 
     val portForwardingScope = scope.childScope("PortForwarding")
     val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, portForwardingScope)

@@ -11,14 +11,12 @@ import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
-import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
 internal class TerminalContentChangesTracker(
   private val textBuffer: TerminalTextBuffer,
   private val discardedHistoryTracker: TerminalDiscardedHistoryTracker,
-  private val fusActivity: BackendOutputActivity,
 ) {
   private var lastChangedVisualLine: Int = 0
   private var anyLineChanged: Boolean = false
@@ -31,7 +29,6 @@ internal class TerminalContentChangesTracker(
         val line = textBuffer.effectiveHistoryLinesCount + fromIndex
         lastChangedVisualLine = min(lastChangedVisualLine, line)
         anyLineChanged = true
-        fusActivity.processedCharsReachedTextBuffer()
       }
 
       override fun linesDiscardedFromHistory(lines: List<TerminalLine>) {
@@ -101,11 +98,13 @@ internal class TerminalContentChangesTracker(
     lastChangedVisualLine = textBuffer.effectiveHistoryLinesCount + textBuffer.screenLinesCount
     anyLineChanged = false
 
-    val styles = output.styleRanges.map { it.toDto() }
-    val charRange = fusActivity.textBufferCharacterIndices()
-    val contentUpdatedEvent = TerminalContentUpdatedEvent(output.text, styles, logicalLineIndex, charRange.first, charRange.last)
-    fusActivity.textBufferCollected(contentUpdatedEvent)
-    return contentUpdatedEvent
+    return TerminalContentUpdatedEvent(
+      text = output.text,
+      styles = output.styleRanges.map { it.toDto() },
+      startLineLogicalIndex = logicalLineIndex,
+      firstCharIndex = -1,
+      lastCharIndex = -1,
+    )
   }
 
   private fun scrapeOutput(startLine: Int, additionalLines: List<TerminalLine>): StyledCommandOutput {
