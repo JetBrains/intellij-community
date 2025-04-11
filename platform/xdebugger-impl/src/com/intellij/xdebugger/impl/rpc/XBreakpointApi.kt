@@ -20,6 +20,20 @@ interface XBreakpointApi : RemoteApi<Unit> {
   suspend fun setSuspendPolicy(breakpointId: XBreakpointId, suspendPolicy: SuspendPolicy)
 
   suspend fun setDefaultSuspendPolicy(project: ProjectId, breakpointTypeId: XBreakpointTypeId, policy: SuspendPolicy)
+  
+  suspend fun setConditionEnabled(breakpointId: XBreakpointId, enabled: Boolean)
+  
+  suspend fun setConditionExpression(breakpointId: XBreakpointId, condition: XExpressionDto?)
+  
+  suspend fun setLogMessage(breakpointId: XBreakpointId, enabled: Boolean)
+  
+  suspend fun setLogStack(breakpointId: XBreakpointId, enabled: Boolean)
+  
+  suspend fun setLogExpressionEnabled(breakpointId: XBreakpointId, enabled: Boolean)
+  
+  suspend fun setLogExpressionObject(breakpointId: XBreakpointId, logExpression: XExpressionDto?)
+  
+  suspend fun setTemporary(breakpointId: XBreakpointId, isTemporary: Boolean)
 
   companion object {
     @JvmStatic

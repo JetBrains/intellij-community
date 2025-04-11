@@ -109,9 +109,10 @@ private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
 }
 
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState {
+  val breakpoint = this
   return withContext(Dispatchers.EDT) {
     XBreakpointDtoState(
-      displayText = XBreakpointUtil.getShortText(this@getDtoState),
+      displayText = XBreakpointUtil.getShortText(breakpoint),
       iconId = getIcon().rpcId().also {
         // let's not cache icon while sending it through RPC
         // TODO: it is better to send all needed icons from BreakpointType
@@ -119,7 +120,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
         clearIcon()
       },
       sourcePosition = sourcePosition?.toRpc(),
-      isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(this@getDtoState),
+      isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(breakpoint),
       logExpressionObject = logExpressionObject?.toRpc(),
       conditionExpression = conditionExpression?.toRpc(),
       enabled = isEnabled,
@@ -128,14 +129,14 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       logStack = isLogStack,
       userDescription = userDescription,
       group = group,
-      shortText = XBreakpointUtil.getShortText(this@getDtoState),
+      shortText = XBreakpointUtil.getShortText(breakpoint),
       isConditionEnabled = isConditionEnabled,
       conditionExpressionInt = conditionExpressionInt?.toRpc(),
-      generalDescription = XBreakpointUtil.getGeneralDescription(this@getDtoState),
+      generalDescription = XBreakpointUtil.getGeneralDescription(breakpoint),
       isLogExpressionEnabled = isLogExpressionEnabled,
       logExpression = logExpression,
       logExpressionObjectInt = logExpressionObjectInt?.toRpc(),
-      isTemporary = (this as? XLineBreakpoint<*>)?.isTemporary ?: false,
+      isTemporary = (breakpoint as? XLineBreakpoint<*>)?.isTemporary ?: false,
     )
   }
 }

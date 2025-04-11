@@ -106,7 +106,11 @@ class FrontendXBreakpointProxy(
   }
 
   override fun setConditionEnabled(enabled: Boolean) {
-    // TODO: implement it through RPC
+    _state.update { it.copy(isConditionEnabled = enabled) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setConditionEnabled(id, enabled)
+    }
   }
 
   override fun getLogExpressionObject(): XExpression? = _state.value.logExpressionObject?.xExpression()
@@ -114,7 +118,12 @@ class FrontendXBreakpointProxy(
   override fun getConditionExpression(): XExpression? = _state.value.conditionExpression?.xExpression()
 
   override fun setConditionExpression(condition: XExpression?) {
-    // TODO: implement it through RPC
+    val conditionDto = condition?.toRpc()
+    _state.update { it.copy(conditionExpression = conditionDto) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setConditionExpression(id, conditionDto)
+    }
   }
 
   override fun getConditionExpressionInt(): XExpression? {
@@ -147,19 +156,36 @@ class FrontendXBreakpointProxy(
   }
 
   override fun setLogMessage(enabled: Boolean) {
-    // TODO: implement it through RPC
+    _state.update { it.copy(logMessage = enabled) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setLogMessage(id, enabled)
+    }
   }
 
   override fun setLogStack(enabled: Boolean) {
-    // TODO: implement it through RPC
+    _state.update { it.copy(logStack = enabled) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setLogStack(id, enabled)
+    }
   }
 
   override fun setLogExpressionEnabled(enabled: Boolean) {
-    // TODO: implement it through RPC
+    _state.update { it.copy(isLogExpressionEnabled = enabled) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setLogExpressionEnabled(id, enabled)
+    }
   }
 
   override fun setLogExpressionObject(logExpression: XExpression?) {
-    // TODO: implement it through RPC
+    val logExpressionDto = logExpression?.toRpc()
+    _state.update { it.copy(logExpressionObject = logExpressionDto) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setLogExpressionObject(id, logExpressionDto)
+    }
   }
 
   override fun isTemporary(): Boolean {
@@ -167,7 +193,11 @@ class FrontendXBreakpointProxy(
   }
 
   override fun setTemporary(isTemporary: Boolean) {
-    // TODO: implement it through RPC
+    _state.update { it.copy(isTemporary = isTemporary) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setTemporary(id, isTemporary)
+    }
   }
 
 
