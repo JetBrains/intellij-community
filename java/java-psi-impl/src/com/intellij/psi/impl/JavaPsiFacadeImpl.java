@@ -32,10 +32,12 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
@@ -51,6 +53,10 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final NotNullLazyValue<JvmFacadeImpl> myJvmFacade;
   private final JvmPsiConversionHelper myConversionHelper;
 
+  private final ThreadLocal<Boolean> myTemporaryScopeCacheEnabled = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  @SuppressWarnings("SSBasedInspection")
+  private final ThreadLocal<Set<GlobalSearchScope>> myCachedTemporaryScopes = ThreadLocal.withInitial(() -> new HashSet<>());
+
   public JavaPsiFacadeImpl(@NotNull Project project, @Nullable CoroutineScope coroutineScope) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(myProject);
@@ -62,6 +68,8 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     (coroutineScope == null ? bus.simpleConnect() : bus.connect(coroutineScope)).subscribe(PsiModificationTracker.TOPIC, () -> {
       myClassCache.clear();
       myPackageCache.clear();
+      myCachedTemporaryScopes.get().clear();
+      myCachedTemporaryScopes.remove();
     });
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
@@ -79,6 +87,9 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(final @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
+    if (myTemporaryScopeCacheEnabled.get()) {
+      myCachedTemporaryScopes.get().add(scope);
+    }
     Map<String, Optional<PsiClass>> map = myClassCache.computeIfAbsent(scope, scope1 -> CollectionFactory.createConcurrentWeakValueMap());
     Optional<PsiClass> result = map.get(qualifiedName);
     if (result == null) {
@@ -500,5 +511,31 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   public @NotNull PsiElementFactory getElementFactory() {
     return PsiElementFactory.getInstance(myProject);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public <T> T withTemporaryScopeCaches(Callable<T> callable) {
+    Boolean previousValue = myTemporaryScopeCacheEnabled.get();
+    myTemporaryScopeCacheEnabled.set(Boolean.TRUE);
+    try {
+      return callable.call();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      for (GlobalSearchScope scope : myCachedTemporaryScopes.get()) {
+        myClassCache.remove(scope);
+      }
+      myCachedTemporaryScopes.get().clear();
+      myCachedTemporaryScopes.remove();
+      myTemporaryScopeCacheEnabled.set(previousValue);
+    }
+  }
+
+  @Override
+  public boolean temporaryScopeCachesEnabled() {
+    return myTemporaryScopeCacheEnabled.get();
   }
 }
