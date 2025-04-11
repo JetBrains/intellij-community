@@ -27,7 +27,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
   private val EVENT_ID_FIELD = EventFields.Int("event_id")
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
-  private val REPAINTED_FIELD = EventFields.Boolean("editor_repainted")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -67,7 +66,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     "terminal.frontend.output.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
-    REPAINTED_FIELD,
   )
 
   @JvmStatic
@@ -117,11 +115,10 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   }
 
   @ApiStatus.Internal
-  fun logFrontendOutputLatency(eventId: Int, duration: Duration, repainted: Boolean) {
+  fun logFrontendOutputLatency(eventId: Int, duration: Duration) {
     frontendOutputLatencyEvent.log(
       EVENT_ID_FIELD with eventId,
-      DURATION_FIELD with duration,
-      REPAINTED_FIELD with repainted,
+      DURATION_FIELD with duration
     )
   }
 }

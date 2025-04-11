@@ -123,25 +123,21 @@ private class FrontendOutputActivityImpl(
       if (repaintExpected) {
         pendingPaints.addDroppingOldest(pendingEvent)
       }
-      else {
-        reportLatency(pendingEvent, false)
-      }
     }
   }
 
   private fun editorPainted() {
     while (true) {
       val pendingPaint = pendingPaints.poll() ?: break
-      reportLatency(pendingPaint, true)
+      reportLatency(pendingPaint)
     }
   }
 
-  private fun reportLatency(receivedEvent: ReceivedEvent, painted: Boolean) {
+  private fun reportLatency(receivedEvent: ReceivedEvent) {
     val latency = receivedEvent.time.elapsedNow()
     ReworkedTerminalUsageCollector.logFrontendOutputLatency(
       eventId = receivedEvent.event.id,
       duration = latency,
-      repainted = painted,
     )
   }
 
