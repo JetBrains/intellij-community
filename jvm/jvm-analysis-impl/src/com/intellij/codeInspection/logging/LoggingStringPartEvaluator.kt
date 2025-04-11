@@ -59,9 +59,9 @@ internal class LoggingStringPartEvaluator {
         is ULiteralExpression -> getFromLiteralExpression(expression)
         is UPolyadicExpression -> getFromPolyadicExpression(expression, context)
         is UParenthesizedExpression -> recursiveCalculateValue(expression.skipParenthesizedExprDown(), context)
+        is UQualifiedReferenceExpression -> recursiveCalculateValue(expression.selector, context)
         is USimpleNameReferenceExpression -> getFromReferenceExpression(expression, context)
         is UCallExpression -> getFromCallExpression(expression, context)
-        is UQualifiedReferenceExpression -> getFromCallExpression(expression.selector as? UCallExpression, context)
         else -> listOf(PartHolder(null, false))
       }
     }

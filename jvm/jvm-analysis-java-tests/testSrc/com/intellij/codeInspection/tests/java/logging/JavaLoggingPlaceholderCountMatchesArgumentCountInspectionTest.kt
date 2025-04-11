@@ -740,5 +740,25 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       }
     """.trimIndent())
   }
+
+  fun `test field from different class`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+      
+      class Main {
+      
+          public static final Logger log = LogManager.getLogger();
+      
+          public static void main(String[] args) {
+              
+           log.error(<warning descr="More arguments provided (6) than placeholders specified (0)">SimpleClass.PLACEHOLDER</warning>, 1, 2, 4,5, 6, 7);
+          }
+      }
+      
+      class SimpleClass {
+          public static final String PLACEHOLDER = "say {} hello {}";
+      }""".trimIndent())
+  }
 }
 
