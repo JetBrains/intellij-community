@@ -48,8 +48,7 @@ class FrontendXBreakpointProxy(
   override fun getDisplayText(): String = _state.value.displayText
 
   override fun getShortText(): @NlsSafe String {
-    // TODO: pass it through RPC
-    return getDisplayText()
+    return _state.value.shortText
   }
 
   internal fun currentState(): XBreakpointDtoState {
@@ -103,8 +102,7 @@ class FrontendXBreakpointProxy(
   override fun isLogStack(): Boolean = _state.value.logStack
 
   override fun isConditionEnabled(): Boolean {
-    // TODO: pass it through RPC
-    return false
+    return _state.value.isConditionEnabled
   }
 
   override fun setConditionEnabled(enabled: Boolean) {
@@ -120,13 +118,11 @@ class FrontendXBreakpointProxy(
   }
 
   override fun getConditionExpressionInt(): XExpression? {
-    // TODO: pass it through RPC
-    return null
+    return _state.value.conditionExpressionInt?.xExpression()
   }
 
   override fun getGeneralDescription(): String {
-    // TODO: pass it through RPC
-    return getDisplayText()
+    return _state.value.generalDescription
   }
 
   override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
@@ -139,18 +135,15 @@ class FrontendXBreakpointProxy(
   }
 
   override fun isLogExpressionEnabled(): Boolean {
-    // TODO: pass it through RPC
-    return false
+    return _state.value.isLogExpressionEnabled
   }
 
-  override fun getLogExpression(): XExpression? {
-    // TODO: pass it through RPC
-    return null
+  override fun getLogExpression(): String? {
+    return _state.value.logExpression
   }
 
   override fun getLogExpressionObjectInt(): XExpression? {
-    // TODO: pass it through RPC
-    return null
+    return _state.value.logExpressionObjectInt?.xExpression()
   }
 
   override fun setLogMessage(enabled: Boolean) {
@@ -170,8 +163,7 @@ class FrontendXBreakpointProxy(
   }
 
   override fun isTemporary(): Boolean {
-    // TODO: pass it through RPC
-    return false
+    return _state.value.isTemporary
   }
 
   override fun setTemporary(isTemporary: Boolean) {

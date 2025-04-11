@@ -52,7 +52,7 @@ interface XBreakpointProxy {
 
   fun isLogExpressionEnabled(): Boolean
 
-  fun getLogExpression(): XExpression?
+  fun getLogExpression(): String?
   fun getLogExpressionObjectInt(): XExpression?
 
   fun setLogMessage(enabled: Boolean)
@@ -135,7 +135,7 @@ interface XBreakpointProxy {
 
     override fun isLogExpressionEnabled(): Boolean = breakpoint.isLogExpressionEnabled
 
-    override fun getLogExpression(): XExpression? = breakpoint.logExpressionObject
+    override fun getLogExpression(): String? = breakpoint.logExpression
 
     override fun getLogExpressionObjectInt(): XExpression? = breakpoint.logExpressionObjectInt
 

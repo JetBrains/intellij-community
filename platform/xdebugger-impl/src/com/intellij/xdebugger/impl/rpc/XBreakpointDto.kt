@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
@@ -46,6 +47,14 @@ data class XBreakpointDtoState(
   val logStack: Boolean,
   val userDescription: String?,
   val group: String?,
+  val shortText: String,
+  val isConditionEnabled: Boolean,
+  val conditionExpressionInt: XExpressionDto?,
+  val generalDescription: String,
+  val isLogExpressionEnabled: Boolean,
+  val logExpression: String?,
+  val logExpressionObjectInt: XExpressionDto?,
+  val isTemporary: Boolean,
 )
 
 @ApiStatus.Internal
@@ -119,6 +128,14 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       logStack = isLogStack,
       userDescription = userDescription,
       group = group,
+      shortText = XBreakpointUtil.getShortText(this@getDtoState),
+      isConditionEnabled = isConditionEnabled,
+      conditionExpressionInt = conditionExpressionInt?.toRpc(),
+      generalDescription = XBreakpointUtil.getGeneralDescription(this@getDtoState),
+      isLogExpressionEnabled = isLogExpressionEnabled,
+      logExpression = logExpression,
+      logExpressionObjectInt = logExpressionObjectInt?.toRpc(),
+      isTemporary = (this as? XLineBreakpoint<*>)?.isTemporary ?: false,
     )
   }
 }
