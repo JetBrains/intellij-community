@@ -77,7 +77,9 @@ interface TerminalWidget : ComponentContainer {
    */
   @ApiStatus.Experimental
   @RequiresEdt(generateAssertion = false)
-  fun isCommandRunning(): Boolean
+  fun isCommandRunning(): Boolean {
+    return false
+  }
 
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
