@@ -1916,21 +1916,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  // PY-53105
+  // PY-53105, PY-76865
   public void testVariadicGenericStarArgsOfVariadicGeneric() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
 
                    Ts = TypeVarTuple('Ts')
 
-
                    def foo(*args: Tuple[*Ts]): ...
-
 
                    foo((0,), (1,))
                    foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[int, int]' instead">(1, 2)</warning>)
-                   # *tuple[int | str] is inferred for *Ts
-                   foo((0,), ('1',))
+                   # Should fail according to https://typing.python.org/en/latest/spec/generics.html#type-variable-tuple-equality
+                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[str]' instead">('1',)</warning>)
                    """);
   }
 

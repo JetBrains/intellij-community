@@ -542,15 +542,17 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
-        // First collect type parameter substitutions by matching the expected type with the union.
-        PyType actualJoin = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
-        matchParameterAndArgument(expected, actualJoin, null, substitutions);
-        PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
+        // First collect type parameter substitutions by matching the expected type with the union, if it's a keyword container
+        // otherwise, match as usual arguments, passed to a function
+        if (container.isKeywordContainer()) {
+          PyType actualJoin = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
+          matchParameterAndArgument(expected, actualJoin, null, substitutions);
+        }
         return ContainerUtil.map(arguments, argument -> {
           // Then match each argument type against the expected type after these substitutions.
           PyType actual = myTypeEvalContext.getType(argument);
           boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
-          return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
+          return new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched);
         });
       }
       else {
