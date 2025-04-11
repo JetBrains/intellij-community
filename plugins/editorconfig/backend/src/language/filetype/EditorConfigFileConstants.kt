@@ -4,13 +4,11 @@ package org.editorconfig.language.filetype
 import com.intellij.application.options.CodeStyle
 import com.intellij.psi.PsiFile
 import org.editorconfig.language.EditorConfigLanguage
+import org.editorconfig.language.filetype.EditorConfigFileType.fileExtension
 
 object EditorConfigFileConstants {
-  const val FILE_EXTENSION: String = "editorconfig"
   const val FILE_NAME_WITHOUT_EXTENSION: String = ""
-  const val FILE_NAME: String = "$FILE_NAME_WITHOUT_EXTENSION.$FILE_EXTENSION"
-  const val PSI_FILE_NAME: String = "EditorConfig file"
-  const val FILETYPE_NAME: String = "EditorConfig"
+  val FILE_NAME: String = "$FILE_NAME_WITHOUT_EXTENSION.$fileExtension"
   const val ROOT_KEY: String = "root"
   const val ROOT_VALUE: String = "true"
 

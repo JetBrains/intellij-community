@@ -20,7 +20,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ArrayUtil
-import org.editorconfig.language.filetype.EditorConfigFileConstants
+import org.editorconfig.language.filetype.EditorConfigFileType
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -29,7 +29,7 @@ private const val DISABLE_KEY = "editorconfig.wrong.encoding.notification.disabl
 internal class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
-    if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
+    if (file.extension != EditorConfigFileType.fileExtension) return null
     if (file.charset == Charsets.UTF_8) return null
     val document = FileDocumentManager.getInstance().getDocument(file)
     if (document == null) return null

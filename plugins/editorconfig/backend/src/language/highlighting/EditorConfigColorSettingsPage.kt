@@ -9,7 +9,7 @@ import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.psi.codeStyle.DisplayPriority
 import com.intellij.psi.codeStyle.DisplayPrioritySortable
-import org.editorconfig.language.filetype.EditorConfigFileConstants
+import org.editorconfig.language.filetype.EditorConfigFileType
 import org.editorconfig.language.messages.EditorConfigBundle.get
 import javax.swing.Icon
 
@@ -41,7 +41,7 @@ internal class EditorConfigColorSettingsPage : ColorSettingsPage, DisplayPriorit
       |<keyDescription>dotnet_naming_rule</keyDescription>.<propertyKey>my_rule</propertyKey>.<keyDescription>severity</keyDescription> = <propertyValue>warning</propertyValue>
       |""".trimMargin()
 
-  override fun getDisplayName() = EditorConfigFileConstants.FILETYPE_NAME
+  override fun getDisplayName() = EditorConfigFileType.fileTypeName
   override fun getAdditionalHighlightingTagToDescriptorMap(): MutableMap<String, TextAttributesKey> = ADDITIONAL_HIGHLIGHTING
   override fun getAttributeDescriptors() = DESCRIPTORS
   override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY

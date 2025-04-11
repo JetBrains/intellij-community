@@ -21,6 +21,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import org.editorconfig.Utils
 import org.editorconfig.language.filetype.EditorConfigFileConstants
+import org.editorconfig.language.filetype.EditorConfigFileType
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.util.function.Function
@@ -32,7 +33,7 @@ private const val DISABLE_KEY = "editorconfig.wrong.name.notification.disabled"
 internal class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
-    if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
+    if (file.extension != EditorConfigFileType.fileExtension) return null
     if (nameMatches(file)) return null
     val renameAction = createRenameAction(project, file)
     return Function { createNotificationPanel(file, it, project, renameAction) }

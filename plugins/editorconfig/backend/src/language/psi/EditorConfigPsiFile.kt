@@ -5,12 +5,11 @@ import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.util.childrenOfType
 import org.editorconfig.language.EditorConfigLanguage
-import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.filetype.EditorConfigFileType
 
 class EditorConfigPsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, EditorConfigLanguage) {
   override fun getFileType(): EditorConfigFileType = EditorConfigFileType
-  override fun toString(): String = EditorConfigFileConstants.PSI_FILE_NAME
+  override fun toString(): String = "EditorConfig file"
 
   val sections: List<EditorConfigSection>
     get() = this.childrenOfType<EditorConfigSection>()
