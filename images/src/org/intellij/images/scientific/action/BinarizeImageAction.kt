@@ -5,15 +5,19 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeBytes
 import org.intellij.images.editor.ImageDocument
-import org.intellij.images.scientific.BinarizationThresholdConfig
-import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.utils.BinarizationThresholdConfig
+import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
+import org.intellij.images.scientific.utils.launchBackground
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.images.scientific.utils.ScientificUtils.DEFAULT_IMAGE_FORMAT
 
 class BinarizeImageAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -21,17 +25,18 @@ class BinarizeImageAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ScientificUtils.ORIGINAL_IMAGE_KEY) ?: return
-    val thresholdConfig = BinarizationThresholdConfig.getInstance()
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    val binarizedImage = applyBinarization(originalImage, thresholdConfig.threshold)
-    ImageIO.write(binarizedImage, ScientificUtils.DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
-    imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
-    document.value = binarizedImage
-    ScientificImageActionsCollector.logBinarizeImageInvoked(this)
+    val thresholdConfig = BinarizationThresholdConfig.getInstance()
+
+    launchBackground {
+      val binarizedImage = applyBinarization(originalImage, thresholdConfig.threshold)
+      saveImageToFile(imageFile, binarizedImage)
+      document.value = binarizedImage
+      ScientificImageActionsCollector.logBinarizeImageInvoked(this@BinarizeImageAction)
+    }
   }
 
-  private fun applyBinarization(image: BufferedImage, threshold: Int): BufferedImage {
+  private suspend fun applyBinarization(image: BufferedImage, threshold: Int): BufferedImage = withContext(Dispatchers.IO) {
     val binarizedImage = BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_ARGB)
     for (y in 0 until image.height) {
       for (x in 0 until image.width) {
@@ -51,6 +56,12 @@ class BinarizeImageAction : AnAction() {
         binarizedImage.setRGB(x, y, finalColor)
       }
     }
-    return binarizedImage
+    binarizedImage
+  }
+
+  private suspend fun saveImageToFile(imageFile: VirtualFile, binarizedImage: BufferedImage) = withContext(Dispatchers.IO) {
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    ImageIO.write(binarizedImage, DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
+    imageFile.writeBytes(byteArrayOutputStream.toByteArray())
   }
 }

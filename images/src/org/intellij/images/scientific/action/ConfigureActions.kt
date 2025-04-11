@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import org.intellij.images.ImagesBundle
-import org.intellij.images.scientific.BinarizationThresholdConfig
+import org.intellij.images.scientific.utils.BinarizationThresholdConfig
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
