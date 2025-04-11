@@ -62,11 +62,10 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
   override fun update(e: AnActionEvent) {
     val isWatchedFile = e.editor()?.virtualFile?.name?.let { fileNamesPattern.matches(it) } ?: false
     val manager = if (isWatchedFile) getManager(e) else null
-    val lastExecutedJob = manager?.getLastExecutedJob()
 
     with(e.presentation) {
       isVisible = manager != null
-      isEnabled = lastExecutedJob?.isActive != true
+      isEnabled = manager?.getLastExecutedJob()?.isCompleted != false
     }
   }
 
