@@ -13,10 +13,6 @@ public abstract class XBreakpointPropertiesSubPanel {
   protected XBreakpointProxy myBreakpoint;
   protected XBreakpointTypeProxy myBreakpointType;
 
-  public void init(Project project, final XBreakpointManager breakpointManager, @NotNull XBreakpointBase<?, ?, ?> breakpoint) {
-    init(project, new XBreakpointProxy.Monolith(breakpoint));
-  }
-
   public void init(Project project, @NotNull XBreakpointProxy breakpoint) {
     myProject = project;
     myBreakpoint = breakpoint;

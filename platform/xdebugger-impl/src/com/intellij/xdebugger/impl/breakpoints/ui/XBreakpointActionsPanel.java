@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
@@ -11,6 +11,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,8 +38,8 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   private JCheckBox myLogStack;
   private @Nullable XDebuggerExpressionComboBox myLogExpressionComboBox;
 
-  public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
-    init(project, breakpointManager, breakpoint);
+  public void init(Project project, @NotNull XBreakpointBase breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
+    init(project, new XBreakpointProxy.Monolith(breakpoint));
     if (debuggerEditorsProvider != null) {
       ActionListener listener = new ActionListener() {
         @Override
