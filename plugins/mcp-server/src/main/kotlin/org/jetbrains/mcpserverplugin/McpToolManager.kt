@@ -27,9 +27,8 @@ import org.jetbrains.mcpserverplugin.general.RunConfigurationTool
 import org.jetbrains.mcpserverplugin.general.SearchInFilesContentTool
 import org.jetbrains.mcpserverplugin.general.WaitTool
 import org.jetbrains.mcpserverplugin.git.GetVcsStatusTool
-import org.jetbrains.mcpserverplugin.ToggleBreakpointTool
-import org.jetbrains.mcpserverplugin.GetBreakpointsTool
-import org.jetbrains.mcpserverplugin.general.ReformatCurrentFile
+import org.jetbrains.mcpserverplugin.general.ReformatCurrentFileTool
+import org.jetbrains.mcpserverplugin.general.ReformatFileTool
 
 class McpToolManager {
     companion object {
@@ -73,7 +72,8 @@ class McpToolManager {
             GetProgressIndicatorsTool(),
             WaitTool(),
             GetCurrentFileErrorsTool(),
-            ReformatCurrentFile(),
+            ReformatCurrentFileTool(),
+            ReformatFileTool(),
         )
     }
 }
