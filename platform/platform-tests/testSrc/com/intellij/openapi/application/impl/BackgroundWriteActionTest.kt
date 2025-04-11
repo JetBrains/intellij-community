@@ -4,7 +4,9 @@ package com.intellij.openapi.application.impl
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -13,15 +15,14 @@ import com.intellij.util.application
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.random.Random
 import kotlin.test.assertFalse
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
 
 @TestApplication
 class BackgroundWriteActionTest {
@@ -479,7 +480,7 @@ class BackgroundWriteActionTest {
         checkpoint(1)
         checkpoint(4)
         assertThrows<IllegalStateException> {
-          backgroundWriteAction {  }
+          backgroundWriteAction { }
         }
         checkpoint(5)
       }
@@ -489,6 +490,37 @@ class BackgroundWriteActionTest {
       backgroundWriteAction { // can safely start
       }
       checkpoint(3)
+    }
+  }
+
+  @OptIn(ExperimentalTime::class)
+  @RepeatedTest(100)
+  fun `cancellation of read action with pending background WA when modality happens`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    launch(Dispatchers.EDT) {
+      delay(Random.nextInt(1, 10).milliseconds)
+      modalProgress {
+      }
+    }
+    coroutineScope {
+      val writeActionRun = AtomicBoolean(false)
+      repeat(1) {
+        launch {
+          delay(Random.nextInt(1, 10).milliseconds)
+          readAction {
+            while (!writeActionRun.get()) {
+              ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(ProgressManager.getInstance().progressIndicator)
+            }
+          }
+        }
+      }
+
+      launch {
+        delay(Random.nextInt(1, 10).milliseconds)
+        backgroundWriteAction {
+          writeActionRun.set(true)
+        }
+      }
+
     }
   }
 }

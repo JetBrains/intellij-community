@@ -398,6 +398,14 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
   /**
    * We need to keep track of pending write actions on each level.
+   * The reason is that low-level background write actions should not block higher-level read actions:
+   * ```
+   * backgroundWriteAction {} // pending
+   * modalProgress {
+   *   readAction {} // should proceed
+   * }
+   * ```
+   *
    * The underlying array rarely changes in its size, but reasonably frequently changes its values.
    * That's why we don't use COW list here: value updates may be frequent.
    * Also, we'd like to have some sort of random access, that's why we don't use any lock-free list.
@@ -1015,7 +1023,17 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   override fun isWriteActionInProgress(): Boolean = myWriteAcquired != null
 
   override fun isWriteActionPending(): Boolean {
-    return myWriteActionPending.get().last().get() > 0
+    // Here, we must not check lower-level write actions to permit read actions inside modality.
+    // However, we should check for higher-level write actions: this would ensure mutual exclusiveness of WA and RA
+    var level = getComputationState().level()
+    val pendingArray = myWriteActionPending.get()
+    while (level < pendingArray.size) {
+      if (pendingArray[level].get() > 0) {
+        return true
+      }
+      level++
+    }
+    return false
   }
 
   override fun isWriteAccessAllowed(): Boolean = myWriteAcquired == Thread.currentThread()
