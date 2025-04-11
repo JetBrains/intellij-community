@@ -52,14 +52,14 @@ internal class PythonPackageManagerJobService {
   ): Deferred<Result<V, PyError>>? {
 
     val job = synchronized(deferredJobs) {
-      if (deferredJobs[manager]?.isCompleted == false) return null
+      if (deferredJobs[manager]?.isCompleted == false) return@synchronized null
 
       scope.async(context) { runnable.invoke() }.also {
         deferredJobs[manager] = it
       }
     }
 
-    job.invokeOnCompletion { exception ->
+    job?.invokeOnCompletion { exception ->
       synchronized(deferredJobs) {
         deferredJobs.remove(manager, job)  // this cleanup line might be removed if someone needs the last deferred job result in other places
       }
