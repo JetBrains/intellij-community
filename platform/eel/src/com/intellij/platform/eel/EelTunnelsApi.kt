@@ -269,38 +269,12 @@ interface ConfigurableSocket {
    * @see java.net.SocketOptions.SO_REUSEADDR
    */
   suspend fun setReuseAddr(reuseAddr: Boolean)
-
-  /**
-   * Sets the receive buffer size of the socket
-   * @see java.net.SocketOptions.SO_RCVBUF
-   */
-  suspend fun setReceiveBufferSize(size: UInt)
 }
 
 /**
  * Client only socket options
  */
 interface ConfigurableClientSocket : ConfigurableSocket {
-
-  /**
-   * Sets the size of send buffer of the socket
-   * @see java.net.SocketOptions.SO_SNDBUF
-   */
-  suspend fun setSendBufferSize(size: UInt)
-
-
-  /**
-   * Sets the keep alive option for the socket
-   * @see java.net.SocketOptions.SO_KEEPALIVE
-   */
-  suspend fun setKeepAlive(keepAlive: Boolean)
-
-  /**
-   * Sets linger timeout for the socket. Null disables it.
-   * @see java.net.SocketOptions.SO_LINGER
-   */
-  suspend fun setLinger(lingerInterval: Duration?)
-
   /**
    * Disables pending data until acknowledgement
    * @see java.net.SocketOptions.TCP_NODELAY
