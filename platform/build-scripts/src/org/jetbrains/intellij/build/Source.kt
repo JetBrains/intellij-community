@@ -33,7 +33,7 @@ class LazySource(
 
 data class UnpackedZipSource(
   @JvmField val file: Path,
-  override val filter: ((String) -> Boolean),
+  override val filter: ((String) -> Boolean)? = null,
 ) : Source {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

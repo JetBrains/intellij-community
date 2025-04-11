@@ -1,21 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CustomAssetShimSource
 import org.jetbrains.intellij.build.UnpackedZipSource
+import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.io.W_OVERWRITE
-import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
-import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.io.writeToFileChannelFully
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import java.nio.channels.FileChannel
-import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal suspend fun buildPlatformSpecificPluginResources(
   plugin: PluginLayout,
@@ -51,31 +47,6 @@ internal suspend fun buildPlatformSpecificPluginResources(
   return distEntries
 }
 
-@ApiStatus.Internal
-fun unpackTrustedZip(
-  source: UnpackedZipSource,
-  rootDir: Path,
-  createdParents: MutableSet<Path>,
-) {
-  readZipFile(source.file) { name, dataProvider ->
-    if (!source.filter(name)) {
-      return@readZipFile ZipEntryProcessorResult.CONTINUE
-    }
-
-    val file = rootDir.resolve(name)
-    val parent = file.parent
-    if (createdParents.add(parent)) {
-      Files.createDirectories(parent)
-    }
-
-    val data = dataProvider()
-    FileChannel.open(file, W_OVERWRITE).use {
-      writeToFileChannelFully(channel = it, data = data)
-    }
-    ZipEntryProcessorResult.CONTINUE
-  }
-}
-
 internal suspend fun handleCustomPlatformSpecificAssets(
   layout: PluginLayout,
   targetPlatform: SupportedDistribution,
@@ -92,12 +63,26 @@ internal suspend fun handleCustomPlatformSpecificAssets(
 
     val rootDir = customAsset.relativePath?.let { pluginDir.resolve(it) } ?: pluginDir
     val lazySources = customAsset.getSources(context) ?: continue
-    val createdParents = HashSet<Path>()
     for (lazySource in lazySources) {
+      require(lazySource.filter == null) {
+        "please specify filter for wrapped sources, not for LazySource"
+      }
+
       for (source in lazySource.getSources()) {
         when (source) {
           is UnpackedZipSource -> {
-            unpackTrustedZip(source = source, rootDir = rootDir, createdParents = createdParents)
+            val dir = extractFileToCacheLocation(context.paths.communityHomeDirRoot, source.file)
+            val dirPrefix = dir.toString().length + 1
+            copyDir(
+              sourceDir = dir,
+              targetDir = rootDir,
+              fileFilter = source.filter?.let { filter ->
+                {
+                  filter(it.invariantSeparatorsPathString.substring(dirPrefix))
+                }
+              },
+            )
+
             distEntries.add(CustomAssetEntry(path = source.file, hash = lazySource.precomputedHash, relativeOutputFile = customAsset.relativePath))
           }
 
