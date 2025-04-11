@@ -286,6 +286,11 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - getPriority():java.lang.Integer
 - getSynonyms():java.util.List
 - f:setActionId(java.lang.String):V
+*:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider
+- com.intellij.openapi.project.PossiblyDumbAware
+- *sf:Companion:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider$Companion
+- a:getCommands(com.intellij.psi.PsiFile,java.util.List,I):java.util.List
+*f:com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider$Companion
 *:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
 - findOffsets(com.intellij.psi.PsiFile,I):java.util.List

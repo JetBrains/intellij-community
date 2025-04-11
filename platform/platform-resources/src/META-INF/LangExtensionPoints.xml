@@ -767,6 +767,7 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper"/>
     </extensionPoint>
+    <extensionPoint name="codeInsight.completion.error.intention" interface="com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.offset.provider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
