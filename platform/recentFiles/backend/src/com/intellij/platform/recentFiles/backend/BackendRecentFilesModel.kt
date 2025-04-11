@@ -147,13 +147,14 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   suspend fun hideAlreadyShownFiles(hideFilesRequest: RecentFilesBackendRequest.HideFiles) {
     LOG.debug("Switcher hide file: $hideFilesRequest")
 
-    val targetFlow = chooseTargetFlow(hideFilesRequest.filesKind)
-    val project = hideFilesRequest.projectId.findProjectOrNull() ?: return
-    val virtualFiles = hideFilesRequest.filesToHide.mapNotNull(VirtualFileId::virtualFile)
-    for (file in virtualFiles) {
-      EditorHistoryManager.getInstance(project).removeFile(file)
+    if (hideFilesRequest.filesKind == RecentFileKind.RECENTLY_OPENED) {
+      val virtualFiles = hideFilesRequest.filesToHide.mapNotNull(VirtualFileId::virtualFile)
+      for (file in virtualFiles) {
+        EditorHistoryManager.getInstance(project).removeFile(file)
+      }
     }
-    targetFlow.emit(RecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide))
+    chooseTargetFlow(hideFilesRequest.filesKind)
+      .emit(RecentFilesEvent.ItemsRemoved(hideFilesRequest.filesToHide))
   }
 
   fun scheduleRehighlightUnopenedFiles() {

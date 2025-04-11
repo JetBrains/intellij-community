@@ -470,9 +470,12 @@ object Switcher : BaseSwitcherAction(null) {
         }
       }
 
-      val currentlyShownFileType = if (cbShowOnlyEditedFiles?.isSelected == true) RecentFileKind.RECENTLY_EDITED else RecentFileKind.RECENTLY_OPENED
-      // emulate previous implementation behaviour where removing an item from the recently CHANGED files list was erased on its reopen
-      if (filesToHide.isNotEmpty() && currentlyShownFileType == RecentFileKind.RECENTLY_OPENED) {
+      val currentlyShownFileType = when {
+        cbShowOnlyEditedFiles == null -> RecentFileKind.RECENTLY_OPENED_UNPINNED
+        cbShowOnlyEditedFiles.isSelected -> RecentFileKind.RECENTLY_EDITED
+        else -> RecentFileKind.RECENTLY_OPENED
+      }
+      if (filesToHide.isNotEmpty()) {
         frontendModel.applyFrontendChanges(currentlyShownFileType, filesToHide.mapNotNull { it.virtualFile }, false)
       }
     }
