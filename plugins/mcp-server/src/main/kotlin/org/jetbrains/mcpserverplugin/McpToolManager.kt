@@ -29,6 +29,7 @@ import org.jetbrains.mcpserverplugin.general.WaitTool
 import org.jetbrains.mcpserverplugin.git.GetVcsStatusTool
 import org.jetbrains.mcpserverplugin.ToggleBreakpointTool
 import org.jetbrains.mcpserverplugin.GetBreakpointsTool
+import org.jetbrains.mcpserverplugin.general.ReformatCurrentFile
 
 class McpToolManager {
     companion object {
@@ -72,6 +73,7 @@ class McpToolManager {
             GetProgressIndicatorsTool(),
             WaitTool(),
             GetCurrentFileErrorsTool(),
+            ReformatCurrentFile(),
         )
     }
 }
