@@ -932,4 +932,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyUnresolvedReferencesInspection.class;
   }
+
+  @Override
+  protected void configureInspection() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class, PyUnusedImportsInspection.class);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
 }

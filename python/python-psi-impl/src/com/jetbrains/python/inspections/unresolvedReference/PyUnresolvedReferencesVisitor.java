@@ -3,17 +3,15 @@ package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.intellij.codeInsight.controlflow.ControlFlow;
-import com.intellij.codeInsight.controlflow.ControlFlowUtil;
-import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,29 +22,24 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.PyDataFlow;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
-import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper;
-import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
@@ -61,24 +54,17 @@ import static com.jetbrains.python.PyNames.END_WILDCARD;
 import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
 public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
-  private final Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<>());
-  private final Set<PyImportedNameDefiner> myImportsInsideGuard = Collections.synchronizedSet(new HashSet<>());
-  private final Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<>());
-  private final Set<PyImportedNameDefiner> myUnresolvedImports = Collections.synchronizedSet(new HashSet<>());
   private final ImmutableSet<String> myIgnoredIdentifiers;
-  private final PyInspection myInspection;
   private final Version myVersion;
   private volatile Boolean myIsEnabled = null;
   protected final List<PyPackageInstallAllProblemInfo> myUnresolvedRefs = Collections.synchronizedList(new ArrayList<>());
 
   protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
                                           @NotNull List<String> ignoredIdentifiers,
-                                          @NotNull PyInspection inspection,
                                           @NotNull TypeEvalContext context,
                                           @NotNull LanguageLevel languageLevel) {
     super(holder, context);
     myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
-    myInspection = inspection;
     myVersion = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
   }
 
@@ -101,81 +87,15 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   @Override
-  public void visitPyImportElement(@NotNull PyImportElement node) {
-    super.visitPyImportElement(node);
-    final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
-    if (isEnabled(node) && (fromImport == null || !fromImport.isFromFuture())) {
-      myAllImports.add(node);
-    }
-  }
-
-  @Override
-  public void visitPyStarImportElement(@NotNull PyStarImportElement node) {
-    super.visitPyStarImportElement(node);
-    if (isEnabled(node)) {
-      myAllImports.add(node);
-    }
-  }
-
-  @Override
-  public void visitComment(@NotNull PsiComment comment) {
-    super.visitComment(comment);
-    if (comment instanceof PsiLanguageInjectionHost) {
-      processInjection((PsiLanguageInjectionHost)comment);
-    }
-  }
-
-  @Override
   public void visitPyElement(final @NotNull PyElement node) {
     super.visitPyElement(node);
-    final PsiFile file = node.getContainingFile();
-    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(node.getProject());
-    if (injectedLanguageManager.isInjectedFragment(file)) {
-      final PsiLanguageInjectionHost host = injectedLanguageManager.getInjectionHost(node);
-      processInjection(host);
-    }
-    if (node instanceof PyReferenceOwner) {
+    if (node instanceof PyReferenceOwner referenceOwner) {
       final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
-      processReference(node, ((PyReferenceOwner)node).getReference(resolveContext));
+      processReference(node, referenceOwner.getReference(resolveContext));
     }
     else {
-      if (node instanceof PsiLanguageInjectionHost) {
-        processInjection((PsiLanguageInjectionHost)node);
-      }
       for (final PsiReference reference : node.getReferences()) {
         processReference(node, reference);
-      }
-    }
-  }
-
-  private void processInjection(@Nullable PsiLanguageInjectionHost node) {
-    if (node == null) return;
-    final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
-    if (files != null) {
-      for (Pair<PsiElement, TextRange> pair : files) {
-        new PyRecursiveElementVisitor() {
-          @Override
-          public void visitPyElement(@NotNull PyElement element) {
-            super.visitPyElement(element);
-            if (element instanceof PyReferenceOwner) {
-              final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
-              final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-              markTargetImportsAsUsed(reference);
-            }
-          }
-        }.visitElement(pair.getFirst());
-      }
-    }
-  }
-
-  private void markTargetImportsAsUsed(@NotNull PsiPolyVariantReference reference) {
-    final ResolveResult[] resolveResults = reference.multiResolve(false);
-    for (ResolveResult resolveResult : resolveResults) {
-      if (resolveResult instanceof ImportedResolveResult) {
-        final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
-        if (definer != null) {
-          myUsedImports.add(definer);
-        }
       }
     }
   }
@@ -186,7 +106,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
     final PyExceptPart guard = getImportErrorGuard(node);
     if (guard != null) {
-      processReferenceInImportGuard(node, guard);
       return;
     }
     if (node instanceof PyQualifiedExpression qExpr) {
@@ -205,12 +124,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         if (target == null && resolveResult.isValidResult()) {
           target = resolveResult.getElement();
         }
-        if (resolveResult instanceof ImportedResolveResult) {
-          final PyImportedNameDefiner definer = ((ImportedResolveResult)resolveResult).getDefiner();
-          if (definer != null) {
-            myUsedImports.add(definer);
-          }
-        }
       }
     }
     else {
@@ -226,30 +139,11 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         if (severity == null) return;
         registerUnresolvedReferenceProblem(node, reference, severity);
       }
-      // don't highlight unresolved imports as unused
-      if (node.getParent() instanceof PyImportElement importElement) {
-        myUnresolvedImports.add(importElement);
-      }
     }
     else if (reference instanceof PyImportReference &&
              target == reference.getElement().getContainingFile() &&
              !isContainingFileImportAllowed(node, (PsiFile)target)) {
       registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"));
-    }
-  }
-
-  private void processReferenceInImportGuard(@NotNull PyElement node, @NotNull PyExceptPart guard) {
-    final PyImportElement importElement = PsiTreeUtil.getParentOfType(node, PyImportElement.class);
-    if (importElement != null) {
-      final String visibleName = importElement.getVisibleName();
-      final ScopeOwner owner = ScopeUtil.getScopeOwner(importElement);
-      if (visibleName != null && owner != null) {
-        final Collection<PsiElement> allWrites = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE);
-        final boolean hasWriteInsideGuard = ContainerUtil.exists(allWrites, e -> PsiTreeUtil.isAncestor(guard, e, false));
-        if (!hasWriteInsideGuard && !shouldSkipMissingWriteInsideGuard(guard, visibleName)) {
-          myImportsInsideGuard.add(importElement);
-        }
-      }
     }
   }
 
@@ -550,172 +444,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
   }
 
-  public void highlightUnusedImports() {
-    final List<PyInspectionExtension> extensions = PyInspectionExtension.EP_NAME.getExtensionList();
-    final List<PsiElement> unused = collectUnusedImportElements();
-    for (PsiElement element : unused) {
-      if (ContainerUtil.exists(extensions, extension -> extension.ignoreUnused(element, myTypeEvalContext))) {
-        continue;
-      }
-      if (!evaluateVersionsForElement(element).contains(myVersion)) {
-        continue;
-      }
-      if (element.getTextLength() > 0) {
-        OptimizeImportsQuickFix fix = new OptimizeImportsQuickFix();
-        registerProblem(element, PyPsiBundle.message("INSP.unused.import.statement"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, fix);
-      }
-    }
-  }
-
-  public void highlightImportsInsideGuards() {
-    HashSet<PyImportedNameDefiner> usedImportsInsideImportGuards = Sets.newHashSet(getImportsInsideGuard());
-    usedImportsInsideImportGuards.retainAll(getUsedImports());
-
-    for (PyImportedNameDefiner definer : usedImportsInsideImportGuards) {
-
-      PyImportElement importElement = PyUtil.as(definer, PyImportElement.class);
-      if (importElement == null) {
-        continue;
-      }
-      final PyTargetExpression asElement = importElement.getAsNameElement();
-      final PyElement toHighlight = asElement != null ? asElement : importElement.getImportReferenceExpression();
-      registerProblem(toHighlight,
-                      PyPsiBundle.message("INSP.try.except.import.error",
-                                          importElement.getVisibleName()),
-                      ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-    }
-  }
-
-  public void optimizeImports() {
-    final List<PsiElement> elementsToDelete = collectUnusedImportElements();
-    for (PsiElement element : elementsToDelete) {
-      PyPsiUtils.assertValid(element);
-      element.delete();
-    }
-  }
-
-  protected List<PsiElement> collectUnusedImportElements() {
-    if (getAllImports().isEmpty()) {
-      return Collections.emptyList();
-    }
-    // PY-1315 Unused imports inspection shouldn't work in python REPL console
-    final PyImportedNameDefiner first = getAllImports().iterator().next();
-    if (first.getContainingFile() instanceof PyExpressionCodeFragment || PythonRuntimeService.getInstance().isInPydevConsole(first)) {
-      return Collections.emptyList();
-    }
-    List<PsiElement> result = new ArrayList<>();
-
-    Set<PyImportedNameDefiner> unusedImports = new HashSet<>(getAllImports());
-    unusedImports.removeAll(getUsedImports());
-    unusedImports.removeAll(myUnresolvedImports);
-
-    // Remove those unsed, that are reported to be skipped by extension points
-    final Set<PyImportedNameDefiner> unusedImportToSkip = new HashSet<>();
-    for (final PyImportedNameDefiner unusedImport : unusedImports) {
-      if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(), o -> o.ignoreUnusedImports(unusedImport))) {
-        unusedImportToSkip.add(unusedImport);
-      }
-    }
-
-    unusedImports.removeAll(unusedImportToSkip);
-
-    Set<String> usedImportNames = new HashSet<>();
-    for (PyImportedNameDefiner usedImport : getUsedImports()) {
-      for (PyElement e : usedImport.iterateNames()) {
-        usedImportNames.add(e.getName());
-      }
-    }
-
-    Set<PyImportStatementBase> unusedStatements = new HashSet<>();
-    QualifiedName packageQName = null;
-    List<String> dunderAll = null;
-
-    // TODO: Use strategies instead of pack of "continue"
-    iterUnused:
-    for (PyImportedNameDefiner unusedImport : unusedImports) {
-      if (packageQName == null) {
-        final PsiFile file = unusedImport.getContainingFile();
-        if (file instanceof PyFile) {
-          dunderAll = ((PyFile)file).getDunderAll();
-        }
-        if (file != null && PyUtil.isPackage(file)) {
-          packageQName = QualifiedNameFinder.findShortestImportableQName(file);
-        }
-      }
-      PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
-      if (importStatement != null && !unusedStatements.contains(importStatement) && !getUsedImports().contains(unusedImport)) {
-        PyInspection inspection = myInspection;
-        assert inspection != null;
-        if (inspection.isSuppressedFor(importStatement)) {
-          continue;
-        }
-        // don't remove as unused imports in try/except statements
-        if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
-          continue;
-        }
-        // Don't report conditional imports as unused
-        if (PsiTreeUtil.getParentOfType(unusedImport, PyIfStatement.class) != null) {
-          for (PyElement e : unusedImport.iterateNames()) {
-            if (usedImportNames.contains(e.getName())) {
-              continue iterUnused;
-            }
-          }
-        }
-        PsiFileSystemItem importedElement;
-        if (unusedImport instanceof PyImportElement importElement) {
-          final PsiElement element = importElement.resolve();
-          if (element == null) {
-            if (importElement.getImportedQName() != null) {
-              //Mark import as unused even if it can't be resolved
-              if (areAllImportsUnused(importStatement, unusedImports)) {
-                result.add(importStatement);
-              }
-              else {
-                result.add(importElement);
-              }
-            }
-            continue;
-          }
-          if (dunderAll != null && dunderAll.contains(importElement.getVisibleName())) {
-            continue;
-          }
-          importedElement = element.getContainingFile();
-        }
-        else {
-          assert importStatement instanceof PyFromImportStatement;
-          importedElement = ((PyFromImportStatement)importStatement).resolveImportSource();
-          if (importedElement == null) {
-            continue;
-          }
-        }
-        if (packageQName != null && importedElement != null) {
-          final QualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName(importedElement);
-          if (importedQName != null && importedQName.matchesPrefix(packageQName)) {
-            continue;
-          }
-        }
-        if (unusedImport instanceof PyStarImportElement || areAllImportsUnused(importStatement, unusedImports)) {
-          unusedStatements.add(importStatement);
-          result.add(importStatement);
-        }
-        else {
-          result.add(unusedImport);
-        }
-      }
-    }
-    return result;
-  }
-
-  private static boolean areAllImportsUnused(PyImportStatementBase importStatement, Set<PyImportedNameDefiner> unusedImports) {
-    final PyImportElement[] elements = importStatement.getImportElements();
-    for (PyImportElement element : elements) {
-      if (!unusedImports.contains(element)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   private boolean ignoreUnresolved(@NotNull PyElement node, @NotNull PsiReference reference) {
     boolean ignoreUnresolved = false;
     for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
@@ -725,18 +453,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
     }
     return ignoreUnresolved;
-  }
-
-  Collection<PyImportedNameDefiner> getImportsInsideGuard() {
-    return Collections.unmodifiableCollection(myImportsInsideGuard);
-  }
-
-  Collection<PyImportedNameDefiner> getAllImports() {
-    return Collections.unmodifiableCollection(myAllImports);
-  }
-
-  Collection<PyImportedNameDefiner> getUsedImports() {
-    return Collections.unmodifiableCollection(myUsedImports);
   }
 
   private static @Nullable PyExceptPart getImportErrorGuard(PyElement node) {
@@ -760,35 +476,6 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
   private static boolean isContainingFileImportAllowed(PyElement node, PsiFile target) {
     return PyImportStatementNavigator.getImportStatementByElement(node) == null && target.getName().equals(PyNames.INIT_DOT_PY);
-  }
-
-  private static boolean shouldSkipMissingWriteInsideGuard(@NotNull PyExceptPart guard, @NotNull String name) {
-    return isDefinedInParentScope(name, guard) ||
-           PyBuiltinCache.getInstance(guard).getByName(name) != null ||
-           controlFlowAlwaysTerminatesInsideGuard(guard);
-  }
-
-  private static boolean isDefinedInParentScope(@NotNull String name, @NotNull PsiElement anchor) {
-    return ScopeUtil.getDeclarationScopeOwner(ScopeUtil.getScopeOwner(anchor), name) != null;
-  }
-
-  private static boolean controlFlowAlwaysTerminatesInsideGuard(@NotNull PyExceptPart guard) {
-    final ScopeOwner owner = ScopeUtil.getScopeOwner(guard);
-    if (owner == null) return false;
-    final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
-    final Instruction[] instructions = flow.getInstructions();
-    final int start = ControlFlowUtil.findInstructionNumberByElement(instructions, guard.getExceptClass());
-    if (start <= 0) return false;
-    final Ref<Boolean> canEscapeGuard = Ref.create(false);
-    ControlFlowUtil.process(instructions, start, instruction -> {
-      final PsiElement e = instruction.getElement();
-      if (e != null && !PsiTreeUtil.isAncestor(guard, e, true)) {
-        canEscapeGuard.set(true);
-        return false;
-      }
-      return true;
-    });
-    return !canEscapeGuard.get();
   }
 
   private static @Nullable PyExpression getReferenceQualifier(@NotNull PsiReference reference) {

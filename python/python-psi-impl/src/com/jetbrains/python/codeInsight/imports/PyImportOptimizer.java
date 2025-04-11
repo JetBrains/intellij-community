@@ -23,8 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
-import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesVisitor;
-import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.PyUnusedImportsInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -61,7 +60,7 @@ public final class PyImportOptimizer implements ImportOptimizer {
       return EmptyRunnable.INSTANCE;
     }
 
-    PyUnresolvedReferencesVisitor visitor = prepare(file);
+    PyUnusedImportsInspection.Visitor visitor = prepare(file);
     return () -> {
       LOG.debug(String.format("----------------- OPTIMIZE IMPORTS STARTED (%s) -----------------", file.getVirtualFile()));
       visitor.optimizeImports();
@@ -72,14 +71,14 @@ public final class PyImportOptimizer implements ImportOptimizer {
     };
   }
 
-  private PyUnresolvedReferencesVisitor prepare(@NotNull PsiFile file) {
+  private PyUnusedImportsInspection.Visitor prepare(@NotNull PsiFile file) {
     final PsiFile contextFile = FileContextUtil.getContextFile(file);
     final PsiFile rfile = ObjectUtils.chooseNotNull(contextFile, file);
 
     TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), rfile);
 
-    SimplePyUnresolvedReferencesInspection inspection = new SimplePyUnresolvedReferencesInspection();
-    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(
+    PyUnusedImportsInspection inspection = new PyUnusedImportsInspection();
+    PyUnusedImportsInspection.Visitor visitor = new PyUnusedImportsInspection.Visitor(
       null, inspection, context, PythonLanguageLevelPusher.getLanguageLevelForFile(file)
     );
     file.accept(new PyRecursiveElementVisitor() {

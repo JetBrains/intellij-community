@@ -26,7 +26,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils
-import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
 import com.jetbrains.python.inspections.quickfix.*
@@ -50,7 +49,6 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
   override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): PyUnresolvedReferencesVisitor =
     Visitor(holder,
             ignoredIdentifiers,
-            this,
             PyInspectionVisitor.getContext(session),
             PythonLanguageLevelPusher.getLanguageLevelForFile(session.file))
 
@@ -61,10 +59,9 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
   private class Visitor(
     holder: ProblemsHolder,
     ignoredIdentifiers: List<String>,
-    inspection: PyInspection,
     context: TypeEvalContext,
     languageLevel: LanguageLevel,
-  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, inspection, context, languageLevel) {
+  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, context, languageLevel) {
 
     override fun getInstallPackageQuickFixes(
       node: PyElement,

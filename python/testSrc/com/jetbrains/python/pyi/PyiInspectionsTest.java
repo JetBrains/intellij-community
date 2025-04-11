@@ -134,7 +134,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiUnusedImports() {
-    doPyiTest(PyUnresolvedReferencesInspection.class);
+    doPyiTest(PyUnusedImportsInspection.class);
   }
 
   public void testPyiRelativeImports() {

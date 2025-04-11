@@ -1,8 +1,8 @@
 import mod_a
 import mod_Z
-# noinspection PyUnresolvedReferences
+# noinspection PyUnusedImports
 import pkg.pkg_a
-# noinspection PyUnresolvedReferences
+# noinspection PyUnusedImports
 import pkg.pkg_Z
 from mod import var_a
 from mod import var_Z
