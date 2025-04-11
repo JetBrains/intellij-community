@@ -5,11 +5,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalInputEvent
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalWriteBytesEvent
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent
-import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 interface FrontendLatencyService {
@@ -26,11 +24,9 @@ interface FrontendLatencyService {
   fun getFrontendTypingActivityOrNull(event: TerminalInputEvent): FrontendTypingActivity?
 
   fun startFrontendOutputActivity(
-    sessionFuture: CompletableFuture<TerminalSession>,
     outputEditor: EditorImpl,
     alternateBufferEditor: EditorImpl,
   ): FrontendOutputActivity
-
 }
 
 @ApiStatus.Internal

@@ -7,6 +7,7 @@ import com.intellij.terminal.session.dto.TerminalOutputModelStateDto
 import com.intellij.terminal.session.dto.TerminalStateDto
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.TimeMark
 
 @ApiStatus.Internal
 @Serializable
@@ -15,11 +16,11 @@ sealed interface TerminalOutputEvent
 @ApiStatus.Internal
 @Serializable
 data class TerminalContentUpdatedEvent(
+  val id: Int,
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,
-  val firstCharIndex: Long,
-  val lastCharIndex: Long,
+  val readTime: TimeMark?,
 ) : TerminalOutputEvent
 
 @ApiStatus.Internal

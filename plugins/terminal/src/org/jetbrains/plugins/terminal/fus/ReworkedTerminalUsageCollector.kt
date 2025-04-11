@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
-import com.intellij.platform.rpc.UID
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.KNOWN_SHELLS
@@ -26,11 +25,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
-  private val INPUT_EVENT_ID_FIELD = EventFields.Int("input_event_id")
-  private val SESSION_ID = EventFields.Int("session_id")
-  private val CHAR_INDEX = EventFields.Long("char_index")
-  private val FIRST_CHAR_INDEX = EventFields.Long("first_char_index")
-  private val LAST_CHAR_INDEX = EventFields.Long("last_char_index")
+  private val EVENT_ID_FIELD = EventFields.Int("event_id")
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
   private val REPAINTED_FIELD = EventFields.Boolean("editor_repainted")
 
@@ -52,35 +47,25 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val frontendTypingLatencyEvent = GROUP.registerVarargEvent(
     "terminal.frontend.typing.latency",
-    INPUT_EVENT_ID_FIELD,
+    EVENT_ID_FIELD,
     DURATION_FIELD,
   )
 
   private val backendTypingLatencyEvent = GROUP.registerVarargEvent(
     "terminal.backend.typing.latency",
-    INPUT_EVENT_ID_FIELD,
+    EVENT_ID_FIELD,
     DURATION_FIELD,
   )
 
-  private val backendMinOutputLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.backend.min.output.latency",
-    SESSION_ID,
-    CHAR_INDEX,
-    DURATION_FIELD,
-  )
-
-  private val backendMaxOutputLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.backend.max.output.latency",
-    SESSION_ID,
-    CHAR_INDEX,
+  private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
+    "terminal.backend.output.latency",
+    EVENT_ID_FIELD,
     DURATION_FIELD,
   )
 
   private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
     "terminal.frontend.output.latency",
-    SESSION_ID,
-    FIRST_CHAR_INDEX,
-    LAST_CHAR_INDEX,
+    EVENT_ID_FIELD,
     DURATION_FIELD,
     REPAINTED_FIELD,
   )
@@ -110,7 +95,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   @ApiStatus.Internal
   fun logFrontendLatency(inputEventId: Int, duration: Duration) {
     frontendTypingLatencyEvent.log(
-      INPUT_EVENT_ID_FIELD with inputEventId,
+      EVENT_ID_FIELD with inputEventId,
       DURATION_FIELD with duration
     )
   }
@@ -118,35 +103,23 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   @ApiStatus.Internal
   fun logBackendLatency(inputEventId: Int, duration: Duration) {
     backendTypingLatencyEvent.log(
-      INPUT_EVENT_ID_FIELD with inputEventId,
+      EVENT_ID_FIELD with inputEventId,
       DURATION_FIELD with duration
     )
   }
 
   @ApiStatus.Internal
-  fun logBackendMinOutputLatency(sessionId: UID, charIndex: Long, duration: Duration) {
-    backendMinOutputLatencyEvent.log(
-      SESSION_ID with sessionId,
-      CHAR_INDEX with charIndex,
+  fun logBackendOutputLatency(eventId: Int, duration: Duration) {
+    backendOutputLatencyEvent.log(
+      EVENT_ID_FIELD with eventId,
       DURATION_FIELD with duration
     )
   }
 
   @ApiStatus.Internal
-  fun logBackendMaxOutputLatency(sessionId: UID, charIndex: Long, duration: Duration) {
-    backendMaxOutputLatencyEvent.log(
-      SESSION_ID with sessionId,
-      CHAR_INDEX with charIndex,
-      DURATION_FIELD with duration
-    )
-  }
-
-  @ApiStatus.Internal
-  fun logFrontendOutputLatency(sessionId: UID, firstCharIndex: Long, lastCharIndex: Long, duration: Duration, repainted: Boolean) {
+  fun logFrontendOutputLatency(eventId: Int, duration: Duration, repainted: Boolean) {
     frontendOutputLatencyEvent.log(
-      SESSION_ID with sessionId,
-      FIRST_CHAR_INDEX with firstCharIndex,
-      LAST_CHAR_INDEX with lastCharIndex,
+      EVENT_ID_FIELD with eventId,
       DURATION_FIELD with duration,
       REPAINTED_FIELD with repainted,
     )

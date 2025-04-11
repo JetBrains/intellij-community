@@ -129,7 +129,6 @@ internal class ReworkedTerminalView(
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     val fusActivity = FrontendLatencyService.getInstance().startFrontendOutputActivity(
-      sessionFuture,
       outputEditor = outputEditor as EditorImpl,
       alternateBufferEditor = alternateBufferEditor as EditorImpl,
     )
