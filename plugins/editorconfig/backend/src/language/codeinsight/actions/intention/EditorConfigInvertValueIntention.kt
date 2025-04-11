@@ -14,11 +14,12 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnsetValueD
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 import org.editorconfig.language.util.EditorConfigTextMatchingUtil
+import org.jetbrains.annotations.Nls
 
 class EditorConfigInvertValueIntention : IntentionAction {
-  override fun getText() = EditorConfigBundle.get("intention.invert-option-value")
+  override fun getText(): @Nls String = EditorConfigBundle.get("intention.invert-option-value")
   override fun getFamilyName(): String = EditorConfigBundle.get("intention.invert-option-value")
-  override fun startInWriteAction() = true
+  override fun startInWriteAction(): Boolean = true
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val value = getDescribableElement(editor, file) ?: return false

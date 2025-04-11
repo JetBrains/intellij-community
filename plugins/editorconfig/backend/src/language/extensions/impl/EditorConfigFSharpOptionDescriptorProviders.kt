@@ -4,5 +4,5 @@ package org.editorconfig.language.extensions.impl
 import org.editorconfig.language.extensions.EditorConfigFSharpOptionDescriptorProviderBase
 
 class EditorConfigFantomasFormattingOptionDescriptorProvider : EditorConfigFSharpOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/fantomas.json"
+  override val filePath: String = "schemas/editorconfig/fantomas.json"
 }

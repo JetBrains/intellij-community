@@ -5,5 +5,5 @@ import com.intellij.lang.PsiStructureViewFactory
 import com.intellij.psi.PsiFile
 
 class EditorConfigStructureViewFactory : PsiStructureViewFactory {
-  override fun getStructureViewBuilder(psiFile: PsiFile) = EditorConfigStructureViewBuilder(psiFile)
+  override fun getStructureViewBuilder(psiFile: PsiFile): EditorConfigStructureViewBuilder = EditorConfigStructureViewBuilder(psiFile)
 }

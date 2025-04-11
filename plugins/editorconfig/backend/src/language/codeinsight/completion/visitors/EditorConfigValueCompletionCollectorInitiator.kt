@@ -18,9 +18,9 @@ data class EditorConfigValueCompletionCollectorInitiator(
   val file: PsiFile
 ) : EditorConfigDescriptorVisitor {
 
-  override fun visitOption(option: EditorConfigOptionDescriptor) = collectCompletions(option.value)
-  override fun visitList(list: EditorConfigListDescriptor) = collectCompletions(list)
-  override fun visitPair(pair: EditorConfigPairDescriptor) = collectCompletions(pair.second)
+  override fun visitOption(option: EditorConfigOptionDescriptor): Unit = collectCompletions(option.value)
+  override fun visitList(list: EditorConfigListDescriptor): Unit = collectCompletions(list)
+  override fun visitPair(pair: EditorConfigPairDescriptor): Unit = collectCompletions(pair.second)
 
   override fun visitDescriptor(descriptor: EditorConfigDescriptor) {
     descriptor.parent?.accept(this)

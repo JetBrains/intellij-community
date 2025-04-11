@@ -9,9 +9,10 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.services.EditorConfigElementFactory
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
+import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveListValueQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.value.remove.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.value.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement

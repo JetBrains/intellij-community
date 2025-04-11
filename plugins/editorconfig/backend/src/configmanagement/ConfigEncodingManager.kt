@@ -19,8 +19,8 @@ internal class ConfigEncodingManager : FileEncodingProvider {
 
 object ConfigEncodingCharsetUtil {
   // Handles the following EditorConfig settings:
-  const val charsetKey = "charset"
-  const val UTF8_BOM_ENCODING = "utf-8-bom"
+  const val charsetKey: String = "charset"
+  const val UTF8_BOM_ENCODING: String = "utf-8-bom"
   private const val UTF8_ENCODING = "utf-8"
 
   // @formatter:off

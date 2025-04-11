@@ -127,7 +127,7 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
     special(pattern)
   }
 
-  override fun visitCharClassLetter(letter: EditorConfigCharClassLetter) = when {
+  override fun visitCharClassLetter(letter: EditorConfigCharClassLetter): Unit = when {
     !letter.isEscape -> holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(letter).textAttributes(EditorConfigSyntaxHighlighter.PATTERN).create()
     letter.isValidEscape -> holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(letter).textAttributes(EditorConfigSyntaxHighlighter.VALID_CHAR_ESCAPE).create()
     else -> holder.newAnnotation(HighlightSeverity.INFORMATION, EditorConfigBundle.get("annotator.error.illegal.char.escape")).range(letter).textAttributes(EditorConfigSyntaxHighlighter.INVALID_CHAR_ESCAPE).create()

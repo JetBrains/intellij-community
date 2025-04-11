@@ -14,6 +14,7 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclaration
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKeyDescriptor
 import org.editorconfig.language.util.EditorConfigDescriptorUtil
 import org.editorconfig.language.util.EditorConfigTemplateUtil
+import org.jetbrains.annotations.Nls
 
 class EditorConfigAddRequiredDeclarationsQuickFix(
   missingDescriptors: List<EditorConfigDeclarationDescriptor>,
@@ -24,7 +25,7 @@ class EditorConfigAddRequiredDeclarationsQuickFix(
     EditorConfigDescriptorUtil.getParentOfType<EditorConfigQualifiedKeyDescriptor>(it)
   }
 
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.declaration.add-required.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.declaration.add-required.description")
 
   override fun applyFix(project: Project, problemDescriptor: ProblemDescriptor) {
     val element = problemDescriptor.psiElement as? EditorConfigDescribableElement ?: return

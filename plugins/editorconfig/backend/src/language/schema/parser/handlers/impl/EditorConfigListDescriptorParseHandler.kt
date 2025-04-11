@@ -17,10 +17,10 @@ import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaParser
 import org.editorconfig.language.schema.parser.handlers.EditorConfigDescriptorParseHandlerBase
 
 class EditorConfigListDescriptorParseHandler : EditorConfigDescriptorParseHandlerBase() {
-  override val requiredKeys = listOf(TYPE, VALUES)
-  override val optionalKeys = super.optionalKeys + listOf(MIN_LENGTH, ALLOW_REPETITIONS)
+  override val requiredKeys: List<String> = listOf(TYPE, VALUES)
+  override val optionalKeys: List<String> = super.optionalKeys + listOf(MIN_LENGTH, ALLOW_REPETITIONS)
 
-  override val forbiddenChildren = listOf(PAIR, LIST, OPTION)
+  override val forbiddenChildren: List<String> = listOf(PAIR, LIST, OPTION)
 
   override fun doHandle(jsonObject: JsonObject, parser: EditorConfigJsonSchemaParser): EditorConfigDescriptor {
     val minLength = tryGetInt(jsonObject, MIN_LENGTH) ?: 0

@@ -4,6 +4,6 @@ package org.editorconfig.language.extensions.impl
 import org.editorconfig.language.extensions.EditorConfigJsonFileOptionDescriptorProviderBase
 
 class EditorConfigBasicOptionDescriptorProvider : EditorConfigJsonFileOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/basic.json"
-  override fun requiresFullSupport() = true
+  override val filePath: String = "schemas/editorconfig/basic.json"
+  override fun requiresFullSupport(): Boolean = true
 }

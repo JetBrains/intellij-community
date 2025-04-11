@@ -11,11 +11,12 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier
 import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.services.EditorConfigElementFactory
+import org.jetbrains.annotations.Nls
 import kotlin.math.abs
 import kotlin.math.min
 
 class EditorConfigRemoveUnexpectedValuesQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.value.list.remove.others")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.value.list.remove.others")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val list = descriptor.psiElement as EditorConfigOptionValueList

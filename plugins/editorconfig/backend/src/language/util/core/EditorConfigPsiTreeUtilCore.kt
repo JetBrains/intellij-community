@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.safeCast
 
 object EditorConfigPsiTreeUtilCore {
-  fun findMatchingSections(section: EditorConfigSection) =
+  fun findMatchingSections(section: EditorConfigSection): List<EditorConfigSection> =
     findMatchingParentSections(section) + findMatchingChildSections(section)
 
   private fun findMatchingParentSections(section: EditorConfigSection): List<EditorConfigSection> {

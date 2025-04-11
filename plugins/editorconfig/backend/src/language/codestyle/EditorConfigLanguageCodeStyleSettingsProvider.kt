@@ -8,12 +8,12 @@ import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.messages.EditorConfigBundle
 
 class EditorConfigLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
-  override fun getLanguage() = EditorConfigLanguage
+  override fun getLanguage(): EditorConfigLanguage = EditorConfigLanguage
 
   override fun createConfigurable(baseSettings: CodeStyleSettings, modelSettings: CodeStyleSettings):
     CodeStyleConfigurable = EditorConfigCodeStyleConfigurable(baseSettings, modelSettings)
 
-  override fun getConfigurableDisplayName() = Utils.EDITOR_CONFIG_NAME
+  override fun getConfigurableDisplayName(): String = Utils.EDITOR_CONFIG_NAME
 
   override fun customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: IndentOptions) {
     commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS = true
@@ -25,7 +25,7 @@ class EditorConfigLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsP
     commonSettings.ALIGN_GROUP_FIELD_DECLARATIONS = false
   }
 
-  override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) = when (settingsType) {
+  override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType): Unit = when (settingsType) {
     SettingsType.SPACING_SETTINGS -> {
       consumer.showStandardOptions(
         "SPACE_AROUND_ASSIGNMENT_OPERATORS",

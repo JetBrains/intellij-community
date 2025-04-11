@@ -6,5 +6,5 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 class EditorConfigSyntaxHighlighterFactory : SyntaxHighlighterFactory() {
-  override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?) = EditorConfigSyntaxHighlighter
+  override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): EditorConfigSyntaxHighlighter = EditorConfigSyntaxHighlighter
 }

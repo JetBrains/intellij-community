@@ -20,7 +20,7 @@ data class EditorConfigQualifiedKeyDescriptor(
     children.forEach { (it as EditorConfigMutableDescriptor).parent = this }
   }
 
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitQualifiedKey(this)
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitQualifiedKey(this)
 
   override fun matches(element: PsiElement): Boolean {
     if (element !is EditorConfigQualifiedOptionKey) return false

@@ -5,5 +5,5 @@ import com.intellij.psi.PsiReferenceBase
 import org.editorconfig.language.psi.EditorConfigHeader
 
 class EditorConfigHeaderReference(header: EditorConfigHeader) : PsiReferenceBase<EditorConfigHeader>(header) {
-  override fun resolve() = element
+  override fun resolve(): EditorConfigHeader = element
 }

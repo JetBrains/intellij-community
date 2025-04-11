@@ -16,7 +16,7 @@ import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.util.EditorConfigVfsUtil
 
 class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {
-  override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions) = runReadAction {
+  override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions): Boolean = runReadAction {
     if (element !is EditorConfigDescribableElement) return@runReadAction false
     val descriptor = element.getDescriptor(false) ?: return@runReadAction false
     EditorConfigVfsUtil
@@ -29,7 +29,7 @@ class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescriba
       .all(processor::process)
   }
 
-  override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) = runReadAction {
+  override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): List<PsiReference> = runReadAction {
     if (searchScope !is LocalSearchScope) return@runReadAction emptyList<PsiReference>()
     if (target !is EditorConfigDescribableElement) return@runReadAction emptyList<PsiReference>()
     val descriptor = target.getDescriptor(false) ?: return@runReadAction emptyList<PsiReference>()

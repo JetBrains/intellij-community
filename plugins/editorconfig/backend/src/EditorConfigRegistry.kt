@@ -8,15 +8,15 @@ import org.jetbrains.annotations.TestOnly
 
 @Suppress("MemberVisibilityCanBePrivate")
 object EditorConfigRegistry {
-  const val EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY = "editor.config.stop.at.project.root"
-  const val EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY = "editor.config.breadcrumbs.support"
-  const val EDITORCONFIG_DOTNET_SUPPORT_KEY = "editor.config.csharp.support"
-  const val EDITORCONFIG_RESHARPER_SUPPORT_KEY = "editor.config.resharper.support"
+  const val EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY: String = "editor.config.stop.at.project.root"
+  const val EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY: String = "editor.config.breadcrumbs.support"
+  const val EDITORCONFIG_DOTNET_SUPPORT_KEY: String = "editor.config.csharp.support"
+  const val EDITORCONFIG_RESHARPER_SUPPORT_KEY: String = "editor.config.resharper.support"
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Calling this C# is too narrow. Use EDITORCONFIG_DOTNET_SUPPORT_KEY instead",
               ReplaceWith("EDITORCONFIG_DOTNET_SUPPORT_KEY", "org.editorconfig.EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY"))
-  const val EDITORCONFIG_CSHARP_SUPPORT_KEY = EDITORCONFIG_DOTNET_SUPPORT_KEY
+  const val EDITORCONFIG_CSHARP_SUPPORT_KEY: String = EDITORCONFIG_DOTNET_SUPPORT_KEY
 
   private var forceSkipProjectRootInTest = false
 
@@ -27,16 +27,16 @@ object EditorConfigRegistry {
   }
 
   @JvmStatic
-  fun shouldStopAtProjectRoot() =
+  fun shouldStopAtProjectRoot(): Boolean =
     Registry.`is`(EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY, false) or
       (ApplicationManager.getApplication().isUnitTestMode && !forceSkipProjectRootInTest)
 
   @JvmStatic
-  fun shouldSupportBreadCrumbs() = Registry.`is`(EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY, false)
+  fun shouldSupportBreadCrumbs(): Boolean = Registry.`is`(EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY, false)
 
   @JvmStatic
-  fun shouldSupportDotNet() = Registry.`is`(EDITORCONFIG_DOTNET_SUPPORT_KEY, false)
+  fun shouldSupportDotNet(): Boolean = Registry.`is`(EDITORCONFIG_DOTNET_SUPPORT_KEY, false)
 
   @JvmStatic
-  fun shouldSupportReSharper() = Registry.`is`(EDITORCONFIG_RESHARPER_SUPPORT_KEY, false)
+  fun shouldSupportReSharper(): Boolean = Registry.`is`(EDITORCONFIG_RESHARPER_SUPPORT_KEY, false)
 }

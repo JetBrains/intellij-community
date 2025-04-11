@@ -16,13 +16,14 @@ import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 import org.editorconfig.language.util.EditorConfigDescriptorUtil
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.EditorConfigTemplateUtil
+import org.jetbrains.annotations.Nls
 
 class EditorConfigAddDeclarationPartIntention : IntentionAction {
-  override fun getText() = EditorConfigBundle.get("intention.add-declaration-part")
-  override fun getFamilyName() = EditorConfigBundle.get("intention.add-declaration-part")
-  override fun startInWriteAction() = true
+  override fun getText(): @Nls String = EditorConfigBundle.get("intention.add-declaration-part")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("intention.add-declaration-part")
+  override fun startInWriteAction(): Boolean = true
 
-  override fun isAvailable(project: Project, editor: Editor, file: PsiFile) =
+  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean =
     findDeclaration(EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, file)) != null
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {

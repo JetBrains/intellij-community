@@ -9,7 +9,7 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescri
 class EditorConfigPairDescriptorFinderVisitor : EditorConfigDescriptorVisitor {
   var descriptor: EditorConfigPairDescriptor? = null
 
-  override fun visitOption(option: EditorConfigOptionDescriptor) =
+  override fun visitOption(option: EditorConfigOptionDescriptor): Unit =
     option.value.accept(this)
 
   override fun visitUnion(union: EditorConfigUnionDescriptor) {

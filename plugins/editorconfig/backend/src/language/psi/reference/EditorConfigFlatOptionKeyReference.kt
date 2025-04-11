@@ -68,7 +68,7 @@ class EditorConfigFlatOptionKeyReference(element: EditorConfigFlatOptionKey)
     section.containsKey(myElement)
     && (section.containingFile.virtualFile != virtualFile || section.textRange.endOffset < this.section.textRange.startOffset)
 
-  override fun resolve() = element
+  override fun resolve(): EditorConfigFlatOptionKey = element
 
   fun findChildren(): List<EditorConfigFlatOptionKey> {
     val psiFile = psiFile ?: return emptyList()

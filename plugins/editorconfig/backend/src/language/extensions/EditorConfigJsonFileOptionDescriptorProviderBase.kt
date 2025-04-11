@@ -15,7 +15,7 @@ abstract class EditorConfigJsonFileOptionDescriptorProviderBase : EditorConfigOp
     deserialize(loadFileContent())
   }
 
-  override fun getOptionDescriptors(project: Project) = cachedDescriptors
+  override fun getOptionDescriptors(project: Project): List<EditorConfigOptionDescriptor> = cachedDescriptors
 
   private fun deserialize(text: String): List<EditorConfigOptionDescriptor> = try {
     EditorConfigOptionDescriptorJsonDeserializer

@@ -12,19 +12,19 @@ private const val BUNDLE_NAME: String = "messages.EditorConfigBundle"
 object EditorConfigBundle {
   internal val bundle: DynamicBundle = DynamicBundle(EditorConfigBundle::class.java, BUNDLE_NAME)
 
-  const val BUNDLE = BUNDLE_NAME
+  const val BUNDLE: String = BUNDLE_NAME
 
   @Nls
-  fun get(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = bundle.getMessage(key, *params)
+  fun get(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): @Nls String = bundle.getMessage(key, *params)
 
   @Nls
-  operator fun get(@PropertyKey(resourceBundle = BUNDLE) key: String) = get(key, *emptyArray())
-
-  @JvmStatic
-  @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String) = get(key)
+  operator fun get(@PropertyKey(resourceBundle = BUNDLE) key: String): @Nls String = get(key, *emptyArray())
 
   @JvmStatic
   @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, param: String) = get(key, param)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String): @Nls String = get(key)
+
+  @JvmStatic
+  @Nls
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, param: String): @Nls String = get(key, param)
 }

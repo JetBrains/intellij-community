@@ -13,7 +13,7 @@ import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaParser
 import org.editorconfig.language.schema.parser.handlers.EditorConfigDescriptorParseHandlerBase
 
 class EditorConfigUnionDescriptorParseHandler : EditorConfigDescriptorParseHandlerBase() {
-  override val requiredKeys = listOf(TYPE, VALUES)
+  override val requiredKeys: List<String> = listOf(TYPE, VALUES)
 
   override fun doHandle(jsonObject: JsonObject, parser: EditorConfigJsonSchemaParser): EditorConfigDescriptor {
     val values = jsonObject[VALUES]

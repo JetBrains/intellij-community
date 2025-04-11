@@ -13,27 +13,27 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescr
  * @see EditorConfigCompleteReSharperOptionDescriptorProvider
  */
 class EditorConfigIncompleteReSharperOptionDescriptorProvider : EditorConfigJsonFileOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/resharper.json"
+  override val filePath: String = "schemas/editorconfig/resharper.json"
   override fun getOptionDescriptors(project: Project): List<EditorConfigOptionDescriptor> {
     if (!EditorConfigRegistry.shouldSupportReSharper()) return super.getOptionDescriptors(project)
     else return emptyList()
   }
 
-  override fun requiresFullSupport() = EditorConfigRegistry.shouldSupportDotNet()
+  override fun requiresFullSupport(): Boolean = EditorConfigRegistry.shouldSupportDotNet()
 }
 
 class EditorConfigMsFormattingOptionDescriptorProvider : EditorConfigCSharpOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/msformatting.json"
+  override val filePath: String = "schemas/editorconfig/msformatting.json"
 }
 
 class EditorConfigMsLanguageOptionDescriptorProvider : EditorConfigCSharpOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/mslanguage.json"
+  override val filePath: String = "schemas/editorconfig/mslanguage.json"
 }
 
 class EditorConfigMsNamingOptionDescriptorProvider : EditorConfigCSharpOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/msnaming.json"
+  override val filePath: String = "schemas/editorconfig/msnaming.json"
 }
 
 class EditorConfigMsMiscOptionDescriptorProvider : EditorConfigCSharpOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/msmisc.json"
+  override val filePath: String = "schemas/editorconfig/msmisc.json"
 }

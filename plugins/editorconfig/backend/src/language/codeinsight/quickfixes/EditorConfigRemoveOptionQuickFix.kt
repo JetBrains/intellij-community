@@ -7,9 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveOptionQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.option.remove.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.option.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement as? EditorConfigDescribableElement ?: return

@@ -2,6 +2,6 @@
 package org.editorconfig.language.parser
 
 class EditorConfigSkippedWhitespaceData {
-  var start = 0
-  var end = 0
+  var start: Int = 0
+  var end: Int = 0
 }

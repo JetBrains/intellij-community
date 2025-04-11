@@ -17,7 +17,7 @@ class EditorConfigSuppressInspectionFix(
     setText(text)
   }
 
-  override fun getContainer(context: PsiElement?) = runReadAction {
+  override fun getContainer(context: PsiElement?): PsiElement? = runReadAction {
     val element = EditorConfigPsiTreeUtil.findIdentifierUnderCaret(context)
     PsiTreeUtil.getParentOfType(element, target)
   }

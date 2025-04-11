@@ -30,7 +30,7 @@ object EditorConfigParserUtil : GeneratedParserUtilBase() {
   }
 
   @JvmStatic
-  fun isOptionWithRawValueKeyAhead(builder: PsiBuilder, level: Int) =
+  fun isOptionWithRawValueKeyAhead(builder: PsiBuilder, level: Int): Boolean =
     nextTokenIs(builder, EditorConfigElementTypes.IDENTIFIER) && builder.tokenText in specialKeys
 
   private val specialKeys = listOf("file_header_template",
@@ -54,6 +54,6 @@ object EditorConfigParserUtil : GeneratedParserUtilBase() {
     return whitespaceText.contains('\n')
   }
 
-  val KEY = Key<EditorConfigSkippedWhitespaceData>("EditorConfigSkippedWhitespaceData")
+  val KEY: Key<EditorConfigSkippedWhitespaceData> = Key<EditorConfigSkippedWhitespaceData>("EditorConfigSkippedWhitespaceData")
 }
 

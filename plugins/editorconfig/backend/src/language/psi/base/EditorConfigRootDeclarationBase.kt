@@ -24,6 +24,6 @@ abstract class EditorConfigRootDeclarationBase(node: ASTNode) : ASTWrapperPsiEle
       return containingFile.virtualFile?.presentableName ?: return ""
     }
 
-  final override fun getPresentation() = PresentationData(text, declarationSite, AllIcons.Nodes.HomeFolder, null)
+  final override fun getPresentation(): PresentationData = PresentationData(text, declarationSite, AllIcons.Nodes.HomeFolder, null)
   final override fun getName(): String = rootDeclarationKey.text
 }

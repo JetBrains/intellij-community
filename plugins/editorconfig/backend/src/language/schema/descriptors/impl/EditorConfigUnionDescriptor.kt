@@ -14,11 +14,11 @@ data class EditorConfigUnionDescriptor(
 
   override var parent: EditorConfigDescriptor? = null
 
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitUnion(this)
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitUnion(this)
 
   init {
     children.forEach { (it as EditorConfigMutableDescriptor).parent = this }
   }
 
-  override fun matches(element: PsiElement) = children.any { it.matches(element) }
+  override fun matches(element: PsiElement): Boolean = children.any { it.matches(element) }
 }

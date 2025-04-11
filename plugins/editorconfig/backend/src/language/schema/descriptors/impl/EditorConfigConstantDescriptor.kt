@@ -16,9 +16,9 @@ data class EditorConfigConstantDescriptor(
   override val deprecation: String?
 ) : EditorConfigMutableDescriptor {
   override var parent: EditorConfigDescriptor? = null
-  override fun toString() = text
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitConstant(this)
-  override fun matches(element: PsiElement) =
+  override fun toString(): String = text
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitConstant(this)
+  override fun matches(element: PsiElement): Boolean =
     (element is EditorConfigOptionValueIdentifier || element is EditorConfigQualifiedKeyPart || element is EditorConfigFlatOptionKey)
     && EditorConfigTextMatchingUtil.textMatchesToIgnoreCase(element, text)
 

@@ -7,9 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
+import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveSectionQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.section.remove.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.section.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return

@@ -13,9 +13,9 @@ import org.editorconfig.language.psi.EditorConfigRootDeclaration
 class EditorConfigStructureViewModel(psiFile: PsiFile) :
   StructureViewModelBase(psiFile, EditorConfigStructureViewElement(psiFile)), StructureViewModel.ElementInfoProvider {
 
-  override fun getSorters() = arrayOf(Sorter.ALPHA_SORTER)
-  override fun isAlwaysShowsPlus(element: StructureViewTreeElement) = false
-  override fun isAlwaysLeaf(element: StructureViewTreeElement) = when (element.value) {
+  override fun getSorters(): Array<Sorter?> = arrayOf(Sorter.ALPHA_SORTER)
+  override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = false
+  override fun isAlwaysLeaf(element: StructureViewTreeElement): Boolean = when (element.value) {
     is EditorConfigFlatOptionKey -> true
     is EditorConfigQualifiedOptionKey -> true
     is EditorConfigRootDeclaration -> true

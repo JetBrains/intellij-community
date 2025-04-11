@@ -8,7 +8,7 @@ import org.editorconfig.language.util.headers.EditorConfigHeaderSearcherUtil.isP
 import org.editorconfig.language.util.headers.EditorConfigHeaderSearcherUtil.isStrictOverride
 
 class EditorConfigOverriddenHeaderSearcher(private val honorRoot: Boolean = true) : EditorConfigHeaderOverrideSearcherBase() {
-  override fun findRelevantPsiFiles(file: EditorConfigPsiFile) = (findAllChildrenFiles(file, honorRoot) + file).asSequence()
+  override fun findRelevantPsiFiles(file: EditorConfigPsiFile): Sequence<EditorConfigPsiFile> = (findAllChildrenFiles(file, honorRoot) + file).asSequence()
 
   override fun getOverrideKind(baseHeader: EditorConfigHeader, testedHeader: EditorConfigHeader): OverrideKind {
     if (isStrictOverride(baseHeader, testedHeader)) return OverrideKind.STRICT

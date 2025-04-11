@@ -13,7 +13,7 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclaration
 import org.editorconfig.language.util.EditorConfigIdentifierUtil
 
 class EditorConfigUnusedDeclarationInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitPsiElement(element: PsiElement) {
       if (element !is EditorConfigDescribableElement) return
       val descriptor = element.getDescriptor(false) as? EditorConfigDeclarationDescriptor ?: return

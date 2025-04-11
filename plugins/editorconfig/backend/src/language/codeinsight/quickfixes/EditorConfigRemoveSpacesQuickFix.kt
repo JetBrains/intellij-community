@@ -8,9 +8,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.codeinsight.inspections.findSuspiciousSpaces
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
+import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveSpacesQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.header.remove.spaces.description"]
+  override fun getFamilyName(): @Nls String = EditorConfigBundle["quickfix.header.remove.spaces.description"]
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return
     val manager = CodeStyleManager.getInstance(project)

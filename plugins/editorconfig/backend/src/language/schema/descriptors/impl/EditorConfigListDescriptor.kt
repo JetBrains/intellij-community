@@ -16,7 +16,7 @@ data class EditorConfigListDescriptor(
 ) : EditorConfigMutableDescriptor {
 
   override var parent: EditorConfigDescriptor? = null
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitList(this)
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitList(this)
 
   init {
     children.forEach { (it as EditorConfigMutableDescriptor).parent = this }

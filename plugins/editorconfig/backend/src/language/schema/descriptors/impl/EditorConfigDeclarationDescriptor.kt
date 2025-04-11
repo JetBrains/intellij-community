@@ -17,9 +17,9 @@ data class EditorConfigDeclarationDescriptor(
   override val deprecation: String?
 ) : EditorConfigMutableDescriptor {
   override var parent: EditorConfigDescriptor? = null
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitDeclaration(this)
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitDeclaration(this)
 
-  override fun matches(element: PsiElement) =
+  override fun matches(element: PsiElement): Boolean =
     element is EditorConfigFlatOptionKey
     || element is EditorConfigQualifiedKeyPart
     || element is EditorConfigOptionValueIdentifier

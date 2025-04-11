@@ -19,6 +19,6 @@ abstract class EditorConfigQualifiedOptionKeyBase(node: ASTNode) : EditorConfigD
 
   override fun getName(): String = text
 
-  override fun getPresentation() = PresentationData(text, this.declarationSite, IconManager.getInstance().getPlatformIcon(
+  override fun getPresentation(): PresentationData = PresentationData(text, this.declarationSite, IconManager.getInstance().getPlatformIcon(
     PlatformIcons.Property), null)
 }

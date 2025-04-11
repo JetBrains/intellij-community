@@ -9,9 +9,10 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigCharClassLetter
 import org.editorconfig.language.psi.EditorConfigCharClassPattern
 import org.editorconfig.language.services.EditorConfigElementFactory
+import org.jetbrains.annotations.Nls
 
 class EditorConfigSanitizeCharClassQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.charclass.sanitize.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.charclass.sanitize.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val charClass = descriptor.psiElement as? EditorConfigCharClassPattern ?: return

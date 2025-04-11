@@ -5,6 +5,8 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement
 import com.intellij.ide.util.treeView.smartTree.TreeElement
+import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.util.childrenOfType
 import org.editorconfig.language.psi.EditorConfigPsiFile
@@ -12,12 +14,12 @@ import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.psi.EditorConfigSection
 
 class EditorConfigStructureViewElement(private val element: NavigatablePsiElement) : StructureViewTreeElement, SortableTreeElement {
-  override fun getValue() = element
-  override fun navigate(requestFocus: Boolean) = element.navigate(requestFocus)
-  override fun canNavigate() = element.canNavigate()
-  override fun canNavigateToSource() = element.canNavigateToSource()
-  override fun getAlphaSortKey() = element.name ?: ""
-  override fun getPresentation() = element.presentation ?: PresentationData()
+  override fun getValue(): NavigatablePsiElement = element
+  override fun navigate(requestFocus: Boolean): Unit = element.navigate(requestFocus)
+  override fun canNavigate(): Boolean = element.canNavigate()
+  override fun canNavigateToSource(): Boolean = element.canNavigateToSource()
+  override fun getAlphaSortKey(): @NlsSafe String = element.name ?: ""
+  override fun getPresentation(): ItemPresentation = element.presentation ?: PresentationData()
 
   override fun getChildren(): Array<out TreeElement> = when (element) {
     is EditorConfigPsiFile -> {

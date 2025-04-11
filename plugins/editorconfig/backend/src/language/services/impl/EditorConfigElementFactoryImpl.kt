@@ -17,33 +17,33 @@ class EditorConfigElementFactoryImpl(private val project: Project) : EditorConfi
       .createFileFromText(EditorConfigFileConstants.FILE_NAME, EditorConfigFileType, content)
       as EditorConfigPsiFile
 
-  override fun createRootDeclaration(file: PsiFile) =
+  override fun createRootDeclaration(file: PsiFile): EditorConfigRootDeclaration =
     createDummyFile(EditorConfigFileConstants.getRootDeclarationFor(file))
       .firstChild as EditorConfigRootDeclaration
 
-  override fun createSection(source: CharSequence) =
+  override fun createSection(source: CharSequence): EditorConfigSection =
     createDummyFile(source)
       .sections
       .single()
 
-  override fun createHeader(source: CharSequence) =
+  override fun createHeader(source: CharSequence): EditorConfigHeader =
     createSection(source).header
 
-  override fun createPattern(source: CharSequence) =
+  override fun createPattern(source: CharSequence): EditorConfigPattern =
     createSection("[$source]")
       .header
       .pattern!!
 
-  override fun createCharClassPattern(source: CharSequence) =
+  override fun createCharClassPattern(source: CharSequence): EditorConfigCharClassPattern =
     PsiTreeUtil.findChildOfType(createPattern(source), EditorConfigCharClassPattern::class.java, false)!!
 
-  override fun createAnyValue(source: CharSequence) =
+  override fun createAnyValue(source: CharSequence): EditorConfigDescribableElement =
     createOption("foo=$source").anyValue!!
 
-  override fun createValueIdentifier(source: CharSequence) =
+  override fun createValueIdentifier(source: CharSequence): EditorConfigOptionValueIdentifier =
     createOption("foo=$source").optionValueIdentifier!!
 
-  override fun createOption(source: CharSequence) =
+  override fun createOption(source: CharSequence): EditorConfigOption =
     createSection("[*]$source")
       .optionList
       .single<EditorConfigOption>()
@@ -53,7 +53,7 @@ class EditorConfigElementFactoryImpl(private val project: Project) : EditorConfi
     return option.flatOptionKey ?: option.qualifiedOptionKey ?: throw IllegalStateException()
   }
 
-  override fun createKeyPart(source: CharSequence) =
+  override fun createKeyPart(source: CharSequence): EditorConfigQualifiedKeyPart =
     createOption("hello.$source=value")
       .qualifiedOptionKey!!
       .qualifiedKeyPartList[1]!!

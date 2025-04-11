@@ -8,18 +8,19 @@ import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptorVisitor
 import org.editorconfig.language.util.EditorConfigTextMatchingUtil
+import org.jetbrains.annotations.Nls
 
 object EditorConfigUnsetValueDescriptor : EditorConfigDescriptor {
   private const val text = "unset"
   override val deprecation: String? = null
-  override val documentation
+  override val documentation: @Nls String
     get() = EditorConfigBundle["descriptor.unset.documentation"]
 
   override val parent: EditorConfigDescriptor
     get() = throw UnsupportedOperationException()
 
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitUnset(this)
-  override fun matches(element: PsiElement) =
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitUnset(this)
+  override fun matches(element: PsiElement): Boolean =
     element is EditorConfigOptionValueIdentifier
     && element.parent is EditorConfigOption
     && EditorConfigTextMatchingUtil.textMatchesToIgnoreCase(element, text)

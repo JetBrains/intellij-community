@@ -19,14 +19,14 @@ import org.editorconfig.language.util.EditorConfigTextMatchingUtil.textMatchesTo
 import org.editorconfig.language.util.EditorConfigVfsUtil
 
 class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {
-  override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions) =
+  override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions): Boolean =
     runReadAction {
       getId(element)?.let { id -> findAllUsages(element, id) }
         ?.map(::UsageInfo)
         ?.all(processor::process) == true
     }
 
-  override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) =
+  override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): List<PsiReference> =
     runReadAction {
       if (searchScope !is LocalSearchScope) return@runReadAction emptyList<PsiReference>()
       val id = getId(target) ?: return@runReadAction emptyList<PsiReference>()

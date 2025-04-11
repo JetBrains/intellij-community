@@ -10,7 +10,7 @@ import org.editorconfig.language.psi.EditorConfigVisitor
 import java.util.concurrent.atomic.AtomicBoolean
 
 class EditorConfigRootDeclarationUniquenessInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     private val visitedRootDeclaration = AtomicBoolean()
     override fun visitRootDeclaration(declaration: EditorConfigRootDeclaration) {
       if (!visitedRootDeclaration.compareAndSet(false, true)) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.NonNls
 
 object EditorConfigPresentationUtil {
   @JvmStatic
@@ -22,5 +23,5 @@ object EditorConfigPresentationUtil {
   }
 
   @JvmStatic
-  fun path(element: PsiElement) = EditorConfigPsiTreeUtil.getOriginalFile(element.containingFile)?.virtualFile?.parent?.path ?: ""
+  fun path(element: PsiElement): @NonNls String = EditorConfigPsiTreeUtil.getOriginalFile(element.containingFile)?.virtualFile?.parent?.path ?: ""
 }

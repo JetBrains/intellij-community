@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 
 class EditorConfigKeyCorrectnessInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitQualifiedOptionKey(key: EditorConfigQualifiedOptionKey) = checkKey(key)
     override fun visitFlatOptionKey(key: EditorConfigFlatOptionKey) = checkKey(key)
     fun checkKey(key: EditorConfigDescribableElement) {

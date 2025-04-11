@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigValueCorrectnessInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitOptionValueIdentifier(identifier: EditorConfigOptionValueIdentifier) {
       val parent = identifier.describableParent
 

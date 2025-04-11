@@ -18,8 +18,8 @@ class EditorConfigBreadcrumbsProvider : BreadcrumbsProvider {
     SUPPORTED_LANGUAGES = if (enabled) arrayOf(EditorConfigLanguage) else emptyArray()
   }
 
-  override fun getLanguages() = SUPPORTED_LANGUAGES
-  override fun acceptElement(element: PsiElement) =
+  override fun getLanguages(): Array<EditorConfigLanguage> = SUPPORTED_LANGUAGES
+  override fun acceptElement(element: PsiElement): Boolean =
     element is EditorConfigPsiFile
     || element is EditorConfigSection
 

@@ -12,7 +12,7 @@ import org.editorconfig.language.psi.EditorConfigDoubleAsteriskPattern
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigWildcardRedundancyInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitDoubleAsteriskPattern(pattern: EditorConfigDoubleAsteriskPattern) = checkSiblings(pattern)
     override fun visitAsteriskPattern(pattern: EditorConfigAsteriskPattern) = checkSiblings(pattern)
     fun checkSiblings(element: PsiElement) {

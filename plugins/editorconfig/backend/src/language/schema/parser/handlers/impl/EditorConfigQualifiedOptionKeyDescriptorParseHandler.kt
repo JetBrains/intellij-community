@@ -17,8 +17,8 @@ import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaParser
 import org.editorconfig.language.schema.parser.handlers.EditorConfigDescriptorParseHandlerBase
 
 class EditorConfigQualifiedOptionKeyDescriptorParseHandler : EditorConfigDescriptorParseHandlerBase() {
-  override val requiredKeys = listOf(TYPE, VALUES)
-  override val forbiddenChildren = listOf(PAIR, LIST, OPTION, QUALIFIED)
+  override val requiredKeys: List<String> = listOf(TYPE, VALUES)
+  override val forbiddenChildren: List<String> = listOf(PAIR, LIST, OPTION, QUALIFIED)
 
   override fun doHandle(jsonObject: JsonObject, parser: EditorConfigJsonSchemaParser): EditorConfigDescriptor {
     val rawValues = jsonObject[VALUES]

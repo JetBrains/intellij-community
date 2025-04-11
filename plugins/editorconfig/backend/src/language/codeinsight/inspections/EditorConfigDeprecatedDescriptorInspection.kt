@@ -13,7 +13,7 @@ import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement
 import java.text.MessageFormat
 
 class EditorConfigDeprecatedDescriptorInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitDescribableElement(element: EditorConfigDescribableElement) {
       val descriptor = element.getDescriptor(true) ?: return
       val deprecation = descriptor.deprecation ?: return

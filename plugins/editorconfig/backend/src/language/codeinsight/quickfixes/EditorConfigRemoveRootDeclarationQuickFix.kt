@@ -7,9 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
+import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveRootDeclarationQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.root-declaration.remove.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.root-declaration.remove.description")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val rootDeclaration = descriptor.psiElement as? EditorConfigRootDeclaration ?: return
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(rootDeclaration::delete)

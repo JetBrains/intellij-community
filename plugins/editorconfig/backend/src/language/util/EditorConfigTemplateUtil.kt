@@ -21,7 +21,7 @@ object EditorConfigTemplateUtil {
     section: EditorConfigSection,
     substitutions: Map<String, String> = emptyMap(),
     initialNewLine: Boolean = true
-  ) = EditorConfigTemplateBuilder(key, section, substitutions, initialNewLine).appendDescriptorGroup(descriptors).build()
+  ): TemplateImpl = EditorConfigTemplateBuilder(key, section, substitutions, initialNewLine).appendDescriptorGroup(descriptors).build()
 
   /**
    * Creates separate option for every given key
@@ -85,7 +85,7 @@ object EditorConfigTemplateUtil {
       .all { (first, second) -> first == second }
   }
 
-  fun startsWithVariable(descriptor: EditorConfigQualifiedKeyDescriptor) =
+  fun startsWithVariable(descriptor: EditorConfigQualifiedKeyDescriptor): Boolean =
     DescriptorType.from(descriptor.children.first()) is DescriptorType.Variable
 
   private sealed class DescriptorType {
@@ -117,5 +117,5 @@ object EditorConfigTemplateUtil {
 
   private val Log = logger<EditorConfigTemplateUtil>()
   private var idCounter = 0
-  val uniqueId get() = (++idCounter).toString()
+  val uniqueId: String get() = (++idCounter).toString()
 }

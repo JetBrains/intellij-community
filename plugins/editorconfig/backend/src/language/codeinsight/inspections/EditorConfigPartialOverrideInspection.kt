@@ -10,7 +10,7 @@ import org.editorconfig.language.util.headers.EditorConfigOverriddenHeaderSearch
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
 
 class EditorConfigPartialOverrideInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
       if (!header.isValidGlob) return
       val isPartiallyOverriding = EditorConfigOverriddenHeaderSearcher(false).findMatchingHeaders(header).any { it.isPartial }

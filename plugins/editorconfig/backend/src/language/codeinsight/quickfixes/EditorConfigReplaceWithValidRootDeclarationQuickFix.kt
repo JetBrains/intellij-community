@@ -8,9 +8,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.services.EditorConfigElementFactory
+import org.jetbrains.annotations.Nls
 
 class EditorConfigReplaceWithValidRootDeclarationQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.root-declaration.replace-with-valid.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.root-declaration.replace-with-valid.description")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement as? EditorConfigRootDeclaration ?: return
     val elementFactory = EditorConfigElementFactory.getInstance(project)

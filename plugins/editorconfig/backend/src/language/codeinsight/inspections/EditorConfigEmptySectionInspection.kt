@@ -9,7 +9,7 @@ import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigEmptySectionInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
       if (header.section.optionList.isNotEmpty()) return
       val message = EditorConfigBundle["inspection.section.emptiness.message"]

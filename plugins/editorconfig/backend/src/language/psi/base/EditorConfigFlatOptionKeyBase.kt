@@ -9,12 +9,13 @@ import com.intellij.ui.PlatformIcons
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.psi.reference.EditorConfigFlatOptionKeyReference
+import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 
 abstract class EditorConfigFlatOptionKeyBase(node: ASTNode) : EditorConfigIdentifierElementBase(node), EditorConfigFlatOptionKey {
   final override fun setName(name: String): PsiElement = throw UnsupportedOperationException()
   final override fun getReference(): EditorConfigFlatOptionKeyReference = EditorConfigFlatOptionKeyReference(this)
-  final override fun getDescriptor(smart: Boolean) = option.getDescriptor(smart)?.key
-  final override fun getPresentation() = PresentationData(text, declarationSite, IconManager.getInstance().getPlatformIcon(
+  final override fun getDescriptor(smart: Boolean): EditorConfigDescriptor? = option.getDescriptor(smart)?.key
+  final override fun getPresentation(): PresentationData = PresentationData(text, declarationSite, IconManager.getInstance().getPlatformIcon(
     PlatformIcons.Property), null)
 
   final override fun definesSameOption(element: EditorConfigFlatOptionKey): Boolean {

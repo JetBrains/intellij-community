@@ -6,7 +6,7 @@ import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.findAllParentsFiles
 
 class EditorConfigOverridingHeaderSearcher : EditorConfigHeaderOverrideSearcherBase() {
-  override fun findRelevantPsiFiles(file: EditorConfigPsiFile) = findAllParentsFiles(file).asSequence()
+  override fun findRelevantPsiFiles(file: EditorConfigPsiFile): Sequence<EditorConfigPsiFile> = findAllParentsFiles(file).asSequence()
 
   override fun getOverrideKind(baseHeader: EditorConfigHeader, testedHeader: EditorConfigHeader): OverrideKind {
     if (EditorConfigHeaderSearcherUtil.isStrictOverride(testedHeader, baseHeader)) return OverrideKind.STRICT

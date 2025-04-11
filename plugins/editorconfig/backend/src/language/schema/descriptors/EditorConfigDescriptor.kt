@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
  * For consistency purposes, all subclasses are advised to be data classes
  */
 interface EditorConfigDescriptor {
-  val children
+  val children: List<EditorConfigDescriptor>
     get() = emptyList<EditorConfigDescriptor>()
 
   val documentation: String?

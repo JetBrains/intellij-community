@@ -25,7 +25,7 @@ object EditorConfigDescriptorUtil {
     return result
   }
 
-  inline fun <reified T : EditorConfigDescriptor> getParentOfType(descriptor: EditorConfigDescriptor) =
+  inline fun <reified T : EditorConfigDescriptor> getParentOfType(descriptor: EditorConfigDescriptor): T? =
     getParentOfType(descriptor, T::class)
 
   tailrec fun <T : EditorConfigDescriptor> getParentOfType(descriptor: EditorConfigDescriptor, cls: KClass<T>): T? {

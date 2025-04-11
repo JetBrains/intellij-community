@@ -24,6 +24,6 @@ abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElement
     return true
   }
 
-  final override fun getReference() = EditorConfigHeaderReference(this)
+  final override fun getReference(): EditorConfigHeaderReference = EditorConfigHeaderReference(this)
 
 }

@@ -8,9 +8,9 @@ import org.editorconfig.language.psi.EditorConfigQualifiedKeyPart
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 
 abstract class EditorConfigIdentifierFinderVisitor : EditorConfigRecursiveVisitor() {
-  final override fun visitFlatOptionKey(key: EditorConfigFlatOptionKey) = collectIdentifier(key)
-  final override fun visitQualifiedKeyPart(keyPart: EditorConfigQualifiedKeyPart) = collectIdentifier(keyPart)
-  final override fun visitOptionValueIdentifier(identifier: EditorConfigOptionValueIdentifier) = collectIdentifier(identifier)
-  final override fun visitHeader(header: EditorConfigHeader) = Unit
+  final override fun visitFlatOptionKey(key: EditorConfigFlatOptionKey): Unit = collectIdentifier(key)
+  final override fun visitQualifiedKeyPart(keyPart: EditorConfigQualifiedKeyPart): Unit = collectIdentifier(keyPart)
+  final override fun visitOptionValueIdentifier(identifier: EditorConfigOptionValueIdentifier): Unit = collectIdentifier(identifier)
+  final override fun visitHeader(header: EditorConfigHeader): Unit = Unit
   abstract fun collectIdentifier(identifier: EditorConfigDescribableElement)
 }

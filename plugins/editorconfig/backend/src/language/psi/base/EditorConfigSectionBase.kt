@@ -12,7 +12,7 @@ import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigSection
 
 abstract class EditorConfigSectionBase(node: ASTNode) : ASTWrapperPsiElement(node), EditorConfigSection {
-  final override fun containsKey(key: EditorConfigFlatOptionKey) = optionList
+  final override fun containsKey(key: EditorConfigFlatOptionKey): Boolean = optionList
     .asSequence()
     .mapNotNull(EditorConfigOption::getFlatOptionKey)
     .any(key::definesSameOption)

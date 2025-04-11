@@ -13,7 +13,7 @@ data class EditorConfigStringDescriptor(
   val pattern : String? = null
 ) : EditorConfigMutableDescriptor {
   override var parent: EditorConfigDescriptor? = null
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitString(this)
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitString(this)
   override fun matches(element: PsiElement): Boolean {
     if (element.children.isNotEmpty()) return false
     return when {

@@ -13,15 +13,15 @@ data class EditorConfigPairDescriptor(
   override val documentation: String?,
   override val deprecation: String?
 ) : EditorConfigMutableDescriptor {
-  override val children = listOf(first, second)
+  override val children: List<EditorConfigDescriptor> = listOf(first, second)
   override var parent: EditorConfigDescriptor? = null
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitPair(this)
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitPair(this)
 
   init {
     (first as EditorConfigMutableDescriptor).parent = this
     (second as EditorConfigMutableDescriptor).parent = this
   }
 
-  override fun matches(element: PsiElement) =
+  override fun matches(element: PsiElement): Boolean =
     element is EditorConfigOptionValuePair
 }

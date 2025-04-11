@@ -8,9 +8,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.services.EditorConfigElementFactory
+import org.jetbrains.annotations.Nls
 
 class EditorConfigInsertStarQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.header.insert.star.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.header.insert.star.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return

@@ -4,5 +4,5 @@ package org.editorconfig.language.extensions
 import org.editorconfig.EditorConfigRegistry
 
 abstract class EditorConfigFSharpOptionDescriptorProviderBase : EditorConfigJsonFileOptionDescriptorProviderBase() {
-  final override fun requiresFullSupport() = EditorConfigRegistry.shouldSupportDotNet()
+  final override fun requiresFullSupport(): Boolean = EditorConfigRegistry.shouldSupportDotNet()
 }

@@ -8,9 +8,9 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescr
 import java.lang.reflect.Type
 
 class EditorConfigOptionDescriptorJsonDeserializer(logger: Logger) : JsonDeserializer<EditorConfigOptionDescriptor> {
-  val parser = EditorConfigJsonSchemaParser(logger)
+  val parser: EditorConfigJsonSchemaParser = EditorConfigJsonSchemaParser(logger)
 
-  override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext) = try {
+  override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): EditorConfigOptionDescriptor? = try {
     parser.parse(json) as? EditorConfigOptionDescriptor ?: throw EditorConfigJsonSchemaException(json)
   }
   catch (ex: EditorConfigJsonSchemaException) {

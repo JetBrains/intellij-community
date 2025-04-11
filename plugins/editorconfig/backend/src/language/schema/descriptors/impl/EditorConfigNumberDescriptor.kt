@@ -11,7 +11,7 @@ data class EditorConfigNumberDescriptor(
   override val deprecation: String?
 ) : EditorConfigMutableDescriptor {
   override var parent: EditorConfigDescriptor? = null
-  override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitNumber(this)
+  override fun accept(visitor: EditorConfigDescriptorVisitor): Unit = visitor.visitNumber(this)
 
   override fun matches(element: PsiElement): Boolean =
     element.text.asEditorConfigInt() != null

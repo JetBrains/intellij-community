@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.EditorConfigCharClassPattern
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigCharClassLetterRedundancyInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitCharClassPattern(charClass: EditorConfigCharClassPattern) {
       val letters = charClass.charClassLetterList
       val message = EditorConfigBundle["inspection.charclass.duplicate.message"]

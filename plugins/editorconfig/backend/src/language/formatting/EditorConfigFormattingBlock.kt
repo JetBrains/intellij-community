@@ -54,9 +54,9 @@ class EditorConfigFormattingBlock(
     return false
   }
 
-  override fun isLeaf() = myNode.firstChildNode === null
+  override fun isLeaf(): Boolean = myNode.firstChildNode === null
 
-  override fun getAlignment() =
+  override fun getAlignment(): Alignment? =
     if (isSeparator && shouldAlignSeparators) separatorAlignment
     else myAlignment
 

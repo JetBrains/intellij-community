@@ -6,6 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 
 class EditorConfigTargetElementEvaluator : TargetElementEvaluator {
-  override fun includeSelfInGotoImplementation(element: PsiElement) = false
-  override fun getElementByReference(ref: PsiReference, flags: Int) = ref.resolve()
+  override fun includeSelfInGotoImplementation(element: PsiElement): Boolean = false
+  override fun getElementByReference(ref: PsiReference, flags: Int): PsiElement? = ref.resolve()
 }

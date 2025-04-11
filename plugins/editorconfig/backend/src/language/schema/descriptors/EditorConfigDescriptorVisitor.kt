@@ -6,15 +6,15 @@ import org.editorconfig.language.schema.descriptors.impl.*
 interface EditorConfigDescriptorVisitor {
   fun visitDescriptor(descriptor: EditorConfigDescriptor) {}
 
-  fun visitConstant(constant: EditorConfigConstantDescriptor) = visitDescriptor(constant)
-  fun visitOption(option: EditorConfigOptionDescriptor) = visitDescriptor(option)
-  fun visitNumber(number: EditorConfigNumberDescriptor) = visitDescriptor(number)
-  fun visitUnion(union: EditorConfigUnionDescriptor) = visitDescriptor(union)
-  fun visitList(list: EditorConfigListDescriptor) = visitDescriptor(list)
-  fun visitPair(pair: EditorConfigPairDescriptor) = visitDescriptor(pair)
-  fun visitQualifiedKey(qualifiedKey: EditorConfigQualifiedKeyDescriptor) = visitDescriptor(qualifiedKey)
-  fun visitString(string: EditorConfigStringDescriptor) = visitDescriptor(string)
-  fun visitReference(reference: EditorConfigReferenceDescriptor) = visitDescriptor(reference)
-  fun visitDeclaration(declaration: EditorConfigDeclarationDescriptor) = visitDescriptor(declaration)
-  fun visitUnset(unset: EditorConfigUnsetValueDescriptor) = visitDescriptor(unset)
+  fun visitConstant(constant: EditorConfigConstantDescriptor): Unit = visitDescriptor(constant)
+  fun visitOption(option: EditorConfigOptionDescriptor): Unit = visitDescriptor(option)
+  fun visitNumber(number: EditorConfigNumberDescriptor): Unit = visitDescriptor(number)
+  fun visitUnion(union: EditorConfigUnionDescriptor): Unit = visitDescriptor(union)
+  fun visitList(list: EditorConfigListDescriptor): Unit = visitDescriptor(list)
+  fun visitPair(pair: EditorConfigPairDescriptor): Unit = visitDescriptor(pair)
+  fun visitQualifiedKey(qualifiedKey: EditorConfigQualifiedKeyDescriptor): Unit = visitDescriptor(qualifiedKey)
+  fun visitString(string: EditorConfigStringDescriptor): Unit = visitDescriptor(string)
+  fun visitReference(reference: EditorConfigReferenceDescriptor): Unit = visitDescriptor(reference)
+  fun visitDeclaration(declaration: EditorConfigDeclarationDescriptor): Unit = visitDescriptor(declaration)
+  fun visitUnset(unset: EditorConfigUnsetValueDescriptor): Unit = visitDescriptor(unset)
 }

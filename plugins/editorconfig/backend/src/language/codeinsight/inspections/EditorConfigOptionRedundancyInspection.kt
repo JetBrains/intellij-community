@@ -13,7 +13,7 @@ import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigOptionRedundancyInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitFlatOptionKey(flatOptionKey: EditorConfigFlatOptionKey) {
       val option = flatOptionKey.option
       val parents = flatOptionKey.reference.findParents()

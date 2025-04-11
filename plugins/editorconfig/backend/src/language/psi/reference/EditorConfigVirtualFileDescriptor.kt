@@ -27,10 +27,10 @@ class EditorConfigVirtualFileDescriptor(val file: VirtualFile) {
     return distance
   }
 
-  fun isChildOf(parent: VirtualFile) = distanceToParent(parent) >= 0
-  fun isParentOf(child: VirtualFile) = distanceToChild(child) >= 0
-  fun isStrictParentOf(child: VirtualFile) = distanceToChild(child) > 0
-  fun isStrictChildOf(parent: VirtualFile) = distanceToParent(parent) > 0
+  fun isChildOf(parent: VirtualFile): Boolean = distanceToParent(parent) >= 0
+  fun isParentOf(child: VirtualFile): Boolean = distanceToChild(child) >= 0
+  fun isStrictParentOf(child: VirtualFile): Boolean = distanceToChild(child) > 0
+  fun isStrictChildOf(parent: VirtualFile): Boolean = distanceToParent(parent) > 0
 
   private fun calculateDistanceBetween(parentFile: VirtualFile, initialFile: VirtualFile): Int {
     var result = 0

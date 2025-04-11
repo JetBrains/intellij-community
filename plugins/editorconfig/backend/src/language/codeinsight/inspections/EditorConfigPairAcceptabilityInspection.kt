@@ -9,7 +9,7 @@ import org.editorconfig.language.psi.EditorConfigOptionValuePair
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigPairAcceptabilityInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitOptionValuePair(pair: EditorConfigOptionValuePair) {
       if (pair.getDescriptor(false) != null) return
       pair.describableParent?.getDescriptor(false) ?: return

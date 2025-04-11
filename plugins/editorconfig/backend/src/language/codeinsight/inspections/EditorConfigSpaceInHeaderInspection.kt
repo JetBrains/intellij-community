@@ -13,7 +13,7 @@ import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigSpaceInHeaderInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
       if (PsiTreeUtil.hasErrorElements(header)) return
       val spaces = findSuspiciousSpaces(header)

@@ -17,7 +17,7 @@ class EditorConfigInspectionSuppressor : InspectionSuppressor {
   private val suppressCommentPattern = "[#;]" + SuppressionUtil.COMMON_SUPPRESS_REGEXP
   private val suppressPattern = Pattern.compile(suppressCommentPattern)
 
-  override fun isSuppressedFor(element: PsiElement, toolId: String) =
+  override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean =
     isSuppressedFor(element, toolId, EditorConfigOption::class.java)
     || isSuppressedFor(element, toolId, EditorConfigSection::class.java)
     || isSuppressedFor(element, toolId, EditorConfigRootDeclaration::class.java)
@@ -39,7 +39,7 @@ class EditorConfigInspectionSuppressor : InspectionSuppressor {
     }
   }
 
-  override fun getSuppressActions(element: PsiElement?, toolId: String) = arrayOf(
+  override fun getSuppressActions(element: PsiElement?, toolId: String): Array<EditorConfigSuppressInspectionFix> = arrayOf(
     EditorConfigSuppressInspectionFix(toolId, EditorConfigBundle.get("suppress.inspection.option"), EditorConfigOption::class.java),
     EditorConfigSuppressInspectionFix(toolId, EditorConfigBundle.get("suppress.inspection.section"), EditorConfigSection::class.java)
   )

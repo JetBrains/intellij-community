@@ -13,6 +13,7 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigQualifiedKeyPart
+import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 
@@ -40,7 +41,7 @@ abstract class EditorConfigOptionBase(node: ASTNode) : EditorConfigDescribableEl
     ?: qualifiedOptionKey?.qualifiedKeyPartList?.map(EditorConfigQualifiedKeyPart::getText)
     ?: emptyList()
 
-  final override fun getAnyValue() =
+  final override fun getAnyValue(): EditorConfigDescribableElement? =
     optionValueIdentifier
     ?: optionValueList
     ?: optionValuePair

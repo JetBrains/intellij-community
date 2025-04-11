@@ -10,7 +10,7 @@ import org.editorconfig.language.util.headers.EditorConfigOverriddenHeaderSearch
 import javax.swing.Icon
 
 class EditorConfigOverriddenHeaderLineMarkerProvider : EditorConfigHeaderLineMarkerProviderBase() {
-  override val searcher = EditorConfigOverriddenHeaderSearcher()
+  override val searcher: EditorConfigOverriddenHeaderSearcher = EditorConfigOverriddenHeaderSearcher()
 
   override fun createTooltipProvider(searchResults: List<OverrideSearchResult>): (PsiElement) -> String {
     val isPartial = searchResults.any { it.isPartial }

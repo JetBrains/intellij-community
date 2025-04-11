@@ -6,5 +6,5 @@ import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement
 
 abstract class EditorConfigIdentifierElementBase(node: ASTNode) : EditorConfigDescribableElementBase(node), EditorConfigIdentifierElement {
   final override fun getName(): String = text
-  final override fun getNameIdentifier() = this
+  final override fun getNameIdentifier(): EditorConfigIdentifierElementBase = this
 }

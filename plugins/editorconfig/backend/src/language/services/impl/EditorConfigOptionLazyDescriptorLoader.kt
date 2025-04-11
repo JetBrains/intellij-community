@@ -7,9 +7,9 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescr
 import org.jetbrains.annotations.TestOnly
 
 class EditorConfigOptionLazyDescriptorLoader(project: Project) {
-  var fullySupportedDescriptors = EditorConfigOptionDescriptorStorage(emptyList())
+  var fullySupportedDescriptors: EditorConfigOptionDescriptorStorage = EditorConfigOptionDescriptorStorage(emptyList())
     private set
-  var partiallySupportedDescriptors = EditorConfigOptionDescriptorStorage(emptyList())
+  var partiallySupportedDescriptors: EditorConfigOptionDescriptorStorage = EditorConfigOptionDescriptorStorage(emptyList())
     private set
 
   init {
@@ -37,5 +37,5 @@ class EditorConfigOptionLazyDescriptorLoader(project: Project) {
   }
 
   @TestOnly
-  fun reloadDescriptors(project: Project) = loadDescriptors(project)
+  fun reloadDescriptors(project: Project): Unit = loadDescriptors(project)
 }

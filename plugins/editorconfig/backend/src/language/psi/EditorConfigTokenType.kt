@@ -6,5 +6,5 @@ import org.editorconfig.language.EditorConfigLanguage
 import org.jetbrains.annotations.NonNls
 
 class EditorConfigTokenType(@NonNls debugName: String) : IElementType(debugName, EditorConfigLanguage) {
-  override fun toString() = "EditorConfigTokenType." + super.toString()
+  override fun toString(): String = "EditorConfigTokenType." + super.toString()
 }

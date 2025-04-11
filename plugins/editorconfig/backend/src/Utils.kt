@@ -31,10 +31,10 @@ import java.io.IOException
 import java.nio.file.Paths
 
 object Utils {
-  const val EDITOR_CONFIG_NAME = "EditorConfig"
-  const val EDITOR_CONFIG_FILE_NAME = ".editorconfig"
+  const val EDITOR_CONFIG_NAME: String = "EditorConfig"
+  const val EDITOR_CONFIG_FILE_NAME: String = ".editorconfig"
   private const val FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support"
-  const val PLUGIN_ID = "org.editorconfig.editorconfigjetbrains"
+  const val PLUGIN_ID: String = "org.editorconfig.editorconfigjetbrains"
   // EC spec does not define "none"
   // WEB-18555 says it is a convention, the description seems the same as "unset"?
   // it seems "unset" was added later to the spec.
@@ -46,7 +46,7 @@ object Utils {
 
   @TestOnly
   @JvmStatic
-  var isEnabledInTests = false
+  var isEnabledInTests: Boolean = false
 
   fun ResourceProperties.configValueForKey(key: String): String {
     val prop = properties[key] ?: return ""

@@ -4,8 +4,8 @@ package org.editorconfig.language.codeinsight
 import com.intellij.lang.Commenter
 
 class EditorConfigCommenter : Commenter {
-  override fun getLineCommentPrefix() = "# "
-  override fun getBlockCommentPrefix() = ""
+  override fun getLineCommentPrefix(): String = "# "
+  override fun getBlockCommentPrefix(): String = ""
   override fun getBlockCommentSuffix(): String? = null
   override fun getCommentedBlockCommentPrefix(): String? = null
   override fun getCommentedBlockCommentSuffix(): String? = null

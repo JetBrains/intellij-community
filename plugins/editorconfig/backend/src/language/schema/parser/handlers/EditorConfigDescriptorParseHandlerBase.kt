@@ -13,7 +13,7 @@ abstract class EditorConfigDescriptorParseHandlerBase {
   protected abstract val requiredKeys: List<String>
   protected open val optionalKeys: List<String> = listOf(DOCUMENTATION, TYPE_ALIAS, DEPRECATION)
 
-  open val forbiddenChildren = emptyList<String>()
+  open val forbiddenChildren: List<String> = emptyList<String>()
 
   protected abstract fun doHandle(jsonObject: JsonObject, parser: EditorConfigJsonSchemaParser): EditorConfigDescriptor
 
@@ -42,7 +42,7 @@ abstract class EditorConfigDescriptorParseHandlerBase {
     if (jsonObject.has(key)) jsonObject[key]
     else null
 
-  protected fun tryGetString(jsonObject: JsonObject, key: String) = try {
+  protected fun tryGetString(jsonObject: JsonObject, key: String): String? = try {
     tryGetElement(jsonObject, key)?.asString
   }
   catch (ex: ClassCastException) {
@@ -52,7 +52,7 @@ abstract class EditorConfigDescriptorParseHandlerBase {
     null
   }
 
-  protected fun tryGetInt(jsonObject: JsonObject, key: String) = try {
+  protected fun tryGetInt(jsonObject: JsonObject, key: String): Int? = try {
     tryGetElement(jsonObject, key)?.asInt
   }
   catch (ex: ClassCastException) {
@@ -62,7 +62,7 @@ abstract class EditorConfigDescriptorParseHandlerBase {
     null
   }
 
-  protected fun tryGetBoolean(jsonObject: JsonObject, key: String) = try {
+  protected fun tryGetBoolean(jsonObject: JsonObject, key: String): Boolean? = try {
     tryGetElement(jsonObject, key)?.asBoolean
   }
   catch (ex: ClassCastException) {

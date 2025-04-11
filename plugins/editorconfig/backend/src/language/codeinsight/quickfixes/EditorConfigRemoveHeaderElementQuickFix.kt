@@ -9,9 +9,10 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement
 import org.editorconfig.language.services.EditorConfigElementFactory
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
+import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveHeaderElementQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle.get("quickfix.header-element.remove.description")
+  override fun getFamilyName(): @Nls String = EditorConfigBundle.get("quickfix.header-element.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val pattern = descriptor.psiElement as? EditorConfigHeaderElement ?: return

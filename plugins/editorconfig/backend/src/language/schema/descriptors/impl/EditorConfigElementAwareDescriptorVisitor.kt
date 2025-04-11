@@ -10,7 +10,7 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 abstract class EditorConfigElementAwareDescriptorVisitor : EditorConfigDescriptorVisitor {
   protected abstract val element: EditorConfigDescribableElement
 
-  override fun visitPair(pair: EditorConfigPairDescriptor) =
+  override fun visitPair(pair: EditorConfigPairDescriptor): Unit =
     handleRelativeToPair(pair::first, pair::second).accept(this)
 
   private fun isInsertingPairFirst(): Boolean {

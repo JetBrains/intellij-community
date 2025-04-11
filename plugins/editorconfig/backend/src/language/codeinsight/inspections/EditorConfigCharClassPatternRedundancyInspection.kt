@@ -9,7 +9,7 @@ import org.editorconfig.language.psi.EditorConfigCharClassPattern
 import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigCharClassPatternRedundancyInspection : LocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitCharClassPattern(charClass: EditorConfigCharClassPattern) {
       if (charClass.charClassExclamation != null) return
       if (charClass.charClassLetterList.size != 1) return
