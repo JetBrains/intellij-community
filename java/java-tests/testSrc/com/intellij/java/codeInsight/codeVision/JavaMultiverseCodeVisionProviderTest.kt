@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.impl.file.impl.sharedSourceRootFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
 import kotlinx.coroutines.Dispatchers
@@ -39,12 +40,11 @@ internal class JavaMultiverseCodeVisionProviderTest {
   private val codeVisionFixture = codeVisionFixture(editorFixture, sharedFileFixture)
 
   @Test
-  fun testClassUsages() {
-    runBlocking {
-      val codeVision = codeVisionFixture.get()
-      val editor = editorFixture.get()
+  fun testClassUsages() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
 
-      addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
         import com.company.Shared;
         public class A {
           void foo() {
@@ -56,7 +56,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }
           """.trimIndent())
 
-      addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
         import com.company.Shared;
         public class B {
           void foo() {
@@ -65,28 +65,26 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }
           """.trimIndent())
 
-      val moduleAContext = setContext(editor, moduleAFixture.get())
-      codeVision.testProviders(moduleAContext, """
+    val moduleAContext = setContext(editor, moduleAFixture.get())
+    codeVision.testProviders(moduleAContext, """
         package com.company;
         class Shared {}  /*<# [3 usages] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-      val moduleBContext = setContext(editor, moduleBFixture.get())
-      codeVision.testProviders(moduleBContext, """
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
       package com.company;
       class Shared {} /*<# [2 usages] #>*/
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-    }
   }
 
   @Test
-  fun testMethodUsages() {
-    runBlocking {
-      val codeVision = codeVisionFixture.get()
-      val editor = editorFixture.get()
+  fun testMethodUsages() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
 
-      addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
         import com.company.Shared;
         public class A {
           void foo() {
@@ -99,7 +97,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }
           """.trimIndent())
 
-      addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
         import com.company.Shared;
         public class B {
           void foo() {
@@ -108,104 +106,98 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }
           """.trimIndent())
 
-      val moduleAContext = setContext(editor, moduleAFixture.get())
-      codeVision.testProviders(moduleAContext, """
+    val moduleAContext = setContext(editor, moduleAFixture.get())
+    codeVision.testProviders(moduleAContext, """
       package com.company;
       class Shared { /*<# [3 usages] #>*/
         void doShared() {} /*<# [1 usage] #>*/
       }  
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-      val moduleBContext = setContext(editor, moduleBFixture.get())
-      codeVision.testProviders(moduleBContext, """
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
         package com.company;
         class Shared {  /*<# [2 usages] #>*/
           void doShared() {} /*<# [no usages] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
-    }
   }
 
   @Test
-  fun testClassInheritors() {
-    runBlocking {
-      val codeVision = codeVisionFixture.get()
-      val editor = editorFixture.get()
+  fun testClassInheritors() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
 
-      addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
         import com.company.Shared;
         public class A extends Shared {}
         public class A1 extends Shared {}
       """.trimIndent())
 
-      addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
         import com.company.Shared;
         public class B extends Shared {}
       """.trimIndent())
 
-      val moduleAContext = setContext(editor, moduleAFixture.get())
-      codeVision.testProviders(moduleAContext, """
+    val moduleAContext = setContext(editor, moduleAFixture.get())
+    codeVision.testProviders(moduleAContext, """
         package com.company;
         class Shared{} /*<# [3 usages   2 inheritors] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
-      val moduleBContext = setContext(editor, moduleBFixture.get())
-      codeVision.testProviders(moduleBContext, """
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
         package com.company;
         class Shared{} /*<# [2 usages   1 inheritor] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
-    }
   }
 
   @Test
-  fun testInterfaceInheritors() {
-    runBlocking {
-      val codeVision = codeVisionFixture.get()
-      val editor = editorFixture.get()
+  fun testInterfaceInheritors() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
 
-      addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
         import com.company.Shared;
         public class A implements Shared {}
       """.trimIndent())
 
-      addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
         import com.company.Shared;
         public class B implements Shared {}
         public class C implements Shared {}
       """.trimIndent())
 
-      val moduleAContext = setContext(editor, moduleAFixture.get())
-      codeVision.testProviders(moduleAContext, """
+    val moduleAContext = setContext(editor, moduleAFixture.get())
+    codeVision.testProviders(moduleAContext, """
         package com.company;
         interface Shared{} /*<# [2 usages   1 implementation] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
 
-      val moduleBContext = setContext(editor, moduleBFixture.get())
-      codeVision.testProviders(moduleBContext, """
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
         package com.company;
         interface Shared{} /*<# [3 usages   2 implementations] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
-    }
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
   }
 
   @Test
-  fun testMethodOverrides() {
-    runBlocking {
-      val codeVision = codeVisionFixture.get()
-      val editor = editorFixture.get()
+  fun testMethodOverrides() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
 
-      addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
         import com.company.Shared;
         class A extends Shared {
           void foo(){}
         }
       """.trimIndent())
 
-      addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
         import com.company.Shared;
         class B extends Shared {
           void foo(){}
@@ -215,42 +207,40 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }  
       """.trimIndent())
 
-      val moduleAContext = setContext(editor, moduleAFixture.get())
-      codeVision.testProviders(moduleAContext, """
+    val moduleAContext = setContext(editor, moduleAFixture.get())
+    codeVision.testProviders(moduleAContext, """
         package com.company;
         class Shared{ /*<# [2 usages   1 inheritor] #>*/
           public void foo(){} /*<# [no usages   1 override] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
 
-      val moduleBContext = setContext(editor, moduleBFixture.get())
-      codeVision.testProviders(moduleBContext, """
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
         package com.company;
         class Shared{ /*<# [3 usages   2 inheritors] #>*/
           public void foo(){} /*<# [no usages   2 overrides] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
-    }
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
   }
 
   @Test
-  fun testAbstractMethodImplementations() {
-    runBlocking {
-      val codeVision = codeVisionFixture.get()
-      val editor = editorFixture.get()
+  fun testAbstractMethodImplementations() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
 
-      addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
         import com.company.Shared;
         class A implements Shared {
           public void foo(){}
         }
       """.trimIndent())
 
-      addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
         import com.company.Shared;
         class B implements Shared {
           public void foo(){}
@@ -260,35 +250,33 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }
       """.trimIndent())
 
-      val moduleAContext = setContext(editor, moduleAFixture.get())
-      codeVision.testProviders(moduleAContext, """
+    val moduleAContext = setContext(editor, moduleAFixture.get())
+    codeVision.testProviders(moduleAContext, """
         package com.company;
         interface Shared {/*<# [2 usages   1 implementation] #>*/
         void foo();/*<# [no usages   1 implementation] #>*/
       }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
 
-      val moduleBContext = setContext(editor, moduleBFixture.get())
-      codeVision.testProviders(moduleBContext, """
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
         package com.company;
         interface Shared {/*<# [3 usages   2 implementations] #>*/
         void foo();/*<# [no usages   2 implementations] #>*/
       }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
-    }
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
   }
 
   @Test
-  fun testEnumMembers() {
-    runBlocking {
-      val codeVision = codeVisionFixture.get()
-      val editor = editorFixture.get()
+  fun testEnumMembers() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
 
-      addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
         import com.company.E;
         class A {
           E foo() {
@@ -298,7 +286,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }
       """.trimIndent())
 
-      addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
         import com.company.E;
         class B {
           E foo() {
@@ -308,27 +296,25 @@ internal class JavaMultiverseCodeVisionProviderTest {
         }  
       """.trimIndent())
 
-      val moduleAContext = setContext(editor, moduleAFixture.get())
-      codeVision.testProviders(moduleAContext, """
+    val moduleAContext = setContext(editor, moduleAFixture.get())
+    codeVision.testProviders(moduleAContext, """
         package com.company;
         enum E { /*<# [7 usages] #>*/
           E1, E2, E3, E4/*<# [1 usage] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
 
-      val moduleBContext = setContext(editor, moduleBFixture.get())
-      codeVision.testProviders(moduleBContext, """
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
         package com.company;
         enum E { /*<# [5 usages] #>*/
           E1, E2, E3, E4/*<# [1 usage] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
-                               JavaInheritorsCodeVisionProvider().groupId
-      )
-
-    }
+                             JavaInheritorsCodeVisionProvider().groupId
+    )
 
   }
 
