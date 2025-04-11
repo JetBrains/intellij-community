@@ -5,5 +5,10 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
   fun isPerTaskOutputSupported(): Boolean = isGradleAtLeast("4.7")
 
+  /**
+   * Since Gradle 8.14, a problem report contains errors ordered by a [Problem ID](https://github.com/gradle/gradle/pull/32407).
+   */
+  fun isOrderBasedBuildCompilationReportSupported(): Boolean = isGradleAtLeast("8.14")
+
   fun isBuildCompilationReportSupported(): Boolean = isGradleAtLeast("8.11")
 }
