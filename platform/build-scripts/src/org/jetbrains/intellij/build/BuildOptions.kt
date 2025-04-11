@@ -136,7 +136,6 @@ data class BuildOptions(
     const val SEARCHABLE_OPTIONS_INDEX_STEP: String = "search_index"
     const val BROKEN_PLUGINS_LIST_STEP: String = "broken_plugins_list"
     const val PROVIDED_MODULES_LIST_STEP: String = "provided_modules_list"
-    const val GENERATE_JAR_ORDER_STEP: String = "jar_order"
     const val SOURCES_ARCHIVE_STEP: String = "sources_archive"
     const val SCRAMBLING_STEP: String = "scramble"
     const val NON_BUNDLED_PLUGINS_STEP: String = "non_bundled_plugins"

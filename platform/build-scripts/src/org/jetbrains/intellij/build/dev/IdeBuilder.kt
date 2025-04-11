@@ -474,7 +474,6 @@ private suspend fun createBuildContext(
         options.setTargetOsAndArchToCurrent()
         options.buildStepsToSkip += listOf(
           BuildOptions.PREBUILD_SHARED_INDEXES,
-          BuildOptions.GENERATE_JAR_ORDER_STEP,
           BuildOptions.FUS_METADATA_BUNDLE_STEP,
           BuildOptions.PROVIDED_MODULES_LIST_STEP,
         )

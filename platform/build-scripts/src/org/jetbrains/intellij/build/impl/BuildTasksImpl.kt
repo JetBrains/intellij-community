@@ -106,7 +106,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = persistentListOf(currentOs)
     context.options.buildStepsToSkip += sequenceOf(
-      BuildOptions.GENERATE_JAR_ORDER_STEP,
       SoftwareBillOfMaterials.STEP_ID,
     )
     context.reportDistributionBuildNumber()
