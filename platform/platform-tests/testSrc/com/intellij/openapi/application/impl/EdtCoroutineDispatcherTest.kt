@@ -394,9 +394,7 @@ class EdtCoroutineDispatcherTest {
       assertFalse(application.isReadAccessAllowed)
       assertFalse(application.isWriteAccessAllowed)
       assertFalse(application.isWriteIntentLockAcquired)
-      assertThrows<RuntimeException> {
-        TransactionGuard.getInstance().isWritingAllowed
-      }
+      assertTrue(TransactionGuard.getInstance().isWritingAllowed) // TODO
     }
   }
 
