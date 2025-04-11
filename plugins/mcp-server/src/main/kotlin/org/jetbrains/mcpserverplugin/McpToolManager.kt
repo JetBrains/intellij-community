@@ -6,6 +6,7 @@ import org.jetbrains.mcpserverplugin.general.ExecuteActionByIdTool
 import org.jetbrains.mcpserverplugin.general.FindFilesByNameSubstring
 import org.jetbrains.mcpserverplugin.general.GetAllOpenFilePathsTool
 import org.jetbrains.mcpserverplugin.general.GetAllOpenFileTextsTool
+import org.jetbrains.mcpserverplugin.general.GetCurrentFileErrorsTool
 import org.jetbrains.mcpserverplugin.general.GetCurrentFilePathTool
 import org.jetbrains.mcpserverplugin.general.GetCurrentFileTextTool
 import org.jetbrains.mcpserverplugin.general.GetFileTextByPathTool
@@ -26,6 +27,8 @@ import org.jetbrains.mcpserverplugin.general.RunConfigurationTool
 import org.jetbrains.mcpserverplugin.general.SearchInFilesContentTool
 import org.jetbrains.mcpserverplugin.general.WaitTool
 import org.jetbrains.mcpserverplugin.git.GetVcsStatusTool
+import org.jetbrains.mcpserverplugin.ToggleBreakpointTool
+import org.jetbrains.mcpserverplugin.GetBreakpointsTool
 
 class McpToolManager {
     companion object {
@@ -68,6 +71,7 @@ class McpToolManager {
             ExecuteActionByIdTool(),
             GetProgressIndicatorsTool(),
             WaitTool(),
+            GetCurrentFileErrorsTool(),
         )
     }
 }

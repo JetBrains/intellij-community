@@ -97,15 +97,6 @@ class ListDirectoryTreeInFolderTool : AbstractMcpTool<ListDirectoryTreeInFolderA
         sb.append("}")
         return sb.toString()
     }
-
-    private fun escapeJson(str: String): String {
-        return str.replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\b", "\\b")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\t", "\\t")
-    }
 }
 
 
