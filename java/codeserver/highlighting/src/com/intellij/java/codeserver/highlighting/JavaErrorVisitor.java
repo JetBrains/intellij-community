@@ -480,7 +480,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         if (error != null) report(error);
       }
     }
-    else if (parent instanceof PsiClass aClass) {
+    else if (parent instanceof PsiClass aClass && aClass.getModifierList() == list) {
       if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
       if (!hasErrorResults() && !(aClass instanceof PsiAnonymousClass)) {
         /* an anonymous class is highlighted in HighlightClassUtil.checkAbstractInstantiation()*/
