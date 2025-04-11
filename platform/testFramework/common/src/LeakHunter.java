@@ -7,18 +7,24 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.common.DumpKt;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.PersistentEnumeratorCache;
 import com.intellij.util.ref.DebugReflectionUtil;
 import com.intellij.util.ref.GCUtil;
@@ -36,7 +42,7 @@ import java.util.function.Supplier;
 public final class LeakHunter {
 
   @TestOnly
-  public static @NotNull String getCreationPlace(@NotNull Project project) {
+  private static @NotNull String getCreationPlace(@NotNull Project project) {
     String creationTrace = project instanceof ProjectEx ? ((ProjectEx)project).getCreationTrace() : null;
     return project + " " + (creationTrace == null ? " " : creationTrace);
   }
@@ -52,7 +58,7 @@ public final class LeakHunter {
   }
 
   @TestOnly
-  public static void checkNonDefaultProjectLeakWithIgnoredEntries(@NotNull List<IgnoredTraverseEntry> ignoredTraverseEntries) {
+  public static void checkNonDefaultProjectLeakWithIgnoredEntries(@NotNull List<? extends IgnoredTraverseEntry> ignoredTraverseEntries) {
     checkLeak(allRoots(), ProjectImpl.class, ignoredTraverseEntries, project -> !project.isDefault());
   }
 
@@ -82,7 +88,7 @@ public final class LeakHunter {
   @TestOnly
   public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                    @NotNull Class<T> suspectClass,
-                                   @NotNull List<IgnoredTraverseEntry> ignoredTraverseEntries,
+                                   @NotNull List<? extends IgnoredTraverseEntry> ignoredTraverseEntries,
                                    @Nullable Predicate<? super T> isReallyLeak) throws AssertionError {
     processLeaks(rootsSupplier, suspectClass, isReallyLeak, (backLink) -> {
       for (IgnoredTraverseEntry entry : ignoredTraverseEntries) {
@@ -109,8 +115,9 @@ public final class LeakHunter {
   public static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
                                       @NotNull Class<T> suspectClass,
                                       @Nullable Predicate<? super T> isReallyLeak,
-                                      @Nullable Predicate<DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
+                                      @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
                                       @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
+    waitForIndicesToUpdate();
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -139,6 +146,28 @@ public final class LeakHunter {
     }
     else {
       application.runReadAction(runnable);
+    }
+  }
+
+  // we want to avoid walking heap during indexing, because zillions of UpdateOp and other transient indexing requests stored in the temp queue could OOME
+  @TestOnly
+  private static void waitForIndicesToUpdate() {
+    if (SwingUtilities.isEventDispatchThread()) {
+      UIUtil.dispatchAllInvocationEvents();
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        while (DumbServiceImpl.getInstance(project).isDumb()) {
+          DumbServiceImpl.getInstance(project).waitForSmartMode(100L);
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+      }
+    }
+    else {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        DumbService.getInstance(project).waitForSmartMode();
+        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+      }
+      UIUtil.pump();
     }
   }
 
