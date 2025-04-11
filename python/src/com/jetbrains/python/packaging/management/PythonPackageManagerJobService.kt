@@ -44,7 +44,7 @@ internal class PythonPackageManagerJobService {
    * @param [runnable] a suspendable function that represents the operation to be performed, producing a [Result] with a success type [V] or a failure type [PyError].
    * @return a [Deferred] representing the asynchronous computation of the job, or null if a job is already active for the given manager.
    */
-  fun <V> runDeferredJob(
+  fun <V> tryRunDeferredJob(
     manager: PythonPackageManager,
     scope: CoroutineScope = service<PythonSdkCoroutineService>().cs,
     context: CoroutineContext = Dispatchers.IO,
@@ -52,7 +52,7 @@ internal class PythonPackageManagerJobService {
   ): Deferred<Result<V, PyError>>? {
 
     val job = synchronized(deferredJobs) {
-      if (deferredJobs[manager]?.isActive == true) return null
+      if (deferredJobs[manager]?.isCompleted == false) return null
 
       scope.async(context) { runnable.invoke() }.also {
         deferredJobs[manager] = it
@@ -60,7 +60,9 @@ internal class PythonPackageManagerJobService {
     }
 
     job.invokeOnCompletion { exception ->
-      synchronized(deferredJobs) { deferredJobs.remove(manager) }  // just a cleanup, this line might be removed if someone needs the last deferred job result in other places
+      synchronized(deferredJobs) {
+        deferredJobs.remove(manager, job)  // this cleanup line might be removed if someone needs the last deferred job result in other places
+      }
       ActivityTracker.getInstance().inc() // it forces the next update cycle to give all waiting/currently disabled actions a callback
     }
 
@@ -76,11 +78,11 @@ internal fun PythonPackageManager.getLastExecutedJob(): Deferred<Result<*, PyErr
   return PythonPackageManagerJobService.getInstance(this.project)?.getLastExecutedJob(this)
 }
 
-internal fun <V> PythonPackageManager.runDeferredJob(
+internal fun <V> PythonPackageManager.tryRunDeferredJob(
   scope: CoroutineScope = service<PythonSdkCoroutineService>().cs,
   dispatcher: CoroutineDispatcher = Dispatchers.IO,
   runnable: suspend () -> Result<V, PyError>,
 ): Deferred<Result<V, PyError>>? {
   val jobService = PythonPackageManagerJobService.getInstance(this.project) ?: return null
-  return jobService.runDeferredJob(this, scope, dispatcher, runnable)
+  return jobService.tryRunDeferredJob(this, scope, dispatcher, runnable)
 }

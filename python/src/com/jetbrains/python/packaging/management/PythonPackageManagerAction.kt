@@ -85,7 +85,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
    * This action saves the current document on fs because tools are command line tools, and they need actual files to be up to date
    * Handles errors via [errorSink]
    */
-  private fun T.executeActionJob(e: AnActionEvent): Deferred<Result<V, PyError>>? = runDeferredJob {
+  private fun T.executeActionJob(e: AnActionEvent): Deferred<Result<V, PyError>>? = tryRunDeferredJob {
     val document = e.editor()?.document
 
     document?.let {
