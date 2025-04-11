@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +23,7 @@ import static org.jetbrains.jps.javac.Iterators.*;
  * This class provides commonly used graph traversal methods.
  */
 public final class Utils {
+  private static final int JVM_CLASS_NODE_CACHE_SIZE = 1024;
   private final @NotNull Graph myGraph;
   private final @Nullable Delta myDelta;
 
@@ -28,6 +31,8 @@ public final class Utils {
   private final @NotNull Predicate<? super ReferenceID> myIsNodeDeleted;
   private final @NotNull BackDependencyIndex myDirectSubclasses;
   private final @Nullable BackDependencyIndex myDeltaDirectSubclasses;
+
+  private final Cache<ReferenceID, Iterable<JvmClass>> myJvmClassCache = Caffeine.newBuilder().maximumSize(JVM_CLASS_NODE_CACHE_SIZE).build();
 
   /**
    * Use this constructor for traversal during differentiate operation
@@ -74,7 +79,7 @@ public final class Utils {
   }
 
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
-    return name.isBlank()? Collections.emptyList() : getNodes(new JvmNodeReferenceID(name), JvmClass.class);
+    return name.isBlank()? Collections.emptyList() : getJvmClassNodes(name);
   }
 
   public Iterable<JvmModule> getModulesByName(@NotNull String name) {
@@ -95,7 +100,7 @@ public final class Utils {
 
   // test if a JvmClass is a SAM interface
   public boolean isLambdaTarget(ReferenceID classId) {
-    return !isEmpty(filter(getNodes(classId, JvmClass.class), this::isLambdaTarget));
+    return find(getJvmClassNodes(classId), this::isLambdaTarget) != null;
   }
 
   public boolean isLambdaTarget(JvmClass cls) {
@@ -118,6 +123,14 @@ public final class Utils {
     return flat(
       map(recurse(cls, c -> flat(map(c.getSuperTypes(), st -> getClassesByName(st))), true), c -> c.getMethods())
     );
+  }
+
+  private Iterable<JvmClass> getJvmClassNodes(@NotNull String name) {
+    return getJvmClassNodes(new JvmNodeReferenceID(name));
+  }
+  
+  private Iterable<JvmClass> getJvmClassNodes(@NotNull ReferenceID nodeId) {
+    return myJvmClassCache.get(nodeId, id -> collect(getNodesImpl(id, JvmClass.class, false), new SmartList<>()));
   }
 
   /**
@@ -181,12 +194,12 @@ public final class Utils {
 
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
     // return only those direct supertypes that exist in the graph as Nodes
-    return unique(flat(map(getNodes(classId, JvmClass.class), cl -> flat(map(cl.getSuperTypes(), st -> map(getNodes(new JvmNodeReferenceID(st), JvmClass.class), JvmClass::getReferenceID))))));
+    return unique(flat(map(getJvmClassNodes(classId), cl -> flat(map(cl.getSuperTypes(), st -> map(getJvmClassNodes(st), JvmClass::getReferenceID))))));
   }
 
   public Iterable<JvmClass> allDirectSupertypes(JvmClass cls) {
     // return only those direct supertypes that exist in the graph as Nodes
-    return flat(map(cls.getSuperTypes(), st -> getNodes(new JvmNodeReferenceID(st), JvmClass.class)));
+    return flat(map(cls.getSuperTypes(), this::getJvmClassNodes));
   }
 
   public Iterable<JvmNodeReferenceID> allSupertypes(JvmNodeReferenceID classId) {
@@ -228,7 +241,7 @@ public final class Utils {
 
   // propagateMemberAccess
   private <T extends ProtoMember> Set<JvmNodeReferenceID> collectSubclassesWithoutMember(JvmNodeReferenceID classId, Predicate<? super T> isSame, Function<JvmClass, Iterable<T>> membersGetter) {
-    Predicate<ReferenceID> containsMember = id -> isEmpty(filter(getNodes(id, JvmClass.class), cls -> isEmpty(filter(membersGetter.apply(cls), isSame::test))));
+    Predicate<ReferenceID> containsMember = id -> find(getJvmClassNodes(id), cls -> find(membersGetter.apply(cls), isSame::test) == null) == null;
     //stop further traversal, if nodes corresponding to the subclassName contain matching member
     Iterable<JvmNodeReferenceID> result = getNodesData(
       classId,
@@ -242,36 +255,43 @@ public final class Utils {
 
   public Iterable<Pair<JvmClass, JvmField>> getOverriddenFields(JvmClass fromCls, JvmField field) {
     Function<JvmClass, Iterable<Pair<JvmClass, JvmField>>> dataGetter = cls -> collect(
-      flat(map(withAllImplementedInterfaces(cls), c -> map(filter(c.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleInHierarchy(cls, f, fromCls)), ff -> Pair.create(cls, ff)))),
+      map(filter(cls.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleInHierarchy(cls, f, fromCls)), ff -> Pair.create(cls, ff)),
       new SmartList<>()
     );
     return flat(
-      getNodesData(fromCls, cl -> getClassesByName(cl.getSuperFqName()), dataGetter, result -> isEmpty(result), false)
+      getNodesData(fromCls, cl -> flat(map(cl.getSuperTypes(), this::getClassesByName)), dataGetter, Iterators::isEmpty, false)
     );
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverriddenMethods(JvmClass fromCls, Predicate<JvmMethod> searchCond) {
     Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cls -> collect(
-      flat(map(withAllImplementedInterfaces(cls), c -> map(filter(c.getMethods(), m -> searchCond.test(m) && isVisibleInHierarchy(cls, m, fromCls)), mm -> Pair.create(cls, mm)))),
+      map(filter(cls.getMethods(), m -> searchCond.test(m) && isVisibleInHierarchy(cls, m, fromCls)), mm -> Pair.create(cls, mm)),
       new SmartList<>()
     );
     return flat(
-      getNodesData(fromCls, cl -> getClassesByName(cl.getSuperFqName()), dataGetter, result -> isEmpty(result), false)
+      getNodesData(fromCls, cl -> flat(map(cl.getSuperTypes(), this::getClassesByName)), dataGetter, Iterators::isEmpty, false)
     );
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverridingMethods(JvmClass fromCls, JvmMethod method, Predicate<JvmMethod> searchCond) {
+    Function<JvmClass, Iterable<JvmMethod>> matchingMethodsGetter = cachingFunction(
+      cl -> fromCls.isSame(cl)?
+            List.of() :
+            collect(filter(cl.getMethods(), searchCond::test), new SmartList<>())
+    );
+    
     Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cls -> isVisibleInHierarchy(fromCls, method, cls)? collect(
-      flat(map(withAllImplementedInterfaces(cls), c -> map(filter(c.getMethods(), searchCond::test), mm -> Pair.create(cls, mm)))),
+      flat(map(withAllImplementedInterfaces(cls), c -> map(matchingMethodsGetter.apply(c), mm -> Pair.create(cls, mm)))),
       new SmartList<>()
     ) : Collections.emptyList();
+    
     return flat(
-      getNodesData(fromCls, cl -> flat(map(directSubclasses(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> isEmpty(result), false)
+      getNodesData(fromCls, cl -> flat(map(directSubclasses(cl.getReferenceID()), this::getJvmClassNodes)), dataGetter, Iterators::isEmpty, false)
     );
   }
 
   private Iterable<JvmClass> withAllImplementedInterfaces(JvmClass cls) {
-    return recurse(cls, c -> flat(map(c.getInterfaces(), st -> getClassesByName(st))), true);
+    return recurse(cls, cl -> flat(map(cl.getInterfaces(), this::getClassesByName)), true);
   }
 
   public static final class OverloadDescriptor {
@@ -293,8 +313,8 @@ public final class Utils {
     }), notNullFilter());
 
     return flat(
-      flat(map(recurse(cls, cl -> flat(map(cl.getSuperTypes(), st -> getClassesByName(st))), true), cl -> mapper.apply(cl))),
-      flat(map(allSubclasses(cls.getReferenceID()), id -> flat(map(getNodes(id, JvmClass.class), cl -> mapper.apply(cl)))))
+      flat(map(recurse(cls, cl -> flat(map(cl.getSuperTypes(), this::getClassesByName)), true), mapper::apply)),
+      flat(map(allSubclasses(cls.getReferenceID()), id -> flat(map(getJvmClassNodes(id), mapper::apply))))
     );
   }
 
@@ -315,11 +335,11 @@ public final class Utils {
   }
 
   boolean isFieldVisible(final JvmClass cls, final JvmField field) {
-    return !isEmpty(filter(cls.getFields(), field::isSame)) || !isEmpty(getOverriddenFields(cls, field));
+    return find(cls.getFields(), field::isSame) != null || !isEmpty(getOverriddenFields(cls, field));
   }
   
   boolean isMethodVisible(final JvmClass cls, final JvmMethod method) {
-    return !isEmpty(filter(cls.getMethods(), method::isSameByJavaRules)) || !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules));
+    return find(cls.getMethods(), method::isSameByJavaRules) != null || !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules));
   }
 
   private boolean isVisibleInHierarchy(final JvmClass cls, final ProtoMember clsMember, final JvmClass subClass) {
@@ -335,13 +355,13 @@ public final class Utils {
       return Objects.equals(cls.getPackageName(), scope.getPackageName());
     }
     if (clsMember.isProtected()) {
-      return Objects.equals(cls.getPackageName(), scope.getPackageName()) || isInheritorOf(scope, cls);
+      return Objects.equals(cls.getPackageName(), scope.getPackageName()) || isSameOrInheritorOf(scope, cls);
     }
     return true;
   }
 
-  public boolean isInheritorOf(JvmClass who, JvmClass whom) {
-    return !isEmpty(filter(recurseDepth(who, cl -> flat(map(who.getSuperTypes(), st -> getClassesByName(st))), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())));
+  public boolean isSameOrInheritorOf(JvmClass who, JvmClass whom) {
+    return find(recurseDepth(who, cl -> flat(map(who.getSuperTypes(), this::getClassesByName)), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())) != null;
   }
 
   public boolean inheritsFromLibraryClass(JvmClass cls) {
@@ -361,7 +381,7 @@ public final class Utils {
   }
 
   public @Nullable Boolean isInheritorOf(JvmNodeReferenceID who, final JvmNodeReferenceID whom) {
-    if (who.equals(whom) || !isEmpty(filter(allSupertypes(who), st -> st.equals(whom)))) {
+    if (whom.equals(who) || find(recurseDepth(who, this::allDirectSupertypes, false), whom::equals) != null) {
       return Boolean.TRUE;
     }
     return null;
