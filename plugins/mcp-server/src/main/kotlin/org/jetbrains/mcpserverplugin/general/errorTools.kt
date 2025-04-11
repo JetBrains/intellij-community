@@ -1,34 +1,25 @@
 package org.jetbrains.mcpserverplugin.general
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.psi.search.GlobalSearchScope
-import kotlinx.serialization.Serializable
 import org.jetbrains.ide.mcp.NoArgs
 import org.jetbrains.ide.mcp.Response
 import org.jetbrains.mcpserverplugin.AbstractMcpTool
 import org.jetbrains.mcpserverplugin.JsonUtils
-import org.jetbrains.mcpserverplugin.general.relativizeByProjectDir
-import org.jetbrains.mcpserverplugin.general.resolveRel
+import java.nio.file.Path
 
 
 class GetCurrentFileErrorsTool : AbstractMcpTool<NoArgs>() {
@@ -89,6 +80,47 @@ class GetCurrentFileErrorsTool : AbstractMcpTool<NoArgs>() {
                 "severity": "${info.severity}",
                 "description": "${JsonUtils.escapeJson(info.description)}",
                 "lineContent": "${JsonUtils.escapeJson(lineContent)}",
+            }
+            """.trimIndent()
+        }
+    }
+}
+
+class GetProblemsTools : AbstractMcpTool<NoArgs>() {
+    override val name: String = "get_project_problems"
+    override val description: String = """
+        Retrieves all project problems (errors, warnings, etc.) detected in the project by IntelliJ's inspections.
+        Use this tool to get a comprehensive list of global project issues (compilation errors, inspections problems, etc.).
+        Does not require any parameters.
+        
+        Use another tool get_current_file_errors to get errors in the opened file. 
+        
+        Returns a JSON array of objects containing problem information:
+        - group: The group or category of the problem
+        - description: The location and description of the problem
+        - problemText: The short text of the problem 
+        
+        Returns an empty array ([]) if no problems are found.
+        Returns error "project dir not found" if the project directory cannot be determined.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "project dir not found")
+
+        val collector = project.service<ProblemsCollector>()
+        val problems = collector.getProblemFiles().map { collector.getFileProblems(it) }.flatten() + collector.getOtherProblems()
+        val problemsFormatted = formatProjectProblems(projectDir, problems)
+        return Response(problemsFormatted.joinToString(",\n", prefix = "[", postfix = "]"))
+    }
+
+    private fun formatProjectProblems(projectDir: Path, problems: List<Problem>): List<String> {
+        return problems.map { problem ->
+            """
+            {
+                "group": "${problem.group ?: ""}",
+                "description": "${JsonUtils.escapeJson(problem.description?.removePrefix(projectDir.toAbsolutePath().toString())?.trimStart('/') ?: "")}",
+                "problemText": "${JsonUtils.escapeJson(problem.text)}",
             }
             """.trimIndent()
         }

@@ -10,6 +10,7 @@ import org.jetbrains.mcpserverplugin.general.GetCurrentFileErrorsTool
 import org.jetbrains.mcpserverplugin.general.GetCurrentFilePathTool
 import org.jetbrains.mcpserverplugin.general.GetCurrentFileTextTool
 import org.jetbrains.mcpserverplugin.general.GetFileTextByPathTool
+import org.jetbrains.mcpserverplugin.general.GetProblemsTools
 import org.jetbrains.mcpserverplugin.general.GetProgressIndicatorsTool
 import org.jetbrains.mcpserverplugin.general.GetProjectDependenciesTool
 import org.jetbrains.mcpserverplugin.general.GetProjectModulesTool
@@ -74,6 +75,7 @@ class McpToolManager {
             GetCurrentFileErrorsTool(),
             ReformatCurrentFileTool(),
             ReformatFileTool(),
+            GetProblemsTools(),
         )
     }
 }
