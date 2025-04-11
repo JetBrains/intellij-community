@@ -169,8 +169,9 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
     fun Module.addDependency(
         other: Module,
         dependencyScope: DependencyScope = DependencyScope.COMPILE,
-        exported: Boolean = false
-    ): Module = this.apply { ModuleRootModificationUtil.addDependency(this, other, dependencyScope, exported) }
+        exported: Boolean = false,
+        productionOnTest: Boolean = false,
+    ): Module = this.apply { ModuleRootModificationUtil.addDependency(this, other, dependencyScope, exported, productionOnTest) }
 
     fun Module.removeDependency(
         other: Module,

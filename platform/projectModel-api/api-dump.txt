@@ -652,6 +652,7 @@ f:com.intellij.openapi.roots.ModuleRootModificationUtil
 - s:addContentRoot(com.intellij.openapi.module.Module,java.lang.String):V
 - s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module):V
 - s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module,com.intellij.openapi.roots.DependencyScope,Z):V
+- s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module,com.intellij.openapi.roots.DependencyScope,Z,Z):V
 - s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.roots.libraries.Library):V
 - s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.roots.libraries.Library,com.intellij.openapi.roots.DependencyScope,Z):V
 - s:addModuleLibrary(com.intellij.openapi.module.Module,java.lang.String):V
