@@ -46,16 +46,16 @@ open class CharSequenceSubSequence(
   override fun get(index: Int): Char =
     baseSequence[index + start]
 
-  override fun subSequence(start: Int, end: Int): CharSequence {
-    if (start == this.start && end == this.end) return this
-    return CharSequenceSubSequence(this.baseSequence, this.start + start, this.start + end)
+  override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+    if (startIndex == this.start && endIndex == this.end) return this
+    return CharSequenceSubSequence(this.baseSequence, this.start + startIndex, this.start + endIndex)
   }
 
   override fun toString(): String {
     if (this.baseSequence is String) {
       return this.baseSequence.substring(start, end)
     }
-    return String(baseSequence.fromSequence(start, end))
+    return baseSequence.fromSequence(start, end).concatToString()
   }
 
   override fun getChars(start: Int, end: Int, dest: CharArray, destPos: Int) {
