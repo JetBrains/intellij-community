@@ -144,6 +144,8 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
 
       updateCache(extensionOrFileName, compatiblePlugins)
 
+      LOG.debug("Found compatible plugins for files '$extensionOrFileName': ${compatiblePlugins.joinToString { it.pluginIdString }}")
+
       return@withContext true
     }
   }
@@ -162,9 +164,9 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
 
     var refreshedCompatiblePlugins = false
     for (h in fileHandlerDetectors) {
-      if (!force && cache.getIfPresent(h.id) != null) continue // already filled cache in this session
-
       val implementationName = "${FILE_HANDLER_KIND}:${h.id}"
+
+      if (!force && cache.getIfPresent(implementationName) != null) continue // already filled cache in this session
 
       // if network fails we will have empty results here and do not ask again for the same file
       cache.put(implementationName, PluginAdvertisedByFileContent(h, emptySet()))
@@ -172,6 +174,8 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
       withContext(Dispatchers.IO) {
         val compatiblePlugins = requestCompatiblePlugins(implementationName, knownDependencies.get(implementationName))
         cache.put(implementationName, PluginAdvertisedByFileContent(h, compatiblePlugins))
+
+        LOG.debug("Found compatible handlers '${h.id}': ${compatiblePlugins.joinToString { it.pluginIdString }}")
 
         refreshedCompatiblePlugins = true
       }
@@ -216,7 +220,7 @@ class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
 
               if (!UnknownFeaturesCollector.getInstance(project).isIgnored(unknownFeature)) {
                 val fromCache = (cache.getIfPresent(implementationName) as? PluginAdvertisedByFileContent)?.plugins
-                if (fromCache == null) return null // no compatible plugins info yet, need round-trip to Marketplace
+                if (fromCache == null) return null // no compatible plugins info yet, need a round-trip to Marketplace
 
                 val compatibleOnlyPlugins = fromCache.map { it.pluginIdString }
 
