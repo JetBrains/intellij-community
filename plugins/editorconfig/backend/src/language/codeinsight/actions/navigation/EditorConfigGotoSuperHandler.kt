@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.EditorConfigHeader
+import org.editorconfig.language.psi.reference.findParents
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
 
 internal class EditorConfigGotoSuperHandler : GotoTargetHandler() {

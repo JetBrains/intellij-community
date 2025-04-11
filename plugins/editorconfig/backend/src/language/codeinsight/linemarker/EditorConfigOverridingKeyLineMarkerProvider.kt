@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
+import org.editorconfig.language.psi.reference.findParents
 import java.awt.event.MouseEvent
 
 class EditorConfigOverridingKeyLineMarkerProvider : LineMarkerProvider, DumbAware {

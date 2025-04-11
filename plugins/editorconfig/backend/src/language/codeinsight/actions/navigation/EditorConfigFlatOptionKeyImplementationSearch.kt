@@ -5,6 +5,7 @@ import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.util.Processor
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
+import org.editorconfig.language.psi.reference.findChildren
 
 class EditorConfigFlatOptionKeyImplementationSearch : QueryExecutorBase<EditorConfigFlatOptionKey, DefinitionsScopedSearch.SearchParameters>(true) {
   override fun processQuery(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in EditorConfigFlatOptionKey>) {
