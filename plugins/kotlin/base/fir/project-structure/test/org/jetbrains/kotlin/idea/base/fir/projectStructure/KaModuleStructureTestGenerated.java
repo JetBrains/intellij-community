@@ -170,6 +170,11 @@ public abstract class KaModuleStructureTestGenerated extends AbstractKaModuleStr
             runTest("testData/kaModuleStructure/productionAndTest/");
         }
 
+        @TestMetadata("productionDependsOnTest")
+        public void testProductionDependsOnTest() throws Exception {
+            runTest("testData/kaModuleStructure/productionDependsOnTest/");
+        }
+
         @TestMetadata("simpleJvm")
         public void testSimpleJvm() throws Exception {
             runTest("testData/kaModuleStructure/simpleJvm/");
