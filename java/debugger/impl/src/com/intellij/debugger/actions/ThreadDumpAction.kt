@@ -3,7 +3,6 @@ package com.intellij.debugger.actions
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.MethodInvokeUtils.getMethodHandlesImplLookup
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -11,95 +10,32 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.suspendAllAndEvaluate
 import com.intellij.debugger.impl.*
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
-import com.intellij.ide.ui.icons.icon
-import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
-import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpDto
-import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpItemDto
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.debugger.VirtualThreadDumper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.JavaThreadDumpItem
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.util.lang.JavaVersion
-import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.toSimpleTextAttributes
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.*
-import fleet.rpc.core.util.map
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.awt.Color
 import java.util.concurrent.CancellationException
-import javax.swing.Icon
 import kotlin.time.Duration.Companion.milliseconds
 import java.lang.Long as JLong
 
-class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
-    if (project == null) {
-      return
-    }
-    val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
-    sessionProxy.coroutineScope.launch {
-      val threadDumpsDtoChannel = JavaDebuggerSessionApi.getInstance().dumpThreads(sessionProxy.id)
-      val threadDumpsChannel = threadDumpsDtoChannel.map { it.threadDumpData() }
-
-      withContext(Dispatchers.EDT) {
-        collectAndShowDumpItems(project, sessionProxy, threadDumpsChannel)
-      }
-    }
-  }
-
-  override fun update(e: AnActionEvent) {
-    val presentation = e.presentation
-    val project = e.project
-    if (project == null) {
-      presentation.setEnabled(false)
-      return
-    }
-    val sessionProxy = DebuggerUIUtil.getSessionProxy(e)
-    if (sessionProxy == null) {
-      presentation.setEnabled(false)
-      return
-    }
-    val isAttached = if (sessionProxy is XDebugSessionProxy.Monolith) {
-      (sessionProxy.session.debugProcess as JavaDebugProcess).debuggerSession.isAttached
-    }
-    else {
-      !sessionProxy.isStopped
-    }
-    presentation.setEnabled(isAttached)
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
-
+class ThreadDumpAction {
   companion object {
     private val extendedProviders: ExtensionPointName<ThreadDumpItemsProviderFactory> =
       ExtensionPointName.Companion.create("com.intellij.debugger.dumpItemsProvider")
@@ -196,41 +132,6 @@ class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Fr
         vm.resume()
       }
     }
-
-    private suspend fun collectAndShowDumpItems(project: Project, session: XDebugSessionProxy, threadDumpsChannel: ReceiveChannel<ThreadDumpData>) {
-      val ui = session.sessionTab?.ui ?: return
-      val searchScope = if (session is XDebugSessionProxy.Monolith) {
-        (session.session.debugProcess as JavaDebugProcess).debuggerSession.searchScope
-      }
-      else {
-        GlobalSearchScope.allScope(project)
-      }
-      val threadDumpPanel = DebuggerUtilsEx.createThreadDumpPanel(project, ui, searchScope)
-
-      for ((threadDump, mergedThreadDump) in threadDumpsChannel) {
-        threadDumpPanel.addDumpItems(threadDump, mergedThreadDump)
-      }
-    }
-  }
-}
-
-private data class ThreadDumpData(val threadDump: List<DumpItem>, val mergedThreadDump: List<DumpItem>)
-
-private fun JavaThreadDumpDto.threadDumpData(): ThreadDumpData {
-  return ThreadDumpData(threadDump.toDumpItems(), mergedThreadDump.toDumpItems())
-}
-
-private fun List<JavaThreadDumpItemDto>.toDumpItems(): List<DumpItem> = map { itemDto ->
-  object : DumpItem {
-    override val name: @NlsSafe String = itemDto.name
-    override val stateDesc: @NlsSafe String = itemDto.stateDesc
-    override val stackTrace: @NlsSafe String = itemDto.stackTrace
-    override val interestLevel: Int = itemDto.interestLevel
-    override val icon: Icon = itemDto.iconId.icon()
-    override val attributes: SimpleTextAttributes = itemDto.attributes.toSimpleTextAttributes()
-
-    // TODO pass correct color here
-    override fun getBackgroundColor(selectedItem: DumpItem?): Color? = UIUtil.getListBackground()
   }
 }
 

@@ -381,10 +381,6 @@
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       <add-to-group group-id="XDebugger.Actions"/>
     </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
-      <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
-    </action>
 
     <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction">
       <add-to-group group-id="Internal.Errors"/>

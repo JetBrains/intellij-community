@@ -7,4 +7,10 @@
     <xdebugger.xValueCustomDescriptorSerializerProvider
       implementation="com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptorSerializerProvider"/>
   </extensions>
+  <actions resource-bundle="messages.JavaDebuggerSharedBundle">
+    <action id="DumpThreads" class="com.intellij.java.debugger.impl.shared.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
+      <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
+    </action>
+  </actions>
 </idea-plugin>

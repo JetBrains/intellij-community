@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
-import com.intellij.debugger.actions.ThreadDumpAction.Companion.buildThreadDump
+import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.withDebugContext
+import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpDto
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpItemDto
+import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpResponseDto
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -22,26 +24,27 @@ import kotlinx.coroutines.coroutineScope
 
 internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun dumpThreads(sessionId: XDebugSessionId): ReceiveChannel<JavaThreadDumpDto> {
-    val xSession = sessionId.findValue() ?: return emptyChannel()
+  override suspend fun dumpThreads(sessionId: XDebugSessionId): JavaThreadDumpResponseDto? {
+    val xSession = sessionId.findValue() ?: return null
 
     val javaDebugProcess = xSession.debugProcess as JavaDebugProcess
     val session = javaDebugProcess.debuggerSession
     val context = session.contextManager.context
     if (session == null || !session.isAttached) {
-      return emptyChannel()
+      return null
     }
     val dumpItemsChannel = withDebugContext(context.managerThread!!) {
       // Pass parts of the dump to the ThreadDumpPanel via a channel as soon as they are computed
       produce(capacity = Channel.BUFFERED) {
-        buildThreadDump(context, channel)
+        ThreadDumpAction.buildThreadDump(context, channel)
       }
     }
-    return dumpItemsChannel.map { mergeableItem ->
+    val dtos = dumpItemsChannel.map { mergeableItem ->
       val threadDumpDto = mergeableItem.dumpItemDtos()
       val mergedThreadDumpDto = CompoundDumpItem.mergeThreadDumpItems(mergeableItem).dumpItemDtos()
       JavaThreadDumpDto(threadDumpDto, mergedThreadDumpDto)
     }
+    return JavaThreadDumpResponseDto(dtos, ExceptionFilters.getFilters(session.searchScope))
   }
 }
 

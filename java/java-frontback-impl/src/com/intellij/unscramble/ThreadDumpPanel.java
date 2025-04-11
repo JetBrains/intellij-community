@@ -9,7 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.java.JavaBundle;
+import com.intellij.java.frontback.impl.JavaFrontbackBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.*;
@@ -124,7 +124,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private static JBList<DumpItem> createThreadList(ConsoleView consoleView) {
     JBList<DumpItem> threadList = new JBList<>(new DefaultListModel<>());
     threadList.setCellRenderer(new ThreadListCellRenderer());
-    threadList.setEmptyText(JavaBundle.message("thread.dump.loading.text"));
+    threadList.setEmptyText(JavaFrontbackBundle.message("thread.dump.loading.text"));
     threadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     threadList.addListSelectionListener(new ListSelectionListener() {
       int currentSelectedIndex = -2; // to avoid multiple expensive invocations of printStackTrace()
@@ -248,7 +248,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private final class SortThreadsAction extends DumbAwareAction {
 
     private SortThreadsAction() {
-      super(JavaBundle.message("sort.threads.by.interest.level"));
+      super(JavaFrontbackBundle.message("sort.threads.by.interest.level"));
     }
 
     @Override
@@ -266,8 +266,8 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(currentComparator == DumpItem.BY_INTEREST ? AllIcons.ObjectBrowser.Sorted : AllIcons.ObjectBrowser.SortByType);
-      e.getPresentation().setText(currentComparator == DumpItem.BY_INTEREST ? JavaBundle.message("sort.threads.by.name") :
-                                  JavaBundle.message("sort.threads.by.interest.level")                                  );
+      e.getPresentation().setText(currentComparator == DumpItem.BY_INTEREST ? JavaFrontbackBundle.message("sort.threads.by.name") :
+                                  JavaFrontbackBundle.message("sort.threads.by.interest.level")                                  );
     }
   }
   private static final class CopyToClipboardAction extends DumbAwareAction {
@@ -276,7 +276,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     private final Project myProject;
 
     private CopyToClipboardAction(List<? extends DumpItem> threadDump, Project project) {
-      super(JavaBundle.message("action.text.copy.to.clipboard"), JavaBundle.message("action.description.copy.whole.thread.dump.to.clipboard"), PlatformIcons.COPY_ICON);
+      super(JavaFrontbackBundle.message("action.text.copy.to.clipboard"), JavaFrontbackBundle.message("action.description.copy.whole.thread.dump.to.clipboard"), PlatformIcons.COPY_ICON);
       myThreadDump = threadDump;
       myProject = project;
     }
@@ -290,14 +290,14 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
       }
       CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
 
-      GROUP.createNotification(JavaBundle.message("notification.text.full.thread.dump.was.successfully.copied.to.clipboard"), MessageType.INFO).notify(myProject);
+      GROUP.createNotification(JavaFrontbackBundle.message("notification.text.full.thread.dump.was.successfully.copied.to.clipboard"), MessageType.INFO).notify(myProject);
     }
   }
 
   private final class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
-      super(CommonBundle.messagePointer("action.text.filter"), JavaBundle.messagePointer(
+      super(CommonBundle.messagePointer("action.text.filter"), JavaFrontbackBundle.lazyMessage(
         "action.description.show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
     }
 
@@ -324,7 +324,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
 
   private final class MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
-      super(JavaBundle.messagePointer("action.text.merge.identical.stacktraces"), JavaBundle.messagePointer(
+      super(JavaFrontbackBundle.lazyMessage("action.text.merge.identical.stacktraces"), JavaFrontbackBundle.lazyMessage(
         "action.description.group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
     }
 
