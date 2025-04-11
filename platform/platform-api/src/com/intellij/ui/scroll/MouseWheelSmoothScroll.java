@@ -79,7 +79,9 @@ public final class MouseWheelSmoothScroll {
   }
 
   private static AnimationSettings getAnimationSettings(MouseWheelEvent e) {
-    return abs(e.getPreciseWheelRotation()) >= 1 ? ScrollAnimationSettings.DEFAULT : ScrollAnimationSettings.NO_ANIMATION;
+    double preciseWheelRotation = e.getPreciseWheelRotation();
+    boolean isFineGrainedWheelRotation = preciseWheelRotation != (float) (int) preciseWheelRotation;
+    return isFineGrainedWheelRotation ? ScrollAnimationSettings.NO_ANIMATION : ScrollAnimationSettings.DEFAULT;
   }
 
   private static Predicate<Integer> shouldStop(JScrollBar bar) {
