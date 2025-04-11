@@ -86,14 +86,14 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   ) {
     if (pattern.isEmpty()) return
 
-    LOG.debug { "Start actions searching ($pattern)" }
+    LOG.debug { "Start actions searching ($pattern) from suspend function" }
 
     val actionIds = (actionManager as ActionManagerImpl).actionIds
 
-    scope.runFilterJobs( presentationProvider, pattern, consumer, actionIds).forEach { it.join() }
+    scope.runFilterJobs(presentationProvider, pattern, consumer, actionIds).forEach { it.join() }
   }
 
-  fun CoroutineScope.runFilterJobs(
+  private fun CoroutineScope.runFilterJobs(
     presentationProvider: suspend (AnAction) -> Presentation,
     pattern: String,
     consumer: suspend (MatchedValue) -> Boolean,
