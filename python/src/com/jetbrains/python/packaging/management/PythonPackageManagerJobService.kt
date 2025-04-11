@@ -60,9 +60,7 @@ internal class PythonPackageManagerJobService {
     }
 
     job?.invokeOnCompletion { exception ->
-      synchronized(deferredJobs) {
-        deferredJobs.remove(manager, job)  // this cleanup line might be removed if someone needs the last deferred job result in other places
-      }
+      deferredJobs.remove(manager, job)  // this cleanup line might be removed if someone needs the last deferred job result in other places
       ActivityTracker.getInstance().inc() // it forces the next update cycle to give all waiting/currently disabled actions a callback
     }
 
