@@ -5,13 +5,15 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelTunnelsApi.HostAddress
+import com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 
 @GeneratedBuilder.Result
-class HostAddressBuilder {
+class GetAcceptorForRemotePortBuilder {
+  private var configureServerSocket: Function1<ConfigurableSocket, Unit> = {}
+
   private var hostname: String = "localhost"
 
   private var port: UShort = 0u
@@ -20,39 +22,44 @@ class HostAddressBuilder {
 
   private var timeout: Duration = 10.seconds
 
-  fun hostname(arg: String): HostAddressBuilder = apply {
+  fun configureServerSocket(arg: Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePortBuilder = apply {
+    this.configureServerSocket = arg
+  }
+
+  fun hostname(arg: String): GetAcceptorForRemotePortBuilder = apply {
     this.hostname = arg
   }
 
-  fun port(arg: UShort): HostAddressBuilder = apply {
+  fun port(arg: UShort): GetAcceptorForRemotePortBuilder = apply {
     this.port = arg
   }
 
   /**
    * @see [Builder.preferIPv4]
    */
-  fun protocolPreference(arg: EelIpPreference): HostAddressBuilder = apply {
+  fun protocolPreference(arg: EelIpPreference): GetAcceptorForRemotePortBuilder = apply {
     this.protocolPreference = arg
   }
 
-  fun preferV4(): HostAddressBuilder =
+  fun preferV4(): GetAcceptorForRemotePortBuilder =
     protocolPreference(EelIpPreference.PREFER_V4)
 
-  fun preferV6(): HostAddressBuilder =
+  fun preferV6(): GetAcceptorForRemotePortBuilder =
     protocolPreference(EelIpPreference.PREFER_V6)
 
-  fun useSystemDefault(): HostAddressBuilder =
+  fun useSystemDefault(): GetAcceptorForRemotePortBuilder =
     protocolPreference(EelIpPreference.USE_SYSTEM_DEFAULT)
 
   /**
    * @see [Builder.connectionTimeout]
    */
-  fun timeout(arg: Duration): HostAddressBuilder = apply {
+  fun timeout(arg: Duration): GetAcceptorForRemotePortBuilder = apply {
     this.timeout = arg
   }
 
-  fun build(): HostAddress =
-    HostAddressImpl(
+  fun build(): GetAcceptorForRemotePort =
+    GetAcceptorForRemotePortImpl(
+      configureServerSocket = configureServerSocket,
       hostname = hostname,
       port = port,
       protocolPreference = protocolPreference,
@@ -61,9 +68,10 @@ class HostAddressBuilder {
 }
 
 @GeneratedBuilder.Result
-internal class HostAddressImpl(
+internal class GetAcceptorForRemotePortImpl(
+  override val configureServerSocket: Function1<ConfigurableSocket, Unit>,
   override val hostname: String,
   override val port: UShort,
   override val protocolPreference: EelIpPreference,
   override val timeout: Duration,
-) : HostAddress
+) : GetAcceptorForRemotePort
