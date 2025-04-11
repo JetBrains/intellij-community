@@ -7,7 +7,6 @@ import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.NamedColorUtil
@@ -75,9 +74,9 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
 
   private fun getContainerTextForLeftComponent(containerText: String, maxWidth: Int, fm: FontMetrics): String {
     var text = containerText
-    val `in` = text.startsWith("in ")
-    if (`in`) text = text.substring(3)
-    val left = if (`in`) "in " else ""
+    val textStartsWithIn = text.startsWith("in ")
+    if (textStartsWithIn) text = text.substring(3)
+    val left = if (textStartsWithIn) "in " else ""
     val adjustedText = left + text
     if (maxWidth < 0) return adjustedText
 
