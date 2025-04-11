@@ -77,7 +77,7 @@ object CharArrayUtilKmp {
         return
       }
       if (this is StringBuilder) {
-        this.getChars(srcOffset, srcOffset + len, dst, dstOffset)
+        this.toCharArray(dst, dstOffset, srcOffset, srcOffset + len)
         return
       }
 
