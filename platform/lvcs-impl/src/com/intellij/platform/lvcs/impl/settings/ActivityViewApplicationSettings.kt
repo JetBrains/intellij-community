@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.settings
 
 import com.intellij.openapi.Disposable
@@ -13,12 +13,20 @@ internal class ActivityViewApplicationSettings : SimplePersistentStateComponent<
 
   class State : BaseState() {
     var diffMode by enum(DirectoryDiffMode.WithLocal)
+    var showSystemLabels by property(true)
   }
 
   var diffMode: DirectoryDiffMode
     get() = state.diffMode
     set(value) {
       state.diffMode = value
+      eventDispatcher.multicaster.settingsChanged()
+    }
+
+  var showSystemLabels: Boolean
+    get() = state.showSystemLabels
+    set(value) {
+      state.showSystemLabels = value
       eventDispatcher.multicaster.settingsChanged()
     }
 

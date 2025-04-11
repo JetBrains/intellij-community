@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.diff.chains.DiffRequestProducer
@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus
 interface ActivityProvider {
   fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit>
 
-  fun loadActivityList(scope: ActivityScope, fileFilter: String?): ActivityData
-  fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>?
+  fun loadActivityList(scope: ActivityScope, fileFilter: String?, showSystemLabels: Boolean): ActivityData
+  fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?, showSystemLabels: Boolean): Set<ActivityItem>?
 
   fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData?
   fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer?

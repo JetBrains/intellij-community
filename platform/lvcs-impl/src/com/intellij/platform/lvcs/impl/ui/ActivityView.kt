@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
@@ -173,6 +173,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     sink[ActivityViewDataKeys.SCOPE] = activityScope
     sink[DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW] = editorDiffPreview
     sink[ActivityViewDataKeys.DIRECTORY_DIFF_MODE] = model.diffMode
+    sink[ActivityViewDataKeys.ACTIVITY_VIEW_MODEL] = model
   }
 
   val preferredFocusedComponent: JComponent get() = activityList

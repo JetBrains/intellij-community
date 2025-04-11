@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.platform.lvcs.impl
@@ -14,12 +14,14 @@ import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
+abstract class ChangeSetActivityItem(private val changeSet: ChangeSet) : ActivityItem {
   override val timestamp: Long = changeSet.timestamp
   val id = changeSet.id
   val activityId: ActivityId? = changeSet.activityId
   open val fullName: @NlsSafe String? get() = name
   abstract val name: @NlsSafe String?
+
+  fun isSystemLabelOnly(): Boolean = changeSet.isSystemLabelOnly
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

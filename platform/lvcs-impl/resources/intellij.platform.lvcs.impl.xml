@@ -52,10 +52,15 @@
     <action id="ActivityView.RevertDifferences" class="com.intellij.platform.lvcs.impl.actions.RevertDifferencesAction"
             icon="AllIcons.Actions.Rollback"/>
     <action id="ActivityView.CreatePatch" class="com.intellij.platform.lvcs.impl.actions.CreatePatchAction" icon="AllIcons.Vcs.Patch"/>
+    <group id="ActivityView.Options" icon="AllIcons.General.Show" popup="true">
+      <action id="ActivityView.ShowSystemLabelsAction"
+              class="com.intellij.platform.lvcs.impl.actions.ShowSystemLabelsAction"/>
+    </group>
 
     <group id="ActivityView.Toolbar">
       <reference ref="ActivityView.Revert"/>
       <reference ref="ActivityView.CreatePatch"/>
+      <reference ref="ActivityView.Options"/>
     </group>
     <group id="ActivityView.Popup">
       <reference ref="ActivityView.Revert"/>

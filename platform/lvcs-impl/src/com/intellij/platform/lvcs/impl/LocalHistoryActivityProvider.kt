@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lvcs.impl.diff.createDiffData
 import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
 import kotlinx.coroutines.channels.awaitClose
@@ -30,46 +29,45 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return facade.onChangeSetFinished(project, gateway, scope)
   }
 
-  override fun loadActivityList(scope: ActivityScope, fileFilter: String?): ActivityData {
+  override fun loadActivityList(scope: ActivityScope, fileFilter: String?, showSystemLabels: Boolean): ActivityData {
     gateway.registerUnsavedDocuments(facade)
 
     val filter = HistoryPathFilter.create(fileFilter, project)
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
-      return loadFileActivityList(projectId, scope, filter)
+      return loadFileActivityList(projectId, scope, filter, showSystemLabels)
     } else if (scope is ActivityScope.Files) {
-      return loadFilesActivityList(projectId, scope, filter)
+      return loadFilesActivityList(projectId, scope, filter, showSystemLabels)
     }
-    return loadRecentActivityList(projectId, scope, filter)
+    return loadRecentActivityList(projectId, scope, filter, showSystemLabels)
   }
 
-  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: HistoryPathFilter?): ActivityData {
+  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: HistoryPathFilter?, showSystemLabels: Boolean): ActivityData {
     val path = gateway.getPathOrUrl(scope.file)
     val activityItems = mutableListOf<ActivityItem>()
     val affectedPaths = mutableSetOf(path)
 
-    doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems)
+    doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems, showSystemLabels)
 
     return ActivityData(activityItems).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
-  private fun loadFilesActivityList(projectId: String, scope: ActivityScope.Files, scopeFilter: HistoryPathFilter?): ActivityData {
+  private fun loadFilesActivityList(projectId: String, scope: ActivityScope.Files, scopeFilter: HistoryPathFilter?, showSystemLabels: Boolean): ActivityData {
     val paths = scope.files.map { gateway.getPathOrUrl(it) }
     val activityItems = mutableListOf<ActivityItem>()
     val affectedPaths = paths.toMutableSet()
 
     for (path in paths) {
-      doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems)
+      doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems, showSystemLabels)
     }
 
     return ActivityData(activityItems.toSet().sortedByDescending { it.timestamp }).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
   private fun doLoadPathActivityList(projectId: String, scope: ActivityScope, path: String, scopeFilter: HistoryPathFilter?,
-                                     affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>) {
+                                     affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>, showSystemLabels: Boolean) {
     var lastEventLabel: ChangeSet? = null
     val userLabels = mutableListOf<ChangeSet>()
-    val showSystemLabels = Registry.`is`("lvcs.show.system.labels.in.activity.view")
 
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, scopeFilter, affectedPaths::add) { changeSet ->
       if (!showSystemLabels && changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
@@ -95,10 +93,9 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     })
   }
 
-  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: HistoryPathFilter?): ActivityData {
+  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: HistoryPathFilter?, showSystemLabels: Boolean): ActivityData {
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
-    val showSystemLabels = Registry.`is`("lvcs.show.system.labels.in.activity.view")
 
     for (changeSet in facade.changes) {
       if (!showSystemLabels && changeSet.isSystemLabelOnly) continue
@@ -115,14 +112,14 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return ActivityData(result).also { it.putUserData(AFFECTED_PATHS, paths) }
   }
 
-  override fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>? {
+  override fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?, showSystemLabels: Boolean): Set<ActivityItem>? {
     val changeSets = data.getChangeSets()
-    if (contentFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
+    if (changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
     val filteredIds = mutableSetOf<Long>()
     val processor: (Long, String?) -> Boolean = { changeSetId, content ->
-      if (content?.contains(contentFilter, true) == true) filteredIds.add(changeSetId)
+      if (contentFilter == null || content?.contains(contentFilter, true) == true) filteredIds.add(changeSetId)
       true
     }
 
@@ -135,7 +132,14 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
       facade.processContents(gateway, rootEntry, path, changeSets, before = USE_OLD_CONTENT, processor = processor)
     }
 
-    return data.items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
+    val result = mutableSetOf<ActivityItem>()
+    for (item in data.items) {
+      when {
+        !showSystemLabels && item is ChangeSetActivityItem && item.isSystemLabelOnly() -> continue
+        item is ChangeSetActivityItem && filteredIds.contains(item.id) -> result.add(item)
+      }
+    }
+    return result
   }
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData? {
