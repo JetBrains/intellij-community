@@ -160,7 +160,8 @@ class ClassLoaderConfigurator(
                                       || module.moduleName == "intellij.rider.plugins.unity.test.cases"
                                       || module.moduleName == "intellij.rider.plugins.unreal.link.test.cases"
                                       || module.moduleName == "intellij.rider.test.cases.qodana"
-                                      || module.moduleName == "intellij.rider.test.cases.supplementary")
+                                      || module.moduleName == "intellij.rider.test.cases.supplementary"
+                                      || module.moduleName == "intellij.rider.test.cases.consoles")
       module.pluginClassLoader = PluginClassLoader(
         classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
         parents = dependencies,
