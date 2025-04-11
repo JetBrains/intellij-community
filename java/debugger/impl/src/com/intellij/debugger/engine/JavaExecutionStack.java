@@ -281,24 +281,26 @@ public class JavaExecutionStack extends XExecutionStack {
 
       if (!myHiddenFrames.isEmpty()) {
         var placeholder = new XFramesView.HiddenStackFramesItem(myHiddenFrames);
+        myAdded++;
         myContainer.addStackFrames(Collections.singletonList(placeholder), false);
         myHiddenFrames.clear();
       }
     }
 
     private void rememberHiddenFrame(XStackFrame frame) {
-      if (!XFramesView.shouldFoldHiddenFrames()) return;
+      if (!XFramesView.shouldFoldHiddenFrames() || myAdded < mySkip) return;
 
       myHiddenFrames.add(frame);
     }
 
     private void addStackFrames(List<XStackFrame> frames, boolean last) {
       flushHiddenFrames();
+      myAdded += frames.size();
       myContainer.addStackFrames(frames, last);
     }
 
     private boolean addFrameIfNeeded(XStackFrame frame, boolean last) {
-      if (++myAdded > mySkip) {
+      if (myAdded >= mySkip) {
         addStackFrames(Collections.singletonList(frame), last);
         return true;
       }
