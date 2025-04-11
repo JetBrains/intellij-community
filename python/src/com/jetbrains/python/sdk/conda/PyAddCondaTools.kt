@@ -47,6 +47,9 @@ internal val condaSupportedLanguages: List<LanguageLevel>
     .asReversed()
     .filter { it < LanguageLevel.PYTHON313 }
 
+val condaLatestSupportedLanguage: LanguageLevel @ApiStatus.Internal get() =
+  condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
+
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
  */
