@@ -29,7 +29,7 @@ class AnsiHighlighterDetector : FileHandlerFeatureDetector {
     if (fileType.isBinary) return false
     if (fileType !is PlainTextLikeFileType) return false
 
-    val logString = LoadTextUtil.loadText(file)
+    val logString = LoadTextUtil.loadText(file, 1000)
     return ansiRegex.containsMatchIn(logString)
   }
 }
