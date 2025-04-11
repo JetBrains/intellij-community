@@ -420,6 +420,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/NotImportedFunction/");
     }
 
+    @TestMetadata("NotImportedGenericReceiverExtension")
+    public void testNotImportedGenericReceiverExtension() throws Exception {
+        runTest("../testData/basic/multifile/NotImportedGenericReceiverExtension/");
+    }
+
     @TestMetadata("NotImportedInfixExtension")
     public void testNotImportedInfixExtension() throws Exception {
         runTest("../testData/basic/multifile/NotImportedInfixExtension/");

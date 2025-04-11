@@ -420,6 +420,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/NotImportedFunction/");
     }
 
+    @TestMetadata("NotImportedGenericReceiverExtension")
+    public void testNotImportedGenericReceiverExtension() throws Exception {
+        runTest("../../completion/testData/basic/multifile/NotImportedGenericReceiverExtension/");
+    }
+
     @TestMetadata("NotImportedInfixExtension")
     public void testNotImportedInfixExtension() throws Exception {
         runTest("../../completion/testData/basic/multifile/NotImportedInfixExtension/");
