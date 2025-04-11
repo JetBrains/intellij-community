@@ -64,7 +64,7 @@ suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
  * The PyProject.toml found in the main content root of the module.
  */
 @Internal
-suspend fun pyProjectToml(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PY_PROJECT_TOML) }
+suspend fun findPyProjectToml(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PY_PROJECT_TOML) }
 
 internal suspend fun poetryToml(module: Module): VirtualFile? = withContext(Dispatchers.IO) {
   findAmongRoots(module, POETRY_TOML)?.takeIf { readAction { ProjectFileIndex.getInstance(module.project).isInProject(it) } }

@@ -29,4 +29,7 @@ interface UvLowLevel {
 
   suspend fun listPackages(): Result<List<PythonPackage>>
   suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>>
+
+  suspend fun sync(): Result<String>
+  suspend fun lock(): Result<String>
 }

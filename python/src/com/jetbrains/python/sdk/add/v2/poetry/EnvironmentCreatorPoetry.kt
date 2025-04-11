@@ -147,7 +147,7 @@ private class PoetryConfigService : SerializablePersistentStateComponent<PoetryC
   suspend fun setInProjectEnv(module: Module) {
     val hasPoetryToml = poetryToml(module) != null
     if (state.isInProjectEnv || hasPoetryToml) {
-      val modulePath = withContext(Dispatchers.IO) { pyProjectToml(module)?.parent?.toNioPath() ?: module.basePath?.let { Path.of(it) } }
+      val modulePath = withContext(Dispatchers.IO) { findPyProjectToml(module)?.parent?.toNioPath() ?: module.basePath?.let { Path.of(it) } }
       configurePoetryEnvironment(modulePath, "virtualenvs.in-project", state.isInProjectEnv.toString(), "--local")
     }
   }
