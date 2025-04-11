@@ -169,6 +169,15 @@ class FrontendXBreakpointProxy(
     // TODO: implement it through RPC
   }
 
+  override fun isTemporary(): Boolean {
+    // TODO: pass it through RPC
+    return false
+  }
+
+  override fun setTemporary(isTemporary: Boolean) {
+    // TODO: implement it through RPC
+  }
+
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

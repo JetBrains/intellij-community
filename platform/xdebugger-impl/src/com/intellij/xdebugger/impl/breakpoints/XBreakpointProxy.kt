@@ -7,6 +7,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -58,6 +59,11 @@ interface XBreakpointProxy {
   fun setLogStack(enabled: Boolean)
   fun setLogExpressionEnabled(enabled: Boolean)
   fun setLogExpressionObject(logExpression: XExpression?)
+
+  fun isTemporary(): Boolean
+
+  // Supported only for line breakpoints
+  fun setTemporary(isTemporary: Boolean)
 
   class Monolith(override val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpoint.project, breakpoint.getType())
@@ -147,6 +153,14 @@ interface XBreakpointProxy {
 
     override fun setLogExpressionObject(logExpression: XExpression?) {
       breakpoint.logExpressionObject = logExpression
+    }
+
+    override fun isTemporary(): Boolean = (breakpoint as? XLineBreakpoint<*>)?.isTemporary ?: false
+
+    override fun setTemporary(isTemporary: Boolean) {
+      if (breakpoint is XLineBreakpoint<*>) {
+        breakpoint.isTemporary = isTemporary
+      }
     }
   }
 }

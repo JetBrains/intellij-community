@@ -150,11 +150,8 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider(breakpoint, project);
 
     if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS)) {
-      // TODO: XBreakpointActionsPanel should work through proxies, otherwise it won't work in Remote Dev
-      if (breakpoint instanceof XBreakpointProxy.Monolith) {
-        myActionsPanel.init(project, ((XBreakpointProxy.Monolith)breakpoint).getBreakpoint(), debuggerEditorsProvider);
-        mySubPanels.add(myActionsPanel);
-      }
+      myActionsPanel.init(project, breakpoint, debuggerEditorsProvider);
+      mySubPanels.add(myActionsPanel);
     }
     else {
       myActionsPanel.hide();
