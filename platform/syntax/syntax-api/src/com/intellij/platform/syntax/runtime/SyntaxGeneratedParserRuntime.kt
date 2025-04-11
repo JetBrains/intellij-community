@@ -745,7 +745,6 @@ fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<T?>?, param: T?) 
 }
 
 @ApiStatus.Experimental
-@SafeVarargs
 fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<Array<T?>?>?, vararg param: T?) {
   errorState.hooks = SyntaxGeneratedParserRuntime.Hooks.Companion.concat<Array<T?>?>(hook, arrayOf(param.asIterable()) as Array<T?>, errorState.level, errorState.hooks)
 }
