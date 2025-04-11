@@ -166,7 +166,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   }
 
   override fun processSelectedItem(item: MatchedValue, modifiers: Int, text: String): Boolean {
-    if (modifiers == InputEvent.ALT_MASK) {
+    if (modifiers == InputEvent.ALT_DOWN_MASK) {
       showAssignShortcutDialog(myProject, item)
       return true
     }

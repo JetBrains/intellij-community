@@ -1163,10 +1163,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private void registerSelectItemAction() {
     int[] allowedModifiers = new int[]{
       0,
-      InputEvent.SHIFT_MASK,
-      InputEvent.CTRL_MASK,
-      InputEvent.META_MASK,
-      InputEvent.ALT_MASK
+      InputEvent.SHIFT_DOWN_MASK,
+      InputEvent.CTRL_DOWN_MASK,
+      InputEvent.META_DOWN_MASK,
+      InputEvent.ALT_DOWN_MASK
     };
 
     ShortcutSet selectShortcuts = ActionManager.getInstance().getAction(SearchEverywhereActions.SELECT_ITEM).getShortcutSet();
@@ -1267,7 +1267,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       final int i = myResultsList.locationToIndex(e.getPoint());
       if (i > -1) {
         myResultsList.setSelectedIndex(i);
-        elementsSelected(new int[]{i}, e.getModifiers());
+        elementsSelected(new int[]{i}, e.getModifiersEx());
       }
     }
   }

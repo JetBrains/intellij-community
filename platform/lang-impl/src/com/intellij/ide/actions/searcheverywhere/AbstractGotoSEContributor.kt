@@ -489,9 +489,8 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     }
 
     return suspend {
-      @Suppress("DEPRECATION")
       val navigationOptions = NavigationOptions.defaultOptions()
-        .openInRightSplit((modifiers and InputEvent.SHIFT_MASK) != 0)
+        .openInRightSplit((modifiers and InputEvent.SHIFT_DOWN_MASK) != 0)
         .preserveCaret(true)
       if (extendedNavigatable == null) {
         if (file == null) {

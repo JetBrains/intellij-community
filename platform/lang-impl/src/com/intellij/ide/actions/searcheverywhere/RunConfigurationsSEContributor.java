@@ -129,7 +129,7 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
       return RUN_MODE;
     }
     else {
-      return (modifiers & InputEvent.SHIFT_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
+      return (modifiers & InputEvent.SHIFT_DOWN_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
     }
   }
 
