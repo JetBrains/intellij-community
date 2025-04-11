@@ -21,11 +21,11 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class ConvertToStringTemplateInspection :
-    KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
+  KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
 
     override fun buildVisitor(
-        holder: ProblemsHolder,
-        isOnTheFly: Boolean,
+      holder: ProblemsHolder,
+      isOnTheFly: Boolean,
     ) = object : KtVisitorVoid() {
 
         override fun visitBinaryExpression(expression: KtBinaryExpression) {
@@ -36,17 +36,17 @@ internal class ConvertToStringTemplateInspection :
     data class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
     override fun createQuickFix(
-        element: KtBinaryExpression,
-        context: Context,
+      element: KtBinaryExpression,
+      context: Context,
     ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.concatenation.to.template")
 
         override fun applyFix(
-            project: Project,
-            element: KtBinaryExpression,
-            updater: ModPsiUpdater,
+          project: Project,
+          element: KtBinaryExpression,
+          updater: ModPsiUpdater,
         ) {
             context.replacement.element?.let { element.replaced(it) }
         }
