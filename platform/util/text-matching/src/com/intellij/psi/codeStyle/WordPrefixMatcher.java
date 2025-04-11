@@ -24,7 +24,7 @@ public final class WordPrefixMatcher implements Matcher {
   }
 
   private static @NotNull String[] splitToWords(@NotNull String string) {
-    return string.split("[\\s-/]");
+    return string.split("[^a-zA-Z]+");
   }
 
   private static boolean matches(String[] patternWords, String[] nameWords) {
