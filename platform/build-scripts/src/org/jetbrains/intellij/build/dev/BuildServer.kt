@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.dev
 
 import com.intellij.openapi.util.io.NioFiles
@@ -73,8 +75,8 @@ fun readVmOptions(runDir: Path): List<String> {
   require(vmOptionsFile != null) {
     "No single *.vmoptions file in ${runDir} (${NioFiles.list(runDir).map(Path::getFileName).joinToString()})}"
   }
-  result += vmOptionsFile.readLines()
-  result += "-Djb.vmOptionsFile=${vmOptionsFile}"
+  result.addAll(vmOptionsFile.readLines())
+  result.add("-Djb.vmOptionsFile=${vmOptionsFile}")
 
   val productInfoFile = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
   if (productInfoFile.exists()) {
@@ -84,7 +86,7 @@ fun readVmOptions(runDir: Path): List<String> {
       OsFamily.MACOS -> "\$APP_PACKAGE/Contents"
       OsFamily.LINUX -> "\$IDE_HOME"
     }
-    result += productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) }
+    result.addAll(productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) })
   }
 
   return result
@@ -92,8 +94,8 @@ fun readVmOptions(runDir: Path): List<String> {
 
 /** Returns IDE installation directory */
 suspend fun buildProductInProcess(request: BuildRequest): Path {
-  if (request.tracer != null) {
-    TraceManager.setTracer(request.tracer)
+  request.tracer?.let {
+    TraceManager.setTracer(it)
   }
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).use {
     try {
