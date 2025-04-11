@@ -29,7 +29,6 @@ import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
-import java.util.concurrent.CancellationException
 
 internal fun startTerminalProcess(
   project: Project,
@@ -64,13 +63,9 @@ internal fun createTerminalSession(
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
   shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
   val outputFlow = createTerminalOutputFlow(
-    services.textBuffer,
-    fusActivity,
-    services.terminalDisplay,
-    services.controller,
+    services,
     shellIntegrationController,
     outputScope,
-    ensureEmulationActive = { ensureEmulationActive(services.terminalStarter) }
   )
 
   val inputScope = coroutineScope.childScope("Terminal input handling")
@@ -101,8 +96,7 @@ internal fun createTerminalSession(
 }
 
 private fun createJediTermServices(
-  connector: TtyConnector,
-  fusActivity: BackendOutputActivity,
+  connector: ObservableTtyConnector,
   termSize: TermSize,
   maxHistoryLinesCount: Int,
   settings: JBTerminalSystemSettingsProviderBase,
@@ -118,11 +112,10 @@ private fun createJediTermServices(
     connector,
     TtyBasedArrayDataStream(connector),
     typeAheadManager,
-    executorService,
-    fusActivity
+    executorService
   )
 
-  return JediTermServices(textBuffer, terminalDisplay, controller, executorService, terminalStarter)
+  return JediTermServices(textBuffer, terminalDisplay, controller, executorService, terminalStarter, connector)
 }
 
 private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
@@ -142,16 +135,11 @@ private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
   }
 }
 
-private fun ensureEmulationActive(starter: StopAwareTerminalStarter) {
-  if (Thread.interrupted() || starter.isStopped) {
-    throw CancellationException("Terminal emulation was stopped")
-  }
-}
-
 internal class JediTermServices(
   val textBuffer: TerminalTextBuffer,
   val terminalDisplay: TerminalDisplayImpl,
   val controller: ObservableJediTerminal,
   val executorService: TerminalExecutorServiceManager,
   val terminalStarter: StopAwareTerminalStarter,
+  val ttyConnector: ObservableTtyConnector,
 )

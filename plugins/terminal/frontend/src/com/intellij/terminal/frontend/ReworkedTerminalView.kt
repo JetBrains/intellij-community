@@ -133,7 +133,6 @@ internal class ReworkedTerminalView(
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
 
     val fusActivity = FrontendLatencyService.getInstance().startFrontendOutputActivity(
-      sessionFuture,
       outputEditor = outputEditor as EditorImpl,
       alternateBufferEditor = alternateBufferEditor as EditorImpl,
     )

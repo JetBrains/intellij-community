@@ -2,23 +2,18 @@ package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.platform.rpc.UID
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalInputEvent
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalWriteBytesEvent
 import com.intellij.util.concurrency.ThreadingAssertions
 import fleet.multiplatform.shims.ConcurrentHashMap
-import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
 import org.jetbrains.plugins.terminal.fus.FrontendTypingActivity
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.awt.event.KeyEvent
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
@@ -41,11 +36,10 @@ internal class FrontendLatencyServiceImpl : FrontendLatencyService {
   }
 
   override fun startFrontendOutputActivity(
-    sessionFuture: CompletableFuture<TerminalSession>,
     outputEditor: EditorImpl,
     alternateBufferEditor: EditorImpl,
   ): FrontendOutputActivity {
-    return FrontendOutputActivityImpl(sessionFuture, outputEditor, alternateBufferEditor)
+    return FrontendOutputActivityImpl(outputEditor, alternateBufferEditor)
   }
 }
 
@@ -90,21 +84,15 @@ private class FrontendTypingActivityImpl(override val id: Int) : FrontendTypingA
 }
 
 private class FrontendOutputActivityImpl(
-  sessionFuture: CompletableFuture<TerminalSession>,
   private val outputEditor: EditorImpl,
   private val alternateBufferEditor: EditorImpl,
 ) : FrontendOutputActivity {
-
-  private val sessionId = AtomicReference<UID?>()
   private val pendingEvents = ArrayBlockingQueue<ReceivedEvent>(100)
   private val pendingPaints = ArrayBlockingQueue<ReceivedEvent>(100)
   private var editorRepaintRequests = 0L
   private var editorRepaintRequestsBeforeModelUpdate = 0L
 
   init {
-    sessionFuture.whenComplete { session, _ ->
-      sessionId.set((session as? FrontendTerminalSession?)?.id?.eid)
-    }
     outputEditor.setRepaintCallback { editorRepaintRequested() }
     alternateBufferEditor.setRepaintCallback { editorRepaintRequested() }
     outputEditor.setPaintCallback { editorPainted() }
@@ -150,15 +138,8 @@ private class FrontendOutputActivityImpl(
 
   private fun reportLatency(receivedEvent: ReceivedEvent, painted: Boolean) {
     val latency = receivedEvent.time.elapsedNow()
-    val sessionId = this.sessionId.get()
-    if (sessionId == null) {
-      LOG.error("For some reason sessionId was not initialized, likely a bug")
-      return
-    }
     ReworkedTerminalUsageCollector.logFrontendOutputLatency(
-      sessionId = sessionId,
-      firstCharIndex = receivedEvent.event.firstCharIndex,
-      lastCharIndex = receivedEvent.event.lastCharIndex,
+      eventId = receivedEvent.event.id,
       duration = latency,
       repainted = painted,
     )
