@@ -29,7 +29,7 @@ import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private final ExporterToTextFile myExporterToTextFile;
 
   public ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<ThreadState> threadDump) {
-    this(project, consoleView, toolbarActions, ContainerUtil.map(threadDump, JavaThreadDumpItem::new), false);
+    this(project, consoleView, toolbarActions, DumpItemKt.toDumpItems(threadDump), false);
   }
 
   @ApiStatus.Internal
@@ -233,11 +233,21 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
       setIcon(threadState.getIcon());
       if (!selected) {
         DumpItem selectedThread = list.getSelectedValue();
-        threadState.getBackgroundColor(selectedThread);
+        setBackground(getBackgroundColor(threadState, selectedThread));
       }
       SimpleTextAttributes attrs = threadState.getAttributes();
       append(threadState.getName(), attrs);
       append(threadState.getStateDesc(), attrs);
+    }
+
+    private static @NotNull Color getBackgroundColor(DumpItem threadState, DumpItem selectedThread) {
+      if (threadState.isDeadLocked()) {
+        return LightColors.RED;
+      } else if (threadState.getAwaitingDumpItems().contains(selectedThread)) {
+        return LightColors.YELLOW;
+      } else {
+        return UIUtil.getListBackground();
+      }
     }
   }
 
@@ -350,7 +360,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   }
 
   public static ExporterToTextFile createToFileExporter(Project project, List<ThreadState> threadStates) {
-    return new MyToFileExporter(project, ContainerUtil.map(threadStates, it -> new JavaThreadDumpItem(it)));
+    return new MyToFileExporter(project, DumpItemKt.toDumpItems(threadStates));
   }
 
   private static final class MyToFileExporter implements ExporterToTextFile {

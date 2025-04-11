@@ -7,6 +7,7 @@ import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpDto
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpItemDto
+import com.intellij.java.debugger.impl.shared.rpc.ThreadDumpWithAwaitingDependencies
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
-import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.toSimpleTextAttributes
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -26,7 +26,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.awt.Color
 import javax.swing.Icon
 
 private class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
@@ -90,16 +89,29 @@ private fun JavaThreadDumpDto.threadDumpData(): ThreadDumpData {
   return ThreadDumpData(threadDump.toDumpItems(), mergedThreadDump.toDumpItems())
 }
 
-private fun List<JavaThreadDumpItemDto>.toDumpItems(): List<DumpItem> = map { itemDto ->
-  object : DumpItem {
-    override val name: @NlsSafe String = itemDto.name
-    override val stateDesc: @NlsSafe String = itemDto.stateDesc
-    override val stackTrace: @NlsSafe String = itemDto.stackTrace
-    override val interestLevel: Int = itemDto.interestLevel
-    override val icon: Icon = itemDto.iconId.icon()
-    override val attributes: SimpleTextAttributes = itemDto.attributes.toSimpleTextAttributes()
+private fun ThreadDumpWithAwaitingDependencies.toDumpItems(): List<DumpItem> {
+  val feDumpItems = items.map(::FrontendDumpItem)
+  for ((index, awaitingIndices) in awaitingDependencies) {
+    val awaitingItems = awaitingIndices.map { feDumpItems[it] }.toHashSet()
+    feDumpItems[index].setAwaitingItems(awaitingItems)
+  }
+  return feDumpItems
+}
 
-    // TODO pass correct color here
-    override fun getBackgroundColor(selectedItem: DumpItem?): Color? = UIUtil.getListBackground()
+private class FrontendDumpItem(itemDto: JavaThreadDumpItemDto) : DumpItem {
+  private var internalAwaitingItems: Set<DumpItem> = emptySet()
+
+  override val name: @NlsSafe String = itemDto.name
+  override val stateDesc: @NlsSafe String = itemDto.stateDesc
+  override val stackTrace: @NlsSafe String = itemDto.stackTrace
+  override val interestLevel: Int = itemDto.interestLevel
+  override val icon: Icon = itemDto.iconId.icon()
+  override val attributes: SimpleTextAttributes = itemDto.attributes.toSimpleTextAttributes()
+  override val isDeadLocked: Boolean = itemDto.isDeadLocked
+
+  override val awaitingDumpItems: Set<DumpItem> = internalAwaitingItems
+
+  fun setAwaitingItems(items: Set<DumpItem>) {
+    internalAwaitingItems = items
   }
 }

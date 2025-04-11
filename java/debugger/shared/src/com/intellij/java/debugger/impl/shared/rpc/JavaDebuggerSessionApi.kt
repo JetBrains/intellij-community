@@ -40,8 +40,15 @@ data class JavaThreadDumpResponseDto(
 @ApiStatus.Internal
 @Serializable
 data class JavaThreadDumpDto(
-  val threadDump: List<JavaThreadDumpItemDto>,
-  val mergedThreadDump: List<JavaThreadDumpItemDto>,
+  val threadDump: ThreadDumpWithAwaitingDependencies,
+  val mergedThreadDump: ThreadDumpWithAwaitingDependencies,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class ThreadDumpWithAwaitingDependencies(
+  val items: List<JavaThreadDumpItemDto>,
+  val awaitingDependencies: Map<Int, List<Int>>,
 )
 
 @ApiStatus.Internal
@@ -53,4 +60,5 @@ data class JavaThreadDumpItemDto(
   val interestLevel: Int,
   val iconId: IconId,
   val attributes: SerializableSimpleTextAttributes,
+  val isDeadLocked: Boolean,
 )

@@ -20,8 +20,8 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.rt.debugger.VirtualThreadDumper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
-import com.intellij.unscramble.JavaThreadDumpItem
 import com.intellij.unscramble.MergeableDumpItem
+import com.intellij.unscramble.toDumpItems
 import com.intellij.util.lang.JavaVersion
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.*
@@ -56,7 +56,7 @@ class ThreadDumpAction {
 
       suspend fun fallback() =
         dumpItemsChannel.send(
-          buildJavaPlatformThreadDump(context).map(::JavaThreadDumpItem)
+          buildJavaPlatformThreadDump(context).toDumpItems()
         )
 
       if (!Registry.`is`("debugger.thread.dump.extended")) {
@@ -465,8 +465,7 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
         if (shouldDumpVirtualThreads) evaluateAndGetAllVirtualThreads(suspendContext!!)
         else emptyList()
 
-      return buildThreadStates(vm, virtualThreads)
-        .map(::JavaThreadDumpItem)
+      return buildThreadStates(vm, virtualThreads).toDumpItems()
     }
 
     private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Triple<ThreadReference, String, Long>> {

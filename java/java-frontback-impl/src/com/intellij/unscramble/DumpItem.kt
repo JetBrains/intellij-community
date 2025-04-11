@@ -5,10 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.threadDumpParser.ThreadOperation
 import com.intellij.threadDumpParser.ThreadState
-import com.intellij.ui.JBColor
-import com.intellij.ui.LightColors
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.util.*
@@ -28,7 +25,13 @@ interface DumpItem {
 
   val attributes: SimpleTextAttributes
 
-  fun getBackgroundColor(selectedItem: DumpItem?): Color?
+  val isDeadLocked: Boolean
+
+  /**
+   * When having a list of [DumpItem]s, it is expected that contents of this set are instances from the list.
+   * @see toDumpItems
+   */
+  val awaitingDumpItems: Set<DumpItem>
 
   companion object {
     @JvmField
@@ -81,7 +84,7 @@ interface MergeableToken {
 @ApiStatus.Internal
 class CompoundDumpItem<T : DumpItem>(
   val originalItem: T,
-  val counter: Int
+  val counter: Int,
 ) : DumpItem by originalItem {
 
   override val name: String = originalItem.name + (if (counter == 1) "" else " [and ${counter - 1} similar]")
@@ -100,7 +103,18 @@ class CompoundDumpItem<T : DumpItem>(
 }
 
 @ApiStatus.Internal
-class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
+fun List<ThreadState>.toDumpItems(): List<MergeableDumpItem> {
+  val statesToItems = associateWith(::JavaThreadDumpItem)
+
+  for ((threadState, dumpItem) in statesToItems) {
+    val awaitingItems = threadState.awaitingThreads.mapNotNull { statesToItems[it] }.toSet()
+    dumpItem.setAwaitingItems(awaitingItems)
+  }
+
+  return statesToItems.values.toList()
+}
+
+private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name
 
   override val stateDesc: String
@@ -168,10 +182,16 @@ class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpIt
     else -> SimpleTextAttributes.REGULAR_ATTRIBUTES
   }
 
-  override fun getBackgroundColor(selectedItem: DumpItem?): Color? = when {
-    threadState.isDeadlocked -> LightColors.RED
-    selectedItem != null && selectedItem is JavaThreadDumpItem && threadState.isAwaitedBy(selectedItem.threadState) -> JBColor.YELLOW
-    else -> UIUtil.getListBackground()
+  override val isDeadLocked: Boolean
+    get() = threadState.isDeadlocked
+
+  private var internalAwaitingItems = emptySet<DumpItem>()
+
+  override val awaitingDumpItems: Set<DumpItem>
+    get() = internalAwaitingItems
+
+  fun setAwaitingItems(awaitingItems: Set<DumpItem>) {
+    internalAwaitingItems = awaitingItems
   }
 
   override val mergeableToken: MergeableToken get() = JavaMergeableToken()

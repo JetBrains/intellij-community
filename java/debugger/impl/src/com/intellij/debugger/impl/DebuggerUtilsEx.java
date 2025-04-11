@@ -45,7 +45,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
-import com.intellij.unscramble.JavaThreadDumpItem;
+import com.intellij.unscramble.DumpItemKt;
 import com.intellij.unscramble.MergeableDumpItem;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
@@ -322,7 +322,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
-    List<MergeableDumpItem> javaThreadDump = new ArrayList<>(ContainerUtil.map(threads, JavaThreadDumpItem::new));
+    List<MergeableDumpItem> javaThreadDump = new ArrayList<>(DumpItemKt.toDumpItems(threads));
     List<Filter> filters = ExceptionFilters.getFilters(searchScope);
     SharedDebuggerUtils.createThreadDumpPanel(project, javaThreadDump, ui, filters);
   }
