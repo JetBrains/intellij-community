@@ -874,6 +874,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return breakpointReached(breakpoint, evaluatedLogExpression, suspendContext, true)
   }
 
+  @ApiStatus.Internal
   fun breakpointReachedNoProcessing(breakpoint: XBreakpoint<*>, suspendContext: XSuspendContext) {
     breakpointReached(breakpoint, null, suspendContext, false)
   }
@@ -987,25 +988,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     setBreakpointsDisabledTemporarily(false)
-    suspendContextFlow.value = suspendContext
-    this.currentSuspendCoroutineScope = suspendContext.coroutineScope ?: provideSuspendScope(this)
-    this.currentExecutionStack = suspendContext.activeExecutionStack
-    val newCurrentStackFrame = if (this.currentExecutionStack != null) currentExecutionStack!!.getTopFrame() else null
-    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
-    myIsTopFrame = true
-    myTopStackFrame.value = newCurrentStackFrame
+    updateSuspendContext(suspendContext)
+
     val topFramePosition = getTopFramePosition()
-
-    val isSteppingSuspendContext = suspendContext is XSteppingSuspendContext
-
-    myPaused.value = !isSteppingSuspendContext
-
-    if (!isSteppingSuspendContext) {
-      val isAlternative = myAlternativeSourceHandler != null &&
-                          myAlternativeSourceHandler!!.isAlternativeSourceKindPreferred(suspendContext)
-      updateExecutionPosition(if (isAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN)
-    }
-
     logPositionReached(topFramePosition)
 
     val needsInitialization = myTabInitDataFlow.value == null
@@ -1026,6 +1011,26 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     myDispatcher.getMulticaster().sessionPaused()
+  }
+
+  @ApiStatus.Internal
+  fun updateSuspendContext(newSuspendContext: XSuspendContext) {
+    suspendContextFlow.value = newSuspendContext
+    this.currentSuspendCoroutineScope = newSuspendContext.coroutineScope ?: provideSuspendScope(this)
+    this.currentExecutionStack = newSuspendContext.activeExecutionStack
+    val newCurrentStackFrame = currentExecutionStack?.topFrame
+    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
+    myIsTopFrame = true
+    myTopStackFrame.value = newCurrentStackFrame
+
+    val isSteppingSuspendContext = newSuspendContext is XSteppingSuspendContext
+
+    myPaused.value = !isSteppingSuspendContext
+
+    if (!isSteppingSuspendContext) {
+      val isAlternative = myAlternativeSourceHandler?.isAlternativeSourceKindPreferred(newSuspendContext) == true
+      updateExecutionPosition(if (isAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN)
+    }
   }
 
   override fun positionReached(suspendContext: XSuspendContext) {
