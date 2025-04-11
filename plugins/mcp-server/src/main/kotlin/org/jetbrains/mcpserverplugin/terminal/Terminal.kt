@@ -73,7 +73,7 @@ class ExecuteTerminalCommandTool : AbstractMcpTool<ExecuteTerminalCommandArgs>()
     private fun formatOutput(output: String): String {
         val lines = output.lines()
         return if (lines.size > maxLineCount) {
-            lines.take(maxLineCount).joinToString("\n") + "\n... (output truncated at 200 lines)"
+            lines.take(maxLineCount).joinToString("\n") + "\n... (output truncated at ${maxLineCount} lines)"
         } else {
             output
         }
