@@ -339,9 +339,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
     left.add(BorderLayout.CENTER, treeView);
-    left.setMinimumSize(JBUI.size(96, left.getMinimumSize().height));
-    left.setPreferredSize(JBUI.size(256, left.getPreferredSize().height));
-    left.setMaximumSize(JBUI.size(300, left.getMaximumSize().height));
     JPanel right = new JPanel(new BorderLayout());
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
