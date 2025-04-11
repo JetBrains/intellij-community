@@ -10,8 +10,10 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -28,6 +31,8 @@ data class XBreakpointDto(
   val id: XBreakpointId,
   val initialState: XBreakpointDtoState,
   val state: RpcFlow<XBreakpointDtoState>,
+  @Transient val localEditorsProvider: XDebuggerEditorsProvider? = null,
+  val editorsProviderFileTypeId: String?,
   // TODO: let's pass XBreakpointTypeId here and have a single place where all types are registered
   val type: XBreakpointTypeDto,
 )
@@ -81,10 +86,13 @@ data class XLineBreakpointTypeInfo(
 
 @ApiStatus.Internal
 suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
+  val editorsProvider = getEditorsProvider(type, this, project)
   return XBreakpointDto(
     id = breakpointId,
     initialState = getDtoState(),
     type = type.toRpc(project),
+    localEditorsProvider = editorsProvider,
+    editorsProviderFileTypeId = editorsProvider?.fileType?.name,
     state = channelFlow {
       breakpointChangedFlow().collectLatest {
         send(getDtoState())

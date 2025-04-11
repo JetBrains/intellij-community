@@ -147,7 +147,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myMasterBreakpointPanel.hide();
     }
 
-    XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider(breakpoint, project);
+    XDebuggerEditorsProvider debuggerEditorsProvider = breakpoint.getEditorsProvider();
 
     if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS)) {
       myActionsPanel.init(project, breakpoint, debuggerEditorsProvider);

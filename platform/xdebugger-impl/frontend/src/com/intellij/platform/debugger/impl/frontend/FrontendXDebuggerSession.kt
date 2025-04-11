@@ -102,8 +102,12 @@ class FrontendXDebuggerSession private constructor(
   override val isSuspended: Boolean
     get() = sessionState.value.isSuspended
 
-  override val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider
-                                                           ?: FrontendXDebuggerEditorsProvider(id, sessionDto.editorsProviderDto.fileTypeId)
+  override val editorsProvider: XDebuggerEditorsProvider =
+    localEditorsProvider
+    ?: FrontendXDebuggerEditorsProvider(sessionDto.editorsProviderDto.fileTypeId,
+                                        documentIdProvider = { frontendDocumentId, expression, position, mode ->
+                                          XDebugSessionApi.getInstance().createDocument(frontendDocumentId, id, expression, position, mode)
+                                        })
 
   override val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 

@@ -7,7 +7,11 @@ import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -59,6 +63,8 @@ interface XBreakpointProxy {
   fun setLogStack(enabled: Boolean)
   fun setLogExpressionEnabled(enabled: Boolean)
   fun setLogExpressionObject(logExpression: XExpression?)
+
+  fun getEditorsProvider(): XDebuggerEditorsProvider?
 
   fun isTemporary(): Boolean
 
@@ -133,6 +139,10 @@ interface XBreakpointProxy {
       return false
     }
 
+    override fun getEditorsProvider(): XDebuggerEditorsProvider? {
+      return getEditorsProvider(breakpoint.type, breakpoint, project)
+    }
+
     override fun isLogExpressionEnabled(): Boolean = breakpoint.isLogExpressionEnabled
 
     override fun getLogExpression(): String? = breakpoint.logExpression
@@ -161,6 +171,16 @@ interface XBreakpointProxy {
       if (breakpoint is XLineBreakpoint<*>) {
         breakpoint.isTemporary = isTemporary
       }
+    }
+
+    companion object {
+      @ApiStatus.Internal
+      @Suppress("UNCHECKED_CAST")
+      fun <B : XBreakpoint<P>, P : XBreakpointProperties<*>> getEditorsProvider(
+        breakpointType: XBreakpointType<B, P>,
+        breakpoint: XBreakpoint<*>,
+        project: Project,
+      ): XDebuggerEditorsProvider? = breakpointType.getEditorsProvider(breakpoint as B, project)
     }
   }
 }

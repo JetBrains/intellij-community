@@ -10,8 +10,6 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
@@ -49,11 +47,6 @@ internal class FrontendXBreakpointType(
   override fun getVisibleStandardPanels(): EnumSet<StandardPanels> {
     // TODO: pass through RPC
     return EnumSet.allOf(StandardPanels::class.java)
-  }
-
-  override fun getEditorsProvider(breakpoint: XBreakpointProxy, project: Project): XDebuggerEditorsProvider? {
-    // TODO: implement through FrontendXDebuggerEditorsProvider
-    return null
   }
 
   override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {

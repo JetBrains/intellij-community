@@ -10,6 +10,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.*
@@ -36,12 +37,21 @@ class FrontendXBreakpointProxy(
 
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
+  private val editorsProvider = dto.localEditorsProvider ?: createFrontendEditorsProvider()
+
   init {
     cs.launch {
       dto.state.toFlow().collectLatest {
         _state.value = it
         onBreakpointChange()
       }
+    }
+  }
+
+  private fun createFrontendEditorsProvider(): FrontendXDebuggerEditorsProvider? {
+    val fileTypeId = dto.editorsProviderFileTypeId ?: return null
+    return FrontendXDebuggerEditorsProvider(fileTypeId) { frontendDocumentId, expression, position, mode ->
+      XBreakpointApi.getInstance().createDocument(frontendDocumentId, id, expression, position, mode)
     }
   }
 
@@ -186,6 +196,10 @@ class FrontendXBreakpointProxy(
     project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
       XBreakpointApi.getInstance().setLogExpressionObject(id, logExpressionDto)
     }
+  }
+
+  override fun getEditorsProvider(): XDebuggerEditorsProvider? {
+    return editorsProvider
   }
 
   override fun isTemporary(): Boolean {
