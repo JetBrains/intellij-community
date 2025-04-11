@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
-import com.intellij.terminal.backend.fus.enableFus
 import com.intellij.terminal.backend.fus.installFusListener
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalSessionTerminatedEvent
@@ -28,7 +27,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CancellationException
@@ -55,13 +53,12 @@ internal fun createTerminalSession(
   initialSize: TermSize,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
-  fusActivity: BackendOutputActivity,
 ): TerminalSession {
   val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
-  installFusListener(observableTtyConnector, fusActivity, parentDisposable = coroutineScope.asDisposable())
+  installFusListener(observableTtyConnector, parentDisposable = coroutineScope.asDisposable())
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
-  val services: JediTermServices = createJediTermServices(observableTtyConnector, fusActivity, initialSize, maxHistoryLinesCount, settings)
+  val services: JediTermServices = createJediTermServices(observableTtyConnector, initialSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
@@ -119,7 +116,7 @@ private fun createJediTermServices(
   val terminalStarter = StopAwareTerminalStarter(
     controller,
     connector,
-    enableFus(TtyBasedArrayDataStream(connector), fusActivity),
+    TtyBasedArrayDataStream(connector),
     typeAheadManager,
     executorService,
     fusActivity

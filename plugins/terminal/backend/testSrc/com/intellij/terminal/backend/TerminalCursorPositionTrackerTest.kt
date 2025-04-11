@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
-import com.intellij.terminal.backend.util.BackendOutputTestFusActivity
 import com.intellij.terminal.backend.util.write
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
@@ -17,7 +16,7 @@ internal class TerminalCursorPositionTrackerTest {
     val textBuffer = TerminalTextBuffer(10, 5, StyleState(), 3)
     val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
     val terminalDisplay = TerminalDisplayImpl(DefaultSettingsProvider())
-    val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker, BackendOutputTestFusActivity)
+    val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
     val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
 
     // Prepare

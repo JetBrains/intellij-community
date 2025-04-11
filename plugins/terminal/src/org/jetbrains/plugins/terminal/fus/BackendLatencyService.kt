@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.openapi.components.service
-import com.intellij.platform.rpc.UID
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalWriteBytesEvent
 import org.jetbrains.annotations.ApiStatus
 
@@ -15,7 +13,6 @@ interface BackendLatencyService {
   }
   fun tryStartBackendTypingActivity(event: TerminalWriteBytesEvent)
   fun getBackendTypingActivityOrNull(bytes: ByteArray): BackendTypingActivity?
-  fun startBackendOutputActivity(): BackendOutputActivity
 }
 
 @ApiStatus.Internal
@@ -23,17 +20,4 @@ interface BackendTypingActivity {
   val id: Int
   fun reportDuration()
   fun finishBytesProcessing()
-}
-
-@ApiStatus.Internal
-interface BackendOutputActivity {
-  var sessionId: UID?
-  fun charsRead(count: Int)
-  fun charProcessingStarted()
-  fun charsProcessed(count: Int)
-  fun processedCharsReachedTextBuffer()
-  fun charProcessingFinished()
-  fun textBufferCharacterIndices(): LongRange
-  fun textBufferCollected(event: TerminalContentUpdatedEvent)
-  fun eventCollected(event: TerminalContentUpdatedEvent)
 }

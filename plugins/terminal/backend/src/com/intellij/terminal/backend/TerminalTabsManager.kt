@@ -10,6 +10,7 @@ import com.intellij.platform.kernel.backend.findValueEntity
 import com.intellij.platform.kernel.backend.newValueEntity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalCloseEvent
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.util.TermSize
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
-import org.jetbrains.plugins.terminal.fus.BackendLatencyService
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(AwaitCancellationAndInvoke::class)
@@ -132,12 +132,10 @@ internal class TerminalTabsManager(private val project: Project, private val cor
 
     val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
     val observableTtyConnector = ObservableTtyConnector(ttyConnector)
-    val fusActivity = BackendLatencyService.getInstance().startBackendOutputActivity()
-    val session = createTerminalSession(project, observableTtyConnector, termSize, JBTerminalSystemSettingsProvider(), scope, fusActivity)
-    val stateAwareSession = StateAwareTerminalSession(session, fusActivity)
+    val session = createTerminalSession(project, observableTtyConnector, termSize, JBTerminalSystemSettingsProvider(), scope)
+    val stateAwareSession = StateAwareTerminalSession(session)
 
     val sessionEntity = newValueEntity(stateAwareSession)
-    fusActivity.sessionId = sessionEntity.id
 
     scope.awaitCancellationAndInvoke {
       sessionEntity.delete()
