@@ -5,27 +5,51 @@ import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.flow.collectLatest
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.SwingConstants
 
 internal class XNextStatusBarWidgetPane {
-  private val widgetPanel = JPanel(HorizontalLayout(10, SwingConstants.CENTER)).apply {
+  private val widgetPanel = JPanel(GridBagLayout()).apply {
     isOpaque = false
     border = JBUI.Borders.empty(0, 10)
     minimumSize = JBDimension(JBUI.scale(300), minimumSize.height)
   }
 
   val component: JComponent = widgetPanel
+
   fun init(project: Project) {
-    InternalUICustomization.getInstance()?.progressWidget(project)?.let {
-      widgetPanel.add(it)
+    val constraints = GridBagConstraints().apply {
+      gridx = 1
+      gridy = 0
+      weightx = 0.0
+      fill = GridBagConstraints.NONE
     }
 
-    val ideMessagePanel = IdeMessagePanel(null, MessagePool.getInstance())
-    widgetPanel.add(ideMessagePanel.component)
+    val messagePanel = IdeMessagePanel(null, MessagePool.getInstance())
+    widgetPanel.add(messagePanel.component, constraints)
+    val showInEditor = ProgressPlaceChecker.getInstance().showInEditor
+
+    InternalUICustomization.getInstance()?.progressWidget(project)?.let { pw ->
+      widgetPanel.launchOnShow("XNextStatusBarProgressWidget") {
+        showInEditor.collectLatest {
+          if (!it) {
+            constraints.insets = JBUI.insetsRight(10)
+            constraints.gridx = 0
+            widgetPanel.add(pw, constraints)
+          }
+          else {
+            widgetPanel.remove(pw)
+            widgetPanel.revalidate()
+            widgetPanel.repaint()
+          }
+        }
+      }
+    }
   }
 }
