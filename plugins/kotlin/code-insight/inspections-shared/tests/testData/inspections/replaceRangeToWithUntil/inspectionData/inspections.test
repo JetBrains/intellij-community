@@ -1,1 +1,3 @@
-// INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.ReplaceRangeToWithUntilInspection
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceRangeToWithUntilInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceRangeToWithUntilInspection
+// LANGUAGE_VERSION: 1.8

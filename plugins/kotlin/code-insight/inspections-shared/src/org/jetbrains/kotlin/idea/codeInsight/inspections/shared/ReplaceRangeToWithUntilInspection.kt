@@ -1,107 +1,133 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-package org.jetbrains.kotlin.idea.inspections
-
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
-import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection.Util.isPossibleToUseRangeUntil
-import org.jetbrains.kotlin.idea.intentions.getArguments
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractReplaceRangeToInspection.Context
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.canUseRangeUntil
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.isFloatingPointType
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.isIntegralType
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.typeUtil.isDouble
-import org.jetbrains.kotlin.types.typeUtil.isFloat
-import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
-sealed class AbstractReplaceRangeToWithRangeUntilInspection : AbstractRangeInspection() {
-    override fun visitRange(
-        range: KtExpression,
-        context: Lazy<BindingContext>,
-        type: RangeKtExpressionType,
-        holder: ProblemsHolder,
-        session: LocalInspectionToolSession
-    ) {
-        when (type) {
-            UNTIL, RANGE_UNTIL, DOWN_TO -> return
-            RANGE_TO -> Unit
-        }
-        val useRangeUntil = range.isPossibleToUseRangeUntil(context)
-        if (useRangeUntil xor (this is ReplaceRangeToWithRangeUntilInspection)) return
-        if (!isApplicable(range, context, useRangeUntil)) return
-        val desc =
-            if (useRangeUntil) KotlinBundle.message("inspection.replace.range.to.with.rangeUntil.display.name")
-            else KotlinBundle.message("inspection.replace.range.to.with.until.display.name")
-        holder.registerProblem(range, desc, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ReplaceWithUntilQuickFix(useRangeUntil))
+abstract class AbstractReplaceRangeToInspection : AbstractRangeInspection<Context>() {
+    data class Context(
+        val left: SmartPsiElementPointer<KtExpression>,
+        val right: SmartPsiElementPointer<KtExpression>,
+    )
+
+    abstract fun KaSession.isApplicableToRangeExpression(expression: KtExpression): Boolean
+    abstract fun KaSession.isApplicableArgumentType(type: KaType): Boolean
+
+    abstract val replacementPattern: String
+    abstract val problemDescription: @InspectionMessage String
+    abstract val quickFixDescription: @IntentionFamilyName String
+
+    override fun getProblemDescription(
+        range: RangeExpression,
+        context: Context
+    ): @InspectionMessage String = problemDescription
+
+    override fun isApplicableByPsi(range: RangeExpression): Boolean =
+        range.type == RangeKtExpressionType.RANGE_TO
+
+    override fun KaSession.prepareContext(range: RangeExpression): Context? {
+        if (!isApplicableToRangeExpression(range.expression)) return null
+
+        val (left, right) = range.arguments
+        val leftType = left?.expressionType ?: return null
+        val rightType = right?.expressionType ?: return null
+        if (!isApplicableArgumentType(leftType) || !isApplicableArgumentType(rightType)) return null
+
+        val rightUnfolded = unfoldMinusOne(KtPsiUtil.safeDeparenthesize(right)) ?: return null
+        return Context(
+            left.createSmartPointer(),
+            rightUnfolded.createSmartPointer(),
+        )
     }
 
-    private class ReplaceWithUntilQuickFix(private val useRangeUntil: Boolean) : LocalQuickFix {
-        override fun getName(): String =
-            if (useRangeUntil) KotlinBundle.message("replace.with.rangeUntil.quick.fix.text")
-            else KotlinBundle.message("replace.with.until.quick.fix.text")
+    private fun KaSession.unfoldMinusOne(expression: KtExpression): KtExpression? {
+        if (expression !is KtBinaryExpression || expression.operationToken != KtTokens.MINUS) return null
 
-        override fun getFamilyName() = name
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val element = descriptor.psiElement as KtExpression
-            applyFix(element, useRangeUntil)
-        }
+        val constantValue = expression.right?.evaluate() ?: return null
+        if ((constantValue.value as? Number)?.toInt() != 1) return null
+        return expression.left
     }
 
-    companion object {
-        fun applyFixIfApplicable(expression: KtExpression) {
-            val context = lazy { expression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL) }
-            val useRangeUntil = expression.isPossibleToUseRangeUntil(context)
-            if (isApplicable(expression, context, useRangeUntil)) {
-                applyFix(expression, useRangeUntil)
-            }
-        }
+    private class ReplaceRangeToQuickFix(
+        private val replacementPattern: String,
+        private val description: @IntentionFamilyName String,
+        private val context: Context,
+    ) : KotlinModCommandQuickFix<KtExpression>() {
+        override fun getFamilyName(): @IntentionFamilyName String = description
 
-        private fun isApplicable(expression: KtExpression, context: Lazy<BindingContext>, useRangeUntil: Boolean): Boolean {
-            val (left, right) = expression.getArguments() ?: return false
-            // `until` isn't available for floating point numbers
-            fun KtExpression.isRangeUntilOrUntilApplicable() = getType(context.value)
-                ?.let { it.isPrimitiveNumberType() && (useRangeUntil || !it.isDouble() && !it.isFloat()) }
-            return right?.deparenthesize()?.isMinusOne() == true &&
-                    left?.isRangeUntilOrUntilApplicable() == true && right.isRangeUntilOrUntilApplicable() == true
-        }
+        override fun applyFix(
+            project: Project,
+            element: KtExpression,
+            updater: ModPsiUpdater
+        ) {
+            val left = context.left.element ?: return
+            val right = context.right.element ?: return
 
-        private fun applyFix(element: KtExpression, useRangeUntil: Boolean) {
-            val args = element.getArguments() ?: return
-            val operator = if (useRangeUntil) "..<" else " until "
             element.replace(
-                KtPsiFactory(element.project).createExpressionByPattern(
-                    "$0$operator$1",
-                    args.first ?: return,
-                    (args.second?.deparenthesize() as? KtBinaryExpression)?.left ?: return
-                )
+                KtPsiFactory(project)
+                    .createExpressionByPattern(replacementPattern, left, right)
             )
         }
-
-        private fun KtExpression.isMinusOne(): Boolean {
-            if (this !is KtBinaryExpression) return false
-            if (operationToken != KtTokens.MINUS) return false
-
-            val constantValue = right?.constantValueOrNull()
-            val rightValue = (constantValue?.value as? Number)?.toInt() ?: return false
-            return rightValue == 1
-        }
     }
+
+    override fun createQuickFix(
+        range: RangeExpression,
+        context: Context
+    ): KotlinModCommandQuickFix<KtExpression> =
+        ReplaceRangeToQuickFix(
+            replacementPattern = replacementPattern,
+            description = quickFixDescription,
+            context = context,
+        )
 }
 
-/**
- * Tests: [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceRangeToWithUntil]
- */
-class ReplaceRangeToWithUntilInspection : AbstractReplaceRangeToWithRangeUntilInspection()
+class ReplaceRangeToWithUntilInspection : AbstractReplaceRangeToInspection() {
+    override fun KaSession.isApplicableToRangeExpression(expression: KtExpression): Boolean =
+        !expression.canUseRangeUntil()
 
-/**
- * Tests: [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceRangeToWithRangeUntil]
- */
-class ReplaceRangeToWithRangeUntilInspection : AbstractReplaceRangeToWithRangeUntilInspection()
+    override fun KaSession.isApplicableArgumentType(type: KaType): Boolean =
+        type.isIntegralType
 
-private fun KtExpression.deparenthesize() = KtPsiUtil.safeDeparenthesize(this)
+    override val replacementPattern: String
+        get() = "$0 until $1"
+
+    override val problemDescription: @InspectionMessage String
+        get() = KotlinBundle.message("inspection.replace.range.to.with.until.display.name")
+    override val quickFixDescription: @IntentionFamilyName String
+        get() = KotlinBundle.message("replace.with.until.quick.fix.text")
+}
+
+class ReplaceRangeToWithRangeUntilInspection : AbstractReplaceRangeToInspection() {
+    override fun KaSession.isApplicableToRangeExpression(expression: KtExpression): Boolean =
+        expression.canUseRangeUntil()
+
+    override fun KaSession.isApplicableArgumentType(type: KaType): Boolean =
+        type.isIntegralType || type.isFloatingPointType
+
+    override val replacementPattern: String
+        get() = "$0..<$1"
+
+    override val problemDescription: @InspectionMessage String
+        get() = KotlinBundle.message("inspection.replace.range.to.with.rangeUntil.display.name")
+    override val quickFixDescription: @IntentionFamilyName String
+        get() = KotlinBundle.message("replace.with.rangeUntil.quick.fix.text")
+}

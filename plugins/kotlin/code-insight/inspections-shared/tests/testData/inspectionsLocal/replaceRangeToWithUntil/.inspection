@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.ReplaceRangeToWithUntilInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceRangeToWithUntilInspection
