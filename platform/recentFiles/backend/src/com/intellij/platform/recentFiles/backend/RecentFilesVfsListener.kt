@@ -20,7 +20,7 @@ internal class RecentFilesVfsListener : AsyncFileListener {
     val filesWithChangedContents = collectFilesWithChangedContents(events)
 
     return object : AsyncFileListener.ChangeApplier {
-      override fun afterVfsChange() {
+      override fun beforeVfsChange() {
         for (project in ProjectManager.getInstance().openProjects) {
           val recentFilesModel = BackendRecentFilesModel.getInstance(project)
 
