@@ -21,6 +21,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
@@ -28,11 +29,13 @@ class SeTabDelegate private constructor(val project: Project,
                                         private val logLabel: String,
                                         private val providers: Map<SeProviderId, SeItemDataProvider>): Disposable {
   private val providersAndLimits = providers.values.associate { it.id to Int.MAX_VALUE }
+  val providersIdToName: Map<SeProviderId, @Nls String> = providers.mapValues { it.value.displayName }
 
-  fun getItems(params: SeParams): Flow<SeResultEvent> {
+  fun getItems(params: SeParams, disabledProviders: List<SeProviderId>? = null): Flow<SeResultEvent> {
     val accumulator = SeResultsAccumulator(providersAndLimits)
+    val filteredProviders = disabledProviders?.let { providers.filterKeys { it !in disabledProviders } } ?: providers
 
-    return providers.values.asFlow().flatMapMerge { provider ->
+    return filteredProviders.values.asFlow().flatMapMerge { provider ->
       provider.getItems(params).mapNotNull {
         SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${it.presentation.text}" }
         accumulator.add(it)
@@ -91,9 +94,12 @@ class SeTabDelegate private constructor(val project: Project,
         if (hasWildcard) SeRemoteApi.getInstance().getAvailableProviderIds()
         else allProviderIds - localProviders.keys.toSet()
 
-      val frontendProviders = remoteProviderIds.associateWith { providerId ->
-        SeFrontendItemDataProvider(project.projectId(), providerId, sessionRef, dataContextId)
-      }
+      val remoteProviderIdToName =
+        SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
+
+      val frontendProviders = remoteProviderIdToName.map { (providerId, name) ->
+        SeFrontendItemDataProvider(project.projectId(), providerId, name, sessionRef, dataContextId)
+      }.associateBy { it.id }
 
       val providers = frontendProviders + localProviders
       val delegate = SeTabDelegate(project, logLabel, providers)

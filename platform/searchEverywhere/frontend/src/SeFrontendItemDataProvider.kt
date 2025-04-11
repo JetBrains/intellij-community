@@ -15,10 +15,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 
 @Internal
 class SeFrontendItemDataProvider(private val projectId: ProjectId,
                                  override val id: SeProviderId,
+                                 override val displayName: @Nls String,
                                  private val sessionRef: DurableRef<SeSessionEntity>,
                                  private val dataContextId: DataContextId): SeItemDataProvider {
   override fun getItems(params: SeParams): Flow<SeItemData> {

@@ -15,7 +15,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
 
 class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
-  private val defaultProvider: SeItemsProvider get() = SeItemsProviderMock(delayMillis = 1000, delayStep = 5)
+  private val defaultProvider: SeItemsProvider get() = SeItemsProviderMock(delayMillis = 1000, delayStep = 5, displayName = "Default")
 
   fun `test empty`() {}
 

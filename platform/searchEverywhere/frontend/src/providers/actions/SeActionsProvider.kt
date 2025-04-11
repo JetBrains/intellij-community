@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager
 import com.intellij.ide.util.gotoByName.ActionAsyncProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -17,14 +18,16 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 
 
 @ApiStatus.Internal
 class SeActionsProvider(project: Project? = null, contextComponent: Component? = null, editor: Editor? = null): SeItemsProvider {
-  constructor(): this(null, null, null)
-
   override val id: String get() = "com.intellij.ActionsItemsProvider"
+  override val displayName: @Nls String
+    get() = IdeBundle.message("search.everywhere.group.name.actions")
+
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 

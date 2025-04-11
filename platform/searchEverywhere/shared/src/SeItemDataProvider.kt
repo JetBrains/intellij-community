@@ -5,10 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 
 @Internal
 interface SeItemDataProvider: Disposable {
   val id: SeProviderId
+  val displayName: @Nls String
 
   fun getItems(params: SeParams): Flow<SeItemData>
 

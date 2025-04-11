@@ -14,12 +14,16 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 
 @Internal
 class SeBackendItemDataProvider(override val id: SeProviderId,
                                 private val provider: SeItemsProvider,
                                 private val sessionRef: DurableRef<SeSessionEntity>
 ): SeItemDataProvider {
+  override val displayName: @Nls String
+    get() = provider.displayName
+
   override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
       provider.collectItems(params, object : SeItemsProvider.Collector {

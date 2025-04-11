@@ -15,6 +15,7 @@ import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int) : SeItem {
@@ -36,6 +37,8 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int) 
 @ApiStatus.Internal
 class SeTextItemsProvider(val project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>): SeItemsProvider {
   override val id: String get() = ID
+  override val displayName: @Nls String
+    get() = contributorWrapper.contributor.fullGroupName
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery

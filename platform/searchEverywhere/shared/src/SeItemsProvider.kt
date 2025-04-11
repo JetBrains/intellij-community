@@ -3,11 +3,13 @@ package com.intellij.platform.searchEverywhere
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface SeItemsProvider: Disposable {
   val id: String
+  val displayName: @Nls String
 
   fun interface Collector {
     suspend fun put(item: SeItem): Boolean
