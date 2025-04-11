@@ -12,10 +12,6 @@ class EditorConfigPsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProv
   override fun getFileType(): EditorConfigFileType = EditorConfigFileType
   override fun toString(): String = EditorConfigFileConstants.PSI_FILE_NAME
 
-  val hasValidRootDeclaration: Boolean
-    get() = this.childrenOfType<EditorConfigRootDeclaration>()
-      .any(EditorConfigRootDeclaration::isValidRootDeclaration)
-
   val sections: List<EditorConfigSection>
     get() = this.childrenOfType<EditorConfigSection>()
 }

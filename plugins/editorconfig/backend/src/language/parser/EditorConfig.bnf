@@ -42,9 +42,6 @@ root_declaration ::= root_declaration_key SEPARATOR root_declaration_list (COLON
   recoverWhile=not_next_entry
   mixin="org.editorconfig.language.psi.base.EditorConfigRootDeclarationBase"
   implements="com.intellij.psi.NavigatablePsiElement"
-  methods=[
-    isValidRootDeclaration
-  ]
 }
 
 private root_declaration_list ::= root_declaration_value (COMMA root_declaration_value)*

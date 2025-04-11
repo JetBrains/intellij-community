@@ -8,6 +8,7 @@ import org.editorconfig.language.codeinsight.quickfixes.EditorConfigReplaceWithV
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.psi.EditorConfigVisitor
+import org.editorconfig.language.util.isValidRootDeclaration
 
 class EditorConfigRootDeclarationCorrectnessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

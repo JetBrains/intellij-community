@@ -14,6 +14,4 @@ public interface EditorConfigRootDeclaration extends NavigatablePsiElement {
   @NotNull
   List<EditorConfigRootDeclarationValue> getRootDeclarationValueList();
 
-  boolean isValidRootDeclaration();
-
 }

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.psi.EditorConfigPsiFile
+import org.editorconfig.language.util.hasValidRootDeclaration
 
 object EditorConfigRootDeclarationCompletionProvider : EditorConfigCompletionProviderBase() {
   override val destination: PsiElementPattern.Capture<PsiElement> =

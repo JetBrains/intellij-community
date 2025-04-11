@@ -32,6 +32,7 @@ import org.editorconfig.language.services.EditorConfigServiceLoaded
 import org.editorconfig.language.services.EditorConfigServiceLoading
 import org.editorconfig.language.services.EditorConfigServiceResult
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
+import org.editorconfig.language.util.hasValidRootDeclaration
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 
