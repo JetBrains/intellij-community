@@ -5,7 +5,6 @@ import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.util.DelegatingProgressIndicator
-import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -14,7 +13,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
-import com.intellij.psi.codeStyle.NameUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -65,12 +63,6 @@ class SeTextItemsProvider(val project: Project, private val contributorWrapper: 
     return withContext(Dispatchers.EDT) {
       contributorWrapper.contributor.processSelectedItem (legacyItem, modifiers, searchText)
     }
-  }
-
-  private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
-    val namePattern = contributorWrapper.contributor.filterControlSymbols(rawPattern)
-    val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)
-    return ItemMatchers(matcher, null)
   }
 
   override fun dispose() {
