@@ -313,7 +313,7 @@ final class SyntaxGeneratedParserRuntime(
             (if ((modifiers and _AND_) != 0) "_AND_, " else "") +
             (if ((modifiers and _NOT_) != 0) "_NOT_, " else "") +
             (if ((modifiers and _UPPER_) != 0) "_UPPER_, " else ""))
-      return String.format("{%s:%s:%d, %d, %s%s, %s}", offset, position, level, errorReportedAt, mod, elementType, name)
+      return "{$offset:$position:$level, $errorReportedAt, $mod$elementType, $name}"
     }
   }
 
