@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers
 
-import kotlin.jvm.Synchronized
-
 /**
  * <p>A simple object pool which instantiates objects on-demand and keeps up to the given number of objects for later reuse.</p>
  * <p><b>Note:</b> the class is not thread-safe; use {@link Sync synchronized version} for concurrent access.</p>
@@ -49,18 +47,6 @@ open class LimitedPool<T>(private val myMaxCapacity: Int, private val myFactory:
         newCapacity <= myMaxCapacity -> myStorage = myStorage.copyOf(newCapacity)
         else -> myStorage = myStorage.copyOf(myMaxCapacity)
       }
-    }
-  }
-
-  class Sync<T>(maxCapacity: Int, factory: ObjectFactory<T>) : LimitedPool<T>(maxCapacity, factory) {
-    @Synchronized
-    override fun alloc(): T {
-      return super.alloc()
-    }
-
-    @Synchronized
-    override fun recycle(t: T) {
-      super.recycle(t)
     }
   }
 }
