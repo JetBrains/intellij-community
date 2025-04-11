@@ -5,14 +5,18 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeBytes
 import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
-import org.intellij.images.scientific.ScientificUtils.DEFAULT_IMAGE_FORMAT
-import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
+import org.intellij.images.scientific.utils.ScientificUtils.DEFAULT_IMAGE_FORMAT
+import org.intellij.images.scientific.utils.ScientificUtils.ORIGINAL_IMAGE_KEY
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
+import org.intellij.images.scientific.utils.launchBackground
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class GrayscaleImageAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -20,20 +24,27 @@ class GrayscaleImageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
-    val grayscaleImage = applyGrayscale(originalImage)
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    ImageIO.write(grayscaleImage, DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
-    imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
-    document.value = grayscaleImage
-    ScientificImageActionsCollector.logGrayscaleImageInvoked(this)
+
+    launchBackground {
+      val grayscaleImage = applyGrayscale(originalImage)
+      saveImageToFile(imageFile, grayscaleImage)
+      document.value = grayscaleImage
+      ScientificImageActionsCollector.logGrayscaleImageInvoked(this@GrayscaleImageAction)
+    }
   }
 
-  private fun applyGrayscale(image: BufferedImage): BufferedImage {
+  private suspend fun applyGrayscale(image: BufferedImage): BufferedImage = withContext(Dispatchers.IO) {
     val grayscaleImage = BufferedImage(image.width, image.height, BufferedImage.TYPE_BYTE_GRAY)
     val graphics = grayscaleImage.createGraphics()
     graphics.drawImage(image, 0, 0, null)
     graphics.dispose()
-    return grayscaleImage
+    grayscaleImage
+  }
+
+  private suspend fun saveImageToFile(imageFile: VirtualFile, grayscaleImage: BufferedImage) = withContext(Dispatchers.IO) {
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    ImageIO.write(grayscaleImage, DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
+    imageFile.writeBytes(byteArrayOutputStream.toByteArray())
   }
 }
