@@ -35,6 +35,11 @@ public final class JsonEditorOptions implements PersistentStateComponent<JsonEdi
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  @Override
+  public void noStateLoaded() {
+    loadState(new JsonEditorOptions());
+  }
+
   public static JsonEditorOptions getInstance() {
     return ApplicationManager.getApplication().getService(JsonEditorOptions.class);
   }
