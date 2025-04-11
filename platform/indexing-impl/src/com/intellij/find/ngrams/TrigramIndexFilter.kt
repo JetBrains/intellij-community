@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams
 
 import com.intellij.openapi.components.Service
@@ -13,6 +13,12 @@ import com.intellij.util.indexing.hints.BaseFileTypeInputFilter
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * 'Smart' file-filter for {@link TrigramIndex}: allows extending filtering patterns with {@link ExtensionPointName}.
+ * The current use of it is to exclude source files in libraries from trigram indexing.
+ *
+ * @see TrigramIndexFilterExcludeExtension
+ */
 @Service
 internal class TrigramIndexFilter: BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
   private companion object {
@@ -45,7 +51,7 @@ internal class TrigramIndexFilter: BaseFileTypeInputFilter(FileTypeSubstitutionS
   }
 
   override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {
-    val excludeExtensions = excludeExtensions.value.get(file.fileType) ?: return true
+    val excludeExtensions = excludeExtensions.value[file.fileType] ?: return true
     return !excludeExtensions.any { it.shouldExclude(file) }
   }
 }

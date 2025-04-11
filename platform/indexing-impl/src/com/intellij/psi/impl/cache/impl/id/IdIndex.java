@@ -109,12 +109,12 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   public @NotNull DataExternalizer<Integer> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
-      public void save(final @NotNull DataOutput out, final Integer value) throws IOException {
+      public void save(@NotNull DataOutput out, Integer value) throws IOException {
         out.write(value.intValue() & UsageSearchContext.ANY);
       }
 
       @Override
-      public Integer read(final @NotNull DataInput in) throws IOException {
+      public Integer read(@NotNull DataInput in) throws IOException {
         return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
       }
     };

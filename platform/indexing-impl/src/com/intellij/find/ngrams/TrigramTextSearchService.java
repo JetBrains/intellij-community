@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.find.TextSearchService;
@@ -25,6 +25,7 @@ public final class TrigramTextSearchService implements TextSearchService {
     IntSet keys = TrigramBuilder.getTrigrams(text);
     if (keys.isEmpty()) return TextSearchResult.NO_TRIGRAMS;
     return FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, f -> {
+      //TODO RC: checkCanceled() is not needed here, since all processors are already wrapped in cancellableProcessor()
       ProgressManager.checkCanceled();
       return processor.process(f);
     }, scope)
