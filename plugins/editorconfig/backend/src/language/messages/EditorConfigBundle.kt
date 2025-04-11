@@ -6,25 +6,23 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
-@NonNls
-private const val BUNDLE_NAME: String = "messages.EditorConfigBundle"
-
 object EditorConfigBundle {
-  internal val bundle: DynamicBundle = DynamicBundle(EditorConfigBundle::class.java, BUNDLE_NAME)
 
-  const val BUNDLE: String = BUNDLE_NAME
+  const val BUNDLE: @NonNls String = "messages.EditorConfigBundle"
 
-  @Nls
-  fun get(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): @Nls String = bundle.getMessage(key, *params)
+  internal val instance: DynamicBundle = DynamicBundle(EditorConfigBundle::class.java, BUNDLE)
 
-  @Nls
-  operator fun get(@PropertyKey(resourceBundle = BUNDLE) key: String): @Nls String = get(key, *emptyArray())
-
-  @JvmStatic
-  @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String): @Nls String = get(key)
+  operator fun get(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): @Nls String {
+    return instance.getMessage(key, *params)
+  }
 
   @JvmStatic
-  @Nls
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, param: String): @Nls String = get(key, param)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String): @Nls String {
+    return get(key)
+  }
+
+  @JvmStatic
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, param: String): @Nls String {
+    return get(key, param)
+  }
 }
