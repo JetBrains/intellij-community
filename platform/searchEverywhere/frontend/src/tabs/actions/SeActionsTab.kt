@@ -31,7 +31,7 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     val presentation = item.presentation
     if (presentation is SeActionItemPresentation ) {
-      presentation.changeStateIfSwitcher()
+      presentation.commonData.toggleStateIfSwitcher()
     }
 
     return delegate.itemSelected(item, modifiers, searchText)

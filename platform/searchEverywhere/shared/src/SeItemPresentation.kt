@@ -40,13 +40,9 @@ sealed interface SeActionItemPresentation : SeItemPresentation {
     private var _switcherState: Boolean? = null,
   ) {
     val switcherState: Boolean? get() = _switcherState
-    fun toggleSwitcherState() {
+    fun toggleStateIfSwitcher() {
       _switcherState = _switcherState?.not()
     }
-  }
-
-  fun changeStateIfSwitcher() {
-    commonData.toggleSwitcherState()
   }
 }
 
