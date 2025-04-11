@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
-import com.intellij.terminal.backend.util.BackendOutputTestFusActivity
 import com.intellij.terminal.backend.util.scrollDown
 import com.intellij.terminal.backend.util.write
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
@@ -177,6 +176,6 @@ internal class TerminalContentChangesTrackerTest {
 
   private fun createChangesTracker(textBuffer: TerminalTextBuffer): TerminalContentChangesTracker {
     val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
-    return TerminalContentChangesTracker(textBuffer, discardedHistoryTracker, BackendOutputTestFusActivity)
+    return TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
   }
 }

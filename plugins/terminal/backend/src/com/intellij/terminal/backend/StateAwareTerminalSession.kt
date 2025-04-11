@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
-import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -25,10 +24,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * So, actually it allows restoring the state of UI that requests the [getOutputFlow].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class StateAwareTerminalSession(
-  private val delegate: TerminalSession,
-  private val fusActivity: BackendOutputActivity,
-) : TerminalSession {
+internal class StateAwareTerminalSession(private val delegate: TerminalSession) : TerminalSession {
   private val sessionModel: TerminalSessionModel = TerminalSessionModelImpl()
   private val outputModel: TerminalOutputModel
   private val alternateBufferModel: TerminalOutputModel
@@ -87,7 +83,6 @@ internal class StateAwareTerminalSession(
         val styles = event.styles.map { it.toStyleRange() }
         val model = getCurrentOutputModel()
         model.updateContent(event.startLineLogicalIndex, event.text, styles)
-        fusActivity.eventCollected(event)
       }
       is TerminalCursorPositionChangedEvent -> {
         val model = getCurrentOutputModel()
