@@ -7,6 +7,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -46,9 +47,11 @@ class SeFrontendItemDataProvider(private val projectId: ProjectId,
     return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText)
   }
 
-  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
-    return SeRemoteApi.getInstance().getSearchScopesInfoForProvider(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
-  }
+  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? =
+    SeRemoteApi.getInstance().getSearchScopesInfoForProvider(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
+
+  override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
+    SeRemoteApi.getInstance().getTypeVisibilityStatesForProvider(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
 
   override fun dispose() {}
 

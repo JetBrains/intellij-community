@@ -21,6 +21,8 @@ class SeClassesTabFactory : SeTabFactory {
                                         dataContext,
                                         true)
 
-    return SeClassesTab(delegate, delegate.getSearchScopesInfos().firstOrNull())
+    return SeClassesTab(delegate,
+                        delegate.getSearchScopesInfos().firstOrNull(),
+                        delegate.getTypeVisibilityStates())
   }
 }

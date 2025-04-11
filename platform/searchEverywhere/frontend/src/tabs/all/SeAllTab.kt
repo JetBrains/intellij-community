@@ -9,8 +9,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.frontend.*
+import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
+import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.ui.IdeUICustomization
 import kotlinx.coroutines.flow.Flow
@@ -56,7 +60,7 @@ private class SeAllFilterEditor : SeFilterEditorBase<SeEverywhereFilter>(SeEvery
         override fun setEverywhere(state: Boolean) {
           filterValue = SeEverywhereFilter(state)
         }
-      });
+      })
     }
   }
 }

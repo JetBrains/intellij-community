@@ -15,6 +15,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -41,6 +42,10 @@ class SeTabDelegate private constructor(val project: Project,
 
   suspend fun getSearchScopesInfos(): List<SeSearchScopesInfo> {
     return providers.values.mapNotNull { it.getSearchScopesInfo() }
+  }
+
+  suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> {
+    return providers.values.flatMap { it.getTypeVisibilityStates() ?: emptyList() }
   }
 
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {

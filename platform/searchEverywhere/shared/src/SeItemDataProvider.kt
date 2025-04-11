@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.openapi.Disposable
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -16,4 +17,5 @@ interface SeItemDataProvider: Disposable {
                            searchText: String): Boolean
 
   suspend fun getSearchScopesInfo(): SeSearchScopesInfo?
+  suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>?
 }

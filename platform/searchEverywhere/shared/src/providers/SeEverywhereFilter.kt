@@ -3,12 +3,13 @@ package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
+import com.intellij.platform.searchEverywhere.SeFilterValue
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeEverywhereFilter(val isEverywhere: Boolean): SeFilter {
   override fun toState(): SeFilterState =
-    SeFilterState.Data(mapOf(KEY_IS_EVERYWHERE to isEverywhere.toString()))
+    SeFilterState.Data(mapOf(KEY_IS_EVERYWHERE to SeFilterValue.One(isEverywhere.toString())))
 
   companion object {
     const val KEY_IS_EVERYWHERE: String = "IS_EVERYWHERE"
@@ -16,7 +17,11 @@ class SeEverywhereFilter(val isEverywhere: Boolean): SeFilter {
     fun from(state: SeFilterState): SeEverywhereFilter {
       when (state) {
         is SeFilterState.Data -> {
-          return SeEverywhereFilter(state.map[KEY_IS_EVERYWHERE] == "true")
+          val isEverywhere = state.map[KEY_IS_EVERYWHERE]?.let {
+            it as? SeFilterValue.One
+          }?.value?.toBoolean() ?: false
+
+          return SeEverywhereFilter(isEverywhere)
         }
         SeFilterState.Empty -> return SeEverywhereFilter(false)
       }

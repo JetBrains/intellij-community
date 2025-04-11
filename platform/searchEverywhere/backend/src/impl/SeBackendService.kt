@@ -12,6 +12,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.DurableRef
@@ -135,8 +136,15 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   suspend fun getSearchScopesInfoForProvider(sessionRef: DurableRef<SeSessionEntity>,
                                              dataContextId: DataContextId,
                                              providerId: SeProviderId): SeSearchScopesInfo? {
-    val provider = getProviders(sessionRef, dataContextId)[providerId] ?: return null
-    return provider.getSearchScopesInfo()
+    val provider = getProviders(sessionRef, dataContextId)[providerId]
+    return provider?.getSearchScopesInfo()
+  }
+
+  suspend fun getTypeVisibilityStatesForProvider(sessionRef: DurableRef<SeSessionEntity>,
+                                                 dataContextId: DataContextId,
+                                                 providerId: SeProviderId): List<SeTypeVisibilityStatePresentation>? {
+    val provider = getProviders(sessionRef, dataContextId)[providerId]
+    return provider?.getTypeVisibilityStates()
   }
 
   companion object {

@@ -6,6 +6,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +43,9 @@ class SeBackendItemDataProvider(override val id: SeProviderId,
   override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
     return (provider as? SeSearchScopesProvider)?.getSearchScopesInfo()
   }
+
+  override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
+    (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates()
 
   override fun dispose() {
     SeLog.log(LIFE_CYCLE, "Backend provider ${id.value} disposed")

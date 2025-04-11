@@ -14,7 +14,9 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
@@ -32,12 +34,13 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   @Volatile
   private var scopeIdToScope: ConcurrentHashMap<String, ScopeDescriptor> = ConcurrentHashMap()
 
-  suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+  suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
     val filter = SeTargetsFilter.from(params.filter)
 
     applyScope(filter.selectedScopeId)
+    SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributorWrapper.contributor, filter.hiddenTypes)
 
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
@@ -115,4 +118,8 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
                               projectScopeId)
   }
 
+  fun <T> getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> {
+    val contributor = contributorWrapper.contributor
+    return SeTypeVisibilityStateProviderDelegate.getStates<T>(contributor)
+  }
 }
