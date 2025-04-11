@@ -3640,6 +3640,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/changeVisibility/internal/inInterfaceCompanion.kt");
             }
 
+            @TestMetadata("inTypeParameter.kt")
+            public void testInTypeParameter() throws Exception {
+                runTest("testData/intentions/changeVisibility/internal/inTypeParameter.kt");
+            }
+
             @TestMetadata("notForAnnotationClassPrimaryConstructor.kt")
             public void testNotForAnnotationClassPrimaryConstructor() throws Exception {
                 runTest("testData/intentions/changeVisibility/internal/notForAnnotationClassPrimaryConstructor.kt");

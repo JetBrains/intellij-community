@@ -7085,6 +7085,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/inInterfaceCompanion.kt");
             }
 
+            @TestMetadata("inTypeParameter.kt")
+            public void testInTypeParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/inTypeParameter.kt");
+            }
+
             @TestMetadata("notForAnnotationClassPrimaryConstructor.kt")
             public void testNotForAnnotationClassPrimaryConstructor() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/notForAnnotationClassPrimaryConstructor.kt");

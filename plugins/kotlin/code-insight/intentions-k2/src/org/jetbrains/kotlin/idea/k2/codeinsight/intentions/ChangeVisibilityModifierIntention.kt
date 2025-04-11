@@ -97,6 +97,7 @@ sealed class ChangeVisibilityModifierIntention(
     }
 
     override fun isApplicableByPsi(element: KtDeclaration): Boolean {
+        if (element is KtTypeParameter) return false
         val modifierList = element.modifierList
         if (modifierList?.hasModifier(modifier) == true) return false
         if (KtPsiUtil.isLocal((element as? KtPropertyAccessor)?.property ?: element)) return false
