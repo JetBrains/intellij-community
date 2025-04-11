@@ -173,6 +173,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     preprocessUsages(moveDescriptor.project, moveDescriptor.source, usages.toList())
 
                     val declarationsToMove = moveDescriptor.source.elements
+                    val listeners = declarationsToMove.associateWith { transaction.getElementListener(it) }
                     declarationsToMove.forEach { elementToMove ->
                         preprocessDeclaration(elementToMove)
                         preDeclarationMoved(elementToMove)
@@ -195,6 +196,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                         if (originalDeclaration != null && newDeclaration != null) {
                             postDeclarationMoved(original, new)
                         }
+                        listeners[original]?.elementMoved(new)
                     }
                     oldToNewMap.values
                 }

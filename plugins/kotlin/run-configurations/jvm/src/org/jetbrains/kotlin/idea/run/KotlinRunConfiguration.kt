@@ -212,18 +212,23 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
-        val fqNameBeingRenamed: String? = when (element) {
+        val fqNameBeingChanged: String? = when (element) {
             is KtDeclarationContainer -> getMainClassJvmName(element as KtDeclarationContainer)
             is PsiPackage -> element.qualifiedName
+            is KtNamedFunction -> {
+                if (PsiOnlyKotlinMainFunctionDetector.isMain(element)) {
+                    element.containingKtFile.javaFileFacadeFqName.asString()
+                } else null
+            }
             else -> null
         }
         val mainClassName = options.mainClassName
         if (mainClassName == null ||
-            mainClassName != fqNameBeingRenamed && !mainClassName.startsWith("$fqNameBeingRenamed.")
+            mainClassName != fqNameBeingChanged && !mainClassName.startsWith("$fqNameBeingChanged.")
         ) {
             return null
         }
-        if (element is KtDeclarationContainer) {
+        if (element is KtDeclarationContainer || element is KtNamedFunction) {
             return object : RefactoringElementAdapter() {
                 override fun undoElementMovedOrRenamed(newElement: PsiElement, oldQualifiedName: String) {
                     updateMainClassName(newElement)
@@ -234,7 +239,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 }
             }
         }
-        val nameSuffix = mainClassName.substring(fqNameBeingRenamed!!.length)
+        val nameSuffix = mainClassName.substring(fqNameBeingChanged!!.length)
         return object : RefactoringElementAdapter() {
             override fun elementRenamedOrMoved(newElement: PsiElement) {
                 updateMainClassNameWithSuffix(newElement, nameSuffix)
