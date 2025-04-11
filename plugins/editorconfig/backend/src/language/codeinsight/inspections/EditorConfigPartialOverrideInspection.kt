@@ -8,6 +8,7 @@ import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.util.headers.EditorConfigOverriddenHeaderSearcher
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
+import org.editorconfig.language.util.isValidGlob
 
 class EditorConfigPartialOverrideInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

@@ -60,9 +60,6 @@ header ::= L_BRACKET pattern_aux? R_BRACKET {
   recoverWhile=not_next_entry
   mixin="org.editorconfig.language.psi.base.EditorConfigHeaderBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
-  methods=[
-    isValidGlob
-  ]
 }
 
 fake pattern ::= {

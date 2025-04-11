@@ -13,6 +13,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.util.headers.EditorConfigHeaderOverrideSearcherBase
 import org.editorconfig.language.util.headers.EditorConfigHeaderOverrideSearcherBase.OverrideSearchResult
+import org.editorconfig.language.util.isValidGlob
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 import javax.swing.Icon

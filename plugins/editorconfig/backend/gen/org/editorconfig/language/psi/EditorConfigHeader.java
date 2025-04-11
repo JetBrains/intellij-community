@@ -11,6 +11,4 @@ public interface EditorConfigHeader extends EditorConfigHeaderElement {
   @Nullable
   EditorConfigPattern getPattern();
 
-  boolean isValidGlob();
-
 }

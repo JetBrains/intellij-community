@@ -13,6 +13,7 @@ import org.editorconfig.configmanagement.GlobVisibilityWorkaround
 import org.editorconfig.core.EditorConfigAutomatonBuilder.unionOptimized
 import org.editorconfig.language.psi.*
 import org.editorconfig.language.util.EditorConfigPresentationUtil
+import org.editorconfig.language.util.isValidGlob
 import java.io.File
 
 object EditorConfigAutomatonBuilder {

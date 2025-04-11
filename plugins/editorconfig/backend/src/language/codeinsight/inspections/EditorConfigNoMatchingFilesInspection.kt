@@ -12,6 +12,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
+import org.editorconfig.language.util.isValidGlob
 
 class EditorConfigNoMatchingFilesInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

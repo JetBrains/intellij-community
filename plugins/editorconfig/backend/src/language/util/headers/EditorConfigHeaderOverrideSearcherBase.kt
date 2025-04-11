@@ -6,6 +6,7 @@ import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
+import org.editorconfig.language.util.isValidGlob
 
 abstract class EditorConfigHeaderOverrideSearcherBase {
   fun findMatchingHeaders(header: EditorConfigHeader): List<OverrideSearchResult> {
