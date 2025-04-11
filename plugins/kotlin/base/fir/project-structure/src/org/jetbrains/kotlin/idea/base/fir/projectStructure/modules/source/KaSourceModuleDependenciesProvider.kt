@@ -179,7 +179,13 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
         when (scope) {
             DependencyScope.COMPILE, DependencyScope.PROVIDED -> {
                 to.addIfNotNull(module.toKaSourceModule(project, KaSourceModuleKind.PRODUCTION))
-                if (kind == KaSourceModuleKind.TEST) {
+
+                val dependsOnTest = when (kind) {
+                    KaSourceModuleKind.PRODUCTION -> productionOnTest
+                    KaSourceModuleKind.TEST -> true
+                }
+
+                if (dependsOnTest) {
                     to.addIfNotNull(module.toKaSourceModule(project, KaSourceModuleKind.TEST))
                 }
             }

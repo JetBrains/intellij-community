@@ -18,6 +18,7 @@ KaSourceModule:
   stableModuleName: <A>
   regularDependencies:
     KaSourceModule(B, production)
+    KaSourceModule(B, test)
   friendDependencies:
     <empty>
   dependsOnDependencies:
