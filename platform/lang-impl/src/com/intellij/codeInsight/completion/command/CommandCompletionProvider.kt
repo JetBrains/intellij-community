@@ -56,6 +56,10 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (!commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return
+    //not support injected fragment, it is not so obvious how to do it
+    //it can work with errors
+    if (parameters.editor is EditorWindow) return
+
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
