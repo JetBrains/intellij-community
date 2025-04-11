@@ -2330,6 +2330,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_ALL, 0);
       setSuspendContextAndCheckConsistency(suspendContext);
       forEachSafe(myDebugProcessListeners, it -> it.paused(suspendContext));
+      XDebuggerManagerImpl.getNotificationGroup()
+        .createNotification(JavaDebuggerBundle.message("evaluation.warning.cannot.evaluate.on.pause"), MessageType.WARNING)
+        .notify(getProject());
     }
   }
 
