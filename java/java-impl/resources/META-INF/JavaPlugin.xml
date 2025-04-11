@@ -2749,7 +2749,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
 
-    <trigramIndexFilterExcludeExtension implementation="com.intellij.java.impl.find.ngrams.JavaTrigramFilterExcludeExtension"/>
+    <trigramIndexFilterExcludeExtension implementation="com.intellij.java.JavaLibrarySourcesExcludingIndexFilterExtension"/>
 
     <registryKey key="java.completion.argument.live.template" defaultValue="false"
                  description="When completing a method call, start a live template with all arguments"/>

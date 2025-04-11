@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.hints
 
 import com.intellij.openapi.fileTypes.FileType
@@ -85,7 +85,12 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 @Experimental
 @OverrideOnly
 interface FileTypeIndexingHint {
+  /**
+   * @return {@link ThreeState#YES} if this filter accepts a file of given [fileType], {@link ThreeState#NO} if it doesn't, and
+   *         {@link ThreeState#UNSURE} if {@link #slowPathIfFileTypeHintUnsure()} must be called to find out
+   */
   fun acceptsFileTypeFastPath(fileType: FileType): ThreeState
 
+  /** @return true if a file should be included in indexing, false otherwise */
   fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean
 }

@@ -5,59 +5,45 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.util.SystemProperties
+import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.ThreeState
+import com.intellij.util.indexing.ExtensionCustomizableExcludes
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.IndexFilterExcludingExtension
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.hints.BaseFileTypeInputFilter
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
-import org.jetbrains.annotations.ApiStatus
 
 /**
- * 'Smart' file-filter for {@link TrigramIndex}: allows extending filtering patterns with {@link ExtensionPointName}.
+ * 'Smart' file-filter for {@link TrigramIndex}: allows extending filtering patterns with {@link IndexFilterExcludingExtension}.
  * The current use of it is to exclude source files in libraries from trigram indexing.
  *
- * @see TrigramIndexFilterExcludeExtension
+ * @see IndexFilterExcludingExtension
  */
-@Service
+@Service //RC: why is it a service? All other filters are just a regular POJO
 internal class TrigramIndexFilter: BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
   private companion object {
-    val excludeExtensionEPName = ExtensionPointName.create<TrigramIndexFilterExcludeExtension>("com.intellij.trigramIndexFilterExcludeExtension")
-    val enableExcludeExtensions = SystemProperties.getBooleanProperty("ide.trigram.index.uses.exclude.extensions", false)
+    val ENABLE_EXTENSION_EXCLUDES = getBooleanProperty("ide.trigram.index.uses.exclude.extensions", false)
+    val EXTENSION_EXCLUDES: ExtensionCustomizableExcludes = ExtensionCustomizableExcludes(
+      ExtensionPointName.create("com.intellij.trigramIndexFilterExcludeExtension")
+    )
   }
 
-  @Volatile
-  private var excludeExtensions = createExcludeExtensionsLazyValue()
+  override fun acceptFileType(fileType: FileType): ThreeState = when {
+    !TrigramIndex.isEnabled() -> ThreeState.NO
 
-  private fun createExcludeExtensionsLazyValue(): Lazy<Map<FileType, List<TrigramIndexFilterExcludeExtension>>> = lazy(LazyThreadSafetyMode.PUBLICATION) {
-    excludeExtensionEPName.extensionList.groupBy { it.getFileType() }
-  }
+    fileType.isBinary -> ThreeState.NO
 
-  fun installListener() = excludeExtensionEPName.addChangeListener({
-                                                                     excludeExtensions = createExcludeExtensionsLazyValue()
-                                                                   }, null)
+    fileType is PlainTextFileType -> ThreeState.fromBoolean(!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES)
 
+    ENABLE_EXTENSION_EXCLUDES && EXTENSION_EXCLUDES.hasExtensionForFileType(fileType) -> ThreeState.UNSURE //go through slowPathIfFileTypeHintUnsure()
 
-  override fun acceptFileType(fileType: FileType): ThreeState {
-    if (!TrigramIndex.isEnabled()) {
-      return ThreeState.NO
-    }
-    when {
-      fileType.isBinary -> return ThreeState.NO
-      fileType is PlainTextFileType -> return ThreeState.fromBoolean(!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES)
-      enableExcludeExtensions && excludeExtensions.value.containsKey(fileType) -> return ThreeState.UNSURE
-      else -> return ThreeState.YES
-    }
+    else -> ThreeState.YES
   }
 
   override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {
-    val excludeExtensions = excludeExtensions.value[file.fileType] ?: return true
-    return !excludeExtensions.any { it.shouldExclude(file) }
-  }
-}
+    check(ENABLE_EXTENSION_EXCLUDES){"ENABLE_EXTENSION_EXCLUDES must be true to reach this point"}
 
-@ApiStatus.Internal
-interface TrigramIndexFilterExcludeExtension {
-  fun getFileType(): FileType
-  fun shouldExclude(file: IndexedFile): Boolean
+    return !EXTENSION_EXCLUDES.shouldExcludeFile(file)
+  }
 }
