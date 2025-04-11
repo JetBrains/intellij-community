@@ -376,6 +376,10 @@
     </intentionAction>
 
     <!-- Services -->
+    <applicationService
+      serviceInterface="org.editorconfig.language.psi.EditorConfigReferenceSupport"
+      serviceImplementation="org.editorconfig.language.psi.reference.BackendEditorConfigReferenceSupport"
+    />
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigOptionDescriptorManager"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl"/>

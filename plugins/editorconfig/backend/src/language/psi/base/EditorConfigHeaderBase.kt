@@ -2,14 +2,17 @@
 package org.editorconfig.language.psi.base
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.codeinsight.inspections.hasNumerousWildcards
 import org.editorconfig.language.codeinsight.inspections.hasRedundancy
 import org.editorconfig.language.codeinsight.inspections.isEmptyHeader
 import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.reference.EditorConfigHeaderReference
+import org.editorconfig.language.psi.EditorConfigReferenceSupport
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.containsErrors
 
 abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElementBase(node), EditorConfigHeader {
@@ -24,6 +27,7 @@ abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElement
     return true
   }
 
-  final override fun getReference(): EditorConfigHeaderReference = EditorConfigHeaderReference(this)
-
+  final override fun getReference(): PsiReference {
+    return ApplicationManager.getApplication().service<EditorConfigReferenceSupport>().getReference(this)
+  }
 }

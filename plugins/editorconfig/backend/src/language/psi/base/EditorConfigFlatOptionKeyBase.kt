@@ -7,11 +7,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey
-import org.editorconfig.language.psi.reference.EditorConfigFlatOptionKeyReference
 
 abstract class EditorConfigFlatOptionKeyBase(node: ASTNode) : EditorConfigIdentifierElementBase(node), EditorConfigFlatOptionKey {
   final override fun setName(name: String): PsiElement = throw UnsupportedOperationException()
-  final override fun getReference(): EditorConfigFlatOptionKeyReference = EditorConfigFlatOptionKeyReference(this)
   final override fun getPresentation(): PresentationData = PresentationData(text, declarationSite, IconManager.getInstance().getPlatformIcon(
     PlatformIcons.Property), null)
 }

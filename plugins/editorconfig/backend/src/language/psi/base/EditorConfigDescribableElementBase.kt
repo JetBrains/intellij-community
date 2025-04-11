@@ -3,20 +3,13 @@ package org.editorconfig.language.psi.base
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.psi.PsiReference
 import org.editorconfig.language.psi.EditorConfigOption
+import org.editorconfig.language.psi.EditorConfigReferenceSupport
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
-import org.editorconfig.language.psi.reference.EditorConfigConstantReference
-import org.editorconfig.language.psi.reference.EditorConfigDeclarationReference
-import org.editorconfig.language.psi.reference.EditorConfigIdentifierReference
-import org.editorconfig.language.schema.descriptors.getDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
-import org.editorconfig.language.util.EditorConfigDescriptorUtil
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 
 abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsiElement(node), EditorConfigDescribableElement {
@@ -39,21 +32,7 @@ abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsi
 
 
   override fun getReference(): PsiReference? {
-    return when (val descriptor = getDescriptor(false)) {
-      is EditorConfigDeclarationDescriptor -> EditorConfigDeclarationReference(this)
-      is EditorConfigReferenceDescriptor -> EditorConfigIdentifierReference(this, descriptor.id)
-      is EditorConfigConstantDescriptor -> EditorConfigConstantReference(this)
-      is EditorConfigUnionDescriptor -> {
-        if (EditorConfigDescriptorUtil.isConstant(descriptor)) {
-          EditorConfigConstantReference(this)
-        }
-        else {
-          logger<EditorConfigDescribableElementBase>().warn("Got non-constant union")
-          null
-        }
-      }
-      else -> null
-    }
+    return ApplicationManager.getApplication().service<EditorConfigReferenceSupport>().getReference(this)
   }
 
   final override fun toString(): String = text
