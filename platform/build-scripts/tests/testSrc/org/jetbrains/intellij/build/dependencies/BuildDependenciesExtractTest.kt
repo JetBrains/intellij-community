@@ -10,6 +10,7 @@ import org.apache.commons.compress.archivers.zip.UnixStat
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
+import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.junit.Assert
@@ -24,16 +25,14 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
-import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 @RunWith(Parameterized::class)
-class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
+internal class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   companion object {
     @Parameterized.Parameters
     @JvmStatic
-    fun data(): Collection<Array<Any>> =
-      listOf(arrayOf(TestArchiveType.ZIP), arrayOf(TestArchiveType.TAR_GZ))
+    fun data(): Collection<Array<Any>> = listOf(arrayOf(TestArchiveType.ZIP), arrayOf(TestArchiveType.TAR_GZ))
 
     private val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
   }
@@ -132,18 +131,17 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
-  fun `extractFileToCacheLocation - symlink pointing to outside location`() {
+  fun `extractFileToCacheLocation - symlink pointing to outside location`(): Unit = runBlocking {
     val testArchive = createTestFile(archiveType, listOf(
       TestFile("dir/test.symlink", symlinkTarget = "../dir/.///../../test.txt"),
       TestFile("dir/test.symlink2"),
     ))
 
-    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
+    val root = extractFileToCacheLocation(BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     // will be skipped
-    Assert.assertFalse(root.resolve("dir/test.symlink").exists())
-    Assert.assertTrue(root.resolve("dir/test.symlink2").exists())
+    assertThat(root.resolve("dir/test.symlink")).doesNotExist()
+    assertThat(root.resolve("dir/test.symlink2")).exists()
   }
 
   @Test
@@ -160,10 +158,10 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
 
     if (isWindows) {
       // On Windows directory symlinks are not supported
-      Assert.assertFalse(target.exists())
+      assertThat(target).doesNotExist()
     }
     else {
-      Assert.assertTrue(target.exists())
+      assertThat(target).exists()
     }
   }
 
@@ -171,8 +169,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   fun `extractFileToCacheLocation - strip root with different leading components`() {
     val testArchive = createTestFile(archiveType, listOf(TestFile("top-level1/test1.txt"), TestFile("top-level2/test2.txt")))
 
-    BuildDependenciesDownloader.extractFileToCacheLocation(
-      BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
+    BuildDependenciesDownloader.extractFileToCacheLocation(BuildDependenciesManualRunOnly.communityRootFromWorkingDirectory, testArchive)
 
     thrown.expectMessage(object : BaseMatcher<String>() {
       val prefix = "should start with previously found prefix"
@@ -299,10 +296,10 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   private fun createTestFile(type: TestArchiveType, files: List<TestFile>): Path {
-    val archiveFile = temp.newFile().also { Files.delete(it.toPath()) }
+    val archiveFile = temp.newFile().also { Files.delete(it.toPath()) }.toPath()
 
     when (type) {
-      TestArchiveType.TAR_GZ -> TarArchiveOutputStream(GzipCompressorOutputStream(archiveFile.outputStream())).use { tarStream ->
+      TestArchiveType.TAR_GZ -> TarArchiveOutputStream(GzipCompressorOutputStream(Files.newOutputStream(archiveFile))).use { tarStream ->
         val createdDirs = mutableSetOf<Path>()
 
         for (file in files) {
@@ -334,7 +331,7 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
         }
       }
 
-      TestArchiveType.ZIP -> ZipArchiveOutputStream(archiveFile.outputStream()).use { zipStream ->
+      TestArchiveType.ZIP -> ZipArchiveOutputStream(archiveFile).use { zipStream ->
         val createdDirs = mutableSetOf<Path>()
 
         for (file in files) {
@@ -372,12 +369,17 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
       }
     }.let {  } // exhaustive when
 
-    return archiveFile.toPath()
-  }
-
-  private data class TestFile(val path: String, val symlinkTarget: String? = null, val executable: Boolean = false)
-  enum class TestArchiveType {
-    ZIP,
-    TAR_GZ,
+    return archiveFile
   }
 }
+
+internal enum class TestArchiveType {
+  ZIP,
+  TAR_GZ,
+}
+
+private data class TestFile(
+  @JvmField val path: String,
+  @JvmField val symlinkTarget: String? = null,
+  @JvmField val executable: Boolean = false,
+)

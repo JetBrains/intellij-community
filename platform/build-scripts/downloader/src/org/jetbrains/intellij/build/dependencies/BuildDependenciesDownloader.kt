@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
@@ -9,6 +10,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.StripedMutex
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.cleanUpIfRequired
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.cleanDirectory
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractTarBz2
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractTarGz
@@ -18,6 +20,7 @@ import org.jetbrains.intellij.build.downloadFileToCacheLocationSync
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.Long
 import java.math.BigInteger
 import java.net.URI
 import java.nio.ByteBuffer
@@ -37,6 +40,24 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
+import kotlin.Array
+import kotlin.Boolean
+import kotlin.ByteArray
+import kotlin.Deprecated
+import kotlin.DeprecationLevel
+import kotlin.IllegalArgumentException
+import kotlin.IllegalStateException
+import kotlin.Int
+import kotlin.LazyThreadSafetyMode
+import kotlin.String
+import kotlin.Suppress
+import kotlin.Throwable
+import kotlin.check
+import kotlin.emptyArray
+import kotlin.error
+import kotlin.getValue
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.lazy
 
 private val LOG = Logger.getLogger(BuildDependenciesDownloader::class.java.name)
 private val fileLocks = StripedMutex(1024)
@@ -165,6 +186,33 @@ object BuildDependenciesDownloader {
     override fun toString(): String = "HttpStatusException(status=${statusCode}, url=${url}, message=${message})"
   }
 }
+
+suspend fun extractFileToCacheLocation(
+  communityRoot: BuildDependenciesCommunityRoot,
+  archiveFile: Path,
+): Path {
+  cleanUpIfRequired(communityRoot)
+
+  val archivePath = archiveFile.invariantSeparatorsPathString
+  val archivePathHash = Hashing.xxh3_64().hashBytesToLong(archivePath.encodeToByteArray())
+
+  fileLocks.getLockByHash(archivePathHash).withLock {
+    val cachePath = getDownloadCachePath(communityRoot)
+
+    val hasher = Hashing.xxh3_64().hashStream()
+      .putLong(archivePathHash)
+      .putInt(archivePath.length)
+      .putInt(EXTRACT_CODE_VERSION)
+
+    val dirName = "${archiveFile.fileName}.${Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)}.d"
+    val targetDir = cachePath.resolve(dirName)
+    val flagFile = cachePath.resolve("$dirName.flag")
+    extractFileWithFlagFileLocation(archiveFile = archiveFile, targetDirectory = targetDir, flagFile = flagFile, options = EMPTY_OPTIONS)
+    return targetDir
+  }
+}
+
+private val EMPTY_OPTIONS = emptyArray<BuildDependenciesExtractOptions>()
 
 private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
   return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
