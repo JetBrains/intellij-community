@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -112,14 +112,6 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
   public void setDetailView(DetailView detailView) {
     myMasterBreakpointPanel.setDetailView(detailView);
-  }
-
-  /**
-   * @deprecated use {@link XLightBreakpointPropertiesPanel#XLightBreakpointPropertiesPanel(Project, XBreakpointManager, XBreakpointBase, boolean, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint, boolean showAllOptions) {
-    this(project, breakpointManager, breakpoint, showAllOptions, false);
   }
 
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
