@@ -82,11 +82,11 @@ object BitUtil {
 
   @JvmStatic
   fun assertOneBitMask(mask: Int) {
-    assert((mask and mask - 1) == 0) { invalidMaskError(mask.toLong()) }
+    require((mask and mask - 1) == 0) { invalidMaskError(mask.toLong()) }
   }
 
   private fun assertOneBitMask(mask: Long) {
-    assert((mask and mask - 1) == 0L) { invalidMaskError(mask) }
+    require((mask and mask - 1) == 0L) { invalidMaskError(mask) }
   }
 
   private fun invalidMaskError(mask: Long): String = "Mask must have only one bit set, but got: $mask"

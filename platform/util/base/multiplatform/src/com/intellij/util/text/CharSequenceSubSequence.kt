@@ -59,7 +59,7 @@ open class CharSequenceSubSequence(
   }
 
   override fun getChars(start: Int, end: Int, dest: CharArray, destPos: Int) {
-    assert(end - start <= this.end - this.start)
+    require(end - start <= this.end - this.start)
     baseSequence.getChars(dest, start + this.start, destPos, end - start)
   }
 

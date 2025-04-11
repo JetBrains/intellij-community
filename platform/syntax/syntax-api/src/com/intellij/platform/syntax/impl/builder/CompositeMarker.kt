@@ -24,7 +24,7 @@ internal class CompositeMarker(
       val startOffset = getStartOffset() - builder.startOffset
       val endOffset = getEndOffset() - builder.startOffset
       val text = originalText.subSequence(startOffset, endOffset)
-      require(text.length == endOffset - startOffset)
+      check(text.length == endOffset - startOffset)
       return text
     }
 

@@ -27,10 +27,10 @@ internal class TokenSequence(
     logger: Logger?,
   ) {
     val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
-    require(tokenCount == sequence.tokenCount)
+    check(tokenCount == sequence.tokenCount)
     for (j in 0..tokenCount) {
       if (sequence.lexStarts[j] != lexStarts[j] || sequence.lexTypes[j] !== lexTypes[j]) {
-        require(false)
+        check(false)
       }
     }
   }
@@ -224,7 +224,7 @@ private fun CharSequence.shortenTextWithEllipsis(
   }
 
   val prefixLength = maxLength - suffixLength - symbol.length
-  require(prefixLength >= 0)
+  check(prefixLength >= 0)
   return substring(0, prefixLength) + symbol + substring(textLength - suffixLength)
 }
 

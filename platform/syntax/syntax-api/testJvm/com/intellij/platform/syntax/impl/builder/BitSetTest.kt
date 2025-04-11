@@ -2,15 +2,16 @@
 package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.impl.util.MutableBitSet
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 internal class BitSetTest {
   @Test
   fun `test empty`() {
     val set = MutableBitSet()
-    assert(!set.contains(0))
-    assert(!set.contains(1))
-    assert(!set.contains(2))
+    assertTrue(!set.contains(0))
+    assertTrue(!set.contains(1))
+    assertTrue(!set.contains(2))
   }
 
   @Test
@@ -19,14 +20,14 @@ internal class BitSetTest {
       try {
         val set = MutableBitSet()
         set.add(i)
-        assert(set.contains(i))
-        assert(!set.contains(i + 1))
+        assertTrue(set.contains(i))
+        assertTrue(!set.contains(i + 1))
         if (i > 0) {
-          assert(!set.contains(i - 1))
+          assertTrue(!set.contains(i - 1))
         }
 
         set.remove(i)
-        assert(!set.contains(i))
+        assertTrue(!set.contains(i))
       }
       catch (e: Throwable) {
         throw RuntimeException("Failed at $i", e)
@@ -42,12 +43,12 @@ internal class BitSetTest {
     }
 
     for (i in 0..1000) {
-      assert(set.contains(i)) { "Not contains $i"}
+      assertTrue(set.contains(i), "Not contains $i")
     }
 
-    assert(!set.contains(1001))
+    assertTrue(!set.contains(1001))
 
     set.remove(500)
-    assert(!set.contains(500))
+    assertTrue(!set.contains(500))
   }
 }

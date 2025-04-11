@@ -414,7 +414,7 @@ internal class ParsingTreeBuilder(
     }
 
     override fun copyTokenTypesToArray(dest: Array<in SyntaxElementType>, srcStart: Int, destStart: Int, length: Int) {
-      myLexTypes.copyInto(dest, destStart,  srcStart, srcStart + length)
+      myLexTypes.copyInto(dest, destStart, srcStart, srcStart + length)
     }
   }
 
@@ -435,7 +435,7 @@ internal class ParsingTreeBuilder(
       val item = starting ?: pool.get(-id)
 
       val binder = if (item is ErrorMarker) {
-        require(!done)
+        check(!done)
         WhitespacesBinders.defaultRightBinder()
       }
       else {
