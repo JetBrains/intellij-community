@@ -26,7 +26,9 @@ data class Interval<out K, out T>(
   }
 
   init {
-    require(from == -1L || to == -1L || from <= to) { "Interval to <= from: $to <= $from" }
+    require(from == -1L || to == -1L || from <= to) {
+      "Interval to <= from: $to <= $from"
+    }
   }
 
   operator fun contains(other: Interval<Long, *>): Boolean {
