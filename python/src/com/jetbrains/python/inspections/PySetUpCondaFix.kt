@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
@@ -66,7 +67,7 @@ internal class PySetUpCondaFix : LocalQuickFix {
     }
   }
 
-  private fun setUpCondaInterpreter(project: Project, condaPath: FullPathOnTarget) {
+  private fun setUpCondaInterpreter(project: Project, condaPath: Path) {
     runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.conda.environment.sentence")) {
       reportRawProgress { reporter ->
         createCondaSdk(project, condaPath, reporter)?.let { sdk ->
@@ -82,18 +83,18 @@ internal class PySetUpCondaFix : LocalQuickFix {
 
   private suspend fun createCondaSdk(
     project: Project,
-    condaPath: FullPathOnTarget,
+    condaPath: Path,
     reporter: RawProgressReporter,
   ): Sdk? {
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
     val maxCondaSupportedLanguage = condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
     val envRequest = NewCondaEnvRequest.EmptyNamedEnv(maxCondaSupportedLanguage, project.name)
-    return PyCondaCommand(condaPath, null, project)
+    return PyCondaCommand(FullPathOnTarget(condaPath.toString()), null, project)
       .createCondaSdkAlongWithNewEnv(envRequest, Dispatchers.EDT, existingSdks.toList(), project, reporter)
       .reportError(project, "Failed to set up conda sdk", "conda.sdk.setup.failed")
   }
 
-  private fun installConda(project: Project): FullPathOnTarget? {
+  private fun installConda(project: Project): Path? {
     runCatching { installLatest(project, Product.Miniconda) }
       .reportError(project, "Failed to install conda", "conda.failed.to.install")
     return getCondaPath(project)
@@ -107,15 +108,15 @@ internal class PySetUpCondaFix : LocalQuickFix {
     return getOrNull()
   }
 
-  private fun getCondaPath(project: Project): FullPathOnTarget? {
+  private fun getCondaPath(project: Project): Path? {
     loadLocalPythonCondaPath()?.let {
-      return FullPathOnTarget(it.toString())
+      return it
     }
     val path = runWithModalProgressBlocking(project, PyBundle.message("python.add.sdk.conda.detecting")) {
-      suggestCondaPath()
+      suggestCondaPath()?.toNioPathOrNull()
     }
-    path?.let {
-      saveLocalPythonCondaPath(Path.of(path))
+    if (path != null) {
+      saveLocalPythonCondaPath(path)
     }
     return path
   }
