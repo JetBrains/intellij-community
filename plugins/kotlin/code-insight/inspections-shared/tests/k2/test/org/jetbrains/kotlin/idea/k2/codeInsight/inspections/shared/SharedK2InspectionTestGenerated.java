@@ -441,6 +441,52 @@ public abstract class SharedK2InspectionTestGenerated extends AbstractSharedK2In
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/replaceRangeToWithRangeUntil")
+        public abstract static class ReplaceRangeToWithRangeUntil extends AbstractSharedK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/replaceRangeToWithRangeUntil/inspectionData")
+            public static class InspectionData extends AbstractSharedK2InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/replaceRangeToWithRangeUntil/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/replaceRangeToWithUntil")
+        public abstract static class ReplaceRangeToWithUntil extends AbstractSharedK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/replaceRangeToWithUntil/inspectionData")
+            public static class InspectionData extends AbstractSharedK2InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/replaceRangeToWithUntil/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspections/suspiciousEqualsCombination")
         public abstract static class SuspiciousEqualsCombination extends AbstractSharedK2InspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
