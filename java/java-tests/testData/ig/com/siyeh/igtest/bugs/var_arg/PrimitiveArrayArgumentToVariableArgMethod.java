@@ -30,6 +30,8 @@ public class PrimitiveArrayArgumentToVariableArgMethod
     void foo(byte[] bs) {
         final X<byte[]> x = new X<byte[]>();
         x.method(bs);
+      final X<Object> y = new X<Object>();
+      y.method(<warning descr="Confusing primitive array argument to varargs method">bs</warning>);
     }
 
     void m() {
