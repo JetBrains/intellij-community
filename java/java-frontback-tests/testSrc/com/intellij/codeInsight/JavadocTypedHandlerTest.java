@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.editorActions.AbstractBasicJavadocTypedHandler;
+import com.intellij.codeInsight.editorActions.JavadocTypedHandler;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class AbstractBasicJavadocTypedHandlerTest {
+public abstract class JavadocTypedHandlerTest {
 
   private static final String CARET_MARKER = "<caret>";
   
@@ -45,7 +45,7 @@ public abstract class AbstractBasicJavadocTypedHandlerTest {
     int offset = text.indexOf(CARET_MARKER);
     normalized.append(text, 0, offset);
     normalized.append(text.substring(offset + CARET_MARKER.length()));
-    CharSequence actual = AbstractBasicJavadocTypedHandler.getTagName(normalized.toString(), offset);
+    CharSequence actual = JavadocTypedHandler.getTagName(normalized.toString(), offset);
     assertEquals(expected, actual);
   }
 }

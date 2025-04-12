@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.tree.ParentAwareTokenSet;
+import com.intellij.xml.util.BasicHtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,15 +21,12 @@ import static com.intellij.util.text.CharArrayUtil.containsOnlyWhiteSpaces;
 /**
  * Advises typing in javadoc if necessary.
  */
-public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDelegate {
+public final class JavadocTypedHandler extends TypedHandlerDelegate {
 
   private static final char START_TAG_SYMBOL = '<';
   private static final char CLOSE_TAG_SYMBOL = '>';
   private static final char SLASH = '/';
   private static final String COMMENT_PREFIX = "!--";
-
-  protected AbstractBasicJavadocTypedHandler() {
-  }
 
   @Override
   public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -40,7 +38,9 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
     return Result.CONTINUE;
   }
 
-  public abstract boolean isJavaFile(@Nullable PsiFile file);
+  private static boolean isJavaFile(@Nullable PsiFile file) {
+    return file instanceof AbstractBasicJavaFile;
+  }
 
   private static void adjustStartIndent(char c, @NotNull Editor editor, @NotNull PsiFile file) {
     if (c == '@') {
@@ -79,7 +79,7 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
    * @param file    current file
    * @return {@code true} if closing tag is inserted; {@code false} otherwise
    */
-  private boolean insertClosingTagIfNecessary(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  private static boolean insertClosingTagIfNecessary(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (c != CLOSE_TAG_SYMBOL || !CodeInsightSettings.getInstance().JAVADOC_GENERATE_CLOSING_TAG) {
       return false;
     }
@@ -95,15 +95,13 @@ public abstract class AbstractBasicJavadocTypedHandler extends TypedHandlerDeleg
     int offset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     String tagName = getTagName(document.getText(), offset);
-    if (tagName == null || isSingleHtmlTag(tagName) || tagName.startsWith(COMMENT_PREFIX)) {
+    if (tagName == null || BasicHtmlUtil.isSingleHtmlTag(tagName, false) || tagName.startsWith(COMMENT_PREFIX)) {
       return false;
     }
 
     document.insertString(offset, String.valueOf(START_TAG_SYMBOL) + SLASH + tagName + CLOSE_TAG_SYMBOL);
     return true;
   }
-
-  public abstract boolean isSingleHtmlTag(@NotNull String tagName);
 
   /**
    * Tries to derive start tag name assuming that given offset points to position just after {@code '>'} symbol.
