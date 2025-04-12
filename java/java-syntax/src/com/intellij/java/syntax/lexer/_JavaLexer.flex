@@ -6,7 +6,7 @@ import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.util.lexer.FlexLexer
 import com.intellij.pom.java.LanguageLevel
 
-@SuppressWarnings("ALL")
+@Suppress("ALL")
 %%
 
 %{

@@ -4,7 +4,7 @@ import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.util.lexer.FlexLexer
 
-@SuppressWarnings("ALL")
+@Suppress("ALL")
 %%
 
 %{
