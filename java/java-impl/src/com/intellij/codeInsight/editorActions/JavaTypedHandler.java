@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.completion.command.CommandCompletionFactoryKt;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
-import com.intellij.java.JavaBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -52,7 +52,7 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
   @Override
   protected @NotNull Result processWhileAndIfStatementBody(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     CommandProcessor.getInstance().executeCommand(project, () -> new JavaSmartEnterProcessor().process(project, editor, file),
-                                                  JavaBundle.message("command.name.insert.block.statement"), null);
+                                                  JavaPsiBundle.message("command.name.insert.block.statement"), null);
     return Result.STOP;
   }
 
