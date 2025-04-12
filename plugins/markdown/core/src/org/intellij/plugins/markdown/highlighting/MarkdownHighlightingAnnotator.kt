@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -17,7 +18,9 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
-class MarkdownHighlightingAnnotator : Annotator {
+internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
+  private val syntaxHighlighter = MarkdownSyntaxHighlighter()
+
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     when (PsiUtilCore.getElementType(element)) {
       MarkdownTokenTypes.EMPH -> annotateBasedOnParent(element, holder) {
@@ -127,9 +130,5 @@ class MarkdownHighlightingAnnotator : Annotator {
     mergedRanges.add(currentRange)
 
     return mergedRanges
-  }
-
-  companion object {
-    private val syntaxHighlighter = MarkdownSyntaxHighlighter()
   }
 }
