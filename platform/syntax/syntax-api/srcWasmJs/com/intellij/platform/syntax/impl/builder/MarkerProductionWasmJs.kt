@@ -3,12 +3,9 @@ package com.intellij.platform.syntax.impl.builder
 
 import fleet.util.multiplatform.Actual
 
+/**
+ * Wasm implementation of [makeStackTraceRelative]
+ */
 @Suppress("unused")
-@Actual("doHeavyCheckImpl")
-internal fun doHeavyCheckImplWasmJs(
-  production: MarkerProduction,
-  doneMarker: CompositeMarker,
-  anchorBefore: CompositeMarker?,
-) {
-  // TODO no check here yet
-}
+@Actual("makeStackTraceRelative")
+internal fun makeStackTraceRelativeWasmJs(th: Throwable, relativeTo: Throwable): Throwable {

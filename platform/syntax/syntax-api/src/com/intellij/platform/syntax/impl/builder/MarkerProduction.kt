@@ -11,15 +11,15 @@ import kotlin.math.max
 
 internal class MarkerProduction(
   private val myPool: MarkerPool,
-  val myOptionalData: MarkerOptionalData,
-  val logger: Logger,
-  val production: IntArrayList = IntArrayList(256)
+  private val myOptionalData: MarkerOptionalData,
+  private val logger: Logger,
+  private val production: IntArrayList = IntArrayList(256)
 ) : IntList by production {
   fun addBefore(marker: ProductionMarker, anchor: ProductionMarker) {
     production.add(indexOf(anchor), marker.markerId)
   }
 
-  fun indexOf(marker: ProductionMarker): Int {
+  private fun indexOf(marker: ProductionMarker): Int {
     var idx = findLinearly(marker.markerId)
     if (idx < 0) {
       for (i in findMarkerAtLexeme(marker.getStartTokenIndex())..<production.size) {
@@ -133,7 +133,34 @@ internal class MarkerProduction(
   }
 
   fun doHeavyChecksOnMarkerDone(doneMarker: CompositeMarker, anchorBefore: CompositeMarker?) {
-    doHeavyCheckImpl(this@MarkerProduction, doneMarker, anchorBefore)
+    val idx = indexOf(doneMarker)
+
+    var endIdx = production.size
+    if (anchorBefore != null) {
+      endIdx = indexOf(anchorBefore)
+      if (idx > endIdx) {
+        logger.error("'Before' marker precedes this one.")
+      }
+    }
+
+    for (i in endIdx - 1 downTo idx + 1) {
+      val item = getStartMarkerAt(i)
+      if (item is CompositeMarker) {
+        val otherMarker = item
+        if (!otherMarker.isDone) {
+          val debugAllocThis = myOptionalData.getAllocationTrace(doneMarker)
+          val currentTrace = Throwable()
+          if (debugAllocThis != null) {
+            makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace()
+          }
+          val debugAllocOther = myOptionalData.getAllocationTrace(otherMarker)
+          if (debugAllocOther != null) {
+            makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace()
+          }
+          logger.error("Another not done marker added after this one. Must be done before this.")
+        }
+      }
+    }
   }
 
   fun assertNoDoneMarkerAround(pivot: ProductionMarker) {
@@ -151,6 +178,9 @@ internal class MarkerProduction(
 }
 
 private const val LINEAR_SEARCH_LIMIT = 20
+
+@Suppress("unused")
+internal fun makeStackTraceRelative(th: Throwable, relativeTo: Throwable): Throwable = linkToActual()
 
 /**
  * Performs binary search on the range [fromIndex, toIndex)
@@ -173,9 +203,3 @@ private inline fun binSearch(fromIndex: Int, toIndex: Int, indexComparator: (Int
   return -(low + 1)
 }
 
-@Suppress("unused")
-internal fun doHeavyCheckImpl(
-  production: MarkerProduction,
-  doneMarker: CompositeMarker,
-  anchorBefore: CompositeMarker?,
-): Unit = linkToActual()

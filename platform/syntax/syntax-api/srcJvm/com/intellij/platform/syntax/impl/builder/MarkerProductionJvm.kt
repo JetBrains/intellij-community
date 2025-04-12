@@ -4,51 +4,12 @@ package com.intellij.platform.syntax.impl.builder
 import fleet.util.multiplatform.Actual
 import kotlin.math.min
 
+/**
+ * JVM implementation of [makeStackTraceRelative]
+ */
 @Suppress("unused")
-@Actual("doHeavyCheckImpl")
-internal fun doHeavyCheckImplJvm(
-  production: MarkerProduction,
-  doneMarker: CompositeMarker,
-  anchorBefore: CompositeMarker?,
-) {
-  production.doHeavyCheckImpl_(doneMarker, anchorBefore)
-}
-
-private fun MarkerProduction.doHeavyCheckImpl_(
-  doneMarker: CompositeMarker,
-  anchorBefore: CompositeMarker?,
-) {
-  val idx = indexOf(doneMarker)
-
-  var endIdx = production.size
-  if (anchorBefore != null) {
-    endIdx = indexOf(anchorBefore)
-    if (idx > endIdx) {
-      logger.error("'Before' marker precedes this one.")
-    }
-  }
-
-  for (i in endIdx - 1 downTo idx + 1) {
-    val item = getStartMarkerAt(i)
-    if (item is CompositeMarker) {
-      val otherMarker = item
-      if (!otherMarker.isDone) {
-        val debugAllocThis = myOptionalData.getAllocationTrace(doneMarker)
-        val currentTrace = Throwable()
-        if (debugAllocThis != null) {
-          makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace(System.err)
-        }
-        val debugAllocOther = myOptionalData.getAllocationTrace(otherMarker)
-        if (debugAllocOther != null) {
-          makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace(System.err)
-        }
-        logger.error("Another not done marker added after this one. Must be done before this.")
-      }
-    }
-  }
-}
-
-private fun makeStackTraceRelative(th: Throwable, relativeTo: Throwable): Throwable {
+@Actual("makeStackTraceRelative")
+internal fun makeStackTraceRelativeJvm(th: Throwable, relativeTo: Throwable): Throwable {
   val trace = th.stackTrace
   val rootTrace = relativeTo.stackTrace
   var i = 0
