@@ -510,11 +510,6 @@
       <reference ref="Git.Revert.Abort"/>
     </group>
 
-    <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
-      <add-to-group group-id="MainToolbarQuickActionsRaw" relative-to-action="MainToolbarQuickActions.Run" anchor="before"/>
-      <group id="MainToolbarQuickActions.VCS" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false" popup="false"/>
-    </group>
-
     <group id="Git.Hosting.Open.In.Browser.Group" popup="false">
       <add-to-group group-id="RevealGroup"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
@@ -852,11 +847,6 @@
 
     <postStartupActivity implementation="git4idea.commit.GitMergeCommitMessageActivity"/>
     <vcs.defaultCommitMessagePolicy implementation="git4idea.commit.GitMergeCommitMessagePolicy"/>
-
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdatePushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
 
     <changesViewContent tabName="Git Conflicts"
                         className="git4idea.conflicts.GitConflictsToolWindowManager$ContentProvider"
