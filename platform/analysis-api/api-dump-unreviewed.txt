@@ -3477,6 +3477,7 @@ com.intellij.psi.IntentionFilterOwner$IntentionActionsFilter
 - sf:EVERYTHING_AVAILABLE:com.intellij.psi.IntentionFilterOwner$IntentionActionsFilter
 - a:isAvailable(com.intellij.codeInsight.intention.IntentionAction):Z
 com.intellij.psi.LanguageInjector
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getLanguagesToInject(com.intellij.psi.PsiLanguageInjectionHost,com.intellij.psi.InjectedLanguagePlaces):V
 a:com.intellij.psi.Weigher

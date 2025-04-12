@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,7 +36,7 @@ import java.util.*;
  * Perform injections, run highlight visitors and annotators on discovered injected files
  */
 @ApiStatus.Internal
-public final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
+public final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
   private final boolean myUpdateAll;
   private final ProperTextRange myPriorityRange;

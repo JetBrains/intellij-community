@@ -803,6 +803,7 @@ com.intellij.lang.injection.general.Injection
 - a:getSuffix():java.lang.String
 - a:getSupportId():java.lang.String
 com.intellij.lang.injection.general.LanguageInjectionContributor
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:INJECTOR_EXTENSION:com.intellij.lang.LanguageExtension
 - a:getInjection(com.intellij.psi.PsiElement):com.intellij.lang.injection.general.Injection
