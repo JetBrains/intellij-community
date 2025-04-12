@@ -4,4 +4,41 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.java.definitions" interface="com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService" dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.MethodCallSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.AntLikePropertySelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.CaseStatementsSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.StatementGroupSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaTokenSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.TypeCastSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.IfStatementSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.ForStatementHeaderSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.ReferenceSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.FieldSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.MethodOrClassSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.FinallyBlockSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.CodeBlockOrInitializerSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.ListSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.DocCommentSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.LiteralSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaWordSelectioner"/>
+
+    <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaBasicWordSelectionFilter"/>
+    <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
+    <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaBackspaceHandler"/>
+    <wordBoundaryFilter language="JAVA" implementationClass="com.intellij.codeInsight.editorActions.JavaWordBoundaryFilter"/>
+    <lineIndentProvider implementation="com.intellij.codeInsight.editorActions.JavaLineIndentProvider"/>
+    <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
+
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.AutoFormatTypedHandler"/>
+
+    <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
+    <editorActionHandler action="EditorLineStartWithSelection" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartWithSelectionHandler"/>
+
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>
+  </extensions>
 </idea-plugin>
