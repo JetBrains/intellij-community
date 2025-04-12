@@ -64,6 +64,7 @@ class PluginBuilder {
   private val extensions = mutableListOf<ExtensionBlock>()
   private var extensionPoints: String? = null
   private var untilBuild: String? = null
+  private var sinceBuild: String? = null
   private var version: String? = null
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
@@ -145,6 +146,11 @@ class PluginBuilder {
     return this
   }
 
+  fun sinceBuild(buildNumber: String): PluginBuilder {
+    sinceBuild = buildNumber
+    return this
+  }
+
   fun version(version: String): PluginBuilder {
     this.version = version
     return this
@@ -200,9 +206,17 @@ class PluginBuilder {
         }
       }
       version?.let { append("<version>$it</version>") }
-      if (untilBuild != null) {
+
+      if (sinceBuild != null && untilBuild != null) {
+        append("""<idea-version since-build="${sinceBuild}" until-build="${untilBuild}"/>""")
+      }
+      else if (sinceBuild != null) {
+        append("""<idea-version since-build="${sinceBuild}"/>""")
+      }
+      else if (untilBuild != null) {
         append("""<idea-version until-build="${untilBuild}"/>""")
       }
+
       for (extensionBlock in extensions) {
         append("""<extensions defaultExtensionNs="${extensionBlock.ns}">${extensionBlock.text}</extensions>""")
       }
