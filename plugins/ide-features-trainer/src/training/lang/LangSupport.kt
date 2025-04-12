@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import training.dsl.LessonContext
 import training.learn.course.KLesson
 import training.learn.exceptons.InvalidSdkException
@@ -120,4 +121,13 @@ interface LangSupport {
   fun getContentRootPath(projectPath: Path): Path {
     return projectPath
   }
+
+  /**
+   * When a project dir is cleared using [training.project.ProjectUtils.restoreProject],
+   * these paths along with their descenders are protected.
+   *
+   * For example: `.venv` in Python shouldn't be deleted as it has SDK.
+   */
+  @RequiresReadLock
+  fun getProtectedDirs(project: Project): Set<Path> = emptySet()
 }
