@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.module.JdkApiCompatabilityCache;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -215,7 +216,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
       @Contract("_, _, _,null -> true")
       private static boolean ignoreSuperMethod(PsiMethod method, PsiClass methodClass, PsiMethod superMethod, PsiClass superClass) {
         return !InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true) ||
-               LanguageLevelUtil.getLastIncompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
+               JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
       }
   }
 

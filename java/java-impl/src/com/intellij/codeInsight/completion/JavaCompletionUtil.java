@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.JdkApiCompatabilityCache;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -503,7 +503,7 @@ public final class JavaCompletionUtil {
     private @Nullable LookupElement generateLookupElementDecorator(@Nullable PsiType qualifierType, @NotNull Object object,
                                                                    @NotNull Function<Consumer<LookupElementPresentation>, LookupElementDecorator<LookupElement>> generator) {
       if (object instanceof PsiMember) {
-        if (LanguageLevelUtil.getLastIncompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
+        if (JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
           LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
           return PrioritizedLookupElement.withExplicitProximity(element, -1);
         }
