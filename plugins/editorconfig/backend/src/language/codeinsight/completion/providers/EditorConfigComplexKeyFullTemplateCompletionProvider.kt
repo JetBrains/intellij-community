@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElementImpl
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigSection
@@ -15,7 +16,6 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclaration
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKeyDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 import org.editorconfig.language.util.EditorConfigTemplateUtil
 
 object EditorConfigComplexKeyFullTemplateCompletionProvider : EditorConfigCompletionProviderBase() {
@@ -23,7 +23,7 @@ object EditorConfigComplexKeyFullTemplateCompletionProvider : EditorConfigComple
     get() = EditorConfigComplexKeyTemplateCompletionProvider.destination
 
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-    val section = parameters.position.getParentOfType<EditorConfigSection>() ?: return
+    val section = parameters.position.parentOfType<EditorConfigSection>(withSelf = true) ?: return
     val descriptors = EditorConfigOptionDescriptorManager.getInstance(parameters.originalFile.project).getQualifiedKeyDescriptors(true)
 
     EditorConfigTemplateUtil

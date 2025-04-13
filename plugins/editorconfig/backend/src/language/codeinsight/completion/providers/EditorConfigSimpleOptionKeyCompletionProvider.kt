@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_T
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.completion.EditorConfigCompletionWeigher
@@ -18,7 +19,6 @@ import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigPattern
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 
 object EditorConfigSimpleOptionKeyCompletionProvider : EditorConfigCompletionProviderBase() {
   override val destination: PsiElementPattern.Capture<PsiElement> =
@@ -36,7 +36,7 @@ object EditorConfigSimpleOptionKeyCompletionProvider : EditorConfigCompletionPro
     val option = position.parent.parent as EditorConfigOption
     val text = position.text
     val firstChar = text.first().takeUnless { text.startsWith(DUMMY_IDENTIFIER_TRIMMED) }
-    val section = position.getParentOfType<EditorConfigSection>() ?: return
+    val section = position.parentOfType<EditorConfigSection>(withSelf = true) ?: return
     val optionKeys = section.optionList.mapNotNull(EditorConfigOption::getFlatOptionKey)
     val rawCompletionItems = EditorConfigOptionDescriptorManager
       .getInstance(parameters.originalFile.project)

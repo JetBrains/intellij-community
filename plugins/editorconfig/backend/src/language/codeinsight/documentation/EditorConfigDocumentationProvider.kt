@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parentOfType
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.getDescriptor
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 import org.jetbrains.annotations.Nls
 import kotlin.math.max
 
@@ -37,14 +37,14 @@ class EditorConfigDocumentationProvider : DocumentationProvider {
   override fun getCustomDocumentationElement(editor: Editor, file: PsiFile, contextElement: PsiElement?, targetOffset: Int): PsiElement? {
     contextElement ?: return null
     if (contextElement !is PsiWhiteSpace) {
-      val describable = contextElement.getParentOfType<EditorConfigDescribableElement>()
+      val describable = contextElement.parentOfType<EditorConfigDescribableElement>(withSelf = true)
       val descriptor = describable?.getDescriptor(false)
       return EditorConfigDocumentationHolderElement(file.manager, descriptor)
     }
 
     val offset = max(0, targetOffset - 1)
     val psiBeforeCaret = file.findElementAt(offset)
-    val describable = psiBeforeCaret?.getParentOfType<EditorConfigDescribableElement>()
+    val describable = psiBeforeCaret?.parentOfType<EditorConfigDescribableElement>(withSelf = true)
     val descriptor = describable?.getDescriptor(false) ?: return null
     return EditorConfigDocumentationHolderElement(file.manager, descriptor)
   }

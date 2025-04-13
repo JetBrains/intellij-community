@@ -9,10 +9,10 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 
 class EditorConfigStatementUpDownMover : LineMover() {
   override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
@@ -24,9 +24,9 @@ class EditorConfigStatementUpDownMover : LineMover() {
     val range = StatementUpDownMover.getLineRangeFromSelection(editor)
     if (!canMove(editor, range, down)) return false
     val (startElement, _) = getElementRange(editor, file, range) ?: return false
-    val option = startElement.getParentOfType<EditorConfigOption>()
+    val option = startElement.parentOfType<EditorConfigOption>(withSelf = true)
     if (option != null) return orderMoveOption(info, down, option)
-    val section = startElement.getParentOfType<EditorConfigSection>()
+    val section = startElement.parentOfType<EditorConfigSection>(withSelf = true)
     if (section != null) return orderMoveSection(info, down, section)
     return info.prohibitMove()
   }

@@ -2,10 +2,10 @@
 package org.editorconfig.language.schema.descriptors.impl
 
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.editorconfig.language.psi.EditorConfigOptionValuePair
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptorVisitor
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 
 abstract class EditorConfigElementAwareDescriptorVisitor : EditorConfigDescriptorVisitor {
   protected abstract val element: EditorConfigDescribableElement
@@ -14,13 +14,13 @@ abstract class EditorConfigElementAwareDescriptorVisitor : EditorConfigDescripto
     handleRelativeToPair(pair::first, pair::second).accept(this)
 
   private fun isInsertingPairFirst(): Boolean {
-    val psiPair = element.getParentOfType<EditorConfigOptionValuePair>() ?: return true
+    val psiPair = element.parentOfType<EditorConfigOptionValuePair>(withSelf = true) ?: return true
     val leftIdentifiers = PsiTreeUtil.findChildrenOfAnyType(psiPair.first, false, element::class.java)
     return element in leftIdentifiers
   }
 
   private fun isInsertingPairSecond(): Boolean {
-    val psiPair = element.getParentOfType<EditorConfigOptionValuePair>()
+    val psiPair = element.parentOfType<EditorConfigOptionValuePair>(withSelf = true)
     psiPair ?: return false
     val rightIdentifiers = PsiTreeUtil.findChildrenOfAnyType(psiPair.second, false, element::class.java)
     return element in rightIdentifiers

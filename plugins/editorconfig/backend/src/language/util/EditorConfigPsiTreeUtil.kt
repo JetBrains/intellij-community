@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.psi.EditorConfigElementTypes
@@ -24,7 +25,7 @@ object EditorConfigPsiTreeUtil {
     PsiTreeUtil.getParentOfType(this, T::class.java, strict, *stopAt)
 
   inline fun <reified T : PsiElement> PsiElement.hasParentOfType(): Boolean =
-    getParentOfType<T>() != null
+    parentOfType<T>(withSelf = true) != null
 
   fun containsErrors(element: PsiElement): Boolean =
     SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement::class.java).isNotEmpty
