@@ -9,3 +9,5 @@ fun test(foo: Int?) {
 }
 
 fun bar(i: Int) {}
+
+// IGNORE_K2
