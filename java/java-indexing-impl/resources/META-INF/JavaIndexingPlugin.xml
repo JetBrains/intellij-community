@@ -34,6 +34,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <languageStubDefinition language="JAVA" implementationClass="com.intellij.psi.impl.java.stubs.JavaStubDefinition"/>
+
+    <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
 
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>

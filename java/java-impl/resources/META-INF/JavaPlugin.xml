@@ -8,7 +8,6 @@
   <xi:include href="/idea/JavaActions.xml"/>
 
   <xi:include href="/META-INF/JavaIndexingPlugin.xml"/>
-  <xi:include href="intellij.java.psi.impl.xml"/>
   <xi:include href="/META-INF/JavaCodeServerCore.xml"/>
   <xi:include href="/META-INF/JavaCodeServerHighlighting.xml"/>
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
@@ -301,6 +300,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
+    <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
+    <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+    <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
 
     <notificationGroup id="jps configuration error"
                        toolWindowId="Build"
