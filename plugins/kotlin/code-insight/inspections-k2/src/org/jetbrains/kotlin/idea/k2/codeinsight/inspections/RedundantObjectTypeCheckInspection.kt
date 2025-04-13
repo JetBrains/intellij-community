@@ -9,7 +9,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -37,12 +36,7 @@ internal class RedundantObjectTypeCheckInspection :
     ): @InspectionMessage String = KotlinBundle.message("redundant.type.checks.for.object")
 
     override fun getApplicableRanges(element: KtIsExpression): List<TextRange> =
-        listOf(
-            TextRange(
-                0,
-                if (element.isNegated) 3 else 2
-            ).shiftRight(element.operationReference.startOffsetInParent)
-        )
+        listOf(element.operationReference.textRangeInParent)
 
     override fun isApplicableByPsi(element: KtIsExpression): Boolean =
         element.typeReference != null
@@ -51,7 +45,7 @@ internal class RedundantObjectTypeCheckInspection :
         val typeReference = element.typeReference ?: return null
         val typeSymbol = typeReference.type.symbol as? KaClassSymbol ?: return null
 
-        if (typeSymbol.classKind != KaClassKind.OBJECT) return null
+        if (!typeSymbol.classKind.isObject) return null
 
         return Context(element.isNegated)
     }
