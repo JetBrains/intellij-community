@@ -18,6 +18,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
+private const val NAN_NAME = "NaN"
+private const val REGULAR_PATTERN = "$0.isNaN()"
+private const val INVERTED_PATTERN = "!$0.isNaN()"
+
 internal class ConvertNaNEqualityInspection :
     KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ConvertNaNEqualityInspection.Context>() {
 
@@ -43,7 +47,7 @@ internal class ConvertNaNEqualityInspection :
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
         val operationToken = element.operationToken
         return (operationToken == KtTokens.EQEQ || operationToken == KtTokens.EXCLEQ) &&
-                (element.left?.text?.endsWith("NaN") == true || element.right?.text?.endsWith("NaN") == true)
+                (element.left?.text?.endsWith(NAN_NAME) == true || element.right?.text?.endsWith(NAN_NAME) == true)
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -78,10 +82,19 @@ internal class ConvertNaNEqualityInspection :
                 else -> return
             }
 
-            val pattern = if (inverted) "!$0.isNaN()" else "$0.isNaN()"
+            val pattern = if (inverted) INVERTED_PATTERN else REGULAR_PATTERN
             element.replace(KtPsiFactory(project).createExpressionByPattern(pattern, context.otherExpression))
         }
     }
+}
+
+private fun KaSession.isNaNExpression(expression: KtExpression): Boolean {
+    if (expression.text?.endsWith(NAN_NAME) != true) return false
+
+    val symbol = expression.resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return false
+    val fqName = symbol.callableId?.asSingleFqName()?.asString() ?: return false
+
+    return NaNSet.contains(fqName)
 }
 
 private val NaNSet = setOf(
@@ -90,12 +103,3 @@ private val NaNSet = setOf(
     "kotlin.Float.Companion.NaN",
     "java.lang.Float.NaN",
 )
-
-private fun KaSession.isNaNExpression(expression: KtExpression): Boolean {
-    if (expression.text?.endsWith("NaN") != true) return false
-
-    val symbol = expression.resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return false
-    val fqName = symbol.callableId?.asSingleFqName()?.asString() ?: return false
-
-    return NaNSet.contains(fqName)
-}
