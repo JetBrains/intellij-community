@@ -10,14 +10,14 @@ import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigReferenceSupport
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
+import org.editorconfig.language.util.requiredParentOfType
 
 abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsiElement(node), EditorConfigDescribableElement {
   final override val option: EditorConfigOption
-    get() = getParentOfType() ?: throw IllegalStateException()
+    get() = requiredParentOfType()
 
   final override val section: EditorConfigSection
-    get() = getParentOfType() ?: throw IllegalStateException()
+    get() = requiredParentOfType()
 
   override val describableParent: EditorConfigDescribableElement?
     get() = parent as? EditorConfigDescribableElement

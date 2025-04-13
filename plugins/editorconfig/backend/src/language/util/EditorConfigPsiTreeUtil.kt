@@ -26,9 +26,6 @@ object EditorConfigPsiTreeUtil {
   inline fun <reified T : PsiElement> PsiElement.hasParentOfType(): Boolean =
     getParentOfType<T>() != null
 
-  inline fun <reified T : PsiElement> getRequiredParent(element: PsiElement): T =
-    PsiTreeUtil.getParentOfType(element, T::class.java, false) ?: throw IllegalStateException()
-
   fun containsErrors(element: PsiElement): Boolean =
     SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement::class.java).isNotEmpty
 
