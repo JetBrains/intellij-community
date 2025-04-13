@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -18,13 +19,10 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.dotQualifiedExpressionVisitor
 
-private val rangeTypes = setOf(
-    "kotlin.ranges.IntRange",
-    "kotlin.ranges.CharRange",
-    "kotlin.ranges.LongRange",
-    "kotlin.ranges.UIntRange",
-    "kotlin.ranges.ULongRange"
-)
+private const val START: String = "start"
+private const val END_INCLUSIVE: String = "endInclusive"
+private const val FIRST: String = "first"
+private const val LAST: String = "last"
 
 internal class ReplaceRangeStartEndInclusiveWithFirstLastInspection : KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, Unit>() {
 
@@ -37,18 +35,18 @@ internal class ReplaceRangeStartEndInclusiveWithFirstLastInspection : KotlinAppl
 
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean {
         val selectorExpression = element.selectorExpression ?: return false
-        return selectorExpression.text == "start" || selectorExpression.text == "endInclusive"
+        return selectorExpression.text == START || selectorExpression.text == END_INCLUSIVE
     }
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Unit? {
         val receiverType = element.receiverExpression.expressionType as? KaClassType ?: return null
         val classSymbol = receiverType.symbol as? KaClassSymbol ?: return null
-        return if (classSymbol.isRange()) Unit else null
+        return classSymbol.isRange().asUnit
     }
 
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Unit): String {
         val selectorExpression = element.selectorExpression ?: return ""
-        return if (selectorExpression.text == "start") {
+        return if (selectorExpression.text == START) {
             KotlinBundle.message("could.be.replaced.with.unboxed.first")
         } else {
             KotlinBundle.message("could.be.replaced.with.unboxed.last")
@@ -56,8 +54,8 @@ internal class ReplaceRangeStartEndInclusiveWithFirstLastInspection : KotlinAppl
     }
 
     override fun createQuickFix(element: KtDotQualifiedExpression, context: Unit): KotlinModCommandQuickFix<KtDotQualifiedExpression> {
-        val selectorExpression = element.selectorExpression ?: return ReplaceIntRangeStartWithFirstQuickFix()
-        return if (selectorExpression.text == "start") {
+        val selectorExpression = element.selectorExpression
+        return if (selectorExpression == null || selectorExpression.text == START) {
             ReplaceIntRangeStartWithFirstQuickFix()
         } else {
             ReplaceIntRangeEndInclusiveWithLastQuickFix()
@@ -70,7 +68,7 @@ private class ReplaceIntRangeStartWithFirstQuickFix : KotlinModCommandQuickFix<K
 
     override fun applyFix(project: Project, element: KtDotQualifiedExpression, updater: ModPsiUpdater) {
         val selector = element.selectorExpression ?: return
-        selector.replace(KtPsiFactory(project).createExpression("first"))
+        selector.replace(KtPsiFactory(project).createExpression(FIRST))
     }
 }
 
@@ -79,7 +77,7 @@ private class ReplaceIntRangeEndInclusiveWithLastQuickFix : KotlinModCommandQuic
 
     override fun applyFix(project: Project, element: KtDotQualifiedExpression, updater: ModPsiUpdater) {
         val selector = element.selectorExpression ?: return
-        selector.replace(KtPsiFactory(project).createExpression("last"))
+        selector.replace(KtPsiFactory(project).createExpression(LAST))
     }
 }
 
@@ -87,3 +85,11 @@ private fun KaClassSymbol.isRange(): Boolean {
     val fqName = classId?.asSingleFqName()?.asString() ?: return false
     return fqName in rangeTypes
 }
+
+private val rangeTypes: Set<String> = setOf(
+    "kotlin.ranges.IntRange",
+    "kotlin.ranges.CharRange",
+    "kotlin.ranges.LongRange",
+    "kotlin.ranges.UIntRange",
+    "kotlin.ranges.ULongRange"
+)
