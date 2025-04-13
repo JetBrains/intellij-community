@@ -45,6 +45,7 @@ import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.references.impl.IJ_IGNORE_REFS
 import com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl
+import com.intellij.webSymbols.search.WebSymbolReferenceHints
 import com.intellij.webSymbols.utils.applyIfNotNull
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 import com.intellij.webSymbols.utils.nameSegments
@@ -68,7 +69,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
 
       // For symbols contributed through PsiWebSymbolReferenceProvider and WebSymbolDeclarationProvider
       // provide automatic symbol kind highlighting
-      val multiMap = symbolReferencesProvider.getSymbolOffsetsAndReferences(element).first.copy()
+      val multiMap = symbolReferencesProvider.getSymbolOffsetsAndReferences(element, WebSymbolReferenceHints.NO_HINTS).first.copy()
 
       WebSymbolDeclarationProvider.getAllDeclarations(element, -1).forEach { declaration ->
         multiMap.putValue(declaration.rangeInDeclaringElement.startOffset, declaration.symbol)

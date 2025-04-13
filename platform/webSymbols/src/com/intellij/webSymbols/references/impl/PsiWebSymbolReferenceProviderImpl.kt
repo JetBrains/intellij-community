@@ -40,12 +40,12 @@ internal const val IJ_IGNORE_REFS = "ij-no-psi-refs"
 class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> =
-    getSymbolOffsetsAndReferences(element).second
+    getSymbolOffsetsAndReferences(element, hints).second
 
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> =
     emptyList()
 
-  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost): Pair<MultiMap<Int, WebSymbol>, List<WebSymbolReference>> =
+  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, WebSymbol>, List<WebSymbolReference>> =
     CachedValuesManager.getCachedValue(element, CachedValuesManager.getManager(element.project).getKeyForClass(this.javaClass)) {
       val beans = PsiWebSymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
       val result = SmartList<WebSymbolReference>()
@@ -54,7 +54,7 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
         @Suppress("UNCHECKED_CAST")
         val provider = bean.instance as PsiWebSymbolReferenceProvider<PsiExternalReferenceHost>
         val showProblems = provider.shouldShowProblems(element)
-        val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element)
+        val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element, hints)
         result.addAll(offsetsFromProvider.flatMap { (offset, symbol) ->
           getReferences(element, offset, symbol, showProblems)
         })

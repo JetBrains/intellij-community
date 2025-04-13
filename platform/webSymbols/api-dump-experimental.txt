@@ -546,9 +546,12 @@
 *:com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 - *sf:Companion:com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider$Companion
 - s:getAllDeclarations(com.intellij.psi.PsiElement,I):java.util.Collection
+- s:getAllEquivalentDeclarations(com.intellij.psi.PsiElement,I,com.intellij.webSymbols.WebSymbol):java.util.Collection
 - a:getDeclarations(com.intellij.psi.PsiElement,I):java.util.Collection
+- getEquivalentDeclarations(com.intellij.psi.PsiElement,I,com.intellij.webSymbols.WebSymbol):java.util.Collection
 *f:com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider$Companion
 - f:getAllDeclarations(com.intellij.psi.PsiElement,I):java.util.Collection
+- f:getAllEquivalentDeclarations(com.intellij.psi.PsiElement,I,com.intellij.webSymbols.WebSymbol):java.util.Collection
 *:com.intellij.webSymbols.documentation.WebSymbolDocumentation
 - *sf:Companion:com.intellij.webSymbols.documentation.WebSymbolDocumentation$Companion
 - appendFootnote(java.lang.String):com.intellij.webSymbols.documentation.WebSymbolDocumentation
@@ -895,7 +898,7 @@
 - f:create(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 *:com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 - *sf:Companion:com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider$Companion
-- getOffsetsToReferencedSymbols(com.intellij.model.psi.PsiExternalReferenceHost):java.util.Map
+- getOffsetsToReferencedSymbols(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Map
 - getReferencedSymbol(com.intellij.model.psi.PsiExternalReferenceHost):com.intellij.webSymbols.WebSymbol
 - getReferencedSymbolNameOffset(com.intellij.model.psi.PsiExternalReferenceHost):I
 - shouldShowProblems(com.intellij.model.psi.PsiExternalReferenceHost):Z
