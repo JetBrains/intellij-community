@@ -3,6 +3,7 @@ package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.notification.Notification;
@@ -150,7 +151,8 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
     Notification notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
       .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), StringUtil.join(errorMessages, "<br>"),
-                          NotificationType.ERROR);
+                          NotificationType.ERROR)
+      .setIcon(AllIcons.Ide.Notification.IdeUpdate);
 
     if (!disabled.isEmpty()) {
       notification.addAction(new NotificationAction(disabled.size() == 1 ?
