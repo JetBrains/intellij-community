@@ -4,7 +4,6 @@
 
 package com.intellij.platform.syntax.runtime
 
-import com.intellij.openapi.util.text.StringHash
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
@@ -192,46 +191,37 @@ final class SyntaxGeneratedParserRuntime(
     internal val FRAMES: LimitedPool<Frame> = LimitedPool<Frame>(FRAMES_POOL_SIZE) { Frame() }
 
     fun getExpected(position: Int, expected: Boolean): String {
-      val sb = StringBuilder()
       val list = if (expected) variants else unexpected
-      val strings: Array<String?> = arrayOfNulls<String>(list.size)
-      val hashes = LongArray(strings.size)
-      strings.fill("")
-      var count = 0
-      loop@ for (variant in list) {
+      val strings = HashSet<String>(list.size)
+      for (i in 0..list.size) {
+        val variant: Variant = list.get(i)
         if (position == variant.position) {
-          val text: String? = variant.`object`.toString()
-          val hash: Long = StringHash.calc(text)
-          for (i in 0..<count) {
-            if (hashes[i] == hash) continue@loop
-          }
-          hashes[count] = hash
-          strings[count] = text!!
-          count++
-        }
-      }
-      strings.sort()
-      count = 0
-      for (s in strings) {
-        if (s.isNullOrEmpty()) continue
-        if (count++ > 0) {
-          if (count > MAX_VARIANTS_TO_DISPLAY) {
-            sb.append(" ").append(bundle.message("parsing.error.and.ellipsis"))
-            break
-          }
-          else {
-            sb.append(", ")
+          val text: String = variant.`object`.toString()
+          if (text.isNotEmpty()) {
+            strings.add(text)
           }
         }
-        val c = s.get(0)
-        val displayText = if (c == '<' || c.isJavaIdentifierStart()) s else "'$s'"
-        sb.append(displayText)
       }
-      if (count > 1 && count < MAX_VARIANTS_TO_DISPLAY) {
-        val idx = sb.lastIndexOf(", ")
-        sb.replace(idx, idx + 1, " " + bundle.message("parsing.error.or"))
+
+      return when {
+        strings.size > MAX_VARIANTS_TO_DISPLAY -> {
+          strings
+            .asSequence()
+            .sorted()
+            .take(MAX_VARIANTS_TO_DISPLAY)
+            .joinToString(separator = ", ", postfix = " ${bundle.message("parsing.error.and.ellipsis")}")
+        }
+        strings.size > 1 -> {
+          val sorted = strings.sorted()
+          val last = sorted.last()
+          sorted
+            .dropLast(1)
+            .joinToString(separator = ", ", postfix = " ${bundle.message("parsing.error.or")} $last")
+        }
+        else -> {
+          strings.singleOrNull().orEmpty()
+        }
       }
-      return sb.toString()
     }
 
     fun clearVariants(frame: Frame?) {
