@@ -2,12 +2,13 @@
 package com.intellij.find.ngrams
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.ThreeState
-import com.intellij.util.indexing.ExtensionCustomizableExcludes
+import com.intellij.util.indexing.CustomizableExcludeExtensions
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.IndexFilterExcludingExtension
 import com.intellij.util.indexing.IndexedFile
@@ -21,11 +22,17 @@ import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
  * @see IndexFilterExcludingExtension
  */
 @Service //RC: why is it a service? All other filters are just a regular POJO
-internal class TrigramIndexFilter: BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
+internal class TrigramIndexFilter : BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
   private companion object {
     val ENABLE_EXTENSION_EXCLUDES = getBooleanProperty("ide.trigram.index.uses.exclude.extensions", false)
-    val EXTENSION_EXCLUDES: ExtensionCustomizableExcludes = ExtensionCustomizableExcludes(
+    val EXTENSION_EXCLUDES: CustomizableExcludeExtensions = CustomizableExcludeExtensions(
       ExtensionPointName.create("com.intellij.trigramIndexFilterExcludeExtension")
+    )
+  }
+
+  init {
+    logger<TrigramIndexFilter>().info(
+      "Filter extensions is ${if (ENABLE_EXTENSION_EXCLUDES) "enabled: $EXTENSION_EXCLUDES" else "disabled"}"
     )
   }
 
@@ -42,7 +49,7 @@ internal class TrigramIndexFilter: BaseFileTypeInputFilter(FileTypeSubstitutionS
   }
 
   override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {
-    check(ENABLE_EXTENSION_EXCLUDES){"ENABLE_EXTENSION_EXCLUDES must be true to reach this point"}
+    check(ENABLE_EXTENSION_EXCLUDES) { "ENABLE_EXTENSION_EXCLUDES must be true to reach this point" }
 
     return !EXTENSION_EXCLUDES.shouldExcludeFile(file)
   }

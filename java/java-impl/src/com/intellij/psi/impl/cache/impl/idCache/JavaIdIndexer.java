@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -31,20 +31,33 @@ import static com.intellij.psi.impl.cache.impl.BaseFilterLexerUtil.scanContentWi
 
 public final class JavaIdIndexer implements IdIndexer {
   private static final Logger LOG = Logger.getInstance(JavaIdIndexer.class);
-  static final String ENABLED_REGISTRY_KEY = "index.ids.from.java.sources.in.jar";
-  static volatile boolean isEnabled = Registry.is("index.ids.from.java.sources.in.jar", true);
+  
+  static final String INDEX_SOURCE_FILES_IN_LIBRARIES_REGISTRY_KEY = "index.ids.from.java.sources.in.jar";
+  /**
+   * if true  -> .java-files in libraries are indexes
+   * if false -> .class-files in libraries should be indexed instead, while .java-sources in libraries should be skipped
+   */
+  //MAYBE RC: it is better to have it through system-properties, since we need to trigger re-indexing, if the property is
+  //          changed -- so Registry is not a good choice?
+  static volatile boolean indexSourceFilesInLibraries = Registry.is(INDEX_SOURCE_FILES_IN_LIBRARIES_REGISTRY_KEY, false);
 
   @Override
   public @NotNull Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData) {
     VirtualFile file = inputData.getFile();
     FileType fileType = file.getFileType();
-    if (fileType.equals(JavaClassFileType.INSTANCE) && isEnabled) {
-      Map<IdIndexEntry, Integer> idEntries = calculateIdEntriesParsingConstantPool(inputData);
-      if (idEntries != null) return idEntries;
+
+    if (fileType.equals(JavaClassFileType.INSTANCE)) {
+      if (!indexSourceFilesInLibraries) {
+        Map<IdIndexEntry, Integer> idEntries = calculateIdEntriesParsingConstantPool(inputData);
+        if (idEntries != null) {
+          return idEntries;
+        }
+      }
       return Map.of();
     }
+
     // we are skipping indexing of sources in libraries (we are going to index only the compiled library classes)
-    if (isEnabled || JavaFileElementType.isInSourceContent(file)) {
+    if (indexSourceFilesInLibraries || JavaFileElementType.isInSourceContent(file)) {
       IdDataConsumer consumer = new IdDataConsumer();
       scanContentWithCheckCanceled(inputData, createIndexingLexer(new OccurrenceConsumer(consumer, false)));
       return consumer.getResult();

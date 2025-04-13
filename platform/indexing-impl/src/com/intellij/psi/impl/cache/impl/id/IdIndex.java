@@ -1,14 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -24,8 +21,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
-
 /**
  * An implementation of identifier index where the key is an identifier hash,
  * and the value is an occurrence mask ({@link UsageSearchContext}).
@@ -35,6 +30,8 @@ import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFO
 @ApiStatus.Internal
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   public static final @NonNls ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
+
+  private static final FileBasedIndex.InputFilter INPUT_FILES_FILTER = new IdIndexFilter();
 
   private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<>() {
     @Override
@@ -127,12 +124,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
-  }
-
-  public static boolean isIndexable(FileType fileType) {
-    return (fileType instanceof LanguageFileType && (fileType != PlainTextFileType.INSTANCE || !FileBasedIndex.IGNORE_PLAIN_TEXT_FILES)) ||
-           IdTableBuilding.getFileTypeIndexer(fileType) != null;
+    return INPUT_FILES_FILTER;
   }
 
   @Override

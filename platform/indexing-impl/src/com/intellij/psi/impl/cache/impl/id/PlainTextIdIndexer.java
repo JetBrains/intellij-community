@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +44,7 @@ public final class PlainTextIdIndexer implements IdIndexer {
 
     Map<IdIndexEntry, Integer> result = consumer.getResult();
 
-    if (TodoIndexers.needsTodoIndex(content) &&
-        IdIndex.isIndexable(PlainTextFileType.INSTANCE)) {
+    if (TodoIndexers.needsTodoIndex(content) && !FileBasedIndex.IGNORE_PLAIN_TEXT_FILES) {
       content.putUserData(ID_INDEX_DATA_KEY, result);
     }
 
