@@ -75,6 +75,8 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   // Supported only for line breakpoints
   fun setTemporary(isTemporary: Boolean)
 
+  fun getCustomizedPresentation(): CustomizedBreakpointPresentation?
+
   class Monolith(override val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     override val id: XBreakpointId = breakpoint.breakpointId
 
@@ -179,6 +181,10 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
       if (breakpoint is XLineBreakpoint<*>) {
         breakpoint.isTemporary = isTemporary
       }
+    }
+
+    override fun getCustomizedPresentation(): CustomizedBreakpointPresentation? {
+      return breakpoint.customizedPresentation
     }
 
     override fun equals(other: Any?): Boolean {

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
-import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -12,6 +11,8 @@ import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase.calculateIcon
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.*
@@ -73,7 +74,10 @@ class FrontendXBreakpointProxy(
 
   override fun getGroup(): String? = _state.value.group
 
-  override fun getIcon(): Icon = _state.value.iconId.icon()
+  override fun getIcon(): Icon {
+    // TODO: do we need to cache icon like it is done in XBreakpointBase
+    return calculateIcon(this)
+  }
 
   override fun isEnabled(): Boolean = _state.value.enabled
 
@@ -218,6 +222,11 @@ class FrontendXBreakpointProxy(
     project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
       XBreakpointApi.getInstance().setTemporary(id, isTemporary)
     }
+  }
+
+  override fun getCustomizedPresentation(): CustomizedBreakpointPresentation? {
+    // TODO: support customized presentation
+    return null
   }
 
   internal fun dispose() {

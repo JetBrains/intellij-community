@@ -33,6 +33,8 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
@@ -328,6 +330,21 @@ class FrontendXDebuggerSession private constructor(
 
   override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
     return FrontendXStackFramesListColorsCache(this, framesList)
+  }
+
+  override fun areBreakpointsMuted(): Boolean {
+    // TODO: support muted breakpoints
+    return false
+  }
+
+  override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
+    // TODO: support dependent manager
+    return false
+  }
+
+  override fun getBreakpointPresentation(breakpoint: XBreakpointProxy): CustomizedBreakpointPresentation? {
+    // TODO: support passing breakpoint presentation from backend
+    return null
   }
 
   companion object {

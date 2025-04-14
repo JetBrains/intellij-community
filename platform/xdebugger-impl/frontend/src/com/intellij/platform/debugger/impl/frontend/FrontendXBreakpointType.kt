@@ -25,7 +25,16 @@ internal class FrontendXBreakpointType(
   override val id: String = dto.id.id
   override val index: Int = dto.index
   override val title: String = dto.title
-  override val enabledIcon: Icon = dto.enabledIcon.icon()
+
+  override val enabledIcon: Icon = dto.icons.enabledIcon.icon()
+  override val disabledIcon: Icon = dto.icons.disabledIcon.icon()
+  override val suspendNoneIcon: Icon = dto.icons.suspendNoneIcon.icon()
+  override val mutedEnabledIcon: Icon = dto.icons.mutedEnabledIcon.icon()
+  override val mutedDisabledIcon: Icon = dto.icons.mutedDisabledIcon.icon()
+  override val pendingIcon: Icon? = dto.icons.pendingIcon?.icon()
+  override val inactiveDependentIcon: Icon = dto.icons.inactiveDependentIcon.icon()
+  override val temporaryIcon: Icon? = dto.icons.temporaryIcon?.icon()
+
   override val isLineBreakpoint: Boolean = dto.lineTypeInfo != null
   override val isSuspendThreadSupported: Boolean = dto.suspendThreadSupported
   override val priority: Int? = dto.lineTypeInfo?.priority

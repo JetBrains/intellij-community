@@ -42,6 +42,8 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
@@ -477,47 +479,61 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   protected void updateIcon() {
-    final Icon icon = calculateSpecialIcon();
-    setIcon(icon != null ? icon : getType().getEnabledIcon());
+    myIcon = calculateIcon(new XBreakpointProxy.Monolith(this));
   }
 
-  protected void setIcon(Icon icon) {
-    if (!XDebuggerUtilImpl.isEmptyExpression(getConditionExpression())) {
-      LayeredIcon newIcon = new LayeredIcon(2);
-      newIcon.setIcon(icon, 0);
-      int hShift = ExperimentalUI.isNewUI() ? 7 : 10;
-      newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, hShift, 6);
-      myIcon = JBUIScale.scaleIcon(newIcon);
-    }
-    else {
-      myIcon = icon;
-    }
+  @ApiStatus.Internal
+  public static @NotNull Icon calculateIcon(@NotNull XBreakpointProxy breakpoint) {
+    Icon specialIcon = calculateSpecialIcon(breakpoint);
+    Icon icon = specialIcon != null ? specialIcon : breakpoint.getType().getEnabledIcon();
+    return withQuestionBadgeIfNeeded(icon, breakpoint);
   }
 
-  protected final @Nullable Icon calculateSpecialIcon() {
-    XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
-    if (!isEnabled()) {
+  private static @NotNull Icon withQuestionBadgeIfNeeded(
+    @NotNull Icon icon,
+    @NotNull XBreakpointProxy breakpoint
+  ) {
+    if (XDebuggerUtilImpl.isEmptyExpression(breakpoint.getConditionExpression())) {
+      return icon;
+    }
+
+    LayeredIcon newIcon = new LayeredIcon(2);
+    newIcon.setIcon(icon, 0);
+    int hShift = ExperimentalUI.isNewUI() ? 7 : 10;
+    newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, hShift, 6);
+    return JBUIScale.scaleIcon(newIcon);
+  }
+
+  private static @Nullable Icon calculateSpecialIcon(
+    @NotNull XBreakpointProxy breakpoint
+  ) {
+    @NotNull XBreakpointTypeProxy type = breakpoint.getType();
+    XDebugManagerProxy debugManager = XDebugManagerProxy.getInstance();
+    XDebugSessionProxy session = debugManager.getCurrentSessionProxy(breakpoint.getProject());
+    XBreakpointManagerProxy breakpointManager = debugManager.getBreakpointManagerProxy(breakpoint.getProject());
+
+    if (!breakpoint.isEnabled()) {
       if (session != null && session.areBreakpointsMuted()) {
-        return getType().getMutedDisabledIcon();
+        return type.getMutedDisabledIcon();
       }
       else {
-        return getType().getDisabledIcon();
+        return type.getDisabledIcon();
       }
     }
 
     if (session == null) {
-      if (getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this) != null) {
-        return getType().getInactiveDependentIcon();
+      if (breakpointManager.getDependentBreakpointManager().getMasterBreakpoint(breakpoint) != null) {
+        return type.getInactiveDependentIcon();
       }
     }
     else {
       if (session.areBreakpointsMuted()) {
-        return getType().getMutedEnabledIcon();
+        return type.getMutedEnabledIcon();
       }
-      if (session.isInactiveSlaveBreakpoint(this)) {
-        return getType().getInactiveDependentIcon();
+      if (session.isInactiveSlaveBreakpoint(breakpoint)) {
+        return type.getInactiveDependentIcon();
       }
-      CustomizedBreakpointPresentation presentation = session.getBreakpointPresentation(this);
+      CustomizedBreakpointPresentation presentation = session.getBreakpointPresentation(breakpoint);
       if (presentation != null) {
         Icon icon = presentation.getIcon();
         if (icon != null) {
@@ -526,16 +542,22 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       }
     }
 
-    if (getSuspendPolicy() == SuspendPolicy.NONE) {
-      return getType().getSuspendNoneIcon();
+    if (breakpoint.getSuspendPolicy() == SuspendPolicy.NONE) {
+      return type.getSuspendNoneIcon();
     }
 
-    if (myCustomizedPresentation != null) {
-      final Icon icon = myCustomizedPresentation.getIcon();
+    CustomizedBreakpointPresentation presentation = breakpoint.getCustomizedPresentation();
+    if (presentation != null) {
+      final Icon icon = presentation.getIcon();
       if (icon != null) {
         return icon;
       }
     }
+
+    if (breakpoint.isTemporary() && type.getTemporaryIcon() != null) {
+      return type.getTemporaryIcon();
+    }
+
     return null;
   }
 

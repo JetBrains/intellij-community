@@ -22,6 +22,8 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -80,6 +82,10 @@ interface XDebugSessionProxy {
   fun updateExecutionPosition()
   fun onTabInitialized(tab: XDebugSessionTab)
   fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache
+
+  fun areBreakpointsMuted(): Boolean
+  fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean
+  fun getBreakpointPresentation(breakpoint: XBreakpointProxy): CustomizedBreakpointPresentation?
 
   companion object {
     @JvmField
@@ -214,6 +220,24 @@ interface XDebugSessionProxy {
 
     override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
       return XStackFramesListColorsCache.Monolith(session as XDebugSessionImpl, framesList)
+    }
+
+    override fun areBreakpointsMuted(): Boolean {
+      return session.areBreakpointsMuted()
+    }
+
+    override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
+      if (breakpoint !is XBreakpointProxy.Monolith) {
+        return false
+      }
+      return (session as XDebugSessionImpl).isInactiveSlaveBreakpoint(breakpoint.breakpoint)
+    }
+
+    override fun getBreakpointPresentation(breakpoint: XBreakpointProxy): CustomizedBreakpointPresentation? {
+      if (breakpoint !is XBreakpointProxy.Monolith) {
+        return null
+      }
+      return (session as XDebugSessionImpl).getBreakpointPresentation(breakpoint.breakpoint)
     }
   }
 }
