@@ -85,9 +85,7 @@ class ClassLoaderConfigurator(
   fun configureModule(module: IdeaPluginDescriptorImpl): Boolean {
     checkPackagePrefixUniqueness(module)
 
-    val isMain = module.moduleName == null
-
-    if (isMain) {
+    if (module.isMainPluginDescriptor) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
         setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
       }
