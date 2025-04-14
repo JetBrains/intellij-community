@@ -42,8 +42,7 @@ class StoreHighlightingResultsCommand(text: String, line: Int) : PlaybackCommand
       writeIntentReadAction {
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
         require(psiFile != null)
-        val highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.document, null, project)
-        highlights.forEach { highlight ->
+        DaemonCodeAnalyzerImpl.getHighlights(editor.document, null, project).forEach { highlight ->
           assert(editor.document.textLength > highlight.actualStartOffset) {
             "Highlight start offset ${editor.document.textLength} less than document text length ${highlight.actualStartOffset}"
           }
