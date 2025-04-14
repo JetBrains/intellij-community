@@ -124,7 +124,10 @@ internal open class TerminalEventsHandlerImpl(
       // Command + backtick is a short-cut on Mac OSX, so we shouldn't type anything
       return false
     }
-    terminalInput.sendString(keyChar.toString())
+    if (e.original.id == KeyEvent.KEY_TYPED) {
+      terminalInput.sendTrackedString(keyChar.toString(), eventTime = e.initTime)
+    }
+    else terminalInput.sendString(keyChar.toString())
 
     scrollingModel?.scrollToCursor(force = true)
 

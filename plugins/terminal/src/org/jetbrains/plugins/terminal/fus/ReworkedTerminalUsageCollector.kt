@@ -91,7 +91,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   }
 
   @ApiStatus.Internal
-  fun logFrontendLatency(inputEventId: Int, duration: Duration) {
+  fun logFrontendTypingLatency(inputEventId: Int, duration: Duration) {
     frontendTypingLatencyEvent.log(
       EVENT_ID_FIELD with inputEventId,
       DURATION_FIELD with duration
