@@ -3,12 +3,15 @@ package com.intellij.terminal.backend
 
 import com.intellij.terminal.backend.util.scrollDown
 import com.intellij.terminal.backend.util.write
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
-import junit.framework.TestCase.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
-internal class TerminalContentChangesTrackerTest {
+@RunWith(JUnit4::class)
+internal class TerminalContentChangesTrackerTest : BasePlatformTestCase() {
   @Test
   fun `test writing`() {
     val textBuffer = createTextBuffer(width = 10, height = 5, maxHistoryLinesCount = 3)

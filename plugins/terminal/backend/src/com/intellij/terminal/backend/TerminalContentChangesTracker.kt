@@ -11,8 +11,10 @@ import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
+import kotlin.time.TimeSource
 
 internal class TerminalContentChangesTracker(
   private val textBuffer: TerminalTextBuffer,
@@ -75,7 +77,14 @@ internal class TerminalContentChangesTracker(
 
   private fun getContentUpdate(additionalLines: List<TerminalLine>): TerminalContentUpdate? {
     return if (anyLineChanged) {
-      collectOutput(additionalLines)
+      val startTime = TimeSource.Monotonic.markNow()
+      val update = collectOutput(additionalLines)
+      ReworkedTerminalUsageCollector.logBackendTextBufferCollectionLatency(
+        textLength = update.text.length,
+        duration = startTime.elapsedNow()
+      )
+
+      update
     }
     else null
   }
