@@ -7,9 +7,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
@@ -74,6 +76,18 @@ data class XBreakpointTypeDto(
   val lineTypeInfo: XLineBreakpointTypeInfo?,
   val defaultSuspendPolicy: SuspendPolicy,
   val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,
+  val customPanels: XBreakpointTypeCustomPanels,
+)
+
+
+// TODO: LUXify it for remote dev?
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointTypeCustomPanels(
+  @Transient val customPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
+  @Transient val customConditionsPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
+  @Transient val customRightPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
+  @Transient val customTopPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
 )
 
 @ApiStatus.Internal
@@ -135,10 +149,25 @@ private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
   }
   val index = XBreakpointType.EXTENSION_POINT_NAME.extensionList.indexOf(this)
   val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(this)
+  val customPanels = XBreakpointTypeCustomPanels(
+    customPropertiesPanelProvider = {
+      this.createCustomPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    },
+    customConditionsPanelProvider = {
+      this.createCustomConditionsPanel() as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    },
+    customRightPropertiesPanelProvider = {
+      this.createCustomRightPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    },
+    customTopPropertiesPanelProvider = {
+      this.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    }
+  )
   // TODO: do we need to subscribe on [defaultState] changes?
   return XBreakpointTypeDto(
     XBreakpointTypeId(id), index, title, enabledIcon.rpcId(), isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
-    standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() }
+    standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() },
+    customPanels = customPanels
   )
 }
 

@@ -55,23 +55,19 @@ internal class FrontendXBreakpointType(
   }
 
   override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customPropertiesPanelProvider?.invoke()
   }
 
   override fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customConditionsPanelProvider?.invoke()
   }
 
   override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customRightPropertiesPanelProvider?.invoke()
   }
 
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customTopPropertiesPanelProvider?.invoke()
   }
 }
 
