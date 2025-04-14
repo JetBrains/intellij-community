@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -168,7 +169,9 @@ sealed class GitExecutable {
         if (userLocale != null) return userLocale
 
         val envMap = GitConfigurationCache.getInstance().computeCachedValue(WslSupportedLocaleKey(distribution)) {
-          computeWslSupportedLocaleKey(distribution)
+          coroutineToIndicator {
+            computeWslSupportedLocaleKey(distribution)
+          }
         }
         if (envMap != null) return envMap
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.github.benmanes.caffeine.cache.AsyncCache
@@ -14,11 +14,13 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
 import git4idea.config.GitConfigUtil
 import git4idea.util.CaffeineUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @Service(Service.Level.APP)
-class GitConfigurationCache : GitConfigurationCacheBase() {
+class GitConfigurationCache(cs: CoroutineScope) : GitConfigurationCacheBase(cs) {
   companion object {
     @JvmStatic
     fun getInstance(): GitConfigurationCache = service()
@@ -27,7 +29,7 @@ class GitConfigurationCache : GitConfigurationCacheBase() {
 
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
-class GitProjectConfigurationCache(val project: Project) : GitConfigurationCacheBase() {
+class GitProjectConfigurationCache(val project: Project, cs: CoroutineScope) : GitConfigurationCacheBase(cs) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): GitProjectConfigurationCache = project.service()
@@ -68,14 +70,16 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
   data class RepoConfigKey(override val repository: GitRepository, val key: String) : GitRepositoryConfigKey<String?>
 }
 
-abstract class GitConfigurationCacheBase : Disposable {
+abstract class GitConfigurationCacheBase(private val cs: CoroutineScope) : Disposable {
   protected val cache: AsyncCache<GitConfigKey<*>, Any?> = CaffeineUtil
     .withIoExecutor()
     .buildAsync()
 
   @RequiresBackgroundThread
   @Suppress("UNCHECKED_CAST")
-  fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: () -> T): T = cache.get(configKey) { computeValue() }.get() as T
+  fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: suspend () -> T): T = cache.get(configKey) { _, _ ->
+    cs.future { computeValue() }
+  }.get() as T
 
   fun clearCache() {
     cache.synchronous().invalidateAll()
