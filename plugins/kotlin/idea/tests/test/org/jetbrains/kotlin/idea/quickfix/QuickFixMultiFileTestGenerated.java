@@ -939,9 +939,39 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/invokeExtension_afterConstructorCall.test");
             }
 
+            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_single.test")
+            public void testInvokeExtension_afterConstructorCall_anotherInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_afterConstructorCall_anotherInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_two.test")
+            public void testInvokeExtension_afterConstructorCall_anotherInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_afterConstructorCall_anotherInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_anotherInvokes_single.test")
+            public void testInvokeExtension_anotherInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_anotherInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_anotherInvokes_two.test")
+            public void testInvokeExtension_anotherInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_anotherInvokes_two.test");
+            }
+
             @TestMetadata("invokeExtension_qualifiedCall.test")
             public void testInvokeExtension_qualifiedCall() throws Exception {
                 runTest("testData/quickfix/autoImports/invokeExtension_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_single.test")
+            public void testInvokeExtension_qualifiedCall_anotherInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_qualifiedCall_anotherInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_two.test")
+            public void testInvokeExtension_qualifiedCall_anotherInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invokeExtension_qualifiedCall_anotherInvokes_two.test");
             }
 
             @TestMetadata("invokeExtension_topLevelVal.test")
