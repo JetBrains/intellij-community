@@ -29,6 +29,9 @@
 
         <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
 
+
+        <virtualFileCustomDataProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsSynchronizer"/>
+
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
     </extensions>
 </idea-plugin>
