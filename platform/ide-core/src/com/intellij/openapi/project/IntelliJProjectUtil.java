@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.CachedValue;
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -15,19 +19,27 @@ public final class IntelliJProjectUtil {
   private static final Key<Boolean> PLUGIN_PROJECT = Key.create("ij.platform.plugin.project");
 
   private static final String[] IDEA_PROJECT_MARKER_MODULE_NAMES = {
-    "intellij.idea.community.main", "intellij.platform.commercial", "intellij.android.studio.integration"
+    // JPS module names
+    "intellij.idea.community.main",
+    "intellij.platform.commercial",
+    "intellij.android.studio.integration",
+    // Bazel module names
+    "community.platform.platform-api.ide",
   };
+
+  private final static CachedValue<Boolean> isIntelliJPlatformProjectValue = new CachedValue<>(storage -> {
+    for (String ideaProjectMarkerName : IDEA_PROJECT_MARKER_MODULE_NAMES) {
+      if (storage.resolve(new ModuleId(ideaProjectMarkerName)) != null) {
+        return true;
+      }
+    }
+    return false;
+  });
 
   public static boolean isIntelliJPlatformProject(@Nullable Project project) {
     if (project == null) return false;
-
-    var flag = project.getUserData(IDEA_PROJECT);
-    if (flag == null) {
-      var moduleManager = ModuleManager.getInstance(project);
-      flag = ContainerUtil.exists(IDEA_PROJECT_MARKER_MODULE_NAMES, name -> moduleManager.findModuleByName(name) != null);
-      project.putUserData(IDEA_PROJECT, flag);
-    }
-    return flag;
+    VersionedEntityStorageImpl storage = ((WorkspaceModelInternal)WorkspaceModel.getInstance(project)).getEntityStorage();
+    return storage.cachedValue(isIntelliJPlatformProjectValue) || Boolean.TRUE.equals(project.getUserData(IDEA_PROJECT));
   }
 
   public static boolean isIntelliJPluginProject(@Nullable Project project) {
