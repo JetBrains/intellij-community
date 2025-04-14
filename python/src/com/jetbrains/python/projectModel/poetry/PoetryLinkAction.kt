@@ -31,7 +31,7 @@ class PoetryLinkAction : AnAction() {
     project.trackActivityBlocking(PoetryLinkActivityKey) {
       project.coroutineScope.launchTracked {
         val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.poetry.projects")) {
-          readProjectModelGraph(Path.of(basePath)).roots.map { it.root }
+          readProjectModelGraph(Path.of(basePath), PoetryRootResolver).roots.map { it.root }
         }
         poetrySettings.setLinkedProjects(allProjectRoots)
       }

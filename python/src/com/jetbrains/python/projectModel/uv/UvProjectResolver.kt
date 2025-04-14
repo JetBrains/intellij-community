@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.projectModel.ModuleDescriptor
-import com.jetbrains.python.projectModel.readUvProjectRoot
 import java.nio.file.Path
 
 /**
@@ -60,7 +59,7 @@ object UvProjectResolver {
     try {
       val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
       val source = UvEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
-      val graph = readUvProjectRoot(projectRoot)
+      val graph = UvProjectRootResolver.discoverProjectRoot(projectRoot)
       val storage = createProjectModel(project, graph?.modules.orEmpty(), source)
 
       project.workspaceModel.update("Uv sync at ${projectRoot}") { mutableStorage ->
@@ -96,7 +95,7 @@ object UvProjectResolver {
         dependencies += sdkDependency
         dependencies += ModuleSourceDependency
         for (moduleName in module.moduleDependencies) {
-          dependencies += ModuleDependency(ModuleId(moduleName), true, DependencyScope.COMPILE, false)
+          dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
         }
         contentRoots = listOf(ContentRootEntity(module.root.toVirtualFileUrl(fileUrlManager), emptyList(), source))
       }
