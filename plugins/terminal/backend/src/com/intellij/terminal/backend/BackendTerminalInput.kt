@@ -12,6 +12,7 @@ import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CancellationException
+import kotlin.time.TimeSource
 
 internal fun createTerminalInputChannel(
   services: JediTermServices,
@@ -50,7 +51,7 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
 
   when (event) {
     is TerminalWriteBytesEvent -> {
-      terminalStarter.sendBytes(event.bytes, false)
+      terminalStarter.sendTrackedBytes(event.bytes, event.id, eventTime = TimeSource.Monotonic.markNow())
     }
     is TerminalResizeEvent -> {
       terminalStarter.postResize(event.newSize.toTermSize(), RequestOrigin.User)

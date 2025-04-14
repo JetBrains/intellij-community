@@ -104,7 +104,7 @@ private fun createJediTermServices(
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()
-  val terminalStarter = StopAwareTerminalStarter(
+  val terminalStarter = TerminalStarterEx(
     controller,
     connector,
     TtyBasedArrayDataStream(connector),
@@ -137,6 +137,6 @@ internal class JediTermServices(
   val terminalDisplay: TerminalDisplayImpl,
   val controller: ObservableJediTerminal,
   val executorService: TerminalExecutorServiceManager,
-  val terminalStarter: StopAwareTerminalStarter,
+  val terminalStarter: TerminalStarterEx,
   val ttyConnector: ObservableTtyConnector,
 )
