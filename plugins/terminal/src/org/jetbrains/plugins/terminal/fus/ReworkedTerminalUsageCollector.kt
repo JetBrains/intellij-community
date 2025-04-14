@@ -45,52 +45,63 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
 
+  private val osVersion: String by lazy {
+    Version.parseVersion(OS.CURRENT.version)?.toCompactString() ?: "unknown"
+  }
+
   private val frontendTypingLatencyEvent = GROUP.registerVarargEvent(
     "terminal.frontend.typing.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
+    OS_VERSION_FIELD,
   )
 
   private val backendTypingLatencyEvent = GROUP.registerVarargEvent(
     "terminal.backend.typing.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
+    OS_VERSION_FIELD,
   )
 
   private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
     "terminal.backend.output.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
+    OS_VERSION_FIELD,
   )
 
   private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
     "terminal.frontend.output.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
+    OS_VERSION_FIELD,
   )
 
   private val backendTextBufferCollectionLatencyEvent = GROUP.registerVarargEvent(
     "terminal.backend.text.buffer.collection.latency",
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
+    OS_VERSION_FIELD,
   )
 
   private val backendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
     "terminal.backend.document.update.latency",
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
+    OS_VERSION_FIELD,
   )
 
   private val frontendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
     "terminal.frontend.document.update.latency",
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
+    OS_VERSION_FIELD,
   )
 
   @JvmStatic
   fun logLocalShellStarted(project: Project, shellCommand: Array<String>) {
     localShellStartedEvent.log(project,
-                               Version.parseVersion(OS.CURRENT.version)?.toCompactString() ?: "unknown",
+                               osVersion,
                                getShellNameForStat(shellCommand.firstOrNull()))
   }
 
@@ -113,7 +124,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logFrontendTypingLatency(inputEventId: Int, duration: Duration) {
     frontendTypingLatencyEvent.log(
       EVENT_ID_FIELD with inputEventId,
-      DURATION_FIELD with duration
+      DURATION_FIELD with duration,
+      OS_VERSION_FIELD with osVersion,
     )
   }
 
@@ -121,7 +133,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logBackendTypingLatency(inputEventId: Int, duration: Duration) {
     backendTypingLatencyEvent.log(
       EVENT_ID_FIELD with inputEventId,
-      DURATION_FIELD with duration
+      DURATION_FIELD with duration,
+      OS_VERSION_FIELD with osVersion,
     )
   }
 
@@ -129,7 +142,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logBackendOutputLatency(eventId: Int, duration: Duration) {
     backendOutputLatencyEvent.log(
       EVENT_ID_FIELD with eventId,
-      DURATION_FIELD with duration
+      DURATION_FIELD with duration,
+      OS_VERSION_FIELD with osVersion,
     )
   }
 
@@ -137,28 +151,32 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logFrontendOutputLatency(eventId: Int, duration: Duration) {
     frontendOutputLatencyEvent.log(
       EVENT_ID_FIELD with eventId,
-      DURATION_FIELD with duration
+      DURATION_FIELD with duration,
+      OS_VERSION_FIELD with osVersion,
     )
   }
 
   fun logBackendTextBufferCollectionLatency(textLength: Int, duration: Duration) {
     backendTextBufferCollectionLatencyEvent.log(
       TEXT_LENGTH_FIELD with textLength,
-      DURATION_FIELD with duration
+      DURATION_FIELD with duration,
+      OS_VERSION_FIELD with osVersion,
     )
   }
 
   fun logBackendDocumentUpdateLatency(textLength: Int, duration: Duration) {
     backendDocumentUpdateLatencyEvent.log(
       TEXT_LENGTH_FIELD with textLength,
-      DURATION_FIELD with duration
+      DURATION_FIELD with duration,
+      OS_VERSION_FIELD with osVersion,
     )
   }
 
   fun logFrontendDocumentUpdateLatency(textLength: Int, duration: Duration) {
     frontendDocumentUpdateLatencyEvent.log(
       TEXT_LENGTH_FIELD with textLength,
-      DURATION_FIELD with duration
+      DURATION_FIELD with duration,
+      OS_VERSION_FIELD with osVersion,
     )
   }
 }
