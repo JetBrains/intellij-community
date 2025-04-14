@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunction
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
@@ -260,7 +261,8 @@ private fun createRenderer(
         }
 
         modifiersRenderer = modifiersRenderer.with {
-            if (mode != MemberGenerateMode.EXPECT) {
+            visibilityProvider = visibilityProvider.onlyIf { s -> s != KtTokens.DEFAULT_VISIBILITY_KEYWORD }
+            if (mode == MemberGenerateMode.OVERRIDE) {
                 keywordsRenderer = keywordsRenderer.with {
                     keywordFilter = KaRendererKeywordFilter.without(
                         TokenSet.orSet(
