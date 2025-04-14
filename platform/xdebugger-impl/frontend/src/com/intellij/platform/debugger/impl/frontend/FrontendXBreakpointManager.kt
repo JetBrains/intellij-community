@@ -27,8 +27,11 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
   private val breakpoints: ConcurrentMap<XBreakpointId, FrontendXBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
 
+  private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
+
+  // TODO[IJPL-160384]: support persistance between sessions
   override val breakpointsDialogSettings: XBreakpointsDialogState?
-    get() = null // TODO: add persistance
+    get() = _breakpointsDialogSettings
 
   override val allGroups: Set<String>
     get() = setOf() // TODO: implement groups
@@ -60,7 +63,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   }
 
   override fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState) {
-    // TODO: add persistance
+    _breakpointsDialogSettings = settings
   }
 
   override fun setDefaultGroup(group: String) {
