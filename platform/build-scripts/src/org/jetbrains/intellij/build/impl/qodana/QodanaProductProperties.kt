@@ -19,6 +19,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dide.activity.tracking.enable.debug=true",
   "-Deslint.service.expiration.timeout.ms=5000",
   "-Dphp.additional.library.manager.new.updater=true",
+  "-Dgradle.force.project.sdk.import=true" //workaround for https://youtrack.jetbrains.com/issue/IDEA-367680/The-module-SDK-isnt-always-specified
   )
 
 private const val IS_EAP = false
