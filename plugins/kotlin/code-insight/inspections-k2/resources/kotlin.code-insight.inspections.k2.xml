@@ -826,7 +826,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.with.display.name" bundle="messages.KotlinBundle"/>
 
