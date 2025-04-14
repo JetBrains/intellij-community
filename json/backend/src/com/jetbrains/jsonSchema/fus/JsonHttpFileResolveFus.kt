@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileState
 internal object JsonHttpFileLoadingUsageCollector : CounterUsagesCollector() {
   private val jsonHttpFileResolveGroup = EventLogGroup(
     id = "json.http.file.resolve",
-    version = 1,
+    version = 2,
   )
 
   internal val jsonSchemaHighlightingSessionData =

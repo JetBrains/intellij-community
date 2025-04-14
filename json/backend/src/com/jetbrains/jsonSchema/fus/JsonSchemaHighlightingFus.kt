@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 internal object JsonFeatureUsageCollector : CounterUsagesCollector() {
   private val jsonSchemaGroup = EventLogGroup(
     id = "json.schema.features",
-    version = 5,
+    version = 6,
   )
 
   internal val jsonSchemaHighlightingSessionData =
