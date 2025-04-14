@@ -126,7 +126,7 @@ final class PluginUpdateDialog extends DialogWrapper {
           descriptor = node;
         }
         PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, uiModelAdapter, group, LinkListener.NULL, true);
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), uiModelAdapter, group, LinkListener.NULL, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;

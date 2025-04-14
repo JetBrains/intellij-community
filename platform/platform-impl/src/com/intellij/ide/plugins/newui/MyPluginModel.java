@@ -378,6 +378,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return myInstallingPlugins;
   }
 
+  public static boolean isInstallingOrUpdate(PluginId pluginId) {
+    return myInstallingWithUpdatesPlugins.contains(pluginId);
+  }
+
   static boolean isInstallingOrUpdate(@NotNull IdeaPluginDescriptor descriptor) {
     return myInstallingWithUpdatesPlugins.contains(descriptor.getPluginId());
   }

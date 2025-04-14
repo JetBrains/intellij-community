@@ -10,6 +10,8 @@ import com.intellij.openapi.extensions.PluginId
 interface PluginUiModel {
   val pluginId: PluginId
 
+  val source: PluginSource
+
   /**
    * Java compatibility method. Going to be removed after refactoring is done.
    */
@@ -19,4 +21,8 @@ interface PluginUiModel {
 fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
   if (this is PluginUiModelAdapter) return pluginDescriptor
   throw IllegalStateException("PluginUiModelAdapter expected")
+}
+
+enum class PluginSource {
+  LOCAL, REMOTE
 }
