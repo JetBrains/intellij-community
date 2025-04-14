@@ -12,8 +12,10 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
+import kotlin.time.TimeMark
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class TerminalInput(
@@ -30,7 +32,7 @@ internal class TerminalInput(
   /**
    * Use this channel to buffer the input events before we get the actual channel from the backend.
    */
-  private val bufferChannel = Channel<TerminalInputEvent>(
+  private val bufferChannel = Channel<InputEventSubmission>(
     capacity = 10000,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
@@ -45,8 +47,14 @@ internal class TerminalInput(
       val targetChannel = inputChannelDeferred.await()
 
       try {
-        for (event in bufferChannel) {
+        for (submission in bufferChannel) {
+          val event = submission.event
           targetChannel.send(event)
+
+          val latency = submission.eventTime?.elapsedNow()
+          if (latency != null) {
+            ReworkedTerminalUsageCollector.logFrontendTypingLatency(event.id, latency)
+          }
         }
       }
       catch (e: CancellationException) {
@@ -66,7 +74,16 @@ internal class TerminalInput(
 
   fun sendString(data: String) {
     // TODO: should there always be UTF8?
-    sendBytes(data.toByteArray(StandardCharsets.UTF_8))
+    doSendBytes(data.toByteArray(StandardCharsets.UTF_8), eventTime = null)
+  }
+
+  /**
+   * Sends the provided [data] and reports the typing latency from the moment of [eventTime].
+   * This method should be used only for events triggered by the user.
+   * For these events, we track the latency.
+   */
+  fun sendTrackedString(data: String, eventTime: TimeMark) {
+    doSendBytes(data.toByteArray(StandardCharsets.UTF_8), eventTime)
   }
 
   fun sendBracketedString(data: String) {
@@ -79,12 +96,16 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
+    doSendBytes(data, eventTime = null)
+  }
+
+  private fun doSendBytes(data: ByteArray, eventTime: TimeMark?) {
     val writeBytesEvent = TerminalWriteBytesEvent(bytes = data)
-    sendEvent(writeBytesEvent)
+    sendEvent(InputEventSubmission(writeBytesEvent, eventTime))
   }
 
   fun sendClearBuffer() {
-    sendEvent(TerminalClearBufferEvent())
+    sendEvent(InputEventSubmission(TerminalClearBufferEvent()))
   }
 
   /**
@@ -92,10 +113,11 @@ internal class TerminalInput(
    */
   fun sendResize(newSize: TermSize) {
     terminalSessionFuture.getNow(null) ?: return
-    sendEvent(TerminalResizeEvent(newSize.toDto()))
+    val event = TerminalResizeEvent(newSize.toDto())
+    sendEvent(InputEventSubmission(event))
   }
 
-  private fun sendEvent(event: TerminalInputEvent) {
+  private fun sendEvent(event: InputEventSubmission) {
     val result = bufferChannel.trySend(event)
 
     if (result.isClosed) {
@@ -105,4 +127,9 @@ internal class TerminalInput(
       LOG.error("Failed to send input event: $event", result.exceptionOrNull())
     }
   }
+
+  private data class InputEventSubmission(
+    val event: TerminalInputEvent,
+    val eventTime: TimeMark? = null,
+  )
 }
