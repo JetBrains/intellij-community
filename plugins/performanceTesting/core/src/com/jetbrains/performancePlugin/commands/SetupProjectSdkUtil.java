@@ -40,8 +40,8 @@ public final class SetupProjectSdkUtil {
   }
 
   @VisibleForTesting
-  public static boolean isApplicationLoaded(){
-    return LoadingState.COMPONENTS_LOADED.isOccurred();
+  public static boolean isApplicationLoaded() {
+    return LoadingState.APP_STARTED.isOccurred();
   }
 
   @VisibleForTesting
