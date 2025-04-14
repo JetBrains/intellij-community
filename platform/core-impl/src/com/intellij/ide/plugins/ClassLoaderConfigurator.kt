@@ -133,41 +133,41 @@ class ClassLoaderConfigurator(
 
     if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
       module.pluginClassLoader = mainInfo.mainClassLoader
+      return true
+    }
+
+    val customJarFiles = module.jarFiles
+    if (customJarFiles == null) {
+      module.pluginClassLoader = PluginClassLoader(
+        classPath = mainInfo.classPath,
+        parents = dependencies,
+        pluginDescriptor = module,
+        coreLoader = coreLoader,
+        resolveScopeManager = createModuleResolveScopeManager(),
+        packagePrefix = module.packagePrefix,
+        libDirectories = mainInfo.libDirectories,
+      )
     }
     else {
-      val customJarFiles = module.jarFiles
-      if (customJarFiles == null) {
-        module.pluginClassLoader = PluginClassLoader(
-          classPath = mainInfo.classPath,
-          parents = dependencies,
-          pluginDescriptor = module,
-          coreLoader = coreLoader,
-          resolveScopeManager = createModuleResolveScopeManager(),
-          packagePrefix = module.packagePrefix,
-          libDirectories = mainInfo.libDirectories,
-        )
-      }
-      else {
-        val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
-                                    && (module.moduleName == "intellij.rider.test.cases"
-                                        || module.moduleName == "intellij.rider.plugins.efCore.test.cases"
-                                        || module.moduleName == "intellij.rider.plugins.for.tea.test.cases"
-                                        || module.moduleName == "intellij.rider.plugins.fsharp.test.cases"
-                                        || module.moduleName == "intellij.rider.plugins.godot.test.cases"
-                                        || module.moduleName == "intellij.rider.plugins.unity.test.cases"
-                                        || module.moduleName == "intellij.rider.plugins.unreal.link.test.cases"
-                                        || module.moduleName == "intellij.rider.test.cases.qodana"
-                                        || module.moduleName == "intellij.rider.test.cases.supplementary")
-        module.pluginClassLoader = PluginClassLoader(
-          classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
-          parents = dependencies,
-          pluginDescriptor = module,
-          coreLoader = coreLoader,
-          resolveScopeManager = null,
-          packagePrefix = null,
-          libDirectories = mainInfo.libDirectories,
-        )
-      }
+      val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
+                                  && (module.moduleName == "intellij.rider.test.cases"
+                                      || module.moduleName == "intellij.rider.plugins.efCore.test.cases"
+                                      || module.moduleName == "intellij.rider.plugins.for.tea.test.cases"
+                                      || module.moduleName == "intellij.rider.plugins.fsharp.test.cases"
+                                      || module.moduleName == "intellij.rider.plugins.godot.test.cases"
+                                      || module.moduleName == "intellij.rider.plugins.unity.test.cases"
+                                      || module.moduleName == "intellij.rider.plugins.unreal.link.test.cases"
+                                      || module.moduleName == "intellij.rider.test.cases.qodana"
+                                      || module.moduleName == "intellij.rider.test.cases.supplementary")
+      module.pluginClassLoader = PluginClassLoader(
+        classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
+        parents = dependencies,
+        pluginDescriptor = module,
+        coreLoader = coreLoader,
+        resolveScopeManager = null,
+        packagePrefix = null,
+        libDirectories = mainInfo.libDirectories,
+      )
     }
     return true
   }
