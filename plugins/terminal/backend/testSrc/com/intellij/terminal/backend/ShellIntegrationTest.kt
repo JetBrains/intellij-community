@@ -214,7 +214,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
       delay(1000) // Wait for the shell to handle input sent in `block`
 
-      inputChannel.send(TerminalCloseEvent)
+      inputChannel.send(TerminalCloseEvent())
 
       outputEvents
     }

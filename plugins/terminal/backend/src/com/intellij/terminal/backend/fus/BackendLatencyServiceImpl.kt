@@ -12,7 +12,7 @@ import kotlin.time.TimeSource
 
 internal class BackendLatencyServiceImpl : BackendLatencyService {
   override fun tryStartBackendTypingActivity(event: TerminalWriteBytesEvent) {
-    val id = event.id ?: return
+    val id = event.id
     val bytes = event.bytes
     val activity = BackendTypingActivityImpl(id, bytes)
     backendTypingActivityByByteArray[bytes] = activity

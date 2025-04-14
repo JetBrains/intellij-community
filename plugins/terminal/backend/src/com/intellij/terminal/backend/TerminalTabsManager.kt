@@ -103,7 +103,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         }
         // It should terminate the shell process, then cancel the coroutine scope,
         // and finally remove the tab in awaitCancellationAndInvoke body defined in the methods above.
-        session.getInputChannel().send(TerminalCloseEvent)
+        session.getInputChannel().send(TerminalCloseEvent())
       }
       else {
         // The session was not started - just remove the tab.
