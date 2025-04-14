@@ -397,7 +397,8 @@ private suspend fun <D> Wrapper.bindContentImpl(
   }
 }
 
-private fun JPanel.runPreservingFocus(runnable: () -> Unit) {
+@ApiStatus.Internal
+fun JPanel.runPreservingFocus(runnable: () -> Unit) {
   val focused = CollaborationToolsUIUtil.isFocusParent(this)
   runnable()
   if (focused) {

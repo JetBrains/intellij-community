@@ -11,6 +11,7 @@ import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.util.resolveRelative
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
@@ -64,8 +65,9 @@ suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitL
   }
 }
 
+@ApiStatus.Internal
 @SinceGitLab("13.0")
-internal fun GitLabApi.GraphQL.getCloneableProjects(): Flow<List<GitLabProjectForCloneDTO>> =
+fun GitLabApi.GraphQL.getCloneableProjects(): Flow<List<GitLabProjectForCloneDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters()
     val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_CLONE, parameters)
