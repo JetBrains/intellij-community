@@ -62,6 +62,10 @@ open class SeTopHitItemsProvider(
     return contributorWrapper.contributor.getExtendedDescription(item)
   }
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return contributorWrapper.contributor.showInFindResults()
+  }
+
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
   }

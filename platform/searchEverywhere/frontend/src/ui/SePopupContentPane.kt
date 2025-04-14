@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -58,7 +59,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
-class SePopupContentPane(private val project: Project?, private val vm: SePopupVm) : JPanel(), Disposable {
+class SePopupContentPane(private val project: Project?, private val vm: SePopupVm) : JPanel(), Disposable, UiDataProvider {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
@@ -143,6 +144,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
               resultListModel.removeLoadingItem()
               if (!resultListModel.isValid) resultListModel.reset()
+              if (resultListModel.isEmpty) updateEmptyStatus()
             }
           }.collect { event ->
             withContext(Dispatchers.EDT) {
@@ -516,6 +518,28 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   private fun closePopup() {
     vm.closePopup()
+  }
+
+  private suspend fun updateEmptyStatus() {
+    resultList.emptyText.clear()
+
+    if (textField.text.isEmpty()) {
+      return
+    }
+
+    val emptyResultInfo = vm.currentTab.getEmptyResultInfo(DataManager.getInstance().getDataContext(this@SePopupContentPane))
+    emptyResultInfo?.chunks?.forEach { (text, newLine, attrs, listener) ->
+      if (newLine) {
+        resultList.emptyText.appendLine(text, attrs, listener)
+      }
+      else {
+        resultList.emptyText.appendText(text, attrs, listener)
+      }
+    }
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.PREDEFINED_TEXT] = textField.text
   }
 
   override fun dispose() {}

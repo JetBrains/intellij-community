@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
@@ -29,8 +30,5 @@ interface SeTab: Disposable {
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
 
-  /**
-   * Defines if results can be shown in <i>Find</i> toolwindow.
-   */
-  suspend fun canBeShownInFindResults(): Boolean
+  suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? = null
 }

@@ -9016,6 +9016,7 @@ f:com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributo
 - getSelectedElements():java.util.List
 - isSelected(java.lang.Object):Z
 - setSelected(java.lang.Object,Z):V
+- setSelectedToAllElements(Z):V
 f:com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider
 - com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider
 - <init>():V
@@ -9107,7 +9108,7 @@ c:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 - p:createChooser():com.intellij.ide.util.ElementsChooser
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getFilter():com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
-- p:isActive():Z
+- isActive():Z
 - isEnabled():Z
 c:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 - sf:COMPARATOR:java.util.Comparator

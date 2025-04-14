@@ -8,17 +8,22 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
 import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
+import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
+import com.intellij.platform.searchEverywhere.frontend.utils.suspendLazy
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.ui.IdeUICustomization
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +33,7 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Function
 
 @ApiStatus.Internal
-class SeAllTab(private val delegate: SeTabDelegate): SeTab {
+class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String
     get() = IdeBundle.message("searcheverywhere.all.elements.tab.name")
 
@@ -36,6 +41,7 @@ class SeAllTab(private val delegate: SeTabDelegate): SeTab {
     get() = name
 
   override val id: String get() = ID
+  private val filterEditor: SuspendLazyProperty<SeFilterEditor> = suspendLazy { SeAllFilterEditor(delegate.getProvidersIdToName()) }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> {
     if (params.inputQuery.isEmpty()) return emptyFlow()
@@ -44,14 +50,16 @@ class SeAllTab(private val delegate: SeTabDelegate): SeTab {
     return delegate.getItems(params, allTabFilter.disabledProviderIds)
   }
 
-  override suspend fun getFilterEditor(): SeFilterEditor? = SeAllFilterEditor(delegate.getProvidersIdToName())
+  override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor.getValue()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
-  override suspend fun canBeShownInFindResults(): Boolean {
-    return delegate.canBeShownInFindResults()
+  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+    return SeEmptyResultInfoProvider(getFilterEditor(),
+                                     delegate.getProvidersIds(),
+                                     delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)
   }
 
   override fun dispose() {
@@ -97,7 +105,8 @@ private class SeAllFilterEditor(private val providersIdToName: Map<SeProviderId,
   }
 
   companion object {
-    val disabledProviders: List<SeProviderId> get() =
-      SearchEverywhereConfiguration.getInstance().state?.filteredOutFileTypeNames?.map { SeProviderId(it) } ?: emptyList()
+    val disabledProviders: List<SeProviderId>
+      get() =
+        SearchEverywhereConfiguration.getInstance().state?.filteredOutFileTypeNames?.map { SeProviderId(it) } ?: emptyList()
   }
 }

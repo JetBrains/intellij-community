@@ -29,10 +29,6 @@ class SeTabMock(override val name: String,
     return true
   }
 
-  override suspend fun canBeShownInFindResults(): Boolean {
-    return false
-  }
-
   override fun dispose() {
     Disposer.dispose(delegate)
   }

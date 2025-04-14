@@ -67,11 +67,13 @@ class SeTabDelegate(val project: Project?,
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 
+  fun getProvidersIds() : List<SeProviderId> = providerIds
+
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.
    */
   suspend fun canBeShownInFindResults(): Boolean {
-    return providers.values.any { it.canBeShownInFindResults() }
+    return providers.getValue().values.any { it.canBeShownInFindResults() }
   }
 
   override fun dispose() {}

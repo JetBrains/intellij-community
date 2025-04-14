@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.classes
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
@@ -19,7 +20,7 @@ class SeClassesTabFactory : SeTabFactory {
     val delegate = SeTabDelegate(project,
                                  sessionRef,
                                  "Classes",
-                                 listOf(SeProviderId("com.intellij.ClassSearchEverywhereItemProvider")),
+                                 listOf(SeProviderId(SeProviderIdUtils.CLASSES_ID)),
                                  dataContext)
 
     return SeClassesTab(delegate)

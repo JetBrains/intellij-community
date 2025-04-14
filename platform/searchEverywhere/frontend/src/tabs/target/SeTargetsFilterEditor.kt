@@ -19,8 +19,20 @@ class SeTargetsFilterEditor(private val scopesInfo: SeSearchScopesInfo?,
                             typeVisibilityStates: List<SeTypeVisibilityStatePresentation>?) : SeFilterEditorBase<SeTargetsFilter>(
   SeTargetsFilter(scopesInfo?.selectedScopeId, hiddenTypes(typeVisibilityStates))
 ) {
-  val visibilityStateHolder: SeTypeVisibilityStateHolder? =
-    typeVisibilityStates?.takeIf { it.isNotEmpty() }?.let { SeTypeVisibilityStateHolder(it) }
+  private val updateFilterValueWithVisibilityStates = {
+    filterValue = filterValue.cloneWith(hiddenTypes(visibilityStateHolder?.elements))
+  }
+
+  private val visibilityStateHolder: SeTypeVisibilityStateHolder? =
+    typeVisibilityStates?.takeIf { it.isNotEmpty() }?.let { it ->
+      SeTypeVisibilityStateHolder(it, updateFilterValueWithVisibilityStates)
+    }
+
+  private val scopeFilterAction: AnAction? = scopesInfo?.let {
+    SeScopeChooserActionProvider(scopesInfo) {
+      filterValue = filterValue.cloneWith(it)
+    }.getAction()
+  }
 
   override fun getPresentation(): SeFilterPresentation {
     return object : SeFilterActionsPresentation {
@@ -29,11 +41,7 @@ class SeTargetsFilterEditor(private val scopesInfo: SeSearchScopesInfo?,
   }
 
   private fun getScopeFilterAction(): AnAction? {
-    if (scopesInfo == null) return null
-
-    return SeScopeChooserActionProvider(scopesInfo) {
-      filterValue = filterValue.cloneWith(it)
-    }.getAction()
+    return scopeFilterAction
   }
 
   private fun getTypeFilterAction(): AnAction? {
@@ -43,9 +51,7 @@ class SeTargetsFilterEditor(private val scopesInfo: SeSearchScopesInfo?,
                                                                        visibilityStateHolder,
                                                                        { it.name },
                                                                        { it.iconId?.icon() })
-    return SearchEverywhereFiltersAction(persistentFilter) {
-      filterValue = filterValue.cloneWith(hiddenTypes(visibilityStateHolder.elements))
-    }
+    return SearchEverywhereFiltersAction(persistentFilter, updateFilterValueWithVisibilityStates)
   }
 
   companion object {

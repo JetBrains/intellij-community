@@ -52,6 +52,10 @@ public final class PersistentSearchEverywhereContributorFilter<T> {
     myVisibilityStateHolder.setVisible(element, selected);
   }
 
+  public void setSelectedToAllElements(boolean selected) {
+    myElements.forEach(element -> setSelected(element, selected));
+  }
+
   public @Nls String getElementText(T element) {
     return myTextExtractor.apply(element);
   }

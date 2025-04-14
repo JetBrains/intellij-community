@@ -2,10 +2,13 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.FindBundle
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
@@ -29,9 +32,12 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
-  override suspend fun canBeShownInFindResults(): Boolean {
-    return delegate.canBeShownInFindResults()
+  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+    return SeEmptyResultInfoProvider(getFilterEditor(),
+                                     delegate.getProvidersIds(),
+                                     delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)
   }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

@@ -4,11 +4,14 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
 import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
@@ -24,9 +27,10 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
   override val name: String get() = IdeBundle.message("search.everywhere.group.name.actions")
   override val shortName: String get() = name
   override val id: String get() = "ActionSearchEverywhereContributor"
+  private val filterEditor: SeFilterEditor = SeActionsFilterEditor()
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
-  override suspend fun getFilterEditor(): SeFilterEditor = SeActionsFilterEditor()
+  override suspend fun getFilterEditor(): SeFilterEditor = filterEditor
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     val presentation = item.presentation
@@ -37,9 +41,10 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
-  // TODO: or just return false?
-  override suspend fun canBeShownInFindResults(): Boolean {
-    return delegate.canBeShownInFindResults()
+  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+    return SeEmptyResultInfoProvider(getFilterEditor(),
+                                     delegate.getProvidersIds(),
+                                     delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)
   }
 
   override fun dispose() {

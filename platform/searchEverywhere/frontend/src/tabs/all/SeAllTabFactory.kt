@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.all
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
@@ -19,7 +20,7 @@ class SeAllTabFactory : SeTabFactory {
     val delegate = SeTabDelegate(project,
                                  sessionRef,
                                  "All",
-                                 listOf(SeProviderId(SeProviderId.WILDCARD_ID)),
+                                 listOf(SeProviderId(SeProviderIdUtils.WILDCARD_ID)),
                                  dataContext)
 
     return SeAllTab(delegate)

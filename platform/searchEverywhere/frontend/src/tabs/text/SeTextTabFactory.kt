@@ -5,6 +5,7 @@ import com.intellij.find.impl.TextSearchContributor
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.SeTabFactory
@@ -20,7 +21,7 @@ class SeTextTabFactory : SeTabFactory {
     val delegate = SeTabDelegate(project,
                                  sessionRef,
                                  "Text",
-                                 listOf(SeProviderId("com.intellij.TextSearchEverywhereItemProvider")),
+                                 listOf(SeProviderId(SeProviderIdUtils.TEXT_ID)),
                                  dataContext)
     return SeTextTab(delegate)
   }

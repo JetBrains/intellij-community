@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -8,6 +9,7 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.utils.SuspendLazyProperty
@@ -102,10 +104,7 @@ class SeTabVm(
     return tab.itemSelected(item, modifiers, searchText)
   }
 
-  /**
-   * Defines if results can be shown in <i>Find</i> toolwindow.
-   */
-  suspend fun canBeShownInFindResults(): Boolean {
-    return tab.canBeShownInFindResults()
+  suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+    return tab.getEmptyResultInfo(context)
   }
 }

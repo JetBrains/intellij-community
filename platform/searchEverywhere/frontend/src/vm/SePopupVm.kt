@@ -88,13 +88,6 @@ class SePopupVm(
     return currentTab.itemSelected(item, modifiers, searchPattern.value)
   }
 
-  /**
-   * Defines if results can be shown in <i>Find</i> toolwindow.
-   */
-  suspend fun canBeShownInFindResults(): Boolean {
-    return currentTab.canBeShownInFindResults()
-  }
-
   fun selectNextTab() {
     currentTabIndex.value = (currentTabIndex.value + 1).coerceIn(tabVms.indices)
     usageLogger.tabSwitched()
