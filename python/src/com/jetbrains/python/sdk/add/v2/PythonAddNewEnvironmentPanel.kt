@@ -83,7 +83,6 @@ internal class PythonAddNewEnvironmentPanel(
       promoPopup.gotIt()
       promoPopup.hidePopup()
     }
-    .withTimeout(15_000)
   private lateinit var interpreterTypeButton: SegmentedButton<*>
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
