@@ -55,7 +55,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   fun showDialog(initialBreakpoint: Any?) {
-    if (useFeProxy() && Registry.`is`("xdebugger.breakpoints.dialog.split")) {
+    if (useFeProxy()) {
       hideBalloon()
       showDialogEvents.tryEmit(initialBreakpoint)
       return

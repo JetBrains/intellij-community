@@ -166,10 +166,6 @@
                  key="xdebugger.toolwindow.split"/>
 
     <registryKey defaultValue="false"
-                 description="Breakpoints dialog implementation for split mode. Enable it in monolith as well to have the same experience as in RD."
-                 key="xdebugger.breakpoints.dialog.split"/>
-
-    <registryKey defaultValue="false"
                  description="Throw warnings and errors about misusages of frontend components on the backend (and vice versa)"
                  key="xdebugger.toolwindow.split.warnings"/>
 
