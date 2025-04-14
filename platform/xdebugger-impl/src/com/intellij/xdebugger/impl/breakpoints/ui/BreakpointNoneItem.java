@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 
@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -74,6 +76,11 @@ public class BreakpointNoneItem extends BreakpointItem {
 
   @Override
   public void removed(Project project) {
+  }
+
+  @Override
+  public @Nullable XBreakpointId getId() {
+    return null;
   }
 
   @Override

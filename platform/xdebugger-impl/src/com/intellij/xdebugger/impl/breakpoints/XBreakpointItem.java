@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -220,6 +221,11 @@ public class XBreakpointItem extends BreakpointItem {
   @Override
   public boolean isDefaultBreakpoint() {
     return myBreakpointProxy.isDefaultBreakpoint();
+  }
+
+  @Override
+  public @Nullable XBreakpointId getId() {
+    return myBreakpointProxy.getId();
   }
 
   @Override

@@ -39,6 +39,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ import java.util.List;
 public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
 
-  private final Object myInitialBreakpoint;
+  private final @Nullable BreakpointsDialogInitialBreakpoint myInitialBreakpoint;
   private final XBreakpointManagerProxy myBreakpointManager;
 
   private BreakpointItemsTreeController myTreeController;
@@ -95,10 +96,12 @@ public class BreakpointsDialog extends DialogWrapper {
     return myBreakpointManager;
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, XBreakpointManagerProxy breakpointManager) {
+  protected BreakpointsDialog(@NotNull Project project,
+                              @Nullable BreakpointsDialogInitialBreakpoint initialBreakpoint,
+                              XBreakpointManagerProxy breakpointManager) {
     super(project);
     myProject = project;
-    myInitialBreakpoint = breakpoint;
+    myInitialBreakpoint = initialBreakpoint;
     myBreakpointManager = breakpointManager;
 
     collectGroupingRules();
@@ -182,7 +185,12 @@ public class BreakpointsDialog extends DialogWrapper {
         });
       myTreeController.selectFirstBreakpointItem();
     }
-    selectBreakpoint(myInitialBreakpoint, false);
+    if (myInitialBreakpoint instanceof BreakpointsDialogInitialBreakpoint.BreakpointId) {
+      selectBreakpointById(((BreakpointsDialogInitialBreakpoint.BreakpointId)myInitialBreakpoint).getId(), false);
+    }
+    else if (myInitialBreakpoint instanceof BreakpointsDialogInitialBreakpoint.GenericBreakpoint) {
+      selectBreakpoint(((BreakpointsDialogInitialBreakpoint.GenericBreakpoint)myInitialBreakpoint).getBreakpoint(), false);
+    }
   }
 
   @Override
@@ -446,6 +454,21 @@ public class BreakpointsDialog extends DialogWrapper {
       window.setBounds(window.getBounds()); // will force fit to screen
     }
     super.toFront();
+  }
+
+  private boolean selectBreakpointById(@Nullable XBreakpointId breakpointId, boolean update) {
+    if (update) {
+      updateBreakpoints();
+    }
+    if (breakpointId != null) {
+      for (BreakpointItem item : myBreakpointItems) {
+        if (Objects.equals(item.getId(), breakpointId)) {
+          myTreeController.selectBreakpointItem(item, null);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public boolean selectBreakpoint(Object breakpoint, boolean update) {
