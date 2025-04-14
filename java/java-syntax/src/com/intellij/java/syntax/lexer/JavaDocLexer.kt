@@ -123,7 +123,7 @@ private class AsteriskStripperLexer(
     if (myInLeadingSpace) {
       myInLeadingSpace = false
       var lf = false
-      while (myTokenEndOffset < myBufferEndOffset && Character.isWhitespace(myBuffer[myTokenEndOffset])) {
+      while (myTokenEndOffset < myBufferEndOffset && myBuffer[myTokenEndOffset].isWhitespace()) {
         if (myBuffer[myTokenEndOffset] == '\n') lf = true
         myTokenEndOffset++
       }
