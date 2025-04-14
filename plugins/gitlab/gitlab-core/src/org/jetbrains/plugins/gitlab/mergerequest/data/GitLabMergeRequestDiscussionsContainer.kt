@@ -79,7 +79,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       requestRefreshFlow = updateRequests,
       requestChangeFlow = discussionEvents,
 
-      isReversed = true
+      shouldTryToLoadAll = true
     ) { cursor ->
       api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, GraphQLRequestPagination(cursor))
     }

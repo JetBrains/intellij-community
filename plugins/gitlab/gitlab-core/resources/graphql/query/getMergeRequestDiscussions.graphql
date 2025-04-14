@@ -1,7 +1,7 @@
 query($projectId: ID!, $mriid: String!, $pageSize: Int = 100, $cursor: String) {
   project(fullPath: $projectId) {
     mergeRequest(iid: $mriid) {
-      discussions(last: $pageSize, before: $cursor) {
+      discussions(first: $pageSize, after: $cursor) {
         pageInfo {
           ...pageInfo
         }
