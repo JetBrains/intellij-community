@@ -87,9 +87,9 @@
     <applicationService serviceInterface="com.intellij.codeInspection.SuppressManager"
                         serviceImplementation="com.intellij.codeInspection.SuppressManagerImpl"/>
     <annotator language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaDocAnnotator"/>
-    <localInspection language="JAVA" shortName="JavaModuleNaming" enabledByDefault="true" level="WARNING"
-                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
-                     bundle="messages.JavaAnalysisBundle" key="inspection.java.module.naming"
+    <localInspection language="JAVA" shortName="JavaModuleNaming" suppressId="module" alternativeId="JavaModuleNaming"
+                     enabledByDefault="true" level="WARNING" groupPath="Java" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.naming.conventions" bundle="messages.JavaAnalysisBundle" key="inspection.java.module.naming"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
     <localInspection language="JAVA" shortName="JavaModuleDefinition" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
