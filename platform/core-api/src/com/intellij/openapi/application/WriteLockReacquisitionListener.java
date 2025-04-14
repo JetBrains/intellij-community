@@ -5,11 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.util.EventListener;
 
-/**
- * Shall be removed in IJPL-149765
- */
-@ApiStatus.Obsolete
 @ApiStatus.Internal
-public interface SuspendingWriteActionListener extends EventListener {
+public interface WriteLockReacquisitionListener extends EventListener {
   void beforeWriteLockReacquired();
 }

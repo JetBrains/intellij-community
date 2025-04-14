@@ -803,17 +803,17 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
-    if (mySuspendingWriteActionListener != null)
+  override fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
+    if (myWriteLockReacquisitionListener != null)
       error("SuspendingWriteActionListener already registered")
-    mySuspendingWriteActionListener = listener
+    myWriteLockReacquisitionListener = listener
   }
 
   @ApiStatus.Internal
-  override fun removeSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
-    if (mySuspendingWriteActionListener != listener)
+  override fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
+    if (myWriteLockReacquisitionListener != listener)
       error("SuspendingWriteActionListener is not registered")
-    mySuspendingWriteActionListener = null
+    myWriteLockReacquisitionListener = null
   }
 
   @ApiStatus.Internal
@@ -1008,7 +1008,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
       action()
     }
     finally {
-      mySuspendingWriteActionListener?.beforeWriteLockReacquired()
+      myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
       val newWritePermit = runSuspend {
         rootWriteIntentPermit.acquireWritePermit()
       }

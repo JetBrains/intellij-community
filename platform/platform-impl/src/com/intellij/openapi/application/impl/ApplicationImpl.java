@@ -374,7 +374,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     getThreadingSupport().removeReadActionListener(myLockDispatcherListener);
     getThreadingSupport().removeWriteActionListener(myLockDispatcherListener);
     getThreadingSupport().removeLockAcquisitionListener(myLockDispatcherListener);
-    getThreadingSupport().removeSuspendingWriteActionListener(myLockDispatcherListener);
+    getThreadingSupport().removeWriteLockReacquisitionListener(myLockDispatcherListener);
     getThreadingSupport().removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
 
     //noinspection deprecation
@@ -1272,7 +1272,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     getThreadingSupport().setWriteActionListener(app.myLockDispatcherListener);
     getThreadingSupport().setWriteIntentReadActionListener(app.myLockDispatcherListener);
     getThreadingSupport().setLockAcquisitionListener(app.myLockDispatcherListener);
-    getThreadingSupport().setSuspendingWriteActionListener(app.myLockDispatcherListener);
+    getThreadingSupport().setWriteLockReacquisitionListener(app.myLockDispatcherListener);
     getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
 
     app.addApplicationListener(new ApplicationListener() {
@@ -1333,7 +1333,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) {
+  public void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) {
     myLockDispatcherListener.addSuspendingWriteActionListener(listener, parentDisposable);
   }
 
@@ -1342,7 +1342,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
    */
   private class LockDispatchListener
     implements ReadActionListener, WriteActionListener, WriteIntentReadActionListener, LockAcquisitionListener,
-               SuspendingWriteActionListener {
+               WriteLockReacquisitionListener {
 
     private final DisposableWrapperList<WriteActionListener> myWriteActionListeners = new DisposableWrapperList<>();
 
@@ -1354,7 +1354,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     private final DisposableWrapperList<LockAcquisitionListener> myLockAcquisitionListeners =
       new DisposableWrapperList<>();
 
-    private final DisposableWrapperList<SuspendingWriteActionListener> mySuspendingWriteActionListeners =
+    private final DisposableWrapperList<WriteLockReacquisitionListener> myWriteLockReacquisitionListeners =
       new DisposableWrapperList<>();
 
     public void addWriteActionListener(WriteActionListener listener, Disposable disposable) {
@@ -1369,8 +1369,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       addListener(myWriteIntentReadActionListeners, listener, disposable);
     }
 
-    public void addSuspendingWriteActionListener(SuspendingWriteActionListener listener, Disposable disposable) {
-      addListener(mySuspendingWriteActionListeners, listener, disposable);
+    public void addSuspendingWriteActionListener(WriteLockReacquisitionListener listener, Disposable disposable) {
+      addListener(myWriteLockReacquisitionListeners, listener, disposable);
     }
 
     public void addLockAcquisitionListener(LockAcquisitionListener listener, Disposable disposable) {
@@ -1425,7 +1425,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
     @Override
     public void beforeWriteLockReacquired() {
-      invokeListeners(mySuspendingWriteActionListeners, SuspendingWriteActionListener::beforeWriteLockReacquired);
+      invokeListeners(myWriteLockReacquisitionListeners, WriteLockReacquisitionListener::beforeWriteLockReacquired);
     }
 
 
