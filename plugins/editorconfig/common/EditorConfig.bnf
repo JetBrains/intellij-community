@@ -1,19 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 {
-  parserClass="org.editorconfig.language.parser.EditorConfigParserBase"
-  parserUtilClass="org.editorconfig.language.parser.EditorConfigParserUtil"
+  parserClass="com.intellij.editorconfig.common.syntax.parser.EditorConfigParserBase"
+  parserUtilClass="com.intellij.editorconfig.common.syntax.parser.EditorConfigParserUtil"
   extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
 
   psiClassPrefix="EditorConfig"
   psiImplClassSuffix="Impl"
-  psiPackage="org.editorconfig.language.psi"
-  psiImplPackage="org.editorconfig.language.psi.impl"
+  psiPackage="com.intellij.editorconfig.common.syntax.psi"
+  psiImplPackage="com.intellij.editorconfig.common.syntax.psi.impl"
 
-  elementTypeHolderClass="org.editorconfig.language.psi.EditorConfigElementTypes"
-  elementTypeClass="org.editorconfig.language.psi.EditorConfigElementType"
-  tokenTypeClass="org.editorconfig.language.psi.EditorConfigTokenType"
+  elementTypeHolderClass="com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes"
+  elementTypeClass="com.intellij.editorconfig.common.syntax.psi.EditorConfigElementType"
+  tokenTypeClass="com.intellij.editorconfig.common.syntax.lexer.EditorConfigTokenType"
   psiVisitorName="EditorConfigVisitor"
-  psiImplUtilClass="org.editorconfig.language.psi.impl.EditorConfigPsiImplUtils"
+  psiImplUtilClass="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigPsiImplUtils"
 
   tokens=[
     LINE_COMMENT='regexp:[#;].*'
@@ -31,7 +31,7 @@ private section_wrap ::= section <<unbindComments>>
 section ::= header option* {
   pin=1
   recoverWhile=not_header
-  mixin="org.editorconfig.language.psi.base.EditorConfigSectionBase"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigSectionBase"
   implements="com.intellij.psi.NavigatablePsiElement"
 }
 
@@ -40,7 +40,7 @@ section ::= header option* {
 root_declaration ::= root_declaration_key SEPARATOR root_declaration_list (COLON root_declaration_list)? {
   pin=2
   recoverWhile=not_next_entry
-  mixin="org.editorconfig.language.psi.base.EditorConfigRootDeclarationBase"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigRootDeclarationBase"
   implements="com.intellij.psi.NavigatablePsiElement"
 }
 
@@ -55,66 +55,66 @@ root_declaration_value ::= IDENTIFIER
 header ::= L_BRACKET pattern_aux? R_BRACKET {
   pin=1
   recoverWhile=not_next_entry
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 fake pattern ::= {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 
 private pattern_aux ::= (concatenated_pattern | elemental_pattern) {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 private elemental_pattern ::= (enumeration_pattern | flat_pattern | asterisk_pattern | double_asterisk_pattern | question_pattern | char_class_pattern)
 
 concatenated_pattern ::= elemental_pattern (elemental_pattern)+ {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 enumeration_pattern ::= L_CURLY (pattern_aux (COMMA pattern_aux)*)? R_CURLY {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 asterisk_pattern ::= ASTERISK {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 double_asterisk_pattern ::= DOUBLE_ASTERISK {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 question_pattern ::= QUESTION {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 flat_pattern ::= (PATTERN_IDENTIFIER | PATTERN_WHITE_SPACE)+ {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 char_class_pattern ::= L_BRACKET char_class_exclamation? char_class_letter+ R_BRACKET {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 char_class_exclamation ::= EXCLAMATION {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
 }
 
 char_class_letter ::= CHARCLASS_LETTER {
-  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigHeaderElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeaderElement"
   methods=[
     isEscape
     isValidEscape
@@ -124,8 +124,8 @@ char_class_letter ::= CHARCLASS_LETTER {
 // ---- ---- Option ---- ----
 
 option ::= option_with_raw_value | simple_option {
-  mixin="org.editorconfig.language.psi.base.EditorConfigOptionBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigOptionBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement"
   methods=[
     getKeyParts
     getAnyValue
@@ -152,26 +152,26 @@ private option_value ::= option_value_pair | option_value_standalone_list | opti
 // ---- ---- Key ---- ----
 
 qualified_option_key ::= DOT* (qualified_key_part DOT+)+ qualified_key_part? | (DOT+ qualified_key_part) {
-  mixin="org.editorconfig.language.psi.base.EditorConfigQualifiedOptionKeyBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigQualifiedOptionKeyBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement"
 }
 
 qualified_key_part ::= IDENTIFIER {
-  mixin="org.editorconfig.language.psi.base.EditorConfigQualifiedKeyPartBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigQualifiedKeyPartBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigIdentifierElement"
 }
 
 flat_option_key ::= IDENTIFIER {
-  mixin="org.editorconfig.language.psi.base.EditorConfigFlatOptionKeyBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigFlatOptionKeyBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigIdentifierElement"
 }
 
 // ---- ---- Value ---- ----
 
 option_value_pair ::= (option_value_list | option_value_identifier) COLON (option_value_list | option_value_identifier) <<followedByNewLineOrEndOfFile>> {
   pin=2
-  mixin="org.editorconfig.language.psi.base.EditorConfigDescribableElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigDescribableElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement"
   methods=[
     getFirst
     getSecond
@@ -181,15 +181,15 @@ option_value_pair ::= (option_value_list | option_value_identifier) COLON (optio
 private option_value_standalone_list ::= option_value_list <<followedByNewLineOrEndOfFile>>
 
 option_value_list ::= COMMA* option_value_identifier (COMMA option_value_identifier !(DOT | SEPARATOR) | COMMA)+ {
-  mixin="org.editorconfig.language.psi.base.EditorConfigDescribableElementBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigDescribableElementBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement"
 }
 
 private option_value_standalone_identifier ::= option_value_identifier <<followedByNewLineOrEndOfFile>>
 
 option_value_identifier ::= IDENTIFIER {
-  mixin="org.editorconfig.language.psi.base.EditorConfigOptionValueIdentifierBase"
-  implements="org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement"
+  mixin="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigOptionValueIdentifierBase"
+  implements="com.intellij.editorconfig.common.syntax.psi.EditorConfigIdentifierElement"
 }
 
 // ---- ---- Recovery ---- ----

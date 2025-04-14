@@ -7,11 +7,11 @@ import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveDeprecatedElementQuickFix : LocalQuickFix {

@@ -3,13 +3,13 @@ package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueList
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigCleanupValueListQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigElementTypes
-import org.editorconfig.language.psi.EditorConfigOptionValueList
-import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 
 internal fun findBadCommas(list: EditorConfigOptionValueList): List<PsiElement> {

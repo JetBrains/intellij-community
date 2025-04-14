@@ -2,8 +2,8 @@
 package org.editorconfig.language.codestyle
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel
+import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import org.editorconfig.language.EditorConfigLanguage
 
 class EditorConfigCodeStyleSettingsPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings)
   : TabbedLanguageCodeStylePanel(EditorConfigLanguage, currentSettings, settings) {

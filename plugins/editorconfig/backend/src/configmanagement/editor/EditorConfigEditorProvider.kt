@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.editor
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.editorconfig.common.plugin.EditorConfigFileType
 import com.intellij.lang.Language
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -31,7 +32,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.editorconfig.configmanagement.editor.EditorConfigEditorProvider.Companion.MAX_PREVIEW_LENGTH
 import org.editorconfig.configmanagement.editor.EditorConfigEditorProvider.Companion.getLanguage
-import org.editorconfig.language.filetype.EditorConfigFileType
 import org.editorconfig.settings.EditorConfigSettings
 import java.io.IOException
 

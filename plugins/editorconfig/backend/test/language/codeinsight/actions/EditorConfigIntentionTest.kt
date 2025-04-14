@@ -2,9 +2,9 @@
 package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.editorconfig.language.messages.EditorConfigBundle
 import org.jetbrains.annotations.PropertyKey
 
 class EditorConfigIntentionTest : BasePlatformTestCase() {

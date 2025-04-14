@@ -373,14 +373,14 @@
 
     <!-- Services -->
     <applicationService
-      serviceInterface="org.editorconfig.language.psi.EditorConfigReferenceSupport"
+      serviceInterface="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigReferenceSupport"
       serviceImplementation="org.editorconfig.language.psi.reference.BackendEditorConfigReferenceSupport"
     />
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigOptionDescriptorManager"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl"/>
     <projectService
-        serviceInterface="org.editorconfig.language.services.EditorConfigElementFactory"
+        serviceInterface="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigElementFactory"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigElementFactoryImpl"/>
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigFileHierarchyService"
@@ -431,10 +431,10 @@
         language="EditorConfig"
         implementationClass="org.editorconfig.language.structureview.EditorConfigStructureViewFactory"/>
     <elementManipulator
-        forClass="org.editorconfig.language.psi.EditorConfigHeader"
+        forClass="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader"
         implementationClass="org.editorconfig.language.psi.EditorConfigSilentElementManipulator"/>
     <elementManipulator
-        forClass="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
+        forClass="com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement"
         implementationClass="org.editorconfig.language.psi.EditorConfigSilentElementManipulator"/>
     <findUsagesProvider
         language="EditorConfig"

@@ -4,15 +4,15 @@ package org.editorconfig.language.codeinsight.actions
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange
 import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.editorconfig.language.psi.EditorConfigOption
-import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.psi.EditorConfigSection
 
 class EditorConfigStatementUpDownMover : LineMover() {
   override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {

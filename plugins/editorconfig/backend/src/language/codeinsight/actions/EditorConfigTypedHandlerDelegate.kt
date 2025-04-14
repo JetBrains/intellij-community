@@ -3,6 +3,9 @@ package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigEnumerationPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -11,9 +14,6 @@ import com.intellij.openapi.editor.impl.TypedActionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.editorconfig.language.psi.EditorConfigEnumerationPattern
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 
 class EditorConfigTypedHandlerDelegate : TypedHandlerDelegate() {

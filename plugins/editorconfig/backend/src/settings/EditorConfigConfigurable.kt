@@ -1,6 +1,7 @@
 package org.editorconfig.settings
 
 import com.intellij.application.options.GeneralCodeStyleOptionsProvider
+import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -8,7 +9,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import com.intellij.ui.dsl.builder.panel
 import org.editorconfig.Utils
-import org.editorconfig.language.messages.EditorConfigBundle
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 

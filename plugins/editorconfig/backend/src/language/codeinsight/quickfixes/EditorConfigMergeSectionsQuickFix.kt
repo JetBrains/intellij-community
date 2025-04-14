@@ -3,13 +3,13 @@ package org.editorconfig.language.codeinsight.quickfixes
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
+import com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigElementFactory
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.codeinsight.inspections.findDuplicateSection
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigSection
-import org.editorconfig.language.services.EditorConfigElementFactory
 import org.jetbrains.annotations.Nls
 
 class EditorConfigMergeSectionsQuickFix : LocalQuickFix {

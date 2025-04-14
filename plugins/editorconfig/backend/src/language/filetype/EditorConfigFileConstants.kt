@@ -2,9 +2,9 @@
 package org.editorconfig.language.filetype
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.editorconfig.common.plugin.EditorConfigFileType.fileExtension
+import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
 import com.intellij.psi.PsiFile
-import org.editorconfig.language.EditorConfigLanguage
-import org.editorconfig.language.filetype.EditorConfigFileType.fileExtension
 
 object EditorConfigFileConstants {
   const val FILE_NAME_WITHOUT_EXTENSION: String = ""

@@ -1,11 +1,11 @@
-package org.editorconfig.language.lexer;
+package com.intellij.editorconfig.common.syntax.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import kotlin.NotImplementedError;
 import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
-import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
+import static com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes.*;
 
 %%
 

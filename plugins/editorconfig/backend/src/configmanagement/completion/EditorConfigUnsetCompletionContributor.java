@@ -3,11 +3,11 @@ package org.editorconfig.configmanagement.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ProcessingContext;
-import org.editorconfig.language.psi.EditorConfigElementTypes;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;

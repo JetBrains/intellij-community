@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.util.core
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.editorconfig.language.psi.EditorConfigElementTypes
-import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.isSubcaseOf
 import kotlin.reflect.KClass

@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.util
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigEnumerationPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPattern
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiErrorElement
@@ -11,9 +14,6 @@ import org.editorconfig.core.EditorConfigAutomatonBuilder.getCachedHeaderAutomat
 import org.editorconfig.language.codeinsight.inspections.hasNumerousWildcards
 import org.editorconfig.language.codeinsight.inspections.hasRedundancy
 import org.editorconfig.language.codeinsight.inspections.isEmptyHeader
-import org.editorconfig.language.psi.EditorConfigEnumerationPattern
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigPattern
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.containsErrors
 
 val EditorConfigHeader.isValidGlob: Boolean

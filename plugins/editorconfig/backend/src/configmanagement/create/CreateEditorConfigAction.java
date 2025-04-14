@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.NewFileActionWithCategory;
@@ -28,7 +29,6 @@ import com.intellij.util.PlatformUtils;
 import org.editorconfig.EditorConfigNotifier;
 import org.editorconfig.configmanagement.export.EditorConfigSettingsWriter;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

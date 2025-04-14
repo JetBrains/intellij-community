@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.IndentStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import org.editorconfig.configmanagement.EditorConfigActionUtil;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

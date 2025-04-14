@@ -2,7 +2,7 @@
 package org.editorconfig.language.codeinsight.completion.providers
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor

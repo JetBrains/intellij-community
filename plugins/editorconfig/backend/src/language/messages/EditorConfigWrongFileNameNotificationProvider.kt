@@ -2,6 +2,8 @@
 package org.editorconfig.language.messages
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.plugin.EditorConfigFileType
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -21,7 +23,6 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import org.editorconfig.Utils
 import org.editorconfig.language.filetype.EditorConfigFileConstants
-import org.editorconfig.language.filetype.EditorConfigFileType
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.util.function.Function

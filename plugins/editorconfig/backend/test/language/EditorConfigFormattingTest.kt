@@ -2,6 +2,7 @@
 package org.editorconfig.language
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.services.impl
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -25,7 +26,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.filetype.EditorConfigFileConstants
-import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.reference.EditorConfigVirtualFileDescriptor
 import org.editorconfig.language.services.EditorConfigFileHierarchyService
 import org.editorconfig.language.services.EditorConfigServiceLoaded

@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.core
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import dk.brics.automaton.Automaton
-import org.editorconfig.language.psi.EditorConfigSection
 import org.junit.Assert
 
 class EditorConfigAutomatonBuilderTest : BasePlatformTestCase() {

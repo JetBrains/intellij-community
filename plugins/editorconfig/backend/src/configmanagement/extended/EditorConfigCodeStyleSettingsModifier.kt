@@ -9,6 +9,7 @@ import com.intellij.application.options.codeStyle.properties.CodeStyleProperties
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper
 import com.intellij.application.options.codeStyle.properties.OverrideLanguageIndentOptionsAccessor.OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME
+import com.intellij.editorconfig.common.EditorConfigBundle.message
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -38,7 +39,6 @@ import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory
 import org.editorconfig.configmanagement.EditorConfigUsagesCollector.logEditorConfigUsed
-import org.editorconfig.language.messages.EditorConfigBundle.message
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.Nls

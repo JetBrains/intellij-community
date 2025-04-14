@@ -4,11 +4,11 @@ package org.editorconfig.language.codeinsight.completion.providers
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElementImpl
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
-import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 import org.editorconfig.language.util.EditorConfigTemplateUtil
 

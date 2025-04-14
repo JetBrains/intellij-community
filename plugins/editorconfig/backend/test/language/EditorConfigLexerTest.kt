@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language
 
+import com.intellij.editorconfig.common.syntax.lexer.EditorConfigLexerAdapter
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.LexerTestCase
-import org.editorconfig.language.lexer.EditorConfigLexerAdapter
 
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 

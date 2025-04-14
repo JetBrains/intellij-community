@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.psi.reference
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.psi.PsiReferenceBase
-import org.editorconfig.language.psi.EditorConfigFlatOptionKey
-import org.editorconfig.language.psi.EditorConfigOption
-import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.schema.descriptors.containsKey
 import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil

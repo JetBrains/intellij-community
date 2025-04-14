@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.messages
 
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.plugin.EditorConfigFileType
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -20,7 +22,6 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ArrayUtil
-import org.editorconfig.language.filetype.EditorConfigFileType
 import java.util.function.Function
 import javax.swing.JComponent
 

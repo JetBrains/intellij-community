@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.headers
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.assertIterableEquals
-import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.util.headers.EditorConfigHeaderOverrideSearcherBase
 import org.editorconfig.language.util.headers.EditorConfigOverriddenHeaderSearcher
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher

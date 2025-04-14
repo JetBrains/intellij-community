@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInspection.*
+import com.intellij.editorconfig.common.EditorConfigBundle.message
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -13,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils.isEnabled
-import org.editorconfig.language.messages.EditorConfigBundle.message
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 

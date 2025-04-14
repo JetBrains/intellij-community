@@ -3,14 +3,14 @@ package org.editorconfig.language.codeinsight.suppression
 
 import com.intellij.codeInspection.InspectionSuppressor
 import com.intellij.codeInspection.SuppressionUtil
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigRootDeclaration
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigOption
-import org.editorconfig.language.psi.EditorConfigRootDeclaration
-import org.editorconfig.language.psi.EditorConfigSection
 import java.util.regex.Pattern
 
 class EditorConfigInspectionSuppressor : InspectionSuppressor {

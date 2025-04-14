@@ -4,12 +4,12 @@ package org.editorconfig.language.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigIdentifierElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import com.intellij.openapi.application.ApplicationNamesInfo
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveDeprecatedElementQuickFix
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOptionQuickFix
-import org.editorconfig.language.psi.EditorConfigVisitor
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
-import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement
 import org.editorconfig.language.schema.descriptors.getDescriptor
 import java.text.MessageFormat
 

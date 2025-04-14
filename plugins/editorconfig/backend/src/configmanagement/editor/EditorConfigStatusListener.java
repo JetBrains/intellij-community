@@ -3,6 +3,10 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatOptionKey;
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption;
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueIdentifier;
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -16,10 +20,6 @@ import com.intellij.ui.EditorNotifications;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil;
 import org.editorconfig.configmanagement.EditorConfigEncodingCache;
-import org.editorconfig.language.psi.EditorConfigFlatOptionKey;
-import org.editorconfig.language.psi.EditorConfigOption;
-import org.editorconfig.language.psi.EditorConfigOptionValueIdentifier;
-import org.editorconfig.language.psi.EditorConfigSection;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 
