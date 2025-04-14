@@ -102,6 +102,7 @@ data class TestPluginDescriptor(
 
   override fun isEnabled(): Boolean = _enabled
 
+  @Deprecated("Deprecated in Java")
   override fun setEnabled(enabled: Boolean) {
     this._enabled = enabled
   }

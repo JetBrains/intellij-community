@@ -126,6 +126,7 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
     return false;
   }
 
+  @Deprecated
   @Override
   public void setEnabled(boolean enabled) { }
 

@@ -244,6 +244,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override fun isEnabled(): Boolean = isMarkedForLoading
 
+  @Deprecated("Deprecated in Java")
   override fun setEnabled(enabled: Boolean) {
     isMarkedForLoading = enabled
   }

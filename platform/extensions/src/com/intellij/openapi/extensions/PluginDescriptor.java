@@ -94,5 +94,9 @@ public interface PluginDescriptor {
 
   boolean isEnabled();
 
+  /**
+   * @deprecated for removal. This method has no immediate effect and is, in fact, an implementation detail of plugin loading.
+   */
+  @Deprecated
   void setEnabled(boolean enabled);
 }

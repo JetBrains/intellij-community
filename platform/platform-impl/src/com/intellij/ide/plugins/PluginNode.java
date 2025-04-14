@@ -542,6 +542,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return myEnabled;
   }
 
+  @Deprecated
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
