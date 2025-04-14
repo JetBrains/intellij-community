@@ -10,6 +10,7 @@
   </dependencies>
 
   <content>
+    <module name="intellij.markdown" loading="embedded"/>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
     <module name="intellij.markdown.frontmatter.yaml"/>
@@ -395,7 +396,6 @@
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessLinksExtension$Provider"/>
-    <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.ProcessImagesExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension$Provider"/>
 
     <fenceLanguageProvider id="DefaultMermaidCodeFenceLanguageProvider"

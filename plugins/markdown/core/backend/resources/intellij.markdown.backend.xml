@@ -2,6 +2,7 @@
     <dependencies>
       <module name="intellij.platform.backend"/>
       <module name="intellij.platform.kernel.backend"/>
+      <module name="intellij.markdown"/>
     </dependencies>
     <extensions defaultExtensionNs="com.intellij">
       <platform.rpc.backend.remoteApiProvider
