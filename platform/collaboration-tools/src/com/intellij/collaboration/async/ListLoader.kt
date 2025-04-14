@@ -198,10 +198,8 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
       // Reset any errors that were present
       doEmitPages(State())
 
-      // Perform 2 loads by default to start seeing data.
-      var loadedMoreData = loadMoreImpl()
-      loadedMoreData = if (loadedMoreData) loadMoreImpl() else false
-
+      // Perform a load by default to start seeing data.
+      val loadedMoreData = loadMoreImpl()
       if (loadedMoreData && shouldTryToLoadAll) {
         loadAllImpl()
       }
