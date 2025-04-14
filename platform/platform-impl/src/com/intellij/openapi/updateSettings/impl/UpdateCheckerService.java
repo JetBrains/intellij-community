@@ -356,14 +356,27 @@ public class UpdateCheckerService {
     }
   }
 
-  static void cleanupObsoleteCustomRepositories() {
+  static void pruneUpdateSettings() {
     var settings = UpdateSettings.getInstance();
+
     if (settings.isObsoleteCustomRepositoriesCleanNeeded()) {
       var cleaned = settings.getStoredPluginHosts().removeIf(host -> host.startsWith("https://secure.feed.toolbox.app/plugins"));
       if (cleaned) {
         LOG.info("Some obsolete TBE custom repositories have been removed");
       }
       settings.setObsoleteCustomRepositoriesCleanNeeded(false);
+    }
+
+    var ignoredBuildNumbers = settings.getIgnoredBuildNumbers();
+    if (!ignoredBuildNumbers.isEmpty()) {
+      var currentBuild = ApplicationInfo.getInstance().getBuild();
+      var cleaned = ignoredBuildNumbers.removeIf(str -> {
+        var bn = BuildNumber.fromStringOrNull(str);
+        return bn != null && currentBuild.compareTo(bn) >= 0;
+      });
+      if (cleaned) {
+        LOG.info("Some obsolete ignored versions have been removed");
+      }
     }
   }
 }
