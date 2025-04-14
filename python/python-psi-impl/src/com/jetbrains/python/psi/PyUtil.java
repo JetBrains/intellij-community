@@ -1748,6 +1748,13 @@ public final class PyUtil {
     }
 
     /**
+     * @return true if given string node contains "t" or "T" prefix
+     */
+    public boolean isTemplate() {
+      return PyStringLiteralUtil.isTemplatePrefix(myPrefix);
+    }
+
+    /**
      * @return true if other string node has the same decorations, i.e. quotes and prefix
      */
     @Override
