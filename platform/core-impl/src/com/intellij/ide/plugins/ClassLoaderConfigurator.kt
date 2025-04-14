@@ -95,76 +95,81 @@ class ClassLoaderConfigurator(
       return true
     }
     else {
-      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
-        throw PluginException("Package is not specified (module=$module)", module.pluginId)
-      }
+      assert(module.isContentModuleDescriptor)
+      return configureContentModule(module)
+    }
+  }
 
-      assert(module.dependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.dependencies}" }
-      val dependencies = getSortedDependencies(module)
-      // if the module depends on an unavailable plugin, it will not be loaded
-      if (dependencies.any { it.pluginClassLoader == null }) {
-        return false
-      }
+  private fun configureContentModule(module: IdeaPluginDescriptorImpl): Boolean {
+    if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
+      throw PluginException("Package is not specified (module=$module)", module.pluginId)
+    }
 
-      if (module.useCoreClassLoader) {
-        module.pluginClassLoader = coreLoader
-        return true
-      }
-      if (module.pluginId == PluginManagerCore.CORE_ID) {
-        if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
-          module.pluginClassLoader = coreLoader
-        }
-        else {
-          configureCorePluginModuleClassLoader(module, dependencies)
-        }
-        return true
-      }
+    assert(module.dependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.dependencies}" }
+    val dependencies = getSortedDependencies(module)
+    // if the module depends on an unavailable plugin, it will not be loaded
+    if (dependencies.any { it.pluginClassLoader == null }) {
+      return false
+    }
 
-      val mainInfo = mainToClassPath.get(module.pluginId) ?: run {
-        val mainDescriptor = pluginSet.findEnabledPlugin(module.pluginId) ?: throw PluginException("Plugin ${module.pluginId} is not found in enabled plugins", module.pluginId)
-        configureMainPluginModule(mainDescriptor)
-      }
-      
+    if (module.useCoreClassLoader) {
+      module.pluginClassLoader = coreLoader
+      return true
+    }
+    if (module.pluginId == PluginManagerCore.CORE_ID) {
       if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
-        module.pluginClassLoader = mainInfo.mainClassLoader
+        module.pluginClassLoader = coreLoader
       }
       else {
-        val customJarFiles = module.jarFiles
-        if (customJarFiles == null) {
-          module.pluginClassLoader = PluginClassLoader(
-            classPath = mainInfo.classPath,
-            parents = dependencies,
-            pluginDescriptor = module,
-            coreLoader = coreLoader,
-            resolveScopeManager = createModuleResolveScopeManager(),
-            packagePrefix = module.packagePrefix,
-            libDirectories = mainInfo.libDirectories,
-          )
-        }
-        else {
-          val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
-                                      && (module.moduleName == "intellij.rider.test.cases"
-                                          || module.moduleName == "intellij.rider.plugins.efCore.test.cases"
-                                          || module.moduleName == "intellij.rider.plugins.for.tea.test.cases"
-                                          || module.moduleName == "intellij.rider.plugins.fsharp.test.cases"
-                                          || module.moduleName == "intellij.rider.plugins.godot.test.cases"
-                                          || module.moduleName == "intellij.rider.plugins.unity.test.cases"
-                                          || module.moduleName == "intellij.rider.plugins.unreal.link.test.cases"
-                                          || module.moduleName == "intellij.rider.test.cases.qodana"
-                                          || module.moduleName == "intellij.rider.test.cases.supplementary")
-          module.pluginClassLoader = PluginClassLoader(
-            classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
-            parents = dependencies,
-            pluginDescriptor = module,
-            coreLoader = coreLoader,
-            resolveScopeManager = null,
-            packagePrefix = null,
-            libDirectories = mainInfo.libDirectories,
-          )
-        }
+        configureCorePluginModuleClassLoader(module, dependencies)
       }
       return true
     }
+
+    val mainInfo = mainToClassPath.get(module.pluginId) ?: run {
+      val mainDescriptor = pluginSet.findEnabledPlugin(module.pluginId) ?: throw PluginException("Plugin ${module.pluginId} is not found in enabled plugins", module.pluginId)
+      configureMainPluginModule(mainDescriptor)
+    }
+
+    if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
+      module.pluginClassLoader = mainInfo.mainClassLoader
+    }
+    else {
+      val customJarFiles = module.jarFiles
+      if (customJarFiles == null) {
+        module.pluginClassLoader = PluginClassLoader(
+          classPath = mainInfo.classPath,
+          parents = dependencies,
+          pluginDescriptor = module,
+          coreLoader = coreLoader,
+          resolveScopeManager = createModuleResolveScopeManager(),
+          packagePrefix = module.packagePrefix,
+          libDirectories = mainInfo.libDirectories,
+        )
+      }
+      else {
+        val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS
+                                    && (module.moduleName == "intellij.rider.test.cases"
+                                        || module.moduleName == "intellij.rider.plugins.efCore.test.cases"
+                                        || module.moduleName == "intellij.rider.plugins.for.tea.test.cases"
+                                        || module.moduleName == "intellij.rider.plugins.fsharp.test.cases"
+                                        || module.moduleName == "intellij.rider.plugins.godot.test.cases"
+                                        || module.moduleName == "intellij.rider.plugins.unity.test.cases"
+                                        || module.moduleName == "intellij.rider.plugins.unreal.link.test.cases"
+                                        || module.moduleName == "intellij.rider.test.cases.qodana"
+                                        || module.moduleName == "intellij.rider.test.cases.supplementary")
+        module.pluginClassLoader = PluginClassLoader(
+          classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
+          parents = dependencies,
+          pluginDescriptor = module,
+          coreLoader = coreLoader,
+          resolveScopeManager = null,
+          packagePrefix = null,
+          libDirectories = mainInfo.libDirectories,
+        )
+      }
+    }
+    return true
   }
 
   private fun getSortedDependencies(module: IdeaPluginDescriptorImpl): Array<IdeaPluginDescriptorImpl> {
