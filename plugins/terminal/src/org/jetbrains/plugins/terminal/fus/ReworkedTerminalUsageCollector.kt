@@ -27,6 +27,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
   private val EVENT_ID_FIELD = EventFields.Int("event_id")
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
+  private val TEXT_LENGTH_FIELD = EventFields.Int("text_length")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -65,6 +66,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
     "terminal.frontend.output.latency",
     EVENT_ID_FIELD,
+    DURATION_FIELD,
+  )
+
+  private val backendTextBufferCollectionLatencyEvent = GROUP.registerVarargEvent(
+    "terminal.backend.text.buffer.collection.latency",
+    TEXT_LENGTH_FIELD,
     DURATION_FIELD,
   )
 
@@ -118,6 +125,13 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun logFrontendOutputLatency(eventId: Int, duration: Duration) {
     frontendOutputLatencyEvent.log(
       EVENT_ID_FIELD with eventId,
+      DURATION_FIELD with duration
+    )
+  }
+
+  fun logBackendTextBufferCollectionLatency(textLength: Int, duration: Duration) {
+    backendTextBufferCollectionLatencyEvent.log(
+      TEXT_LENGTH_FIELD with textLength,
       DURATION_FIELD with duration
     )
   }
