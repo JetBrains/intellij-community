@@ -26,6 +26,7 @@ data class PluginValidationOptions(
   val skipUnresolvedOptionalContentModules: Boolean = false,
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
   val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
+  val modulesToSkip: Set<String> = emptySet(), 
 )
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
@@ -90,28 +91,6 @@ internal val homePath by lazy {
   Path.of(getHomePath())
 }
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
-private val moduleSkipList = java.util.Set.of(
-  "fleet",
-  "intellij.indexing.shared.ultimate.plugin.internal.generator",
-  "intellij.indexing.shared.ultimate.plugin.public",
-  "kotlin-ultimate.appcode-kmm.main", /* Used only when running from sources */
-  "intellij.idea.ultimate.min.customization", //has the same plugin ID as intellij.idea.ultimate.customization 
-  "intellij.javaFX.community",
-  "intellij.vcs.gitlab.community", //has the same plugin ID as intellij.vcs.gitlab.ultimate 
-  "intellij.lightEdit",
-  "intellij.webstorm",
-  "intellij.datagrip", //the core plugin with 'com.intellij' ID
-  "intellij.gateway", //the core plugin with 'com.intellij' ID
-  "intellij.cwm", /* remote-dev/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
-  "intellij.osgi", /* no particular package prefix to choose */
-  "intellij.hunspell", /* MP-3656 Marketplace doesn't allow uploading plugins without dependencies */
-  "intellij.android.device-explorer", /* android plugin doesn't follow the new plugin model yet, $modulename$.xml is not a module descriptor */
-  "intellij.bigdatatools.plugin.spark", /* Spark Scala depends on Scala, Scala is not in monorepo*/
-  "kotlin.highlighting.shared",
-  "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
-)
-
 class PluginModelValidator(private val sourceModules: List<Module>, private val validationOptions: PluginValidationOptions) {
   sealed interface Module {
     val name: String
@@ -129,7 +108,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     // 1. collect plugin and module file info set
     val sourceModuleNameToFileInfo =
       sourceModules
-        .filterNot { it.name.startsWith("fleet.") || moduleSkipList.contains(it.name) }
+        .filterNot { it.name.startsWith("fleet.") || validationOptions.modulesToSkip.contains(it.name) }
         .mapNotNull { createFileInfo(it) }
         .associateBy { it.sourceModule.name }
 

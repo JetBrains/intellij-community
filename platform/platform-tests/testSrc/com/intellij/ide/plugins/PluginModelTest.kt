@@ -12,7 +12,13 @@ class PluginModelTest {
   @TestFactory
   fun check(): List<DynamicTest> {
     val communityPath = PlatformTestUtil.getCommunityPath()
-    val options = PluginValidationOptions(skipUnresolvedOptionalContentModules = true)
+    val options = PluginValidationOptions(
+      skipUnresolvedOptionalContentModules = true,
+      modulesToSkip = setOf(
+        "intellij.android.device-explorer",
+        "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
+      )
+    )
     val result = validatePluginModel(Path.of(communityPath), options)
     
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
