@@ -11,4 +11,16 @@ class ExtensionElement(
    @JvmField val order: String?,
    @JvmField val element: XmlElement?,
    @JvmField val hasExtraAttributes: Boolean,
-)
+) {
+  override fun toString(): String {
+    return buildString {
+      append("ExtensionElement(implementation=$implementation")
+      if (os != null) append(", os=$os")
+      if (orderId != null) append(", orderId=$orderId")
+      if (order != null) append(", order=$order")
+      if (hasExtraAttributes) append(", hasExtraAttributes=true")
+      if (element != null) append(", element=$element")
+      append(")")
+    }
+  }
+}

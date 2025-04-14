@@ -2,6 +2,14 @@
 package com.intellij.platform.plugins.parser.impl.elements
 
 abstract class DependenciesElement {
-  class ModuleDependency(@JvmField val moduleName: String): DependenciesElement()
-  class PluginDependency(@JvmField val pluginId: String): DependenciesElement()
+  class ModuleDependency(@JvmField val moduleName: String): DependenciesElement() {
+    override fun toString(): String {
+      return "ModuleDependency(moduleName=$moduleName)"
+    }
+  }
+  class PluginDependency(@JvmField val pluginId: String): DependenciesElement() {
+    override fun toString(): String {
+      return "PluginDependency(pluginId=$pluginId)"
+    }
+  }
 }

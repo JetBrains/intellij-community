@@ -6,5 +6,9 @@ abstract class ContentElement {
     val name: String,
     val loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
     val embeddedDescriptorContent: CharArray? = null,
-  ) : ContentElement()
+  ) : ContentElement() {
+    override fun toString(): String {
+      return "Module(name=$name, loadingRule=$loadingRule)"
+    }
+  }
 }

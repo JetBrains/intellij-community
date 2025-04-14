@@ -11,4 +11,19 @@ class ServiceElement(
   @JvmField val preload: PreloadMode,
   @JvmField val client: ClientKind?,
   @JvmField val os: OS?
-)
+) {
+  override fun toString(): String {
+    return buildString {
+      append("ServiceElement(serviceImplementation=$serviceImplementation")
+      if (serviceInterface != null) append(", serviceInterface=$serviceInterface")
+      if (testServiceImplementation != null) append(", testServiceImplementation=$testServiceImplementation")
+      if (headlessImplementation != null) append(", headlessImplementation=$headlessImplementation")
+      if (overrides) append(", overrides=true")
+      if (configurationSchemaKey != null) append(", configurationSchemaKey=$configurationSchemaKey")
+      if (preload != PreloadMode.FALSE) append(", preload=$preload")
+      if (client != null) append(", client=$client")
+      if (os != null) append(", os=$os")
+      append(")")
+    }
+  }
+}
