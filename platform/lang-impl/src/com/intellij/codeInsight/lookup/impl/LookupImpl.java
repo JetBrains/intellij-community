@@ -138,7 +138,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myArranger = arranger;
     myPresentableArranger = arranger;
     this.editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
-    myDisplayStrategy = LookupDisplayStrategy.Companion.getStrategy(editor);
+    myDisplayStrategy = LookupDisplayStrategy.getStrategy(editor);
 
     DaemonCodeAnalyzer.getInstance(session.getProject()).disableUpdateByTimer(this);
 

@@ -26,6 +26,7 @@ interface LookupDisplayStrategy {
     @Internal
     val EP_NAME: ExtensionPointName<LookupDisplayStrategy> = ExtensionPointName("com.intellij.lookup.displayStrategy")
 
+    @JvmStatic
     fun getStrategy(e: Editor): LookupDisplayStrategy = EP_NAME.extensionList.firstOrNull { it.isAvailable(e) } ?: LookupDisplayAsHintStrategy
   }
 
