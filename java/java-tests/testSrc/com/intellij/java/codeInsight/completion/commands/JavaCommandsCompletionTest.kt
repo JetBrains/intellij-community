@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion.commands
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider
+import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -706,6 +707,25 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
     val elements = myFixture.completeBasic()
     assertTrue(elements.any { element -> element.lookupString.equals("Copy class", ignoreCase = true) })
+  }
+
+  fun testDoNotCloseAfterPreview() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Test {
+          void f(Iterable<String> it) {
+            it.<caret>;
+          }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val lookupElement = elements.first { element -> element.lookupString.contains("Iterate over", ignoreCase = true) }
+    assertNotNull(lookupElement)
+    val element = lookupElement.`as`(CommandCompletionLookupElement::class.java)
+    assertNotNull(element)
+    assertTrue(element!!.hasPreview)
+    assertNotNull(element.preview)
+    assertNotNull(lookup)
   }
 
   private class TestHintManager : HintManagerImpl() {

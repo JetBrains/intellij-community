@@ -105,5 +105,6 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="maven-resolver-provider" level="project" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
   </component>
 </module>

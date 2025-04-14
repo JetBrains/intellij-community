@@ -16,13 +16,14 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.Icon
 
 /**
  * Represents a specialized lookup element intended for usage in command completion scenarios.
  */
 @ApiStatus.Internal
-internal class CommandCompletionLookupElement(
+class CommandCompletionLookupElement(
   lookupElement: LookupElement,
   val command: CompletionCommand,
   val hostStartOffset: Int,
@@ -39,9 +40,11 @@ internal class CommandCompletionLookupElement(
     return NEVER_AUTOCOMPLETE
   }
 
-  internal val hasPreview: Boolean = command is CompletionCommandWithPreview
+  @VisibleForTesting
+  val hasPreview: Boolean = command is CompletionCommandWithPreview
 
-  internal val preview: IntentionPreviewInfo? by lazy {
+  @get:VisibleForTesting
+  val preview: IntentionPreviewInfo? by lazy {
     (command as? CompletionCommandWithPreview)?.getPreview()
   }
 }
