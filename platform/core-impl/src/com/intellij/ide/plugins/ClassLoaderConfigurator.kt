@@ -19,7 +19,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.function.BiFunction
 import java.util.function.Function
-import kotlin.collections.LinkedHashSet
 
 private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache()
 
@@ -95,6 +94,7 @@ class ClassLoaderConfigurator(
       else {
         configureMainPluginModule(module)
       }
+      return true
     }
     else {
       if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
@@ -165,9 +165,8 @@ class ClassLoaderConfigurator(
           )
         }
       }
+      return true
     }
-
-    return true
   }
 
   private fun getSortedDependencies(module: IdeaPluginDescriptorImpl): Array<IdeaPluginDescriptorImpl> {
