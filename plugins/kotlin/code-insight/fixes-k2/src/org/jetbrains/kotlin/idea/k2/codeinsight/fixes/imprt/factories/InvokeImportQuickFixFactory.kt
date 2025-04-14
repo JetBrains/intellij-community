@@ -26,17 +26,16 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
                 )
             }
 
-            // We have to handle UnresolvedReference here because of KT-61638 and KT-76531
-            is KaFirDiagnostic.UnresolvedReference -> {
+            is KaFirDiagnostic.UnresolvedReference,
+            is KaFirDiagnostic.NoneApplicable -> {
                 val psiElement = diagnostic.psi as? KtExpression ?: return null
-                val parent = psiElement.parent
 
                 val invokeReceiver = when {
                     // Cases like `(... /* anything complex here */)()` (see KT-61638)
                     psiElement is KtCallExpression -> psiElement.calleeExpression
 
                     // Cases like `simpleName()` (see KT-76531)
-                    parent is KtCallExpression && parent.calleeExpression == psiElement -> psiElement
+                    psiElement.isCalleeExpression -> psiElement
 
                     else -> null
                 } ?: return null
@@ -50,6 +49,21 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
 
                     invokeReceiverFragment.getContentElement()?.expressionType
                 } ?: return null
+
+                ImportContextWithFixedReceiverType(
+                    psiElement,
+                    ImportPositionType.OperatorCall,
+                    explicitReceiverType = invokeReceiverType,
+                )
+            }
+
+            is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> {
+                val psiElement = diagnostic.psi as? KtExpression ?: return null
+
+                if (!psiElement.isCalleeExpression) return null
+
+                // for this diagnostic, AA can provide the receiver type just fine
+                val invokeReceiverType = psiElement.expressionType ?: return null
 
                 ImportContextWithFixedReceiverType(
                     psiElement,
@@ -74,3 +88,9 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
         return provider.collectCandidates(unresolvedName, indexProvider)
     }
 }
+
+private val KtExpression.isCalleeExpression: Boolean
+    get() {
+        val parent = parent
+        return parent is KtCallExpression && parent.calleeExpression === this
+    }
