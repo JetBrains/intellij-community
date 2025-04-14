@@ -62,7 +62,13 @@ interface XBreakpointManagerProxy {
       })
     }
 
-    override fun getLastRemovedBreakpoint(): XBreakpointProxy? = XBreakpointProxy.Monolith(breakpointManager.lastRemovedBreakpoint as XBreakpointBase<*, *, *>)
+    override fun getLastRemovedBreakpoint(): XBreakpointProxy? {
+      val lastRemovedBreakpoint = breakpointManager.lastRemovedBreakpoint
+      if (lastRemovedBreakpoint !is XBreakpointBase<*, *, *>) {
+        return null
+      }
+      return XBreakpointProxy.Monolith(lastRemovedBreakpoint)
+    }
 
     override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
       if (breakpoint !is XBreakpointProxy.Monolith) {
