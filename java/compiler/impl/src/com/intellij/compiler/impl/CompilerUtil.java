@@ -45,7 +45,8 @@ public final class CompilerUtil {
         attributes = Files.readAttributes(outputPath, BasicFileAttributes.class);
       }
       catch (IOException | InvalidPathException e) {
-        LOG.info(e);
+        LOG.info(e.getClass().getName() + ": " + e.getMessage());
+        LOG.debug(e);
       }
 
       var vFile = fs.findFileByPath(outputRoot);
