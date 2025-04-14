@@ -111,6 +111,8 @@ class FrontendXBreakpointProxy(
     }
   }
 
+  override fun getTimestamp(): Long = _state.value.timestamp
+
   override fun isLogMessage(): Boolean = _state.value.logMessage
 
   override fun isLogStack(): Boolean = _state.value.logStack
@@ -220,6 +222,15 @@ class FrontendXBreakpointProxy(
 
   internal fun dispose() {
     cs.cancel()
+  }
+
+  override fun compareTo(other: XBreakpointProxy): Int {
+    if (other !is FrontendXBreakpointProxy) {
+      return 1
+    }
+    // TODO: do we need to pass XBreakpointType.getBreakpointComparator somehow?
+    //  it always uses timestamps, so it seems like we can keep comparing by timestamps.
+    return getTimestamp().compareTo(other.getTimestamp())
   }
 
   override fun equals(other: Any?): Boolean {

@@ -17,9 +17,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import com.intellij.xdebugger.ui.DebuggerColors;
@@ -194,15 +192,6 @@ public class XBreakpointItem extends BreakpointItem {
     return myBreakpointProxy.canNavigateToSource();
   }
 
-  // TODO: This method should be removed once all usages are migrated to use the proxy instead
-  @Nullable
-  private XBreakpoint<?> getUnderlyingBreakpoint() {
-    if (myBreakpointProxy instanceof XBreakpointProxy.Monolith) {
-      return ((XBreakpointProxy.Monolith)myBreakpointProxy).getBreakpoint();
-    }
-    return null;
-  }
-
   @Override
   public boolean allowedToRemove() {
     return !myBreakpointProxy.isDefaultBreakpoint();
@@ -235,9 +224,11 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public int compareTo(BreakpointItem breakpointItem) {
-    // TODO: Implement comparison without depending on underlying breakpoint for frontend implementation
-    XBreakpoint<?> thisBreakpoint = getUnderlyingBreakpoint();
+    Object thisBreakpoint = getBreakpoint();
     Object otherBreakpoint = breakpointItem.getBreakpoint();
+    if (otherBreakpoint instanceof XBreakpointProxy) {
+      return myBreakpointProxy.compareTo((XBreakpointProxy)otherBreakpoint);
+    }
     if (thisBreakpoint instanceof XBreakpointBase && otherBreakpoint instanceof XBreakpoint) {
       return ((XBreakpointBase)thisBreakpoint).compareTo((XBreakpoint<?>)otherBreakpoint);
     }

@@ -60,6 +60,7 @@ data class XBreakpointDtoState(
   val logExpression: String?,
   val logExpressionObjectInt: XExpressionDto?,
   val isTemporary: Boolean,
+  val timestamp: Long,
 )
 
 @ApiStatus.Internal
@@ -145,6 +146,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       logExpression = logExpression,
       logExpressionObjectInt = logExpressionObjectInt?.toRpc(),
       isTemporary = (breakpoint as? XLineBreakpoint<*>)?.isTemporary ?: false,
+      timestamp = timeStamp,
     )
   }
 }

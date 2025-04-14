@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
-interface XBreakpointProxy {
+interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   val id: XBreakpointId
   val breakpoint: Any
   val type: XBreakpointTypeProxy
@@ -37,6 +37,8 @@ interface XBreakpointProxy {
   fun isDefaultBreakpoint(): Boolean
   fun getSuspendPolicy(): SuspendPolicy
   fun setSuspendPolicy(suspendPolicy: SuspendPolicy)
+
+  fun getTimestamp(): Long
 
   fun isLogMessage(): Boolean
   fun isLogStack(): Boolean
@@ -116,6 +118,8 @@ interface XBreakpointProxy {
       breakpoint.suspendPolicy = suspendPolicy
     }
 
+    override fun getTimestamp(): Long = breakpoint.timeStamp
+
     override fun isLogMessage(): Boolean = breakpoint.isLogMessage
 
     override fun isLogStack(): Boolean = breakpoint.isLogStack
@@ -190,6 +194,13 @@ interface XBreakpointProxy {
       return id.hashCode()
     }
 
+    override fun compareTo(other: XBreakpointProxy): Int {
+      if (other !is Monolith) {
+        return 1
+      }
+
+      return compare(breakpoint, other.breakpoint)
+    }
 
     companion object {
       @ApiStatus.Internal
@@ -199,6 +210,12 @@ interface XBreakpointProxy {
         breakpoint: XBreakpoint<*>,
         project: Project,
       ): XDebuggerEditorsProvider? = breakpointType.getEditorsProvider(breakpoint as B, project)
+
+      @Suppress("UNCHECKED_CAST")
+      private fun <B : XBreakpoint<P>, P : XBreakpointProperties<*>> compare(
+        breakpoint1: XBreakpointBase<B, P, *>,
+        breakpoint2: XBreakpoint<*>,
+      ): Int = breakpoint1.compareTo(breakpoint2 as B)
     }
   }
 }
