@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Stores a compatibility matrix for JDK APIs. The matrix is generated from {@code @since} tags in the JDK source code.
@@ -26,7 +27,7 @@ import java.util.*;
 public final class JdkApiCompatibilityCache {
   private static final Logger LOG = Logger.getInstance(JdkApiCompatibilityCache.class);
 
-  private final Map<LanguageLevel, List<String>> cache = new EnumMap<>(LanguageLevel.class);
+  private final Map<LanguageLevel, List<String>> cache = new ConcurrentHashMap<>();
 
   public static JdkApiCompatibilityCache getInstance() {
     return ApplicationManager.getApplication().getService(JdkApiCompatibilityCache.class);
@@ -93,21 +94,20 @@ public final class JdkApiCompatibilityCache {
    * @return the newly introduced APIs in {@code  languageLevel} or empty set if the language level is not supported.
    */
   private @NotNull List<String> getIntroducedApis(@NotNull LanguageLevel languageLevel) {
-    String featureString = languageLevel.toJavaVersion().toFeatureString();
-    List<String> result = cache.get(languageLevel);
-    if (result != null) return result;
-    result = Collections.emptyList();
-    URL resource = JdkApiCompatibilityCache.class.getResource("api" + featureString + ".txt");
-    if (resource != null) {
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-        result = FileUtil.loadLines(reader);
+    return cache.computeIfAbsent(languageLevel, level -> {
+      String featureString = level.toJavaVersion().toFeatureString();
+      List<String> result = Collections.emptyList();
+      URL resource = JdkApiCompatibilityCache.class.getResource("api" + featureString + ".txt");
+      if (resource != null) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
+          result = FileUtil.loadLines(reader);
+        }
+        catch (IOException ex) {
+          LOG.error("Cannot load: " + resource.getFile(), ex);
+        }
       }
-      catch (IOException ex) {
-        LOG.error("Cannot load: " + resource.getFile(), ex);
-      }
-    }
-    cache.put(languageLevel, result);
-    return result;
+      return result;
+    });
   }
 
   /**
