@@ -2,8 +2,8 @@
 
 class Foo {
   void test() {
-    String colors = """
-
-<caret>  """;
+    String s = """
+		   <caret>foo
+		   bar""";
   }
 }
