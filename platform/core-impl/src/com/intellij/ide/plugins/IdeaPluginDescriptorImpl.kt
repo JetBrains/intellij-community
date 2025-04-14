@@ -243,6 +243,7 @@ class IdeaPluginDescriptorImpl private constructor(
     _pluginClassLoader = classLoader
   }
 
+  @Deprecated("Deprecated in Java")
   override fun isEnabled(): Boolean = isMarkedForLoading
 
   @Deprecated("Deprecated in Java")

@@ -537,6 +537,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.untilBuild = untilBuild;
   }
 
+  @Deprecated
   @Override
   public boolean isEnabled() {
     return myEnabled;

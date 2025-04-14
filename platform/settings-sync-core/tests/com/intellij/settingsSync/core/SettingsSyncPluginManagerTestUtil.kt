@@ -100,6 +100,7 @@ data class TestPluginDescriptor(
   override fun getUntilBuild(): String? = null
   // endregion
 
+  @Deprecated("Deprecated in Java")
   override fun isEnabled(): Boolean = _enabled
 
   @Deprecated("Deprecated in Java")
