@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands.dto
 
 // Exactly the same class is in `intellij.tools.ide.performanceTesting.commands` module, com.intellij.tools.ide.performanceTesting.commands.dto package.
