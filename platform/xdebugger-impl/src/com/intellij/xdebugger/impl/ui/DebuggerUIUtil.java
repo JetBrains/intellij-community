@@ -505,9 +505,9 @@ public final class DebuggerUIUtil {
   }
 
   /**
-   * @deprecated Use {@link DebuggerUIUtil#getSessionProxy(AnActionEvent)} instead.
+   * Use {@link DebuggerUIUtil#getSessionProxy(AnActionEvent)} instead.
    */
-  @Deprecated
+  @ApiStatus.Obsolete
   public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     if (session == null) {
