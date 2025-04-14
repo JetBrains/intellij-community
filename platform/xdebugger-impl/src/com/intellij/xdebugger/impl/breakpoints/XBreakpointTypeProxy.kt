@@ -27,7 +27,7 @@ interface XBreakpointTypeProxy {
   val defaultSuspendPolicy: SuspendPolicy
 
   fun setDefaultSuspendPolicy(policy: SuspendPolicy)
-  fun getVisibleStandardPanels(): EnumSet<XBreakpointType.StandardPanels>
+  fun getVisibleStandardPanels(): Set<XBreakpointType.StandardPanels>
   fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?

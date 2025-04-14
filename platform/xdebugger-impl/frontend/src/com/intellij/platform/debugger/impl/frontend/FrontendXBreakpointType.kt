@@ -13,9 +13,9 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
+import com.intellij.xdebugger.impl.rpc.standardPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.swing.Icon
 
 internal class FrontendXBreakpointType(
@@ -33,6 +33,12 @@ internal class FrontendXBreakpointType(
   // TODO: should we support changes from the backend (so we need to subscribe on them)
   private var _defaultSuspendPolicy = dto.defaultSuspendPolicy
 
+  private val visibleStandardPanels: Set<StandardPanels> = dto.standardPanels.mapTo(mutableSetOf()) { it.standardPanel() }.also {
+    // TODO: support DEPENDENCY on the frontend side
+    //  see com.intellij.platform.debugger.impl.frontend.FrontendXDependentBreakpointManagerProxy
+    it.remove(StandardPanels.DEPENDENCY)
+  }
+
   override val defaultSuspendPolicy: SuspendPolicy
     get() = _defaultSuspendPolicy
 
@@ -44,9 +50,8 @@ internal class FrontendXBreakpointType(
     }
   }
 
-  override fun getVisibleStandardPanels(): EnumSet<StandardPanels> {
-    // TODO: pass through RPC
-    return EnumSet.allOf(StandardPanels::class.java)
+  override fun getVisibleStandardPanels(): Set<StandardPanels> {
+    return visibleStandardPanels
   }
 
   override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {

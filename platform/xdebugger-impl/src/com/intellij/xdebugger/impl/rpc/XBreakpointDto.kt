@@ -73,7 +73,31 @@ data class XBreakpointTypeDto(
   val suspendThreadSupported: Boolean,
   val lineTypeInfo: XLineBreakpointTypeInfo?,
   val defaultSuspendPolicy: SuspendPolicy,
+  val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,
 )
+
+@ApiStatus.Internal
+@Serializable
+enum class XBreakpointTypeSerializableStandardPanels {
+  SUSPEND_POLICY, ACTIONS, DEPENDENCY
+}
+
+private fun XBreakpointType.StandardPanels.toDto(): XBreakpointTypeSerializableStandardPanels {
+  return when (this) {
+    XBreakpointType.StandardPanels.SUSPEND_POLICY -> XBreakpointTypeSerializableStandardPanels.SUSPEND_POLICY
+    XBreakpointType.StandardPanels.ACTIONS -> XBreakpointTypeSerializableStandardPanels.ACTIONS
+    XBreakpointType.StandardPanels.DEPENDENCY -> XBreakpointTypeSerializableStandardPanels.DEPENDENCY
+  }
+}
+
+@ApiStatus.Internal
+fun XBreakpointTypeSerializableStandardPanels.standardPanel(): XBreakpointType.StandardPanels {
+  return when (this) {
+    XBreakpointTypeSerializableStandardPanels.SUSPEND_POLICY -> XBreakpointType.StandardPanels.SUSPEND_POLICY
+    XBreakpointTypeSerializableStandardPanels.ACTIONS -> XBreakpointType.StandardPanels.ACTIONS
+    XBreakpointTypeSerializableStandardPanels.DEPENDENCY -> XBreakpointType.StandardPanels.DEPENDENCY
+  }
+}
 
 @ApiStatus.Internal
 @Serializable
@@ -113,7 +137,8 @@ private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
   val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(this)
   // TODO: do we need to subscribe on [defaultState] changes?
   return XBreakpointTypeDto(
-    XBreakpointTypeId(id), index, title, enabledIcon.rpcId(), isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy
+    XBreakpointTypeId(id), index, title, enabledIcon.rpcId(), isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
+    standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() }
   )
 }
 
