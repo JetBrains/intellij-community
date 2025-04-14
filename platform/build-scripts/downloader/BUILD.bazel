@@ -10,7 +10,6 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:commons-compress",
     "@lib//:tc_service_messages",
-    "@lib//:guava",
     "@lib//:zstd-jni",
     "@lib//:commons-io",
     "@lib//:kotlin-stdlib",

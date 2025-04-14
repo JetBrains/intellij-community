@@ -1,5 +1,11 @@
 ### auto-generated section `build fleet.util.core` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"]
+)
 
 jvm_provided_library(
   name = "fleet-util-multiplatform_provided",
@@ -11,6 +17,7 @@ jvm_library(
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
   srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
