@@ -222,6 +222,7 @@ a:com.intellij.ide.macro.MacroFilter
 - <init>():V
 - a:accept(com.intellij.ide.macro.Macro):Z
 f:com.intellij.ide.macro.MacroManager
+- sf:CONTEXT_PATH:com.intellij.openapi.actionSystem.DataKey
 - sf:PATH_CONVERTER_KEY:com.intellij.openapi.actionSystem.DataKey
 - cacheMacrosPreview(com.intellij.openapi.actionSystem.DataContext):V
 - s:containsMacros(java.lang.String):Z

@@ -4,6 +4,8 @@
  import com.intellij.ide.IdeCoreBundle;
  import com.intellij.openapi.actionSystem.DataContext;
  import com.intellij.openapi.util.SystemInfo;
+ import com.intellij.platform.eel.path.EelPath;
+ import com.intellij.platform.eel.provider.utils.JEelUtils;
  import com.intellij.util.SystemProperties;
  import org.jetbrains.annotations.NotNull;
  import org.jetbrains.annotations.Nullable;
@@ -21,7 +23,7 @@
 
    @Override
    public @Nullable String expand(@NotNull DataContext dataContext) {
-     if (SystemInfo.isWindows) {
+     if (isLocalWindowsTarget(dataContext)) {
        String tempDir = System.getenv("TEMP");
        if (tempDir == null) {
          String homeDir = SystemProperties.getUserHome();
@@ -31,5 +33,13 @@
      }
 
      return "/tmp";
+   }
+
+   private static boolean isLocalWindowsTarget(@NotNull DataContext dataContext) {
+     var contextPath = MacroManager.CONTEXT_PATH.getData(dataContext);
+     if (contextPath != null) {
+       return JEelUtils.toEelPath(contextPath).getOs() == EelPath.OS.WINDOWS;
+     }
+     return SystemInfo.isWindows;
    }
  }
