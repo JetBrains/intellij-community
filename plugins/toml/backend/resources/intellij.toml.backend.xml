@@ -24,6 +24,10 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
 
+
+        <!-- Folding -->
+        <lang.foldingBuilder language="TOML" implementationClass="org.toml.ide.folding.TomlFoldingBuilder"/>
+
         <intentionAction>
             <language>TOML</language>
             <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
