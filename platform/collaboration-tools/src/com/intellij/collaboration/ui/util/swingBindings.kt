@@ -380,7 +380,7 @@ private suspend fun <D> Wrapper.bindContentImpl(
 ): Nothing {
   try {
     dataFlow.collectScoped {
-      val component = componentFactory(it) ?: return@collectScoped
+      val component = componentFactory(it)
       runPreservingFocus {
         setContent(component)
       }
