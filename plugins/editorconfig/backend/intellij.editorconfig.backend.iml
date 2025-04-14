@@ -55,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.settings" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.editorconfig.common" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
   </component>
 </module>
