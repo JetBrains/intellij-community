@@ -3,15 +3,12 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -36,9 +33,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 
 internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBase.Simple<KtNamedFunction, Unit>(), CleanupLocalInspectionTool {
@@ -90,7 +85,7 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
             if (allSuperOverriddenSymbols.any { it.callableId in CALLABLE_IDS_OF_ANY }) return null
         }
 
-        if (element.hasDerivedProperty(symbol)) return null
+        if (hasDerivedProperty(element, symbol)) return null
 
         val superCallValueParameters = superFunctionCallOrNull.partiallyAppliedSymbol.signature.valueParameters
         val functionValueParameters = symbol.valueParameters
@@ -116,7 +111,7 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
             return null
         }
 
-        if (element.isAmbiguouslyDerived(allFunctionOverriddenSymbols)) {
+        if (isAmbiguouslyDerived(element, allFunctionOverriddenSymbols)) {
             return null
         }
 
@@ -162,28 +157,29 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
         return function.name == superCallMethodName
     }
 
-    context(KaSession)
-    private fun KtNamedFunction.hasDerivedProperty(functionSymbol: KaFunctionSymbol): Boolean {
-        val functionName = nameAsName ?: return false
+    private fun KaSession.hasDerivedProperty(function: KtNamedFunction, functionSymbol: KaFunctionSymbol): Boolean {
+        val functionName = function.nameAsName ?: return false
         if (!canBePropertyAccessor(functionName.asString())) return false
         val functionType = functionSymbol.returnType
         val isSetter = functionType.isUnitType
-        val valueParameters = valueParameters
+        val valueParameters = function.valueParameters
         val singleValueParameter = valueParameters.singleOrNull()
         if (isSetter && singleValueParameter == null || !isSetter && valueParameters.isNotEmpty()) return false
         val propertyType = if (isSetter) singleValueParameter!!.returnType else functionType
         val nonNullablePropertyType = propertyType.withNullability(KaTypeNullability.NON_NULLABLE)
         return propertyNamesByAccessorName(functionName).any {
             val propertyName = it.asString()
-            containingClassOrObject?.declarations?.find { d ->
+            function.containingClassOrObject?.declarations?.find { d ->
                 d is KtProperty && d.name == propertyName && d.returnType.withNullability(KaTypeNullability.NON_NULLABLE)
                     .semanticallyEquals(nonNullablePropertyType)
             } != null
         }
     }
 
-    context(KaSession)
-    private fun KtNamedFunction.isAmbiguouslyDerived(allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>): Boolean {
+    private fun KaSession.isAmbiguouslyDerived(
+        function: KtNamedFunction,
+        allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>,
+    ): Boolean {
         // less than 2 functions
         if (allFunctionOverriddenSymbols.take(2).count() < 2) return false
 
@@ -204,7 +200,7 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
             return true
         }
 
-        val superTypeListEntries = containingClassOrObject?.superTypeListEntries
+        val superTypeListEntries = function.containingClassOrObject?.superTypeListEntries
         val delegatedSuperTypeEntries =
             superTypeListEntries?.filterIsInstance<KtDelegatedSuperTypeEntry>()?.ifEmpty { return false } ?: return false
         val delegatedSuperDeclarationTypes =
