@@ -83,6 +83,26 @@ object Execution {
     )
   )
 
+  val LLM_SYSTEM_CONTEXT: TrivialEvalData<String> = EvalDataDescription(
+    name = "LLM system context",
+    description = "Result system prompt used for LLM",
+    DataPlacement.AdditionalText(AIA_SYSTEM_CONTEXT),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text
+    )
+  )
+
+  val LLM_CHAT_DUMP: TrivialEvalData<String> = EvalDataDescription(
+    name = "LLM chat dump",
+    description = "Full dump of the chat session including system context, messages, and metadata",
+    placement = DataPlacement.AdditionalText(AIA_CHAT_DUMP),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text
+    )
+  )
+
   val NAME: TrivialEvalData<String> = EvalDataDescription(
     name = "Name",
     description = "Some description of an evaluation case",
