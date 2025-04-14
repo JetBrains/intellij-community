@@ -184,13 +184,22 @@ object PluginManagerCore {
     nullablePluginSet = value
   }
 
+  /**
+   * Checks if the plugin with a given id is marked as disabled.
+   */
   @JvmStatic
   fun isDisabled(pluginId: PluginId): Boolean = PluginEnabler.HEADLESS.isDisabled(pluginId)
 
+  /**
+   * Marks the plugin with a given id as disabled (a persistent setting). Note that this method does not unload the plugin.
+   */
   @Internal
   @JvmStatic
   fun disablePlugin(id: PluginId): Boolean = PluginEnabler.HEADLESS.disableById(setOf(id))
 
+  /**
+   * Marks the plugin with a given id as enabled (a persistent setting). Note that this method does not load the plugin.
+   */
   @Internal
   @JvmStatic
   fun enablePlugin(id: PluginId): Boolean = PluginEnabler.HEADLESS.enableById(setOf(id))
