@@ -15,6 +15,9 @@
         <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral"
                                  implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
 
+
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
+
         <!-- Formatting -->
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider
