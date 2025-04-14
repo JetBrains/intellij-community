@@ -1186,6 +1186,7 @@ private fun processDependenciesOnPlugin(
   for (module in dependencyPlugin.content.modules) {
     wantedIds.add(module.name)
   }
+  // FIXME plugin aliases probably missing?
 
   for (plugin in pluginSet.enabledPlugins) {
     if (plugin === dependencyPlugin) {
