@@ -96,7 +96,12 @@ public final class HighlightFixUtil {
     if (qualifier instanceof PsiExpression) {
       accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
     }
-    registerReplaceInaccessibleFieldWithGetterSetterFix(info, refElement, place, accessObjectClass);
+    if (place instanceof PsiReferenceExpression ref) {
+      FieldAccessFixer fixer = FieldAccessFixer.create(ref, refElement, place);
+      if (fixer != null) {
+        info.accept(new ReplaceInaccessibleFieldWithGetterSetterFix(ref, fixer));
+      }
+    }
 
     if (refElement instanceof PsiCompiledElement) return;
     PsiModifierList modifierList = refElement.getModifierList();
@@ -255,37 +260,6 @@ public final class HighlightFixUtil {
     if (lClass == rClass) return null;
 
     return QuickFixFactory.getInstance().createChangeParameterClassFix(rClass, (PsiClassType)lType);
-  }
-
-  private static void registerReplaceInaccessibleFieldWithGetterSetterFix(@NotNull Consumer<? super CommonIntentionAction> info,
-                                                                          @NotNull PsiMember refElement,
-                                                                          @NotNull PsiJavaCodeReferenceElement place,
-                                                                          @Nullable PsiClass accessObjectClass) {
-    if (refElement instanceof PsiField psiField && place instanceof PsiReferenceExpression ref) {
-      if (PsiTypes.nullType().equals(psiField.getType())) return;
-      PsiClass containingClass = psiField.getContainingClass();
-      if (containingClass != null) {
-        if (PsiUtil.isOnAssignmentLeftHand(ref)) {
-          PsiMethod setterPrototype = PropertyUtilBase.generateSetterPrototype(psiField);
-          PsiMethod setter = containingClass.findMethodBySignature(setterPrototype, true);
-          if (setter != null && PsiUtil.isAccessible(setter, ref, accessObjectClass)) {
-            PsiElement element = PsiTreeUtil.skipParentsOfType(ref, PsiParenthesizedExpression.class);
-            if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.EQ) {
-              IntentionAction action = QuickFixFactory.getInstance().createReplaceInaccessibleFieldWithGetterSetterFix(ref, setter, true);
-              info.accept(action);
-            }
-          }
-        }
-        else if (PsiUtil.isAccessedForReading(ref)) {
-          PsiMethod getterPrototype = PropertyUtilBase.generateGetterPrototype(psiField);
-          PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
-          if (getter != null && PsiUtil.isAccessible(getter, ref, accessObjectClass)) {
-            IntentionAction action = QuickFixFactory.getInstance().createReplaceInaccessibleFieldWithGetterSetterFix(ref, getter, false);
-            info.accept(action);
-          }
-        }
-      }
-    }
   }
 
   static void registerLambdaReturnTypeFixes(@NotNull Consumer<? super CommonIntentionAction> info, PsiLambdaExpression lambda, PsiExpression expression) {

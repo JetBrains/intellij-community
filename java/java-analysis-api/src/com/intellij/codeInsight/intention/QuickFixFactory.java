@@ -171,10 +171,6 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createChangeParameterClassFix(@NotNull PsiClass aClass, @NotNull PsiClassType type);
 
-  public abstract @NotNull IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiReferenceExpression element,
-                                                                                             @NotNull PsiMethod getter,
-                                                                                             boolean isSetter);
-
   public abstract @NotNull IntentionAction createSurroundWithArrayFix(@Nullable PsiCall methodCall, @Nullable PsiExpression expression);
 
   public abstract @NotNull IntentionAction createImplementAbstractClassMethodsFix(@NotNull PsiElement elementToHighlight);
