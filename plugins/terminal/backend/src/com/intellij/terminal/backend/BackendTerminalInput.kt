@@ -65,7 +65,7 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
     is TerminalResizeEvent -> {
       terminalStarter.postResize(event.newSize.toTermSize(), RequestOrigin.User)
     }
-    TerminalCloseEvent -> {
+    is TerminalCloseEvent -> {
       terminalStarter.close()
       terminalStarter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
         terminalStarter.requestEmulatorStop()
