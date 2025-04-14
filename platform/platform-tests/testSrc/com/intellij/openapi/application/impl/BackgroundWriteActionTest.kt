@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 import kotlin.test.assertFalse
-import kotlin.time.Clock
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 
@@ -523,6 +523,66 @@ class BackgroundWriteActionTest {
       }
 
     }
+  }
+
+  /**
+   * This test is not set in stone; if you feel that the platform is ready to block same-level read actions, the feel free to adjust the test.
+   */
+  @Test
+  fun `same-level pending WA does not prevent same-level RA`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val job1 = Job()
+    launch {
+      modalProgress {
+        job1.join()
+        delay(100)
+      }
+    }
+    launch {
+      delay(10)
+      backgroundWriteAction {  // pending
+        Assertions.assertTrue { job1.isCompleted }
+      }
+    }
+    delay(50)
+    readAction { // must start regardless of the pending WA, because WA is free
+      job1.complete()
+    }
+  }
+
+  @Test
+  fun `same-level ra gets canceled when modal progress exists and there is a pending WA`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    launch {
+      modalProgress {
+        delay(100)
+      }
+    }
+    val counter = AtomicInteger()
+    val bgWaCompleted = AtomicBoolean(false)
+
+    launch {
+      delay(10)
+      backgroundWriteAction {  // pending
+        Assertions.assertTrue { counter.get() == 1 }
+        bgWaCompleted.set(true)
+      }
+    }
+    delay(50)
+    readAction { // must start regardless of the pending WA, because WA is free
+      if (counter.get() == 0) {
+        assertFalse(bgWaCompleted.get())
+        while (true) {
+          try {
+            Cancellation.checkCancelled()
+          } catch (e : Throwable) {
+            counter.incrementAndGet()
+            throw e
+          }
+        }
+      } else {
+        assertTrue(bgWaCompleted.get())
+      }
+    }
+    Assertions.assertEquals(1, counter.get())
   }
 
   @Test
