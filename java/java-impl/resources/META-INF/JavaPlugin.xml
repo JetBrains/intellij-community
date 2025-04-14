@@ -327,8 +327,8 @@
     <registryKey key="java.highest.language.level" defaultValue="24"
                  description="Highest released language level" restartRequired="false"/>
 
-    <registryKey key="index.ids.from.java.sources.in.jar" defaultValue="true"
-                 description="Index ids from .class-files instead of .java-files in JARs" restartRequired="true"/>
+    <registryKey key="ide.index.id.skip.java.sources.in.libs" defaultValue="false"
+                 description="IdIndex skips .java-files in libraries (index .class-files instead)" restartRequired="true"/>
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true"
                  description="Enables 'Build' toolwindow for JPS compilation messages"/>
@@ -2750,7 +2750,6 @@
       implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
 
     <trigramIndexFilterExcludeExtension implementation="com.intellij.java.JavaLibrarySourcesExcludingIndexFilterExtension"/>
-    <idIndexFilterExcludeExtension implementation="com.intellij.java.JavaLibrarySourcesExcludingIndexFilterExtension"/>
 
     <registryKey key="java.completion.argument.live.template" defaultValue="false"
                  description="When completing a method call, start a live template with all arguments"/>

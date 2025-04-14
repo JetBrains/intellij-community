@@ -10,7 +10,7 @@ import com.intellij.util.indexing.IndexedFile
 
 /**
  * Extension for [com.intellij.util.indexing.FileBasedIndex.InputFilter]: excludes .java-sources located in libraries from indexing.
- * Used e.g. in [TrigramIndex] and [IdIndex]
+ * Used e.g. in [TrigramIndex]
  */
 internal class JavaLibrarySourcesExcludingIndexFilterExtension: IndexFilterExcludingExtension {
   override fun getFileType(): FileType = JavaFileType.INSTANCE
