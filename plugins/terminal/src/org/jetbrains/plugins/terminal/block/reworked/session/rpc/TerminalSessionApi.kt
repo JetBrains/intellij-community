@@ -14,6 +14,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface TerminalSessionApi : RemoteApi<Unit> {
+  /**
+   * Note, that implementation should return the separate instance of the channel at least for each [com.intellij.codeWithMe.ClientId].
+   * Because the RPC logic closes the returned channel once the client disconnects,
+   * so it may interrupt the reading of the channel on the backend.
+   */
   suspend fun getInputChannel(sessionId: TerminalSessionId): SendChannel<TerminalInputEvent>
 
   suspend fun getOutputFlow(sessionId: TerminalSessionId): Flow<List<TerminalOutputEvent>>
