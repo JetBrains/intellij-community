@@ -1104,6 +1104,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/textmate/core/intellij.textmate.core.iml" filepath="$PROJECT_DIR$/plugins/textmate/core/intellij.textmate.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/textmate/joni/intellij.textmate.joni.iml" filepath="$PROJECT_DIR$/plugins/textmate/joni/intellij.textmate.joni.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/intellij.toml.iml" filepath="$PROJECT_DIR$/plugins/toml/intellij.toml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/toml/backend/intellij.toml.backend.iml" filepath="$PROJECT_DIR$/plugins/toml/backend/intellij.toml.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/core/intellij.toml.core.iml" filepath="$PROJECT_DIR$/plugins/toml/core/intellij.toml.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/grazie/intellij.toml.grazie.iml" filepath="$PROJECT_DIR$/plugins/toml/grazie/intellij.toml.grazie.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/toml/json/intellij.toml.json.iml" filepath="$PROJECT_DIR$/plugins/toml/json/intellij.toml.json.iml" />
