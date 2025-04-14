@@ -28,11 +28,6 @@
     <editorNotificationProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorNotificationProvider"/>
 
     <!-- Language support -->
-    <fileType name="EditorConfig"
-              language="EditorConfig"
-              implementationClass="org.editorconfig.language.filetype.EditorConfigFileType"
-              fieldName="INSTANCE"
-              fileNames=".editorconfig"/>
     <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
     <annotator
         language="EditorConfig"
@@ -420,9 +415,6 @@
     <syntaxHighlighterFactory
         language="EditorConfig"
         implementationClass="org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighterFactory"/>
-    <parserDefinition
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.parser.EditorConfigParserDefinition"/>
     <braceMatcher
         language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigBraceMatcher"/>
