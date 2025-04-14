@@ -6,7 +6,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.module.JdkApiCompatabilityCache;
+import com.intellij.openapi.module.JdkApiCompatibilityCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
@@ -62,7 +62,7 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
     }
 
     LocalQuickFix createFix(LanguageLevel level) {
-      return myMethod == null || JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(myMethod, level) != null
+      return myMethod == null || JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(myMethod, level) != null
              ? null
              : new AddUtf8CharsetFix(this);
     }

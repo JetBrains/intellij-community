@@ -88,11 +88,11 @@ public final class LanguageLevelUtil {
    */
   @Deprecated(forRemoval = true)
   public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
-    return JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
+    return JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
   }
 
   /**
-   * @deprecated Please use {@link JdkApiCompatabilityCache} to check for incompatible APIs.
+   * @deprecated Please use {@link JdkApiCompatibilityCache} to check for incompatible APIs.
    */
   @Deprecated(forRemoval = true)
   public static Set<String> loadSignatureList(@NotNull URL resource) {
@@ -108,10 +108,10 @@ public final class LanguageLevelUtil {
   /**
    * For serialization of forbidden api.
    *
-   * @deprecated Please don't use this, this API was moved to {@link JdkApiCompatabilityCache} and is for internal use only.
+   * @deprecated Please don't use this, this API was moved to {@link JdkApiCompatibilityCache} and is for internal use only.
    */
   @Deprecated(forRemoval = true)
   public static @Nullable String getSignature(@Nullable PsiMember member) {
-    return JdkApiCompatabilityCache.getInstance().getSignature(member);
+    return JdkApiCompatibilityCache.getInstance().getSignature(member);
   }
 }

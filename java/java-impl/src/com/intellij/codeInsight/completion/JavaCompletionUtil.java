@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.JdkApiCompatabilityCache;
+import com.intellij.openapi.module.JdkApiCompatibilityCache;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -503,7 +503,7 @@ public final class JavaCompletionUtil {
     private @Nullable LookupElement generateLookupElementDecorator(@Nullable PsiType qualifierType, @NotNull Object object,
                                                                    @NotNull Function<Consumer<LookupElementPresentation>, LookupElementDecorator<LookupElement>> generator) {
       if (object instanceof PsiMember) {
-        if (JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
+        if (JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
           LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
           return PrioritizedLookupElement.withExplicitProximity(element, -1);
         }

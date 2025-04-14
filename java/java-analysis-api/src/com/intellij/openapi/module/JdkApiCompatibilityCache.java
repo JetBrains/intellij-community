@@ -23,13 +23,13 @@ import java.util.*;
  * Stores a compatibility matrix for JDK APIs. The matrix is generated from {@code @since} tags in the JDK source code.
  */
 @Service(Service.Level.APP)
-public final class JdkApiCompatabilityCache {
-  private static final Logger LOG = Logger.getInstance(JdkApiCompatabilityCache.class);
+public final class JdkApiCompatibilityCache {
+  private static final Logger LOG = Logger.getInstance(JdkApiCompatibilityCache.class);
 
   private final Map<LanguageLevel, List<String>> cache = new EnumMap<>(LanguageLevel.class);
 
-  public static JdkApiCompatabilityCache getInstance() {
-    return ApplicationManager.getApplication().getService(JdkApiCompatabilityCache.class);
+  public static JdkApiCompatibilityCache getInstance() {
+    return ApplicationManager.getApplication().getService(JdkApiCompatibilityCache.class);
   }
 
   /**
@@ -97,7 +97,7 @@ public final class JdkApiCompatabilityCache {
     List<String> result = cache.get(languageLevel);
     if (result != null) return result;
     result = Collections.emptyList();
-    URL resource = JdkApiCompatabilityCache.class.getResource("api" + featureString + ".txt");
+    URL resource = JdkApiCompatibilityCache.class.getResource("api" + featureString + ".txt");
     if (resource != null) {
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
         result = FileUtil.loadLines(reader);

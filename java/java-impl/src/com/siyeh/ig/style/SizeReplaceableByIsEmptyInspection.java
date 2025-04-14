@@ -8,7 +8,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.module.JdkApiCompatabilityCache;
+import com.intellij.openapi.module.JdkApiCompatibilityCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -115,7 +115,7 @@ public final class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
     private static boolean isLanguageLevelCompatible(PsiElement element, PsiMethod method) {
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
-      LanguageLevel lastIncompatibleLanguageLevel = JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(method, languageLevel);
+      LanguageLevel lastIncompatibleLanguageLevel = JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(method, languageLevel);
       return lastIncompatibleLanguageLevel == null || lastIncompatibleLanguageLevel.isLessThan(languageLevel);
     }
 

@@ -14,7 +14,7 @@ import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.JdkApiCompatabilityCache
+import com.intellij.openapi.module.JdkApiCompatibilityCache
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -142,7 +142,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
       val lastIncompatibleLevel = overriddenMethods.mapNotNull { overriddenMethod ->
-        JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(overriddenMethod, languageLevel)
+        JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return
       val toHighlight = overrideAnnotation?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
       if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
@@ -162,7 +162,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = sourceNode.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
-      val lastIncompatibleLevel = JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(constructor, languageLevel)
+      val lastIncompatibleLevel = JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(constructor, languageLevel)
                                   ?: return
       if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
       registerError(sourcePsi, lastIncompatibleLevel, holder, isOnTheFly)
@@ -184,7 +184,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         languageLevel = sourcePsi.containingFile.getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY)
       }
       if (languageLevel == null) return
-      val lastIncompatibleLevel = JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(target, languageLevel)
+      val lastIncompatibleLevel = JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(target, languageLevel)
       if (lastIncompatibleLevel != null) {
         if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return
         val psiClass = if (qualifier != null) {
