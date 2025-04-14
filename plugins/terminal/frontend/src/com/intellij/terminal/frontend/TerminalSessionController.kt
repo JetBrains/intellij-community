@@ -12,6 +12,7 @@ import com.intellij.terminal.session.dto.toState
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
@@ -19,8 +20,10 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.TimeSource
 
 internal class TerminalSessionController(
   private val sessionModel: TerminalSessionModel,
@@ -75,8 +78,7 @@ internal class TerminalSessionController(
         fusActivity.eventReceived(event)
         updateOutputModel { model ->
           fusActivity.beforeModelUpdate()
-          val styles = event.styles.map { it.toStyleRange() }
-          model.updateContent(event.startLineLogicalIndex, event.text, styles)
+          updateOutputModelContent(model, event)
           fusActivity.afterModelUpdate()
         }
       }
@@ -128,6 +130,19 @@ internal class TerminalSessionController(
     withContext(edtContext) {
       block(getCurrentOutputModel())
     }
+  }
+
+  @RequiresEdt
+  private fun updateOutputModelContent(model: TerminalOutputModel, event: TerminalContentUpdatedEvent) {
+    val startTime = TimeSource.Monotonic.markNow()
+
+    val styles = event.styles.map { it.toStyleRange() }
+    model.updateContent(event.startLineLogicalIndex, event.text, styles)
+
+    ReworkedTerminalUsageCollector.logFrontendDocumentUpdateLatency(
+      textLength = event.text.length,
+      duration = startTime.elapsedNow(),
+    )
   }
 
   private fun getCurrentOutputModel(): TerminalOutputModel {
