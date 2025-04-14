@@ -103,10 +103,11 @@ public final class ListPluginComponent extends JPanel {
   private @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
-                             @NotNull IdeaPluginDescriptor plugin,
+                             @NotNull PluginUiModel pluginUiModel,
                              @NotNull PluginsGroup group,
                              @NotNull LinkListener<Object> searchListener,
                              boolean marketplace) {
+    IdeaPluginDescriptor plugin = pluginUiModel.getDescriptor();
     myPlugin = plugin;
     myGroup = group;
     myPluginModel = pluginModel;

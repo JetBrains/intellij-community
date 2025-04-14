@@ -447,7 +447,8 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, true);
+            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
+            return new ListPluginComponent(myPluginModel, uiModelAdapter, group, searchListener, true);
           }
         };
 
@@ -817,7 +818,8 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, true);
+            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
+            return new ListPluginComponent(myPluginModel, uiModelAdapter, group, searchListener, true);
           }
         };
 
@@ -995,7 +997,8 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, false);
+            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
+            return new ListPluginComponent(myPluginModel, uiModelAdapter, group, searchListener, false);
           }
         };
 
@@ -1162,7 +1165,8 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, false);
+            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
+            return new ListPluginComponent(myPluginModel, uiModelAdapter, group, searchListener, false);
           }
         };
 
