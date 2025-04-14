@@ -480,7 +480,7 @@ class BackgroundWriteActionTest {
         checkpoint(1)
         checkpoint(4)
         assertThrows<IllegalStateException> {
-          backgroundWriteAction { }
+          application.runWriteAction { }
         }
         checkpoint(5)
       }
