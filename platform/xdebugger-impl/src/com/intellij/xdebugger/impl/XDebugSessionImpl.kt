@@ -591,6 +591,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
   override fun areBreakpointsMuted(): Boolean {
     return sessionData.isBreakpointsMuted
   }
+  
+  @ApiStatus.Internal
+  fun getBreakpointsMutedFlow(): StateFlow<Boolean> {
+    return sessionData.breakpointsMutedFlow
+  }
 
   override fun addSessionListener(listener: XDebugSessionListener, parentDisposable: Disposable) {
     myDispatcher.addListener(listener, parentDisposable)

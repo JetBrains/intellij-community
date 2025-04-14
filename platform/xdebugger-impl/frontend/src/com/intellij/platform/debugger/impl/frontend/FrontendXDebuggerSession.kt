@@ -168,6 +168,12 @@ class FrontendXDebuggerSession private constructor(
         this.cancel() // Only one tab expected
       }
     }
+
+    cs.launch(Dispatchers.EDT) {
+      sessionDto.sessionDataDto.breakpointsMutedFlow.toFlow().collectLatest {
+        sessionData.isBreakpointsMuted = it
+      }
+    }
   }
 
 
@@ -333,8 +339,7 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun areBreakpointsMuted(): Boolean {
-    // TODO: support muted breakpoints
-    return false
+    return sessionData.isBreakpointsMuted
   }
 
   override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
@@ -363,9 +368,11 @@ class FrontendXDebuggerSession private constructor(
   }
 }
 
-// TODO pass breakpoints muted flow
-private fun FrontendXDebuggerSession.createFeSessionData(sessionDto: XDebugSessionDto): XDebugSessionData =
-  XDebugSessionData(project, sessionDto.sessionDataDto.configurationName)
+private fun FrontendXDebuggerSession.createFeSessionData(sessionDto: XDebugSessionDto): XDebugSessionData {
+  val sessionData = XDebugSessionData(project, sessionDto.sessionDataDto.configurationName)
+  sessionData.isBreakpointsMuted = sessionDto.sessionDataDto.initialBreakpointsMuted
+  return sessionData
+}
 
 private fun CoroutineScope.createPositionFlow(dtoFlow: suspend () -> Flow<XSourcePositionDto?>): StateFlow<XSourcePosition?> = channelFlow {
   dtoFlow().collectLatest { sourcePositionDto ->

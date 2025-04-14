@@ -54,6 +54,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     )
     val sessionDataDto = XDebugSessionDataDto(
       currentSession.sessionData.configurationName,
+      currentSession.areBreakpointsMuted(),
+      currentSession.getBreakpointsMutedFlow().toRpc()
     )
 
     val consoleView = if (useFeProxy()) {
