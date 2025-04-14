@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.editorconfig.language.codeinsight.annotators
+package com.intellij.editorconfig.frontend.highlighting
 
 import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.editorconfig.common.syntax.psi.*
@@ -9,7 +9,6 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
-import org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighter
 
 internal class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : EditorConfigVisitor() {
 

@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.editorconfig.language.highlighting
+package com.intellij.editorconfig.frontend.settings
 
 import com.intellij.editorconfig.common.EditorConfigBundle.get
 import com.intellij.editorconfig.common.plugin.EditorConfigFileType
+import com.intellij.editorconfig.frontend.highlighting.EditorConfigSyntaxHighlighter
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter

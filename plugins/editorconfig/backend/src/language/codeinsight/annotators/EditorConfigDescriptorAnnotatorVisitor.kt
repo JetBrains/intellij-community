@@ -3,9 +3,9 @@ package org.editorconfig.language.codeinsight.annotators
 
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigQualifiedKeyPart
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
+import com.intellij.editorconfig.common.highlighting.EditorConfigTextAttributeKeys
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighter
 import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 
@@ -14,10 +14,10 @@ internal class EditorConfigDescriptorAnnotatorVisitor(private val holder: Annota
   override fun visitQualifiedKeyPart(keyPart: EditorConfigQualifiedKeyPart) {
     val descriptor = keyPart.getDescriptor(false)
     val attributesKey = if (descriptor is EditorConfigDeclarationDescriptor) {
-      EditorConfigSyntaxHighlighter.PROPERTY_KEY
+      EditorConfigTextAttributeKeys.PROPERTY_KEY
     }
     else {
-      EditorConfigSyntaxHighlighter.KEY_DESCRIPTION
+      EditorConfigTextAttributeKeys.KEY_DESCRIPTION
     }
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(keyPart).textAttributes(attributesKey).create()
   }
