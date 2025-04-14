@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.Lookup
+import com.google.common.base.Ascii
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
@@ -19,6 +20,9 @@ internal class TerminalCharFilter : CharFilter() {
     else if (lookup.isTerminalCommandSearch) {
       // Add any char to prefix in command search, because command can contain various characters
       Result.ADD_TO_PREFIX
+    }
+    else if (lookup.editor.isReworkedTerminalEditor && c.code.toByte() == Ascii.BS) {
+      Result.HIDE_LOOKUP
     }
     else if (lookup.editor.isPromptEditor || lookup.editor.isReworkedTerminalEditor) {
       // It is command completion lookup

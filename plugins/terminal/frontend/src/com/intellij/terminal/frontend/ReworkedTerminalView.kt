@@ -157,6 +157,7 @@ internal class ReworkedTerminalView(
     )
 
     controller = TerminalSessionController(
+      project,
       sessionModel,
       outputModel,
       alternateBufferModel,
