@@ -1128,14 +1128,6 @@ public final class ConfigImportHelper {
       }
     }
 
-    Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
-    Set<PluginId> disabledPlugins =
-      Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
-    for (IdeaPluginDescriptor pluginToMigrate : pluginsToMigrate) {
-      if (disabledPlugins.contains(pluginToMigrate.getPluginId())) {
-        pluginToMigrate.setEnabled(false);
-      }
-    }
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
     }
