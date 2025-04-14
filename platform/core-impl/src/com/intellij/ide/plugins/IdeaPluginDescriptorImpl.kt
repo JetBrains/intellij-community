@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl.Type
 import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
@@ -719,3 +720,12 @@ fun IdeaPluginDescriptorImpl.createSubInTest(
   recordDescriptorPath: ((IdeaPluginDescriptorImpl, RawPluginDescriptor, String) -> Unit)?,
   module: PluginContentDescriptor.ModuleItem?,
 ): IdeaPluginDescriptorImpl = createSub(subBuilder, descriptorPath, getDefaultVersion, recordDescriptorPath, module)
+
+@get:ApiStatus.Internal
+val IdeaPluginDescriptorImpl.isMainPluginDescriptor: Boolean get() = type == Type.PluginMainDescriptor
+
+@get:ApiStatus.Internal
+val IdeaPluginDescriptorImpl.isContentModuleDescriptor: Boolean get() = type == Type.ContentModuleDescriptor
+
+@get:ApiStatus.Internal
+val IdeaPluginDescriptorImpl.isDependsSubDescriptor: Boolean get() = type == Type.DependsSubDescriptor
