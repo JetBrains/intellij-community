@@ -328,7 +328,7 @@
                  description="Highest released language level" restartRequired="false"/>
 
     <registryKey key="index.ids.from.java.sources.in.jar" defaultValue="true"
-                 description="Index ids from class files instead of source files in JARs" restartRequired="false"/>
+                 description="Index ids from .class-files instead of .java-files in JARs" restartRequired="true"/>
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true"
                  description="Enables 'Build' toolwindow for JPS compilation messages"/>

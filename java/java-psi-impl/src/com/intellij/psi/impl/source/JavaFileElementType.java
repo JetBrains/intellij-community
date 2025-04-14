@@ -27,6 +27,8 @@ public class JavaFileElementType extends IFileElementType {
   }
 
   public static boolean isInSourceContent(@NotNull VirtualFile file) {
+    //RC: this is a bit hackish implementation: we rely on the fact that project's sources have languageLevel property
+    //    pushed for them, so if this property is present for a file => this file is under 'source' tree
     return ApplicationManager.getApplication().getService(InternalPersistentJavaLanguageLevelReaderService.class)
              .getPersistedLanguageLevel(file) != null;
   }

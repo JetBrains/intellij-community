@@ -29,6 +29,7 @@ import java.util.Map;
 
 import static com.intellij.psi.impl.cache.impl.BaseFilterLexerUtil.scanContentWithCheckCanceled;
 
+/** @see com.intellij.psi.impl.cache.impl.id.IdIndexFilter */
 public final class JavaIdIndexer implements IdIndexer {
   private static final Logger LOG = Logger.getInstance(JavaIdIndexer.class);
   
@@ -59,7 +60,7 @@ public final class JavaIdIndexer implements IdIndexer {
     // we are skipping indexing of sources in libraries (we are going to index only the compiled library classes)
     if (indexSourceFilesInLibraries || JavaFileElementType.isInSourceContent(file)) {
       IdDataConsumer consumer = new IdDataConsumer();
-      scanContentWithCheckCanceled(inputData, createIndexingLexer(new OccurrenceConsumer(consumer, false)));
+      scanContentWithCheckCanceled(inputData, createIndexingLexer(new OccurrenceConsumer(consumer, /*needToDo:*/ false)));
       return consumer.getResult();
     }
     return Map.of();

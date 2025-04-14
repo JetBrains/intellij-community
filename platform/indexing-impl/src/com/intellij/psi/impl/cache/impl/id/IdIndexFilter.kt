@@ -23,8 +23,17 @@ import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
  */
 internal class IdIndexFilter : BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) {
   private companion object {
-    //FIXME RC: use JavaIdIndexer.INDEX_SOURCE_FILES_IN_LIBRARIES_REGISTRY_KEY (but it is in different module, and overall it looks
-    //          like encapsulation violation)
+    //TODO RC: extension is currently used to support JavaIdIndexer ability to index .class-files from libraries instead of .java
+    //         source files (IDEA-327594, IJPL-181002).
+    //         This was the simplest option to implement the input files filtering required, but it is not a very good design --
+    //         inflexible and unnatural -- because single specific sub-indexer (JavaIdIndexer) influences IdIndexFilter which is
+    //         common for all sub-indexers. This is why we need to duplicate 'index.ids.from.java.sources.in.jar' registry key here,
+    //         -- we can't just reference JavaIdIndexer.INDEX_SOURCE_FILES_IN_LIBRARIES_REGISTRY_KEY
+    //         More logical approach is for give _each_ SubIndexers a way to contribute to input filter. We're already close to
+    //         this: we use IdTableBuilding.getFileTypeIndexer(fileType) in the filtering. We just need DataIndexer/IdIndexer to
+    //         implement some kind of BaseFileTypeInputFilter, which could be used both .acceptFileType() and .slowPathIfFileTypeHintUnsure()
+    //         If >1 sub-indexer follow the same pattern as IdJavaIndexer => we should definitely shift to this approach.
+
     val ENABLE_EXTENSION_EXCLUDES = !Registry.`is`("index.ids.from.java.sources.in.jar", false)
 
     val EXTENSION_EXCLUDES: CustomizableExcludeExtensions = CustomizableExcludeExtensions(
