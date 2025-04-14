@@ -79,12 +79,12 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    val writeBytesEvent = TerminalWriteBytesEvent(bytes = data, id = -1 /* todo */)
+    val writeBytesEvent = TerminalWriteBytesEvent(bytes = data)
     sendEvent(writeBytesEvent)
   }
 
   fun sendClearBuffer() {
-    sendEvent(TerminalClearBufferEvent)
+    sendEvent(TerminalClearBufferEvent())
   }
 
   /**
