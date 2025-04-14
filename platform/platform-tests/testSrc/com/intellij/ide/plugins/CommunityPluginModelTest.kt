@@ -8,7 +8,7 @@ import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import java.nio.file.Path
 
-class PluginModelTest {
+class CommunityPluginModelTest {
   @TestFactory
   fun check(): List<DynamicTest> {
     val communityPath = PlatformTestUtil.getCommunityPath()
