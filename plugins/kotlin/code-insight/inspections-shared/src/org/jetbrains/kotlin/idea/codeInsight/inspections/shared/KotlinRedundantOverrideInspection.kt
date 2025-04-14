@@ -45,8 +45,7 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
 
     override fun isApplicableByPsi(element: KtNamedFunction): Boolean {
         val modifierList = element.modifierList ?: return false
-        val overrideKeyword = modifierList.getModifier(OVERRIDE_KEYWORD)
-        if (overrideKeyword == null) return false
+        if (modifierList.getModifier(OVERRIDE_KEYWORD) == null) return false
         if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return false
         if (KotlinPsiHeuristics.hasNonSuppressAnnotations(element)) return false
 
@@ -111,7 +110,11 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
             return null
         }
 
-        if (isAmbiguouslyDerived(element, allFunctionOverriddenSymbols)) {
+        if (isAmbiguouslyDerived(allFunctionOverriddenSymbols)) {
+            return null
+        }
+
+        if (isOverridingDelegatedImplementation(element, allFunctionOverriddenSymbols)) {
             return null
         }
 
@@ -177,37 +180,43 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
     }
 
     private fun KaSession.isAmbiguouslyDerived(
-        function: KtNamedFunction,
         allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>,
     ): Boolean {
         // less than 2 functions
         if (allFunctionOverriddenSymbols.take(2).count() < 2) return false
 
-        // Two+ functions
+        // 2+ functions
         // At least one default in interface or abstract in class, or just something from Java
-        if (allFunctionOverriddenSymbols.any { overriddenSymbol ->
-                val javaSourceOrLibrary = overriddenSymbol.origin.isJavaSourceOrLibrary()
+        return allFunctionOverriddenSymbols.any { overriddenSymbol ->
+            val javaSourceOrLibrary = overriddenSymbol.origin.isJavaSourceOrLibrary()
 
-                val kind = (overriddenSymbol.containingDeclaration as? KaNamedClassSymbol)?.classKind
-                javaSourceOrLibrary || when (kind) {
-                    KaClassKind.CLASS -> overriddenSymbol.modality == KaSymbolModality.ABSTRACT
-                    KaClassKind.INTERFACE -> overriddenSymbol.modality != KaSymbolModality.ABSTRACT
-                    else -> false
-                }
-
+            val kind = (overriddenSymbol.containingDeclaration as? KaNamedClassSymbol)?.classKind
+            javaSourceOrLibrary || when (kind) {
+                KaClassKind.CLASS -> overriddenSymbol.modality == KaSymbolModality.ABSTRACT
+                KaClassKind.INTERFACE -> overriddenSymbol.modality != KaSymbolModality.ABSTRACT
+                else -> false
             }
-        ) {
-            return true
         }
+    }
 
+    /**
+     * Don't mark an override unused if it overrides an implementation by delegation.
+     *
+     * Members from interfaces implemented by delegation and their super interfaces are affected.
+     * Explicit overrides in this case replace the overrides from delegation and are not unused.
+     */
+    private fun KaSession.isOverridingDelegatedImplementation(
+        function: KtNamedFunction,
+        allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>,
+    ): Boolean {
         val superTypeListEntries = function.containingClassOrObject?.superTypeListEntries
         val delegatedSuperTypeEntries =
-            superTypeListEntries?.filterIsInstance<KtDelegatedSuperTypeEntry>()?.ifEmpty { return false } ?: return false
+            superTypeListEntries.orEmpty().filterIsInstance<KtDelegatedSuperTypeEntry>().ifEmpty { return false }
         val delegatedSuperDeclarationTypes =
             delegatedSuperTypeEntries.mapNotNull { it.typeReference?.type }
         return allFunctionOverriddenSymbols.any { overriddenSymbol ->
-            val type = (overriddenSymbol.containingSymbol as? KaNamedClassSymbol)?.defaultType ?: return@any false
-            delegatedSuperDeclarationTypes.any { type.isSubtypeOf(it) }
+            val containingSymbolType = (overriddenSymbol.containingSymbol as? KaNamedClassSymbol)?.defaultType ?: return@any false
+            delegatedSuperDeclarationTypes.any { delegatedIFaceType -> delegatedIFaceType.isSubtypeOf(containingSymbolType) }
         }
     }
 }
