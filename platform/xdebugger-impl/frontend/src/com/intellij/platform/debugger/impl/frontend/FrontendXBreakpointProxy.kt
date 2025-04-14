@@ -29,7 +29,7 @@ class FrontendXBreakpointProxy(
   private val dto: XBreakpointDto,
   private val onBreakpointChange: () -> Unit,
 ) : XBreakpointProxy {
-  val id: XBreakpointId = dto.id
+  override val id: XBreakpointId = dto.id
 
   override val breakpoint: Any = this
 

@@ -14,6 +14,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManagerProxy
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,5 +87,11 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   override fun getLastRemovedBreakpoint(): XBreakpointProxy? {
     // TODO: Send through RPC
     return null
+  }
+
+  override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
+    cs.launch {
+      XBreakpointApi.getInstance().removeBreakpoint(breakpoint.id)
+    }
   }
 }

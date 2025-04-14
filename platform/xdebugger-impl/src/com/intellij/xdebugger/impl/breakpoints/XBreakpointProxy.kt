@@ -12,11 +12,13 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
 interface XBreakpointProxy {
+  val id: XBreakpointId
   val breakpoint: Any
   val type: XBreakpointTypeProxy
   val project: Project
@@ -72,6 +74,8 @@ interface XBreakpointProxy {
   fun setTemporary(isTemporary: Boolean)
 
   class Monolith(override val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
+    override val id: XBreakpointId = breakpoint.breakpointId
+
     override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpoint.project, breakpoint.getType())
 
     override val project: Project = breakpoint.project

@@ -26,6 +26,8 @@ interface XBreakpointManagerProxy {
   fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit)
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
+  fun removeBreakpoint(breakpoint: XBreakpointProxy)
+
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
       get() = breakpointManager.breakpointsDialogSettings
@@ -61,5 +63,12 @@ interface XBreakpointManagerProxy {
     }
 
     override fun getLastRemovedBreakpoint(): XBreakpointProxy? = XBreakpointProxy.Monolith(breakpointManager.lastRemovedBreakpoint as XBreakpointBase<*, *, *>)
+
+    override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
+      if (breakpoint !is XBreakpointProxy.Monolith) {
+        return
+      }
+      breakpointManager.removeBreakpoint(breakpoint.breakpoint)
+    }
   }
 }

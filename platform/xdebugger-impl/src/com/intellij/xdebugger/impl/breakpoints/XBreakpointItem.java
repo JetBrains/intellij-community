@@ -211,11 +211,7 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void removed(Project project) {
-    // TODO: Remove dependency on underlying breakpoint object for frontend implementation
-    XBreakpoint<?> breakpoint = getUnderlyingBreakpoint();
-    if (breakpoint != null) {
-      XDebuggerUtil.getInstance().removeBreakpoint(project, breakpoint);
-    }
+    myBreakpointManagerProxy.removeBreakpoint(myBreakpointProxy);
   }
 
   @Override

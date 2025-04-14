@@ -109,4 +109,11 @@ internal class BackendXBreakpointApi : XBreakpointApi {
       backendDocument.bindToFrontend(frontendDocumentId)
     }
   }
+
+  override suspend fun removeBreakpoint(breakpointId: XBreakpointId) {
+    val breakpoint = breakpointId.findValue() ?: return
+    edtWriteAction {
+      XDebuggerManager.getInstance(breakpoint.project).breakpointManager.removeBreakpoint(breakpoint)
+    }
+  }
 }
