@@ -6,9 +6,9 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 
-internal class EditorConfigAnnotator : Annotator, DumbAware {
+internal class EditorConfigDescriptorAnnotator : Annotator, DumbAware {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    element.accept(EditorConfigAnnotatorVisitor(holder))
+    element.accept(EditorConfigDescriptorAnnotatorVisitor(holder))
   }
 }

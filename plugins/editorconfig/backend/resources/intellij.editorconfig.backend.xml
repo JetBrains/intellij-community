@@ -29,9 +29,10 @@
 
     <!-- Language support -->
     <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
-    <annotator
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.codeinsight.annotators.EditorConfigAnnotator"/>
+    <annotator language="EditorConfig"
+               implementationClass="org.editorconfig.language.codeinsight.annotators.EditorConfigAnnotator"/>
+    <annotator language="EditorConfig"
+               implementationClass="org.editorconfig.language.codeinsight.annotators.EditorConfigDescriptorAnnotator"/>
     <enterHandlerDelegate implementation="org.editorconfig.language.codeinsight.actions.EnterInEditorConfigFileHandler"/>
     <vetoRenameCondition implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigVetoRenameCondition"/>
     <completion.contributor
