@@ -79,7 +79,7 @@ private fun DefaultTabShowcase() {
             }
         }
 
-    TabStripWithAddButton(tabs, JewelTheme.defaultTabStyle) {
+    TabStripWithAddButton(tabs = tabs, style = JewelTheme.defaultTabStyle) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
@@ -138,7 +138,7 @@ private fun EditorTabShowcase() {
             }
         }
 
-    TabStripWithAddButton(tabs, JewelTheme.editorTabStyle) {
+    TabStripWithAddButton(tabs = tabs, style = JewelTheme.editorTabStyle) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
@@ -150,7 +150,7 @@ private fun EditorTabShowcase() {
 @Composable
 private fun TabStripWithAddButton(tabs: List<TabData>, style: TabStyle, onAddClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        TabStrip(tabs, style, modifier = Modifier.weight(1f))
+        TabStrip(tabs = tabs, style = style, modifier = Modifier.weight(1f))
 
         IconButton(onClick = onAddClick, modifier = Modifier.size(JewelTheme.defaultTabStyle.metrics.tabHeight)) {
             Icon(key = AllIconsKeys.General.Add, contentDescription = "Add a tab")

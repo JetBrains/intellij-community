@@ -12,7 +12,7 @@ import org.jetbrains.jewel.samples.showcase.components.Borders
 import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
-import org.jetbrains.jewel.samples.showcase.components.Dropdowns
+import org.jetbrains.jewel.samples.showcase.components.ComboBoxes
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.ProgressBar
@@ -48,7 +48,7 @@ public class ComponentsViewModel(
                 content = { RadioButtons() },
             ),
             ViewInfo(title = "Checkboxes", iconKey = ShowcaseIcons.Components.checkbox, content = { Checkboxes() }),
-            ViewInfo(title = "Dropdowns", iconKey = ShowcaseIcons.Components.comboBox, content = { Dropdowns() }),
+            ViewInfo(title = "Combo Boxes", iconKey = ShowcaseIcons.Components.comboBox, content = { ComboBoxes() }),
             ViewInfo(title = "Chips and trees", iconKey = ShowcaseIcons.Components.tree, content = { ChipsAndTrees() }),
             ViewInfo(
                 title = "Progressbar",

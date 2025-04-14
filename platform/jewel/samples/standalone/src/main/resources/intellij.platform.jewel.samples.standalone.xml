@@ -7,9 +7,9 @@
     <module name="intellij.platform.jewel.decoratedWindow" />
     <module name="intellij.platform.jewel.markdown.intUiStandaloneStyling" />
     <module name="intellij.platform.jewel.markdown.core" />
-    <module name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
-    <module name="intellij.platform.jewel.markdown.extension.gfmStrikethrough" />
-    <module name="intellij.platform.jewel.markdown.extension.gfmTables" />
-    <module name="intellij.platform.jewel.markdown.extension.autolink" />
+    <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts" />
+    <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" />
+    <module name="intellij.platform.jewel.markdown.extensions.gfmTables" />
+    <module name="intellij.platform.jewel.markdown.extensions.autolink" />
   </dependencies>
 </idea-plugin>

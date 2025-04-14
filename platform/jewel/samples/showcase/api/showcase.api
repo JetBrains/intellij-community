@@ -117,27 +117,17 @@ public final class org/jetbrains/jewel/samples/showcase/components/ComposableSin
 
 public final class org/jetbrains/jewel/samples/showcase/components/ComposableSingletons$DropdownsKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/samples/showcase/components/ComposableSingletons$DropdownsKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function3;
-	public static field lambda-10 Lkotlin/jvm/functions/Function2;
-	public static field lambda-2 Lkotlin/jvm/functions/Function2;
-	public static field lambda-3 Lkotlin/jvm/functions/Function2;
-	public static field lambda-4 Lkotlin/jvm/functions/Function2;
+	public static field lambda-1 Lkotlin/jvm/functions/Function5;
+	public static field lambda-2 Lkotlin/jvm/functions/Function5;
+	public static field lambda-3 Lkotlin/jvm/functions/Function5;
+	public static field lambda-4 Lkotlin/jvm/functions/Function5;
 	public static field lambda-5 Lkotlin/jvm/functions/Function2;
-	public static field lambda-6 Lkotlin/jvm/functions/Function3;
-	public static field lambda-7 Lkotlin/jvm/functions/Function5;
-	public static field lambda-8 Lkotlin/jvm/functions/Function5;
-	public static field lambda-9 Lkotlin/jvm/functions/Function5;
 	public fun <init> ()V
-	public final fun getLambda-1$showcase ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda-10$showcase ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-2$showcase ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-3$showcase ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-4$showcase ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda-1$showcase ()Lkotlin/jvm/functions/Function5;
+	public final fun getLambda-2$showcase ()Lkotlin/jvm/functions/Function5;
+	public final fun getLambda-3$showcase ()Lkotlin/jvm/functions/Function5;
+	public final fun getLambda-4$showcase ()Lkotlin/jvm/functions/Function5;
 	public final fun getLambda-5$showcase ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-6$showcase ()Lkotlin/jvm/functions/Function3;
-	public final fun getLambda-7$showcase ()Lkotlin/jvm/functions/Function5;
-	public final fun getLambda-8$showcase ()Lkotlin/jvm/functions/Function5;
-	public final fun getLambda-9$showcase ()Lkotlin/jvm/functions/Function5;
 }
 
 public final class org/jetbrains/jewel/samples/showcase/components/ComposableSingletons$ScrollbarsKt {

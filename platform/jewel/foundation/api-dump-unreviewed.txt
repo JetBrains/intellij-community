@@ -646,7 +646,6 @@ f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 - f:getGlobalColors(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalColors
 - f:getGlobalMetrics(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalMetrics
 - f:getName(androidx.compose.runtime.Composer,I):java.lang.String
-- f:getTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - f:isDark(androidx.compose.runtime.Composer,I):Z
 - f:isSwingCompatMode(androidx.compose.runtime.Composer,I):Z
 f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
@@ -680,8 +679,6 @@ f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - f:grayOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - f:green-vNxB06k(I):J
 - f:greenOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
-- f:grey-vNxB06k(I):J
-- f:greyOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - hashCode():I
 - f:lookup-ijrfgN4(java.lang.String):androidx.compose.ui.graphics.Color
 - f:orange-vNxB06k(I):J
