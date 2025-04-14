@@ -1,10 +1,6 @@
 package org.jetbrains.jewel.bridge.actionSystem
 
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.DataSnapshotProvider
-import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.*
 
 internal class TestDataSink : DataSink {
     val allData = mutableMapOf<String, Any>()

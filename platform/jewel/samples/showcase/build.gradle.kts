@@ -8,6 +8,7 @@ plugins {
 dependencies {
     implementation(project(":foundation"))
     implementation(project(":ui"))
+    implementation(projects.markdown.core)
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }

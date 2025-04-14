@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.toSize
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.registry.Registry
 import java.awt.BorderLayout
 import javax.swing.JComponent

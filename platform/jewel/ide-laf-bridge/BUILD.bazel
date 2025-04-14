@@ -45,8 +45,9 @@ jvm_library(
   plugins = ["@lib//:compose-plugin"]
 )
 
-jvm_test(
-  name = "ideLafBridge_test",
+jvm_library(
+  name = "ideLafBridge_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":ideLafBridge"],
@@ -72,5 +73,10 @@ jvm_test(
   ],
   runtime_deps = [":ideLafBridge_resources"],
   plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "ideLafBridge_test",
+  runtime_deps = [":ideLafBridge_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end

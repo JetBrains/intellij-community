@@ -9,8 +9,8 @@ plugins {
 dependencies {
     api(projects.markdown.core)
     api(projects.intUi.intUiStandalone)
-    compileOnly(projects.markdown.extension.gfmAlerts)
-    compileOnly(projects.markdown.extension.gfmTables)
+    compileOnly(projects.markdown.extensions.gfmAlerts)
+    compileOnly(projects.markdown.extensions.gfmTables)
 
     testImplementation(compose.desktop.uiTestJUnit4)
 }

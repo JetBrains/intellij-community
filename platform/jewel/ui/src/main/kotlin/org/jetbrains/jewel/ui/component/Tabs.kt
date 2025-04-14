@@ -43,6 +43,7 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -111,15 +112,10 @@ public fun TabContentScope.SimpleTabContent(
 internal fun TabImpl(
     isActive: Boolean,
     tabData: TabData,
+    tabStyle: TabStyle,
     modifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val tabStyle =
-        when (tabData) {
-            is TabData.Default -> JewelTheme.defaultTabStyle
-            is TabData.Editor -> JewelTheme.editorTabStyle
-        }
-
     var tabState by remember { mutableStateOf(TabState.of(selected = tabData.selected, active = isActive)) }
     remember(tabData.selected, isActive) { tabState = tabState.copy(selected = tabData.selected, active = isActive) }
 
