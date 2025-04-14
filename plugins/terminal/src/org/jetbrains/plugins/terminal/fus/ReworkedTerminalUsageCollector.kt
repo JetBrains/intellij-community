@@ -75,6 +75,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     DURATION_FIELD,
   )
 
+  private val backendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
+    "terminal.backend.document.update.latency",
+    TEXT_LENGTH_FIELD,
+    DURATION_FIELD,
+  )
+
   @JvmStatic
   fun logLocalShellStarted(project: Project, shellCommand: Array<String>) {
     localShellStartedEvent.log(project,
@@ -131,6 +137,13 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   fun logBackendTextBufferCollectionLatency(textLength: Int, duration: Duration) {
     backendTextBufferCollectionLatencyEvent.log(
+      TEXT_LENGTH_FIELD with textLength,
+      DURATION_FIELD with duration
+    )
+  }
+
+  fun logBackendDocumentUpdateLatency(textLength: Int, duration: Duration) {
+    backendDocumentUpdateLatencyEvent.log(
       TEXT_LENGTH_FIELD with textLength,
       DURATION_FIELD with duration
     )
