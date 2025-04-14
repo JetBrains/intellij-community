@@ -23,7 +23,6 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import java.awt.AWTEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -61,13 +60,7 @@ internal abstract class TerminalEventDispatcher(
 
   override fun dispatch(e: AWTEvent): Boolean {
     if (e is KeyEvent) {
-      val fusActivity = FrontendLatencyService.getInstance().startFrontendTypingActivity(e)
-      try {
-        dispatchKeyEvent(e)
-      }
-      finally {
-        fusActivity?.finishKeyEventProcessing()
-      }
+      dispatchKeyEvent(e)
     }
     return false
   }

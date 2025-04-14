@@ -4,38 +4,19 @@ package org.jetbrains.plugins.terminal.fus
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
-import com.intellij.terminal.session.TerminalInputEvent
-import com.intellij.terminal.session.TerminalWriteBytesEvent
 import org.jetbrains.annotations.ApiStatus
-import java.awt.event.KeyEvent
 
 @ApiStatus.Internal
 interface FrontendLatencyService {
+  fun startFrontendOutputActivity(
+    outputEditor: EditorImpl,
+    alternateBufferEditor: EditorImpl,
+  ): FrontendOutputActivity
 
   companion object {
     @JvmStatic
     fun getInstance(): FrontendLatencyService = service()
   }
-
-  fun startFrontendTypingActivity(e: KeyEvent): FrontendTypingActivity?
-
-  fun getCurrentKeyEventTypingActivityOrNull(): FrontendTypingActivity?
-
-  fun getFrontendTypingActivityOrNull(event: TerminalInputEvent): FrontendTypingActivity?
-
-  fun startFrontendOutputActivity(
-    outputEditor: EditorImpl,
-    alternateBufferEditor: EditorImpl,
-  ): FrontendOutputActivity
-}
-
-@ApiStatus.Internal
-interface FrontendTypingActivity {
-  val id: Int
-  fun startTerminalInputEventProcessing(writeBytesEvent: TerminalWriteBytesEvent)
-  fun finishKeyEventProcessing()
-  fun reportDuration()
-  fun finishTerminalInputEventProcessing()
 }
 
 @ApiStatus.Internal
