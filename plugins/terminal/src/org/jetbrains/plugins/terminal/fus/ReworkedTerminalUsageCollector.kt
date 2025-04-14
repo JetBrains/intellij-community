@@ -50,49 +50,49 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   }
 
   private val frontendTypingLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.frontend.typing.latency",
+    "frontend.typing.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendTypingLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.backend.typing.latency",
+    "backend.typing.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.backend.output.latency",
+    "backend.output.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.frontend.output.latency",
+    "frontend.output.latency",
     EVENT_ID_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendTextBufferCollectionLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.backend.text.buffer.collection.latency",
+    "backend.text.buffer.collection.latency",
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.backend.document.update.latency",
+    "backend.document.update.latency",
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val frontendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
-    "terminal.frontend.document.update.latency",
+    "frontend.document.update.latency",
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
@@ -120,7 +120,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                              EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds)
   }
 
-  @ApiStatus.Internal
+
   fun logFrontendTypingLatency(inputEventId: Int, duration: Duration) {
     frontendTypingLatencyEvent.log(
       EVENT_ID_FIELD with inputEventId,
@@ -129,7 +129,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  @ApiStatus.Internal
+
   fun logBackendTypingLatency(inputEventId: Int, duration: Duration) {
     backendTypingLatencyEvent.log(
       EVENT_ID_FIELD with inputEventId,
@@ -138,7 +138,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  @ApiStatus.Internal
+
   fun logBackendOutputLatency(eventId: Int, duration: Duration) {
     backendOutputLatencyEvent.log(
       EVENT_ID_FIELD with eventId,
@@ -147,7 +147,6 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  @ApiStatus.Internal
   fun logFrontendOutputLatency(eventId: Int, duration: Duration) {
     frontendOutputLatencyEvent.log(
       EVENT_ID_FIELD with eventId,
