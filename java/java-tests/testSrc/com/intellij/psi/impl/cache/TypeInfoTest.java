@@ -85,8 +85,7 @@ public class TypeInfoTest extends LightJavaCodeInsightFixtureTestCase {
     LighterASTNode classNode = LightTreeUtil.firstChildOfType(ast, root, JavaElementType.CLASS);
     LighterASTNode fieldNode = LightTreeUtil.firstChildOfType(ast, classNode, JavaElementType.FIELD);
     TypeInfo info = TypeInfo.create(ast, fieldNode, null);
-    PsiType type = getElementFactory().createTypeFromText(info.text(), getFile());
-    type = info.getTypeAnnotations().applyTo(type, getFile());
+    PsiType type = getElementFactory().createTypeFromText(info.annotatedText(), getFile());
     assertEquals(typeText, type.getCanonicalText(true));
   }
 }
