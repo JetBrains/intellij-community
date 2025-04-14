@@ -20,6 +20,7 @@ class YAMLEmptySequenceItemBackspaceHandler : BackspaceHandlerDelegate() {
     // when the char is already deleted, and in the case when the deleted char was in the end of a file,
     // the "-" is not parsed by a lexer as YAMLTokenTypes.SEQUENCE_MARKER anymore.
 
+    if (!c.isWhitespace()) return false
     if (c != ' ') return false
     if (!file.language.isKindOf(YAMLLanguage.INSTANCE)) return false
 
