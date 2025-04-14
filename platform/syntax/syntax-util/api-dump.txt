@@ -1,0 +1,4 @@
+f:com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle
+- sf:INSTANCE:com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle
+- sf:message(java.lang.String,java.lang.Object[]):java.lang.String
+- sf:messagePointer(java.lang.String,java.lang.Object[]):kotlin.jvm.functions.Function0

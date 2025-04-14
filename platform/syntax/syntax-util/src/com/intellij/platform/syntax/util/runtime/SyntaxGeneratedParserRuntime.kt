@@ -2,23 +2,22 @@
 @file:Suppress("FunctionName")
 @file:ApiStatus.Experimental
 
-package com.intellij.platform.syntax.runtime
+package com.intellij.platform.syntax.util.runtime
 
-import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import com.intellij.platform.syntax.i18n.ResourceBundle
-import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
-import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
+import com.intellij.platform.syntax.Logger
+import com.intellij.platform.syntax.logger.noopLogger
+import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime.Hook
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NonNls
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.util.containers.LimitedPool
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Contract
-import org.jetbrains.annotations.NonNls
 import kotlin.math.min
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
@@ -121,15 +120,7 @@ final class SyntaxGeneratedParserRuntime(
   private val braces: Collection<BracePair>?,
 ) {
 
-  internal val bundle
-    get() = ResourceBundle(
-      bundleClass = "com.intellij.analysis.AnalysisBundle",
-      pathToBundle = "messages.AnalysisBundle",
-      self = this,
-      defaultMapping = emptyMap() // todo replace emptyMap with the proper mapping (generate it with `GenerateBundleMapping` run configuration)
-    )
-
-  private val error: ErrorState = ErrorState(bundle)
+  private val error: ErrorState = ErrorState()
   internal val LOG: Logger = noopLogger()
 
   internal var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit = { _, _ -> }
@@ -178,7 +169,7 @@ final class SyntaxGeneratedParserRuntime(
     }
   }
 
-  class ErrorState(val bundle: ResourceBundle) {
+  class ErrorState() {
     internal var currentFrame: Frame? = null
     internal val variants: MyList<Variant> = MyList<Variant>(INITIAL_VARIANTS_SIZE)
     internal val unexpected: MyList<Variant> = MyList<Variant>(INITIAL_VARIANTS_SIZE / 10)
@@ -216,14 +207,14 @@ final class SyntaxGeneratedParserRuntime(
             .asSequence()
             .sorted()
             .take(MAX_VARIANTS_TO_DISPLAY)
-            .joinToString(separator = ", ", postfix = " ${bundle.message("parsing.error.and.ellipsis")}")
+            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.and.ellipsis")}")
         }
         strings.size > 1 -> {
           val sorted = strings.sorted()
           val last = sorted.last()
           sorted
             .dropLast(1)
-            .joinToString(separator = ", ", postfix = " ${bundle.message("parsing.error.or")} $last")
+            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.or")} $last")
         }
         else -> {
           strings.singleOrNull().orEmpty()
@@ -356,7 +347,7 @@ fun SyntaxGeneratedParserRuntime.current_position_(): Int {
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String): Boolean {
   if (level > MAX_RECURSION_LEVEL) {
-    builder.mark().error(bundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName))
+    builder.mark().error(SyntaxRuntimeBundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName))
     return false
   }
   return true
@@ -366,7 +357,7 @@ fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String):
 fun SyntaxGeneratedParserRuntime.empty_element_parsed_guard_(funcName: String, pos: Int): Boolean {
   if (pos == current_position_()) {
     // sometimes this is a correct situation, therefore no explicit marker
-    builder.error(bundle.message("parsing.error.empty.element.parsed.in.at.offset", funcName, builder.currentOffset))
+    builder.error(SyntaxRuntimeBundle.message("parsing.error.empty.element.parsed.in.at.offset", funcName, builder.currentOffset))
     return false
   }
   return true
@@ -750,7 +741,7 @@ private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: SyntaxGeneratedP
   state.hooks?.let { hooks ->
     var marker: SyntaxTreeBuilder.Marker? = if (elementType == null) null else builder.lastDoneMarker
     if (elementType != null && marker == null) {
-      builder.mark().error(bundle.message("parsing.error.no.expected.done.marker.at.offset", builder.currentOffset))
+      builder.mark().error(SyntaxRuntimeBundle.message("parsing.error.no.expected.done.marker.at.offset", builder.currentOffset))
     }
     while (hooks.level >= state.level) {
       if (hooks.level == state.level) {
@@ -1015,18 +1006,18 @@ private fun SyntaxGeneratedParserRuntime.reportError(
   val message: String
   if (expected.isEmpty()) {
     if (actual.isNullOrEmpty()) {
-      message = bundle.message("parsing.error.unmatched.input")
+      message = SyntaxRuntimeBundle.message("parsing.error.unmatched.input")
     }
     else {
-      message = bundle.message("parsing.error.unexpected", actual.crop(MAX_ERROR_TOKEN_TEXT, true))
+      message = SyntaxRuntimeBundle.message("parsing.error.unexpected", actual.crop(MAX_ERROR_TOKEN_TEXT, true))
     }
   }
   else {
     if (actual.isNullOrEmpty()) {
-      message = bundle.message("parsing.error.expected", expected)
+      message = SyntaxRuntimeBundle.message("parsing.error.expected", expected)
     }
     else {
-      message = bundle.message("parsing.error.expected.got", expected, actual.crop(MAX_ERROR_TOKEN_TEXT, true))
+      message = SyntaxRuntimeBundle.message("parsing.error.expected.got", expected, actual.crop(MAX_ERROR_TOKEN_TEXT, true))
     }
   }
   if (advance) {

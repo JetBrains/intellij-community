@@ -49,7 +49,7 @@
 *f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
 - f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 *f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImplKt
-- sf:getSyntaxParserRuntimeFactory(com.intellij.lang.Language):com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
+- sf:getSyntaxParserRuntimeFactory(com.intellij.lang.Language):com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 *c:com.intellij.platform.syntax.psi.lexer.LexerAdapter
 - com.intellij.lexer.Lexer
 - <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.psi.ElementTypeConverter):V
