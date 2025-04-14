@@ -18,7 +18,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class LanguageLevelUtil {
@@ -56,15 +55,19 @@ public final class LanguageLevelUtil {
   }
 
   /**
-   * @param api The language level to get the next from.
+   * @param languageLevel The language level to get the next from.
    * @return Next {@link LanguageLevel} that is not in preview or null if there is no language level.
    */
-  public static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel api) {
-    List<LanguageLevel> levels = LanguageLevel.getEntries();
-    for (LanguageLevel level : levels.subList(api.ordinal() + 1, levels.size())) {
-      if (!level.isPreview()) return level;
-    }
-    return null;
+  public static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    return LanguageLevel.forFeature(languageLevel.feature() + 1);
+  }
+
+  /**
+   * @param languageLevel The language level to get the previous from.
+   * @return Previous {@link LanguageLevel} that is not in preview or null if there is no language level.
+   */
+  public static @Nullable LanguageLevel getPrevLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    return LanguageLevel.forFeature(languageLevel.feature() - 1);
   }
 
   /**
@@ -88,7 +91,9 @@ public final class LanguageLevelUtil {
    */
   @Deprecated(forRemoval = true)
   public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
-    return JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
+    LanguageLevel firstCompatibleLanguageLevel = JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
+    if (firstCompatibleLanguageLevel == null) return null;
+    return getPrevLanguageLevel(firstCompatibleLanguageLevel);
   }
 
   /**
