@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.EditorNotifications;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TripleFunction;
 import org.jetbrains.annotations.NotNull;
@@ -257,7 +256,6 @@ public final class UnknownSdkTracker {
     public void showStatus(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
       fixes = applyAutoFixesAndNotify(fixes, indicator);
       UnknownSdkEditorNotification.getInstance(myProject).showNotifications(fixes);
-      EditorNotifications.getInstance(myProject).updateAllNotifications();
     }
   }
 
