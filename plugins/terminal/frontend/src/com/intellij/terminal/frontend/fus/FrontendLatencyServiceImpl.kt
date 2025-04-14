@@ -3,83 +3,19 @@ package com.intellij.terminal.frontend.fus
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
-import com.intellij.terminal.session.TerminalInputEvent
-import com.intellij.terminal.session.TerminalWriteBytesEvent
-import com.intellij.util.concurrency.ThreadingAssertions
-import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
-import org.jetbrains.plugins.terminal.fus.FrontendTypingActivity
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
-import java.awt.event.KeyEvent
 import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 internal class FrontendLatencyServiceImpl : FrontendLatencyService {
-  override fun startFrontendTypingActivity(e: KeyEvent): FrontendTypingActivity? {
-    ThreadingAssertions.softAssertEventDispatchThread()
-    if (e.id != KeyEvent.KEY_TYPED) return null
-    val activity = FrontendTypingActivityImpl(frontendTypingActivityId.incrementAndGet())
-    currentKeyEventTypingActivity = activity
-    return activity
-  }
-
-  override fun getCurrentKeyEventTypingActivityOrNull(): FrontendTypingActivity? {
-    ThreadingAssertions.softAssertEventDispatchThread()
-    return currentKeyEventTypingActivity
-  }
-
-  override fun getFrontendTypingActivityOrNull(event: TerminalInputEvent): FrontendTypingActivity? {
-    return frontendTypingActivityByInputEvent[event.toIdentity()]
-  }
-
   override fun startFrontendOutputActivity(
     outputEditor: EditorImpl,
     alternateBufferEditor: EditorImpl,
   ): FrontendOutputActivity {
     return FrontendOutputActivityImpl(outputEditor, alternateBufferEditor)
-  }
-}
-
-private val frontendTypingActivityId = AtomicInteger()
-private var currentKeyEventTypingActivity: FrontendTypingActivityImpl? = null
-private val frontendTypingActivityByInputEvent = ConcurrentHashMap<IdentityWrapper<TerminalInputEvent>, FrontendTypingActivityImpl>()
-
-private class FrontendTypingActivityImpl(override val id: Int) : FrontendTypingActivity {
-  private val start = TimeSource.Monotonic.markNow()
-  private var writeBytesEvent: TerminalWriteBytesEvent? = null
-
-  override fun startTerminalInputEventProcessing(writeBytesEvent: TerminalWriteBytesEvent) {
-    this.writeBytesEvent = writeBytesEvent
-    frontendTypingActivityByInputEvent[writeBytesEvent.toIdentity()] = this
-    if (frontendTypingActivityByInputEvent.size > 10000) {
-      LOG.error(Throwable(
-        "Too many simultaneous frontend typing activities, likely a leak!" +
-        " Ensure that startTerminalInputEventProcessing() calls are paired with finishTerminalInputEventProcessing()"
-      ))
-    }
-  }
-
-  override fun finishKeyEventProcessing() {
-    ThreadingAssertions.softAssertEventDispatchThread()
-    currentKeyEventTypingActivity = null
-  }
-
-  override fun reportDuration() {
-    val duration = start.elapsedNow()
-    ReworkedTerminalUsageCollector.logFrontendLatency(
-      inputEventId = id,
-      duration,
-    )
-  }
-
-  override fun finishTerminalInputEventProcessing() {
-    val inputEvent = writeBytesEvent
-    if (inputEvent != null) {
-      frontendTypingActivityByInputEvent.remove(inputEvent.toIdentity())
-    }
   }
 }
 
@@ -154,13 +90,5 @@ private fun <T> ArrayBlockingQueue<T>.addDroppingOldest(element: T) {
     LOG.warn("Overflow in the frontend output activity queue, too many requests, maybe the queue is too small?")
   }
 }
-
-// used to track individual instances of data classes
-private class IdentityWrapper<T : Any>(private val instance: T) {
-  override fun equals(other: Any?): Boolean = instance === (other as? IdentityWrapper<T>)?.instance
-  override fun hashCode(): Int = System.identityHashCode(instance)
-}
-
-private fun <T : Any> T.toIdentity(): IdentityWrapper<T> = IdentityWrapper(this)
 
 private val LOG = logger<FrontendLatencyService>()
