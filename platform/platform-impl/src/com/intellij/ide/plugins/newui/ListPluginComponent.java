@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -107,20 +106,16 @@ public final class ListPluginComponent extends JPanel {
                              @NotNull PluginsGroup group,
                              @NotNull LinkListener<Object> searchListener,
                              boolean marketplace) {
-    IdeaPluginDescriptor plugin = pluginUiModel.getDescriptor();
     myPlugin = pluginUiModel;
     myGroup = group;
     myPluginModel = pluginModelFacade;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
-    PluginId pluginId = plugin.getPluginId();
-    boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
-                         ? !"com.jetbrains.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
-                         : PluginManagerCore.INSTANCE.getUnfulfilledOsRequirement(plugin) == null;
-    myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
+    PluginId pluginId = myPlugin.getPluginId();
+    boolean compatible = myPlugin.isIncompatibleWithCurrentOs();
+    myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
-    var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-    myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(plugin.getPluginId(), idMap);
+    myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(pluginUiModel.getPluginId());
     pluginModelFacade.getModel().addComponent(this);
 
     setOpaque(true);
@@ -131,7 +126,7 @@ public final class ListPluginComponent extends JPanel {
     myIconComponent.setOpaque(false);
     myLayout.setIconComponent(myIconComponent);
 
-    myNameComponent.setText(plugin.getName());
+    myNameComponent.setText(pluginUiModel.getName());
     updateNameComponentIcon();
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent));
 
@@ -152,12 +147,12 @@ public final class ListPluginComponent extends JPanel {
     else {
       updateErrors();
     }
-    if (MyPluginModel.isInstallingOrUpdate(plugin)) {
+    if (myPluginModel.isPluginInstallingOrUpdating(pluginUiModel)) {
       showProgress(false);
     }
     updateColors(EventHandler.SelectionType.NONE);
 
-    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, plugin.getName());
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, pluginUiModel.getName());
 
     UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
 
@@ -1579,7 +1574,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private boolean isInstalledAndEnabled() {
-    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myPluginModel.getModel().getState(myPlugin.getDescriptor()).isDisabled();
+    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myPluginModel.getModel().getState(myPlugin.getPluginId()).isDisabled();
   }
 
   @Override

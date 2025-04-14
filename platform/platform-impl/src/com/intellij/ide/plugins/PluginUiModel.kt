@@ -10,6 +10,12 @@ import com.intellij.openapi.extensions.PluginId
 interface PluginUiModel {
   val pluginId: PluginId
 
+  val isIncompatibleWithCurrentOs: Boolean
+
+  val canBeEnabled: Boolean
+
+  val name: String
+
   val source: PluginSource
 
   /**
