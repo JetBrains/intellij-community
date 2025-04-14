@@ -10,9 +10,9 @@ class JavaModuleNamingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.enableInspections(JavaModuleNamingInspection())
   }
 
-  fun testSimple() = highlighting("""module <warning descr="Module name component 'foo1' should avoid terminal digits">foo1</warning>.bar { }""")
+  fun testSimple() = highlighting("""module <warning descr="Module name 'foo1' should not use terminal digits to encode version information">foo1</warning>.bar { }""")
   fun testSuppress() = highlighting("""@SuppressWarnings("module") module foo1.bar { }""")
-  fun testDevanagariDigitsAreBannedToo() = highlighting("""module <warning descr="Module name component 'foo१' should avoid terminal digits">foo१</warning>.bar { }""")
+  fun testDevanagariDigitsAreBannedToo() = highlighting("""module <warning descr="Module name 'foo१' should not use terminal digits to encode version information">foo१</warning>.bar { }""")
   fun testMiddleDigitsAllowed() = highlighting("""module f0o.b4r { }""")
 
   fun testFix() {
