@@ -230,7 +230,7 @@ internal fun createTerminalOutputFlow(
   return outputFlow
 }
 
-private fun ensureEmulationActive(starter: StopAwareTerminalStarter) {
+private fun ensureEmulationActive(starter: TerminalStarterEx) {
   if (Thread.interrupted() || starter.isStopped) {
     throw CancellationException("Terminal emulation was stopped")
   }
