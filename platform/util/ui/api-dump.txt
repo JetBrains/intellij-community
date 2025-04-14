@@ -4675,6 +4675,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow
 - s:hoverBackground():java.awt.Color
 - s:hoverInactiveBackground():java.awt.Color
 - s:inactiveUnderlineColor():java.awt.Color
+- s:mainBorderColor():java.awt.Color
 - s:overrideHeaderFontSizeOffset():F
 - s:stripeBackground():java.awt.Color
 - s:stripeSeparatorColor(Z):java.awt.Color

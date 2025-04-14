@@ -578,12 +578,18 @@ class InternalDecoratorImpl internal constructor(
       height: Int,
       ) {
       if (insets.top > 0) {
-        g.color = JBUI.CurrentTheme.MainToolbar.borderColor()
+        val anchor = window.windowInfo.anchor
+        if (anchor == ToolWindowAnchor.BOTTOM || (anchor == ToolWindowAnchor.RIGHT && window.windowInfo.isSplit)) {
+          g.color = JBUI.CurrentTheme.ToolWindow.mainBorderColor()
+        }
+        else {
+          g.color = JBUI.CurrentTheme.MainToolbar.borderColor()
+        }
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
                             (y + insets.top - 1).toDouble())
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
       }
-      g.color = JBColor.border()
+      g.color = JBUI.CurrentTheme.ToolWindow.mainBorderColor()
       if (paintLeftExternalBorder) {
         LinePainter2D.paint(g, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
         LinePainter2D.paint(g, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())

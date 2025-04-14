@@ -1067,6 +1067,10 @@ public final class JBUI {
         return JBColor.namedColor("ToolWindow.Stripe.borderColor", JBColor.border());
       }
 
+      public static @NotNull Color mainBorderColor() {
+        return JBColor.namedColor("ToolWindow.borderColor", JBColor.border());
+      }
+
       public static @NotNull Color underlinedTabForeground() {
         return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabForeground", DefaultTabs.underlinedTabForeground());
       }
