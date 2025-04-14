@@ -14,22 +14,15 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
-        return when (diagnostic) {
-            is KaFirDiagnostic.FunctionExpected -> {
-                val expression = diagnostic.psi as? KtExpression ?: return null
-                val invokeReceiverType = diagnostic.type
+        val psiElement = diagnostic.psi as? KtExpression ?: return null
 
-                ImportContextWithFixedReceiverType(
-                    expression,
-                    ImportPositionType.OperatorCall,
-                    explicitReceiverType = invokeReceiverType,
-                )
+        val invokeReceiverType = when (diagnostic) {
+            is KaFirDiagnostic.FunctionExpected -> {
+                diagnostic.type
             }
 
             is KaFirDiagnostic.UnresolvedReference,
             is KaFirDiagnostic.NoneApplicable -> {
-                val psiElement = diagnostic.psi as? KtExpression ?: return null
-
                 val invokeReceiver = when {
                     // Cases like `(... /* anything complex here */)()` (see KT-61638)
                     psiElement is KtCallExpression -> psiElement.calleeExpression
@@ -40,40 +33,29 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
                     else -> null
                 } ?: return null
 
-                val invokeReceiverType = run {
-                    // we have no way to know the type of the receiver from the diagnostic,
-                    // so we have to use in-the-air analysis of the receiver in isolation
+                // we have no way to know the type of the receiver from the diagnostic,
+                // so we have to use in-the-air analysis of the receiver in isolation
+                val factory = KtPsiFactory.contextual(psiElement)
+                val invokeReceiverFragment = factory.createExpressionCodeFragment(invokeReceiver.text, context = psiElement)
 
-                    val factory = KtPsiFactory.contextual(psiElement)
-                    val invokeReceiverFragment = factory.createExpressionCodeFragment(invokeReceiver.text, context = psiElement)
-
-                    invokeReceiverFragment.getContentElement()?.expressionType
-                } ?: return null
-
-                ImportContextWithFixedReceiverType(
-                    psiElement,
-                    ImportPositionType.OperatorCall,
-                    explicitReceiverType = invokeReceiverType,
-                )
+                invokeReceiverFragment.getContentElement()?.expressionType
             }
 
             is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> {
-                val psiElement = diagnostic.psi as? KtExpression ?: return null
-
                 if (!psiElement.isCalleeExpression) return null
 
                 // for this diagnostic, AA can provide the receiver type just fine
-                val invokeReceiverType = psiElement.expressionType ?: return null
-
-                ImportContextWithFixedReceiverType(
-                    psiElement,
-                    ImportPositionType.OperatorCall,
-                    explicitReceiverType = invokeReceiverType,
-                )
+                psiElement.expressionType
             }
 
             else -> null
-        }
+        } ?: return null
+
+        return ImportContextWithFixedReceiverType(
+            psiElement,
+            ImportPositionType.OperatorCall,
+            explicitReceiverType = invokeReceiverType,
+        )
     }
 
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name> =
