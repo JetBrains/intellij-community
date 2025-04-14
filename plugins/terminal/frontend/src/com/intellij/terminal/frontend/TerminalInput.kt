@@ -12,7 +12,6 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 
@@ -33,10 +32,7 @@ internal class TerminalInput(
    */
   private val bufferChannel = Channel<TerminalInputEvent>(
     capacity = 10000,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    onUndeliveredElement = { event ->
-      FrontendLatencyService.getInstance().getFrontendTypingActivityOrNull(event)?.finishTerminalInputEventProcessing()
-    }
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
   private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
@@ -48,15 +44,9 @@ internal class TerminalInput(
     val job = coroutineScope.launch {
       val targetChannel = inputChannelDeferred.await()
 
-      var currentEvent: TerminalInputEvent? = null
       try {
         for (event in bufferChannel) {
-          currentEvent = event
           targetChannel.send(event)
-          val fusActivity = FrontendLatencyService.getInstance().getFrontendTypingActivityOrNull(event)
-          fusActivity?.reportDuration()
-          fusActivity?.finishTerminalInputEventProcessing()
-          currentEvent = null
         }
       }
       catch (e: CancellationException) {
@@ -67,11 +57,6 @@ internal class TerminalInput(
       }
       catch (t: Throwable) {
         LOG.error("Error while sending input event", t)
-      }
-      finally {
-        if (currentEvent != null) {
-          FrontendLatencyService.getInstance().getFrontendTypingActivityOrNull(currentEvent)?.finishTerminalInputEventProcessing()
-        }
       }
     }
     job.invokeOnCompletion {
@@ -94,9 +79,7 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    val fusActivity = FrontendLatencyService.getInstance().getCurrentKeyEventTypingActivityOrNull()
-    val writeBytesEvent = TerminalWriteBytesEvent(bytes = data, id = fusActivity?.id)
-    fusActivity?.startTerminalInputEventProcessing(writeBytesEvent)
+    val writeBytesEvent = TerminalWriteBytesEvent(bytes = data, id = -1 /* todo */)
     sendEvent(writeBytesEvent)
   }
 
@@ -113,11 +96,7 @@ internal class TerminalInput(
   }
 
   private fun sendEvent(event: TerminalInputEvent) {
-    val fusActivity = FrontendLatencyService.getInstance().getFrontendTypingActivityOrNull(event)
     val result = bufferChannel.trySend(event)
-    if (fusActivity != null && result.isFailure) {
-      fusActivity.finishTerminalInputEventProcessing()
-    }
 
     if (result.isClosed) {
       LOG.warn("Terminal input channel is closed, $event won't be sent", result.exceptionOrNull())
