@@ -121,7 +121,7 @@ class ClassLoaderConfigurator(
         module.pluginClassLoader = coreLoader
       }
       else {
-        configureCorePluginModuleClassLoader(module, dependencies)
+        configureCorePluginContentModuleClassLoader(module, dependencies)
       }
       return true
     }
@@ -258,7 +258,7 @@ class ClassLoaderConfigurator(
     }
   }
 
-  private fun configureCorePluginModuleClassLoader(module: IdeaPluginDescriptorImpl, deps: Array<IdeaPluginDescriptorImpl>) {
+  private fun configureCorePluginContentModuleClassLoader(module: IdeaPluginDescriptorImpl, deps: Array<IdeaPluginDescriptorImpl>) {
     val jarFiles = module.jarFiles
     if (jarFiles != null) {
       module.pluginClassLoader = PluginClassLoader(
