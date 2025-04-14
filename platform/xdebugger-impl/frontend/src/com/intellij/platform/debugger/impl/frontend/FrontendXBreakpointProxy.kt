@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
@@ -15,6 +16,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -25,11 +27,13 @@ import javax.swing.Icon
 @ApiStatus.Internal
 class FrontendXBreakpointProxy(
   override val project: Project,
-  private val cs: CoroutineScope,
+  parentCs: CoroutineScope,
   private val dto: XBreakpointDto,
   private val onBreakpointChange: () -> Unit,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
+
+  private val cs = parentCs.childScope("FrontendXBreakpointProxy#$id")
 
   override val breakpoint: Any = this
 
@@ -214,6 +218,9 @@ class FrontendXBreakpointProxy(
     }
   }
 
+  internal fun dispose() {
+    cs.cancel()
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
