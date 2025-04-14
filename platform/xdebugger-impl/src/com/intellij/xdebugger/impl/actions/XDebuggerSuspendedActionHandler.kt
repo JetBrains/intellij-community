@@ -27,7 +27,7 @@ abstract class XDebuggerSuspendedActionHandler : XDebuggerActionHandler() {
 @ApiStatus.Internal
 abstract class XDebuggerProxySuspendedActionHandler : XDebuggerActionHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
-    return !session.isReadOnly && session.isSuspended
+    return isEnabled(session)
   }
 
   @Deprecated("Deprecated in Java")
@@ -40,5 +40,11 @@ abstract class XDebuggerProxySuspendedActionHandler : XDebuggerActionHandler() {
   final override fun perform(session: XDebugSession, dataContext: DataContext) {
     @Suppress("DEPRECATION")
     super.perform(session, dataContext)
+  }
+
+  companion object {
+    fun isEnabled(session: XDebugSessionProxy): Boolean {
+      return !session.isReadOnly && session.isSuspended
+    }
   }
 }

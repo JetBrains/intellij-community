@@ -1,13 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetDto
 import com.intellij.xdebugger.impl.rpc.toRpc
 
 internal class XDebuggerStepIntoHandler : XDebuggerSmartStepIntoHandler() {
+  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+    return XDebuggerProxySuspendedActionHandler.isEnabled(session)
+  }
+
   override suspend fun computeTargets(session: XDebugSessionProxy, position: XSourcePosition): List<XSmartStepIntoTargetDto> {
     return XDebugSessionApi.getInstance().computeStepTargets(session.id, position.toRpc())
   }
