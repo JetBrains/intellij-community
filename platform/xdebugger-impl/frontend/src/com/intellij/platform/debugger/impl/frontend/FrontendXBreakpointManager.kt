@@ -43,8 +43,8 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
         }
         send(breakpointProxies)
         breakpointsChanged.tryEmit(Unit)
+        awaitCancellation()
       }
-      awaitCancellation()
     }
   }.stateIn(cs, SharingStarted.Eagerly, emptySet())
 
