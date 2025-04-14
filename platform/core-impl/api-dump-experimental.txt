@@ -32,6 +32,8 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - com.intellij.ide.plugins.PluginEnabler
 - a:isIgnoredDisabledPlugins():Z
 - a:setIgnoredDisabledPlugins(Z):V
+f:com.intellij.ide.plugins.PluginManagerCore
+- *sf:isLoaded(com.intellij.openapi.extensions.PluginDescriptor):Z
 *c:com.intellij.lang.impl.TokenSequence
 - com.intellij.lexer.TokenList
 - asLexer():com.intellij.lexer.Lexer

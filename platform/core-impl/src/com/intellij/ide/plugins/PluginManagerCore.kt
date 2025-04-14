@@ -151,6 +151,16 @@ object PluginManagerCore {
   val loadedPlugins: List<IdeaPluginDescriptor>
     get() = getPluginSet().enabledPlugins
 
+  @JvmStatic
+  fun isLoaded(id: PluginId): Boolean {
+    val plugin = loadedPlugins.find { it.pluginId == id }
+    return plugin != null && isLoaded(plugin)
+  }
+
+  @ApiStatus.Experimental
+  @JvmStatic
+  fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.pluginClassLoader != null
+
   @Internal
   fun getAndClearPluginLoadingErrors(): List<Supplier<HtmlChunk>> {
     synchronized(pluginErrors) {
