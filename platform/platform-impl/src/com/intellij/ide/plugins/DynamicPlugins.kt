@@ -37,7 +37,6 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
@@ -79,18 +78,12 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.CachedValuesManagerImpl
-import com.intellij.util.MemoryDumpHelper
-import com.intellij.util.ObjectUtils
-import com.intellij.util.ReflectionUtil
-import com.intellij.util.SystemProperties
+import com.intellij.util.*
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
 import com.intellij.util.xmlb.clearPropertyCollectorCache
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.KeyboardFocusManager
 import java.awt.Window
@@ -225,7 +218,7 @@ object DynamicPlugins {
       comparator = comparator.reversed()
     }
     for (descriptor in descriptors.sortedWith(comparator)) {
-      descriptor.isEnabled = load
+      descriptor.isMarkedForLoading = load
       if (!executor.invoke(descriptor)) {
         LOG.info("Failed to $operationText: $descriptor, restart required")
         InstalledPluginsState.getInstance().isRestartRequired = true
@@ -526,7 +519,7 @@ object DynamicPlugins {
 
     if (options.checkImplementationDetailDependencies) {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
-        dependentDescriptor.isEnabled = false
+        dependentDescriptor.isMarkedForLoading = false
         unloadPluginWithoutProgress(dependentDescriptor, UnloadPluginOptions(waitForClassloaderUnload = false,
                                                                              checkImplementationDetailDependencies = false))
         true

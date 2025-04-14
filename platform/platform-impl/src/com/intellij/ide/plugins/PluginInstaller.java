@@ -403,7 +403,7 @@ public final class PluginInstaller {
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
         //  so load first, then enable
-        targetDescriptor.setEnabled(true);
+        targetDescriptor.setMarkedForLoading(true);
         var result = DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
         PluginEnabler.HEADLESS.enable(Set.of(targetDescriptor));
         return result;

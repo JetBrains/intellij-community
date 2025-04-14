@@ -354,7 +354,7 @@ object PluginManagerCore {
       val descriptors = ArrayList<IdeaPluginDescriptorImpl>()
       for (descriptor in getPluginSet().allPlugins) {
         if (pluginIds.contains(descriptor.getPluginId())) {
-          descriptor.isEnabled = enabled
+          descriptor.isMarkedForLoading = enabled
           if (descriptor.moduleName == null) {
             descriptors.add(descriptor)
           }
@@ -475,12 +475,12 @@ object PluginManagerCore {
       }
       if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor)) {
-          descriptor.isEnabled = false
+          descriptor.isMarkedForLoading = false
           logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property")
         }
       }
       else if (!shouldLoadPlugins) {
-        descriptor.isEnabled = false
+        descriptor.isMarkedForLoading = false
         errors[descriptor.getPluginId()] = PluginLoadingError(
           descriptor,
           message("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
@@ -494,8 +494,8 @@ object PluginManagerCore {
         val essentialPlugin = idMap[essentialId] ?: continue
         for (incompatibleId in essentialPlugin.incompatiblePlugins) {
           val incompatiblePlugin = idMap[incompatibleId] ?: continue
-          if (incompatiblePlugin.isEnabled) {
-            incompatiblePlugin.isEnabled = false
+          if (incompatiblePlugin.isMarkedForLoading) {
+            incompatiblePlugin.isMarkedForLoading = false
             logger.info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}', hence disabled")
           }
         }
@@ -586,7 +586,7 @@ object PluginManagerCore {
     if (corePlugin != null) {
       val disabledModulesOfCorePlugin =
         corePlugin.content.modules
-          .filter { it.loadingRule.required && !it.requireDescriptor().isEnabled }
+          .filter { it.loadingRule.required && !it.requireDescriptor().isMarkedForLoading }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
         throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.name })
       }
@@ -594,7 +594,7 @@ object PluginManagerCore {
     var missing: MutableList<String>? = null
     for (id in essentialPlugins) {
       val descriptor = idMap[id]
-      if (descriptor == null || !descriptor.isEnabled()) {
+      if (descriptor == null || !descriptor.isMarkedForLoading) {
         if (missing == null) {
           missing = ArrayList()
         }
@@ -664,9 +664,9 @@ object PluginManagerCore {
         registerLoadingError(loadingError)
       }
       if (loadingError != null || context.expiredPlugins.contains(descriptor.getPluginId())) {
-        descriptor.isEnabled = false
+        descriptor.isMarkedForLoading = false
       }
-      !descriptor.isEnabled()
+      !descriptor.isMarkedForLoading
     })
     for (loadingError in additionalErrors) {
       registerLoadingError(loadingError)
@@ -708,7 +708,7 @@ object PluginManagerCore {
   private fun checkThirdPartyPluginsPrivacyConsent(aliens: List<IdeaPluginDescriptorImpl>) {
     fun disableThirdPartyPlugins() {
       for (descriptor in aliens) {
-        descriptor.isEnabled = false
+        descriptor.isMarkedForLoading = false
       }
       PluginEnabler.HEADLESS.disable(aliens)
     }
@@ -720,7 +720,7 @@ object PluginManagerCore {
       }
       logger.info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session")
       for (descriptor in aliens) {
-        descriptor.isEnabled = false
+        descriptor.isMarkedForLoading = false
       }
       //write the list of third-party plugins back to ensure that the privacy note will be shown next time
       writeThirdPartyPluginsIds(aliens.map { it.pluginId })
