@@ -27,6 +27,9 @@ import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.platform.modification.*
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
@@ -43,6 +46,7 @@ import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.idea.test.util.compileScriptsIntoDirectory
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
@@ -799,6 +803,34 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     fun `test dangling script file module`() {
         val file = createDummyFile("dummy.kts", "class A")
         assertKaModuleType<KaDanglingFileModule>(file)
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test dangling file element cannot be analyzed in context module scope`() {
+        // See KT-71135.
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("A.kt", "class A")
+                }
+            }
+        )
+        val sourceKtFile = getFile("A.kt")
+        val sourceKaModule = kaModuleWithAssertion<KaSourceModule>(sourceKtFile)
+
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile(name, "A()")
+        temporaryFile.originalFile = sourceKtFile
+        assertKaModuleType<KaDanglingFileModule>(temporaryFile)
+
+        allowAnalysisOnEdt {
+            analyze(sourceKaModule) {
+                assertFalse(
+                    "The dangling file should not be analyzable in the context of its source module.",
+                    temporaryFile.canBeAnalysed(),
+                )
+            }
+        }
     }
 
     @OptIn(KaExperimentalApi::class)
