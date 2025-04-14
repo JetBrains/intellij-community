@@ -88,12 +88,8 @@ internal class GitBranchesTreePopupStep(
   override fun getFinalRunnable() = finalRunnable
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
-    if (selectedValue is GitBranchesTreeModel.TopLevelRepository) {
+    if (selectedValue is GitBranchesTreeModel.RepositoryNode) {
       return GitBranchesTreePopupStep(project, selectedValue.repository, listOf(selectedValue.repository), false)
-    }
-
-    if (selectedValue is GitRepository) {
-      return GitBranchesTreePopupStep(project, selectedValue, listOf(selectedValue), false)
     }
 
     val refUnderRepository = selectedValue as? GitBranchesTreeModel.RefUnderRepository

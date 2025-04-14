@@ -166,6 +166,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     mavenGeneralSettings.isAlwaysUpdateSnapshots = true
 
     MavenUtil.cleanAllRunnables()
+    MavenSettingsCache.getInstance(project).reload()
 
     EdtTestUtil.runInEdtAndWait<IOException> {
       restoreSettingsFile()
@@ -378,13 +379,15 @@ abstract class MavenTestCase : UsefulTestCase() {
     get() = repositoryPath.toCanonicalPath()
 
   protected var repositoryPath: Path
-    get() = mavenGeneralSettings.effectiveRepositoryPath
+    get() = MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()
     set(path) {
       mavenGeneralSettings.setLocalRepository(path.toCanonicalPath())
+      MavenSettingsCache.getInstance(project).reload()
     }
 
   protected fun resetRepositoryFile() {
     mavenGeneralSettings.setLocalRepository(null)
+    MavenSettingsCache.getInstance(project).reload()
   }
 
   protected val projectPath: Path
@@ -405,8 +408,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
 
-  protected fun updateSettingsXml(content: String): VirtualFile {
-    return updateSettingsXmlFully(createSettingsXmlContent(content))
+  protected suspend fun updateSettingsXml(content: String): VirtualFile {
+    return updateSettingsXmlFully(createSettingsXmlContent(content)).also {
+      MavenSettingsCache.getInstance(project).reloadAsync()
+    }
   }
 
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
@@ -420,7 +425,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun restoreSettingsFile() {
-    updateSettingsXml("""
+    updateSettingsXmlFully(createSettingsXmlContent("""
       <mirrors>
         <mirror>
           <id>central-mirror</id>
@@ -428,7 +433,7 @@ abstract class MavenTestCase : UsefulTestCase() {
           <mirrorOf>central</mirrorOf>
         </mirror>
       </mirrors>
-    """.trimIndent())
+    """.trimIndent()))
   }
 
   protected fun createModule(name: String, type: ModuleType<*>): Module {

@@ -10,12 +10,13 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -335,14 +336,14 @@ class ProjectEntityIndexingService(
       val newEntityExcludedRoots: List<ExcludeUrlEntity> = newEntity.excludedRoots
       for (excludedRoot: ExcludeUrlEntity in oldEntity.excludedRoots) {
         if (!newEntityExcludedRoots.contains(excludedRoot)) return true
-        //if (!newEntityExcludedRoots.contains(excludedRoot.url)) return true
       }
       return false
     }
 
     private fun <E : WorkspaceEntity> isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity: E): Boolean {
       return newEntity is LibraryEntity &&
-             (newEntity as LibraryEntity).symbolicId.tableId is GlobalLibraryTableId
+             (newEntity as LibraryEntity).symbolicId.tableId is LibraryTableId.GlobalLibraryTableId &&
+             !Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")
     }
 
     private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleDependencies(

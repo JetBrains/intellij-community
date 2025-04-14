@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.modcommand.ModCommand.error;
 import static com.intellij.modcommand.ModCommand.nop;
+import static java.util.Objects.requireNonNull;
 
 final class PsiUpdateImpl {
   private static final Key<PsiFile> ORIGINAL_FILE_FOR_INJECTION = Key.create("ORIGINAL_FILE_FOR_INJECTION");
@@ -75,7 +77,6 @@ final class PsiUpdateImpl {
     private final @NotNull Document myPositionDocument;
     private final @NotNull List<ModUpdateFileText.Fragment> myFragments = new ArrayList<>();
     private final @NotNull Document myDocument;
-    private final @NotNull Project myProject;
     private final @NotNull String myOrigText;
     private final @NotNull PsiFile myOrigFile;
     private final @NotNull PsiFile myCopyFile;
@@ -84,15 +85,15 @@ final class PsiUpdateImpl {
     private boolean myGuardModification;
 
     FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles) {
-      myProject = origFile.getProject();
-      myCopyFile = copyFile(myProject, origFile);
+      Project project = origFile.getProject();
+      myCopyFile = copyFile(project, origFile);
       PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
       myDocument = myCopyFile.getViewProvider().getDocument();
       assert !myCopyFile.getViewProvider().isEventSystemEnabled() : "Event system for " + myCopyFile.getName();
-      InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(myProject);
+      InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(project);
       boolean injected = injectionManager.isInjectedFragment(origFile);
       if (injected) {
-        PsiLanguageInjectionHost host = Objects.requireNonNull(injectionManager.getInjectionHost(origFile));
+        PsiLanguageInjectionHost host = requireNonNull(injectionManager.getInjectionHost(origFile));
         myInjectionHost = host;
         PsiFile hostFile = host.getContainingFile();
         FileTracker hostTracker = changedFiles.get(hostFile);
@@ -122,8 +123,8 @@ final class PsiUpdateImpl {
       myPositionDocument.addDocumentListener(this, this);
       myOrigText = myTargetFile.getText();
       myOrigFile = origFile;
-      myManager = PsiDocumentManager.getInstance(myProject);
-      PostprocessReformattingAspect.getInstance(myProject).forcePostprocessFormat(myCopyFile, this);
+      myManager = PsiDocumentManager.getInstance(project);
+      PostprocessReformattingAspect.getInstance(project).forcePostprocessFormat(myCopyFile, this);
     }
 
     @Nullable PsiLanguageInjectionHost getHostCopy() {
@@ -219,7 +220,7 @@ final class PsiUpdateImpl {
       }
     };
     injectionManager.enumerate(hostCopy, visitor);
-    return Objects.requireNonNull(visitor.injectedFileCopy);
+    return requireNonNull(visitor.injectedFileCopy);
   }
 
   private static @NotNull PsiFile copyFile(Project project, PsiFile origFile) {
@@ -246,10 +247,11 @@ final class PsiUpdateImpl {
   }
 
   private static class ModPsiUpdaterImpl implements ModPsiUpdater, DocumentListener, Disposable {
-    private @NotNull FileTracker myTracker;
+    private final @NotNull ActionContext myActionContext;
+    private @Nullable FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
     private final @NotNull Map<VirtualFile, ModPsiUpdaterImpl.ChangedDirectoryInfo> myChangedDirectories = new LinkedHashMap<>();
-    private @NotNull VirtualFile myNavigationFile;
+    private @Nullable VirtualFile myNavigationFile;
     private int myCaretOffset;
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
@@ -260,7 +262,7 @@ final class PsiUpdateImpl {
     private boolean myPositionUpdated = false;
     private @NlsContexts.Tooltip String myErrorMessage;
     private @NlsContexts.Tooltip String myInfoMessage;
-    private @NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> myConflictMap = new LinkedHashMap<>();
+    private final @NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> myConflictMap = new LinkedHashMap<>();
 
     private record ChangedDirectoryInfo(@NotNull ChangedVirtualDirectory directory, @NotNull PsiDirectory psiDirectory) {
       static @NotNull ModPsiUpdaterImpl.ChangedDirectoryInfo create(@NotNull PsiDirectory directory) {
@@ -273,35 +275,57 @@ final class PsiUpdateImpl {
       @NotNull Stream<ModCommand> createFileCommands(@NotNull Project project) {
         PsiManager manager = PsiManager.getInstance(project);
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        return directory().getAddedChildren().values().stream()
+        ChangedVirtualDirectory root = directory();
+        Map<LightVirtualFile, VirtualFile> mapping = new HashMap<>();
+        mapping.put(root, root.getOriginalFile());
+        return StreamEx.<LightVirtualFile, ChangedVirtualDirectory>ofTree(
+            root, ChangedVirtualDirectory.class, vf -> StreamEx.ofValues(vf.getAddedChildren()))
+          .skip(1) // existing root
           .map(vf -> {
+            if (vf.isDirectory()) {
+              FutureVirtualFile file = new FutureVirtualFile(mapping.get(vf.getParent()), vf.getName(), null);
+              mapping.put(vf, file);
+              return new ModCreateFile(file, new ModCreateFile.Directory());
+            }
             PsiFile psiFile = manager.findFile(vf);
             if (psiFile == null) return nop();
             Document document = psiFile.getViewProvider().getDocument();
             documentManager.commitDocument(document);
             documentManager.doPostponedOperationsAndUnblockDocument(document);
-            return new ModCreateFile(new FutureVirtualFile(directory().getOriginalFile(),
-                                                           vf.getName(), vf.getFileType()),
+            return new ModCreateFile(new FutureVirtualFile(mapping.get(vf.getParent()), vf.getName(), vf.getFileType()),
                                      new ModCreateFile.Text(psiFile.getText()));
           });
       }
     }
 
     private ModPsiUpdaterImpl(@NotNull ActionContext actionContext) {
+      myActionContext = actionContext;
       myCaretOffset = myCaretVirtualEnd = actionContext.offset();
       mySelection = actionContext.selection();
-      // TODO: lazily get the tracker for the current file
-      myTracker = tracker(actionContext.file());
-      myTracker.myPositionDocument.addDocumentListener(this, this);
-      myNavigationFile = myTracker.myOrigFile.getViewProvider().getVirtualFile();
     }
+    
+    private @NotNull FileTracker tracker() {
+      return myTracker == null ? tracker(myActionContext.file()) : myTracker;
+    }
+    
+    private @NotNull VirtualFile navigationFile() {
+      if (myNavigationFile == null) {
+        myNavigationFile = tracker().myOrigFile.getViewProvider().getVirtualFile();
+      }
+      return myNavigationFile;
+    } 
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
-      return myChangedFiles.computeIfAbsent(file, origFile -> {
+      FileTracker result = myChangedFiles.computeIfAbsent(file, origFile -> {
         var tracker = new FileTracker(origFile, myChangedFiles);
         Disposer.register(this, tracker);
         return tracker;
       });
+      if (myTracker == null && myActionContext.file() == file) {
+        myTracker = result;
+        myTracker.myPositionDocument.addDocumentListener(this, this);
+      }
+      return result;
     }
 
     @Override
@@ -351,7 +375,7 @@ final class PsiUpdateImpl {
 
     private @Nullable TextRange getRange(@NotNull PsiElement element) {
       if (!element.isValid()) throw new IllegalArgumentException("Element " + element + " is not valid");
-      if (!PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) {
+      if (myTracker == null || !PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) {
         PsiFile file = element.getContainingFile();
         // allow navigating to the beginning of files
         if (file.getViewProvider().getVirtualFile() instanceof LightVirtualFile lvf &&
@@ -361,8 +385,9 @@ final class PsiUpdateImpl {
         else {
           myNavigationFile = file.getOriginalFile().getVirtualFile();
         }
-        // TODO: track new file
-        myTracker.myPositionDocument.removeDocumentListener(this);
+        if (myTracker != null) {
+          myTracker.myPositionDocument.removeDocumentListener(this);
+        }
         myTracker = tracker(file.getOriginalFile());
         myTracker.myPositionDocument.addDocumentListener(this, this);
         return element.getTextRange();
@@ -422,7 +447,8 @@ final class PsiUpdateImpl {
           Result result = expression.calculateResult(new DummyContext(range, element));
           myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           if (result != null) {
-            myTracker.myDocument.replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), result.toString());
+            FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
+            tracker.myDocument.replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), result.toString());
           }
           return this;
         }
@@ -453,9 +479,9 @@ final class PsiUpdateImpl {
     @Override
     public void moveCaretTo(int offset) {
       myPositionUpdated = true;
-      PsiLanguageInjectionHost host = myTracker.getHostCopy();
+      PsiLanguageInjectionHost host = tracker().getHostCopy();
       if (host != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
         PsiFile file = findInjectedFile(instance, host);
         offset = instance.mapUnescapedOffsetToInjected(file, offset);
         offset = instance.injectedToHost(file, offset);
@@ -494,7 +520,7 @@ final class PsiUpdateImpl {
       range = mapRange(range);
       TextRange identifierRange = nameIdentifier != null ? getRange(nameIdentifier) : null;
       identifierRange = identifierRange == null ? null : mapRange(identifierRange);
-      myRenameSymbol = new ModStartRename(myNavigationFile, new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);
+      myRenameSymbol = new ModStartRename(navigationFile(), new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);
     }
 
     @Override
@@ -504,8 +530,8 @@ final class PsiUpdateImpl {
         throw new IllegalArgumentException("Element disappeared after postponed operations: " + declaration);
       }
       range = mapRange(range);
-      String oldText = myTracker.myCopyFile.getText();
-      myTrackedDeclarations.add(new ModUpdateReferences(myNavigationFile, oldText, range, range));
+      String oldText = requireNonNull(myTracker).myCopyFile.getText();
+      myTrackedDeclarations.add(new ModUpdateReferences(navigationFile(), oldText, range, range));
     }
 
     @Override
@@ -547,9 +573,9 @@ final class PsiUpdateImpl {
     }
 
     private TextRange mapRange(@NotNull TextRange range) {
-      PsiLanguageInjectionHost host = myTracker.getHostCopy();
+      PsiLanguageInjectionHost host = tracker().getHostCopy();
       if (host != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
         PsiFile file = findInjectedFile(instance, host);
         int start = instance.mapUnescapedOffsetToInjected(file, range.getStartOffset());
         int end = instance.mapUnescapedOffsetToInjected(file, range.getEndOffset());
@@ -559,7 +585,7 @@ final class PsiUpdateImpl {
     }
 
     private @NotNull PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {
-      Language language = myTracker.myCopyFile.getLanguage();
+      Language language = tracker().myCopyFile.getLanguage();
       var visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         PsiFile myFile = null;
 
@@ -571,7 +597,7 @@ final class PsiUpdateImpl {
         }
       };
       instance.enumerate(host, visitor);
-      return Objects.requireNonNull(visitor.myFile);
+      return requireNonNull(visitor.myFile);
     }
 
     @Override
@@ -634,7 +660,7 @@ final class PsiUpdateImpl {
         .andThen(myChangedFiles.values().stream()
           .map(fileTracker -> fileTracker.getUpdateCommand()).reduce(nop(), ModCommand::andThen))
         .andThen(myChangedDirectories.values().stream()
-                   .flatMap(info -> info.createFileCommands(myTracker.myProject))
+                   .flatMap(info -> info.createFileCommands(myActionContext.project()))
                    .reduce(nop(), ModCommand::andThen))
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(getTemplateCommand())
         .andThen(myTrackedDeclarations.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
@@ -643,7 +669,7 @@ final class PsiUpdateImpl {
     }
 
     private @NotNull ModCommand getNavigateCommand() {
-      if (!myPositionUpdated || myRenameSymbol != null) return nop();
+      if (!myPositionUpdated || myRenameSymbol != null || myTracker == null) return nop();
       int length = myTracker.myTargetFile.getFileDocument().getTextLength();
       int start = -1, end = -1, caret = -1;
       if (mySelection.getEndOffset() <= length) {
@@ -654,17 +680,17 @@ final class PsiUpdateImpl {
         caret = this.myCaretOffset;
       }
       if (start == -1 && end == -1 && caret == -1) return nop();
-      return new ModNavigate(myNavigationFile, start, end, caret);
+      return new ModNavigate(navigationFile(), start, end, caret);
     }
 
     private @NotNull ModCommand getHighlightCommand() {
       if (myHighlightInfos.isEmpty()) return nop();
-      return new ModHighlight(myNavigationFile, myHighlightInfos);
+      return new ModHighlight(navigationFile(), myHighlightInfos);
     }
 
     private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
-      return new ModStartTemplate(myNavigationFile, myTemplateFields, f -> nop());
+      return new ModStartTemplate(navigationFile(), myTemplateFields, f -> nop());
     }
 
     private class DummyContext implements ExpressionContext {
@@ -677,7 +703,7 @@ final class PsiUpdateImpl {
       }
 
       @Override
-      public Project getProject() { return myTracker.myProject; }
+      public Project getProject() { return myActionContext.project(); }
 
       @Override
       public @Nullable Editor getEditor() { return null; }

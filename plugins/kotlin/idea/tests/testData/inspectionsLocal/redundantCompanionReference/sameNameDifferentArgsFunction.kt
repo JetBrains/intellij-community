@@ -1,5 +1,3 @@
-// PROBLEM: none
-
 class Test {
     companion object {
         fun f(x: Int, y: Int) = 1
@@ -11,3 +9,5 @@ class Test {
         <caret>Companion.f(1, 2)
     }
 }
+
+// IGNORE_K1

@@ -6,6 +6,7 @@
   <extensions defaultExtensionNs="com.intellij.cce">
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonCompletionEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonMultiLineEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonTextCompletionEvaluationVisitor"/>
     <lineCompletionVisitorFactory implementation="com.intellij.cce.python.visitor.PythonLineCompletionVisitorFactory"/>
     <setupSdkStep implementation="com.intellij.cce.python.evaluation.SetupPythonInterpreterStep"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonCompletionContextEvaluationVisitor"/>

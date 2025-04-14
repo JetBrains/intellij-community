@@ -16,11 +16,46 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloade
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
 
 @get:ApiStatus.Internal
-val isRunningFromSources: Boolean by lazy {
-    !AppMode.isDevServer() && Files.isDirectory(Path.of(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
+val isRunningFromSources: Boolean
+    get() = KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.SOURCES
+
+object KotlinPluginLayoutModeProvider {
+    @Volatile
+    private var forcedMode: AtomicReference<KotlinPluginLayoutMode?> = AtomicReference(null)
+
+    private val lazyMode = lazy {
+        forcedMode.get() ?: computeDefaultMode()
+    }
+
+    private fun computeDefaultMode(): KotlinPluginLayoutMode {
+        val isRunningFromSources =
+            !AppMode.isDevServer() && Files.isDirectory(Path.of(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
+        return if (isRunningFromSources) KotlinPluginLayoutMode.SOURCES else KotlinPluginLayoutMode.INTELLIJ
+    }
+
+    @get:ApiStatus.Internal
+    val kotlinPluginLayoutMode: KotlinPluginLayoutMode by lazyMode
+
+    @ApiStatus.Internal
+    fun setForcedKotlinPluginLayoutMode(mode: KotlinPluginLayoutMode) {
+        if (lazyMode.isInitialized()) {
+            error("Cannot set forced mode after lazy initialization: ${lazyMode.value} -> $mode")
+        }
+        if (!forcedMode.compareAndSet(null, mode)) {
+            error("Forced mode is already set to ${forcedMode.get()}")
+        }
+    }
+}
+
+@ApiStatus.Internal
+enum class KotlinPluginLayoutMode {
+    SOURCES,
+    INTELLIJ,
+    LSP,
 }
 
 object KotlinPluginLayout {
@@ -66,10 +101,8 @@ object KotlinPluginLayout {
      * Stand-alone compiler is always stable in 'master' and release branches. It is used for compilation with JPS.
      */
     @JvmStatic
-    val standaloneCompilerVersion: IdeKotlinVersion by lazy {
-        val rawVersion = kotlinc.resolve("build.txt").readText().trim()
-        IdeKotlinVersion.get(rawVersion)
-    }
+    val standaloneCompilerVersion: IdeKotlinVersion
+        get() = standaloneCompilerVersionProvider.value
 
     /**
      * Version of the compiler's analyzer bundled into the Kotlin IDE plugin ('kotlin-compiler-for-ide' and so on).
@@ -81,53 +114,72 @@ object KotlinPluginLayout {
     private val kotlincProvider: Lazy<File>
     private val kotlincIdeProvider: Lazy<File>
     private val jpsPluginClasspathProvider: Lazy<List<File>>
+    private val standaloneCompilerVersionProvider: Lazy<IdeKotlinVersion>
 
     init {
-        if (isRunningFromSources) {
-            val bundledJpsVersion by lazy {
-                KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
-            }
-
-            kotlincProvider = lazy {
-                @Suppress("DEPRECATION")
-                val distJar = downloadArtifactForIdeFromSources(
-                    OLD_KOTLIN_DIST_ARTIFACT_ID,
+         val standaloneCompilerVersionDefaultProvider = lazy {
+            val rawVersion = kotlinc.resolve("build.txt").readText().trim()
+            IdeKotlinVersion.get(rawVersion)
+        }
+        when (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode) {
+            KotlinPluginLayoutMode.SOURCES -> {
+                val bundledJpsVersion by lazy {
                     KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
-                ) ?: error("Can't download dist")
-                val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
-                LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+                }
+
+                kotlincProvider = lazy {
+                    @Suppress("DEPRECATION")
+                    val distJar = downloadArtifactForIdeFromSources(
+                        OLD_KOTLIN_DIST_ARTIFACT_ID,
+                        KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
+                    ) ?: error("Can't download dist")
+                    val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")
+                    LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+                }
+
+                // TODO: KTIJ-32993
+                kotlincIdeProvider = lazy {
+                    @Suppress("DEPRECATION")
+                    val distJar = downloadArtifactForIdeFromSources(
+                        OLD_KOTLIN_DIST_ARTIFACT_ID,
+                        KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_ide_dist.xml")
+                    ) ?: error("Can't download dist")
+                    val unpackedDistDir =
+                        KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-ide-dist-for-ide-from-sources")
+                    LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+                }
+
+                jpsPluginClasspathProvider = lazy {
+                    @Suppress("DEPRECATION")
+                    val jpsPluginArtifact = KotlinMavenUtils.findArtifactOrFail(
+                        KOTLIN_MAVEN_GROUP_ID,
+                        OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+                        bundledJpsVersion
+                    )
+
+                    listOf(jpsPluginArtifact.toFile())
+                }
+                standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
             }
 
-            // TODO: KTIJ-32993
-            kotlincIdeProvider = lazy {
-                @Suppress("DEPRECATION")
-                val distJar = downloadArtifactForIdeFromSources(
-                    OLD_KOTLIN_DIST_ARTIFACT_ID,
-                    KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_ide_dist.xml")
-                ) ?: error("Can't download dist")
-                val unpackedDistDir = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-ide-dist-for-ide-from-sources")
-                LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar)
+            KotlinPluginLayoutMode.INTELLIJ -> {
+                val kotlinPluginRoot = getPluginDistDirByClass(KotlinPluginLayout::class.java)
+                    ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
+
+                fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }.toFile()
+
+                kotlincProvider = lazy { resolve("kotlinc") }
+                kotlincIdeProvider = lazy { resolve("kotlinc.ide") }
+                jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }
+                standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
             }
 
-            jpsPluginClasspathProvider = lazy {
-                @Suppress("DEPRECATION")
-                val jpsPluginArtifact = KotlinMavenUtils.findArtifactOrFail(
-                    KOTLIN_MAVEN_GROUP_ID,
-                    OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-                    bundledJpsVersion
-                )
-
-                listOf(jpsPluginArtifact.toFile())
+            KotlinPluginLayoutMode.LSP -> {
+                kotlincProvider = lazy { error("LSP doesn't not include kotlinc") }
+                kotlincIdeProvider = lazy { error("LSP doesn't not include kotlinc.ide for scripts") }
+                jpsPluginClasspathProvider = lazy { error("LSP doesn't not include jps compiler") }
+                standaloneCompilerVersionProvider = lazy { ideCompilerVersion /*there is no standalone compiler in LSP */}
             }
-        } else {
-            val kotlinPluginRoot = getPluginDistDirByClass(KotlinPluginLayout::class.java)
-                ?: error("Can't find jar file for ${KotlinPluginLayout::class.simpleName}")
-
-            fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }.toFile()
-
-            kotlincProvider = lazy { resolve("kotlinc") }
-            kotlincIdeProvider = lazy { resolve("kotlinc.ide") }
-            jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }
         }
 
         check(standaloneCompilerVersion <= ideCompilerVersion) {

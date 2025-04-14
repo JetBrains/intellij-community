@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.EdtDispatcherKind.LockBehavior
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
@@ -27,8 +26,9 @@ internal sealed class EdtCoroutineDispatcher(
 
   override val immediate: MainCoroutineDispatcher
     get() = when (type) {
-      EdtDispatcherKind.EDT -> ImmediateLockingDispatcher
-      EdtDispatcherKind.UI -> ImmediateNonLockingDispatcher
+      EdtDispatcherKind.EDT -> ImmediateEdtDispatcher
+      EdtDispatcherKind.LAX_UI -> ImmediateLaxUiDispatcher
+      EdtDispatcherKind.UI -> ImmediateUiDispatcher
       EdtDispatcherKind.MAIN -> ImmediateMainDispatcher
     }
 
@@ -55,16 +55,16 @@ internal sealed class EdtCoroutineDispatcher(
   }
 
   private fun wrapWithLocking(runnable: Runnable): Runnable {
-    return when (type) {
-      EdtDispatcherKind.UI -> {
+    return when (type.lockBehavior) {
+      EdtDispatcherKind.LockBehavior.LOCKS_DISALLOWED_FAIL_HARD -> {
         Runnable {
           ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, false, lockAccessViolationMessage)
         }
       }
-      EdtDispatcherKind.MAIN -> {
+      EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_NO_WRAPPING -> {
         runnable
       }
-      EdtDispatcherKind.EDT -> {
+      EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING -> {
         return if (isCoroutineWILEnabled) {
           Runnable {
             WriteIntentReadAction.run {
@@ -79,8 +79,9 @@ internal sealed class EdtCoroutineDispatcher(
     }
   }
 
-  object Locking : EdtCoroutineDispatcher(EdtDispatcherKind.EDT)
-  object NonLocking : EdtCoroutineDispatcher(EdtDispatcherKind.UI)
+  object LockWrapping : EdtCoroutineDispatcher(EdtDispatcherKind.EDT)
+  object NonLocking : EdtCoroutineDispatcher(EdtDispatcherKind.LAX_UI)
+  object LockForbidden : EdtCoroutineDispatcher(EdtDispatcherKind.UI)
   object Main : EdtCoroutineDispatcher(EdtDispatcherKind.MAIN)
 
   val lockAccessViolationMessage = """The use of the RW lock is forbidden by `$this`. This dispatcher is intended for pure UI operations, which do not interact with the IntelliJ Platform model (PSI, VFS, etc.).
@@ -107,7 +108,16 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
     if (!ModalityState.current().accepts(contextModality)) {
       return true
     }
-    return false
+    return when (type) {
+      // `Dispatchers.Main.immediate` must look only at the thread where it is executing.
+      // This is needed to support 3rd party libraries which use this dispatcher for getting the UI thread
+      // Relaxed UI dispatcher is indifferent to locks, so it can run in-place.
+      EdtDispatcherKind.MAIN, EdtDispatcherKind.LAX_UI -> false
+      // `Dispatchers.EdtImmediate` must perform dispatch when invoked on a thread without locks, because it needs to get into correct context.
+      EdtDispatcherKind.EDT -> !ApplicationManager.getApplication().isWriteIntentLockAcquired
+      // `Dispatchers.UIImmediate` must perform dispatch when invoked on a thread with locks, because it needs to escape locking and forbid using them inside.
+      EdtDispatcherKind.UI -> ApplicationManager.getApplication().isWriteIntentLockAcquired
+    }
   }
 
   override fun toString(): String {
@@ -118,8 +128,8 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
 internal enum class EdtDispatcherKind(
   /**
    * Historically, all runnables executed on EDT were wrapped into a Write-Intent lock. We want to move away from this contract, so here
-   * we operate with two versions of EDT-thread dispatcher. If [lockBehavior] == [LockBehavior.LOCKS_ALLOWED], then all runnables are
-   * automatically wrapped into write-intent lock If [lockBehavior] != [LockBehavior.LOCKS_ALLOWED], then runnables are executed without the
+   * we operate with two versions of EDT-thread dispatcher. If [lockBehavior] == [LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING], then all runnables are
+   * automatically wrapped into write-intent lock If [lockBehavior] != [LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING], then runnables are executed without the
    * lock, and requesting lock is forbidden for them.
    */
   val lockBehavior: LockBehavior,
@@ -136,11 +146,13 @@ internal enum class EdtDispatcherKind(
 ) {
 
 
-  EDT(LockBehavior.LOCKS_ALLOWED, DefaultModality.NON_MODAL),
+  EDT(LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING, DefaultModality.NON_MODAL),
+
+  LAX_UI(LockBehavior.LOCKS_ALLOWED_NO_WRAPPING, DefaultModality.NON_MODAL),
 
   UI(LockBehavior.LOCKS_DISALLOWED_FAIL_HARD, DefaultModality.NON_MODAL),
 
-  MAIN(LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT, DefaultModality.ANY);
+  MAIN(LockBehavior.LOCKS_ALLOWED_NO_WRAPPING, DefaultModality.ANY);
 
   enum class DefaultModality {
     ANY,
@@ -153,20 +165,20 @@ internal enum class EdtDispatcherKind(
   }
 
   enum class LockBehavior {
-    LOCKS_ALLOWED,
-    LOCKS_DISALLOWED_FAIL_SOFT,
+    LOCKS_ALLOWED_MANDATORY_WRAPPING,
+    LOCKS_ALLOWED_NO_WRAPPING,
     LOCKS_DISALLOWED_FAIL_HARD,
   }
 
-  fun allowLocks(): Boolean = lockBehavior == LockBehavior.LOCKS_ALLOWED
-
   fun presentableName(): String = when (this) {
     EDT -> "Dispatchers.EDT"
+    LAX_UI -> "Dispatchers.ui(RELAX)"
     UI -> "Dispatchers.UI"
     MAIN -> "Dispatchers.Main"
   }
 }
 
-private val ImmediateLockingDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.EDT)
-private val ImmediateNonLockingDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.UI)
+private val ImmediateEdtDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.EDT)
+private val ImmediateLaxUiDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.LAX_UI)
+private val ImmediateUiDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.UI)
 private val ImmediateMainDispatcher = ImmediateEdtCoroutineDispatcher(EdtDispatcherKind.MAIN)

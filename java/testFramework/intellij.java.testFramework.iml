@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
   </component>
   <component name="copyright">
     <Base>

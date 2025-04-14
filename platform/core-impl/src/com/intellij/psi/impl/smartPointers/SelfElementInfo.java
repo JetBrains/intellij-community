@@ -31,7 +31,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private int myStartOffset;
   private int myEndOffset;
 
-  // todo ijpl-339 layout of the object got bigger +8bytes
+  // todo IJPL-339 layout of the object got bigger +8bytes
 
   SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,

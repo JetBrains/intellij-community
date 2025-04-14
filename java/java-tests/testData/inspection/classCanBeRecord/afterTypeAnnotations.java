@@ -1,4 +1,4 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 import java.lang.annotation.*;
 import java.util.*;
 

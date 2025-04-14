@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,7 +95,8 @@ public final class StdArrangementEntryMatcher implements ArrangementEntryMatcher
      *
      * @return a collection of matchers
      */
-    @Nullable Collection<ArrangementEntryMatcher> buildMatchers();
+    @Nullable @Unmodifiable
+    Collection<ArrangementEntryMatcher> buildMatchers();
 
     /**
      * Adds given matcher to collection provided by {@link #buildMatchers() buildMatchers} calls.
@@ -151,7 +153,7 @@ public final class StdArrangementEntryMatcher implements ArrangementEntryMatcher
     }
 
     @Override
-    public @Nullable Collection<ArrangementEntryMatcher> buildMatchers() {
+    public @Nullable @Unmodifiable Collection<ArrangementEntryMatcher> buildMatchers() {
       List<ArrangementEntryMatcher> result =
         new ArrayList<>(myMatchers);
       Collection<ArrangementAtomMatchCondition> entryTokens = context.get(StdArrangementTokenType.ENTRY_TYPE);

@@ -7,13 +7,13 @@
     <option name="jvmTarget" value="17" />
   </component>
   <component name="KotlinCommonCompilerArguments">
-    <option name="apiVersion" value="2.0" />
-    <option name="languageVersion" value="2.0" />
+    <option name="apiVersion" value="2.1" />
+    <option name="languageVersion" value="2.1" />
   </component>
   <component name="KotlinCompilerSettings">
     <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
   </component>
   <component name="KotlinJpsPluginSettings">
-    <option name="version" value="2.1.20-RC2" />
+    <option name="version" value="2.1.20" />
   </component>
 </project>

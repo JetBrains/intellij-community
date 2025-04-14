@@ -142,8 +142,19 @@ object GenerateEqualsAndHashCodeUtils {
             it.name?.quoteIfNeeded().isIdentifier()
         }
 
+    /**
+     * @param tryToFindEqualsMethodForClass Pass `true` to attempt to find an existing `equals()` implementation in
+     * the class or its superclass.
+     *
+     * Pass `false` to bypass this check and generate an `equals()` implementation regardless of any existing method.
+     * This is especially useful when generating the method for the quick fix for the
+     * ```
+     * [ABSTRACT_SUPER_CALL] Abstract member cannot be accessed directly
+     * ```
+     * error because the method where this error appears must be ignored.
+     */
     context(KaSession)
-    fun generateEquals(info: Info): KtNamedFunction? {
+    fun generateEquals(info: Info, tryToFindEqualsMethodForClass: Boolean = true): KtNamedFunction? {
         if (info.equalsInClass != null) return null
 
         val klass = info.klass
@@ -151,7 +162,7 @@ object GenerateEqualsAndHashCodeUtils {
         val contextMap = mutableMapOf<String, Any?>()
 
 
-        val equalsFunction = findEqualsMethodForClass(klass.symbol as KaClassSymbol)
+        val equalsFunction = if (tryToFindEqualsMethodForClass) findEqualsMethodForClass(klass.symbol as KaClassSymbol) else null
 
         contextMap[BASE_PARAM_NAME] = "other"
         if (equalsFunction != null) {
@@ -177,14 +188,25 @@ object GenerateEqualsAndHashCodeUtils {
         return function
     }
 
+    /**
+     * @param tryToFindHashCodeMethodForClass Pass `true` to attempt to find an existing `hashCode()` implementation in
+     * the class or its superclass.
+     *
+     * Pass `false` to bypass this check and generate an `hashCode()` implementation regardless of any existing method.
+     * This is especially useful when generating the method for the quick fix for the
+     * ```
+     * [ABSTRACT_SUPER_CALL] Abstract member cannot be accessed directly
+     * ```
+     * error because the method where this error appears must be ignored.
+     */
     context(KaSession)
-    fun generateHashCode(info: Info): KtNamedFunction? {
+    fun generateHashCode(info: Info, tryToFindHashCodeMethodForClass: Boolean = true): KtNamedFunction? {
         if (info.hashCodeInClass != null) return null
 
         val klass = info.klass
 
         val contextMap = mutableMapOf<String, Any?>()
-        val hashCodeFunction = findHashCodeMethodForClass(klass.symbol as KaClassSymbol)
+        val hashCodeFunction = if (tryToFindHashCodeMethodForClass) findHashCodeMethodForClass(klass.symbol as KaClassSymbol) else null
         contextMap[SUPER_HAS_HASHCODE] = hashCodeFunction != null && (hashCodeFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 
         // Sort variables in `hashCode()` to preserve the same order as in `equals()`

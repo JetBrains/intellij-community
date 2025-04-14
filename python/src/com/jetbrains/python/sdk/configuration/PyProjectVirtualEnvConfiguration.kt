@@ -33,9 +33,14 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * If you need venv only, please use [com.intellij.python.community.impl.venv.createVenv]: it is cleaner and suspend.
+ */
+@ApiStatus.Internal
 @RequiresEdt
-fun createVirtualEnvSynchronously(
+fun createVirtualEnvAndSdkSynchronously(
   baseSdk: Sdk,
   existingSdks: List<Sdk>,
   venvRoot: String,

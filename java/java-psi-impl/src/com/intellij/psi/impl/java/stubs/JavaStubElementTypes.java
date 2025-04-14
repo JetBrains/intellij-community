@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IFileElementType;
@@ -95,7 +95,7 @@ public interface JavaStubElementTypes {
     new JavaClassReferenceListElementType("EXTENDS_LIST", BasicJavaElementType.BASIC_EXTENDS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, PsiKeyword.EXTENDS);
+        return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, JavaKeywords.EXTENDS);
       }
     };
 
@@ -103,21 +103,21 @@ public interface JavaStubElementTypes {
     new JavaClassReferenceListElementType("PERMITS_LIST", BasicJavaElementType.BASIC_PERMITS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.PERMITS_KEYWORD, PsiKeyword.PERMITS);
+        return new ReferenceListElement(this, JavaTokenType.PERMITS_KEYWORD, JavaKeywords.PERMITS);
       }
     };
   JavaClassReferenceListElementType IMPLEMENTS_LIST =
     new JavaClassReferenceListElementType("IMPLEMENTS_LIST", BasicJavaElementType.BASIC_IMPLEMENTS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, PsiKeyword.IMPLEMENTS);
+        return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, JavaKeywords.IMPLEMENTS);
       }
     };
   JavaClassReferenceListElementType THROWS_LIST =
     new JavaClassReferenceListElementType("THROWS_LIST", BasicJavaElementType.BASIC_THROWS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, PsiKeyword.THROWS);
+        return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, JavaKeywords.THROWS);
       }
     };
   JavaClassReferenceListElementType EXTENDS_BOUND_LIST =
@@ -131,7 +131,7 @@ public interface JavaStubElementTypes {
     new JavaClassReferenceListElementType("PROVIDES_WITH_LIST", BasicJavaElementType.BASIC_PROVIDES_WITH_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.WITH_KEYWORD, PsiKeyword.WITH);
+        return new ReferenceListElement(this, JavaTokenType.WITH_KEYWORD, JavaKeywords.WITH);
       }
     };
 

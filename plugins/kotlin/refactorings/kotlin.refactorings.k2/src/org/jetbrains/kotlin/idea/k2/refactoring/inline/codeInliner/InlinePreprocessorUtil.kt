@@ -193,7 +193,7 @@ internal fun removeContracts(codeToInline: MutableCodeToInline) {
  */
 internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, originalDeclaration: KtDeclaration) {
     val isAnonymousFunction = originalDeclaration is KtNamedFunction && originalDeclaration.nameIdentifier == null
-    val isAnonymousFunctionWithReceiver = isAnonymousFunction && (originalDeclaration as KtNamedFunction).receiverTypeReference != null
+    val isAnonymousFunctionWithReceiver = isAnonymousFunction && originalDeclaration.receiverTypeReference != null
 
     codeToInline.forEachDescendantOfType<KtSimpleNameExpression> { expression ->
         val parent = expression.parent
@@ -280,10 +280,12 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 val originalCallableSymbol = ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol ?: return
                 val originalDispatchReceiverType = originalCallableSymbol.dispatchReceiverType
                 val expressionType = receiverExpression.expressionType ?: return
+                val thisAsDispatchReceiver = (receiverExpression.parent as? KtDotQualifiedExpression)?.selectorExpression?.resolveToCall()
+                    ?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver
+                if (thisAsDispatchReceiver is KaSmartCastedReceiverValue) return
                 val originalSymbolReceiverType = originalCallableSymbol.receiverType
                 if (originalDispatchReceiverType != null &&
-                    originalSymbolReceiverType != null &&
-                    expressionType.semanticallyEquals(originalDispatchReceiverType) == true
+                    originalSymbolReceiverType != null && expressionType.semanticallyEquals(originalDispatchReceiverType)
                 ) {
                     receiverExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
                 }

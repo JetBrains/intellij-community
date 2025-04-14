@@ -23,6 +23,7 @@ import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -602,10 +603,10 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append("\n").append(indent).append(preprocessExpression(expression.getExpression()));
     boolean reverse = expression.isReversed();
     int trueHits = reverse ? jumpData.getFalseHits() : jumpData.getTrueHits();
-    buf.append("\n").append(indent).append(indent).append(PsiKeyword.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits));
+    buf.append("\n").append(indent).append(indent).append(JavaKeywords.TRUE).append(" ").append(CoverageBundle.message("hits.message", trueHits));
 
     int falseHits = reverse ? jumpData.getTrueHits() : jumpData.getFalseHits();
-    buf.append("\n").append(indent).append(indent).append(PsiKeyword.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits));
+    buf.append("\n").append(indent).append(indent).append(JavaKeywords.FALSE).append(" ").append(CoverageBundle.message("hits.message", falseHits));
   }
 
   private static void addSwitchDataInfo(StringBuilder buf, SwitchData switchData, SwitchCoverageExpression expression, int coverageStatus) {
@@ -617,12 +618,12 @@ public class JavaCoverageEngine extends CoverageEngine {
                    : Integer.toString(switchData.getKeys()[i]);
       int switchHits = switchData.getHits()[i];
       allBranchesHit &= switchHits > 0;
-      buf.append("\n").append(indent).append(indent).append(PsiKeyword.CASE).append(" ").append(key).append(": ").append(switchHits);
+      buf.append("\n").append(indent).append(indent).append(JavaKeywords.CASE).append(" ").append(key).append(": ").append(switchHits);
     }
     int defaultHits = switchData.getDefaultHits();
     boolean defaultCausesLinePartiallyCovered = allBranchesHit && coverageStatus != LineCoverage.FULL;
     if (expression.getHasDefault() || defaultCausesLinePartiallyCovered || defaultHits > 0) {
-      buf.append("\n").append(indent).append(indent).append(PsiKeyword.DEFAULT).append(": ").append(defaultHits);
+      buf.append("\n").append(indent).append(indent).append(JavaKeywords.DEFAULT).append(": ").append(defaultHits);
     }
   }
 

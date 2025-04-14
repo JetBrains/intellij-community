@@ -1323,7 +1323,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
           UIUtil.dispatchAllInvocationEvents();
           if (System.currentTimeMillis() - start > 1000000) {
-            fail("Too long waiting for daemon");
+            fail("Too long waiting for daemon (" +(System.currentTimeMillis() - start)+"ms) ");
           }
         }
 
@@ -1380,7 +1380,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
           UIUtil.dispatchAllInvocationEvents();
           if (System.currentTimeMillis() - start > 1000000) {
-            fail("Too long waiting for daemon");
+            fail("Too long waiting for daemon (" +(System.currentTimeMillis() - start)+"ms) ");
           }
         }
 
@@ -1582,7 +1582,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile)) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start. " +
+        fail("Too long waiting for daemon to start (" +(System.currentTimeMillis() - deadline + timeoutMs)+"ms) "+
              "daemonIsWorkingOrPending="+daemonIsWorkingOrPending(project, document)+
              "; allFinished="+myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile)+
              "; thread dump:\n------"+ThreadDumper.dumpThreadsToString()+"\n======");
@@ -2172,14 +2172,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private static @NotNull List<HighlightInfo> getErrorsFromMarkup(MarkupModel model) {
+  private static @NotNull List<HighlightInfo> getErrorsFromMarkup(@NotNull MarkupModel model) {
     return Arrays.stream(model.getAllHighlighters())
       .map(m -> HighlightInfo.fromRangeHighlighter(m))
       .filter(Objects::nonNull)
       .filter(h -> h.getSeverity() == HighlightSeverity.ERROR)
       .toList();
   }
-  private static void assertNoDuplicateInfosFromMarkup(MarkupModel model) {
+  private static void assertNoDuplicateInfosFromMarkup(@NotNull MarkupModel model) {
     List<HighlightInfo> infos = Arrays.stream(model.getAllHighlighters())
           .map(m -> HighlightInfo.fromRangeHighlighter(m))
           .filter(Objects::nonNull)

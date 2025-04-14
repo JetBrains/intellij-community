@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,33 +28,39 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
-import com.jetbrains.python.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyTargetEnvironmentPackageManager
 import com.jetbrains.python.requirements.RequirementsFileType
-import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvFromFilePanel
+import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
+import com.jetbrains.python.sdk.isTargetBased
+import com.jetbrains.python.sdk.showSdkExecutionException
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.Path
 
 private val LOGGER = fileLogger()
-class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module, Source.CONFIGURATOR).getOrLogException(LOGGER)
+class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
+  @RequiresBackgroundThread
+  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSdk(module, Source.CONFIGURATOR).getOrLogException(LOGGER)
 
   override fun getIntention(module: Module): @IntentionName String? =
     getRequirementsTxtOrSetupPy(module)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name) }
 
-  override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module, Source.INSPECTION).getOrLogException(LOGGER)
+  @RequiresBackgroundThread
+  override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION).getOrLogException(LOGGER)
 
   private fun createAndAddSdk(module: Module, source: Source): Result<Sdk> {
     val existingSdks = ProjectJdkTable.getInstance().allJdks.asList()
@@ -66,7 +71,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     }
 
     val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = data
-    val systemIndependentLocation = FileUtil.toSystemIndependentName(location)
+    val systemIndependentLocation = Path(location)
     val projectPath = module.basePath ?: module.project.basePath
 
     ProgressManager.progress(PySdkBundle.message("python.creating.venv.sentence"))
@@ -75,7 +80,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       val sdk = invokeAndWaitIfNeeded {
         Disposer.newDisposable("Creating virtual environment").use {
           PyTemporarilyIgnoredFileProvider.ignoreRoot(systemIndependentLocation, it)
-          createVirtualEnvSynchronously(chosenBaseSdk!!, existingSdks, location, projectPath, module.project, module)
+          createVirtualEnvAndSdkSynchronously(chosenBaseSdk!!, existingSdks, location, projectPath, module.project, module)
         }
       }
 

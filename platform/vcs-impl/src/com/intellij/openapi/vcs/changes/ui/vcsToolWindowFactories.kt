@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
 import com.intellij.ide.trustedProjects.TrustedProjects
@@ -9,10 +10,15 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.ui.IconManager
+import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import java.util.function.Supplier
+import javax.swing.UIManager
 
 private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
   private val shouldShowWithoutActiveVcs = Registry.get("vcs.empty.toolwindow.show")
@@ -83,6 +89,25 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     // to show id label
     if (toolWindow.contentManager.isEmpty) {
       rebuildContentUi(toolWindow)
+    }
+  }
+
+  override fun updateState(toolWindow: ToolWindow) {
+    super.updateState(toolWindow)
+
+    val project = toolWindow.project
+    when {
+      !toolWindow.isAvailable || !MergeConflictManager.isNonModalMergeEnabled(project) -> return
+      !MergeConflictManager.getInstance(project).isMergeConflict() -> toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCommit)
+      else -> {
+        val focusColor = UIManager.getColor("ToolWindow.Button.selectedForeground")
+        val originalIcon = toolWindow.icon
+        if (originalIcon != null) {
+          val badgeColor = JBColor { if (toolWindow.isActive) focusColor else JBUI.CurrentTheme.IconBadge.ERROR }
+          val badgeIcon = IconManager.getInstance().withIconBadge(originalIcon, badgeColor)
+          toolWindow.setIcon(badgeIcon)
+        }
+      }
     }
   }
 }

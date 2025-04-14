@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.impl
 
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.Item
@@ -23,24 +24,27 @@ class SeItemEntity(override val eid: EID) : Entity {
     private val Session = requiredRef<SeSessionEntity>("session", RefFlags.CASCADE_DELETE_BY)
 
     suspend fun createWith(sessionRef: DurableRef<SeSessionEntity>, item: SeItem): DurableRef<SeItemEntity>? {
-      val session = sessionRef.derefOrNull() ?: return null
+      @Suppress("DEPRECATION")
+      return withKernel {
+        val session = sessionRef.derefOrNull() ?: return@withKernel null
 
-      return change {
-        val entity = shared {
-          if (!session.exists()) return@shared null
+        change {
+          val entity = shared {
+            if (!session.exists()) return@shared null
 
-          SeItemEntity.new {
-            it[Session] = session
+            SeItemEntity.new {
+              it[Session] = session
+            }
+          } ?: return@change null
+
+          SeItemEntityHolder.new {
+            it[Item] = item
+            it[ItemEntity] = entity
           }
-        } ?: return@change null
 
-        SeItemEntityHolder.new {
-          it[Item] = item
-          it[ItemEntity] = entity
-        }
-
-        entity
-      }?.ref()
+          entity
+        }?.ref()
+      }
     }
   }
 }

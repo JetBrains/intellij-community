@@ -3,6 +3,7 @@ package com.intellij.platform.syntax.psi.impl
 
 import com.intellij.lang.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
@@ -19,6 +20,7 @@ import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.builder
 import com.intellij.platform.syntax.psi.ElementTypeConverter
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+import com.intellij.platform.syntax.psi.asSyntaxLogger
 import com.intellij.platform.syntax.psi.convertNotNull
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.BlockSupportImpl
@@ -68,6 +70,7 @@ internal class PsiSyntaxBuilderImpl(
     .withCancellationProvider { ProgressManager.checkCanceled() }
     .withWhitespaceOrCommentBindingPolicy(whitespaceOrCommentBindingPolicy)
     .withOpaquePolicy(opaquePolicy)
+    .withLogger(syntaxTreeBuilderLogger)
     .build()
 
   internal val textArray: CharArray? = CharArrayUtil.fromSequenceWithoutCopying(text)
@@ -196,8 +199,8 @@ internal class PsiSyntaxBuilderImpl(
     @Suppress("UNCHECKED_CAST")
     val originalLexTypes = arrayOfNulls<SyntaxElementType>(tokenCount) as Array<SyntaxElementType>
     productionResult.copyTokenTypesToArray(originalLexTypes, 0, 0, tokenCount)
-    @Suppress("UNCHECKED_CAST")
-    val lexTypes = tokenConverter.convert(originalLexTypes) as Array<IElementType>
+    val lexTypes = tokenConverter.convert(originalLexTypes)
+    assertAllElementsConverted(lexTypes, originalLexTypes)
 
     val compositeOptionalData = CompositeOptionalData()
 
@@ -209,7 +212,7 @@ internal class PsiSyntaxBuilderImpl(
       whitespaceTokens = parserDefinition.whitespaceTokens,
       lexemeCount = tokenCount,
       lexTypes = originalLexTypes,
-      convertedLexTypes = lexTypes,
+      convertedLexTypes = lexTypes as Array<IElementType>,
       charTable = this.charTable,
       astFactory = parserDefinition as? ASTFactory,
       textArray = this.textArray,
@@ -275,6 +278,17 @@ internal class PsiSyntaxBuilderImpl(
     checkTreeDepth(maxDepth, rootMarker.tokenType is IFileElementType, hasCollapsedChameleons)
 
     return rootMarker
+  }
+
+  private fun assertAllElementsConverted(
+    lexTypes: Array<IElementType?>,
+    originalLexTypes: Array<SyntaxElementType>,
+  ) {
+    for (i in 0..<lexTypes.size) {
+      if (lexTypes[i] == null) {
+        throw IllegalStateException("IElementType for token ${originalLexTypes[i]} is missing. TokenConverter = $tokenConverter")
+      }
+    }
   }
 
   private fun markCollapsedNodes(
@@ -366,6 +380,8 @@ internal val LAZY_PARSEABLE_TOKENS = Key.create<TokenList>("LAZY_PARSEABLE_TOKEN
 internal const val UNBALANCED_MESSAGE: @NonNls String = "Unbalanced tree. Most probably caused by unbalanced markers. " +
                                                         "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem"
 
-private val LOG = Logger.getInstance(PsiSyntaxBuilderImpl::class.java)
+private val LOG: Logger = Logger.getInstance(PsiSyntaxBuilderImpl::class.java)
+
+private val syntaxTreeBuilderLogger: com.intellij.platform.syntax.Logger = logger<SyntaxTreeBuilder>().asSyntaxLogger()
 
 internal var ourAnyLanguageWhitespaceTokens: TokenSet = TokenSet.EMPTY

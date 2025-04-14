@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "yaml_resources",
@@ -30,5 +30,38 @@ jvm_library(
     "@lib//:stream_ex",
   ],
   runtime_deps = [":yaml_resources"]
+)
+
+jvm_library(
+  name = "yaml_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":yaml"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/util:util-ui",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/util/jdom",
+    "@lib//:fastutil-min",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:stream_ex",
+  ],
+  runtime_deps = [":yaml_resources"]
+)
+
+jvm_test(
+  name = "yaml_test",
+  runtime_deps = [":yaml_test_lib"]
 )
 ### auto-generated section `build intellij.yaml` end

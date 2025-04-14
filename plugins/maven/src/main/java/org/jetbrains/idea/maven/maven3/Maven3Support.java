@@ -76,10 +76,10 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
   private static void prepareClassPathForProduction(@NotNull String mavenVersion,
                                                     List<Path> classpath,
                                                     String root) {
-    classpath.add(Path.of(PathUtil.getJarPathForClass(MavenId.class)));
-    classpath.add(Path.of(PathUtil.getJarPathForClass(MavenServer.class)));
-
     Path rootPath = Path.of(root);
+
+    classpath.add(Path.of(PathUtil.getJarPathForClass(MavenId.class)));
+    classpath.add(rootPath.resolve("maven-server.jar"));
 
     classpath.add(rootPath.resolve("maven-server-telemetry.jar"));
     try {

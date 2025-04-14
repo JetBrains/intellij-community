@@ -15,15 +15,18 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.getScriptReports
+import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
+import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 @ApiStatus.Internal
@@ -76,16 +79,23 @@ private fun KtFile.shouldDefinitelyHighlight(): Boolean =
 
 @OptIn(KaPlatformInterface::class)
 private fun KtFile.calculateShouldHighlightFile(): Boolean =
-    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(project, useSiteModule = null) !is KaNotUnderContentRootModule
+    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(
+        project,
+        useSiteModule = null
+    ) !is KaNotUnderContentRootModule
 
 private fun KtFile.calculateShouldHighlightScript(): Boolean {
     if (shouldDefinitelyHighlight()) return true
 
-    return (!KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
-            && !getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
-            && isConfigurationLoaded()
-            && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this))
-}
+    if (KotlinPlatformUtils.isCidr) return false // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
+    if (getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }) return false
 
-private fun KtFile.isConfigurationLoaded(): Boolean =
-    ScriptConfigurationsProvider.getInstance(project)?.getScriptConfigurationResult(this) != null
+    val isReadyToHighlight = if (isK1Mode()) {
+        ScriptConfigurationsProvider.getInstance(project)?.getScriptConfigurationResult(this) != null
+    } else {
+        val strategy = DefaultScriptResolutionStrategy.getInstance(project)
+        strategy.isReadyToHighlight(this).also { isReady -> if (!isReady) strategy.execute(this) }
+    }
+
+    return isReadyToHighlight && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+}

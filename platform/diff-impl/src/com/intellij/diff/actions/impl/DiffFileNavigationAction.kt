@@ -8,6 +8,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 
 internal abstract class DiffFileNavigationAction : AnAction(), DumbAware, ActionPromoter {
+  init {
+    isEnabledInModalContext = true
+  }
+
   final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   /**

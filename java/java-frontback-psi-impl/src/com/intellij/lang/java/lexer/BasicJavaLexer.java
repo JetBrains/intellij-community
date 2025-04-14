@@ -14,6 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicJavaLexer extends LexerBase {
 
   private static final int STATE_DEFAULT = 0;

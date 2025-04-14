@@ -32,8 +32,6 @@
 
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptConfigurationsSource"/>
-
     <kotlinScriptLazyResolveProhibitionCondition
             implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptLazyResolveProhibitionCondition"/>
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsSource"/>

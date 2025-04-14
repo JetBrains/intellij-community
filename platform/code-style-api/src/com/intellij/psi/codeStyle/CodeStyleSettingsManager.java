@@ -19,16 +19,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -168,10 +163,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }
   }
 
-  private @NotNull Collection<CodeStyleSettings> getAllSettings() {
-    List<CodeStyleSettings> allSettings = new ArrayList<>(enumSettings());
-    allSettings.addAll(ourReferencedSettings.toStrongList());
-    return allSettings;
+  private @NotNull @Unmodifiable Collection<CodeStyleSettings> getAllSettings() {
+    return ourReferencedSettings.toStrongList();
   }
 
   @Override
@@ -229,7 +222,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }, disposable);
   }
 
-  protected @NotNull Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
+  protected @NotNull @Unmodifiable Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
 
   @ApiStatus.Internal
   public final void registerFileTypeIndentOptions(@NotNull Collection<? extends CodeStyleSettings> allSettings,

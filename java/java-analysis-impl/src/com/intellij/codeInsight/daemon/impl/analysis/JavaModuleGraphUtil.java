@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmLanguage;
@@ -103,9 +104,9 @@ public final class JavaModuleGraphUtil {
     if (to.equals(from.getName())) return false;
     if (!PsiNameHelper.isValidModuleName(to, from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
-    PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
-                                     (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
-                                     (isExported ? PsiKeyword.TRANSITIVE + " " : "") +
+    PsiUtil.addModuleStatement(from, JavaKeywords.REQUIRES + " " +
+                                     (isStaticModule(to, scope) ? JavaKeywords.STATIC + " " : "") +
+                                     (isExported ? JavaKeywords.TRANSITIVE + " " : "") +
                                      to);
     return true;
   }
@@ -132,9 +133,9 @@ public final class JavaModuleGraphUtil {
     if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
     if (contains(from.getRequires(), to.getName())) return false;
     if (JavaPsiModuleUtil.reads(from, to)) return false;
-    PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
-                                     (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +
-                                     (isExported(from, to) ? PsiKeyword.TRANSITIVE + " " : "") +
+    PsiUtil.addModuleStatement(from, JavaKeywords.REQUIRES + " " +
+                                     (isStaticModule(to.getName(), scope) ? JavaKeywords.STATIC + " " : "") +
+                                     (isExported(from, to) ? JavaKeywords.TRANSITIVE + " " : "") +
                                      to.getName());
     return true;
   }

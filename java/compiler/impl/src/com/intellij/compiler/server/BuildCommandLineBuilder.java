@@ -23,11 +23,9 @@ interface BuildCommandLineBuilder {
 
   void addClasspathParameter(List<String> classpathInHost, List<String> classpathInTarget);
 
-  @NotNull
-  String getWorkingDirectory();
+  @NotNull String getWorkingDirectory();
 
-  @NotNull
-  Path getHostWorkingDirectory();
+  @NotNull Path getHostWorkingDirectory();
 
   String getYjpAgentPath(YourKitProfilerService yourKitProfilerService);
 
@@ -36,26 +34,43 @@ interface BuildCommandLineBuilder {
   GeneralCommandLine buildCommandLine() throws ExecutionException;
 
   /**
-   * Uses `nice` command to run process with a lower priority.
+   * Uses {@code nice} command to run the build process with a lower priority.
+   * Doesn't work on Windows because {@code start /low} does not pass the exit code.
    *
-   * Does not work on Windows since start /low does not pass exit code on Windows, see ExecUtil#setupLowPriorityExecution documentation
-   *
-   * @param priority Unix process priority (-20 <= priority <= 19), see https://en.wikipedia.org/wiki/Nice_(Unix)
+   * @param priority Unix process priority ({@code [0..19]}) (see the <a href="https://en.wikipedia.org/wiki/Nice_(Unix)">Wikipedia article</a>)
    */
   void setUnixProcessPriority(int priority);
 
-  default void setupAdditionalVMOptions() {
-  }
+  /**
+   * Starts the build process in a new session so that the scheduler assigns it to a new autogroup
+   * (see the "The autogroup feature" section in <a href="https://man7.org/linux/man-pages/man7/sched.7.html">sched(7)</a>;
+   * <a href="https://man7.org/linux/man-pages/man1/setsid.1.html">setsid(1)</a>).
+   * Linux-only.
+   */
+  default void setStartNewSession() { }
+
+  default void setupAdditionalVMOptions() { }
 
   /**
-   * @param path a path which is available locally to the IDE
+   * @param path a path to a project-agnostic file which is available locally to the IDE.
    * @return a path which points to a copy on a remote machine, and is available to the IDE (but maybe not to the OS of the IDE)
    * i.e., in case of WSL the original path could be {@code C:\Users\a.zip}, and the returned path would be {@code \\wsl.localhost\home\a.zip}.
+   * The file will be copied to a project-independent location; if the file already exists on the target machine, it will not be copied,
+   * and the path to the existing file will be returned.
+   * This method could be used to copy all the project-independent files like non-snapshot libraries, java agents and other tooling.
    */
   default @NotNull Path copyProjectAgnosticPathToTargetIfRequired(@NotNull Path path) throws FileSystemException {
     return path;
   }
 
+  /**
+   * @param path a path to a project-specific which is available locally to the IDE that can be used only with specific {@link project}.
+   * @return a path which points to a copy on a remote machine, and is available to the IDE (but maybe not to the OS of the IDE)
+   * i.e., in case of WSL the original path could be {@code C:\Users\a.zip}, and the returned path would be {@code \\wsl.localhost\home\a.zip}.
+   * The file will be copied to a project-dependent location; if the file already exists on the target machine, it will not be copied,
+   * and the path to the existing file will be returned.
+   * This method could be used to copy project-dependent files like metadata for a compiler.
+   */
   @ApiStatus.Experimental
   default @NotNull Path copyProjectSpecificPathToTargetIfRequired(@NotNull Project project, @NotNull Path path) throws FileSystemException {
     return path;

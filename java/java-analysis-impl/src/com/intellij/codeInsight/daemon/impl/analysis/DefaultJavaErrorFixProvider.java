@@ -20,6 +20,7 @@ import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -713,7 +714,7 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
     fixes(SWITCH_DOMINANCE_VIOLATION, (error, sink) -> {
       PsiElement who = error.context();
       PsiCaseLabelElement overWhom = error.psi();
-      if (who instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(who.getText()) ||
+      if (who instanceof PsiKeyword && JavaKeywords.DEFAULT.equals(who.getText()) ||
           JavaPsiSwitchUtil.isInCaseNullDefaultLabel(who)) {
         PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
         if (labelStatementBase != null) {

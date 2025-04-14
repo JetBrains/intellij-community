@@ -272,6 +272,11 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myEverywhere = everywhere;
   }
 
+  @Override
+  public SearchEverywherePopupInstance getCurrentlyShownPopupInstance() {
+    return getCurrentlyShownUI();
+  }
+
   private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors,
                                         @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
                                         @Nullable StartMoment startMoment) {

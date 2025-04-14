@@ -32,7 +32,7 @@ public class RunServiceInPlugin extends RunClassInPlugin {
 
     ClassLoader loader = null;
     // requires to avoid "class must not be requested from main classloader of plugin" error
-    List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
+    List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).getContent().modules;
     if (!modules.isEmpty()) {
       for (PluginContentDescriptor.ModuleItem module : modules) {
         if (myClazzName.contains(module.name)) {

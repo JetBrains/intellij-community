@@ -157,8 +157,6 @@ interface BuildContext : CompilationContext {
     prepareForBuild: Boolean = true,
   ): BuildContext
 
-  suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
-
   fun reportDistributionBuildNumber()
 
   suspend fun cleanupJarCache()

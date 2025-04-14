@@ -109,4 +109,8 @@ class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
   override fun collectIconsAtRow(row: Int): List<Icon> {
     return fixture.collectIconsAtRow(row)
   }
+
+  override fun areTreeNodesLoaded(): Boolean {
+    return fixture.areTreeNodesLoaded()
+  }
 }

@@ -3,7 +3,8 @@
   <!-- The plugin id is intentionally kept equal to its main module id
   because historically the module was bundled into the platform,
   and dependent plugins used only module dependency -->
-  <id>com.intellij.modules.json</id>
+  <id>com.intellij.json</id>
+  <module value="com.intellij.modules.json"/>
   <vendor>JetBrains</vendor>
   <category>Languages</category>
   <description><![CDATA[
@@ -16,7 +17,8 @@
   </dependencies>
 
   <content>
-    <module name="intellij.json.split" loading="required"/>
+    <module name="intellij.json.frontend.split"/>
     <module name="intellij.json" loading="embedded"/>
+    <module name="intellij.json.backend"/>
   </content>  
 </idea-plugin>

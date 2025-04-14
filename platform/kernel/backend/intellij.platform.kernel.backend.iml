@@ -9,12 +9,12 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-RC2-0.3/rpc-compiler-plugin-2.1.20-RC2-0.3.jar</args>
+              <args>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.2/rpc-compiler-plugin-2.1.20-0.2.jar</args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>

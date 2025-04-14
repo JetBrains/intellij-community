@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -8,16 +8,14 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -27,9 +25,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.memory.InnerClassReferenceVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,12 +36,10 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.PsiModifier.*;
 
 public class ConvertToRecordFix extends InspectionGadgetsFix {
-  private final boolean myShowAffectedMembers;
   private final boolean mySuggestAccessorsRenaming;
   private final @NotNull List<String> myIgnoredAnnotations;
 
-  ConvertToRecordFix(boolean showAffectedMembers, boolean suggestAccessorsRenaming, @NotNull List<String> ignoredAnnotations) {
-    myShowAffectedMembers = showAffectedMembers;
+  ConvertToRecordFix(boolean suggestAccessorsRenaming, @NotNull List<String> ignoredAnnotations) {
     mySuggestAccessorsRenaming = suggestAccessorsRenaming;
     myIgnoredAnnotations = ignoredAnnotations;
   }
@@ -62,9 +58,24 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final ConvertToRecordProcessor processor = getRecordProcessor(descriptor);
     if (processor == null) return;
+    // Without the next line, the conflicts view is not shown
     processor.setPrepareSuccessfulSwingThreadCallback(() -> {
     });
     processor.run();
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final ConvertToRecordProcessor processor = getRecordProcessor(previewDescriptor);
+    if (processor == null) return IntentionPreviewInfo.EMPTY;
+
+    // We can't use the below here, because BaseRefactoringProcessor#doRun calls PsiDocumentManager#commitAllDocumentsUnderProgress,
+    //  and its Javadoc says "must be called on UI thread".
+    // processor.run();
+
+    processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
+
+    return IntentionPreviewInfo.DIFF;
   }
 
   private @Nullable ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
@@ -76,15 +87,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     RecordCandidate recordCandidate = getClassDefinition(psiClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
     if (recordCandidate == null) return null;
 
-    return new ConvertToRecordProcessor(recordCandidate, myShowAffectedMembers);
-  }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    final ConvertToRecordProcessor processor = getRecordProcessor(previewDescriptor);
-    if (processor == null) return IntentionPreviewInfo.EMPTY;
-    processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
-    return IntentionPreviewInfo.DIFF;
+    return new ConvertToRecordProcessor(recordCandidate);
   }
 
   /**
@@ -94,8 +97,11 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
   static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass,
                                             boolean suggestAccessorsRenaming,
                                             @NotNull List<String> ignoredAnnotations) {
-    boolean isNotAppropriatePsiClass = psiClass.isEnum() || psiClass.isAnnotationType() || psiClass instanceof PsiAnonymousClass ||
-                                       psiClass.isInterface() || psiClass.isRecord();
+    boolean isNotAppropriatePsiClass = psiClass.isEnum() ||
+                                       psiClass.isAnnotationType() ||
+                                       psiClass instanceof PsiAnonymousClass ||
+                                       psiClass.isInterface() ||
+                                       psiClass.isRecord();
     if (isNotAppropriatePsiClass) return null;
 
     PsiModifierList psiClassModifiers = psiClass.getModifierList();
@@ -134,15 +140,14 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
    * It helps to validate whether a class will be a well-formed record and supports performing a refactoring.
    */
   static class RecordCandidate {
-    private static final CallMatcher OBJECT_METHOD_CALLS = CallMatcher.anyOf(
-      CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "equals").parameterCount(1),
-      CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "hashCode", "toString").parameterCount(0)
-    );
+    private static final CallMatcher OBJECT_METHOD_CALLS =
+      CallMatcher.anyOf(CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "equals").parameterCount(1),
+                        CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "hashCode", "toString").parameterCount(0));
     private final PsiClass myClass;
     private final boolean mySuggestAccessorsRenaming;
-    private final MultiMap<PsiField, FieldAccessorCandidate> myFieldAccessors = new MultiMap<>(new LinkedHashMap<>());
+    private final MultiMap<PsiField, FieldAccessorCandidate> myFieldsToAccessorCandidates = new MultiMap<>(new LinkedHashMap<>());
     private final List<PsiMethod> myOrdinaryMethods = new SmartList<>();
-    private final List<RecordConstructorCandidate> myConstructors = new SmartList<>();
+    final List<RecordConstructorCandidate> myConstructorCandidates = new SmartList<>();
 
     private PsiMethod myEqualsMethod;
     private PsiMethod myHashCodeMethod;
@@ -163,46 +168,43 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
       return myClass;
     }
 
-    @NotNull
-    Map<PsiField, @Nullable FieldAccessorCandidate> getFieldAccessors() {
+    @UnmodifiableView
+    @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> getFieldsToAccessorCandidates() {
       if (myFieldAccessorsCache != null) return myFieldAccessorsCache;
 
       Map<PsiField, FieldAccessorCandidate> result = new LinkedHashMap<>();
-      for (var entry : myFieldAccessors.entrySet()) {
+      for (var entry : myFieldsToAccessorCandidates.entrySet()) {
         PsiField newKey = entry.getKey();
         Collection<FieldAccessorCandidate> oldValue = entry.getValue();
         FieldAccessorCandidate newValue = ContainerUtil.getOnlyItem(oldValue);
         result.put(newKey, newValue);
       }
-      myFieldAccessorsCache = result;
+      myFieldAccessorsCache = Collections.unmodifiableMap(result);
       return result;
     }
 
-    @Nullable
-    PsiMethod getCanonicalConstructor() {
-      return myConstructors.size() == 1 ? myConstructors.get(0).myConstructor : null;
+    @Nullable RecordConstructorCandidate getCanonicalConstructorCandidate() {
+      return myConstructorCandidates.size() == 1 ? myConstructorCandidates.get(0) : null;
     }
 
-    @Nullable
-    PsiMethod getEqualsMethod() {
+    @Nullable PsiMethod getEqualsMethod() {
       return myEqualsMethod;
     }
 
-    @Nullable
-    PsiMethod getHashCodeMethod() {
+    @Nullable PsiMethod getHashCodeMethod() {
       return myHashCodeMethod;
     }
 
     private boolean isValid() {
-      if (myConstructors.size() > 1) return false;
-      if (myConstructors.size() == 1) {
-        RecordConstructorCandidate ctorCandidate = myConstructors.get(0);
-        boolean isCanonical = ctorCandidate.myCanonical && throwsOnlyUncheckedExceptions(ctorCandidate.myConstructor);
+      if (myConstructorCandidates.size() > 1) return false;
+      if (myConstructorCandidates.size() == 1) {
+        RecordConstructorCandidate ctorCandidate = myConstructorCandidates.get(0);
+        boolean isCanonical = ctorCandidate.canonical && throwsOnlyUncheckedExceptions(ctorCandidate.constructorMethod);
         if (!isCanonical) return false;
-        if (containsObjectMethodCalls(ctorCandidate.myConstructor)) return false;
+        if (containsObjectMethodCalls(ctorCandidate.constructorMethod)) return false;
       }
-      if (myFieldAccessors.size() == 0) return false;
-      for (var entry : myFieldAccessors.entrySet()) {
+      if (myFieldsToAccessorCandidates.size() == 0) return false;
+      for (var entry : myFieldsToAccessorCandidates.entrySet()) {
         PsiField field = entry.getKey();
         if (!field.hasModifierProperty(FINAL) || field.hasInitializer()) return false;
         if (JavaPsiRecordUtil.ILLEGAL_RECORD_COMPONENT_NAMES.contains(field.getName())) return false;
@@ -214,7 +216,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
       for (PsiMethod ordinaryMethod : myOrdinaryMethods) {
         if (ordinaryMethod.hasModifierProperty(NATIVE)) return false;
         boolean conflictsWithPotentialAccessor = ordinaryMethod.getParameterList().isEmpty() &&
-                                                 ContainerUtil.exists(myFieldAccessors.keySet(),
+                                                 ContainerUtil.exists(myFieldsToAccessorCandidates.keySet(),
                                                                       field -> field.getName().equals(ordinaryMethod.getName()));
         if (conflictsWithPotentialAccessor) return false;
         if (containsObjectMethodCalls(ordinaryMethod)) return false;
@@ -224,10 +226,12 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
     private void prepare() {
       Arrays.stream(myClass.getFields()).filter(field -> !field.hasModifierProperty(STATIC))
-        .forEach(field -> myFieldAccessors.put(field, new ArrayList<>()));
+        .forEach(field -> myFieldsToAccessorCandidates.put(field, new ArrayList<>()));
+
       for (PsiMethod method : myClass.getMethods()) {
         if (method.isConstructor()) {
-          myConstructors.add(new RecordConstructorCandidate(method, myFieldAccessors.keySet()));
+          Set<PsiField> instanceFields = myFieldsToAccessorCandidates.keySet();
+          myConstructorCandidates.add(new RecordConstructorCandidate(method, instanceFields));
           continue;
         }
         if (MethodUtils.isEquals(method)) {
@@ -242,12 +246,12 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
           myOrdinaryMethods.add(method);
           continue;
         }
-        FieldAccessorCandidate fieldAccessorCandidate = createFieldAccessor(method);
+        FieldAccessorCandidate fieldAccessorCandidate = tryCreateFieldAccessorCandidate(method);
         if (fieldAccessorCandidate == null) {
           myOrdinaryMethods.add(method);
         }
         else {
-          myFieldAccessors.putValue(fieldAccessorCandidate.myBackingField, fieldAccessorCandidate);
+          myFieldsToAccessorCandidates.putValue(fieldAccessorCandidate.myBackingField, fieldAccessorCandidate);
         }
       }
     }
@@ -286,20 +290,20 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
         private static boolean hasSuperQualifier(@NotNull PsiReferenceExpression expression) {
           PsiElement qualifier = expression.getQualifier();
-          return qualifier != null && PsiKeyword.SUPER.equals(qualifier.getText());
+          return qualifier != null && JavaKeywords.SUPER.equals(qualifier.getText());
         }
       };
       psiMethod.accept(visitor);
       return visitor.existsSuperMethodCalls;
     }
 
-    private @Nullable FieldAccessorCandidate createFieldAccessor(@NotNull PsiMethod psiMethod) {
+    private @Nullable FieldAccessorCandidate tryCreateFieldAccessorCandidate(@NotNull PsiMethod psiMethod) {
       if (psiMethod.hasModifier(JvmModifier.STATIC)) return null;
       if (!psiMethod.getParameterList().isEmpty()) return null;
       String methodName = psiMethod.getName();
       PsiField backingField = null;
       boolean recordStyleNaming = false;
-      for (PsiField field : myFieldAccessors.keySet()) {
+      for (PsiField field : myFieldsToAccessorCandidates.keySet()) {
         if (!field.getType().equals(psiMethod.getReturnType())) continue;
         String fieldName = field.getName();
         if (fieldName.equals(methodName)) {
@@ -307,7 +311,8 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
           recordStyleNaming = true;
           break;
         }
-        if (mySuggestAccessorsRenaming && fieldName.equals(PropertyUtilBase.getPropertyNameByGetter(psiMethod)) &&
+        if (mySuggestAccessorsRenaming &&
+            fieldName.equals(PropertyUtilBase.getPropertyNameByGetter(psiMethod)) &&
             !ContainerUtil.exists(psiMethod.findDeepestSuperMethods(),
                                   superMethod -> superMethod instanceof PsiCompiledElement || superMethod instanceof SyntheticElement)) {
           backingField = field;
@@ -319,57 +324,84 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
   }
 
   /**
-   * Encapsulates information about the converting constructor e.g whether its canonical or not.
+   * Encapsulates information about converting of a single constructor, for example, whether it is canonical or not.
    */
-  private static class RecordConstructorCandidate {
-    private final PsiMethod myConstructor;
-    private final boolean myCanonical;
+  static class RecordConstructorCandidate {
+    private final @NotNull PsiMethod constructorMethod;
+    private final boolean canonical;
+    private final @NotNull Map<PsiParameter, PsiField> ctorParamsToFields = new HashMap<>();
 
     private RecordConstructorCandidate(@NotNull PsiMethod constructor, @NotNull Set<PsiField> instanceFields) {
-      myConstructor = constructor;
-
-      if (myConstructor.getTypeParameters().length > 0) {
-        myCanonical = false;
+      constructorMethod = constructor;
+      if (constructorMethod.getTypeParameters().length > 0) {
+        canonical = false;
         return;
       }
       Set<String> instanceFieldNames = instanceFields.stream().map(PsiField::getName).collect(Collectors.toSet());
       if (instanceFieldNames.size() != instanceFields.size()) {
-        myCanonical = false;
+        canonical = false;
         return;
       }
-      PsiParameter[] ctorParams = myConstructor.getParameterList().getParameters();
+      PsiParameter[] ctorParams = constructorMethod.getParameterList().getParameters();
       if (instanceFields.size() != ctorParams.length) {
-        myCanonical = false;
+        canonical = false;
         return;
       }
-      PsiCodeBlock ctorBody = myConstructor.getBody();
+      PsiCodeBlock ctorBody = constructorMethod.getBody();
       if (ctorBody == null) {
-        myCanonical = false;
+        canonical = false;
         return;
       }
-      Map<String, PsiType> ctorParamsWithType = Arrays.stream(ctorParams)
-        .collect(Collectors.toMap(param -> param.getName(), param -> param.getType(), (first, second) -> first));
+
+      final boolean allProcessed = PsiTreeUtil.processElements(ctorBody, PsiAssignmentExpression.class, (assignExpr) -> {
+        if (!(assignExpr.getLExpression() instanceof PsiReferenceExpression leftRefExpr)) return true;
+        if (!(leftRefExpr.resolve() instanceof PsiField field)) return true;
+
+        if (!(assignExpr.getRExpression() instanceof PsiReferenceExpression rightRefExpr)) return true;
+        final PsiElement assignmentValue = rightRefExpr.resolve();
+
+        if (assignmentValue == null) return false; // using 'false' as a sentinel value
+        if (!(assignmentValue instanceof PsiParameter parameter)) return true;
+        ctorParamsToFields.put(parameter, field);
+        return true;
+      });
+      if (!allProcessed) {
+        canonical = false;
+        return;
+      }
+
       for (PsiField instanceField : instanceFields) {
-        PsiType ctorParamType = ctorParamsWithType.get(instanceField.getName());
-        if (ctorParamType instanceof PsiEllipsisType) {
-          ctorParamType = ((PsiEllipsisType)ctorParamType).toArrayType();
-        }
-        if (ctorParamType == null || !TypeUtils.typeEquals(ctorParamType.getCanonicalText(), instanceField.getType())) {
-          myCanonical = false;
-          return;
-        }
         if (!ControlFlowUtil.variableDefinitelyAssignedIn(instanceField, ctorBody)) {
-          myCanonical = false;
+          canonical = false;
           return;
         }
       }
-      myCanonical = true;
+
+      canonical = true;
+    }
+
+    public @NotNull @UnmodifiableView Map<PsiParameter, PsiField> getCtorParamsToFields() {
+      return Collections.unmodifiableMap(ctorParamsToFields);
+    }
+
+    @NotNull PsiMethod getConstructorMethod() {
+      return constructorMethod;
+    }
+
+    @Override
+    public String toString() {
+      return "RecordConstructorCandidate{" +
+             "constructorMethod=" + constructorMethod +
+             ", canonical=" + canonical +
+             ", ctorParamToFieldMap=" + ctorParamsToFields +
+             '}';
     }
   }
 
   /**
-   * Encapsulates information about the converting of field accessors.
-   * For instance an existing default accessor may be removed during further record creation.
+   * Encapsulates information about converting of a single field accessor.
+   * <p>
+   * For instance, an existing default accessor may be removed during further record creation.
    */
   static class FieldAccessorCandidate {
     private final PsiMethod myFieldAccessor;
@@ -396,13 +428,11 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
                   !hasAnnotationConflict(backingField, accessor, TargetType.METHOD);
     }
 
-    @NotNull
-    PsiMethod getAccessor() {
+    @NotNull PsiMethod getAccessor() {
       return myFieldAccessor;
     }
 
-    @NotNull
-    PsiField getBackingField() {
+    @NotNull PsiField getBackingField() {
       return myBackingField;
     }
 
@@ -412,6 +442,14 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
     boolean isRecordStyleNaming() {
       return myRecordStyleNaming;
+    }
+
+    @Override
+    public String toString() {
+      return "FieldAccessorCandidate{" +
+             "myFieldAccessor=" + myFieldAccessor +
+             ", myBackingField=" + myBackingField +
+             '}';
     }
   }
 

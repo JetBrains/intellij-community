@@ -11,7 +11,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 
@@ -28,10 +28,8 @@ private class UnknownSdkStartupChecker : ProjectActivity {
       checkUnknownSdks(project)
     }
 
-    WorkspaceModel.getInstance(project).eventLog.collect { event ->
-      if (event.getChanges(SdkEntity::class.java).any() || event.getChanges(ContentRootEntity::class.java).any()) {
-        checkUnknownSdks(project)
-      }
+    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
+      checkUnknownSdks(project)
     }
 
     UnknownSdkResolver.EP_NAME.addExtensionPointListener(object: ExtensionPointListener<UnknownSdkResolver> {
@@ -44,8 +42,10 @@ private class UnknownSdkStartupChecker : ProjectActivity {
       }
     }, project)
 
-    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
-      checkUnknownSdks(project)
+    project.workspaceModel.eventLog.collect { event ->
+      if (event.getChanges(SdkEntity::class.java).any() || event.getChanges(ContentRootEntity::class.java).any()) {
+        checkUnknownSdks(project)
+      }
     }
   }
 

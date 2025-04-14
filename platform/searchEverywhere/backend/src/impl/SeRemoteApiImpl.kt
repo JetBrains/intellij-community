@@ -4,12 +4,10 @@ package com.intellij.platform.searchEverywhere.backend.impl
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import fleet.kernel.DurableRef
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -23,11 +21,26 @@ class SeRemoteApiImpl: SeRemoteApi {
     return SeBackendService.getInstance(projectId.findProject()).itemSelected(sessionRef, itemData, modifiers, searchText)
   }
 
-  override suspend fun getItems(projectId: ProjectId,
-                                sessionRef: DurableRef<SeSessionEntity>,
-                                providerId: SeProviderId,
-                                params: SeParams,
-                                dataContextId: DataContextId?): Flow<SeItemData> {
-    return SeBackendService.getInstance(projectId.findProject()).getItems(sessionRef, providerId, params, dataContextId)
+  override suspend fun getItems(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    providerId: SeProviderId,
+    params: SeParams,
+    dataContextId: DataContextId?,
+    requestedCountChannel: ReceiveChannel<Int>,
+  ): Flow<SeItemData> {
+    return SeBackendService.getInstance(projectId.findProject())
+      .getItems(sessionRef, providerId, params, dataContextId, requestedCountChannel)
+  }
+
+  override suspend fun getAvailableProviderIds(): List<SeProviderId> {
+    return SeItemsProviderFactory.EP_NAME.extensionList.map { SeProviderId(it.id) }
+  }
+
+  override suspend fun getSearchScopesInfoForProvider(projectId: ProjectId,
+                                                      sessionRef: DurableRef<SeSessionEntity>,
+                                                      dataContextId: DataContextId,
+                                                      providerId: SeProviderId): SeSearchScopesInfo? {
+    return SeBackendService.getInstance(projectId.findProject()).getSearchScopesInfoForProvider(sessionRef, dataContextId, providerId)
   }
 }

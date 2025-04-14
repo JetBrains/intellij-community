@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.idea.devkit.themes">
   <dependencies>
     <module name="intellij.devkit.core"/>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json.backend"/>
   </dependencies>
   <resource-bundle>messages.DevKitThemesBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">

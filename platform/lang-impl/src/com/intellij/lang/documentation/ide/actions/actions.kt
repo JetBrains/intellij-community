@@ -2,7 +2,6 @@
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationHistory
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
+import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -48,29 +48,31 @@ internal fun registerBackForwardActions(component: JComponent) {
   ), component)
 }
 
-class DocumentationTargetsDataRule : GetDataRule {
-  override fun getData(dataProvider: DataProvider): List<DocumentationTarget>? {
-    return ContainerUtil.nullize(documentationTargetsInner(dataProvider))
+class DocumentationTargetsDataRule : UiDataRule {
+  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    sink.lazyValue(DOCUMENTATION_TARGETS) { provider ->
+      ContainerUtil.nullize(documentationTargetsInner(provider))
+    }
   }
 }
 
-private fun documentationTargetsInner(dataProvider: DataProvider): List<DocumentationTarget> {
-  val project = CommonDataKeys.PROJECT.getData(dataProvider) ?: return emptyList()
-  val editor = CommonDataKeys.EDITOR.getData(dataProvider)
+private fun documentationTargetsInner(dataProvider: DataMap): List<DocumentationTarget> {
+  val project = dataProvider[CommonDataKeys.PROJECT] ?: return emptyList()
+  val editor = dataProvider[CommonDataKeys.EDITOR]
   if (editor != null) {
     val editorTargets = targetsFromEditor(project, editor, editor.caretModel.offset)
     if (editorTargets != null) {
       return editorTargets
     }
   }
-  val symbols = CommonDataKeys.SYMBOLS.getData(dataProvider)
+  val symbols = dataProvider[CommonDataKeys.SYMBOLS]
   if (!symbols.isNullOrEmpty()) {
     val symbolTargets = symbolDocumentationTargets(project, symbols)
     if (symbolTargets.isNotEmpty()) {
       return symbolTargets
     }
   }
-  val targetElement = CommonDataKeys.PSI_ELEMENT.getData(dataProvider)
+  val targetElement = dataProvider[CommonDataKeys.PSI_ELEMENT]
   if (targetElement != null) {
     return psiDocumentationTargets(targetElement, null)
   }

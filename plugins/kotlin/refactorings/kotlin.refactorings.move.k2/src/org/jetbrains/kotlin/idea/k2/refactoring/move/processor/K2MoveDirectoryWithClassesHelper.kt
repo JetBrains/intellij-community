@@ -50,7 +50,7 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
             val rootDirPkg = JavaDirectoryService.getInstance().getPackage(targetDirWrapper.getRootDirectory())
             if (rootDirPkg != null) {
                 val relativePkgName = targetDirWrapper.getRelativePathFromRoot().replace("/".toRegex(), ".")
-                val packageName = if (!relativePkgName.isEmpty()) {
+                val packageName = if (relativePkgName.isNotEmpty()) {
                     StringUtil.getQualifiedName(rootDirPkg.qualifiedName, relativePkgName)
                 } else rootDirPkg.qualifiedName
                 result.addAll(ktFile.findUsages(searchInComments, searchInNonJavaFiles, FqName(packageName)))

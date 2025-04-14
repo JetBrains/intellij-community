@@ -101,19 +101,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                 }
             }
 
-            var used = false
-            callableDeclaration.acceptChildren(object : KtVisitorVoid(),PsiRecursiveVisitor {
-                override fun visitKtElement(element: KtElement) {
-                    if (used) return
-                    element.acceptChildren(this)
-
-                    if (isUsageOfSymbol(callableSymbol, element) || isUsageOfReifiedType(usedTypeParametersInReceiver, element)) {
-                        used = true
-                    }
-                }
-            })
-
-            if (!used) {
+            if (!isReceiverUsedInside(callableDeclaration, usedTypeParametersInReceiver)) {
                 registerProblem(holder, receiverTypeReference, textForReceiver = null)
             }
         }
@@ -151,6 +139,26 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
             removeUnusedTypeParameters(typeParameters)
         }
     }
+}
+
+context(KaSession)
+fun isReceiverUsedInside(
+    callableDeclaration: KtCallableDeclaration,
+    usedTypeParametersInReceiver: Set<KaTypeParameterSymbol>
+): Boolean {
+    val callableSymbol: KaDeclarationSymbol = callableDeclaration.symbol
+    var used = false
+    callableDeclaration.acceptChildren(object : KtVisitorVoid(), PsiRecursiveVisitor {
+        override fun visitKtElement(element: KtElement) {
+            if (used) return
+            element.acceptChildren(this)
+
+            if (isUsageOfSymbol(callableSymbol, element) || isUsageOfReifiedType(usedTypeParametersInReceiver, element)) {
+                used = true
+            }
+        }
+    })
+    return used
 }
 
 /**
@@ -288,19 +296,42 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
         else -> false
     }
 
-    if (element is KtClassLiteralExpression) {
-        val typeParameterType = (element.receiverExpression?.mainReference?.resolveToSymbol() as? KaTypeParameterSymbol)?.defaultType
-        if (typeParameterType != null && receiverType?.semanticallyEquals(typeParameterType) == true) {
-            return true
+    when (element) {
+        is KtClassLiteralExpression -> {
+            val typeParameterType = (element.receiverExpression?.mainReference?.resolveToSymbol() as? KaTypeParameterSymbol)?.defaultType
+            if (typeParameterType != null && receiverType?.semanticallyEquals(typeParameterType) == true) {
+                return true
+            }
         }
     }
 
-    if (element is KtThisExpression) {
-        // Check if this refers to our receiver
-        val referencedSymbol = element.instanceReference.mainReference.resolveToSymbol()
-        return referencedSymbol is KaReceiverParameterSymbol && referencedSymbol.owningCallableSymbol == symbol
+    fun processOperators(e: KtElement): Boolean {
+        val operatorFunctions = e.mainReference?.resolveToSymbols()?.filterIsInstance<KaFunctionSymbol>() ?: return false
+        return operatorFunctions.any { receiverType?.symbol == it.containingDeclaration }
     }
 
-    val resolvedCall = element.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return false
-    return isUsageOfSymbolInResolvedCall(resolvedCall)
+    when (element) {
+        is KtThisExpression -> { // Check if this refers to our receiver
+            val referencedSymbol = element.instanceReference.mainReference.resolveToSymbol()
+            return referencedSymbol is KaReceiverParameterSymbol && referencedSymbol.owningCallableSymbol == symbol
+        }
+
+        is KtDestructuringDeclarationEntry -> {
+            return processOperators(element)
+        }
+
+        is KtProperty -> {
+            val propertyDelegate = element.delegate
+            return propertyDelegate != null && processOperators(propertyDelegate)
+        }
+
+        is KtForExpression -> {
+            return processOperators(element)
+        }
+
+        else -> {
+            val resolvedCall = element.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return false
+            return isUsageOfSymbolInResolvedCall(resolvedCall)
+        }
+    }
 }

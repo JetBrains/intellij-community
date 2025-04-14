@@ -80,7 +80,7 @@ class XNextRoundedBorder private constructor(
       val emptyCornersGraphics = { g: Graphics, c: JComponent -> null }
       val emptyCornersColor: (c: JComponent) -> Paint? = { c: JComponent -> null }
       val thickness: Int = JBUI.scale(2)
-      val arcDiameter = 35
+      val arcDiameter = JBUI.scale(35)
       val innerInsets: Insets = JBInsets(5, 15, 5, 5)
 
       return XNextRoundedBorder(fillColor, borderColor, emptyCornersGraphics, emptyCornersColor, arcDiameter, thickness, innerInsets)
@@ -106,8 +106,8 @@ class XNextRoundedBorder private constructor(
 
       val borderShape = RoundRectangle2D.Double(outerInsets.left + x.toDouble() + offset,
                                                 outerInsets.top + y.toDouble()+ offset,
-                                                width.toDouble() - outerInsets.width - (offset *2) ,
-                                                height.toDouble() - outerInsets.height - (offset *2),
+                                                width.toDouble() - outerInsets.width - thickness - offset ,
+                                                height.toDouble() - outerInsets.height - thickness - offset,
                                                 arcDiameter.toDouble(),
                                                 arcDiameter.toDouble())
 

@@ -11,7 +11,6 @@ callables_annotation.py
 callables_kwargs.py
 callables_protocol.py
 callables_subtyping.py
-classes_classvar.py
 classes_override.py
 constructors_call_init.py
 constructors_call_metaclass.py
@@ -25,15 +24,11 @@ dataclasses_slots.py
 dataclasses_transform_field.py
 dataclasses_transform_meta.py
 dataclasses_usage.py
-directives_no_type_check.py
 directives_type_checking.py
 directives_version_platform.py
-exceptions_context_managers.py
 generics_base_class.py
 generics_defaults.py
 generics_defaults_referential.py
-generics_defaults_specialization.py
-generics_paramspec_basic.py
 generics_paramspec_components.py
 generics_paramspec_semantics.py
 generics_self_advanced.py
@@ -42,7 +37,6 @@ generics_self_usage.py
 generics_syntax_declarations.py
 generics_syntax_infer_variance.py
 generics_syntax_scoping.py
-generics_type_erasure.py
 generics_typevartuple_args.py
 generics_typevartuple_basic.py
 generics_typevartuple_overloads.py
@@ -61,7 +55,6 @@ protocols_class_objects.py
 protocols_definition.py
 protocols_explicit.py
 protocols_generic.py
-protocols_merging.py
 protocols_modules.py
 protocols_recursive.py
 protocols_runtime_checkable.py

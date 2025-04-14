@@ -16,6 +16,7 @@ jvm_library(
     "//platform/testFramework",
     "//java/idea-ui:ui",
     "@lib//:org-codehaus-groovy-groovy",
+    "//java/java-syntax:syntax",
   ],
   exports = [
     "//platform/util",

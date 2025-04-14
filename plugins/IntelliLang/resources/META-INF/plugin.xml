@@ -18,7 +18,7 @@
    </description>
 
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
-  <depends optional="true" config-file="intellilang-java-support.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="intellilang-java-support.xml">com.intellij.java</depends>
   <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
 
   <extensionPoints>

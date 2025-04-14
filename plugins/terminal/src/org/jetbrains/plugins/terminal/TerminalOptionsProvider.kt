@@ -1,17 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.ide.util.RunOnceUtil
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
+import com.intellij.util.application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
-import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION")
@@ -20,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
        storages = [Storage(value = "terminal.xml")])
-class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
+class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
   override fun getState(): State = state
@@ -34,6 +38,11 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     }
 
     RunOnceUtil.runOnceForApp("TerminalOptionsProvider.terminalEngine.migration") {
+      // If migration is happened in IDE backend, let's skip it.
+      // Because we should receive the correct terminal engine value from the frontend and use it.
+      // Otherwise, there can be a race when migration is performed both on backend and frontend simultaneously.
+      if (AppMode.isRemoteDevHost()) return@runOnceForApp
+
       // The initial state of the terminal engine value should be composed out of registry values
       // used previously to determine what terminal to use.
       val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
@@ -45,6 +54,13 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
         isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
         isReworkedValue -> TerminalEngine.REWORKED
         else -> TerminalEngine.CLASSIC
+      }
+
+      thisLogger().info("Initialized TerminalOptionsProvider.terminalEngine value from registry to ${state.terminalEngine}")
+
+      // Trigger sending the updated terminal engine value to the backend
+      coroutineScope.launch {
+        saveSettingsForRemoteDevelopment(application)
       }
     }
 
@@ -65,6 +81,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
+    var myCopyOnSelection: Boolean = false
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
@@ -77,9 +94,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
     @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
     var myShellPath: String? = null
-
-    @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
-    var myCopyOnSelection: Boolean = SystemInfo.isLinux
   }
 
   private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
@@ -154,13 +168,15 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       }
     }
 
-  @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
+  /**
+   * Enables emulation of Linux-like system selection clipboard behavior on Windows and macOS.
+   * Makes no sense on Linux, because system selection clipboard is enabled by default there.
+   */
   var copyOnSelection: Boolean
-    get() = TerminalOsSpecificOptions.getInstance().copyOnSelection
+    get() = state.myCopyOnSelection
     set(value) {
-      val options = TerminalOsSpecificOptions.getInstance()
-      if (options.copyOnSelection != value) {
-        options.copyOnSelection = value
+      if (state.myCopyOnSelection != value) {
+        state.myCopyOnSelection = value
         fireSettingsChanged()
       }
     }

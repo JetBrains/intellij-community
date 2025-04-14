@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildDependenciesJps
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.junit.Assert.assertEquals
@@ -8,12 +9,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.isDirectory
+import kotlin.io.path.pathString
+import kotlin.io.path.writeText
 
 @OptIn(ExperimentalPathApi::class)
 class BuildDependenciesJpsTest {
   @Test
-  fun getModuleLibrarySingleRoot() {
+  fun getModuleLibrarySingleRoot() = runBlocking {
     val iml = getTestDataRoot().resolve("jps_library_test_iml.xml")
     val root = BuildDependenciesJps.getModuleLibrarySingleRoot(
       iml,
@@ -26,7 +33,7 @@ class BuildDependenciesJpsTest {
   }
 
   @Test
-  fun getModuleLibrarySingleRoot_snapshot_version() {
+  fun getModuleLibrarySingleRoot_snapshot_version() = runBlocking {
     val snapshotDir = BuildDependenciesJps.getLocalArtifactRepositoryRoot().resolve("org/jetbrains/intellij/deps/debugger-agent/1.0-SNAPSHOT")
     snapshotDir.deleteRecursively()
 
@@ -50,7 +57,7 @@ class BuildDependenciesJpsTest {
   }
 
   @Test
-  fun getModuleLibrarySingleRoot_wrong_checksum() {
+  fun getModuleLibrarySingleRoot_wrong_checksum() = runBlocking {
     val iml = getTestDataRoot().resolve("jps_library_test_iml_wrong_checksum.xml")
     val ex = assertThrows<IllegalStateException> {
       BuildDependenciesJps.getModuleLibrarySingleRoot(
@@ -68,7 +75,7 @@ class BuildDependenciesJpsTest {
   }
 
   @Test
-  fun getModuleLibrarySingleRoot_missing_checksum() {
+  fun getModuleLibrarySingleRoot_missing_checksum() = runBlocking {
     val iml = getTestDataRoot().resolve("jps_library_test_iml_missing_checksum.xml")
     val ex = assertThrows<IllegalStateException> {
       BuildDependenciesJps.getModuleLibrarySingleRoot(
@@ -83,7 +90,7 @@ class BuildDependenciesJpsTest {
   }
 
   @Test
-  fun getModuleLibrarySingleRoot_use_local_file() {
+  fun getModuleLibrarySingleRoot_use_local_file() = runBlocking {
     val localFile = BuildDependenciesJps.getLocalArtifactRepositoryRoot()
       .resolve("org/jetbrains/intellij/deps/debugger-agent/1.0/debugger-agent-1.0.jar")
     localFile.deleteIfExists()

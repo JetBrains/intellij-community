@@ -1063,7 +1063,7 @@
     <depends optional="true">-org-jetbrains-plugins-gradle-</depends>
     <depends optional="true">-com-intellij-diagram-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.editorconfig/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.editorconfig.plugin/META-INF/plugin.xml">
     <id>-org-editorconfig-editorconfigjetbrains-</id>
     <name>EditorConfig</name>
     <depends>com.intellij.modules.lang</depends>

@@ -341,7 +341,9 @@ public final class PluginInstaller {
       }
 
       var installedDependencyIds = ContainerUtil.map2Set(installedPlugins, PluginDescriptor::getPluginId);
-      var notInstalled = findNotInstalledPluginDependencies(pluginDescriptor.getDependencies(), model, installedDependencyIds);
+      var notInstalled = findNotInstalledPluginDependencies(
+        ((IdeaPluginDescriptorEx)pluginDescriptor).getDependencies(), model, installedDependencyIds
+      );
       if (!notInstalled.isEmpty()) {
         var message = IdeBundle.message("dialog.message.plugin.depends.on.unknown.plugin",
                                         pluginDescriptor.getName(),

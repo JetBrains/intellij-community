@@ -17,6 +17,7 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -180,6 +182,7 @@ internal class CommandCompletionListener : LookupManagerListener {
     if (newLookup !is LookupImpl) return
     val completionService = editor.project?.getService(CommandCompletionService::class.java)
     completionService?.addFilters(newLookup, nonWrittenFiles, psiFile, editor)
+    installLookupIntentionPreviewListener(newLookup)
     val highlightingListener = CommandCompletionHighlightingListener(topLevelEditor, newLookup, psiFile, nonWrittenFiles, completionService)
     newLookup.addLookupListener(highlightingListener)
     Disposer.register(newLookup, highlightingListener)
@@ -233,7 +236,8 @@ private class CommandCompletionHighlightingListener(
   }
 
   override fun lookupCanceled(event: LookupEvent) {
-    clear(event.lookup.editor)
+    val editor = runReadAction { event.lookup.editor }
+    clear(editor)
     super.lookupCanceled(event)
   }
 
@@ -386,7 +390,11 @@ internal class CommandCompletionLookupCustomizer : LookupCustomizer {
     val service = project.service<CommandCompletionService>()
     val editor = lookupImpl.editor
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val element: PsiElement? = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, editor.caretModel.offset)
+    val element: PsiElement? =
+      //it is used only in backend in split mode, so it is allowed to be on EDT
+      SlowOperations.knownIssue("IJPL-181979").use {
+        InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, editor.caretModel.offset)
+      }
     val language = element?.language ?: psiFile.language
     val factory = service.getFactory(language)
     if (factory != null) {

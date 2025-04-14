@@ -36,7 +36,7 @@ object PyDataclassNames {
     const val DATACLASSES_REPLACE = "dataclasses.replace"
     const val DATACLASSES_KW_ONLY = "dataclasses.KW_ONLY"
     const val DUNDER_POST_INIT = "__post_init__"
-    val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "kw_only")
+    val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "match_args", "kw_only")
     val HELPER_FUNCTIONS = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
   }
 
@@ -64,6 +64,7 @@ object PyDataclassNames {
       "auto_exc",
       "eq",
       "order",
+      "match_args",
     )
     val FIELD_FUNCTIONS = setOf(
       "attr.ib",
@@ -219,6 +220,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         order = provided.order,
         unsafeHash = provided.unsafeHash,
         frozen = provided.frozen,
+        matchArgs = provided.matchArgs,
         kwOnly = provided.kwOnly,
       ),
       DataclassParameterArgumentMapping(
@@ -228,6 +230,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         orderArgument = provided.orderArgument,
         unsafeHashArgument = provided.unsafeHashArgument,
         frozenArgument = provided.frozenArgument,
+        matchArgsArgument = provided.matchArgsArgument,
         kwOnlyArgument = provided.kwOnlyArgument,
         others = provided.others,
       )
@@ -302,6 +305,7 @@ data class PyDataclassParameters(
   val order: Boolean,
   val unsafeHash: Boolean,
   val frozen: Boolean,
+  val matchArgs: Boolean,
   val kwOnly: Boolean,
   val initArgument: PyExpression?,
   val reprArgument: PyExpression?,
@@ -309,6 +313,7 @@ data class PyDataclassParameters(
   val orderArgument: PyExpression?,
   val unsafeHashArgument: PyExpression?,
   val frozenArgument: PyExpression?,
+  val matchArgsArgument: PyExpression?,
   val kwOnlyArgument: PyExpression?,
   val type: Type,
   val others: Map<String, PyExpression>,
@@ -348,6 +353,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
   private var order: Boolean? = null
   private var unsafeHash: Boolean? = null
   private var frozen: Boolean? = null
+  private var matchArgs: Boolean? = null
   private var kwOnly: Boolean? = null
 
   private var initArgument: PyExpression? = null
@@ -356,6 +362,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
   private var orderArgument: PyExpression? = null
   private var unsafeHashArgument: PyExpression? = null
   private var frozenArgument: PyExpression? = null
+  private var matchArgsArgument: PyExpression? = null
   private var kwOnlyArgument: PyExpression? = null
 
   private val others = mutableMapOf<String, PyExpression>()
@@ -377,6 +384,11 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
       "frozen" -> {
         frozen = PyEvaluator.evaluateAsBooleanNoResolve(value)
         frozenArgument = argument
+        return
+      }
+      "match_args" -> {
+        matchArgs = PyEvaluator.evaluateAsBooleanNoResolve(value)
+        matchArgsArgument = argument
         return
       }
       "kw_only" -> {
@@ -457,6 +469,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
         order = order,
         unsafeHash = unsafeHash,
         frozen = frozen,
+        matchArgs = matchArgs,
         kwOnly = kwOnly,
       ),
       DataclassParameterArgumentMapping(
@@ -466,6 +479,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
         orderArgument = orderArgument,
         unsafeHashArgument = unsafeHashArgument,
         frozenArgument = frozenArgument,
+        matchArgsArgument = matchArgsArgument,
         kwOnlyArgument = kwOnlyArgument,
         others = others,
       )
@@ -479,6 +493,7 @@ private data class DataclassParameterArgumentMapping(
   val orderArgument: PyExpression?,
   val unsafeHashArgument: PyExpression?,
   val frozenArgument: PyExpression?,
+  val matchArgsArgument: PyExpression?,
   val kwOnlyArgument: PyExpression?,
   val others: Map<String, PyExpression>
 )
@@ -505,6 +520,7 @@ private fun resolveDataclassParameters(
         order = stub.orderValue() ?: false,
         unsafeHash = stub.unsafeHashValue() ?: false,
         frozen = stub.frozenValue() ?: false,
+        matchArgs = stub.matchArgsValue() ?: true,
         kwOnly = stub.kwOnly() ?: false,
         initArgument = argumentMapping?.initArgument,
         reprArgument = argumentMapping?.reprArgument,
@@ -512,6 +528,7 @@ private fun resolveDataclassParameters(
         orderArgument = argumentMapping?.orderArgument,
         unsafeHashArgument = argumentMapping?.unsafeHashArgument,
         frozenArgument = argumentMapping?.frozenArgument,
+        matchArgsArgument = argumentMapping?.matchArgsArgument,
         kwOnlyArgument = argumentMapping?.kwOnlyArgument,
         others = argumentMapping?.others ?: emptyMap(),
         type = type,
@@ -533,6 +550,7 @@ private fun resolveDataclassParameters(
         order = stub.orderValue() ?: true,
         unsafeHash = stub.unsafeHashValue() ?: false,
         frozen = stub.frozenValue() ?: (stub.decoratorName()?.toString() in PyDataclassNames.Attrs.ATTRS_FROZEN),
+        matchArgs = stub.matchArgsValue() ?: true,
         kwOnly = stub.kwOnly() ?: false,
         initArgument = argumentMapping?.initArgument,
         reprArgument = argumentMapping?.reprArgument,
@@ -540,6 +558,7 @@ private fun resolveDataclassParameters(
         orderArgument = argumentMapping?.orderArgument,
         unsafeHashArgument = argumentMapping?.unsafeHashArgument,
         frozenArgument = argumentMapping?.frozenArgument,
+        matchArgsArgument = argumentMapping?.matchArgsArgument,
         kwOnlyArgument = argumentMapping?.kwOnlyArgument,
         others = (argumentMapping?.others ?: emptyMap()) + extraArguments,
         type = type,
@@ -577,6 +596,7 @@ private fun resolveDataclassParameters(
             order = stub.orderValue() ?: dataclassTransformStub.orderDefault,
             unsafeHash = stub.unsafeHashValue() ?: true,
             frozen = stub.frozenValue() ?: dataclassTransformStub.frozenDefault,
+            matchArgs = stub.matchArgsValue() ?: true,
             kwOnly = stub.kwOnly() ?: dataclassTransformStub.kwOnlyDefault,
             initArgument = argumentMapping?.initArgument,
             reprArgument = argumentMapping?.reprArgument,
@@ -584,6 +604,7 @@ private fun resolveDataclassParameters(
             orderArgument = argumentMapping?.orderArgument,
             unsafeHashArgument = argumentMapping?.unsafeHashArgument,
             frozenArgument = argumentMapping?.frozenArgument,
+            matchArgsArgument = argumentMapping?.matchArgsArgument,
             kwOnlyArgument = argumentMapping?.kwOnlyArgument,
             others = argumentMapping?.others ?: emptyMap(),
             type = type,
@@ -603,11 +624,13 @@ private fun resolveDataclassParameters(
         unsafeHash = stub.unsafeHashValue() ?: false,
         frozen = stub.frozenValue() ?: false,
         kwOnly = stub.kwOnly() ?: false,
+        matchArgs = stub.matchArgsValue() ?: true,
         initArgument = argumentMapping?.initArgument,
         reprArgument = argumentMapping?.reprArgument,
         eqArgument = argumentMapping?.eqArgument,
         orderArgument = argumentMapping?.orderArgument,
         unsafeHashArgument = argumentMapping?.unsafeHashArgument,
+        matchArgsArgument = argumentMapping?.matchArgsArgument,
         frozenArgument = argumentMapping?.frozenArgument,
         kwOnlyArgument = argumentMapping?.kwOnlyArgument,
         others = argumentMapping?.others ?: emptyMap(),

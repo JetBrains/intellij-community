@@ -62,8 +62,9 @@ public class XVariablesView extends XVariablesViewBase {
   protected void beforeTreeBuild(@NotNull SessionEvent event) {
   }
 
+  @ApiStatus.Internal
   @Override
-  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
     if (ApplicationManager.getApplication().isDispatchThread()) { // mark nodes obsolete asap
       getTree().markNodesObsolete();
     }

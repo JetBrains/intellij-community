@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SSBasedInspection", "ReplaceGetOrSet")
 
 package org.jetbrains.jps.dependency.impl
@@ -10,9 +11,9 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.PersistentSet
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.emptySet
-import org.jetbrains.bazel.jvm.hashSet
+import org.jetbrains.bazel.jvm.util.emptyList
+import org.jetbrains.bazel.jvm.util.emptySet
+import org.jetbrains.bazel.jvm.util.hashSet
 import org.jetbrains.jps.dependency.AffectionScopeMetaUsage
 import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.DeltaEx

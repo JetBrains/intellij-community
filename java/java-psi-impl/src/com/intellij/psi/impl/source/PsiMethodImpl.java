@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -28,14 +28,12 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -163,8 +161,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return Objects.requireNonNull(
-      ObjectUtils.tryCast(getStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST), PsiTypeParameterList.class));
+    return getStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST, PsiTypeParameterList.class);
   }
 
   @Override
@@ -198,7 +195,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    return (PsiModifierList)Objects.requireNonNull(getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST));
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override
@@ -208,7 +205,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public @NotNull PsiParameterList getParameterList() {
-    PsiParameterList list = ObjectUtils.tryCast(getStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST), PsiParameterList.class);
+    PsiParameterList list = getStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST, PsiParameterList.class);
     if (list == null) {
       return CachedValuesManager.getCachedValue(this, () -> {
         LightParameterListBuilder lightList = new LightParameterListBuilder(getManager(), getLanguage()) {
@@ -234,7 +231,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public @NotNull PsiReferenceList getThrowsList() {
-    PsiReferenceList child = ObjectUtils.tryCast(getStubOrPsiChild(JavaStubElementTypes.THROWS_LIST), PsiReferenceList.class);
+    PsiReferenceList child = getStubOrPsiChild(JavaStubElementTypes.THROWS_LIST, PsiReferenceList.class);
     if (child != null) return child;
 
     PsiMethodStub stub = getStub();

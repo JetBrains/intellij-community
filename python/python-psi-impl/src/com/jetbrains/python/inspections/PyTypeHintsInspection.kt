@@ -267,6 +267,8 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(annotationValue, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
       }
 
+      checkRawConcatenateUsage(annotationValue)
+
       fun PyAnnotation.findSelvesInAnnotation(context: TypeEvalContext): List<PyReferenceExpression> =
         PsiTreeUtil.findChildrenOfAnyType(this.value, false, PyReferenceExpression::class.java).filter { refExpr ->
           PyTypingTypeProvider.resolveToQualifiedNames(refExpr, context).any {
@@ -1006,7 +1008,16 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkGenericClassParameterization(node: PySubscriptionExpression, declaration: PyClass) {
-      val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(declaration, myTypeEvalContext) ?: return
+      val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(declaration, myTypeEvalContext)
+      if (genericDefinitionType == null) {
+        if (PyTypingTypeProvider.isGeneric(declaration, myTypeEvalContext) &&
+            declaration.findMethodByName(PyNames.CLASS_GETITEM, false, myTypeEvalContext) == null) {
+          registerProblem(node.indexExpression,
+                          PyPsiBundle.message("INSP.type.hints.type.arguments.class.is.already.parameterized",
+                                              declaration.name))
+        }
+        return
+      }
       val typeArguments = checkGenericTypeArguments(node)
 
       if (typeArguments == null || genericDefinitionType.pyClass.qualifiedName == PyNames.TUPLE) return
@@ -1184,6 +1195,15 @@ class PyTypeHintsInspection : PyInspection() {
       val parametersType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
       return parametersType is PyParamSpecType || parametersType is PyConcatenateType
     } 
+
+    private fun checkRawConcatenateUsage(expression: PyExpression) {
+      if (expression is PySubscriptionExpression &&
+          Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext)) is PyConcatenateType) {
+          registerProblem(expression,
+                          PyPsiBundle.message("INSP.type.hints.concatenate.can.only.be.used.inside.callable"),
+                          ProblemHighlightType.WARNING)
+        }
+    }
 
     private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {
       val parameters = if (index is PyTupleExpression) index.elements else arrayOf(index)
@@ -1522,17 +1542,18 @@ class PyTypeHintsInspection : PyInspection() {
       if (resolvedElement == null) return true // We cannot be sure, let it better be false-negative
       return when (resolvedElement) {
         is PyTargetExpression -> {
-          if (PyTypingTypeProvider.OPAQUE_NAMES.contains(resolvedElement.qualifiedName)) return true
+          val qName = resolvedElement.qualifiedName ?: return true
+          if (PyTypingTypeProvider.OPAQUE_NAMES.contains(qName)) return true
           val assignedTypeAliasValue = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)
           if (assignedTypeAliasValue != null) {
             return isValidTypeHint(assignedTypeAliasValue, context)
           }
           else {
             val type = Ref.deref(PyTypingTypeProvider.getType(referenceExpression, context))
-            return type is PyTypingNewType || type is PyTypedDictType
+            return type is PyClassLikeType
           }
         }
-        is PyTypeParameter, is PyClass -> true
+        is PyTypeParameter, is PyClass, is PyTypeAliasStatement -> true
         is PyFunction -> resolvedElement.qualifiedName?.let {
           it.endsWith("ParamSpec.args") || it.endsWith("ParamSpec.kwargs")
         } == true

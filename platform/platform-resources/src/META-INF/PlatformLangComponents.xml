@@ -14,8 +14,6 @@
       testServiceImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
       headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
     />
-    <uiDataRule implementation="com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$DataRule"/>
-
     <projectService
       serviceInterface="com.intellij.problems.WolfTheProblemSolver"
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"

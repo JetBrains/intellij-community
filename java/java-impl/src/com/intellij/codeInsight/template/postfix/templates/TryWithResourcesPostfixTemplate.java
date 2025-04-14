@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -66,7 +67,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
     DumbService dumbService = DumbService.getInstance(project);
     if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
         PsiUtil.isAvailable(JavaFeature.LVTI, expression)) {
-      template.addVariable("type", new TextExpression(PsiKeyword.VAR), false);
+      template.addVariable("type", new TextExpression(JavaKeywords.VAR), false);
     } else {
       PsiType type = dumbService.computeWithAlternativeResolveEnabled(expression::getType);
       template.addVariable("type", new TypeExpression(project, new PsiType[]{type}), false);

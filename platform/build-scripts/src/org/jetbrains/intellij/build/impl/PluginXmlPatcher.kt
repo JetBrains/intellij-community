@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.text.SemVer
 import io.opentelemetry.api.trace.Span
 import org.jdom.CDATA
 import org.jdom.Element
@@ -97,7 +98,7 @@ private suspend fun getPluginVersion(plugin: PluginLayout, descriptorContent: St
   val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
   check(
     !plugin.semanticVersioning ||
-    SemanticVersioningScheme.matches(pluginVersion.pluginVersion) ||
+    SemVer.parseFromText(pluginVersion.pluginVersion) != null ||
     DEV_BUILD_SCHEME.matches(pluginVersion.pluginVersion)
   ) {
     "$plugin version '${pluginVersion.pluginVersion}' is expected to match either '$DEV_BUILD_SCHEME' or the Semantic Versioning, see https://semver.org"

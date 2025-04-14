@@ -8,35 +8,33 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.concurrency.asPromise
 
 @ApiStatus.Internal
-class FrontendXValue(
+class FrontendXValue private constructor(
   val project: Project,
-  evaluatorCoroutineScope: CoroutineScope,
+  private val cs: CoroutineScope,
   val xValueDto: XValueDto,
-  val parentXValue: FrontendXValue?,
+  hasParentValue: Boolean,
+  private val presentation: StateFlow<XValueSerializedPresentation>,
 ) : XValue() {
-  // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
-  //   So, XValues will live more than popups where they appeared
-  //   But it is needed for Mark object functionality at least.
-  //   Since we cannot dispose XValue when evaluation popup is closed
-  //   because it getting closed when Mark Object dialog is shown,
-  //   so we cannot refer to the backend's xValue
-  private val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
 
   @Volatile
   private var modifier: XValueModifier? = null
@@ -47,6 +45,18 @@ class FrontendXValue(
   private var canNavigateToTypeSource = false
 
   var descriptor: XValueDescriptor? = null
+
+  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
+    XValueApi.getInstance().computeChildren(xValueDto.id)
+  }
+
+  private val fullValueEvaluator = xValueDto.fullValueEvaluator.toFlow().map { evaluatorDto ->
+    if (evaluatorDto == null) {
+      return@map null
+    }
+    // TODO: should we strict the coroutine scope?
+    FrontendXFullValueEvaluator(cs, xValueDto.id, evaluatorDto)
+  }.stateIn(cs, SharingStarted.Eagerly, null)
 
   init {
     cs.launch {
@@ -63,7 +73,7 @@ class FrontendXValue(
     }
 
     // request to dispose root XValue, children will be disposed automatically
-    if (parentXValue == null) {
+    if (!hasParentValue) {
       cs.launch {
         try {
           awaitCancellation()
@@ -98,67 +108,43 @@ class FrontendXValue(
   }
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
+    node.setPresentation(presentation.value)
+    val initialFullValueEvaluator = fullValueEvaluator.value
+    if (initialFullValueEvaluator != null) {
+      node.setFullValueEvaluator(initialFullValueEvaluator)
+    }
     node.childCoroutineScope(parentScope = cs, "FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      XValueApi.getInstance().computePresentation(xValueDto.id, place)?.collect { presentationEvent ->
-        when (presentationEvent) {
-          is XValuePresentationEvent.SetSimplePresentation -> {
-            node.setPresentation(presentationEvent.icon?.icon(), presentationEvent.presentationType, presentationEvent.value, presentationEvent.hasChildren)
+      launch {
+        fullValueEvaluator.collectLatest { evaluator ->
+          if (evaluator != null) {
+            node.setFullValueEvaluator(evaluator)
           }
-          is XValuePresentationEvent.SetAdvancedPresentation -> {
-            node.setPresentation(presentationEvent.icon?.icon(), FrontendXValuePresentation(presentationEvent), presentationEvent.hasChildren)
+          else if (node is XValueNodeEx) {
+            node.clearFullValueEvaluator()
           }
-          is XValuePresentationEvent.SetFullValueEvaluator -> {
-            node.setFullValueEvaluator(FrontendXFullValueEvaluator(cs, xValueDto.id, presentationEvent.fullValueEvaluatorDto))
-          }
-          XValuePresentationEvent.ClearFullValueEvaluator -> {
-            if (node is XValueNodeEx) {
-              node.clearFullValueEvaluator()
-            }
-          }
+        }
+      }
+      launch {
+        presentation.collectLatest {
+          node.setPresentation(it)
         }
       }
     }
   }
 
-  override fun computeChildren(node: XCompositeNode) {
-    node.childCoroutineScope(parentScope = cs, "FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
-      XValueApi.getInstance().computeChildren(xValueDto.id)?.collect { computeChildrenEvent ->
-        when (computeChildrenEvent) {
-          is XValueComputeChildrenEvent.AddChildren -> {
-            val childrenList = XValueChildrenList()
-            for (i in computeChildrenEvent.children.indices) {
-              childrenList.add(computeChildrenEvent.names[i], FrontendXValue(project, cs, computeChildrenEvent.children[i], parentXValue = this@FrontendXValue))
-            }
-            node.addChildren(childrenList, computeChildrenEvent.isLast)
-          }
-          is XValueComputeChildrenEvent.SetAlreadySorted -> {
-            node.setAlreadySorted(computeChildrenEvent.value)
-          }
-          is XValueComputeChildrenEvent.SetErrorMessage -> {
-            node.setErrorMessage(computeChildrenEvent.message, computeChildrenEvent.link)
-          }
-          is XValueComputeChildrenEvent.SetMessage -> {
-            // TODO[IJPL-160146]: support SimpleTextAttributes serialization -- don't pass SimpleTextAttributes.REGULAR_ATTRIBUTES
-            node.setMessage(
-              computeChildrenEvent.message,
-              computeChildrenEvent.icon?.icon(),
-              computeChildrenEvent.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES,
-              computeChildrenEvent.link
-            )
-          }
-          is XValueComputeChildrenEvent.TooManyChildren -> {
-            val addNextChildren = computeChildrenEvent.addNextChildren
-            if (addNextChildren != null) {
-              node.tooManyChildren(computeChildrenEvent.remaining, Runnable { addNextChildren.trySend(Unit) })
-            }
-            else {
-              @Suppress("DEPRECATION")
-              node.tooManyChildren(computeChildrenEvent.remaining)
-            }
-          }
-        }
+  private fun XValueNode.setPresentation(presentation: XValueSerializedPresentation) {
+    when (presentation) {
+      is XValueSerializedPresentation.SimplePresentation -> {
+        setPresentation(presentation.icon?.icon(), presentation.presentationType, presentation.value, presentation.hasChildren)
+      }
+      is XValueSerializedPresentation.AdvancedPresentation -> {
+        setPresentation(presentation.icon?.icon(), FrontendXValuePresentation(presentation), presentation.hasChildren)
       }
     }
+  }
+
+  override fun computeChildren(node: XCompositeNode) {
+    xValueContainer.computeChildren(node)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -166,7 +152,14 @@ class FrontendXValue(
     return modifier
   }
 
-  private class FrontendXValuePresentation(private val advancedPresentation: XValuePresentationEvent.SetAdvancedPresentation) : XValuePresentation() {
+  override fun calculateEvaluationExpression(): Promise<XExpression?> {
+    val deferred = cs.async {
+      XValueApi.getInstance().computeExpression(xValueDto.id)?.xExpression()
+    }
+    return deferred.asCompletableFuture().asPromise()
+  }
+
+  private class FrontendXValuePresentation(private val advancedPresentation: XValueSerializedPresentation.AdvancedPresentation) : XValuePresentation() {
     override fun renderValue(renderer: XValueTextRenderer) {
       for (part in advancedPresentation.parts) {
         when (part) {
@@ -222,6 +215,21 @@ class FrontendXValue(
 
     override fun isAsync(): Boolean {
       return advancedPresentation.isAsync
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    suspend fun create(project: Project, evaluatorCoroutineScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): FrontendXValue {
+      // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
+      //   So, XValues will live more than popups where they appeared
+      //   But it is needed for Mark object functionality at least.
+      //   Since we cannot dispose XValue when evaluation popup is closed
+      //   because it getting closed when Mark Object dialog is shown,
+      //   so we cannot refer to the backend's xValue
+      val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
+      val presentation = xValueDto.presentation.toFlow().stateIn(cs)
+      return FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
     }
   }
 }

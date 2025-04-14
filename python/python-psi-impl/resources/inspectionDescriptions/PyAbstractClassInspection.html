@@ -1,7 +1,6 @@
 <html>
 <body>
-<p>Reports cases when not all abstract properties or methods are defined in
-  a subclass.</p>
+<p>Reports invalid definition and usages of abstract classes.</p>
 <p><b>Example:</b></p>
 <pre><code>
 from abc import abstractmethod, ABC
@@ -14,9 +13,12 @@ class Figure(ABC):
         pass
 
 
-class Triangle(Figure):
+class Triangle(Figure):  # Not all abstract methods are defined in 'Triangle' class
     def do_triangle(self):
         pass
+
+
+Triangle()  # Cannot instantiate abstract class 'Triangle'
 </code></pre>
 <p>When the quick-fix is applied, the IDE implements an abstract method for the <code>Triangle</code> class:</p>
 <pre><code>
@@ -36,6 +38,20 @@ class Triangle(Figure):
 
     def do_triangle(self):
         pass
+
+
+Triangle()
+</code></pre>
+
+It also warns you if <code>abc.abstractmethod</code> is used in a class whose metaclass is not <code>abc.ABCMeta</code>:
+<code><pre>
+from abc import abstractmethod
+
+
+class MyClass:
+    @abstractmethod  # 'MyClass' is not abstract
+    def foo(self):
+        ...
 </code></pre>
 </body>
 </html>

@@ -10,6 +10,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
+@ApiStatus.Internal
+public abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
   protected static final int BASE_INDEX_VERSION = 10;
 

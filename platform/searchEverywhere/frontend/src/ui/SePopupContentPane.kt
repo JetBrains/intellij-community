@@ -8,16 +8,17 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
-import com.intellij.platform.searchEverywhere.SeTextItemPresentation
-import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionItemPresentationRenderer
-import com.intellij.platform.searchEverywhere.frontend.providers.files.SeTargetItemPresentationRenderer
-import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeSortedResultAddedEvent
-import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeSortedResultReplacedEvent
+import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
+import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
 import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -31,22 +32,26 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.Point
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.*
+import javax.swing.text.Document
 
 @Internal
 class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
+  val searchFieldDocument: Document get() = textField.document
 
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
   private val textField: SeTextField = SeTextField()
 
-  private val resultListModel = JBList.createDefaultListModel<SeResultListRow>()
+  private val resultListModel = SeResultListModel()
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
 
@@ -54,12 +59,13 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     layout = GridLayout()
 
     val actionListCellRenderer = SeActionItemPresentationRenderer(resultList).get { textField.text ?: "" }
-    val fileListCellRenderer = SeTargetItemPresentationRenderer().get()
+    val targetListCellRenderer = SeTargetItemPresentationRenderer().get()
+    val textSearchItemListCellRenderer = SeTextSearchItemPresentationRenderer().get()
     val defaultRenderer = listCellRenderer<SeResultListRow> {
       when (val value = value) {
         is SeResultListItemRow -> {
           when (val presentation = value.item.presentation) {
-            is SeTextItemPresentation -> text(presentation.text)
+            is SeSimpleItemPresentation -> text(presentation.text)
             else ->  throw IllegalStateException("Item is not handled: $presentation")
           }
         }
@@ -72,7 +78,10 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
         actionListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       }
       else if (value is SeResultListItemRow && value.item.presentation is SeTargetItemPresentation) {
-        fileListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        targetListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      }
+      else if (value is SeResultListItemRow && value.item.presentation is SeTextSearchItemPresentation) {
+        textSearchItemListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       }
       else {
         defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
@@ -91,9 +100,16 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     vm.coroutineScope.launch {
       vm.searchResults.collectLatest { listEventFlow ->
         withContext(Dispatchers.EDT) {
-          resultListModel.removeAllElements()
+          resultListModel.reset()
           if (vm.searchPattern.value.isNotEmpty()) {
             resultListModel.addElement(SeResultListMoreRow)
+          }
+        }
+
+        launch {
+          delay(SeResultListModel.DEFAULT_FREEZING_DELAY_MS)
+          withContext(Dispatchers.EDT) {
+            resultListModel.ignoreFreezing = false
           }
         }
 
@@ -101,21 +117,12 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
           withContext(Dispatchers.EDT) {
             when (listEvent) {
               is SeResultListUpdateEvent -> {
-                when (val sortedEvent = listEvent.event) {
-                  is SeSortedResultAddedEvent -> {
-                    resultListModel.add(sortedEvent.index, SeResultListItemRow(sortedEvent.itemData))
-                  }
-                  is SeSortedResultReplacedEvent -> {
-                    resultListModel.removeElement(sortedEvent.indexToRemove)
-                    resultListModel.add(sortedEvent.index, SeResultListItemRow(sortedEvent.itemData))
-                  }
-                }
+                resultListModel.freeze(indexToFreezeFromListOffset())
+                resultListModel.addFromEvent(listEvent.event)
               }
 
               SeResultListStopEvent -> {
-                if (!resultListModel.isEmpty && resultListModel.lastElement() is SeResultListMoreRow) {
-                  resultListModel.removeElementAt(resultListModel.size() - 1)
-                }
+                resultListModel.removeLoadingItem()
               }
             }
           }
@@ -126,7 +133,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     vm.coroutineScope.launch {
       vm.currentTabFlow.collectLatest {
         withContext(Dispatchers.EDT) {
-          headerPane.setFilterComponent(it.filterEditor?.component)
+          headerPane.setFilterPresentation(it.filterEditor?.getPresentation())
         }
       }
     }
@@ -136,12 +143,18 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
 
       if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
+        resultListModel.freezeAll()
         vm.shouldLoadMore = true
       } else if (yetToScrollHeight > resultsScrollPane.height / 2) {
         vm.shouldLoadMore = false
       }
     }
+
+    WindowMoveListener(this).installTo(headerPane)
   }
+
+  private fun indexToFreezeFromListOffset(): Int =
+    resultList.locationToIndex(Point(0, resultList.visibleRect.y)) + SeResultListModel.DEFAULT_FROZEN_COUNT
 
   private fun createListPane(resultList: JBList<*>): JScrollPane {
     val resultsScroll: JScrollPane = object : JBScrollPane(resultList) {
@@ -306,7 +319,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
 
     textField.addFocusListener(object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
-        onFocusLost()
+        onFocusLost(e)
       }
     })
   }
@@ -357,7 +370,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     // TODO: Implement description footer
   }
 
-  private fun onFocusLost() {
+  private fun onFocusLost(e: FocusEvent) {
     if (isWaylandToolkit()) {
       // In Wayland focus is always lost when the window is being moved.
       return
@@ -366,7 +379,10 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       return
     }
 
-    closePopup()
+    val oppositeComponent = e.oppositeComponent
+    if (!UIUtil.haveCommonOwner(this, oppositeComponent)) {
+      closePopup()
+    }
   }
 
   private fun closePopup() {

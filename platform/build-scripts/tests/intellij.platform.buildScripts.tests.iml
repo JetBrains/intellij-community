@@ -28,5 +28,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="netty-buffer" level="project" />
+    <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
+    <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
   </component>
 </module>

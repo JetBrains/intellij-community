@@ -42,7 +42,13 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:mvstore",
     "@lib//:netty-jps-provided",
+    "@lib//:maven-resolver-provider",
+    "@lib//:http-client",
     "@lib//:kotlin-metadata",
+  ],
+  exports = [
+    "@lib//:maven-resolver-provider",
+    "@lib//:http-client",
   ],
   runtime_deps = [
     ":build_resources",

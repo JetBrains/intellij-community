@@ -3,11 +3,24 @@ package com.intellij.python.community.execService.impl
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.execute
+import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.*
-import com.intellij.python.community.execService.*
+import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.community.execService.EelProcessInteractiveHandler
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError.ExecException
@@ -92,7 +105,10 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
       val eel = python.getEelDescriptor().upgrade()
       val localHelper = PythonHelpersLocator.findPathInHelpers(helper)
                         ?: error("No ${helper} found: installation broken?")
-      val remoteHelper = EelPathUtils.transferLocalContentToRemoteTempIfNeeded(eel, localHelper).toString()
+      val remoteHelper = EelPathUtils.transferLocalContentToRemote(
+        source = localHelper,
+        target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
+      ).asEelPath().toString()
       Triple(eel, python.pathString, listOf(remoteHelper) + args)
     }
     is WhatToExec.Command -> Triple(eel, command, args)
@@ -110,11 +126,10 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
 @CheckReturnValue
 private suspend fun EelExecutableProcess.run(): Result<EelProcess, ExecException> {
   val workDirectoryEelPath = workingDirectory?.let { EelPath.parse(it.toString(), eel.descriptor) }
-  val executionResult = eel.exec.execute(exe) {
-    args(args)
-    env(env)
-    workingDirectory(workDirectoryEelPath)
-  }
+  val executionResult = eel.exec.execute(exe)
+    .args(args)
+    .env(env)
+    .workingDirectory(workDirectoryEelPath).eelIt()
 
   val process = executionResult.getOr { err ->
     return failAsCantStart(err.error)

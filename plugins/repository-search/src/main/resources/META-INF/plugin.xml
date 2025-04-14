@@ -1,16 +1,13 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <id>org.jetbrains.idea.reposearch</id>
-  <!--suppress PluginXmlValidity -->
-  <name>JetBrains Repository Search</name>
+  <name>Artifacts Repository Search</name>
   <vendor>JetBrains</vendor>
-  <description>
-    <![CDATA[
-    Technical plugin, provides API for artifacts search
-    ]]>
-  </description>
+  <category>Build Tools</category>
+  <description><![CDATA[
+    Provides API for artifact search such as Maven/Gradle dependencies.
+  ]]></description>
 
   <dependencies>
-    <plugin id="org.jetbrains.idea.maven.model"/>
     <module name="intellij.libraries.ktor.client"/>
   </dependencies>
 
@@ -18,12 +15,13 @@
     <extensionPoint name="provider"
                     interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="maven.packagesearch.enabled" defaultValue="true"
                  description="Enable package search dependency via https://package-search.services.jetbrains.com"/>
 
-    <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
-                 description="package search service config url" restartRequired="true"/>
+    <registryKey key="packagesearch.config.url.override" defaultValue="false"
+                 description="Package search service config URL override to maven index labs" restartRequired="true"/>
 
     <registryKey id="org.jetbrains.idea.reposearch.log.debug"
                  key="org.jetbrains.idea.reposearch.log.debug"
@@ -32,7 +30,6 @@
                  restartRequired="false"/>
 
     <statistics.validation.customValidationRule implementation="org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule"/>
-
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">

@@ -8,8 +8,10 @@
   ]]></description>
 
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
-    <module name="intellij.json.split"/>
+    <!-- this dependency is used in 'intellij.yaml.backend' only, so it can be removed from the plugin when we can mark the latter as
+         'required in backend mode' (IJPL-177060) and the Marketplace will treat dependencies of such modules as required for the IDE
+         running in the monolith mode -->
+    <module name="intellij.json"/>
   </dependencies>
   <content>
     <module name="intellij.yaml.backend"/><!-- should be marked as 'required in backend mode' when IJPL-177060 is fixed -->

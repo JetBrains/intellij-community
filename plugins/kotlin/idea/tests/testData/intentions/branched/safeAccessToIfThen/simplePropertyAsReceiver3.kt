@@ -1,6 +1,7 @@
 // AFTER-WARNING: Parameter 'args' is never used
 // AFTER-WARNING: Unnecessary safe call on a non-null receiver of type B?
 // AFTER-WARNING: Variable 'x' is never used
+// K2_AFTER_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'C?'.
 class B {
     val c = C()
 }

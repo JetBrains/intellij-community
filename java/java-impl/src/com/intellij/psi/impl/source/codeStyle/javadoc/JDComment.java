@@ -18,6 +18,8 @@ import java.util.List;
 public class JDComment {
   protected final CommentFormatter myFormatter;
 
+  private int myPrefixEmptyLineCount = 0;
+  private int mySuffixEmptyLineCount = 0;
   private String myDescription;
   private List<String> myUnknownList;
   private List<String> mySeeAlsoList;
@@ -118,6 +120,8 @@ public class JDComment {
       sb.append(tagDescription);
     }
 
+    String emptyLine = prefix + '\n';
+
     if (sb.length() > prefix.length()) {
       // if it ends with a blank line delete that
       int nlen = sb.length() - prefix.length() - 1;
@@ -125,9 +129,10 @@ public class JDComment {
         sb.delete(nlen, sb.length());
       }
     }
-    else if (sb.isEmpty() && !StringUtil.isEmpty(myEndLine)) {
-      sb.append(prefix).append('\n');
+    else if (sb.isEmpty() && !StringUtil.isEmpty(myEndLine) && !hasEmptyTrimmedLines()) {
+      sb.append(emptyLine);
     }
+
 
     if (!myMarkdown && (myMultiLineComment &&
         myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
@@ -135,15 +140,55 @@ public class JDComment {
         || sb.indexOf("\n") != sb.length() - 1)) // If comment has become multiline after formatting - it must be shown as multiline.
                                                 // Last symbol is always '\n', so we need to check if there is one more LF symbol before it.
     {
+      addPrefixEmptyLinesIfNeeded(sb, emptyLine, indent);
       sb.insert(0, myFirstLine + '\n');
       sb.append(indent);
     } else {
       sb.replace(0, prefix.length(), myFirstLine + " ");
       sb.deleteCharAt(sb.length()-1);
+      addPrefixEmptyLinesIfNeeded(sb, emptyLine, indent);
     }
+
+    addSuffixEmptyLinesIfNeeded(sb, emptyLine);
+
     sb.append(' ').append(myEndLine);
 
     return sb.toString();
+  }
+
+  private void addPrefixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String emptyLine, @NotNull String indent) {
+    StringBuilder emptyLinePrefixBuilder = new StringBuilder();
+    addEmptyLinesIfNeeded(emptyLinePrefixBuilder, emptyLine, myPrefixEmptyLineCount);
+    if (myMarkdown && shouldAddExtraLines(myPrefixEmptyLineCount)) {
+      emptyLinePrefixBuilder.append(indent);
+      emptyLinePrefixBuilder.delete(0, indent.length());
+    }
+    sb.insert(0, emptyLinePrefixBuilder);
+  }
+
+  private void addSuffixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String prefix) {
+    addEmptyLinesIfNeeded(sb, prefix, mySuffixEmptyLineCount);
+    if (myMarkdown && shouldAddExtraLines(mySuffixEmptyLineCount)) {
+      while (!sb.isEmpty() && Character.isWhitespace(sb.charAt(sb.length() - 1))) {
+        sb.deleteCharAt(sb.length() - 1);
+      }
+    }
+  }
+
+  private void addEmptyLinesIfNeeded(StringBuilder sb, String emptyLine, int lineCount) {
+    if (shouldAddExtraLines(lineCount)) {
+      int lastSymbolIndex = sb.length() - 1;
+      if (!sb.isEmpty() && sb.charAt(lastSymbolIndex) != '\n') sb.append('\n');
+      sb.append(String.valueOf(emptyLine).repeat(lineCount));
+    }
+  }
+
+  private boolean shouldAddExtraLines(int lineCount) {
+    return lineCount > 0 && myFormatter.getSettings().shouldKeepEmptyTrailingLines();
+  }
+
+  private boolean hasEmptyTrimmedLines() {
+    return myPrefixEmptyLineCount != 0 || mySuffixEmptyLineCount != 0;
   }
 
   protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
@@ -170,6 +215,14 @@ public class JDComment {
   public void addSince(@NotNull String since) {
     if (mySinceList == null) mySinceList = new ArrayList<>();
     mySinceList.add(since);
+  }
+
+  public void setPrefixEmptyLineCount(int prefixEmptyLineCount) {
+    this.myPrefixEmptyLineCount = prefixEmptyLineCount;
+  }
+
+  public void setSuffixEmptyLineCount(int suffixEmptyLineCount) {
+    this.mySuffixEmptyLineCount = suffixEmptyLineCount;
   }
 
   public boolean getIsMarkdown() {

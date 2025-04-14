@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.commons.io.FileUtils
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
@@ -44,7 +43,9 @@ object KotlinCompilerDependencyDownloader {
     println(" * Downloading $kotlinJpsPluginUrl")
     val tmpLocation = Files.createTempFile(cacheLocation.parent, cacheLocation.name, ".tmp")
     retryWithExponentialBackOff {
-      FileUtils.copyURLToFile(kotlinJpsPluginUrl.toURL(), tmpLocation.toFile())
+      kotlinJpsPluginUrl.toURL().openStream().use {
+        Files.copy(it, tmpLocation, StandardCopyOption.REPLACE_EXISTING)
+      }
     }
     Files.move(tmpLocation, cacheLocation, StandardCopyOption.ATOMIC_MOVE)
     return@withContext cacheLocation

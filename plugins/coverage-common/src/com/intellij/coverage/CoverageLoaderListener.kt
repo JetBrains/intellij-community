@@ -3,19 +3,21 @@ package com.intellij.coverage
 
 import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-interface CoverageLoadListener {
+@ApiStatus.Internal
+interface CoverageLoadingListener {
 
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    val COVERAGE_TOPIC: Topic<CoverageLoadListener> = Topic(CoverageLoadListener::class.java, Topic.BroadcastDirection.NONE)
+    val COVERAGE_TOPIC: Topic<CoverageLoadingListener> = Topic(CoverageLoadingListener::class.java, Topic.BroadcastDirection.NONE)
   }
 
   fun coverageLoadingStarted(coverageFile: File)
 
-  fun reportCoverageLoaded(result: LoadCoverageResult, coverageFile: File)
+  fun reportCoverageLoaded(result: CoverageLoadingResult, coverageFile: File)
 
   fun reportCoverageLoadException(reason: String, coverageFile: File, e: Exception? = null)
 }
@@ -27,6 +29,7 @@ interface CoverageLoadErrorReporter {
   fun reportWarning(e: Exception)
 }
 
+@ApiStatus.Internal
 class DummyCoverageLoadErrorReporter: CoverageLoadErrorReporter {
   override fun reportError(reason: String) {}
   override fun reportError(e: Exception) {}
@@ -34,8 +37,8 @@ class DummyCoverageLoadErrorReporter: CoverageLoadErrorReporter {
   override fun reportWarning(e: Exception) {}
 }
 
-class CoverageLoadErrorReporterImplementation(
-  private val coverageLoaderListener: CoverageLoadListener,
+internal class CoverageLoadErrorReporterImplementation(
+  private val coverageLoaderListener: CoverageLoadingListener,
   private val reportFile: File
 ): CoverageLoadErrorReporter {
   override fun reportError(reason: String): Unit = coverageLoaderListener.reportCoverageLoadException(reason, reportFile)
@@ -44,15 +47,15 @@ class CoverageLoadErrorReporterImplementation(
   override fun reportWarning(e: Exception): Unit = coverageLoaderListener.reportCoverageLoadException(e.toReason(), reportFile, e)
 }
 
-sealed class LoadCoverageResult(val projectData: ProjectData?)
+sealed class CoverageLoadingResult(val projectData: ProjectData?)
 
-class SuccessLoadCoverageResult(projectData: ProjectData) : LoadCoverageResult(projectData)
+class SuccessCoverageLoadingResult(projectData: ProjectData) : CoverageLoadingResult(projectData)
 
-class FailedLoadCoverageResult(
+class FailedCoverageLoadingResult(
   val reason: String,
   val exception: Exception?,
   projectData: ProjectData?
-): LoadCoverageResult(projectData) {
+): CoverageLoadingResult(projectData) {
   constructor(reason: String, exception: Exception?): this(reason, exception, null)
   constructor(reason: String): this(reason, null, null)
 

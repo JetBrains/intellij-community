@@ -69,6 +69,8 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/todo",
     "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-psi:psi",
+    "//platform/backend/observation",
     ":junit4_provided",
   ],
   exports = [
@@ -150,6 +152,9 @@ jvm_library(
     "//platform/todo",
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-api:syntax_test_lib",
+    "//platform/syntax/syntax-psi:psi",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
   ],
   runtime_deps = [
     ":testFramework_resources",

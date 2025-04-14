@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.diff.chains.DiffRequestProducer
@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lvcs.impl.diff.createDiffData
 import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
 import kotlinx.coroutines.channels.awaitClose
@@ -68,13 +69,17 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
                                      affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>) {
     var lastEventLabel: ChangeSet? = null
     val userLabels = mutableListOf<ChangeSet>()
+    val showSystemLabels = Registry.`is`("lvcs.show.system.labels.in.activity.view")
+
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, scopeFilter, affectedPaths::add) { changeSet ->
-      if (changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
+      if (!showSystemLabels && changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
       if (changeSet.isLabelOnly) {
         if (changeSet.activityId == CommonActivity.UserLabel) {
           userLabels.add(changeSet)
+          if (showSystemLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = null
         } else {
+          if (showSystemLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = changeSet
         }
       }
@@ -93,8 +98,10 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: HistoryPathFilter?): ActivityData {
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
+    val showSystemLabels = Registry.`is`("lvcs.show.system.labels.in.activity.view")
+
     for (changeSet in facade.changes) {
-      if (changeSet.isSystemLabelOnly) continue
+      if (!showSystemLabels && changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
         if (fileFilter != null || !changeSet.changes.any { it.affectsProject(projectId) }) continue
       }
@@ -154,7 +161,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     val icon = provider?.getIcon(activityId.kind)
     return when (item) {
       is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon)
-      is LabelActivityItem -> ActivityPresentation(item.name ?: "", icon)
+      is LabelActivityItem -> ActivityPresentation(item.name ?: "", icon, item.color)
       else -> null
     }
   }

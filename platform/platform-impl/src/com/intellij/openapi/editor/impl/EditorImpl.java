@@ -1400,19 +1400,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (ProgressManager.getInstance().hasModalProgressIndicator()) {
       return false;
     }
-    FileDocumentManager manager = FileDocumentManager.getInstance();
-    VirtualFile file = manager.getFile(myDocument);
-    if (file != null && !file.isValid()) {
-      return false;
+    // - The frontend cannot synchronously check file validity;
+    // - typing on the backend is not performed.
+    if (EditorFlags.isMonolith()) {
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      VirtualFile file = manager.getFile(myDocument);
+      if (file != null && !file.isValid()) {
+        return false;
+      }
     }
 
     DataContext context = getDataContext();
 
     Graphics graphics = GraphicsUtil.safelyGetGraphics(myEditorComponent);
-    if (graphics != null) { // editor component is not showing
+    if (graphics != null) {
       PaintUtil.alignTxToInt((Graphics2D)graphics, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
       processKeyTypedImmediately(c, graphics, context);
       graphics.dispose();
+    }
+    else {
+      // the editor component is not showing
     }
 
     ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, context);
@@ -1429,7 +1436,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     TypedAction.getInstance().beforeActionPerformed(this, c, dataContext, plan);
     if (myImmediatePainter.paint(graphics, plan)) {
       measureTypingLatency();
-      myLastTypedActionTimestamp = -1;
     }
   }
 
@@ -3356,51 +3362,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           stop();
           return;
         }
-        DocumentRunnable command = new DocumentRunnable(myDocument, myProject) {
-          @Override
-          public void run() {
-            int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-            VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition
-                                                                      : getCaretModel().getVisualPosition();
-            int column = caretPosition.column;
-            xPassedCycles++;
-            if (xPassedCycles >= myXCycles) {
-              xPassedCycles = 0;
-              column += myDx;
-            }
+        Runnable command = () -> {
+          int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+          VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition
+                                                                    : getCaretModel().getVisualPosition();
+          int column = caretPosition.column;
+          xPassedCycles++;
+          if (xPassedCycles >= myXCycles) {
+            xPassedCycles = 0;
+            column += myDx;
+          }
 
-            int line = caretPosition.line;
-            yPassedCycles++;
-            if (yPassedCycles >= myYCycles) {
-              yPassedCycles = 0;
-              line += myDy;
-            }
+          int line = caretPosition.line;
+          yPassedCycles++;
+          if (yPassedCycles >= myYCycles) {
+            yPassedCycles = 0;
+            line += myDy;
+          }
 
-            line = Math.max(0, line);
-            column = Math.max(0, column);
-            VisualPosition pos = new VisualPosition(line, column);
-            if (!myMultiSelectionInProgress) {
-              getCaretModel().moveToVisualPosition(pos);
-              getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            }
+          line = Math.max(0, line);
+          column = Math.max(0, column);
+          VisualPosition pos = new VisualPosition(line, column);
+          if (!myMultiSelectionInProgress) {
+            getCaretModel().moveToVisualPosition(pos);
+            getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
 
-            int newCaretOffset = getCaretModel().getOffset();
-            int caretShift = newCaretOffset - mySavedSelectionStart;
+          int newCaretOffset = getCaretModel().getOffset();
+          int caretShift = newCaretOffset - mySavedSelectionStart;
 
-            if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-              setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
-              return;
-            }
+          if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+            setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
+            return;
+          }
 
-            if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
-              myTargetMultiSelectionPosition = pos;
-              LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
-              getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
-              createSelectionTill(newLogicalPosition);
-            }
-            else {
-              mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
-            }
+          if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
+            myTargetMultiSelectionPosition = pos;
+            LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
+            getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
+            createSelectionTill(newLogicalPosition);
+          }
+          else {
+            mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
           }
         };
         WriteIntentReadAction.run((Runnable)() ->
@@ -3830,17 +3833,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public boolean processKeyTyped(@NotNull KeyEvent e) {
     myLastTypedActionTimestamp = -1;
-    if (e.getID() != KeyEvent.KEY_TYPED) return false;
-    char c = e.getKeyChar();
-    if (UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
-      myLastTypedActionTimestamp = e.getWhen();
-      myLastTypedAction = Character.toString(c);
-      processKeyTyped(c);
-      return true;
-    }
-    else {
+    if (e.getID() != KeyEvent.KEY_TYPED) {
       return false;
     }
+    if (!UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
+      return false;
+    }
+    char c = e.getKeyChar();
+    myLastTypedActionTimestamp = e.getWhen();
+    myLastTypedAction = Character.toString(c);
+    processKeyTyped(c);
+    return true;
   }
 
   public void recordLatencyAwareAction(@NotNull String actionId, long timestampMs) {
@@ -3852,15 +3855,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myLastTypedActionTimestamp == -1) {
       return;
     }
+    long latencyMs = System.currentTimeMillis() - myLastTypedActionTimestamp;
+    myLastTypedActionTimestamp = -1;
 
     LatencyListener latencyPublisher = myLatencyPublisher;
     if (latencyPublisher == null) {
       latencyPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(LatencyListener.TOPIC);
       myLatencyPublisher = latencyPublisher;
     }
-
-    latencyPublisher.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
-    myLastTypedActionTimestamp = -1;
+    latencyPublisher.recordTypingLatency(this, myLastTypedAction, latencyMs);
   }
 
   public boolean isProcessingTypedAction() {

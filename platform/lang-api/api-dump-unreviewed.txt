@@ -781,9 +781,9 @@ com.intellij.codeInsight.folding.CollapseBlockHandler
 - a:invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 com.intellij.codeInsight.generation.ClassMember
 - com.intellij.codeInsight.generation.MemberChooserObject
-- com.intellij.modcommand.MemberChooserElement
+- com.intellij.codeInspection.options.OptMultiSelector$OptElement
 - sf:EMPTY_ARRAY:com.intellij.codeInsight.generation.ClassMember[]
-- s:from(com.intellij.modcommand.MemberChooserElement):com.intellij.codeInsight.generation.ClassMember
+- s:from(com.intellij.codeInspection.options.OptMultiSelector$OptElement):com.intellij.codeInsight.generation.ClassMember
 - a:getParentNodeDelegate():com.intellij.codeInsight.generation.MemberChooserObject
 com.intellij.codeInsight.generation.MemberChooserObject
 - a:equals(java.lang.Object):Z

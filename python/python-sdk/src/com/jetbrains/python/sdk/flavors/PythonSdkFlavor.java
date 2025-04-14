@@ -97,6 +97,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * On local targets some flavours could be detected. It returns path to python interpreters for such cases.
    */
+  @RequiresBackgroundThread
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     return ContainerUtil.map(suggestHomePaths(module, context), Path::of);
   }
@@ -362,14 +363,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
 
   public static @Nullable String getVersionStringFromOutput(@NotNull String output) {
     return PatternUtil.getFirstMatch(Arrays.asList(StringUtil.splitByLines(output)), VERSION_RE);
-  }
-
-  /**
-   * @deprecated use {@link #PYTHON_VERSION_ARG}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull String getVersionOption() {
-    return PYTHON_VERSION_ARG;
   }
 
   public @NotNull Collection<String> getExtraDebugOptions() {

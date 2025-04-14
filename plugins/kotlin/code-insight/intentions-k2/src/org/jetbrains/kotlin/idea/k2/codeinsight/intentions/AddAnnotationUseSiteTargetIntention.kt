@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddAnnotationUs
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
 internal class AddAnnotationUseSiteTargetIntention :
-    AddAnnotationUseSiteTargetModCommandAction(), ContextProvider<KtAnnotationEntry, List<AnnotationUseSiteTarget>> {
+    AddAnnotationUseSiteTargetModCommandAction(),
+    ContextProvider<KtAnnotationEntry, List<AnnotationUseSiteTarget>> {
 
     override fun KaSession.prepareContext(element: KtAnnotationEntry): List<AnnotationUseSiteTarget>? =
         element.getApplicableUseSiteTargets()

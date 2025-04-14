@@ -107,19 +107,14 @@ internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePat
     return TreePathUtil.convertCollectionToTreePath(listOf(root, action))
   }
 
-  val topRepository = value as? GitBranchesTreeModel.TopLevelRepository
-  if (topRepository != null) {
-    return TreePathUtil.convertCollectionToTreePath(listOf(root, topRepository))
-  }
-
-  val repository = value as? GitRepository
-  if (repository != null) {
-    return TreePathUtil.convertCollectionToTreePath(listOf(root, repository))
+  val repositoryNode = value as? GitBranchesTreeModel.RepositoryNode
+  if (repositoryNode != null) {
+    return TreePathUtil.convertCollectionToTreePath(listOf(root, repositoryNode))
   }
 
   val typeUnderRepository = value as? GitBranchesTreeModel.RefTypeUnderRepository
   if (typeUnderRepository != null) {
-    return TreePathUtil.convertCollectionToTreePath(listOf(root, typeUnderRepository.repository, typeUnderRepository))
+    return TreePathUtil.convertCollectionToTreePath(listOf(root, GitBranchesTreeModel.RepositoryNode(typeUnderRepository.repository, isLeaf = false), typeUnderRepository))
   }
 
   val refUnderRepository = value as? GitBranchesTreeModel.RefUnderRepository
@@ -129,7 +124,7 @@ internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePat
   val path = mutableListOf<Any>().apply {
     add(root)
     if (refUnderRepository != null) {
-      add(refUnderRepository.repository)
+      add(GitBranchesTreeModel.RepositoryNode(refUnderRepository.repository, isLeaf = false))
       add(GitBranchesTreeModel.RefTypeUnderRepository(refUnderRepository.repository, refType))
     }
     else {
@@ -251,10 +246,16 @@ internal fun addSeparatorIfNeeded(nodes: Collection<Any>, separator: SeparatorWi
   return result
 }
 
-internal open class LazyRepositoryHolder(project: Project,
-                                         repositories: List<GitRepository>, matcher: MinusculeMatcher?) :
-  LazyHolder<GitRepository>(repositories, matcher, nodeNameSupplier = DvcsUtil::getShortRepositoryName,
-                            needFilter = { GitBranchesTreePopupFilterByRepository.isSelected(project) })
+internal open class LazyRepositoryHolder(
+  project: Project,
+  repositories: List<GitRepository>,
+  matcher: MinusculeMatcher?,
+  canHaveChildren: Boolean,
+) : LazyHolder<GitBranchesTreeModel.RepositoryNode>(
+  repositories.map { GitBranchesTreeModel.RepositoryNode(it, canHaveChildren) },
+  matcher,
+  nodeNameSupplier = { DvcsUtil.getShortRepositoryName(it.repository) },
+  needFilter = { GitBranchesTreePopupFilterByRepository.isSelected(project) })
 
 internal class LazyActionsHolder(project: Project, actions: List<Any>, matcher: MinusculeMatcher?) :
   LazyHolder<Any>(actions, matcher,
@@ -301,7 +302,7 @@ internal class LazyRefsSubtreeHolder<out T: GitReference>(repositories: List<Git
   fun isEmpty() = initiallyEmpty || matchingResult.matchedNodes.isEmpty()
 
   private val matchingResult: MatchResult<T> by lazy {
-    match(matcher, sortedValues, GitReference::getName, exceptRefFilter)
+    match(matcher, sortedValues, GitReference::name, exceptRefFilter)
   }
 
   val tree: Map<String, Any> by lazy {

@@ -106,7 +106,8 @@ data class Config private constructor(
     val logLocationAndItemText: Boolean,
     val trainTestSplit: Int,
     val registry: String,
-  )
+    val iterationCount: Int?
+    )
 
   /**
    * Represents the configuration for reordering elements step.
@@ -149,6 +150,7 @@ data class Config private constructor(
     var logLocationAndItemText = false
     var trainTestSplit: Int = 70
     var registry: String = ""
+    var iterationCount: Int? = null
     var evaluationTitle: String = "BASIC"
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
@@ -180,6 +182,7 @@ data class Config private constructor(
       filesLimit = config.interpret.filesLimit
       sessionProbability = config.interpret.sessionProbability
       sessionSeed = config.interpret.sessionSeed
+      iterationCount = config.interpret.iterationCount
       useReordering = config.reorder.useReordering
       reorderingTitle = config.reorder.title
       featuresForReordering.addAll(config.reorder.features)
@@ -225,6 +228,7 @@ data class Config private constructor(
         logLocationAndItemText,
         trainTestSplit,
         registry,
+        iterationCount
       ),
       ReorderElements(
         useReordering,

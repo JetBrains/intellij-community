@@ -295,7 +295,7 @@ public final class VariableAccessUtils {
    * @param variable  the variable to find references for
    * @return a list of references, empty list if no references were found.
    */
-  public static List<PsiReferenceExpression> getVariableReferencesNoCache(@NotNull PsiVariable variable) {
+  public static @Unmodifiable List<PsiReferenceExpression> getVariableReferencesNoCache(@NotNull PsiVariable variable) {
     PsiElement scope = variable instanceof PsiField ? variable.getContainingFile() : PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return List.of();
     return getVariableReferencesNoCache(variable, scope);
@@ -317,7 +317,7 @@ public final class VariableAccessUtils {
     return getVariableReferencesNoCache(variable, context);
   }
 
-  private static @NotNull List<PsiReferenceExpression> getVariableReferencesNoCache(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+  private static @NotNull @Unmodifiable List<PsiReferenceExpression> getVariableReferencesNoCache(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     List<PsiReferenceExpression> result = new ArrayList<>();
     PsiTreeUtil.processElements(context, e -> {
       if (e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).isReferenceTo(variable)) {
@@ -558,7 +558,7 @@ public final class VariableAccessUtils {
    * @return list of variables declared inside given element that could conflict with other declarations on statement level.
    * I.e. all local and pattern declarations declared inside, except declarations from the local/anonymous classes.
    */
-  public static List<PsiVariable> findDeclaredVariables(@NotNull PsiStatement statement) {
+  public static @Unmodifiable List<PsiVariable> findDeclaredVariables(@NotNull PsiStatement statement) {
     List<PsiVariable> variables = new ArrayList<>();
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
 
@@ -675,6 +675,7 @@ public final class VariableAccessUtils {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
       PsiTypeCastExpression insertedCast = (PsiTypeCastExpression)refCopy.replace(
         factory.createExpressionFromText("(a)"+reference.getReferenceName(), refCopy));
+      if (PsiTypes.nullType().equals(targetType)) return false;
       Objects.requireNonNull(insertedCast.getCastType()).replace(factory.createTypeElement(targetType));
       return callCopy.resolveMethod() == method;
     }

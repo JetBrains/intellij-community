@@ -8,7 +8,7 @@
     ]]></description>
   <category>Test Tools</category>
   <vendor>JetBrains</vendor>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
 
   <depends optional="true" config-file="testng-intellilang.xml">org.intellij.intelliLang</depends>
   <resource-bundle>messages.TestngBundle</resource-bundle>

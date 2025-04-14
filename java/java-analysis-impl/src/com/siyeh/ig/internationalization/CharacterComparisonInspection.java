@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiKeyword;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -64,7 +64,7 @@ public final class CharacterComparisonInspection extends BaseInspection {
     }
 
     private static boolean isCharacter(@Nullable PsiExpression expression) {
-      return ExpressionUtils.hasType(expression, PsiKeyword.CHAR) ||
+      return ExpressionUtils.hasType(expression, JavaKeywords.CHAR) ||
              ExpressionUtils.hasType(expression, CommonClassNames.JAVA_LANG_CHARACTER);
     }
   }

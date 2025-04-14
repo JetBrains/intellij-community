@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.multiverse.isEventSystemEnabled
@@ -133,7 +133,7 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
       // Store new provider to retain it from GC
       task.cachedViewProviders = viewProviders
 
-      // todo ijpl-339 check if this is correct
+      // todo IJPL-339 check if this is correct
       for (viewProvider in viewProviders) {
         for (file in viewProvider.getAllFiles()) {
           val oldFileNode = file.getNode()

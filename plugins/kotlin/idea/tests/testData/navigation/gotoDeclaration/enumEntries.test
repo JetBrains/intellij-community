@@ -1,0 +1,14 @@
+// FILE: before.java
+public class JaEnumChildUse {
+    public void useSynthFun(KtJaEnumChild child) {
+        System.out.println(KtJaEnumChild.getEn<caret>tries());
+    }
+}
+
+// FILE: KtJaEnumChild.kt
+enum class KtJaEnumChild {
+    ENUM_CHILD_A, ENUM_CHILD_B
+}
+
+// FILE: after.kt
+enum class <caret>KtJaEnumChild {

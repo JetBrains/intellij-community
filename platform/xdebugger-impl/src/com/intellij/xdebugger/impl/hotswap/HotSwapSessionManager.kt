@@ -108,7 +108,12 @@ enum class HotSwapVisibleStatus {
 private val logger = logger<HotSwapSession<*>>()
 
 @ApiStatus.Internal
-class HotSwapSession<T> internal constructor(val project: Project, val provider: HotSwapProvider<T>, parentScope: CoroutineScope) : Disposable {
+class HotSwapSession<T> internal constructor(
+  val project: Project,
+  private val provider: HotSwapProvider<T>,
+  parentScope: CoroutineScope,
+) : Disposable {
+
   private val coroutineScope = parentScope.childScope("HotSwapSession $this")
   private lateinit var changesCollector: SourceFileChangesCollector<T>
 
@@ -141,6 +146,8 @@ class HotSwapSession<T> internal constructor(val project: Project, val provider:
     coroutineScope.cancel()
     HotSwapSessionManager.getInstance(project).onSessionDispose(this)
   }
+
+  fun performHotSwap(): Unit = provider.performHotSwap(this)
 
   /**
    * Get elements modified since the last hot swap.

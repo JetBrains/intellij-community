@@ -36,6 +36,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -499,7 +500,7 @@ public class IdeaGateway {
     }
   }
 
-  private void registerDocumentContents(@NotNull LocalHistoryFacade vcs, @NotNull VirtualFile f, Document d) {
+  private void registerDocumentContents(@NotNull LocalHistoryFacade vcs, @NotNull VirtualFile f, @NotNull Document d) {
     Pair<StoredContent, Long> contentAndStamp = acquireAndUpdateActualContent(f, d);
     if (contentAndStamp != null) {
       vcs.contentChanged(getPathOrUrl(f), contentAndStamp.first, contentAndStamp.second);
@@ -507,17 +508,11 @@ public class IdeaGateway {
   }
 
   // returns null is content has not been changes since last time
-  public @Nullable Pair<StoredContent, Long> acquireAndUpdateActualContent(@NotNull VirtualFile f, @Nullable Document d) {
+  public @Nullable Pair<StoredContent, Long> acquireAndUpdateActualContent(@NotNull VirtualFile f, @NotNull Document d) {
     ContentAndTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
     if (contentAndStamp == null) {
-      if (d != null) saveDocumentContent(f, d);
+      saveDocumentContent(f, d);
       return Pair.create(StoredContent.acquireContent(f), f.getTimeStamp());
-    }
-
-    // if no need to save current document content when simply return and clear stored one
-    if (d == null) {
-      f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY, null);
-      return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
     }
 
     // if the stored content equals the current one, do not store it and return null
@@ -525,6 +520,18 @@ public class IdeaGateway {
 
     // is current content has been changed, store it and return the previous one
     saveDocumentContent(f, d);
+    return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
+  }
+
+  // returns null is content has not been changes since last time
+  @ApiStatus.Internal
+  public @Nullable Pair<StoredContent, Long> acquireActualContentAndForgetSavedContent(@NotNull VirtualFile f, @Nullable Document d) {
+    ContentAndTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+    if (contentAndStamp == null) {
+      return Pair.create(StoredContent.acquireContent(f), f.getTimeStamp());
+    }
+    f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY, null);
+    if (d != null && d.getModificationStamp() == contentAndStamp.documentModificationStamp) return null;
     return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
   }
 

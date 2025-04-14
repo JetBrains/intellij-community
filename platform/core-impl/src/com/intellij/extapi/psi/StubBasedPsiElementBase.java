@@ -374,7 +374,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * @return a child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @see #getRequiredStubOrPsiChild(IElementType, Class)
+   * @see #getStubOrPsiChild(IElementType, Class)
+   *
+   * @return a child of the specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
   @ApiStatus.Experimental
   public final @Nullable PsiElement getStubOrPsiChild(@NotNull IElementType elementType) {
@@ -395,38 +398,45 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * @return a child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
-   * @deprecated use {@link #getStubOrPsiChild(IElementType)} instead
+   * @return a not-null child of the specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  @Deprecated
-  public @Nullable <Psi extends PsiElement> Psi getStubOrPsiChild(@NotNull IStubElementType<? extends StubElement, Psi> elementType) {
-    //noinspection unchecked
-    return (Psi)getStubOrPsiChild((IElementType)elementType);
+  @ApiStatus.Experimental
+  public final @NotNull PsiElement getRequiredStubOrPsiChild(@NotNull IElementType elementType) {
+    PsiElement child = getStubOrPsiChild(elementType);
+    if (child == null) {
+      throw new IllegalStateException("Cannot find child of " + elementType + " in " + this);
+    }
+    return child;
   }
 
   /**
-   * @return a not-null child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @return a not-null child of the specified type and class, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  public @NotNull <S extends StubElement<?>, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
-    Psi result = getStubOrPsiChild(elementType);
-    if (result == null) {
-      throw new AssertionError("Missing required child of type " + elementType + "; tree: " + DebugUtil.psiToString(this, true));
-    }
-    return result;
+  @ApiStatus.Experimental
+  public final <Psi extends PsiElement> @Nullable Psi getStubOrPsiChild(@NotNull IElementType elementType, @NotNull Class<Psi> psiClass) {
+    PsiElement child = getStubOrPsiChild(elementType);
+    return psiClass.cast(child);
+  }
+
+  @ApiStatus.Experimental
+  public final <Psi extends PsiElement> @NotNull Psi getRequiredStubOrPsiChild(@NotNull IElementType elementType,
+                                                                               @NotNull Class<Psi> psiClass) {
+    PsiElement child = getRequiredStubOrPsiChild(elementType);
+    return psiClass.cast(child);
   }
 
   /**
    * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  public <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, Psi @NotNull [] array) {
+  public final <Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IElementType elementType, @NotNull ArrayFactory<? extends Psi> f) {
     T stub = getGreenStub();
     if (stub != null) {
       //noinspection unchecked
-      return (Psi[])stub.getChildrenByType(elementType, array);
+      return (Psi[])stub.getChildrenByType(elementType, f);
     }
     else {
       final ASTNode[] nodes = SharedImplUtil.getChildrenOfType(getNode(), elementType);
-      Psi[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
+      Psi[] psiElements = f.create(nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         //noinspection unchecked
         psiElements[i] = (Psi)nodes[i].getPsi();
@@ -436,27 +446,17 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   /**
-   * @deprecated use {@link #getStubOrPsiChildren(IElementType, ArrayFactory)} instead
-   *
    * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  @Deprecated
-  public <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, @NotNull ArrayFactory<? extends Psi> f) {
-    return getStubOrPsiChildren((IElementType)elementType, f);
-  }
-
-  /**
-   * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
-   */
-  public <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IElementType elementType, @NotNull ArrayFactory<? extends Psi> f) {
+  public final <Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IElementType elementType, Psi @NotNull [] array) {
     T stub = getGreenStub();
     if (stub != null) {
       //noinspection unchecked
-      return (Psi[])stub.getChildrenByType(elementType, f);
+      return (Psi[])stub.getChildrenByType(elementType, array);
     }
     else {
       final ASTNode[] nodes = SharedImplUtil.getChildrenOfType(getNode(), elementType);
-      Psi[] psiElements = f.create(nodes.length);
+      Psi[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
       for (int i = 0; i < nodes.length; i++) {
         //noinspection unchecked
         psiElements[i] = (Psi)nodes[i].getPsi();
@@ -522,5 +522,43 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     final StubBasedPsiElementBase<?> copy = (StubBasedPsiElementBase<?>)super.clone();
     copy.setSubstrateRef(SubstrateRef.createAstStrongRef(getNode()));
     return copy;
+  }
+
+  /**
+   * @return a child of the specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @deprecated use {@link #getStubOrPsiChild(IElementType)} instead
+   */
+  @Deprecated
+  public @Nullable <Psi extends PsiElement> Psi getStubOrPsiChild(@NotNull IStubElementType<? extends StubElement, Psi> elementType) {
+    //noinspection unchecked
+    return (Psi)getStubOrPsiChild((IElementType)elementType);
+  }
+
+  /**
+   * @return a not-null child of the specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @deprecated Use {@link #getRequiredStubOrPsiChild(IElementType)} or {@link #getRequiredStubOrPsiChild(IElementType, Class)}
+   */
+  @Deprecated
+  public final @NotNull <S extends StubElement<?>, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
+    return (Psi)getRequiredStubOrPsiChild((IElementType)elementType);
+  }
+
+  /**
+   * @deprecated use {@link #getStubOrPsiChildren(IElementType, ArrayFactory)} instead
+   *
+   * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   */
+  @Deprecated
+  public final <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, @NotNull ArrayFactory<? extends Psi> f) {
+    return getStubOrPsiChildren((IElementType)elementType, f);
+  }
+
+  /**
+   * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @deprecated use {@link #getStubOrPsiChildren(IElementType, PsiElement[])}
+   */
+  @Deprecated
+  public final <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, Psi @NotNull [] array) {
+    return getStubOrPsiChildren((IElementType)elementType, array);
   }
 }

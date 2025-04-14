@@ -95,9 +95,9 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
-    appendPath(cp, BitUtil.class); // intellij.platform.util.kmp
+    appendPath(cp, BitUtil.class); // intellij.platform.util.multiplatform
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
-    appendPath(cp, CharArrayCharSequence.class); // intellij.platform.util.base.kmp
+    appendPath(cp, CharArrayCharSequence.class); // intellij.platform.util.base.multiplatform
     appendPath(cp, Strings.class);  // intellij.platform.util.base
     appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
     appendPath(cp, FileUtilRt.class);  // intellij.platform.util.rt

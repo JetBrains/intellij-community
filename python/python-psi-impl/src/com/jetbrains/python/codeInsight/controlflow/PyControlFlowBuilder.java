@@ -38,7 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
@@ -352,7 +353,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     PyPattern pattern = clause.getPattern();
     if (pattern != null) {
       pattern.accept(this);
-      addTypeAssertionNodes(pattern, true);
     }
 
     TransparentInstruction trueNode = addTransparentInstruction();
@@ -361,11 +361,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (guard != null) {
       visitCondition(guard, trueNode, falseNode);
       addTypeAssertionNodes(guard, true);
+      myBuilder.addPendingEdge(clause, falseNode);
     }
     else {
       myBuilder.addEdge(myBuilder.prevInstruction, trueNode);
     }
-    myBuilder.addPendingEdge(clause, falseNode);
     myBuilder.prevInstruction = trueNode;
 
     clause.getStatementList().accept(this);
@@ -395,6 +395,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     if (isRefutable) {
       myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+      addTypeAssertionNodes(node, true);
     }
   }
 
@@ -427,6 +428,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.getClassNameReference().accept(this);
     myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
 
+    addTypeAssertionNodes(node, true);
     node.getArgumentList().acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
 
@@ -440,13 +442,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.getValue().accept(this);
     myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
 
+    addTypeAssertionNodes(node, true);
     myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
   }
 
   @Override
   public void visitPyAsPattern(@NotNull PyAsPattern node) {
-    // AsPattern cannot fail by itself - it fails only if its child fails.
-    // So no need to create additional fail edge
+    // AsPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge
     myBuilder.startNode(node);
     node.acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
@@ -454,9 +457,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyGroupPattern(@NotNull PyGroupPattern node) {
-    // GroupPattern cannot fail by itself - it fails only if its child fails.
-    // So no need to create additional fail edge
-    // Also no need to dedicated node for GroupPattern itself
+    // GroupPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge 
+    // Also no need for a dedicated node for GroupPattern itself
     node.acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
   }
@@ -769,7 +772,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.flowAbrupted();
       finallyFailInstruction = myBuilder.startNode(finallyPart);
       finallyPart.accept(this);
-      myBuilder.addNode(new PyFinallyFailExitInstruction(myBuilder, finallyFailInstruction));
+      myBuilder.addNodeAndCheckPending(new PyFinallyFailExitInstruction(myBuilder, finallyFailInstruction));
       myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
       myBuilder.flowAbrupted();
     }
@@ -1040,7 +1043,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     expression.accept(this);
     myTrueFalseNodes = prevTrueFalseNodes;
 
-    if (!isLogicalExpression(Objects.requireNonNull(PyPsiUtils.flattenParens(expression)))) {
+    final PyExpression condition = PyPsiUtils.flattenParens(expression);
+    if (condition != null && !isLogicalExpression(condition)) {
       addConditionalNode(expression, false, falseNode);
       addConditionalNode(expression, true, trueNode);
     }
@@ -1087,7 +1091,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator(positive);
     condition.accept(evaluator);
     for (PyTypeAssertionEvaluator.Assertion def : evaluator.getDefinitions()) {
-      final PyReferenceExpression e = def.getElement();
+      final PyQualifiedExpression e = def.getElement();
       final QualifiedName qname = e.asQualifiedName();
       final String name = qname != null ? qname.toString() : e.getName();
       myBuilder.addNode(ReadWriteInstruction.assertType(myBuilder, e, name, def.getTypeEvalFunction()));

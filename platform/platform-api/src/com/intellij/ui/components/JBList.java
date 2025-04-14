@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
@@ -12,8 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +32,7 @@ import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Function;
 
 /**
  * @author Anton Makeev
@@ -123,7 +122,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     if (width > 0 && height > 0) {
       ListUI ui = getUI();
       // do not paint a line background if the layout orientation is not vertical
-      if (ui instanceof WideSelectionListUI && getLayoutOrientation() == JList.VERTICAL) {
+      if (ui instanceof WideSelectionListUI && getLayoutOrientation() == VERTICAL) {
         x = 0;
         width = getWidth();
       }
@@ -185,8 +184,16 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public void setOffsetFromElementTopForDnD(@NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD) {
     this.offsetFromElementTopForDnD = offsetFromElementTopForDnD;
+  }
+
+  /** @deprecated use {@link #setOffsetFromElementTopForDnD(Function)} instead */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UsagesOfObsoleteApi"})
+  public void setOffsetFromElementTopForDnD(@NotNull com.intellij.util.Function<? super Integer, Integer> offsetFromElementTopForDnD) {
+    setOffsetFromElementTopForDnD((Function<? super Integer, Integer>)offsetFromElementTopForDnD);
   }
 
   @Override
@@ -204,7 +211,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
     else {
       rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
-      dropLineY = rc.y + offsetFromElementTopForDnD.fun(myDropTargetIndex);
+      dropLineY = rc.y + offsetFromElementTopForDnD.apply(myDropTargetIndex);
     }
     Graphics2D g2d = (Graphics2D) g;
     g2d.setColor(PlatformColors.BLUE);
@@ -219,8 +226,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     Dimension s = getEmptyText().getPreferredSize();
     JBInsets.addTo(s, getInsets());
     Dimension size = super.getPreferredSize();
-    return new Dimension(Math.max(s.width, size.width),
-                         Math.max(s.height, size.height));
+    return new Dimension(Math.max(s.width, size.width), Math.max(s.height, size.height));
   }
 
   protected final Dimension super_getPreferredSize() {
@@ -352,11 +358,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   @Override
   public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
     int increment = super.getScrollableBlockIncrement(visibleRect, orientation, direction);
-    // in case of scrolling list up using a single wheel rotation, the block increment is used to calculate min scroll as
-    // currScroll - blockIncrement
-    // the resulting y-position of visible rect never exceed min scroll
-
-    // see javax.swing.plaf.basic.BasicScrollPaneUI.Handler.mouseWheelMoved -> vertical handling part -> limitScroll
+    // in the case of scrolling list up using a single-wheel rotation,
+    // the block increment is used to calculate min scroll as `currScroll - blockIncrement`
+    // the resulting y-position of visible rect never exceeds min scroll
+    // see `javax.swing.plaf.basic.BasicScrollPaneUI.Handler.mouseWheelMoved` -> vertical handling part -> limitScroll
     return adjustIncrement(visibleRect, orientation, direction, increment);
   }
 
@@ -368,12 +373,21 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     return increment;
   }
 
-  public void installCellRenderer(final @NotNull NotNullFunction<? super E, ? extends JComponent> fun) {
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public void installCellRenderer(@NotNull Function<? super E, ? extends @NotNull JComponent> fun) {
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
+  }
+
+  /** @deprecated use {@link #installCellRenderer(Function)} instead */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UnnecessaryFullyQualifiedName", "UsagesOfObsoleteApi"})
+  public void installCellRenderer(@NotNull com.intellij.util.NotNullFunction<? super E, ? extends JComponent> fun) {
+    installCellRenderer((Function<? super E, ? extends @NotNull JComponent>)fun);
   }
 
   /** @deprecated Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} instead */
   @Deprecated(forRemoval = true)
+  @SuppressWarnings("UsagesOfObsoleteApi")
   public void setDataProvider(@NotNull DataProvider provider) {
     DataManager.registerDataProvider(this, provider);
   }

@@ -19,17 +19,6 @@ suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesF
   val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context)
   val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context)
 
-  val bundledAndPublished = pluginsToPublish.filter { pluginToPublish ->
-    descriptorMapWithBundled.values.any { descriptor ->
-      descriptor.pluginLayout.mainModule == pluginToPublish.mainModule
-    }
-  }
-  check(bundledAndPublished.isEmpty()) {
-    "Plugins cannot be bundled and published for the same IDE: $bundledAndPublished\n" +
-    "Each IDE compatible with those plugins and having them unbundled should publish them on its own together with that IDE releases.\n" +
-    "Please make sure that productProperties.productLayout.pluginModulesToPublish is correctly specified."
-  }
-
   // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
   // Let's check that and substitute an incorrectly chosen one with a more suitable one or report an error.
   val moreThanOneLayoutMap = context.productProperties.productLayout.pluginLayouts.groupBy { it.mainModule }.filterValues { it.size > 1 }

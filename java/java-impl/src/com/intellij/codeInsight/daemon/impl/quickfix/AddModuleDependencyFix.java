@@ -3,18 +3,15 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
@@ -36,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.openapi.roots.DependencyScope.TEST;
 
@@ -47,22 +45,21 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private final Set<? extends Module> myModules;
   private final DependencyScope myScope;
   private final boolean myExported;
-  private final List<SmartPsiElementPointer<PsiClass>> myClasses;
 
+  <T extends PsiMember>
   AddModuleDependencyFix(@NotNull PsiReference reference,
                          @NotNull Module currentModule,
                          @NotNull DependencyScope scope,
-                         @NotNull List<? extends PsiClass> classes) {
+                         @NotNull List<? extends T> classes) {
     super(reference);
     myCurrentModule = currentModule;
     LinkedHashSet<Module> modules = new LinkedHashSet<>();
     myScope = scope;
     myExported = false;
-    myClasses = ContainerUtil.map(classes, PointersKt::createSmartPointer);
 
     PsiElement psiElement = reference.getElement();
     ModuleRootManager rootManager = ModuleRootManager.getInstance(currentModule);
-    for (PsiClass aClass : classes) {
+    for (T aClass : classes) {
       if (isAccessible(aClass, psiElement)) {
         Module classModule = ModuleUtilCore.findModuleForFile(aClass.getContainingFile());
         if (classModule != null && classModule != currentModule && !dependsWithScope(rootManager, classModule, scope)) {
@@ -83,7 +80,6 @@ class AddModuleDependencyFix extends OrderEntryFix {
     myModules = modules;
     myScope = scope;
     myExported = exported;
-    myClasses = Collections.emptyList();
   }
 
   private static boolean dependsWithScope(@NotNull ModuleRootManager rootManager, Module classModule, DependencyScope scope) {
@@ -92,8 +88,9 @@ class AddModuleDependencyFix extends OrderEntryFix {
                                          (scope == TEST || scope == orderEntry.getScope()));
   }
 
-  private static boolean isAccessible(PsiClass aClass, PsiElement refElement) {
-    return JavaResolveUtil.isAccessible(aClass, aClass.getContainingClass(), aClass.getModifierList(), refElement, aClass, null);
+  private static boolean isAccessible(PsiMember member, PsiElement refElement) {
+    PsiClass containingClass = member.getContainingClass();
+    return JavaResolveUtil.isAccessible(member, containingClass, member.getModifierList(), refElement, member instanceof PsiClass ? ((PsiClass)member) : containingClass, null);
   }
 
   @Override
@@ -171,21 +168,31 @@ class AddModuleDependencyFix extends OrderEntryFix {
   private void addDependencyOnModuleEDT(@NotNull Project project, Editor editor, @NotNull Module module, Couple<Module> circularModules) {
     if (circularModules != null && !showCircularWarning(project, circularModules, module)) return;
 
-    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
-    if (editor == null || myClasses.isEmpty()) return;
-
-    PsiClass[] targetClasses = myClasses.stream()
-      .map(SmartPsiElementPointer::getElement)
-      .filter(Objects::nonNull)
-      .filter(c -> ModuleUtilCore.findModuleForPsiElement(c) == module)
-      .toArray(PsiClass[]::new);
-    if (targetClasses.length == 0) return;
-
-    PsiReference ref = restoreReference();
-    if (ref == null) return;
-
-    DumbService.getInstance(project).completeJustSubmittedTasks();
-    new AddImportAction(project, ref, editor, targetClasses).execute();
+    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported)
+      .onSuccess(__ -> {
+        ReadAction.nonBlocking(() -> {
+            PsiReference ref = restoreReference();
+            List<BooleanSupplier> autoImportActions = new ArrayList<>();
+            if (ref != null) {
+              PsiElement element = ref.getElement();
+              PsiFile file = element.getContainingFile();
+              for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
+                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextOffset(), false);
+                if (action != null) {
+                  autoImportActions.add(action);
+                }
+              }
+            }
+            return autoImportActions;
+          }).finishOnUiThread(ModalityState.nonModal(), actions -> {
+            for (BooleanSupplier action : actions) {
+              if (action.getAsBoolean()) {
+                break;
+              }
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
+      });
   }
 
   private boolean showCircularWarning(@NotNull Project project, @NotNull Couple<Module> circle, @NotNull Module classModule) {

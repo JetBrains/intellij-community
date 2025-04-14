@@ -4,14 +4,12 @@ package com.intellij.terminal;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.client.ClientSystemInfo;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -25,6 +23,7 @@ import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,16 +43,37 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     TextAttributesKey.createTextAttributesKey("TERMINAL_COMMAND_TO_RUN_USING_IDE");
 
   private final TerminalUiSettingsManager myUiSettingsManager;
+  private final TerminalFontSizeProvider myFontSizeProvider = createFontSizeProvider();
 
   public JBTerminalSystemSettingsProviderBase() {
     myUiSettingsManager = TerminalUiSettingsManager.getInstance();
   }
 
-  @NotNull TerminalUiSettingsManager getUiSettingsManager() {
-    return myUiSettingsManager;
+  @ApiStatus.Internal
+  protected @NotNull TerminalFontSizeProvider createFontSizeProvider() {
+    return new TerminalConsoleFontSizeProvider();
   }
 
-  @NotNull EditorColorsScheme getColorsScheme() {
+  @ApiStatus.Internal
+  public void addUiSettingsListener(@NotNull Disposable parentDisposable, @NotNull TerminalUiSettingsListener listener) {
+    myUiSettingsManager.addListener(parentDisposable, new TerminalUiSettingsListener() {
+      @Override
+      public void cursorChanged() {
+        listener.cursorChanged();
+      }
+    });
+
+    // Do not get font change notifications from TerminalUiSettingsManager directly.
+    // Use `myFontSettingsProvider` to make it possible to substitute another implementation in descendants.
+    myFontSizeProvider.addListener(parentDisposable, new TerminalFontSizeProvider.Listener() {
+      @Override
+      public void fontChanged() {
+        listener.fontChanged();
+      }
+    });
+  }
+
+  private @NotNull EditorColorsScheme getColorsScheme() {
     return myUiSettingsManager.getEditorColorsScheme();
   }
 
@@ -232,6 +252,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
     return new TextStyle(getDefaultForeground(), getDefaultBackground());
   }
 
+  @ApiStatus.Internal
+  public FontPreferences getFontPreferences() {
+    return getColorsScheme().getFontPreferences();
+  }
+
   @Override
   public Font getTerminalFont() {
     Font font = getColorsScheme().getFont(EditorFontType.CONSOLE_PLAIN);
@@ -240,7 +265,26 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public float getTerminalFontSize() {
-    return (float)myUiSettingsManager.getFontSize();
+    return (float)myFontSizeProvider.getFontSize();
+  }
+
+  /**
+   * Same as getTerminalFontSize() but without rounding.
+   * @return the raw font size value
+   */
+  @ApiStatus.Internal
+  public float getTerminalFontSize2D() {
+    return myFontSizeProvider.getFontSize2D();
+  }
+
+  @ApiStatus.Internal
+  public void setTerminalFontSize(float fontSize) {
+    myFontSizeProvider.setFontSize(fontSize);
+  }
+
+  @ApiStatus.Internal
+  public void resetTerminalFontSize() {
+    myFontSizeProvider.resetFontSize();
   }
 
   @Override

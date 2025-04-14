@@ -14,11 +14,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.execution.ui.RunContentDescriptorParentCoroutineScopeKt.createRunContentDescriptorCoroutineScope;
+import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 
 /**
  * Holds information about the UI and content shown in the Run tool window.
@@ -42,6 +46,7 @@ public class RunContentDescriptor implements Disposable {
   private long myExecutionId = 0;
   private Computable<JComponent> myFocusComputable = null;
   private boolean myAutoFocusContent = false;
+  private final CoroutineScope myCoroutineScope = createRunContentDescriptorCoroutineScope();
 
   private Content myContent;
   private String myContentToolWindowId;
@@ -125,6 +130,7 @@ public class RunContentDescriptor implements Disposable {
 
   @Override
   public void dispose() {
+    cancel(myCoroutineScope, null);
     myExecutionConsole = null;
     myComponent = null;
     myProcessHandler = null;
@@ -252,6 +258,11 @@ public class RunContentDescriptor implements Disposable {
 
   public void setExecutionId(long executionId) {
     myExecutionId = executionId;
+  }
+
+  @ApiStatus.Internal
+  public CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
   }
 
   @Override

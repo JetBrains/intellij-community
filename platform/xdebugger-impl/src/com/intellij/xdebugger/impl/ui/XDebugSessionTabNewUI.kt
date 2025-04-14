@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.execution.actions.CreateAction
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
@@ -21,7 +22,6 @@ import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -30,8 +30,8 @@ import javax.swing.Icon
 open class XDebugSessionTabNewUI(
   session: XDebugSessionProxy,
   icon: Icon?,
-  environment: ExecutionEnvironment?,
-) : XDebugSessionTab(session, icon, environment, false) {
+  environmentProxy: ExecutionEnvironmentProxy?,
+) : XDebugSessionTab(session, icon, environmentProxy, false) {
 
   private var mySingleContentSupplier: SingleContentSupplier? = null
   private var toolbarGroup: DefaultActionGroup? = null

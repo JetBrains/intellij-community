@@ -15,7 +15,6 @@ c:com.intellij.analysis.AnalysisScope
 - sf:VIRTUAL_FILES:I
 - p:myElement:com.intellij.psi.PsiElement
 - p:myModule:com.intellij.openapi.module.Module
-- p:myModules:java.util.List
 - pf:myScope:com.intellij.psi.search.SearchScope
 - p:myType:I
 - <init>(com.intellij.openapi.module.Module):V
@@ -1281,7 +1280,6 @@ a:com.intellij.codeInspection.InspectionProfileEntry
 - getGroupPath():java.lang.String[]
 - getLanguage():java.lang.String
 - getMainToolId():java.lang.String
-- getOptionController():com.intellij.codeInspection.options.OptionController
 - getOptionsPane():com.intellij.codeInspection.options.OptPane
 - p:getSerializationFilter():com.intellij.util.xmlb.SerializationFilter
 - getShortName():java.lang.String
@@ -1794,8 +1792,8 @@ com.intellij.codeInspection.options.OptComponent
 com.intellij.codeInspection.options.OptControl
 - com.intellij.codeInspection.options.OptComponent
 - a:bindId():java.lang.String
-- getValue(com.intellij.codeInspection.InspectionProfileEntry):java.lang.Object
-- setValue(com.intellij.codeInspection.InspectionProfileEntry,java.lang.Object):V
+- getValue(com.intellij.codeInspection.options.OptionContainer):java.lang.Object
+- setValue(com.intellij.codeInspection.options.OptionContainer,java.lang.Object):V
 f:com.intellij.codeInspection.options.OptCustom
 - java.lang.Record
 - com.intellij.codeInspection.options.OptRegularComponent
@@ -1880,6 +1878,7 @@ f:com.intellij.codeInspection.options.OptPane
 - java.lang.Record
 - sf:EMPTY:com.intellij.codeInspection.options.OptPane
 - <init>(java.util.List):V
+- <init>(java.util.List,java.lang.String):V
 - allControls():java.util.List
 - append(com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptPane
 - asCheckbox(java.lang.String,java.lang.String):com.intellij.codeInspection.options.OptCheckbox
@@ -1897,6 +1896,7 @@ f:com.intellij.codeInspection.options.OptPane
 - findControl(java.lang.String):com.intellij.codeInspection.options.OptControl
 - s:group(java.lang.String,com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptGroup
 - f:hashCode():I
+- helpId():java.lang.String
 - s:horizontalStack(com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptHorizontalStack
 - s:number(java.lang.String,java.lang.String,I,I):com.intellij.codeInspection.options.OptNumber
 - s:option(java.lang.Enum,java.lang.String):com.intellij.codeInspection.options.OptDropdown$Option
@@ -1917,6 +1917,7 @@ f:com.intellij.codeInspection.options.OptPane
 - s:tab(java.lang.String,com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptTab
 - s:table(java.lang.String,com.intellij.codeInspection.options.OptTableColumn[]):com.intellij.codeInspection.options.OptTable
 - s:tabs(com.intellij.codeInspection.options.OptTab[]):com.intellij.codeInspection.options.OptTabSet
+- withHelpId(java.lang.String):com.intellij.codeInspection.options.OptPane
 com.intellij.codeInspection.options.OptRegularComponent
 - com.intellij.codeInspection.options.OptComponent
 - prefix(java.lang.String):com.intellij.codeInspection.options.OptRegularComponent
@@ -2009,6 +2010,7 @@ f:com.intellij.codeInspection.options.OptTableColumn
 - validator():com.intellij.codeInspection.options.StringValidator
 com.intellij.codeInspection.options.OptionContainer
 - getOptionController():com.intellij.codeInspection.options.OptionController
+- getOptionsPane():com.intellij.codeInspection.options.OptPane
 com.intellij.codeInspection.options.OptionController
 - s:empty():com.intellij.codeInspection.options.OptionController
 - s:fieldsOf(java.lang.Object):com.intellij.codeInspection.options.OptionController
@@ -2533,13 +2535,12 @@ f:com.intellij.modcommand.ActionContext
 - withElement(com.intellij.psi.PsiElement):com.intellij.modcommand.ActionContext
 - withFile(com.intellij.psi.PsiFile):com.intellij.modcommand.ActionContext
 - withOffset(I):com.intellij.modcommand.ActionContext
-com.intellij.modcommand.MemberChooserElement
-- a:getText():java.lang.String
 f:com.intellij.modcommand.ModChooseAction
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
 - <init>(java.lang.String,java.util.List):V
 - actions():java.util.List
+- andThen(com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommand
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - isEmpty():Z
@@ -2702,6 +2703,18 @@ e:com.intellij.modcommand.ModDisplayMessage$MessageKind
 - sf:INFORMATION:com.intellij.modcommand.ModDisplayMessage$MessageKind
 - s:valueOf(java.lang.String):com.intellij.modcommand.ModDisplayMessage$MessageKind
 - s:values():com.intellij.modcommand.ModDisplayMessage$MessageKind[]
+f:com.intellij.modcommand.ModEditOptions
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- <init>(java.lang.String,java.util.function.Supplier,Z,java.util.function.Function):V
+- andThen(com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommand
+- applyOptions(java.util.Map):com.intellij.modcommand.ModCommand
+- canUseDefaults():Z
+- containerSupplier():java.util.function.Supplier
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- nextCommand():java.util.function.Function
+- title():java.lang.String
 f:com.intellij.modcommand.ModHighlight
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
@@ -2916,6 +2929,7 @@ a:com.intellij.modcommand.PsiBasedModCommandAction
 - f:getPresentation(com.intellij.modcommand.ActionContext):com.intellij.modcommand.Presentation
 - p:getPresentation(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.Presentation
 - p:isElementApplicable(com.intellij.psi.PsiElement,com.intellij.modcommand.ActionContext):Z
+- p:isFileAllowed(com.intellij.psi.PsiFile):Z
 - f:perform(com.intellij.modcommand.ActionContext):com.intellij.modcommand.ModCommand
 - pa:perform(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
 - p:stopSearchAt(com.intellij.psi.PsiElement,com.intellij.modcommand.ActionContext):Z
@@ -2987,8 +3001,6 @@ a:com.intellij.openapi.editor.LazyRangeMarkerFactory
 - a:createRangeMarker(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.openapi.editor.RangeMarker
 - a:createRangeMarker(com.intellij.openapi.vfs.VirtualFile,I,I,Z):com.intellij.openapi.editor.RangeMarker
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.editor.LazyRangeMarkerFactory
-com.intellij.openapi.fileEditor.EditorDataProvider
-- a:getData(java.lang.String,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret):java.lang.Object
 com.intellij.openapi.fileEditor.FileEditorComposite
 - sf:Companion:com.intellij.openapi.fileEditor.FileEditorComposite$Companion
 - a:getAllEditors():java.util.List
@@ -3012,7 +3024,6 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - a:getAllEditors():com.intellij.openapi.fileEditor.FileEditor[]
 - a:getAllEditors(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
 - a:getComposite(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorComposite
-- a:getData(java.lang.String,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret):java.lang.Object
 - getEditorList(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - a:getEditors(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor[]
 - getFocusedEditor():com.intellij.openapi.fileEditor.FileEditor
@@ -3033,7 +3044,6 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - openFile(com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.fileEditor.FileEditor[]
 - a:openFileEditor(com.intellij.openapi.fileEditor.FileEditorNavigatable,Z):java.util.List
 - a:openTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,Z):com.intellij.openapi.editor.Editor
-- a:registerExtraEditorDataProvider(com.intellij.openapi.fileEditor.EditorDataProvider,com.intellij.openapi.Disposable):V
 - a:removeBottomComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V
 - removeFileEditorManagerListener(com.intellij.openapi.fileEditor.FileEditorManagerListener):V
 - a:removeTopComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V

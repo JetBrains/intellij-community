@@ -359,11 +359,13 @@ c:com.intellij.openapi.vcs.actions.AnnotateActionGroup
 f:com.intellij.openapi.vcs.actions.AnnotateToggleAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.project.DumbAware
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - s:doAnnotate(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.openapi.vcs.annotate.FileAnnotation,com.intellij.openapi.vcs.AbstractVcs):V
 - s:doAnnotate(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.openapi.vcs.annotate.FileAnnotation,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.localVcs.UpToDateLineNumberProvider):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getRequiredPermissions():java.util.Collection
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -4007,7 +4009,6 @@ c:com.intellij.openapi.vcs.impl.VcsRootIterator
 - s:iterateVfUnderVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 com.intellij.openapi.vcs.impl.VcsStartupActivity
 - execute(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- bs:execute$suspendImpl(com.intellij.openapi.vcs.impl.VcsStartupActivity,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - a:getOrder():I
 - runActivity(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.vcs.impl.projectlevelman.AllVcses

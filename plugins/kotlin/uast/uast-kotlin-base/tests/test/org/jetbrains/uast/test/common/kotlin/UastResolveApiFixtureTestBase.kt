@@ -1474,6 +1474,30 @@ interface UastResolveApiFixtureTestBase {
         )
     }
 
+    fun checkResolveDataClassSyntheticMember(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        myFixture.configureByText(
+            "main.kt",
+            """
+                data class JustAnotherData(val p: Int)
+                
+                fun test(d: JustAnotherData): Int {
+                  return d.hash<caret>Code()
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+        val txt = uCallExpression.sourcePsi?.text
+        if (isK2) {
+            TestCase.assertNotNull(txt, resolved)
+            TestCase.assertEquals(txt, "hashCode", resolved!!.name)
+        } else {
+            TestCase.assertNull(txt, resolved)
+        }
+    }
+
     fun checkResolveSyntheticJavaPropertyCompoundAccess(myFixture: JavaCodeInsightTestFixture, isK2 : Boolean = true) {
         myFixture.addClass(
             """public class X {
@@ -1530,6 +1554,48 @@ interface UastResolveApiFixtureTestBase {
             plusPlusMultiStrings,
             "int getFoo() { return 42; }",
             "void setFoo(int s) {}",
+        )
+    }
+
+    fun checkResolveKotlinPropertyCompoundAccess(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                data object Value {
+                    operator fun inc(): Value {
+                        println("Plus!")
+                        return this
+                    }
+                }
+
+                class Test {
+                    var prop: Value = Value
+                        get() { println("Get!"); return field }
+                        set(v) { println("Set!"); field = v }
+                }
+
+                fun test() {
+                    val t = Test()
+                    t.prop++
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val plusPlus = uFile.findElementByTextFromPsi<UPostfixExpression>("t.prop++", strict = false)
+            .orFail("cant convert to UPostfixExpression")
+        val plusPlusResolvedDeclarations = (plusPlus as UMultiResolvable).multiResolve()
+        val plusPlusResolvedDeclarationsStrings = plusPlusResolvedDeclarations.map { it.element?.text ?: "<null>" }
+        assertContainsElements(
+            plusPlusResolvedDeclarationsStrings,
+            "get() { println(\"Get!\"); return field }",
+            "set(v) { println(\"Set!\"); field = v }",
+            """
+            operator fun inc(): Value {
+                    println("Plus!")
+                    return this
+                }
+            """.trimIndent()
         )
     }
 

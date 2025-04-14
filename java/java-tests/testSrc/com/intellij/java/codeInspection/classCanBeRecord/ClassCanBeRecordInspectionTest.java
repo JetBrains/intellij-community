@@ -22,9 +22,9 @@ public class ClassCanBeRecordInspectionTest extends LightQuickFixParameterizedTe
   protected String getBasePath() {
     return "/inspection/classCanBeRecord";
   }
-  
-   @Override
+
+  @Override
   public void runSingle() throws Throwable {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> super.runSingle());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(super::runSingle);
   }
 }

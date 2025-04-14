@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -280,7 +280,7 @@ public class WSLDistribution implements AbstractWslDistribution {
       prependCommand(linuxCommand, "sudo", "-S", "-p", "''");
       //TODO[traff]: ask password only if it is needed. When user is logged as root, password isn't asked.
 
-      SUDO_LISTENER_KEY.set(commandLine, new ProcessAdapter() {
+      SUDO_LISTENER_KEY.set(commandLine, new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           OutputStream input = event.getProcessHandler().getProcessInput();
@@ -302,7 +302,6 @@ public class WSLDistribution implements AbstractWslDistribution {
           else {
             // fixme notify user?
           }
-          super.startNotified(event);
         }
       });
     }

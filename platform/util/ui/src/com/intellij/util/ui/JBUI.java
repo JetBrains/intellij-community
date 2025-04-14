@@ -1059,8 +1059,12 @@ public final class JBUI {
         return JBColor.namedColor("ToolWindow.background");
       }
 
+      public static @NotNull Color stripeBackground() {
+        return JBColor.namedColor("ToolWindow.Stripe.background", background());
+      }
+
       public static @NotNull Color borderColor() {
-        return JBColor.border();
+        return JBColor.namedColor("ToolWindow.Stripe.borderColor", JBColor.border());
       }
 
       public static @NotNull Color underlinedTabForeground() {
@@ -1248,6 +1252,14 @@ public final class JBUI {
         return "MainToolbar.Button.iconSize";
       }
 
+      public static int recentProjectAvatarIconSize() {
+        return getInt(recentProjectAvatarIconSizeKey(), experimentalToolbarButtonIconSize());
+      }
+
+      public static @NotNull String recentProjectAvatarIconSizeKey() {
+        return "RecentProject.Avatar.iconSize";
+      }
+
       public static int defaultExperimentalToolbarButtonIconSize() {
         return 20;
       }
@@ -1323,6 +1335,9 @@ public final class JBUI {
     }
 
     public static final class MainToolbar {
+      public static @NotNull Color borderColor() {
+        return JBColor.namedColor("MainToolbar.borderColor", JBColor.border());
+      }
 
       public static final class Dropdown {
 

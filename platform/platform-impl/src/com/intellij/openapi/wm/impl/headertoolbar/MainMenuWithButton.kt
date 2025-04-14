@@ -137,8 +137,8 @@ class MainMenuWithButton(
       val path = selectionManager.selectedPath
       if (path.size > 0 && path[0] === toolbarMainMenu) {
         val map = frame.rootPane.actionMap
-        addAction(map, "selectChild")
-        addAction(map, "selectParent")
+        addAction(map, MenuNavigationAction.SELECT_CHILD)
+        addAction(map, MenuNavigationAction.SELECT_PARENT)
       }
     }
     selectionManager.addChangeListener(listener)
@@ -247,10 +247,16 @@ internal class MenuNavigationAction(
   val toolbarMainMenu: MergedMainMenu,
 ) : AbstractAction(name) {
 
+  companion object {
+    const val SELECT_CHILD = "selectChild"
+    const val SELECT_PARENT = "selectParent"
+  }
+
   override fun actionPerformed(e: ActionEvent) {
     val path = MenuSelectionManager.defaultManager().selectedPath
     if (path.size > 0 && path[0] === toolbarMainMenu) {
-      if (name == "selectParent") {
+      if (name == SELECT_PARENT) {
+        // if we try to navigate to previous element before first item we just expand full menu and select last element
         if (path.size == 4 && path[1] === toolbarMainMenu.getMenu(0)) {
           if (mainMenuButton.expandableMenu?.isEnabled() == true) {
             mainMenuButton.expandableMenu!!.switchState(itemInd = mainMenuButton.expandableMenu!!.ideMenu.rootMenuItems.lastIndex)
@@ -261,6 +267,7 @@ internal class MenuNavigationAction(
           return
         }
       }
+      // if we try to navigate to next element after last item we just expand full menu
       else if (path.size > 3 && path[1] === toolbarMainMenu.rootMenuItems.last()) {
         val element = path.last()
         if (element is ActionMenu && element.itemCount == 0 || element is ActionMenuItem) {

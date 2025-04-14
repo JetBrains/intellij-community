@@ -95,7 +95,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
     cell.onBeforeRemove()
     val removed = _cells.removeAt(index)
     Disposer.dispose(removed)
-    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed)))
+    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed, index)))
   }
 
   fun <T : EditorNotebookExtension> addExtension(type: KClass<T>, extension: T) {

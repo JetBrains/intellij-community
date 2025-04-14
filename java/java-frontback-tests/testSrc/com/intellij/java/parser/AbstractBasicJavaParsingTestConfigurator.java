@@ -2,15 +2,16 @@
 package com.intellij.java.parser;
 
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.java.parser.BasicJavaParserUtil;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Consumer;
-
 public interface AbstractBasicJavaParsingTestConfigurator {
   ParserDefinition getJavaParserDefinition();
+
+  LanguageSyntaxDefinition getJavaSyntaxDefinition();
 
   void setUp(@NotNull AbstractBasicJavaParsingTestCase thinJavaParsingTestCase);
 
@@ -20,7 +21,7 @@ public interface AbstractBasicJavaParsingTestConfigurator {
   PsiFile createPsiFile(@NotNull AbstractBasicJavaParsingTestCase thinJavaParsingTestCase,
                         @NotNull String name,
                         @NotNull String text,
-                        @NotNull Consumer<PsiBuilder> parser);
+                        @NotNull BasicJavaParserUtil.ParserWrapper  parser);
 
   boolean checkPsi();
 

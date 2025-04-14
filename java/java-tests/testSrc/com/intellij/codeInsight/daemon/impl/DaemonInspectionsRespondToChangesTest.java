@@ -584,21 +584,16 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
     // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
-    long deadline = System.currentTimeMillis() + 10_000;
+    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
     while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start");
-      }
+      t.assertNoTimeout("daemon to start");
     }
     PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
     TextRange range = field.getNameIdentifier().getTextRange();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
-      if (System.currentTimeMillis() > deadline) {
-        DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
-        fail("Too long waiting for daemon to finish");
-      }
+      t.assertNoTimeout("daemon to finish");
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, range.getStartOffset(), range.getEndOffset(), info -> !diagnosticText.get().equals(info.getDescription()));
       if (found) {
@@ -858,20 +853,16 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
     // now when the LIP restarted, we should get back our inspection result very fast, despite very slow processing of every other element
-    long deadline = System.currentTimeMillis() + 10_000;
+    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
     while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start");
-      }
+      t.assertNoTimeout("daemon to start");
     }
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     try {
       boolean fastToolFinishedFaster = false;
       while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
-        if (System.currentTimeMillis() > deadline) {
-          fail("Too long waiting for daemon to finish\n" + ThreadDumper.dumpThreadsToString());
-        }
+        t.assertNoTimeout("daemon to finish");
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         if (fastToolFinished.get() && !slowToolFinished.get()) {
           fastToolFinishedFaster = true;
@@ -1001,19 +992,15 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     type("// another comment\nvoid anotherMethod(){}");
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
 
-    long deadline = System.currentTimeMillis() + 10_000;
+    TestTimeOut t= TestTimeOut.setTimeout(10_000, TimeUnit.MILLISECONDS);
     while (!DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start");
-      }
+      t.assertNoTimeout("daemon to start");
     }
     // now when the LIP restarted, we should observe the range highlighter for the inspection to disappear as soon as visitIdentifier() method is finished
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
     while (DaemonRespondToChangesTest.daemonIsWorkingOrPending(myProject, myEditor.getDocument())) {
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to finish\n"+ThreadDumper.dumpThreadsToString());
-      }
+      t.assertNoTimeout("daemon to finish");
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (fieldHighlightsUpdated.get()) {
         boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),

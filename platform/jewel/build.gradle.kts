@@ -13,8 +13,10 @@ dependencies {
     sarif(projects.intUi.intUiDecoratedWindow)
     sarif(projects.intUi.intUiStandalone)
     sarif(projects.markdown.core)
-    sarif(projects.markdown.extension.autolink)
-    sarif(projects.markdown.extension.gfmAlerts)
+    sarif(projects.markdown.extensions.autolink)
+    sarif(projects.markdown.extensions.gfmAlerts)
+    sarif(projects.markdown.extensions.gfmStrikethrough)
+    sarif(projects.markdown.extensions.gfmTables)
     sarif(projects.markdown.ideLafBridgeStyling)
     sarif(projects.markdown.intUiStandaloneStyling)
     sarif(projects.samples.idePlugin)
@@ -22,8 +24,18 @@ dependencies {
     sarif(projects.ui)
 }
 
+// Faff needed to comply with Gradle's service injection.
+// See https://docs.gradle.org/current/userguide/service_injection.html#execoperations
+interface InjectedExecOps {
+    @get:Inject val execOps: ExecOperations
+
+    fun exec(init: ExecSpec.() -> Unit): ExecResult = execOps.exec(init)
+}
+
 tasks {
     register("tagRelease") {
+        val injected = project.objects.newInstance<InjectedExecOps>()
+
         description = "Tags main branch and releases branches with provided tag name"
         group = "release"
 
@@ -38,7 +50,8 @@ tasks {
 
             // Check we're on the main branch
             logger.info("Checking current branch is main...")
-            exec {
+            injected
+                .exec {
                     commandLine = listOf("git", "rev-parse", "--abbrev-ref", "HEAD")
                     standardOutput = stdOut
                 }
@@ -52,7 +65,8 @@ tasks {
             // Check tag doesn't already exist
             logger.info("Checking current branch is main...")
             stdOut.reset()
-            exec {
+            injected
+                .exec {
                     commandLine = listOf("git", "tag")
                     standardOutput = stdOut
                 }
@@ -65,7 +79,8 @@ tasks {
             // Check there are no uncommitted changes
             logger.info("Checking all changes have been committed...")
             stdOut.reset()
-            exec {
+            injected
+                .exec {
                     commandLine = listOf("git", "status", "--porcelain")
                     standardOutput = stdOut
                 }
@@ -78,7 +93,8 @@ tasks {
             // Get the current HEAD hash
             logger.info("Getting HEAD hash...")
             stdOut.reset()
-            exec {
+            injected
+                .exec {
                     commandLine = listOf("git", "rev-parse", "HEAD")
                     standardOutput = stdOut
                 }
@@ -89,7 +105,8 @@ tasks {
             // Enumerate the release branches
             logger.info("Enumerating release branches...")
             stdOut.reset()
-            exec {
+            injected
+                .exec {
                     commandLine = listOf("git", "branch")
                     standardOutput = stdOut
                 }
@@ -112,7 +129,8 @@ tasks {
             logger.info("Validating release branches...")
             for (branch in releaseBranches) {
                 stdOut.reset()
-                exec {
+                injected
+                    .exec {
                         commandLine = listOf("git", "merge-base", "main", "releases/$branch")
                         standardOutput = stdOut
                     }
@@ -126,7 +144,7 @@ tasks {
 
             // Tag main branch
             logger.lifecycle("Tagging head of main branch as $releaseName...")
-            exec { commandLine = listOf("git", "tag", releaseName) }.assertNormalExitValue()
+            injected.exec { commandLine = listOf("git", "tag", releaseName) }.assertNormalExitValue()
 
             // Tag release branches
             for (branch in releaseBranches) {
@@ -135,7 +153,8 @@ tasks {
                 stdOut.reset()
 
                 logger.info("Getting branch head commit...")
-                exec {
+                injected
+                    .exec {
                         commandLine = listOf("git", "rev-parse", "releases/$branch")
                         standardOutput = stdOut
                     }
@@ -146,7 +165,8 @@ tasks {
 
                 logger.info("Tagging commit ${branchHead.take(7)} as $branchTagName")
                 stdOut.reset()
-                exec {
+                injected
+                    .exec {
                         commandLine = listOf("git", "tag", branchTagName, branchHead)
                         standardOutput = stdOut
                     }
@@ -160,4 +180,6 @@ tasks {
     register<Delete>("cleanTestPublishArtifacts") { delete(rootProject.layout.buildDirectory.dir("maven-test")) }
 
     register<Delete>("clean") { delete(rootProject.layout.buildDirectory) }
+
+    wrapper { distributionType = Wrapper.DistributionType.ALL }
 }

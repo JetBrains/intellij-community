@@ -3,14 +3,15 @@ package com.intellij.openapi.externalSystem.testFramework.fixtures
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
+import java.nio.file.Path
 
 interface MultiProjectTestFixture {
 
-  suspend fun openProject(relativePath: String): Project
+  suspend fun openProject(projectPath: Path): Project
 
-  suspend fun linkProject(project: Project, relativePath: String, systemId: ProjectSystemId)
+  suspend fun linkProject(project: Project, projectPath: Path, systemId: ProjectSystemId)
 
-  suspend fun unlinkProject(project: Project, relativePath: String, systemId: ProjectSystemId)
+  suspend fun unlinkProject(project: Project, projectPath: Path, systemId: ProjectSystemId)
 
   suspend fun awaitOpenProjectConfiguration(openProject: suspend () -> Project): Project
 

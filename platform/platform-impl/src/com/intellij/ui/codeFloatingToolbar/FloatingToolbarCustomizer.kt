@@ -30,10 +30,8 @@ internal fun findActionGroupFor(language: Language): String? {
     if (bean != null) {
       if (bean.isMinimal) {
         // check if any of the primary languages have full toolbar available
-        val hasPrimaryToolbar = IdeLanguageCustomization.getInstance().primaryIdeLanguages.any {
-          val bean = forLanguage(it)
-          bean != null && !bean.isMinimal
-        }
+        val hasPrimaryToolbar = IdeLanguageCustomization.getInstance().primaryIdeLanguages
+          .any { forLanguage(it) != null }
 
         if (!hasPrimaryToolbar) return null
       }

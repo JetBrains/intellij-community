@@ -5,9 +5,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
-
-import static com.intellij.ui.paint.PaintUtil.getStringWidth;
 
 @ApiStatus.Internal
 public final class DefaultCutStrategy implements TextCutStrategy {
@@ -15,19 +14,20 @@ public final class DefaultCutStrategy implements TextCutStrategy {
   private static final int MIN_TEXT_LENGTH = 4;
 
   @Override
-  public @NotNull String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth, @NotNull Graphics g) {
-    int width = getStringWidth(text, g, metrics);
+  public @NotNull String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth, @NotNull JComponent c) {
+    int width = UIUtil.computeStringWidth(c, metrics, text);
     if (width <= maxWidth) return text;
 
     while (width > maxWidth && text.length() > MIN_TEXT_LENGTH) {
       text = text.substring(0, text.length() - 1);
-      width = getStringWidth(text + "...", g, metrics);
+      width = UIUtil.computeStringWidth(c, metrics, text + "...");
     }
     return text + "...";
   }
 
   @Override
-  public int calcMinTextWidth(@NotNull String text, @NotNull FontMetrics metrics) {
-    return UIUtil.computeTextComponentMinimumSize(metrics.stringWidth(text), text, metrics, MIN_TEXT_LENGTH);
+  public int calcMinTextWidth(@NotNull String text, @NotNull FontMetrics metrics, @NotNull JComponent c) {
+    int textWidth = UIUtil.computeStringWidth(c, metrics, text);
+    return UIUtil.computeTextComponentMinimumSize(textWidth, text, metrics, MIN_TEXT_LENGTH);
   }
 }

@@ -142,7 +142,9 @@ public final class PyStringFormatInspection extends PyInspection {
           }
           else {
             final PyTupleType tupleType = (PyTupleType)myTypeEvalContext.getType(rightExpression);
-            assert tupleType != null;
+            if (tupleType == null) {
+              return -1;
+            }
             matchEntireTupleTypes(problemTarget, tupleType);
             return tupleType.getElementCount();
           }

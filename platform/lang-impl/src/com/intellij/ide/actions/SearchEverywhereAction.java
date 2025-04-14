@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
@@ -41,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SearchEverywhereAction extends SearchEverywhereBaseAction
   implements CustomComponentAction, RightAlignedToolbarAction, DumbAware, DataProvider {
+  private static final Logger LOG = Logger.getInstance(SearchEverywhereAction.class);
 
   public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 

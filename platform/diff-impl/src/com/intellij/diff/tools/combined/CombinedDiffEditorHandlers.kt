@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -15,7 +16,7 @@ internal abstract class CombinedDiffBaseEditorForEachCaretHandler(private val or
 
   final override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val combined = editor.diffViewer
-    if (CombinedDiffRegistry.isEnabled() && combined != null && caret != null) {
+    if (!AppMode.isRemoteDevHost() && combined != null && caret != null) {
       doExecute(combined, editor, caret, dataContext)
       return
     }
@@ -32,7 +33,7 @@ abstract class CombinedDiffBaseEditorWithSelectionHandler(private val original: 
 
   final override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val combined = editor.diffViewer
-    if (CombinedDiffRegistry.isEnabled() && combined != null) {
+    if (!AppMode.isRemoteDevHost() && combined != null) {
       doExecute(combined, editor, caret, dataContext)
       return
     }
@@ -91,7 +92,7 @@ internal class CombinedDiffEditorDownWithSelectionHandler(private val original: 
 
 internal class CombinedDiffEditorLeftHandler(private val original: EditorActionHandler) : CombinedDiffBaseEditorForEachCaretHandler(original) {
   override fun doExecute(combined: CombinedDiffViewer, editor: Editor, caret: Caret, dc: DataContext?) {
-    if (caret.isOnFirstVisibleLine() && caret.isOnFirstVisibleColumn() && combined.canGoPrevBlock() ) {
+    if (caret.isOnFirstVisibleLine() && caret.isOnFirstVisibleColumn() && combined.canGoPrevBlock()) {
       combined.moveCaretToPrevBlock()
       return
     }

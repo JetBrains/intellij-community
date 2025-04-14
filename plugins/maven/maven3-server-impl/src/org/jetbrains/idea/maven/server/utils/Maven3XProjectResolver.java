@@ -34,6 +34,7 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
@@ -51,7 +52,6 @@ import org.jetbrains.idea.maven.server.Maven3ImporterSpy;
 import org.jetbrains.idea.maven.server.Maven3ModelConverter;
 import org.jetbrains.idea.maven.server.Maven3TransferListenerAdapter;
 import org.jetbrains.idea.maven.server.Maven3WorkspaceMapReader;
-import org.jetbrains.idea.maven.server.Maven3WorkspaceReader;
 import org.jetbrains.idea.maven.server.Maven3XProfileUtil;
 import org.jetbrains.idea.maven.server.Maven3XServerEmbedder;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
@@ -300,6 +300,8 @@ public class Maven3XProjectResolver {
   }
 
   protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if (VersionComparatorUtil.compare(mavenVersion, "3.3.1") < 0) return;
     if (myWorkspaceMap != null) {
       session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap, myEmbedder.getSystemProperties()));
     }
@@ -428,8 +430,12 @@ public class Maven3XProjectResolver {
         cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
       }
       mavenSession.setProjectMap(mavenProjectMap);
-      ((DefaultRepositorySystemSession)session).setWorkspaceReader(
-        new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
+      DefaultRepositorySystemSession defaultSession = (DefaultRepositorySystemSession)session;
+      WorkspaceReader reader = defaultSession.getWorkspaceReader();
+      if (reader instanceof Maven3WorkspaceMapReader) {
+        Maven3WorkspaceMapReader mapReader = (Maven3WorkspaceMapReader)reader;
+        mapReader.fillSessionCache(cacheMavenModelMap);
+      }
     }
   }
 

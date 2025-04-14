@@ -66,7 +66,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
       return DeprecatedLibraryContextImpl(globalLibrary)
     }
 
-    val sdk = LibrariesAndSdkContributors.getSdk(fileSet)
+    val sdk = storage.findSdk(fileSet)
     if (sdk != null) {
       return DeprecatedSdkContextImpl(sdk)
     }

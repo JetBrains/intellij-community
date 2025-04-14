@@ -7,6 +7,7 @@ import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -356,7 +357,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
     if (!hasErrorResults() &&
         expression.getParent() instanceof PsiCaseLabelElementList &&
-        expression.textMatches(PsiKeyword.NULL)) {
+        expression.textMatches(JavaKeywords.NULL)) {
       checkFeature(expression, JavaFeature.PATTERNS_IN_SWITCH);
     }
 

@@ -193,9 +193,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         if (argumentText == symbolName) return true
 
         if (symbolName.length > 1) {
-            val name = symbolName[0].uppercaseChar() + symbolName.substring(1)
+            val name = symbolName.lowercase()
+            val lowercase = argumentText.lowercase()
             // avoid cases like "`type = Type(...)`" and "`value =` myValue"
-            if (argumentText.startsWith(name) || argumentText.endsWith(name)) return true
+            if (lowercase.startsWith(name) || lowercase.endsWith(name)) return true
         }
 
         // avoid cases like "/* value = */ value"

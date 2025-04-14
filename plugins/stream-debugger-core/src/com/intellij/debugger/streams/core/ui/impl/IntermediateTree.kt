@@ -1,10 +1,15 @@
 package com.intellij.debugger.streams.core.ui.impl
 
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
-import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
+import com.intellij.debugger.streams.core.trace.GenericEvaluationContext
 import com.intellij.debugger.streams.core.trace.TraceElement
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueContainer
+import com.intellij.xdebugger.frame.XValueNode
+import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
@@ -12,16 +17,16 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
 class IntermediateTree(
   traceElements: List<TraceElement>,
-  launcher: DebuggerCommandLauncher,
+  context: GenericEvaluationContext,
   private val myBuilder: CollectionTreeBuilder,
   debugName: String,
-) : CollectionTree(traceElements, launcher, myBuilder, debugName) {
+) : CollectionTree(traceElements, context, myBuilder, debugName) {
   private val myXValue2TraceElement: MutableMap<XValueContainer, TraceElement> = HashMap()
 
   private val itemsCount : Int = traceElements.size
 
   init {
-    val root = XValueNodeImpl(this, null, "root", MyTraceElementsRoot(traceElements, launcher))
+    val root = XValueNodeImpl(this, null, "root", MyTraceElementsRoot(traceElements, context))
     setRoot(root, false)
     root.isLeaf = false
 
@@ -51,12 +56,12 @@ class IntermediateTree(
 
   private inner class MyTraceElementsRoot(
     private val myTraceElements: List<TraceElement>,
-    private val myDebuggerCommandLauncher: DebuggerCommandLauncher,
+    private val myEvaluationContext: GenericEvaluationContext,
   ) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
       val children = XValueChildrenList()
       for (value in myTraceElements) {
-        val namedValue = myBuilder.createXNamedValue(value.value, myDebuggerCommandLauncher)
+        val namedValue = myBuilder.createXNamedValue(value.value, myEvaluationContext)
         myXValue2TraceElement[namedValue] = value
         children.add(namedValue)
       }

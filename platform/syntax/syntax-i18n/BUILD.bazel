@@ -15,7 +15,6 @@ jvm_library(
   plugins = ["@lib//:expects-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/core-api:core",
     "//platform/util",
     ":multiplatformSupport_provided",
   ]

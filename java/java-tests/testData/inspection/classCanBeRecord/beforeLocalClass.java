@@ -1,4 +1,4 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 class Foo {
   void test() {
     class Poi<caret>nt {

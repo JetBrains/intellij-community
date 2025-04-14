@@ -99,7 +99,7 @@ interface PythonPackageSpecification {
     }
     if (repository != null && repository != PyPIPackageRepository) {
       add("--index-url")
-      add(repository!!.urlForInstallation)
+      add(repository!!.urlForInstallation.toString())
     }
   }
 }

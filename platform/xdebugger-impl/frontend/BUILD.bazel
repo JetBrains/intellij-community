@@ -30,6 +30,7 @@ jvm_library(
     "//platform/platform-frontend:frontend",
     "//platform/execution-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl/frontend:execution-impl-frontend",
   ],
   runtime_deps = [":debugger-impl-frontend_resources"]
 )

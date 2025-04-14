@@ -5,6 +5,11 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class ReferenceParser extends BasicReferenceParser {
 
   /** @deprecated use {@link BasicReferenceParser#EAT_LAST_DOT} instead **/

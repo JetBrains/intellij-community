@@ -5,12 +5,18 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.PressureShortcut
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import java.awt.Color
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.Graphics2D
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.UIManager
@@ -39,8 +45,11 @@ internal class ShortcutTextList {
     val boldFont = font.asBold()
     val boldMetrics = tree.getFontMetrics(boldFont)
 
-    val shortcutPresentation = createPresentation("Shortcut.foreground", "Shortcut.background", "Shortcut.borderColor", boldFont)
-    val abbreviationPresentation = createPresentation("Abbreviation.foreground", "Abbreviation.background", "Abbreviation.borderColor", boldFont)
+    val shortcutPresentation = createPresentation(JBColor.namedColor("Shortcut.foreground", JBColor(0x0, 0xDFE1E5)),
+                                                  "Shortcut.background", "Shortcut.borderColor", boldFont)
+
+    val abbreviationPresentation = createPresentation(JBColor.namedColor("Abbreviation.foreground", JBColor(0x5A5D6B2E, 0xB4B8BF40.toInt())),
+                                                      "Abbreviation.background", "Abbreviation.borderColor", boldFont)
 
     val separatorText = KeyMapBundle.message("or.separator")
     val separatorPresentation = ShortcutTextPresentation(JBUI.CurrentTheme.Label.foreground(), null, null, font)
@@ -127,7 +136,7 @@ internal class ShortcutTextList {
 
   private fun addShortcutModifiers(result: MutableList<String>, modifiers: Int) {
     val modifiersText = KeymapUtil.getModifiersText(modifiers)
-    if (KeymapUtil.isSimplifiedMacShortcuts()) {
+    if (KeymapUtil.isSimplifiedMacShortcuts() || !ClientSystemInfo.isMac()) {
       modifiersText.split("+").forEach { result.add(it.trim()) }
     }
     else {
@@ -137,8 +146,8 @@ internal class ShortcutTextList {
     }
   }
 
-  private fun createPresentation(textColorKey: String, fillColorKey: String, borderColorKey: String, font: Font): ShortcutTextPresentation {
-    return ShortcutTextPresentation(getColor(textColorKey)!!, getColor(fillColorKey), getColor(borderColorKey), font)
+  private fun createPresentation(textColor: Color, fillColorKey: String, borderColorKey: String, font: Font): ShortcutTextPresentation {
+    return ShortcutTextPresentation(textColor, getColor(fillColorKey), getColor(borderColorKey), font)
   }
 
   private fun createTextElement(text: String, gap: Int, textGap: Int, fontMetrics: FontMetrics, presentation: ShortcutTextPresentation, g: Graphics2D): ShortcutTextElement {

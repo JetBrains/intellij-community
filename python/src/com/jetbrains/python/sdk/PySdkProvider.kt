@@ -50,7 +50,7 @@ interface PySdkProvider {
                                 module: Module?,
                                 existingSdks: List<Sdk>,
                                 newProjectPath: String?,
-                                context: UserDataHolder): PyAddNewEnvPanel
+                                context: UserDataHolder): PyAddNewEnvPanel?
 
 
   companion object {

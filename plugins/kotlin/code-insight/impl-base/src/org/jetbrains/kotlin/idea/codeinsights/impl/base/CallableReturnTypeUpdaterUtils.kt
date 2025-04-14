@@ -71,7 +71,7 @@ object CallableReturnTypeUpdaterUtils {
         declaration: KtCallableDeclaration,
         typeInfo: TypeInfo,
         project: Project,
-    ) = updateType(
+    ): Unit = updateType(
         declaration,
         typeInfo,
         project,
@@ -254,7 +254,7 @@ object CallableReturnTypeUpdaterUtils {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
+    fun getTypeInfo(declaration: KtCallableDeclaration, useTemplate: Boolean = true): TypeInfo {
 
         val calculateAllTypes = calculateAllTypes(declaration) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
@@ -282,7 +282,7 @@ object CallableReturnTypeUpdaterUtils {
             createByKtTypes(
                 approximatedDefaultType,
                 allTypes.drop(1), // The first type is always the default type so we drop it.
-                useTemplate = true
+                useTemplate,
             )
         }
         return calculateAllTypes ?: error("unable to calculate all types for $declaration")
@@ -355,7 +355,7 @@ object CallableReturnTypeUpdaterUtils {
                 is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
                 else -> KotlinBundle.message("specify.type.explicitly")
             }
-        )
+        ).withFixAllOption(this)
 
         override fun invoke(context: ActionContext, element: KtCallableDeclaration, updater: ModPsiUpdater): Unit =
             updateType(element, typeInfo, context.project, updater)

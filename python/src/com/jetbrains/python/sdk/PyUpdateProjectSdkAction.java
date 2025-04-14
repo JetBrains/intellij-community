@@ -10,12 +10,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PyUpdateProjectSdkAction extends DumbAwareAction {
-  private static final int N_REPEATS = 1;
-  private static final int TIMEOUT = 0; // ms
   private static final Logger LOG = Logger.getInstance(PyUpdateProjectSdkAction.class);
 
   @Override
@@ -23,16 +20,13 @@ public class PyUpdateProjectSdkAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      for (int i = 0; i < N_REPEATS; i++) {
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-          if (sdk == null) {
-            LOG.info("Skipping module " + module + " as not having a Python SDK");
-            continue;
-          }
-          PythonSdkUpdater.scheduleUpdate(sdk, project);
-          TimeoutUtil.sleep(TIMEOUT);
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+        if (sdk == null) {
+          LOG.info("Skipping module " + module + " as not having a Python SDK");
+          continue;
         }
+        PythonSdkUpdater.scheduleUpdate(sdk, project);
       }
     });
   }

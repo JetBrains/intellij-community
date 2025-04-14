@@ -1,4 +1,4 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 class Foo {
   static final double staticVar = 1.0;
   

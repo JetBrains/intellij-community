@@ -54,7 +54,6 @@ public abstract class VcsVFSListener implements Disposable {
 
   private final ProjectLevelVcsManager myVcsManager;
   private final VcsIgnoreManager myVcsIgnoreManager;
-  private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   protected static final class MovedFileInfo {
     public final @NotNull String myOldPath;
@@ -414,8 +413,6 @@ public abstract class VcsVFSListener implements Disposable {
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
-    myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
-
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
     myIgnoreFilesProcessor = createIgnoreFilesProcessor();
@@ -484,15 +481,11 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private boolean allowedDeletion(@NotNull VFileEvent event) {
-    if (myVcsFileListenerContextHelper.isDeletionContextEmpty()) return true;
-
-    return !myVcsFileListenerContextHelper.isDeletionIgnored(getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event));
   }
 
   private boolean allowedAddition(@NotNull VFileEvent event) {
-    if (myVcsFileListenerContextHelper.isAdditionContextEmpty()) return true;
-
-    return !myVcsFileListenerContextHelper.isAdditionIgnored(getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event));
   }
 
   @RequiresBackgroundThread

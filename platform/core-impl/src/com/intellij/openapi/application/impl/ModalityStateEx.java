@@ -13,6 +13,7 @@ import com.intellij.util.containers.WeakList;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public final class ModalityStateEx extends ModalityState {
     myModalEntities.addAll(modalEntities);
   }
 
-  private @NotNull List<@NotNull Object> getModalEntities() {
+  private @NotNull @Unmodifiable List<@NotNull Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 

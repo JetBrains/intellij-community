@@ -79,12 +79,20 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     assertExecutionTree(buildViewManager, treeTestPresentationChecker)
   }
 
-  fun assertSyncViewSelectedNode(nodeText: String, consoleText: String) {
-    assertExecutionTreeNode(syncViewManager, nodeText, { assertEquals(consoleText, it) }, null, true)
+  fun assertSyncViewNode(nodeText: String, consoleText: String) {
+    assertSyncViewNode(nodeText) { assertEquals(consoleText, it) }
   }
 
-  fun assertSyncViewSelectedNode(nodeText: String, assertSelected: Boolean, consoleTextChecker: (String?) -> Unit) {
-    assertExecutionTreeNode(syncViewManager, nodeText, consoleTextChecker, null, assertSelected)
+  fun assertSyncViewSelectedNode(nodeText: String, consoleText: String) {
+    assertSyncViewSelectedNode(nodeText) { assertEquals(consoleText, it) }
+  }
+
+  fun assertSyncViewNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
+    assertExecutionTreeNode(syncViewManager, nodeText, { consoleTextChecker(it!!) }, null, false)
+  }
+
+  fun assertSyncViewSelectedNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
+    assertExecutionTreeNode(syncViewManager, nodeText, { consoleTextChecker(it!!) }, null, true)
   }
 
   fun getSyncViewRerunActions(): List<AnAction> {
@@ -92,16 +100,28 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     return buildView.restartActions
   }
 
-  fun assertBuildViewSelectedNode(nodeText: String, consoleText: String, assertSelected: Boolean = true) {
-    assertExecutionTreeNode(buildViewManager, nodeText, { assertEquals(consoleText, it) }, null, assertSelected)
+  fun assertBuildViewNode(nodeText: String, consoleText: String) {
+    assertBuildViewNode(nodeText) { assertEquals(consoleText, it) }
   }
 
-  fun assertBuildViewSelectedNode(nodeText: String, assertSelected: Boolean, consoleTextChecker: (String?) -> Unit) {
-    assertExecutionTreeNode(buildViewManager, nodeText, consoleTextChecker, null, assertSelected)
+  fun assertBuildViewSelectedNode(nodeText: String, consoleText: String) {
+    assertBuildViewSelectedNode(nodeText) { assertEquals(consoleText, it) }
   }
 
-  fun assertBuildViewSelectedNodeConsole(nodeText: String, assertSelected: Boolean, consoleChecker: ((ExecutionConsole?) -> Unit)?) {
-    assertExecutionTreeNode(buildViewManager, nodeText, null, consoleChecker, assertSelected)
+  fun assertBuildViewNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
+    assertExecutionTreeNode(buildViewManager, nodeText, { consoleTextChecker(it!!) }, null, false)
+  }
+
+  fun assertBuildViewSelectedNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
+    assertExecutionTreeNode(buildViewManager, nodeText, { consoleTextChecker(it!!) }, null, true)
+  }
+
+  fun assertBuildViewNodeConsole(nodeText: String, consoleChecker: ((ExecutionConsole?) -> Unit)?) {
+    assertExecutionTreeNode(buildViewManager, nodeText, null, consoleChecker, false)
+  }
+
+  fun assertBuildViewSelectedNodeConsole(nodeText: String, consoleChecker: ((ExecutionConsole?) -> Unit)?) {
+    assertExecutionTreeNode(buildViewManager, nodeText, null, consoleChecker, true)
   }
 
   private fun assertExecutionTree(viewManager: TestViewManager, expected: String, ignoreTasksOrder: Boolean) {

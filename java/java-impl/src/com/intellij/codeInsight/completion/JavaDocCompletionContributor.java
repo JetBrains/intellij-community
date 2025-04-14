@@ -15,6 +15,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,7 +80,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
   };
   static final PsiElementPattern.Capture<PsiElement> THROWS_TAG_EXCEPTION = psiElement().inside(
     psiElement(PsiDocTag.class).withName(
-      string().oneOf(PsiKeyword.THROWS, "exception")));
+      string().oneOf(JavaKeywords.THROWS, "exception")));
 
   private static final PsiElementPattern<?, ?> SNIPPET_ATTRIBUTE_NAME = psiElement(PsiDocToken.class)
     .withElementType(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME).inside(psiElement(PsiSnippetAttribute.class));

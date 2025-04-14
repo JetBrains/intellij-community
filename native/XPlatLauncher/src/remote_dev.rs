@@ -451,10 +451,6 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
         remote_dev_env_var_values.push(("REMOTE_DEV_NON_INTERACTIVE", "1"))
     }
 
-    if let Some(os_spec) = get_os_specific_env_vars() {
-        remote_dev_env_var_values.extend(os_spec);
-    }
-
     // required for the most basic launch (e.g., showing help)
     // as there may be nothing on a user system and we'll crash
     let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
@@ -492,10 +488,6 @@ fn parse_bool_env_var_optional(var_name: &str) -> Result<Option<bool>> {
         Ok(s) if !s.is_empty() => bail!("Unsupported value '{}' for '{}' environment variable", s, var_name),
         _ => None,
     })
-}
-
-fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
-    None
 }
 
 #[cfg(not(target_os = "linux"))]

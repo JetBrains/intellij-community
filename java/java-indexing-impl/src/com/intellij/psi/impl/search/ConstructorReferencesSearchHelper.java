@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -97,7 +98,7 @@ class ConstructorReferencesSearchHelper {
     if (!DumbService.getInstance(project).runReadActionInSmartMode(
       () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
                                isStrictSignatureSearch,
-                               PsiKeyword.THIS, PsiKeyword.SUPER, processor))) {
+                               JavaKeywords.THIS, JavaKeywords.SUPER, processor))) {
       return false;
     }
 
@@ -106,7 +107,7 @@ class ConstructorReferencesSearchHelper {
       final PsiElement navigationElement = inheritor.getNavigationElement();
       if (navigationElement instanceof PsiClass) {
         return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                  isStrictSignatureSearch, PsiKeyword.SUPER, PsiKeyword.THIS, processor);
+                                  isStrictSignatureSearch, JavaKeywords.SUPER, JavaKeywords.THIS, processor);
       }
       return true;
     };

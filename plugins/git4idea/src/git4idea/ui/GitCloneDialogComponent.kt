@@ -2,7 +2,6 @@
 package git4idea.ui
 
 import com.intellij.application.subscribe
-import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ModalityState
@@ -13,15 +12,15 @@ import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR
+import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR
 import git4idea.GitUtil
-import git4idea.checkout.GitCheckoutProvider
-import git4idea.commands.Git
+import git4idea.checkout.GitCloneUtils
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
@@ -46,38 +45,15 @@ class GitCloneDialogComponent(project: Project,
   private var versionCheckState: VersionCheckState = VersionCheckState.NOT_CHECKED // accessed only on EDT
 
   override fun doClone(listener: CheckoutProvider.Listener) {
-    val parent = Paths.get(getDirectory()).toAbsolutePath().parent
-    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
-    if (destinationValidation != null) {
-      LOG.error("Unable to create destination directory", destinationValidation.message)
-      notifyCloneError(project)
-      return
-    }
-
-    val lfs = LocalFileSystem.getInstance()
-    var destinationParent = lfs.findFileByIoFile(parent.toFile())
-    if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-    }
-    if (destinationParent == null) {
-      LOG.error("Clone Failed. Destination doesn't exist")
-      notifyCloneError(project)
-      return
-    }
     val sourceRepositoryURL = getUrl()
-    val directoryName = Paths.get(getDirectory()).fileName.toString()
+    val directoryPath = getDirectory()
+    GitCloneUtils.clone(project, sourceRepositoryURL, directoryPath,
+                        (mainPanelCustomizer as GitCloneDialogMainPanelCustomizer).getShallowCloneOptions(), listener,
+                        CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR, CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR)
+
+    val parent = Paths.get(directoryPath).toAbsolutePath().parent
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(
-      project,
-      Git.getInstance(),
-      listener,
-      destinationParent,
-      sourceRepositoryURL,
-      directoryName,
-      parentDirectory,
-      (mainPanelCustomizer as GitCloneDialogMainPanelCustomizer).getShallowCloneOptions(),
-    )
     val rememberedInputs = GitRememberedInputs.getInstance()
     rememberedInputs.addUrl(sourceRepositoryURL)
     rememberedInputs.cloneParentDir = parentDirectory

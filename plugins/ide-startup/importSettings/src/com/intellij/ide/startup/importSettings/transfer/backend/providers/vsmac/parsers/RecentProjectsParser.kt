@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vsmac.parsers
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.parsers
 
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
@@ -7,7 +7,6 @@ import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
-import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -21,7 +20,7 @@ class RecentProjectsParser(private val settings: Settings) {
     private const val URI_FIELD = "URI"
   }
 
-  fun process(file: File): Unit = try {
+  fun process(file: Path): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = JDOMUtil.load(file)
@@ -42,7 +41,7 @@ class RecentProjectsParser(private val settings: Settings) {
         }
 
         val uri = recentItem.getChild(URI_FIELD)?.value ?: return@forEach
-        val path = Path.of(URI(uri)) ?: return@forEach
+        val path = Path.of(parseAsUriRelaxed(uri)) ?: return@forEach
 
         i -= 1000
         val rpmi = RecentProjectMetaInfo().apply {
@@ -61,4 +60,13 @@ class RecentProjectsParser(private val settings: Settings) {
       }
     }
   }
+}
+
+private fun parseAsUriRelaxed(input: String): URI {
+  val coerced =
+    if (input.startsWith("file:")) {
+      // In .NET, file URI could include spaces as-is, while Java URI insists on encoding them. Let's fix this:
+      input.replace(" ", "%20")
+    } else input
+  return URI(coerced)
 }

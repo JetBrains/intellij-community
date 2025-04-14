@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.java.library.JavaLibraryUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.Module;
@@ -48,7 +49,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
   }
 
   private static boolean isAssertThatCouldBeFail(PsiExpression position, boolean checkTrue) {
-    return (checkTrue ? PsiKeyword.TRUE : PsiKeyword.FALSE).equals(position.getText());
+    return (checkTrue ? JavaKeywords.TRUE : JavaKeywords.FALSE).equals(position.getText());
   }
 
   private static boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint assertHint) {
@@ -63,10 +64,10 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
       return false;
     }
     final String text = expression1.getText();
-    if (PsiKeyword.NULL.equals(text)) {
+    if (JavaKeywords.NULL.equals(text)) {
       return true;
     }
-    if (!PsiKeyword.TRUE.equals(text) && !PsiKeyword.FALSE.equals(text)) {
+    if (!JavaKeywords.TRUE.equals(text) && !JavaKeywords.FALSE.equals(text)) {
       return false;
     }
     final PsiType type = expression2.getType();

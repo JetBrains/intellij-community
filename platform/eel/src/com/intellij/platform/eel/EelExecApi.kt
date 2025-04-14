@@ -59,45 +59,6 @@ interface EelExecApi {
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
     val exe: String
-
-    @Deprecated("Use generated builders. See usages of com.intellij.platform.eel.GeneratedBuilder.Result")
-    interface Builder {
-      fun args(args: List<String>): Builder
-      fun env(env: Map<String, String>): Builder
-
-      /**
-       * When set pty, be sure to accept esc codes for a terminal you are emulating.
-       * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
-       * If not set, `xterm` will be used as a most popular one.
-       *
-       * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
-       */
-      fun ptyOrStdErrSettings(pty: PtyOrStdErrSettings?): Builder
-      fun workingDirectory(workingDirectory: EelPath?): Builder
-      fun build(): ExecuteProcessOptions
-    }
-
-    companion object {
-      /**
-       * Creates builder to start a process on a local or remote machine.
-       * stdin, stdout and stderr of the process are always forwarded, if there are.
-       *
-       * Beware that processes with [ExecuteProcessOptions.ptyOrStdErrSettings] usually don't have stderr.
-       * The [EelProcess.stderr] must be an empty stream in such case.
-       *
-       * By default, environment is always inherited, which may be unwanted. [ExecuteProcessOptions.env] allows
-       * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
-       * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
-       *
-       * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
-       * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
-       */
-      @Deprecated("Use generated builders. See usages of com.intellij.platform.eel.GeneratedBuilder.Result")
-      fun Builder(exe: String): Builder = ExecuteProcessBuilderImpl(exe)
-
-      @Deprecated("Use generated builders. See usages of com.intellij.platform.eel.GeneratedBuilder.Result")
-      fun Builder(exe: String, arg1: String, vararg args: String): Builder = Builder(exe).args(listOf(arg1, *args))
-    }
   }
 
   /**
@@ -151,60 +112,9 @@ interface EelExecApi {
   data object RedirectStdErr : PtyOrStdErrSettings
 }
 
-
-/** Docs: [EelExecApi.executeProcessBuilder] */
-@CheckReturnValue
-suspend inline fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecuteProcessOptions.Builder).() -> Unit): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
-  val builder = EelExecApi.ExecuteProcessOptions.Builder(exe).apply(setup).build()
-  return execute(builder)
+suspend fun EelExecApi.where(exe: String): EelPath? {
+  return this.findExeFilesInPath(exe).firstOrNull()
 }
 
 fun EelExecApi.execute(exe: String, vararg args: String): EelExecApiHelpers.Execute =
   execute(exe).args(*args)
-
-/** Docs: [EelExecApi.executeProcessBuilder] */
-@CheckReturnValue
-suspend fun EelExecApi.executeProcess(exe: String, vararg args: String): EelResult<EelProcess, EelExecApi.ExecuteProcessError> =
-  execute(EelExecApi.ExecuteProcessOptions.Builder(exe).args(listOf(*args)).build())
-
-fun EelExecApi.ExecuteProcessOptions.Builder.args(first: String, vararg other: String): EelExecApi.ExecuteProcessOptions.Builder =
-  args(listOf(first, *other))
-
-
-private data class ExecuteProcessBuilderImpl(
-  override val exe: String,
-  override var args: List<String> = listOf(),
-  override var env: Map<String, String> = mapOf(),
-  override var ptyOrStdErrSettings: PtyOrStdErrSettings? = null,
-  override var workingDirectory: EelPath? = null,
-) : EelExecApi.ExecuteProcessOptions, EelExecApi.ExecuteProcessOptions.Builder {
-
-  override fun toString(): String =
-    "GrpcExecuteProcessBuilder(" +
-    "exe='$exe', " +
-    "args=$args, " +
-    "env=$env, " +
-    "ptyOrStdErrSettings=$ptyOrStdErrSettings, " +
-    "workingDirectory=$workingDirectory" +
-    ")"
-
-  override fun args(args: List<String>): ExecuteProcessBuilderImpl = apply {
-    this.args = args
-  }
-
-  override fun env(env: Map<String, String>): ExecuteProcessBuilderImpl = apply {
-    this.env = env
-  }
-
-  override fun ptyOrStdErrSettings(ptyOrStderrSettings: PtyOrStdErrSettings?): ExecuteProcessBuilderImpl = apply {
-    this.ptyOrStdErrSettings = ptyOrStderrSettings
-  }
-
-  override fun workingDirectory(workingDirectory: EelPath?): ExecuteProcessBuilderImpl = apply {
-    this.workingDirectory = workingDirectory
-  }
-
-  override fun build(): EelExecApi.ExecuteProcessOptions {
-    return copy()
-  }
-}

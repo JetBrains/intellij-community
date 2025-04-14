@@ -123,6 +123,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   @Internal fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
     val path = getProjectPath(projectStoreBaseDir) ?: return null
+    return getProjectMetaInfo(path)
+  }
+
+  @Internal
+  fun getProjectMetaInfo(path: String): RecentProjectMetaInfo? {
     synchronized(stateLock) {
       return state.additionalInfo.get(path)
     }
@@ -835,11 +840,11 @@ int32 "extendedState"
   fun updateProjectColor(project: Project) {
     val info = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
     val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return
-    updateProjectColor(Path.of(projectPath), info)
+    updateProjectColor(projectPath, info)
   }
 
   @Internal
-  fun updateProjectColor(projectBasePath: Path, info: RecentProjectColorInfo) {
+  fun updateProjectColor(projectBasePath: String, info: RecentProjectColorInfo) {
     synchronized(stateLock) {
       getProjectMetaInfo(projectBasePath)?.colorInfo = info
       modCounter.increment()

@@ -102,6 +102,7 @@ LEADING_TOKEN_MARKDOWN="///"
 <DOC_TAG_VALUE> [\(] { yybegin(DOC_TAG_VALUE_IN_PAREN); return myTokenTypes.tagValueLParen(); }
 <DOC_TAG_VALUE_IN_PAREN> [\)] { yybegin(DOC_TAG_VALUE); return myTokenTypes.tagValueRParen(); }
 <DOC_TAG_VALUE> [#] { return myTokenTypes.tagValueSharp(); }
+<DOC_TAG_VALUE> [/] { return myTokenTypes.tagValueDiv(); }
 <DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> [,] { return myTokenTypes.tagValueComma(); }
 <DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }
 

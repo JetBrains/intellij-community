@@ -3,6 +3,7 @@ package com.intellij.python.community.impl.venv
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.HelperName
 import com.intellij.python.community.execService.WhatToExec
@@ -12,6 +13,7 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.validatePythonAndGetVersion
 import com.jetbrains.python.venvReader.Directory
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.file.Path
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Create virtual env in [venvDir] using [python].
@@ -42,7 +45,9 @@ suspend fun createVenv(
     }
     add(venvDir.pathString)
   }
-  execService.execGetStdout(WhatToExec.Helper(python, helper = VIRTUALENV_ZIPAPP_NAME), args).getOr { return it }
+  val version = python.validatePythonAndGetVersion().getOr { return failure(it.error) }
+  val helper = if (version.isPy3K) VIRTUALENV_ZIPAPP_NAME else PY_2_VIRTUALENV_ZIPAPP_NAME
+  execService.execGetStdout(WhatToExec.Helper(python, helper = helper), args, ExecOptions(timeout = 3.minutes)).getOr { return it }
 
 
   val venvPython = withContext(Dispatchers.IO) {
@@ -58,6 +63,9 @@ suspend fun createVenv(
   return Result.success(venvPython)
 }
 
-// venv helper
+// venv helper, update from https://bootstrap.pypa.io/virtualenv.pyz
 @Internal
-const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-20.24.5.pyz"
+const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-py3.pyz"
+
+// Ancient version, the last one compatible with Py2
+private const val PY_2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"

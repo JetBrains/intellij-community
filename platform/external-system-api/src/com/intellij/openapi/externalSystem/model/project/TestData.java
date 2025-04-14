@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -34,7 +35,7 @@ public final class TestData extends AbstractExternalEntityData {
     return testTaskName;
   }
 
-  public @NotNull Set<String> getSourceFolders() {
+  public @NotNull @Unmodifiable Set<String> getSourceFolders() {
     return Collections.unmodifiableSet(sourceFolders);
   }
 }

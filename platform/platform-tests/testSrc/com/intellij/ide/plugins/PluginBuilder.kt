@@ -68,6 +68,7 @@ class PluginBuilder private constructor() {
   private var packagePrefix: String? = null
   private val dependsTags = mutableListOf<DependsTag>()
   private var applicationListeners: String? = null
+  private var resourceBundleBaseName: String? = null
   private var actions: String? = null
   private val extensions = mutableListOf<ExtensionBlock>()
   private var extensionPoints: String? = null
@@ -76,9 +77,9 @@ class PluginBuilder private constructor() {
   private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
-  private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
-  private val pluginDependencies = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
-  private val incompatibleWith = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
+  private val dependencies = mutableListOf<ModuleDependencies.ModuleReference>()
+  private val pluginDependencies = mutableListOf<ModuleDependencies.PluginReference>()
+  private val incompatibleWith = mutableListOf<ModuleDependencies.PluginReference>()
 
   private data class SubDescriptor(val filename: String, val builder: PluginBuilder)
   private val subDescriptors = ArrayList<SubDescriptor>()
@@ -134,9 +135,6 @@ class PluginBuilder private constructor() {
              moduleFile: String = "$moduleName.xml"): PluginBuilder {
     subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
     content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
-
-    // remove default dependency on lang
-    moduleDescriptor.noDepends()
     return this
   }
 
@@ -146,22 +144,22 @@ class PluginBuilder private constructor() {
   }
 
   fun dependency(moduleName: String): PluginBuilder {
-    dependencies.add(ModuleDependenciesDescriptor.ModuleReference(moduleName))
+    dependencies.add(ModuleDependencies.ModuleReference(moduleName))
     return this
   }
 
   fun pluginDependency(pluginId: String): PluginBuilder {
-    pluginDependencies.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
+    pluginDependencies.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
   fun incompatibleWith(pluginId: String): PluginBuilder {
-    incompatibleWith.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
+    incompatibleWith.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
-  fun noDepends(): PluginBuilder {
-    dependsTags.clear()
+  fun resourceBundle(resourceBundle: String?): PluginBuilder {
+    resourceBundleBaseName = resourceBundle
     return this
   }
 
@@ -236,6 +234,7 @@ class PluginBuilder private constructor() {
       }
       extensionPoints?.let { append("<extensionPoints>$it</extensionPoints>") }
       applicationListeners?.let { append("<applicationListeners>$it</applicationListeners>") }
+      resourceBundleBaseName?.let { append("""<resource-bundle>$it</resource-bundle>""") }
       actions?.let { append("<actions>$it</actions>") }
 
       if (content.isNotEmpty()) {

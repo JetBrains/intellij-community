@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
@@ -766,7 +767,7 @@ public final class JavaReflectionReferenceUtil {
 
   public static final class ReflectiveSignature implements Comparable<ReflectiveSignature> {
     public static final ReflectiveSignature NO_ARGUMENT_CONSTRUCTOR_SIGNATURE =
-      new ReflectiveSignature(null, PsiKeyword.VOID, ArrayUtilRt.EMPTY_STRING_ARRAY);
+      new ReflectiveSignature(null, JavaKeywords.VOID, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     private final Icon myIcon;
     private final @NotNull String myReturnType;

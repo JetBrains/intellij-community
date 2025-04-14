@@ -1,21 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -30,23 +31,34 @@ public final class CompilerUtil {
 
   /**
    * A lightweight procedure which ensures that given roots exist in the VFS.
-   * No actual refresh is performed.
+   * No recursive refresh is performed.
    */
   public static void refreshOutputRoots(@NotNull Collection<String> outputRoots) {
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    Collection<VirtualFile> toRefresh = new HashSet<>();
+    var fs = LocalFileSystem.getInstance();
+    var toRefresh = new HashSet<VirtualFile>();
 
-    for (String outputRoot : outputRoots) {
-      FileAttributes attributes = FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(outputRoot));
-      VirtualFile vFile = fs.findFileByPath(outputRoot);
+    for (var outputRoot : outputRoots) {
+      var outputPath = (Path)null;
+      var attributes = (BasicFileAttributes)null;
+      try {
+        outputPath = Path.of(outputRoot);
+        attributes = Files.readAttributes(outputPath, BasicFileAttributes.class);
+      }
+      catch (IOException | InvalidPathException e) {
+        LOG.info(e);
+      }
+
+      var vFile = fs.findFileByPath(outputRoot);
       if (attributes != null && vFile == null) {
-        VirtualFile parent = fs.refreshAndFindFileByPath(PathUtil.getParentPath(outputRoot));
+        var parent = fs.refreshAndFindFileByNioFile(outputPath.getParent());
         if (parent != null && toRefresh.add(parent)) {
           parent.getChildren();
         }
       }
-      else if (attributes == null && vFile != null ||
-               attributes != null && attributes.isDirectory() != vFile.isDirectory()) {
+      else if (
+        attributes == null && vFile != null ||
+        attributes != null && attributes.isDirectory() != vFile.isDirectory()
+      ) {
         toRefresh.add(vFile);
       }
     }

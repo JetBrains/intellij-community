@@ -7,6 +7,7 @@ import icons.MavenIcons
 import org.jetbrains.idea.maven.indices.MavenIndexUtils
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -26,7 +27,7 @@ internal class RepositoriesNode(structure: MavenProjectsStructure, parent: Proje
   }
 
   fun updateRepositories(project: Project) {
-    val local = MavenProjectsManager.getInstance(project).repositoryPathUnderModalProgress
+    val local =  MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()
     val remotes = MavenIndexUtils.getRemoteRepositoriesNoResolve(project)
     myRepositoryNodes.clear()
     myRepositoryNodes.add(RepositoryNode(myMavenProjectsStructure, this, "local", local.toAbsolutePath().toString(), true))

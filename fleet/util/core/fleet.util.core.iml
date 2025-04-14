@@ -4,19 +4,19 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all" />
+          <option name="additionalArguments" value="-Xjvm-default=all -Xlambdas=class" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.20-RC2-0.3/expects-compiler-plugin-2.1.20-RC2-0.3.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.2/expects-compiler-plugin-2.1.20-0.2.jar</arg>
               </args>
             </arrayArg>
           </arrayArguments>
@@ -27,7 +27,6 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/srcJvmMain" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/srcCommonMain" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/gradlebuild/build" />
@@ -45,7 +44,7 @@
     <orderEntry type="module" module-name="fleet.multiplatform.shims" exported="" />
     <orderEntry type="module" module-name="fleet.fastutil" exported="" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
-    <orderEntry type="module" module-name="fleet.util.multiplatform" />
+    <orderEntry type="module" module-name="fleet.util.multiplatform" scope="PROVIDED" />
     <orderEntry type="library" name="de.cketti.unicode.kotlin.codepoints.jvm" level="project" />
   </component>
 </module>

@@ -16,18 +16,21 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
-public class XCopyValueAction extends XFetchValueActionBase {
+@ApiStatus.Internal
+public abstract class XCopyValueAction extends XFetchValueActionBase {
   @Override
   protected void handle(final Project project, final String value, XDebuggerTree tree) {
     if (tree == null) return;
@@ -44,5 +47,8 @@ public class XCopyValueAction extends XFetchValueActionBase {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  static class Simple extends XCopyValueAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   }
 }

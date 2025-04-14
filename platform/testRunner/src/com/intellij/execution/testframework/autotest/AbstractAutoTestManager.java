@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -199,7 +198,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     if (restarterListener != null) {
       clearRestarterListener(processHandler);
     }
-    restarterListener = new ProcessAdapter() {
+    restarterListener = new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         clearRestarterListener(processHandler);

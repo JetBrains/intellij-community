@@ -2,8 +2,8 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
@@ -27,13 +27,12 @@ import kotlin.coroutines.EmptyCoroutineContext
  * and cancels the coroutine when the UI component is hidden.
  * In particular, the component becomes hidden when it's removed from the hierarchy.
  *
- * The [block] may be executed at most one time.
  * The [block] is executed with the modality state of the [component][this].
  * This means that the [block] execution might happen in a different EDT event,
  * because it has to wait for the proper modality.
  *
- * Cancellation of the returned Job brings back the state before calling this function,
- * for instance, the Swing listener is removed.
+ * The [block] may be executed at most **one time**.
+ * It will not be restarted if canceled by the component becoming hidden.
  *
  * @param debugName name to use as [CoroutineName]
  * @param context additional context of the coroutine.
@@ -77,12 +76,11 @@ fun <C : Component> C.launchOnceOnShow(
  * The [block] is executed with the modality state of the [component][this].
  * This means that the [block] execution might happen in a different EDT event,
  * because it has to wait for the proper modality.
+ *
  * The [block] may be executed several times, and the next execution of [block] will start after the previous [block] completes.
  * This also means that the next [block] execution might happen in a different EDT event,
- * because it has to [wait for the completion][Job.join] of a previously scheduled one.
+ * because it has to [wait for the completion][Job.join] of a previously scheduled [block].
  *
- * Cancellation of the returned Job brings back the state before calling this function,
- * for instance, the Swing listener is removed.
  * Exceptions from the [block] don't cancel the returned Job.
  * If [block] throws an exception, it will be re-launched the next time the component becomes showing.
  *
@@ -184,7 +182,7 @@ private fun CoroutineScope.launchUiCoroutine(
   val effectiveContext = additionalContext
     .minusKey(CoroutineName)
     .minusKey(Job)
-    .plus(Dispatchers.EDT)
+    .plus(Dispatchers.UI)
     .plus(componentModality.asContextElement())
   return launch(effectiveContext, block = block)
 }

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.AddToInspectionOptionListFix;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
@@ -33,7 +34,7 @@ import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy.*;
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public final class ClassCanBeRecordInspection extends BaseInspection {
+public final class ClassCanBeRecordInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final List<String> IGNORED_ANNOTATIONS = List.of("io.micronaut.*", "jakarta.*", "javax.*", "org.springframework.*");
 
   public @NotNull ConversionStrategy myConversionStrategy = SHOW_AFFECTED_MEMBERS;
@@ -69,9 +70,10 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     List<LocalQuickFix> fixes = new SmartList<>();
-    fixes.add(new ConvertToRecordFix(true, suggestAccessorsRenaming, myIgnoredAnnotations));
-    boolean isOnTheFly = (boolean)infos[0];
-    if (isOnTheFly) {
+
+    boolean suggestQuickFix = (boolean)infos[0];
+    if (suggestQuickFix) {
+      fixes.add(new ConvertToRecordFix(suggestAccessorsRenaming, myIgnoredAnnotations));
       PsiClass psiClass = ObjectUtils.tryCast(infos[1], PsiClass.class);
       if (psiClass != null) {
         PsiAnnotation[] annotations = psiClass.getAnnotations();
@@ -136,14 +138,21 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
 
+      boolean suggestQuickFix = true;
       boolean noHighlightingButKeepFixAvailable = myConversionStrategy == DO_NOT_SUGGEST || myConversionStrategy == SILENTLY;
       boolean isConflictFree = ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty();
       ProblemHighlightType highlightType = GENERIC_ERROR_OR_WARNING;
-      if (!isConflictFree && noHighlightingButKeepFixAvailable) {
-        highlightType = INFORMATION;
+      if (!isConflictFree) {
+        if (noHighlightingButKeepFixAvailable) {
+          highlightType = INFORMATION;
+        }
+        if (!isOnTheFly()) {
+          // Don't suggest a quick-fix if there are conflicts and we're running in batch (=not "on the fly") mode
+          suggestQuickFix = false;
+        }
       }
 
-      registerError(classIdentifier, highlightType, isOnTheFly(), aClass);
+      registerError(classIdentifier, highlightType, suggestQuickFix, aClass);
     }
   }
 

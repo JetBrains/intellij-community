@@ -159,14 +159,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+    list.setBackground(getBackgroundColor());
 
     if (ExperimentalUI.isNewUI()) {
       myAdComponent = new NewUILookupAdvertiser();
     }
     else {
       myAdComponent = new Advertiser();
-      myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+      myAdComponent.setBackground(getBackgroundColor());
     }
 
     myOffsets = new LookupOffsets(this.editor);
@@ -178,6 +178,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     addListeners();
 
     myCreatedTimestamp = System.currentTimeMillis();
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull Color getBackgroundColor() {
+    return LookupCellRenderer.BACKGROUND_COLOR;
   }
 
   private CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
@@ -657,7 +662,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     fireItemSelected(item, completionChar);
   }
 
-  private void hideWithItemSelected(LookupElement lookupItem, char completionChar) {
+  @ApiStatus.Internal
+  public void hideWithItemSelected(LookupElement lookupItem, char completionChar) {
     fireBeforeItemSelected(lookupItem, completionChar);
     doHide(false, true);
     fireItemSelected(lookupItem, completionChar);
@@ -729,10 +735,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
     if (isVisible() && editor.getContentComponent().isShowing()) {
-      HintManagerImpl.updateLocation(this, editor, myUi.calculatePosition().getLocation());
+      updateLocation(myUi.calculatePosition().getLocation());
     }
     checkValid();
     return true;
+  }
+
+  @ApiStatus.Internal
+  protected void updateLocation(Point p) {
+    HintManagerImpl.updateLocation(this, editor, p);
   }
 
   @Override
@@ -801,6 +812,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     Boolean showBottomPanel = editor.getUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI);
     myUi = new LookupUi(this, myAdComponent, list, showBottomPanel == null || showBottomPanel);
     myUi.setCalculating(myCalculating);
+    doShowLookupInternal();
+
+    if (!isVisible() || !list.isShowing()) {
+      hideLookup(false);
+      return false;
+    }
+
+    return true;
+  }
+
+  @ApiStatus.Internal
+  protected void doShowLookupInternal() {
     Point p = myUi.calculatePosition().getLocation();
     if (ScreenReader.isActive()) {
       list.setFocusable(true);
@@ -833,13 +856,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     catch (Exception e) {
       LOG.error(e);
     }
-
-    if (!isVisible() || !list.isShowing()) {
-      hideLookup(false);
-      return false;
-    }
-
-    return true;
   }
 
   private void fireLookupShown() {

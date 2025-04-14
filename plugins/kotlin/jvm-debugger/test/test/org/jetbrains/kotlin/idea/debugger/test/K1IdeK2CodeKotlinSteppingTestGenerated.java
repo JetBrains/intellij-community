@@ -290,6 +290,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/stepInto/interfacesJvmDefaultDisable.kt");
         }
 
+        @TestMetadata("localDelegatedPropertyAndClinit.kt")
+        public void testLocalDelegatedPropertyAndClinit() throws Exception {
+            runTest("testData/stepping/stepInto/localDelegatedPropertyAndClinit.kt");
+        }
+
         @TestMetadata("localFun.kt")
         public void testLocalFun() throws Exception {
             runTest("testData/stepping/stepInto/localFun.kt");
@@ -622,6 +627,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             @TestMetadata("inlineInObject.kt")
             public void testInlineInObject() throws Exception {
                 runTest("testData/stepping/stepOver/inlineInObject.kt");
+            }
+
+            @TestMetadata("inplaceArgumentLineNum.kt")
+            public void testInplaceArgumentLineNum() throws Exception {
+                runTest("testData/stepping/stepOver/inplaceArgumentLineNum.kt");
             }
 
             @TestMetadata("kt14869.kt")

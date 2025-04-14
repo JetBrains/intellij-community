@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -211,7 +212,7 @@ final class JavaErrorFormatUtil {
   }
 
   static @NotNull String formatType(@Nullable PsiType type) {
-    return type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+    return type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
   static @NlsSafe @NotNull String format(@NotNull PsiElement element) {

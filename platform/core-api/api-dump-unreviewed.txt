@@ -836,6 +836,7 @@ com.intellij.lexer.DocCommentTokenTypes
 - a:tagName():com.intellij.psi.tree.IElementType
 - tagValueColon():com.intellij.psi.tree.IElementType
 - a:tagValueComma():com.intellij.psi.tree.IElementType
+- tagValueDiv():com.intellij.psi.tree.IElementType
 - a:tagValueGT():com.intellij.psi.tree.IElementType
 - a:tagValueLParen():com.intellij.psi.tree.IElementType
 - a:tagValueLT():com.intellij.psi.tree.IElementType
@@ -1376,7 +1377,6 @@ f:com.intellij.openapi.components.ServiceBean
 f:com.intellij.openapi.components.ServiceDescriptor
 - f:client:com.intellij.openapi.client.ClientKind
 - f:headlessImplementation:java.lang.String
-- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
 - f:overrides:Z
 - f:serviceImplementation:java.lang.String
 - f:serviceInterface:java.lang.String
@@ -4380,6 +4380,7 @@ com.intellij.psi.codeStyle.DocCommentSettings
 - a:isLeadingAsteriskEnabled():Z
 - a:isRemoveEmptyTags():Z
 - a:setDocFormattingEnabled(Z):V
+- setRemoveEmptyLines(Z):V
 - a:setRemoveEmptyTags(Z):V
 f:com.intellij.psi.codeStyle.DocCommentSettings$Defaults
 - com.intellij.psi.codeStyle.DocCommentSettings

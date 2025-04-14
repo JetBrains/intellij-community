@@ -140,6 +140,7 @@ internal class GitBranchesTreePopup(
     @JvmStatic
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
       return GitBranchesTreePopup(project, createBranchesTreePopupStep(project, selectedRepository))
+        .apply { setIsMovable(true) }
     }
 
     @VisibleForTesting

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.concurrency.Job;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
@@ -33,8 +32,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   @ApiStatus.Internal
   protected final @NotNull TextRange myRestrictRange;
   private final HighlightingSession myHighlightingSession;
-  @ApiStatus.Internal
-  private volatile Job myJob;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
                                                    @NotNull Document document,
@@ -93,8 +90,12 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
         collectInformationWithProgress(progress);
       }
       else {
-        // we're running the second copy - wait for the first to complete instead of running it again
-        waitMyJob(progress, session.getProgressIndicator());
+        // It seems we're running the second copy of this pass - there must be several file editors opened for the same document.
+        // Just skip all the work, to avoid doing it twice and step on each other toes, that would cause stuck/leaking highlighters.
+        // When the first copy is finished, all other editors will be repainted with the corresponding highlighters.
+        // Do not wait for the first copy to complete, to avoid thread starvation and deadlocks,
+        // when the first copy decides to paralellize stuff and FJP tries to steal other tasks and invokes this method
+        // and blocks waiting for the first copy to complete, which it'll never do because it's waiting.
       }
     }
     finally {
@@ -179,29 +180,5 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   protected @NotNull HighlightingSession getHighlightingSession() {
     return myHighlightingSession;
-  }
-
-  private void waitMyJob(@NotNull ProgressIndicator progress1, @NotNull ProgressIndicator progress2) {
-    Job job;
-    // a tiny data race is possible between the job is submitted in PassExecutorService.submit and myJov field is updated
-    while ((job = myJob) == null) {
-      progress1.checkCanceled();
-      progress2.checkCanceled();
-    }
-    while(!job.isDone() && !job.isCanceled()) {
-      try {
-        job.waitForCompletion(10);
-      }
-      catch (Exception e) {
-        break;
-      }
-      progress1.checkCanceled();
-      progress2.checkCanceled();
-    }
-  }
-
-  @ApiStatus.Internal
-  public void saveJob(@NotNull Job job) {
-    myJob = job;
   }
 }

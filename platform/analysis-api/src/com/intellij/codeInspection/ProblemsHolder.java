@@ -190,7 +190,7 @@ public class ProblemsHolder {
     registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, myOnTheFly, fixes));
   }
 
-  public @NotNull List<ProblemDescriptor> getResults() {
+  public @NotNull @Unmodifiable List<ProblemDescriptor> getResults() {
     return myProblems;
   }
 

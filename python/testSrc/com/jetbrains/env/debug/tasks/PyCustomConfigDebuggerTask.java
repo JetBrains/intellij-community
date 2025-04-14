@@ -11,11 +11,14 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.LockSafeSemaphore;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -48,6 +51,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
   private boolean myWaitForTermination = true;
   private final @NotNull StringBuilder myOutputBuilder = new StringBuilder();
   private final @NotNull StringBuilder myStdErrBuilder = new StringBuilder();
+  private Disposable myThreadLeakDisposable;
 
   protected PyCustomConfigDebuggerTask(@Nullable String relativeTestDataPath) {
     super(relativeTestDataPath);
@@ -62,6 +66,9 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
 
   @Override
   public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+    myThreadLeakDisposable = Disposer.newDisposable();
+    ThreadLeakTracker.longRunningThreadCreated(myThreadLeakDisposable, "");
+
     if (Registry.is("python.debug.use.single.port")) {
       runTestInClientMode(sdkHome, existingSdk);
     }
@@ -115,7 +122,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
               myDebugProcess =
                 new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
                                    isMultiprocessDebug());
-              myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+              myDebugProcess.getProcessHandler().addProcessListener(new ProcessListener() {
                 @Override
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                   myOutputBuilder.append(event.getText());
@@ -207,7 +214,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
             myDebugProcess =
               new PyDebugProcess(session, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
                                  "localhost", port);
-            myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+            myDebugProcess.getProcessHandler().addProcessListener(new ProcessListener() {
               @Override
               public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 myOutputBuilder.append(event.getText());
@@ -345,6 +352,17 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
   protected void toggleBreakpoints(@NotNull String file, int... lines) {
     for (int line : lines) {
       toggleBreakpoint(file, line);
+    }
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      super.tearDown();
+    } finally {
+      if (myThreadLeakDisposable != null) {
+        Disposer.dispose(myThreadLeakDisposable);
+      }
     }
   }
 }

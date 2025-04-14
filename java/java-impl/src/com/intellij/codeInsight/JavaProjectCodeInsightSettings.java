@@ -120,16 +120,14 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
   }
 
   @Override
-  public @NotNull OptionController getOptionController() {
+  public @NotNull OptPane getOptionsPane() {
     String autoStaticImportMessage =
       JavaBundle.message("auto.static.import.comment");
     String excludeStaticImportMessage =
       JavaBundle.message("exclude.from.imports.no.exclusions");
-    return OptionContainer.super.getOptionController()
-      .withRootPane(() -> OptPane.pane(
-        OptPane.stringList("includedAutoStaticNames", autoStaticImportMessage),
-        OptPane.stringList("excludedNames", excludeStaticImportMessage))
-      );
+    return OptPane.pane(
+      OptPane.stringList("includedAutoStaticNames", autoStaticImportMessage),
+      OptPane.stringList("excludedNames", excludeStaticImportMessage));
   }
 
   /**

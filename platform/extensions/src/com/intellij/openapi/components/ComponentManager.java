@@ -11,10 +11,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +87,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, ClientKind client) {
+  default @NotNull @Unmodifiable <T> List<T> getServices(@NotNull Class<T> serviceClass, ClientKind client) {
     T service = getService(serviceClass);
     //noinspection SSBasedInspection
     return service == null ? Collections.emptyList() : Collections.singletonList(service);

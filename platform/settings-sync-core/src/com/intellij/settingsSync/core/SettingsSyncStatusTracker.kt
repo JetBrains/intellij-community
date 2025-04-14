@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.Nls
+import java.awt.Component
 import java.util.*
 
 @Service
@@ -53,7 +54,7 @@ class SettingsSyncStatusTracker {
     eventDispatcher.multicaster.syncStatusChanged()
   }
 
-  fun setActionRequired(message: @Nls String, actionTitle: @Nls String, action: suspend () -> Unit) {
+  fun setActionRequired(message: @Nls String, actionTitle: @Nls String, action: suspend (Component?) -> Unit) {
     lastSyncTime = -1
     state = SyncStatus.ActionRequired(message, actionTitle, action)
     eventDispatcher.multicaster.syncStatusChanged()
@@ -93,8 +94,8 @@ class SettingsSyncStatusTracker {
      */
     class ActionRequired(val message: @Nls String,
                          val actionTitle: @Nls String,
-                         private val action: suspend() -> Unit): SyncStatus() {
-      suspend fun execute() = action()
+                         private val action: suspend(Component?) -> Unit): SyncStatus() {
+      suspend fun execute(component: Component?) = action(component)
     }
   }
 }

@@ -1,78 +1,50 @@
+- name: lib/ai.grazie.nlp.detect.jar
+  library: ai.grazie.nlp.detect
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0/nlp-patterns-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0/nlp-tokenizer-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0/nlp-similarity-jvm-0.jar
+- name: lib/ai.grazie.nlp.langs.jar
+  library: ai.grazie.nlp.langs
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
+  reason: <- intellij.grazie.core
+- name: lib/ai.grazie.utils.lucene.lt.compatibility.jar
+  library: ai.grazie.utils.lucene.lt.compatibility
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility/0/utils-lucene-lt-compatibility-0.jar
+- name: lib/com.carrotsearch-hppc.jar
+  library: com.carrotsearch:hppc
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/com/carrotsearch/hppc/0/hppc-0.jar
+- name: lib/com.hankcs-aho-corasick-double-array-trie.jar
+  library: com.hankcs:aho-corasick-double-array-trie
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1/aho-corasick-double-array-trie-1.jar
+- name: lib/com.vdurmont-emoji-java.jar
+  library: com.vdurmont:emoji-java
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5/emoji-java-5.jar
+- name: lib/commons-text.jar
+  library: commons-text
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
+  reason: <- intellij.grazie.core
 - name: lib/grazie.jar
-  projectLibraries:
-  - name: ai.grazie.nlp.langs
-    files:
-    - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
-    reason: <- intellij.grazie.core
-  - name: commons-text
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
-    reason: <- intellij.grazie.core
-  - name: grpc-core
-    files:
-    - name: $MAVEN_REPOSITORY$/io/grpc/grpc-core/1/grpc-core-1.jar
-    - name: $MAVEN_REPOSITORY$/io/grpc/grpc-api/1/grpc-api-1.jar
-    - name: $MAVEN_REPOSITORY$/com/google/android/annotations/4/annotations-4.jar
-    - name: $MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1/animal-sniffer-annotations-1.jar
-    - name: $MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0/perfmark-api-0.jar
-    - name: $MAVEN_REPOSITORY$/io/grpc/grpc-context/1/grpc-context-1.jar
-    reason: <- intellij.grazie.core
-  - name: grpc-protobuf
-    files:
-    - name: $MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1/grpc-protobuf-1.jar
-    - name: $MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2/proto-google-common-protos-2.jar
-    - name: $MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1/grpc-protobuf-lite-1.jar
-    reason: <- intellij.grazie.core
-  - name: grpc-stub
-    files:
-    - name: $MAVEN_REPOSITORY$/io/grpc/grpc-stub/1/grpc-stub-1.jar
-    reason: <- intellij.grazie.core
   modules:
   - name: intellij.grazie
   - name: intellij.grazie.core
     reason: <- intellij.grazie
-    libraries:
-      org.jetbrains.intellij.deps.languagetool:languagetool-core:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6/languagetool-core-6.jar
-      - name: $MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1/openregex-1.jar
-      org.jetbrains.intellij.deps.languagetool:language-en:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6/language-en-6.jar
-      - name: $MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0/english-pos-dict-0.jar
-      net.loomchild:segment:2.0.1:
-      - name: $MAVEN_REPOSITORY$/net/loomchild/segment/2/segment-2.jar
-      org.carrot2:morfologik-stemming:
-      - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2/morfologik-stemming-2.jar
-      org.carrot2:morfologik-speller:
-      - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2/morfologik-speller-2.jar
-      com.carrotsearch:hppc:
-      - name: $MAVEN_REPOSITORY$/com/carrotsearch/hppc/0/hppc-0.jar
-      org.carrot2:morfologik-fsa-builders:
-      - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2/morfologik-fsa-builders-2.jar
-      org.carrot2:morfologik-fsa:
-      - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2/morfologik-fsa-2.jar
-      tech.uom.lib:uom-lib-common:1.1:
-      - name: $MAVEN_REPOSITORY$/tech/uom/lib/uom-lib-common/1/uom-lib-common-1.jar
-      tech.units:indriya:1.3:
-      - name: $MAVEN_REPOSITORY$/tech/units/indriya/1/indriya-1.jar
-      javax.measure:unit-api:1.0:
-      - name: $MAVEN_REPOSITORY$/javax/measure/unit-api/1/unit-api-1.jar
-      com.hankcs:aho-corasick-double-array-trie:
-      - name: $MAVEN_REPOSITORY$/com/hankcs/aho-corasick-double-array-trie/1/aho-corasick-double-array-trie-1.jar
-      com.vdurmont:emoji-java:
-      - name: $MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5/emoji-java-5.jar
-      org.json:json:
-      - name: $MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar
-      ai.grazie.utils.lucene.lt.compatibility:
-      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility/0/utils-lucene-lt-compatibility-0.jar
-      ai.grazie.nlp.detect:
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0/nlp-patterns-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0/nlp-tokenizer-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0/nlp-similarity-jvm-0.jar
   contentModules:
   - name: intellij.grazie.java
   - name: intellij.grazie.json
@@ -80,3 +52,82 @@
   - name: intellij.grazie.properties
   - name: intellij.grazie.xml
   - name: intellij.grazie.yaml
+- name: lib/grpc-core.jar
+  library: grpc-core
+  files:
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-core/1/grpc-core-1.jar
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-api/1/grpc-api-1.jar
+  - name: $MAVEN_REPOSITORY$/com/google/android/annotations/4/annotations-4.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1/animal-sniffer-annotations-1.jar
+  - name: $MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0/perfmark-api-0.jar
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-context/1/grpc-context-1.jar
+  reason: <- intellij.grazie.core
+- name: lib/grpc-protobuf.jar
+  library: grpc-protobuf
+  files:
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1/grpc-protobuf-1.jar
+  - name: $MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2/proto-google-common-protos-2.jar
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1/grpc-protobuf-lite-1.jar
+  reason: <- intellij.grazie.core
+- name: lib/grpc-stub.jar
+  library: grpc-stub
+  files:
+  - name: $MAVEN_REPOSITORY$/io/grpc/grpc-stub/1/grpc-stub-1.jar
+  reason: <- intellij.grazie.core
+- name: lib/javax.measure-unit-api.jar
+  library: javax.measure:unit-api:1.0
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/javax/measure/unit-api/1/unit-api-1.jar
+- name: lib/net.loomchild-segment.jar
+  library: net.loomchild:segment:2.0.1
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/net/loomchild/segment/2/segment-2.jar
+- name: lib/org.carrot2-morfologik-fsa-builders.jar
+  library: org.carrot2:morfologik-fsa-builders
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2/morfologik-fsa-builders-2.jar
+- name: lib/org.carrot2-morfologik-fsa.jar
+  library: org.carrot2:morfologik-fsa
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2/morfologik-fsa-2.jar
+- name: lib/org.carrot2-morfologik-speller.jar
+  library: org.carrot2:morfologik-speller
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2/morfologik-speller-2.jar
+- name: lib/org.carrot2-morfologik-stemming.jar
+  library: org.carrot2:morfologik-stemming
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2/morfologik-stemming-2.jar
+- name: lib/org.jetbrains.intellij.deps.languagetool-language-en.jar
+  library: org.jetbrains.intellij.deps.languagetool:language-en
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6/language-en-6.jar
+  - name: $MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0/english-pos-dict-0.jar
+- name: lib/org.jetbrains.intellij.deps.languagetool-languagetool-core.jar
+  library: org.jetbrains.intellij.deps.languagetool:languagetool-core
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6/languagetool-core-6.jar
+  - name: $MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1/openregex-1.jar
+- name: lib/org.json-json.jar
+  library: org.json:json
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar
+- name: lib/tech.units-indriya.jar
+  library: tech.units:indriya:1.3
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/tech/units/indriya/1/indriya-1.jar
+- name: lib/tech.uom.lib-uom-lib-common.jar
+  library: tech.uom.lib:uom-lib-common:1.1
+  module: intellij.grazie.core
+  files:
+  - name: $MAVEN_REPOSITORY$/tech/uom/lib/uom-lib-common/1/uom-lib-common-1.jar

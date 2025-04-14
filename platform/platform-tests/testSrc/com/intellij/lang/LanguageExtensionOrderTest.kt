@@ -53,7 +53,7 @@ class LanguageExtensionOrderTest : LightPlatformTestCase() {
       val pluginDescriptor: IdeaPluginDescriptorImpl =
         readDescriptorForTest(Path.of(""), true, moduleXml.toByteArray(StandardCharsets.UTF_8),
                                                      myDescriptor.pluginId)
-      pluginDescriptor.registerExtensions(area.nameToPointMap, pluginDescriptor.appContainerDescriptor, null)
+      pluginDescriptor.registerExtensions(area.nameToPointMap, null)
     }
   }
 

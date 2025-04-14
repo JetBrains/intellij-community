@@ -97,8 +97,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -1220,13 +1220,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
     /* save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
     popup.setUserData(addCodePreview ? Arrays.asList(filteringGroup, contentSplitter) : Collections.singletonList(filteringGroup));
-    popup.setDataProvider(dataId -> {
-      if (UsageView.USAGE_VIEW_SETTINGS_KEY.is(dataId)) {
-        return usageView.getUsageViewSettings();
-      }
-      else {
-        return null;
-      }
+    popup.setUiDataProvider(sink -> {
+      sink.set(UsageView.USAGE_VIEW_SETTINGS_KEY, usageView.getUsageViewSettings());
     });
     popupRef.set(popup);
     return popup;

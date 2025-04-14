@@ -46,14 +46,17 @@ public open class ScrollSyncMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling, enabled, onUrlClick, onTextClick)
+                    super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
                     return
                 }
-        AutoScrollableBlock(block, synchronizer) { super.render(block, styling, enabled, onUrlClick, onTextClick) }
+        AutoScrollableBlock(block, synchronizer) {
+            super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+        }
     }
 
     @Composable
@@ -63,22 +66,30 @@ public open class ScrollSyncMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling, enabled, onUrlClick, onTextClick)
+                    super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
                     return
                 }
-        AutoScrollableBlock(block, synchronizer) { super.render(block, styling, enabled, onUrlClick, onTextClick) }
+        AutoScrollableBlock(block, synchronizer) {
+            super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+        }
     }
 
     @Composable
-    override fun renderWithMimeType(block: FencedCodeBlock, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
+    override fun renderCodeWithMimeType(
+        block: FencedCodeBlock,
+        mimeType: MimeType,
+        styling: MarkdownStyling.Code.Fenced,
+        enabled: Boolean,
+    ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.renderWithMimeType(block, mimeType, styling)
+                    super.renderCodeWithMimeType(block, mimeType, styling, enabled)
                     return
                 }
 
@@ -100,16 +111,22 @@ public open class ScrollSyncMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: IndentedCodeBlock, styling: MarkdownStyling.Code.Indented) {
+    override fun render(
+        block: IndentedCodeBlock,
+        styling: MarkdownStyling.Code.Indented,
+        enabled: Boolean,
+        modifier: Modifier,
+    ) {
         val scrollingSynchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling)
+                    super.render(block, styling, enabled, modifier)
                     return
                 }
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier.background(styling.background, styling.shape)
+            modifier
+                .background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {

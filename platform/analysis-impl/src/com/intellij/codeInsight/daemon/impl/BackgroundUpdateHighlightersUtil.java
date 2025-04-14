@@ -311,7 +311,8 @@ public final class BackgroundUpdateHighlightersUtil {
     TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
     highlighter.setTextAttributesKey(textAttributesKey);
 
-    if (infoAttributes != null) {
+    if (infoAttributes == TextAttributes.ERASE_MARKER ||
+        infoAttributes != null && !infoAttributes.equals(highlighter.getTextAttributes(colorsScheme))) {
       highlighter.setTextAttributes(infoAttributes);
     }
 

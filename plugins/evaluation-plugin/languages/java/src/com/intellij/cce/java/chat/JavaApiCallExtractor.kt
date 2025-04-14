@@ -43,7 +43,7 @@ class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeInt
     return smartReadActionBlocking(project) {
       val method = psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }
                    ?: return@smartReadActionBlocking emptyList()
-      extractCalledApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
+      extractCalledInternalApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
     }
   }
 
@@ -88,7 +88,11 @@ private fun PsiFile.findMethodsByName(methodName: String): List<PsiMethod> {
 
 fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
   val apiMethods = extractCalledApiMethods(psiElement)
-  return apiMethods.filter { isInternalApiMethod(it) }
+  return apiMethods.filter {
+    val containingFile = it.containingFile
+    val isSameFile = containingFile != null && containingFile == psiElement.containingFile
+    return@filter isSameFile || isInternalApiMethod(it)
+  }
 }
 
 private fun isInternalApiMethod(method: PsiMethod): Boolean {

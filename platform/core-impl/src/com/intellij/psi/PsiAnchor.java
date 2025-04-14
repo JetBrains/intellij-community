@@ -181,7 +181,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
   private static final class TreeRangeReference extends PsiAnchor {
     private final VirtualFile myVirtualFile;
-    private final @NotNull CodeInsightContext myContext; // todo ijpl-339 object layout got bigger +8 bytes
+    private final @NotNull CodeInsightContext myContext; // todo IJPL-339 object layout got bigger +8 bytes
     private final Project myProject;
     private final Identikit myInfo;
     private final int myStartOffset;

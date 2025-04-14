@@ -1,8 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import java.io.File
-import java.nio.channels.FileChannel
 import java.nio.file.AccessDeniedException
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -10,15 +8,11 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.util.*
+import java.util.ArrayDeque
 import java.util.zip.Deflater
-
-val W_OVERWRITE: EnumSet<StandardOpenOption> =
-  EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
 
 enum class AddDirEntriesMode {
   NONE,
@@ -40,9 +34,8 @@ fun zipWithCompression(
     Files.createDirectories(targetFile.parent)
   }
   ZipFileWriter(
-    channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
+    zipWriter(targetFile = targetFile, packageIndexBuilder = null, overwrite = overwrite),
     deflater = if (compressionLevel == Deflater.NO_COMPRESSION) null else Deflater(compressionLevel, true),
-    zipIndexWriter = ZipIndexWriter(indexWriter = null),
   ).use { zipFileWriter ->
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
       archiveDirToZipWriter(
@@ -68,9 +61,7 @@ fun zipWithCompression(
       }
 
       archiveDirToZipWriter(zipFileWriter = zipFileWriter, fileAdded = fileAdded, dirs = dirs)
-      for (dir in dirNameSetToAdd) {
-        zipFileWriter.dir(name = dir)
-      }
+      zipFileWriter.resultStream.addDirEntries(dirNameSetToAdd)
     }
   }
 }
@@ -81,41 +72,72 @@ fun zip(
   dirs: Map<Path, String>,
   addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY,
   overwrite: Boolean = false,
+  useCrc: Boolean = true,
   fileFilter: ((name: String) -> Boolean)? = null,
 ) {
   Files.createDirectories(targetFile.parent)
-  val packageIndexBuilder = if (addDirEntriesMode == AddDirEntriesMode.NONE) null else PackageIndexBuilder()
-  ZipFileWriter(
-    channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
-    zipIndexWriter = ZipIndexWriter(indexWriter = packageIndexBuilder?.indexWriter),
-  ).use { zipFileWriter ->
-    if (packageIndexBuilder == null) {
+  if (addDirEntriesMode == AddDirEntriesMode.NONE) {
+    ZipFileWriter(zipWriter(targetFile, null, overwrite), useCrc = useCrc).use { zipFileWriter ->
       archiveDirToZipWriter(
         zipFileWriter = zipFileWriter,
         fileAdded = if (fileFilter == null) null else { name, _ -> fileFilter(name) },
         dirs = dirs,
       )
     }
-    else {
-      archiveDirToZipWriter(
-        zipFileWriter = zipFileWriter,
-        fileAdded = { name, _ ->
-          if (fileFilter != null && !fileFilter(name)) {
-            false
-          }
-          else {
-            packageIndexBuilder.addFile(name, addClassDir = addDirEntriesMode == AddDirEntriesMode.ALL)
-            true
-          }
-        },
-        dirs = dirs,
-      )
-      packageIndexBuilder.writePackageIndex(writer = zipFileWriter, addDirEntriesMode = addDirEntriesMode)
-    }
+  }
+  else {
+    doZipWithPackageIndex(
+      targetFile = targetFile,
+      overwrite = overwrite,
+      useCrc = useCrc,
+      fileFilter = fileFilter,
+      addDirEntriesMode = addDirEntriesMode,
+      dirs = dirs,
+    )
   }
 }
 
-private fun archiveDirToZipWriter(
+fun zipWithPackageIndex(targetFile: Path, dir: Path) {
+  Files.createDirectories(targetFile.parent)
+
+  doZipWithPackageIndex(
+    targetFile = targetFile,
+    overwrite = false,
+    useCrc = true,
+    fileFilter = null,
+    addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY,
+    dirs = java.util.Map.of(dir, ""),
+  )
+}
+
+private fun doZipWithPackageIndex(
+  targetFile: Path,
+  overwrite: Boolean,
+  useCrc: Boolean,
+  fileFilter: ((String) -> Boolean)?,
+  addDirEntriesMode: AddDirEntriesMode,
+  dirs: Map<Path, String>,
+) {
+  val packageIndexBuilder = PackageIndexBuilder(addDirEntriesMode)
+  ZipFileWriter(zipWriter(targetFile, packageIndexBuilder, overwrite), useCrc = useCrc).use { zipFileWriter ->
+    archiveDirToZipWriter(
+      zipFileWriter = zipFileWriter,
+      fileAdded = { name, _ ->
+        if (fileFilter != null && !fileFilter(name)) {
+          false
+        }
+        else {
+          packageIndexBuilder.addFile(name)
+          true
+        }
+      },
+      dirs = dirs,
+    )
+  }
+}
+
+// visible for tests
+fun archiveDirToZipWriter(
   zipFileWriter: ZipFileWriter,
   fileAdded: ((String, Path) -> Boolean)?,
   dirs: Map<Path, String>,
@@ -156,7 +178,8 @@ class ZipArchiver(@JvmField val fileAdded: ((String, Path) -> Boolean)? = null) 
   }
 
   fun addFile(file: Path, zipCreator: ZipFileWriter) {
-    val name = archivePrefix + file.toString().substring(localPrefixLength).replace(File.separatorChar, '/')
+    @Suppress("IO_FILE_USAGE")
+    val name = archivePrefix + file.toString().substring(localPrefixLength).replace(java.io.File.separatorChar, '/')
     if (fileAdded == null || fileAdded.invoke(name, file)) {
       zipCreator.file(name, file)
     }
@@ -206,11 +229,12 @@ inline fun archiveDir(startDir: Path, addFile: (file: Path) -> Unit, excludes: L
   }
 }
 
-inline fun writeZipUsingTempFile(file: Path, indexWriter: IkvIndexBuilder?, task: (ZipArchiveOutputStream) -> Unit) {
+@Suppress("unused")
+inline fun writeZipWithoutChecksumUsingTempFile(file: Path, packageIndexBuilder: PackageIndexBuilder?, task: (ZipArchiveOutputStream) -> Unit) {
   writeFileUsingTempFile(file) { tempFile ->
     ZipArchiveOutputStream(
-      channel = FileChannel.open(tempFile, WRITE),
-      zipIndexWriter = ZipIndexWriter(indexWriter),
+      dataWriter = fileDataWriter(file = tempFile, overwrite = false, isTemp = true),
+      zipIndexWriter = ZipIndexWriter(packageIndexBuilder),
     ).use {
       task(it)
     }
@@ -251,14 +275,14 @@ internal fun moveAtomic(from: Path, to: Path) {
 
 @PublishedApi
 internal fun makeFileWritable(file: Path, cause: Throwable) {
-  val posixView = Files.getFileAttributeView<PosixFileAttributeView?>(file, PosixFileAttributeView::class.java)
+  val posixView = Files.getFileAttributeView(file, PosixFileAttributeView::class.java)
   if (posixView != null) {
     val permissions = posixView.readAttributes().permissions()
     permissions.add(PosixFilePermission.OWNER_WRITE)
     posixView.setPermissions(permissions)
   }
 
-  val dosView = Files.getFileAttributeView<DosFileAttributeView?>(file, DosFileAttributeView::class.java)
+  val dosView = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
   @Suppress("IfThenToSafeAccess")
   if (dosView != null) {
     dosView.setReadOnly(false)

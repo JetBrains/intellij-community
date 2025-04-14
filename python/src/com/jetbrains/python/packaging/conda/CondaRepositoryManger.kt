@@ -16,16 +16,13 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk) {
+internal class CondaRepositoryManger(
+  override val project: Project,
+  @Deprecated("Don't use sdk from here") override val sdk: Sdk
+) : PipBasedRepositoryManager() {
 
   override val repositories: List<PyPackageRepository>
     get() = listOf(CondaPackageRepository) + super.repositories
-
-  override fun allPackages(): Set<String> = service<CondaPackageCache>().packages
-
-  override fun packagesFromRepository(repository: PyPackageRepository): Set<String> {
-    return if (repository is CondaPackageRepository) service<CondaPackageCache>().packages  else super.packagesFromRepository(repository)
-  }
 
   override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
     if (spec is CondaPackageSpecification) {

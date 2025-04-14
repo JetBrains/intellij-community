@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -57,9 +57,7 @@ public final class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordCo
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    PsiModifierList modifierList = (PsiModifierList)getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
-    assert modifierList != null : this;
-    return modifierList;
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override

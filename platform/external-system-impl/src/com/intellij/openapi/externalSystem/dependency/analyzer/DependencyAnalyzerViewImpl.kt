@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware.Companion.isNotificationVisibleProperty
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
@@ -25,6 +25,7 @@ import com.intellij.openapi.observable.operation.core.getOperationInProgressProp
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.withCompletedOperation
 import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -357,7 +358,7 @@ class DependencyAnalyzerViewImpl(
       .apply { templatePresentation.icon = AllIcons.Actions.Show }
       .asActionButton(ACTION_PLACE)
       .bindEnabled(!dependencyLoadingProperty)
-    val reloadNotificationProperty = isNotificationVisibleProperty(project, systemId)
+    val reloadNotificationProperty = isNotificationVisibleProperty(project, systemId, parentDisposable)
     val projectReloadSeparator = separator()
       .bindVisible(reloadNotificationProperty)
     val projectReloadAction = action { ProjectRefreshAction.Manager.refreshProject(project) }
@@ -499,5 +500,16 @@ class DependencyAnalyzerViewImpl(
     private const val SHOW_GROUP_ID_PROPERTY = "ExternalSystem.DependencyAnalyzerView.showGroupId"
     private const val SHOW_AS_TREE_PROPERTY = "ExternalSystem.DependencyAnalyzerView.showAsTree"
     private const val SPLIT_VIEW_PROPORTION_PROPERTY = "ExternalSystem.DependencyAnalyzerView.splitProportion"
+
+    private fun isNotificationVisibleProperty(project: Project, systemId: ProjectSystemId, parentDisposable: Disposable): ObservableProperty<Boolean> {
+      val property = AtomicProperty(ExternalSystemProjectNotificationAware.isNotificationVisible(project, systemId))
+      project.messageBus.connect(parentDisposable)
+        .subscribe(ExternalSystemProjectNotificationAware.TOPIC, object : ExternalSystemProjectNotificationAware.Listener {
+          override fun onNotificationChanged(project: Project) {
+            property.set(ExternalSystemProjectNotificationAware.isNotificationVisible(project, systemId))
+          }
+        })
+      return property
+    }
   }
 }

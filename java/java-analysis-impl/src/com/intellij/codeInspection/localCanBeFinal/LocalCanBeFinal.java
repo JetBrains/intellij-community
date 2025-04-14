@@ -362,6 +362,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   }
 
   private boolean shouldBeIgnored(PsiVariable psiVariable) {
+    if (psiVariable.isUnnamed()) return true;
     PsiModifierList modifierList = psiVariable.getModifierList();
     if (modifierList == null) return true;
     if (modifierList.hasExplicitModifier(PsiModifier.FINAL)) return true;

@@ -78,13 +78,12 @@ class BuildViewTest : LightPlatformTestCase() {
       """.trimIndent()
     )
 
-    buildViewTestFixture.assertBuildViewSelectedNode("finished", "", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Tex of the root message console\n", false)
-    buildViewTestFixture.assertBuildViewSelectedNode(
+    buildViewTestFixture.assertBuildViewNode("finished", "")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Tex of the root message console\n")
+    buildViewTestFixture.assertBuildViewNode(
       "File message1",
       "aFile.java\n" +
-      "message1 descriptive text",
-      false
+      "message1 descriptive text"
     )
   }
 
@@ -206,8 +205,8 @@ class BuildViewTest : LightPlatformTestCase() {
       "aFile.java\n" +
       "message1 descriptive text"
     )
-    buildViewTestFixture.assertBuildViewSelectedNode("failed", "", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Tex of the root message console\n", false)
+    buildViewTestFixture.assertBuildViewNode("failed", "")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Tex of the root message console\n")
   }
 
   @Test
@@ -239,9 +238,9 @@ class BuildViewTest : LightPlatformTestCase() {
       """.trimIndent()
     )
 
-    buildViewTestFixture.assertBuildViewSelectedNode("cancelled", "", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Tex of the root message console\n", false)
-    buildViewTestFixture.assertBuildViewSelectedNodeConsole("Inner progress", false, ::assertNull)
+    buildViewTestFixture.assertBuildViewNode("cancelled", "")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Tex of the root message console\n")
+    buildViewTestFixture.assertBuildViewNodeConsole("Inner progress", ::assertNull)
   }
 
   @Test
@@ -288,15 +287,12 @@ class BuildViewTest : LightPlatformTestCase() {
       """.trimIndent()
     )
 
-    buildViewTestFixture.assertBuildViewSelectedNode("finished", "Build greeting\n" +
-                                                                 "Build farewell", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Inner progress", "inner progress output", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Text of the root message console\n", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("File message1",
-                                                     "aFile.java\n" +
-                                                     "message1 descriptive text",
-                                                     false
-    )
+    buildViewTestFixture.assertBuildViewNode("finished", "Build greeting\n" +
+                                                         "Build farewell")
+    buildViewTestFixture.assertBuildViewNode("Inner progress", "inner progress output")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Text of the root message console\n")
+    buildViewTestFixture.assertBuildViewNode("File message1", "aFile.java\n" +
+                                                              "message1 descriptive text")
 
     assertEquals("running…" +
                  "Build greeting\n" +
@@ -352,7 +348,7 @@ class BuildViewTest : LightPlatformTestCase() {
       """.trimIndent()
     )
 
-    buildViewTestFixture.assertBuildViewSelectedNodeConsole("my event node text updated", false) { executionConsole ->
+    buildViewTestFixture.assertBuildViewNodeConsole("my event node text updated") { executionConsole ->
       assertThat(executionConsole!!.component)
         .isEqualTo(component)
         .matches { (it as JButton).text == "test button" }

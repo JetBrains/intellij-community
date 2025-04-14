@@ -319,7 +319,7 @@ public class SuspendManagerImpl implements SuspendManager {
       }
       else {
         LOG.debug("vote paused");
-        myDebugProcess.cancelRunToCursorBreakpoint();
+        myDebugProcess.cancelSteppingBreakpoints();
         if (!Registry.is("debugger.keep.step.requests")) {
           ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
           myDebugProcess.deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(),

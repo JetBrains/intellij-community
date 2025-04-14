@@ -18,6 +18,8 @@ internal class GitBranchesTreeMultiRepoModel(
   repositories: List<GitRepository>,
   topLevelActions: List<Any>
 ) : GitBranchesTreeModel(project, topLevelActions, repositories) {
+  private val repositoriesNodes = repositories.map { RepositoryNode(it, isLeaf = true) }
+
   private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
   override fun getLocalBranches() = GitBranchUtil.getCommonLocalBranches(repositories)
@@ -48,7 +50,7 @@ internal class GitBranchesTreeMultiRepoModel(
   }
 
   private fun getTopLevelNodes(): List<Any> {
-    val topNodes = actionsTree.match + repositories
+    val topNodes = actionsTree.match + repositoriesNodes
     val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree, tagsTree)
 
     return if (localAndRemoteNodes.isEmpty()) topNodes else topNodes + branchesSubtreeSeparator + localAndRemoteNodes

@@ -253,6 +253,30 @@ public final class NioFiles {
   }
 
   /**
+   * See {@link #deleteQuietly(Path, Consumer)}.
+   */
+  @ApiStatus.Experimental
+  public static void deleteQuietly(@Nullable Path file) {
+    deleteQuietly(file, null);
+  }
+
+  /**
+   * Deletes a single file or an empty directory without throwing exceptions.
+   * Handy for using in {@code finally} blocks for cleaning up temporary artifacts.
+   */
+  @ApiStatus.Experimental
+  public static void deleteQuietly(@Nullable Path file, @Nullable Consumer<IOException> handler) {
+    try {
+      if (file != null) {
+        Files.deleteIfExists(file);
+      }
+    }
+    catch (IOException e) {
+      if (handler != null) handler.accept(e);
+    }
+  }
+
+  /**
    * See {@link #copyRecursively(Path, Path, Consumer)}.
    */
   @ApiStatus.Experimental

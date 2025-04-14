@@ -1,19 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.highlighting
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.registerExtension
+import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptConfigurationHandler
+import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -21,7 +20,9 @@ import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.io.File
+import kotlin.coroutines.EmptyCoroutineContext
 
 abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest(), KMPTest {
 
@@ -33,22 +34,36 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val psiFile = files.first()
-        if (psiFile is KtFile && psiFile.isScript()) {
-            val dependenciesSource = object : BundledScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
-                override suspend fun updateModules(storage: MutableEntityStorage?) {
-                    //do nothing because adding modules is not permitted in light tests
-                }
-            }
-
-            project.registerExtension(SCRIPT_CONFIGURATIONS_SOURCES, dependenciesSource, testRootDisposable)
-
-            val script = BaseScriptModel(psiFile.virtualFile)
-            runWithModalProgressBlocking(project, "Testing") {
-                dependenciesSource.updateDependenciesAndCreateModules(setOf(script))
-            }
+        if (psiFile is KtFile) {
+            processKotlinScriptIfNeeded(psiFile)
         }
 
         super.doMultiFileTest(files, globalDirectives)
+    }
+
+    private fun processKotlinScriptIfNeeded(ktFile: KtFile) {
+        if (!ktFile.isScript()) return
+
+        project.replaceService(
+            DefaultScriptConfigurationHandler::class.java,
+            DefaultScriptConfigurationHandlerForTests(project), testRootDisposable
+        )
+
+        runWithModalProgressBlocking(project, "AbstractK2HighlightingMetaInfoTest§") {
+            DefaultScriptResolutionStrategy(project, this).execute(ktFile).join()
+        }
+    }
+
+    // kotlin scripts require adjusting project model which is not possible for lightweight test fixture
+    private class DefaultScriptConfigurationHandlerForTests(testProject: Project) :
+        DefaultScriptConfigurationHandler(testProject, CoroutineScope(EmptyCoroutineContext)) {
+        override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
+
+        override fun isModuleExist(
+            project: Project,
+            scriptFile: VirtualFile,
+            definition: ScriptDefinition
+        ): Boolean = true
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor =

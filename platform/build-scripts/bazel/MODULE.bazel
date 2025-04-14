@@ -1,0 +1,47 @@
+module(
+    name = "jps_to_bazel",
+    version = "0.1",
+)
+
+bazel_dep(name = "rules_java", version = "8.8.0")
+bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.5")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
+
+archive_override(
+    module_name = "rules_kotlin",
+    integrity = "sha256-jWDqcTgDWbeBqISkF4XFI/WbgeejFJVXMIDsv2oX/ww=",
+    urls = ["https://github.com/develar/rules_kotlin/releases/download/v2.0.0-jb.12/rules_kotlin-v2.0.0-jb.12.tar.gz"],
+)
+
+intellij_version = "251.21223"
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "j2b_maven",
+    artifacts = [
+        "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
+        "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
+        "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20",
+        "org.jetbrains.teamcity:serviceMessages:2024.07",
+    ],
+    fail_if_repin_required = True,
+    fetch_sources = True,
+    lock_file = "//:maven_install.json",
+    repositories = [
+        "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
+        "https://cache-redirector.jetbrains.com/intellij-dependencies",
+        "https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository",
+    ],
+)
+use_repo(maven, "j2b_maven")
+
+bazel_dep(name = "hermetic_cc_toolchain", version = "3.2.0")
+
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(toolchains, "zig_sdk", "zig_sdk-linux-amd64", "zig_sdk-linux-arm64", "zig_sdk-macos-amd64", "zig_sdk-macos-arm64", "zig_sdk-windows-amd64")
+
+register_toolchains(
+    "@zig_sdk//toolchain/...",
+    "@zig_sdk//libc_aware/toolchain/...",
+)

@@ -680,6 +680,7 @@
     <vcs.ignoredFilesHolder implementation="git4idea.repo.GitIgnoredFilesHolder$Provider"/>
     <vcs.unversionedFilesHolder implementation="git4idea.repo.GitUnversionedFilesHolder$Provider"/>
     <vcs.resolvedConflictsFilesHolder implementation="git4idea.merge.GitResolvedConflictsFilesHolder$Provider"/>
+    <vcs.pathsToRefreshProvider implementation="git4idea.merge.GitPathsToRefreshProvider"/>
     <projectConfigurable id="vcs.Git" key="settings.git.option.group" instance="git4idea.config.GitVcsPanel"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
@@ -753,7 +754,7 @@
     <vcsSharedChecker implementation="git4idea.ignore.GitIgnoreInStoreDirSharedChecker"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig"/>
     <backgroundPostStartupActivity implementation="git4idea.repo.GitShallowRepositoryCheck"/>
-    <backgroundPostStartupActivity implementation="git4idea.commit.GitModalCommitSettingMigrator"/>
+    <backgroundPostStartupActivity implementation="git4idea.commit.GitModalCommitDeprecationNotifier"/>
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
@@ -769,6 +770,10 @@
 
     <registryKey key="git.push.upto.commit.with.head.reference" defaultValue="false"
                  description="Detect HEAD relative reference while pushing up to selected commit to the current branch"
+                 restartRequired="false"/>
+
+    <registryKey key="git.modal.commit.deprecation.removed.in" defaultValue=""
+                 description="Show notification about modal commit deprecation if the version is specified"
                  restartRequired="false"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>

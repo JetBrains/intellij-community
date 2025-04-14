@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +21,13 @@ public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHand
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     if (target instanceof PsiKeyword) {
       PsiElement parent = target.getParent();
-      if (PsiKeyword.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
+      if (JavaKeywords.TRY.equals(target.getText()) && parent instanceof PsiTryStatement) {
         return createHighlightTryHandler(editor, file, target, parent);
       }
-      if (PsiKeyword.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
+      if (JavaKeywords.CATCH.equals(target.getText()) && parent instanceof PsiCatchSection) {
         return createHighlightCatchHandler(editor, file, target, parent);
       }
-      if (PsiKeyword.THROWS.equals(target.getText())) {
+      if (JavaKeywords.THROWS.equals(target.getText())) {
         return createThrowsHandler(editor, file, target);
       }
     }

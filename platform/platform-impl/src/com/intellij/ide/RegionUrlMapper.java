@@ -27,7 +27,6 @@ import java.util.concurrent.*;
  * @see Region
  * @see RegionSettings
  */
-@ApiStatus.Experimental
 @ApiStatus.Internal
 public final class RegionUrlMapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.RegionUrlMapper");
@@ -40,6 +39,8 @@ public final class RegionUrlMapper {
   );
 
   private static final Map<Region, String> OVERRIDE_CONFIG_URL_TABLE = new HashMap<>();  // for testing
+  public static final String FORCE_REGION_MAPPINGS_LOAD = "force.region.mappings.load";
+
   static {
     for (Region reg : Region.values()) {
       String propName = "jb.mapper.configuration.url";
@@ -105,8 +106,13 @@ public final class RegionUrlMapper {
     }
     catch (Throwable e) {
       // tryMapUrl() should have already swallowed any failures, so this shouldn't ever happen
-      LOG.warn("Unexpected exception when mapping region-specific url", e);
-      return url;
+      if (Boolean.valueOf(System.getProperty(FORCE_REGION_MAPPINGS_LOAD)).booleanValue()) {
+        throw new RuntimeException(IdeBundle.message("failed.to.load.regional.url.mappings", e.getCause()));
+      }
+      else {
+        LOG.warn("Unexpected exception when mapping region-specific url", e);
+        return url;
+      }
     }
   }
 
@@ -140,6 +146,10 @@ public final class RegionUrlMapper {
       }
       if (t instanceof CancellationException || t instanceof ControlFlowException) {
         LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
+      }
+      else if (Boolean.valueOf(System.getProperty(FORCE_REGION_MAPPINGS_LOAD)).booleanValue()) {
+        LOG.warn("Failed to load regional URL mappings: " + t);
+        throw new CompletionException(t);
       }
       else if (t instanceof IOException) {
         // legitimate failure when using the IDE offline; just log it without the stack trace
@@ -184,6 +194,7 @@ public final class RegionUrlMapper {
    * Represents the contents of the JSON configuration loaded for a particular region
    * and provides the methods for applying the mapping rules found in that configuration.
    */
+  @ApiStatus.Internal
   public static final class RegionMapping {
     private final @NotNull List<PatternReplacement> myPatternReplacements;
 

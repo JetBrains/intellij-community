@@ -23,6 +23,7 @@ data class AiPlatformDatasetItem(
 )
 
 data class AiPlatformDatasetMetadata(
+  val id: String,
   val path: String,
   val source: String,
 )
@@ -60,7 +61,7 @@ class AiPlatformDatasetConverter(private val fileContentProvider: FileContentPro
     val endOffset = offset + item.golden.length
     val expectedText = item.golden
 
-    val actions = with(ActionsBuilder.SessionBuilder()) {
+    val actions = with(ActionsBuilder.SessionBuilder(ExplicitSessionId(item.metadata.id))) {
       moveCaret(offset)
       deleteRange(offset, endOffset)
       callFeature(expectedText, offset, TokenProperties.UNKNOWN)

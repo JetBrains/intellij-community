@@ -1,18 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects.impl
 
+import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.impl.TrustedProjectUtil.findAllIndexesOfSymbol
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -20,24 +26,42 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.AlignY
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.plus
 import com.intellij.ui.util.width
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.nio.file.Path
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JRootPane
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import javax.swing.text.View
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.math.ceil
+import kotlin.reflect.KMutableProperty0
 
-internal class TrustedProjectsStartupDialog(
+@ApiStatus.Internal
+class TrustedProjectStartupDialog private constructor(
   project: Project?,
   private val projectPath: Path,
   private val pathsToExclude: List<Path>,
@@ -56,7 +80,7 @@ internal class TrustedProjectsStartupDialog(
   private var userChoice: OpenUntrustedProjectChoice = OpenUntrustedProjectChoice.CANCEL
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
   private var trustAction: Action? = null
-  
+
   init {
     if (SystemInfoRt.isMac) {
       setInitialLocationCallback {
@@ -274,9 +298,72 @@ internal class TrustedProjectsStartupDialog(
 
   override fun getHelpId(): String? = TRUSTED_PROJECTS_HELP_TOPIC
 
-  fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
+  private fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
 
-  fun isTrustAll(): Boolean = trustAll.get()
+  private fun isTrustAll(): Boolean = trustAll.get()
 
-  fun getDefenderTrustFolder(): Path? = if (windowsDefender.get()) getTrustFolder(isTrustAll()) else null
+  private fun getDefenderTrustFolder(): Path? = if (windowsDefender.get()) getTrustFolder(isTrustAll()) else null
+
+  private fun getDefenderExcludePaths(): List<Path> = pathsToExclude
+
+  class DialogChoice(
+    val openChoice: OpenUntrustedProjectChoice,
+    val isTrustAll: Boolean,
+    val defenderTrustFolder: Path?,
+    val defenderExcludePaths: List<Path> ,
+  )
+
+  companion object {
+
+    private var ourDialogChoice: DialogChoice? = null
+
+    @TestOnly
+    fun setDialogChoiceInTests(openChoice: OpenUntrustedProjectChoice, disposable: Disposable) {
+      val choice = DialogChoice(openChoice, false, null, emptyList())
+      setKotlinProperty(::ourDialogChoice, choice, disposable)
+    }
+
+    @TestOnly
+    private fun <V> setKotlinProperty(property: KMutableProperty0<V>, value: V, disposable: Disposable) {
+      val previousValue = property.get()
+      property.set(value)
+      disposable.whenDisposed {
+        property.set(previousValue)
+      }
+    }
+
+    suspend fun showAndGet(
+      project: Project?,
+      projectPath: Path,
+      title: @NlsContexts.DialogTitle String,
+      message: @NlsContexts.DialogMessage String,
+      trustButtonText: @NlsContexts.Button String,
+      distrustButtonText: @NlsContexts.Button String,
+      cancelButtonText: @NlsContexts.Button String,
+    ): DialogChoice {
+      val pathsToExclude = getDefenderExcludePaths(project, projectPath)
+      return ourDialogChoice ?: withContext(Dispatchers.EDT) {
+        val dialog = TrustedProjectStartupDialog(project, projectPath, pathsToExclude, title, message, trustButtonText, distrustButtonText, cancelButtonText)
+        dialog.show()
+        DialogChoice(dialog.getOpenChoice(), dialog.isTrustAll(), dialog.getDefenderTrustFolder(), dialog.getDefenderExcludePaths())
+      }
+    }
+
+    private suspend fun getDefenderExcludePaths(project: Project?, projectPath: Path): List<Path> {
+      if (SystemInfo.isWindows) {
+        val checker = serviceAsync<WindowsDefenderChecker>()
+        if (
+          !checker.isUntrustworthyLocation(projectPath) &&
+          !checker.isStatusCheckIgnored(project) &&
+          checker.isRealTimeProtectionEnabled == true
+        ) {
+          val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project, projectPath)).toMutableList()
+          if (projectPath in paths) {
+            return paths
+          }
+        }
+      }
+      return emptyList()
+    }
+  }
 }

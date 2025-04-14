@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
+@file:JvmName("TokenListUtil")
 
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import org.jetbrains.annotations.ApiStatus
@@ -48,18 +50,25 @@ interface TokenList {
   }
 }
 
-fun performLexing(text: CharSequence, lexer: Lexer, cancellationProvider: CancellationProvider? = null): TokenList {
+fun performLexing(
+  text: CharSequence,
+  lexer: Lexer,
+  cancellationProvider: CancellationProvider?,
+  logger: Logger?,
+): TokenList {
   if (lexer is TokenListLexerImpl) {
     val existing = lexer.tokens
     if (existing is TokenSequence && equal(text, existing.tokenizedText)) {
       // prevent clients like PsiBuilder from modifying shared token types
-      return TokenSequence(existing.lexStarts,
-                           existing.lexTypes.clone(),
-                           existing.tokenCount,
-                           text) as TokenList
+      return TokenSequence(
+        lexStarts = existing.lexStarts,
+        lexTypes = existing.lexTypes.clone(),
+        tokenCount = existing.tokenCount,
+        tokenizedText = text
+      ) as TokenList
     }
   }
-  val sequence = Builder(text, lexer, cancellationProvider).performLexing()
+  val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
   return sequence as TokenList
 }
 
@@ -70,8 +79,8 @@ fun TokenList(
   tokenizedText: CharSequence,
 ): TokenList = TokenSequence(lexStarts, lexTypes, tokenCount, tokenizedText)
 
-fun tokenListLexer(tokenList: TokenList): Lexer =
-  TokenListLexerImpl(tokenList)
+fun tokenListLexer(tokenList: TokenList, logger: Logger? = null): Lexer =
+  TokenListLexerImpl(tokenList, logger)
 
 /**
  * @return whether [.getTokenType](index) would return the given type

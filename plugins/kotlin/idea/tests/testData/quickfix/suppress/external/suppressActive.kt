@@ -7,5 +7,3 @@
 
 @Suppress("SpellCheckingInspection")
 val str = "<caret>kjsghkjshtiurhuig"
-
-// IGNORE_K2

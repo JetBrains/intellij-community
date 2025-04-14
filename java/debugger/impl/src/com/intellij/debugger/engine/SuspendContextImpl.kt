@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
 import com.intellij.Patches
@@ -17,6 +17,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -106,13 +107,9 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   }
 
   init {
-    val disposable = myDebugProcess.disposable
-    if (disposable.isDisposed()) {
+    if (!Disposer.tryRegister(managerThread, this)) {
       // could be due to VM death
       Disposer.dispose(this)
-    }
-    else {
-      Disposer.register(disposable, this)
     }
   }
 
@@ -147,6 +144,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
 
   override fun dispose() {
     myCoroutineScope.cancel()
+    cancelAllPostponed()
   }
 
   val cachedThreadFrameCount: Int
@@ -204,9 +202,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
 
       cancelAllPostponed()
       if (callResume) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Resuming $this")
-        }
+        LOG.debug { "Resuming context $this" }
         resumeImpl()
       }
     }
@@ -231,8 +227,9 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
     get() = myEventSet
     set(eventSet) {
       assertCanBeUsed()
-      assertInLog(myEventSet == null) { "Event set in ${this}should be empty" }
+      assertInLog(myEventSet == null) { "Event set in ${this} should be empty" }
       myEventSet = eventSet
+      LOG.debug { "Installed set into $this" }
     }
 
   override fun getDebugProcess(): DebugProcessImpl = myDebugProcess
@@ -390,6 +387,15 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
       val added = myKeptReferences.add(reference)
       if (added) {
         DebuggerUtilsEx.disableCollection(reference)
+      }
+    }
+  }
+
+  fun keepAsync(reference: ObjectReference) {
+    if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+      val added = myKeptReferences.add(reference)
+      if (added) {
+        DebuggerUtilsAsync.disableCollection(reference)
       }
     }
   }

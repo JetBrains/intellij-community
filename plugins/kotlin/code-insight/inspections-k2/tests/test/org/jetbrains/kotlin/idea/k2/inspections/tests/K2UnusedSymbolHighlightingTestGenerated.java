@@ -547,6 +547,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateOperatorUsed.kt");
         }
 
+        @TestMetadata("privateOperatorUsed2.kt")
+        public void testPrivateOperatorUsed2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateOperatorUsed2.kt");
+        }
+
         @TestMetadata("privateProperty.kt")
         public void testPrivateProperty() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateProperty.kt");

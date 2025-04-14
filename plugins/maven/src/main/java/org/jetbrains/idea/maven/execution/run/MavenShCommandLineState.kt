@@ -12,7 +12,11 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.PatchedRunnableState
+import com.intellij.execution.configurations.RemoteConnection
+import com.intellij.execution.configurations.RemoteState
+import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -28,22 +32,36 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal
+import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
-import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor
-import org.jetbrains.idea.maven.execution.*
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
+import org.jetbrains.idea.maven.execution.MavenRunner
+import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
-import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.*
+import org.jetbrains.idea.maven.project.BundledMaven
+import org.jetbrains.idea.maven.project.MavenHomeType
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
+import org.jetbrains.idea.maven.project.MavenWrapper
+import org.jetbrains.idea.maven.server.DaemonedMavenDistribution
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenServerEmbedder
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.isMaven4
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.nio.file.Path
 import java.util.function.Function
 import kotlin.io.path.Path
 
@@ -56,7 +74,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
       val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
 
-      val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (isWindows()) "cmd.exe" else "/bin/sh")
+      val processOptions = eelApi.exec.execute(if (isWindows()) "cmd.exe" else "/bin/sh")
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
         .workingDirectory(Path(myConfiguration.runnerParameters.workingDirPath).asEelPath())
         .args(getArgs(eelApi)).let {
@@ -64,9 +82,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
             it.ptyOrStdErrSettings(Pty(-1, -1, true))
           }
           else it
-        }.build()
+        }
 
-      val result = eelApi.exec.execute(processOptions)
+      val result = processOptions.eelIt()
 
       return@runWithModalProgressBlocking when (result) {
         is EelResult.Error -> {
@@ -217,16 +235,21 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     }
 
     if (generalSettings.userSettingsFile.isNotBlank()) {
-      args.addAll("-s", generalSettings.userSettingsFile)
+      args.addAll("-s", generalSettings.userSettingsFile.asTargetPathString())
     }
-    generalSettings.localRepository.nullize(true)?.also { args.addProperty("-Dmaven.repo.local=$it") }
+    if (generalSettings.localRepository.isNotBlank()) {
+      args.addProperty("-Dmaven.repo.local=${MavenSettingsCache.getInstance(myConfiguration.project).getEffectiveUserLocalRepo()}")
+    }
   }
 
   private fun addIdeaParameters(args: ParametersList, eel: EelApi) {
     args.addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess())
     args.addProperty(
       MavenServerEmbedder.MAVEN_EXT_CLASS_PATH,
-      transferContentsIfNonLocal(eel, MavenServerManager.getInstance().getMavenEventListener().toPath()).asEelPath().toString()
+      transferLocalContentToRemote(
+        source = MavenServerManager.getInstance().getMavenEventListener().toPath(),
+        target = TransferTarget.Temporary(eel.descriptor)
+      ).asEelPath().toString()
     )
   }
 
@@ -262,12 +285,12 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
     var mavenHome = distribution.mavenHome
 
-    if (type is BundledMaven3 || type is BundledMaven4) {
-      mavenHome = transferContentsIfNonLocal(eel, mavenHome)
+    if (type is BundledMaven) {
+      mavenHome = transferLocalContentToRemote(mavenHome, TransferTarget.Temporary(eel.descriptor))
     }
 
     if (distribution is DaemonedMavenDistribution) {
-     return distribution.daemonHome.resolve("bin").resolve(if (isWindows()) "mvnd.cmd" else "mvnd.sh").asEelPath().toString()
+      return distribution.daemonHome.resolve("bin").resolve(if (isWindows()) "mvnd.cmd" else "mvnd.sh").asEelPath().toString()
     }
     else {
       return mavenHome.resolve("bin").resolve(if (isWindows()) "mvn.cmd" else "mvn").asEelPath().toString()
@@ -299,4 +322,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     val mavenDistribution = MavenDistributionsCache.getInstance(myConfiguration.project).getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
     return mavenDistribution.isMaven4() || mavenDistribution is DaemonedMavenDistribution
   }
+
+  private fun String.asTargetPathString(): String = Path.of(this).asEelPath().toString()
 }

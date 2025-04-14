@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
@@ -25,32 +24,51 @@ internal class ClassLoaderConfiguratorTest {
 
   @Test
   fun `plugin must be after child`() {
-    val pluginId = PluginId.getId("org.jetbrains.kotlin")
     val emptyPath = Path.of("")
-    val plugins = arrayOf(
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = pluginId, moduleName = null),
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = PluginId.getId("org.jetbrains.plugins.gradle"), moduleName = null),
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
-      IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
-    )
+    val kotlin = IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.kotlin" }.build(), emptyPath, isBundled = false)
+    val gradle = IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().apply { id = "org.jetbrains.plugins.gradle" }.build(), emptyPath, isBundled = false)
+    val emptyBuilder = PluginDescriptorBuilder.builder()
+    val kotlinGradleJava = kotlin.createSubInTest(
+      subBuilder = emptyBuilder,
+      descriptorPath = "",
+      getDefaultVersion = { null },
+      recordDescriptorPath = null,
+      module = PluginContentDescriptor.ModuleItem(name = "kotlin.gradle.gradle-java",
+                                                  loadingRule = ModuleLoadingRule.OPTIONAL,
+                                                  configFile = null,
+                                                  descriptorContent = null))
+    val kotlinCompilerGradle = kotlin.createSubInTest(
+      subBuilder = emptyBuilder,
+      descriptorPath = "",
+      getDefaultVersion = { null },
+      recordDescriptorPath = null,
+      module = PluginContentDescriptor.ModuleItem(name = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
+                                                  loadingRule = ModuleLoadingRule.OPTIONAL,
+                                                  configFile = null,
+                                                  descriptorContent = null))
+    val plugins = arrayOf(kotlin, gradle, kotlinGradleJava, kotlinCompilerGradle)
     sortDependenciesInPlace(plugins)
     assertThat(plugins.last().moduleName).isNull()
   }
 
   @Test
   fun `child with common package prefix must be after included sibling`() {
-    val pluginId = PluginId.getId("com.example")
-    val emptyPath = Path.of("")
-
+    val plugin = IdeaPluginDescriptorImpl(
+      PluginDescriptorBuilder.builder().apply {
+        id = "com.example"
+      }.build(),
+      Path.of(""),
+      false,
+    )
     fun createModuleDescriptor(name: String): IdeaPluginDescriptorImpl {
-      return IdeaPluginDescriptorImpl(raw = PluginDescriptorBuilder.builder().apply { `package` = name }.build(),
-                                      path = emptyPath,
-                                      isBundled = false,
-                                      id = pluginId,
-                                      moduleName = name,
-                                      moduleLoadingRule = ModuleLoadingRule.OPTIONAL)
+      return plugin.createSubInTest(
+        subBuilder = PluginDescriptorBuilder.builder().apply { `package` = name },
+        descriptorPath = "",
+        getDefaultVersion = { null },
+        recordDescriptorPath = null,
+        module = PluginContentDescriptor.ModuleItem(name = name, configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
+      )
     }
-
     val modules = arrayOf(
       createModuleDescriptor("com.foo"),
       createModuleDescriptor("com.foo.bar"),

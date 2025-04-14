@@ -13,7 +13,13 @@ import java.util.List;
  * to get a descriptor by a plugin ID and {@link com.intellij.ide.plugins.PluginManagerCore#getPlugins()} to get all plugins.
  */
 public interface IdeaPluginDescriptor extends PluginDescriptor {
+  /**
+   * aka {@code <depends>} elements from the plugin.xml
+   */
   @NotNull List<IdeaPluginDependency> getDependencies();
 
+  /**
+   * Path to the descriptor file relative to the plugin location
+   */
   @Nullable String getDescriptorPath();
 }

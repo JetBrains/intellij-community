@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
@@ -44,8 +45,8 @@ public class ChangeExtendsToImplementsFix extends PsiBasedModCommandAction<PsiCl
     if (!available) return null;
     String name = QuickFixBundle.message(
       "exchange.extends.implements.keyword",
-      myClass.isInterface() == classToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
-      myClass.isInterface() == classToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
+      myClass.isInterface() == classToExtendFrom.isInterface() ? JavaKeywords.IMPLEMENTS : JavaKeywords.EXTENDS,
+      myClass.isInterface() == classToExtendFrom.isInterface() ? JavaKeywords.EXTENDS : JavaKeywords.IMPLEMENTS,
       classToExtendFrom.getName());
     return Presentation.of(name).withPriority(PriorityAction.Priority.HIGH);
 

@@ -28,6 +28,7 @@ jvm_library(
     "//platform/platform-impl/rpc:ide-rpc",
     "//platform/util/text-matching",
   ],
+  exports = ["//platform/lang-impl"],
   runtime_deps = [":searchEverywhere_resources"]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere` end

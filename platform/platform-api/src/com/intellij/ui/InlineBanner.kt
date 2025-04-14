@@ -39,6 +39,7 @@ open class InlineBanner private constructor(
 
   override var status: EditorNotificationPanel.Status = status
     set(value) {
+      field = value
       setIcon(value.icon)
       super.status = value
     }
@@ -185,6 +186,12 @@ open class InlineBanner private constructor(
     addActionImpl(name, action)
 
     return this
+  }
+
+  @ApiStatus.Internal
+  fun removeAllActions() {
+    myActionPanel.removeAll()
+    myActionPanel.add(DropDownAction())
   }
 
   fun showCloseButton(visible: Boolean): InlineBanner {

@@ -5,9 +5,6 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionWithAny
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.util.KeyedLazyInstance
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
@@ -16,21 +13,17 @@ object ElementTypeConverters {
 
   @ApiStatus.Internal
   @JvmStatic
-  val instance: LanguageExtension<ElementTypeConverterFactory> = LanguageExtensionWithAny<ElementTypeConverterFactory>("com.intellij.syntax.elementTypeConverter").also {
-    it.point?.addExtensionPointListener(object : ExtensionPointListener<KeyedLazyInstance<ElementTypeConverterFactory>> {
-      override fun extensionAdded(extension: KeyedLazyInstance<ElementTypeConverterFactory>, pluginDescriptor: PluginDescriptor) {
-        cache.clear()
-      }
-
-      override fun extensionRemoved(extension: KeyedLazyInstance<ElementTypeConverterFactory>, pluginDescriptor: PluginDescriptor) {
-        cache.clear()
-      }
-    }, false, null)
+  val instance: LanguageExtension<ElementTypeConverterFactory> = object : LanguageExtensionWithAny<ElementTypeConverterFactory>("com.intellij.syntax.elementTypeConverter") {
+    override fun clearCache() {
+      super.clearCache()
+      cache.clear()
+    }
   }
 
+  @JvmStatic
   fun getConverter(
     language: Language,
-  ): ElementTypeConverter? = cache.getOrPut(language) {
+  ): ElementTypeConverter = cache.getOrPut(language) {
     inferConverter(language) ?: run {
       logger<ElementTypeConverters>().error("No ElementTypeConverter for language $language")
       elementTypeConverterOf()

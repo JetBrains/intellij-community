@@ -21,6 +21,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -626,7 +627,7 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
   private static @Nullable ImplicitElseData getIfWithImplicitElse(@NotNull PsiIfStatement ifStatement,
                                                         PsiStatement @NotNull [] thenStatements,
                                                         String jumpKeyword, boolean basicJumpStatement) {
-    if (!PsiKeyword.RETURN.equals(jumpKeyword) && !PsiKeyword.CONTINUE.equals(jumpKeyword)) return null;
+    if (!JavaKeywords.RETURN.equals(jumpKeyword) && !JavaKeywords.CONTINUE.equals(jumpKeyword)) return null;
     int statementsLength = thenStatements.length;
     if (statementsLength == 0) return null;
     PsiIfStatement currentIf = ifStatement;
@@ -658,13 +659,13 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     // ensure it is last statements in method
     PsiElement parent = currentIf.getParent();
     if (!(parent instanceof PsiCodeBlock)) return null;
-    if (PsiKeyword.RETURN.equals(jumpKeyword)) {
+    if (JavaKeywords.RETURN.equals(jumpKeyword)) {
       if (!(parent.getParent() instanceof PsiMethod)) return null;
       if (!statements.isEmpty()) {
         if (PsiTreeUtil.getNextSiblingOfType(statements.get(statements.size() - 1), PsiStatement.class) != null) return null;
       }
     }
-    if (PsiKeyword.CONTINUE.equals(jumpKeyword) && !(parent.getParent() instanceof PsiBlockStatement) && !(parent.getParent().getParent() instanceof PsiLoopStatement)) return null;
+    if (JavaKeywords.CONTINUE.equals(jumpKeyword) && !(parent.getParent() instanceof PsiBlockStatement) && !(parent.getParent().getParent() instanceof PsiLoopStatement)) return null;
     if (basicJumpStatement) {
       // skip possible jump statement
       if (count == statementsLength || count == statementsLength - 1) return new ImplicitElseData(statements, currentIf);
@@ -715,10 +716,10 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
       String jumpKeyword = null;
       boolean basicJumpStatement = false;
       if (lastThenStatement instanceof PsiReturnStatement) {
-        jumpKeyword = PsiKeyword.RETURN;
+        jumpKeyword = JavaKeywords.RETURN;
         basicJumpStatement = ((PsiReturnStatement)lastThenStatement).getReturnValue() == null;
       } else if (lastThenStatement instanceof PsiContinueStatement) {
-        jumpKeyword = PsiKeyword.CONTINUE;
+        jumpKeyword = JavaKeywords.CONTINUE;
         basicJumpStatement = ((PsiContinueStatement)lastThenStatement).getLabelIdentifier() == null;
       }
       if (jumpKeyword == null) return null;

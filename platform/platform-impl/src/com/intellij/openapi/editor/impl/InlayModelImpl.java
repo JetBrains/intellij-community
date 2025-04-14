@@ -265,7 +265,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
     return (List)range;
   }
 
-  private static <T extends Inlay<?>> List<T> getElementsInRange(@NotNull IntervalTreeImpl<? extends T> tree,
+  private static <T extends Inlay<?>> List<T> getElementsInRange(@NotNull IntervalTree<? extends T> tree,
                                                                  int startOffset,
                                                                  int endOffset,
                                                                  Predicate<? super T> predicate,

@@ -24,7 +24,7 @@ import java.awt.*;
 import java.util.function.Consumer;
 
 /**
- * An action that opens emoji picker popup, selected by user.
+ * Opens the emoji picker popup, selected by the user.
  */
 final class OpenEmojiPickerAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static Context getContext(AnActionEvent e, boolean findOnly) {
@@ -91,8 +91,10 @@ final class OpenEmojiPickerAction extends DumbAwareAction implements ActionRemot
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean enabled = SystemInfo.isLinux && EmojiPicker.isAvailable() && getContext(e, true) == Context.FOUND;
-    e.getPresentation().setEnabledAndVisible(enabled);
+    e.getPresentation().setEnabledAndVisible(
+      SystemInfo.isLinux
+      && EmojiPicker.isAvailable() && getContext(e, true) == Context.FOUND
+    );
   }
 
   @Override

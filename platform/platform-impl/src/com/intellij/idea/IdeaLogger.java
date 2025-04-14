@@ -62,7 +62,7 @@ public final class IdeaLogger extends JulLogger {
   }
 
   private boolean isTooFrequentException(@Nullable Throwable t) {
-    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred() || isDebugEnabled() || isTraceEnabled()) {
       return false;
     }
 
@@ -122,21 +122,9 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
+  public void info(String message, @Nullable Throwable t) {
     if (isTooFrequentException(t)) return;
-
-    if (attachments.length == 0) {
-      logSevere(message, t);
-    }
-    else if (t != null) {
-      logSevere(message, new RuntimeExceptionWithAttachments(t, attachments));
-    }
-    else {
-      logSevere(message, new RuntimeExceptionWithAttachments(new Throwable(), attachments));
-    }
-    if (t != null) {
-      reportToFus(t);
-    }
+    super.info(message, ensureNotControlFlow(t));
   }
 
   @Override
@@ -146,20 +134,26 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     if (isTooFrequentException(t)) return;
-    doLogError(message, t, details);
-    logErrorHeader(t);
-    if (t != null) {
-      reportToFus(t);
+
+    Throwable errorWithAttachment;
+    if (attachments.length == 0) {
+      errorWithAttachment = t;
     }
+    else if (t != null) {
+      errorWithAttachment = new RuntimeExceptionWithAttachments(ensureNotControlFlow(t), attachments);
+    }
+    else {
+      errorWithAttachment = new RuntimeExceptionWithAttachments(new Throwable(), attachments);
+    }
+
+    error(message, errorWithAttachment);
   }
 
-  private void doLogError(String message, @Nullable Throwable t, String... details) {
-    if (t != null && shouldRethrow(t)) {
-      logSevere(message, ensureNotControlFlow(t));
-      ExceptionUtil.rethrow(t);
-    }
+  @Override
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+    if (isTooFrequentException(t)) return;
 
     var detailString = String.join("\n", details);
     if (!detailString.isEmpty()) {
@@ -172,7 +166,17 @@ public final class IdeaLogger extends JulLogger {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
-    logSevere(message + detailString, t);
+
+    logSevere(message + detailString, ensureNotControlFlow(t));
+    logErrorHeader(t);
+
+    if (t != null && shouldRethrow(t)) {
+      ExceptionUtil.rethrow(t);
+    }
+
+    if (t != null) {
+      reportToFus(t);
+    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {

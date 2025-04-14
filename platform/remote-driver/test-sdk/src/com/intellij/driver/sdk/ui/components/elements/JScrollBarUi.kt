@@ -41,11 +41,14 @@ class JScrollBarUi(data: ComponentData) : UiComponent(data) {
   fun scrollBlockDown(times: Int) {
     fixture.scrollBlockDown(times)
   }
+
+  fun getScrollValue() = scrollBar.getValue()
 }
 
 @Remote("javax.swing.JScrollBar")
 interface JScrollBarComponent {
   fun getOrientation(): Int
+  fun getValue(): Int
 }
 
 @Remote("org.assertj.swing.fixture.JScrollBarFixture")

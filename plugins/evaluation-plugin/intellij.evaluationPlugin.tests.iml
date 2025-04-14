@@ -16,5 +16,6 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.python" scope="TEST" />
   </component>
 </module>

@@ -43,7 +43,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     CONDA to CondaNewEnvironmentCreator(model),
     PIPENV to EnvironmentCreatorPip(model),
     POETRY to EnvironmentCreatorPoetry(model, moduleOrProject),
-    UV to EnvironmentCreatorUv(model),
+    UV to EnvironmentCreatorUv(model, moduleOrProject),
     HATCH to HatchNewEnvironmentCreator(model),
   )
 
@@ -129,8 +129,8 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
 
 
   fun onShown() {
-    newInterpreterCreators.values.forEach(PythonAddEnvironment::onShown)
-    existingInterpreterSelectors.values.forEach(PythonAddEnvironment::onShown)
+    newInterpreterCreators.values.forEach { it.onShown() }
+    existingInterpreterSelectors.values.forEach { it.onShown() }
   }
 
   fun createStatisticsInfo(): InterpreterStatisticsInfo {

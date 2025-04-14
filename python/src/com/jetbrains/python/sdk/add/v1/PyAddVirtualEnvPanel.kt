@@ -37,7 +37,7 @@ import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.sdk.configuration.createSdkForTarget
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
 import com.jetbrains.python.sdk.detectVirtualEnvs
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -222,8 +222,8 @@ internal class PyAddVirtualEnvPanel(
     else {
       baseSelectedSdk
     }
-    return createVirtualEnvSynchronously(baseSdk, existingSdks, virtualenvRoot, projectBasePath, project, module, context,
-                                         isInheritSitePackages, false, targetPanelExtension)
+    return createVirtualEnvAndSdkSynchronously(baseSdk, existingSdks, virtualenvRoot, projectBasePath, project, module, context,
+                                               isInheritSitePackages, false, targetPanelExtension)
   }
 
   private fun configureExistingVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?, selectedSdk: Sdk): Sdk {

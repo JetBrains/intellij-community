@@ -21,6 +21,7 @@ import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1795,7 +1796,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final boolean skipInstanceQualifier;
     if (myIsChainedConstructor) {
       skipInstanceQualifier = true;
-      buffer.append(PsiKeyword.THIS);
+      buffer.append(JavaKeywords.THIS);
     }
     else {
       skipInstanceQualifier = instanceQualifier == null || instanceQualifier instanceof PsiThisExpression;
@@ -2022,7 +2023,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private static boolean shouldAcceptCurrentTarget(java.util.function.Consumer<? super ExtractMethodProcessor> extractPass, PsiElement target) {
+  private static boolean shouldAcceptCurrentTarget(Consumer<? super ExtractMethodProcessor> extractPass, PsiElement target) {
     return extractPass == null && !(target instanceof PsiAnonymousClass);
   }
 

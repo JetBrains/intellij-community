@@ -11,8 +11,10 @@ internal class ModuleBuilderImpl(
 ) : DirectoryBuilderBase(path, projectStructure), ModuleBuilder {
 
   private val _contentRoots: MutableList<ContentRootBuilderImpl> = mutableListOf()
+  private var _sdk: String? = null
 
   val contentRoots: List<ContentRootBuilderImpl> get() = _contentRoots
+  val usedSdk: String? get() = _sdk
 
   override fun contentRoot(name: String, init: ContentRootBuilder.() -> Unit) {
     val contentRootPath = "$path/$name"
@@ -36,5 +38,12 @@ internal class ModuleBuilderImpl(
                                               projectStructure = projectStructure,
                                               isExisting = true)
     contentRoot.addSourceRoot(newSourceRoot)
+  }
+
+  override fun useSdk(name: String) {
+    if (_sdk != null) {
+      throw IllegalStateException("SDK for module $moduleName is already configured. The current value is $_sdk, new value is '$name'")
+    }
+    this._sdk = name
   }
 }

@@ -26,8 +26,8 @@ import kotlin.Throws
  */
 @Internal
 @ApiStatus.Obsolete
-fun executeOnPooledIoThread(task: Runnable) {
-  (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) {
+fun executeOnPooledIoThread(task: Runnable): Job {
+  return (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) {
     task.run()
   }
 }

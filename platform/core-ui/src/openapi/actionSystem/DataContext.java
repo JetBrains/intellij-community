@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * Allows an action to retrieve information about the context in which it was invoked.
@@ -47,7 +47,6 @@ public interface DataContext {
    *
    * @param dataId the data identifier for which the value is requested.
    * @return the value, or null if no value is available in the current context for this identifier.
-   *
    * @deprecated Always use {@link #getData(DataKey)} instead.
    */
   @Deprecated(forRemoval = true)
@@ -63,7 +62,6 @@ public interface DataContext {
    * @param key the data key for which the value is requested.
    * @return the value, or null if no value is available in the current context for this identifier.
    */
-  @ApiStatus.NonExtendable
   default @Nullable <T> T getData(@NotNull DataKey<T> key) {
     //noinspection unchecked
     return (T)getData(key.getName());

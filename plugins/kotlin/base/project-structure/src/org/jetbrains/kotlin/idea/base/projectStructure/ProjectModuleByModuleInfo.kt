@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODUL
 import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODULE_DEPENDENCIES_IGNORED
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.createForwardDeclarationScope
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaLibraryFallbackDependenciesModuleImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
 import org.jetbrains.kotlin.idea.base.projectStructure.util.createAtomicReferenceFieldUpdaterForProperty
@@ -211,8 +212,13 @@ internal class KtSourceModuleByModuleInfoForOutsider(
 
 @ApiStatus.Internal
 @K1ModeProjectStructureApi
-class KtScriptLibraryModuleByModuleInfo(libraryInfo: LibraryInfo, override val file: KtFile? = null):
-    KtLibraryModuleByModuleInfo(libraryInfo), KaScriptDependencyModule
+class KtScriptLibraryModuleByModuleInfo(
+    libraryInfo: LibraryInfo,
+    override val file: KtFile? = null,
+) : KtLibraryModuleByModuleInfo(libraryInfo), KaScriptDependencyModule {
+    // Script dependency modules should not depend on any other libraries.
+    override fun createFallbackDependenciesModule(): KaLibraryFallbackDependenciesModule? = null
+}
 
 @ApiStatus.Internal
 @K1ModeProjectStructureApi
@@ -309,6 +315,14 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
 
     override val project: Project get() = libraryInfo.project
 
+    override fun computeDirectRegularDependencies(): List<KaModule> =
+        super.computeDirectRegularDependencies()
+            .takeIf { it.isNotEmpty() }
+            ?: listOfNotNull(createFallbackDependenciesModule())
+
+    protected open fun createFallbackDependenciesModule(): KaLibraryFallbackDependenciesModule? =
+        KaLibraryFallbackDependenciesModuleImpl(this)
+
     companion object {
         @JvmStatic
         private val librarySourcesUpdater: AtomicReferenceFieldUpdater<KtLibraryModuleByModuleInfo, KaLibrarySourceModule?> =
@@ -373,13 +387,13 @@ open class KtLibrarySourceModuleByModuleInfo(
         get() = moduleInfo.library.name ?: "Unnamed library"
 
     override fun computeDirectRegularDependencies(): List<KaModule> =
-        binaryLibrary.directRegularDependencies.mapNotNull { it as? KaLibraryModule }
+        binaryLibrary.directRegularDependencies.filter { it is KaLibraryModule || it is KaLibraryFallbackDependenciesModule }
 
     override fun computeDirectFriendDependencies(): List<KaModule> =
-        binaryLibrary.directFriendDependencies.mapNotNull { it as? KaLibraryModule }
+        binaryLibrary.directFriendDependencies.filter { it is KaLibraryModule }
 
     override fun computeDirectDependsOnDependencies(): List<KaModule> =
-        binaryLibrary.directDependsOnDependencies.mapNotNull { it as? KaLibraryModule }
+        binaryLibrary.directDependsOnDependencies.filter { it is KaLibraryModule }
 
     override val baseContentScope: GlobalSearchScope
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)

@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -381,7 +382,7 @@ public final class PluginManagerConfigurable
 
     JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(
       null, null, actions, context, ActionPlaces.POPUP, new PresentationFactory(),
-      ActionPopupOptions.honorMnemonics(), null);
+      ActionPopupOptions.honorMnemonics(), null) {};
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -1021,7 +1022,7 @@ public final class PluginManagerConfigurable
 
           Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = PluginManager
             .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
-            .collect(Collectors.partitioningBy(IdeaPluginDescriptorImpl::isBundled));
+            .collect(Collectors.partitioningBy(PluginDescriptor::isBundled));
 
           List<IdeaPluginDescriptorImpl> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
           downloaded.descriptors.addAll(nonBundledPlugins);
@@ -1050,7 +1051,7 @@ public final class PluginManagerConfigurable
             downloaded.sortByName();
 
             long enabledNonBundledCount = nonBundledPlugins.stream()
-              .map(IdeaPluginDescriptorImpl::getPluginId)
+              .map(PluginDescriptor::getPluginId)
               .filter(descriptor -> !PluginManagerCore.isDisabled(descriptor))
               .count();
             downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));

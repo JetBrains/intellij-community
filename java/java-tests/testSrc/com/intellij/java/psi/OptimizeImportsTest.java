@@ -400,7 +400,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.type('A'); // make file dirty
     myFixture.type('\b');
     IntentionAction fix = ReadAction.nonBlocking(() -> QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFixture.getFile())).submit(
-      AppExecutorUtil.getAppExecutorService()).get();
+      AppExecutorUtil.getAppExecutorService()).get().asIntention();
     myFixture.doHighlighting(); // wait until highlighting is finished to .isAvailable() return true
     boolean old = CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).isOptimizeImportsOnTheFly();
     CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).setOptimizeImportsOnTheFly(true);
@@ -768,6 +768,13 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          """);
     doTest();
   }
+  
+  public void testUnresolvedReferenceAfterParenthesis() {
+    doTest();
+  }
+
+  public void testInvalidExtendsList() { doTest(); }
+  
   private void doTest() {
     doTest(".java");
   }

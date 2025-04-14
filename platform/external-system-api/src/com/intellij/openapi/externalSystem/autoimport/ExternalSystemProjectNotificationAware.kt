@@ -59,6 +59,14 @@ interface ExternalSystemProjectNotificationAware {
     fun getInstance(project: Project): ExternalSystemProjectNotificationAware =
       project.getService(ExternalSystemProjectNotificationAware::class.java)
 
+    fun isNotificationVisible(project: Project): Boolean {
+      return getInstance(project).getSystemIds().isNotEmpty()
+    }
+
+    fun isNotificationVisible(project: Project, systemId: ProjectSystemId): Boolean {
+      return systemId in getInstance(project).getSystemIds()
+    }
+
     /**
      * Function for simple subscription onto notification change events
      * @see ExternalSystemProjectNotificationAware.Listener.onNotificationChanged
@@ -77,9 +85,10 @@ interface ExternalSystemProjectNotificationAware {
       })
     }
 
+    @Deprecated("Use ExternalSystemProjectNotificationAware.isNotificationVisible instead")
     fun isNotificationVisibleProperty(project: Project, systemId: ProjectSystemId): ObservableProperty<Boolean> {
       return object : ObservableProperty<Boolean> {
-        override fun get() = systemId in getInstance(project).getSystemIds()
+        override fun get() = isNotificationVisible(project, systemId)
         override fun afterChange(parentDisposable: Disposable?, listener: (Boolean) -> Unit) {
           whenNotificationChanged(project, parentDisposable) {
             listener(get())

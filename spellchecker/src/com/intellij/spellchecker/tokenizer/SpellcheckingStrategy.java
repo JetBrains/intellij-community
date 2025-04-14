@@ -54,7 +54,10 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
 
   public static final Tokenizer<PsiElement> TEXT_TOKENIZER = new TokenizerBase<>(PlainTextSplitter.getInstance());
 
-  public Tokenizer getTokenizer(PsiElement element, Set<SpellCheckingInspection.SpellCheckingScope> scope) {
+  /**
+   * @see SpellcheckingStrategy#EMPTY_TOKENIZER
+   */
+  public @NotNull Tokenizer getTokenizer(@NotNull PsiElement element, @NotNull Set<SpellCheckingInspection.SpellCheckingScope> scope) {
     return getTokenizer(element);
   }
 

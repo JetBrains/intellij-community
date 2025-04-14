@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.java.syntax` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = 8,
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+jvm_resources(
+  name = "syntax_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "syntax",
+  module_name = "intellij.java.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//platform/syntax/syntax-api:syntax",
+    "@lib//:kotlin-stdlib",
+    "//platform/syntax/syntax-i18n:i18n",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base/multiplatform:util-base-multiplatform",
+    "//platform/util/multiplatform",
+    "//platform/syntax/syntax-util:util",
+  ],
+  exports = [
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-util:util",
+  ],
+  runtime_deps = [":syntax_resources"]
+)
+### auto-generated section `build intellij.java.syntax` end

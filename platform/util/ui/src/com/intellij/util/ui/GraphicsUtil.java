@@ -42,7 +42,8 @@ public final class GraphicsUtil {
   }
 
   /**
-   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
+   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead, as this method will complicate computing
+   * the correct text width for the preferred size.
    */
   public static void setupAntialiasing(@NotNull Graphics g2) {
     setupAntialiasing(g2, true, false);

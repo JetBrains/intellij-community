@@ -6,47 +6,32 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageVersion
+import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.common.EmptyPythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManagerService
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import io.github.z4kn4fein.semver.toVersion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class CompositePythonRepositoryManager(
-  project: Project,
-  sdk: Sdk,
+  override val project: Project,
   private val managers: List<PythonRepositoryManager>,
-) : PythonRepositoryManager(project, sdk) {
+  @Deprecated("Don't use sdk from here") override val sdk: Sdk
+) : PythonRepositoryManager {
 
   override val repositories: List<PyPackageRepository> =
     managers.flatMap { it.repositories }
 
-  override fun allPackages(): Set<String> {
-    return managers.fold(emptySet()) { acc, manager -> acc + manager.allPackages() }
-  }
-
-  override fun packagesFromRepository(repository: PyPackageRepository): Set<String> {
-    return findPackagesInRepository(repository)
-           ?: error("No packages for requested repository in cache")
-  }
-
-  private fun findPackagesInRepository(repository: PyPackageRepository): Set<String>? {
-    for (manager in managers) {
-      val packages = manager.packagesFromRepository(repository)
-      if (packages.isNotEmpty()) {
-        return packages
-      }
-    }
-    return null
-  }
+  override fun allPackages(): Set<String> =
+    repositories.flatMap { it.getPackages() }.toSet()
 
   override suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails {
     for (manager in managers) {
@@ -61,9 +46,7 @@ internal class CompositePythonRepositoryManager(
     var latestVersion: PyPackageVersion? = null
     for (manager in managers) {
       val version = manager.getLatestVersion(spec)
-      if (version != null &&
-          (latestVersion == null || version.presentableText.toVersion() > latestVersion.presentableText.toVersion())
-      ) {
+      if (version != null && (latestVersion == null || PyPackageVersionComparator.compare(version, latestVersion) > 0)) {
         latestVersion = version
       }
     }
@@ -91,7 +74,7 @@ internal class CompositePythonRepositoryManager(
       }
     }
   }
-
+  @Throws(IOException::class)
   override suspend fun initCaches() {
     if (!isInit.compareAndSet(false, true)) return
     mutex.withLock {

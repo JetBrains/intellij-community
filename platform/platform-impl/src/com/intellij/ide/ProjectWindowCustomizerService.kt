@@ -50,7 +50,6 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.Window
-import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -78,7 +77,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project, cor
 
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
-    val size = JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize()
+    val size = JBUI.CurrentTheme.Toolbar.recentProjectAvatarIconSize()
     return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)
   }
 }
@@ -117,7 +116,7 @@ class ProjectWindowCustomizerService : Disposable {
     }
 
     @Internal
-    fun projectPath(project: Project): String? = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project) ?: project.basePath
+    fun projectPath(project: Project): String? = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project)
   }
 
   private var wasGradientPainted = isForceColorfulToolbar()
@@ -573,9 +572,9 @@ private class RecentProjectColorStorage(override val projectPath: String): Proje
     var info = info
     if (info == null) info = RecentProjectColorInfo()
     block(info)
-    RecentProjectsManagerBase.getInstanceEx().updateProjectColor(Path.of(projectPath), info)
+    RecentProjectsManagerBase.getInstanceEx().updateProjectColor(projectPath, info)
   }
 
   private val info: RecentProjectColorInfo? get() =
-    RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(Path.of(projectPath))?.colorInfo
+    RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectPath)?.colorInfo
 }

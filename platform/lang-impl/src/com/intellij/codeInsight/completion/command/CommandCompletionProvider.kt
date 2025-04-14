@@ -56,6 +56,10 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (!commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return
+    //not support injected fragment, it is not so obvious how to do it
+    //it can work with errors
+    if (parameters.editor is EditorWindow) return
+
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
@@ -110,7 +114,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     val prefix = commandCompletionType.pattern
     val sorter = createSorter(parameters)
-    val withPrefixMatcher = resultSet.withPrefixMatcher(CamelHumpMatcher(prefix, false, true))
+    val withPrefixMatcher = resultSet.withPrefixMatcher(LimitedToleranceMatcher(prefix))
       .withRelevanceSorter(sorter)
 
     withPrefixMatcher.restartCompletionOnPrefixChange(
@@ -172,11 +176,13 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
                                                                   .withLookupString(i18nName.trim())
                                                                   .withLookupString(lookupString)
+                                                                  .withLookupStrings(command.synonyms)
                                                                   .withPresentableText(lookupString)
                                                                   .withTypeText(tailText)
                                                                   .withIcon(command.icon ?: Lightning)
                                                                   .withInsertHandler(CommandInsertHandler(command))
-                                                                  .withBoldness(true),
+                                                                  .withBoldness(false),
+                                                                command,
                                                                 adjustedParameters.hostAdjustedOffset,
                                                                 commandCompletionFactory.suffix().toString() +
                                                                 (commandCompletionFactory.filterSuffix() ?: ""),
@@ -260,35 +266,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       TextRange(hostOffset, originalDocument.textLength))
 
 
-    var file =
-      if (isNonWritten) {
-        val createdFile = originalFile.copy() as PsiFile
-        if (createdFile is PsiFileImpl) {
-          createdFile.setOriginalFile(topFile)
-        }
-        createdFile
-      }
-      else {
-        if (topFile == originalFile) {
-          var createdFile = commandCompletionFactory.createFile(originalFile, adjustedText)
-          if (createdFile == null) {
-            createdFile = PsiFileFactory.getInstance(topEditor.project)
-              .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
-            if (createdFile is PsiFileImpl) {
-              createdFile.setOriginalFile(topFile)
-            }
-          }
-          createdFile
-        }
-        else {
-          val createdFile = PsiFileFactory.getInstance(topEditor.project)
-            .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
-          if (createdFile is PsiFileImpl) {
-            createdFile.setOriginalFile(topFile)
-          }
-          createdFile
-        }
-      }
+    var file = createFile(isNonWritten, originalFile, topFile, commandCompletionFactory, adjustedText, topEditor)
 
     if (file is PsiFileImpl) {
       file.setOriginalFile(topFile)
@@ -299,6 +277,41 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       adjustedOffset = (file.fileDocument as? DocumentWindow)?.hostToInjected(adjustedOffset) ?: 0
     }
     return AdjustedCompletionParameters(file, adjustedOffset, hostAdjustedOffset)
+  }
+
+  private fun createFile(
+    isNonWritten: Boolean,
+    originalFile: PsiFile,
+    topFile: PsiFile,
+    commandCompletionFactory: CommandCompletionFactory,
+    adjustedText: String,
+    topEditor: Editor,
+  ): PsiFile {
+    if (isNonWritten) {
+      val createdFile = originalFile.copy() as PsiFile
+      if (createdFile is PsiFileImpl) {
+        createdFile.setOriginalFile(topFile)
+      }
+      return createdFile
+    }
+
+    if (topFile == originalFile) {
+      var createdFile = commandCompletionFactory.createFile(originalFile, adjustedText)
+      if (createdFile == null) {
+        createdFile = PsiFileFactory.getInstance(topEditor.project)
+          .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
+        if (createdFile is PsiFileImpl) {
+          createdFile.setOriginalFile(topFile)
+        }
+      }
+      return createdFile
+    }
+    val createdFile = PsiFileFactory.getInstance(topEditor.project)
+      .createFileFromText(topFile.getName(), topFile.getLanguage(), adjustedText, true, true, false, topFile.virtualFile)
+    if (createdFile is PsiFileImpl) {
+      createdFile.setOriginalFile(topFile)
+    }
+    return createdFile
   }
 }
 
@@ -422,4 +435,37 @@ internal fun findCommandCompletionType(
     return InvocationCommandType.FullLine(text.substring(offset - indexOf, offset), "")
   }
   return null
+}
+
+private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : CamelHumpMatcher(myCurrentPrefix, false, true) {
+  override fun prefixMatches(element: LookupElement): Boolean {
+    if (!super.prefixMatches(element)) return false
+    for (lookupString in element.allLookupStrings) {
+      if (lookupString.contains(prefix, ignoreCase = true)) return true
+      val fragments = matchingFragments(lookupString) ?: continue
+      for (range in fragments) {
+        if (prefix.length != range.length) continue
+        if (range.startOffset >= range.endOffset ||
+            range.startOffset < 0 || range.startOffset >= (lookupString.length - 1) ||
+            range.endOffset < 0 || range.endOffset >= (lookupString.length - 1)) continue
+        val matchedFragment = lookupString.substring(range.startOffset, range.endOffset)
+        var errors = 0
+        for (i in matchedFragment.indices) {
+          if (prefix[i] != matchedFragment[i]) errors++
+          if (errors > 2) return false
+        }
+        if (range.startOffset <= 1) return true
+        if (!lookupString[range.startOffset].isLowerCase()) return true
+        if (!lookupString[range.startOffset - 1].isLetter()) return true
+      }
+    }
+    return false
+  }
+
+  override fun cloneWithPrefix(prefix: String): PrefixMatcher {
+    if (prefix == myCurrentPrefix) {
+      return this
+    }
+    return LimitedToleranceMatcher(prefix)
+  }
 }

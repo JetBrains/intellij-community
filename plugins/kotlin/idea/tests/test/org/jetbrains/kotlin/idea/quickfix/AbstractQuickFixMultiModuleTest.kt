@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
@@ -115,6 +116,8 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         KotlinPluginMode.K2 -> {} // TODO check diagnostics for K2
                     }
                 }
+
+                NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
                 if (actionShouldBeAvailable) {
                     compareToExpected(dirPath)

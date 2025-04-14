@@ -2,6 +2,7 @@
 package com.intellij.internal.statistics.metadata
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
@@ -126,6 +127,32 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertNotNull("Object arrays should be not null", event)
     assertEquals(1, event!!.size)
     assertEquals("parent.middle", event.first())
+  }
+
+  fun `test group data is added to events`() {
+    val testField = EventFields.String("test_field", listOf("test_value_1", "test_value_2"))
+    val groupDataEntry = Pair<EventField<*>, FeatureUsageData.() -> Unit>(
+      testField as EventField<*>
+    ) { fuData: FeatureUsageData -> fuData.addData("test_field", "test_value1") }
+    val groupData = listOf(groupDataEntry)
+    val eventLogGroup = EventLogGroup("test.group.id", 1, "FUS", "test group", groupData)
+    eventLogGroup.registerEvent("test_event1")
+    eventLogGroup.registerEvent("test_event2")
+
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
+
+    assertEquals(2, groups.first().schema.size)
+
+    val event1 = groups.first().schema.first()
+    assertEquals(1, event1.fields.size)
+    assertEquals("test_field", event1.fields.first().path)
+    assertTrue(event1.fields.first().value.contains("{enum:test_value_1|test_value_2}"))
+
+    val event2 = groups.first().schema.last()
+    assertEquals(1, event2.fields.size)
+    assertEquals("test_field", event2.fields.first().path)
+    assertTrue(event2.fields.first().value.contains("{enum:test_value_1|test_value_2}"))
   }
 
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {

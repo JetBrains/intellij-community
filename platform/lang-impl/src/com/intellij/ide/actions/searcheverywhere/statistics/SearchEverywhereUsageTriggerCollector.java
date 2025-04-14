@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
@@ -17,7 +18,7 @@ import java.util.List;
 @ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 18);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 19);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -105,6 +106,22 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
 
   public static final EventId1<Boolean> PREVIEW_SWITCHED = GROUP.registerEvent("previewSwitched", EventFields.Boolean("previewState"));
   public static final EventId1<Boolean> PREVIEW_CLOSED = GROUP.registerEvent("previewClosed", EventFields.Boolean("previewClosed"));
+
+  public enum FuzzySearchResult {
+    PROCESS_COMPLETE, PROCESS_STOPPED, EMPTY_PATTERN
+  }
+
+  public enum FuzzySearchType {
+    FUZZY_FILE_SEARCH
+  }
+
+  public static final EnumEventField<FuzzySearchType> FUZZY_SEARCH_TYPE = EventFields.Enum("fuzzySearchType", FuzzySearchType.class);
+  public static final IntEventField FUZZY_SEARCH_TOTAL_RESULTS = EventFields.Int("fuzzySearchTotalResults");
+  public static final EnumEventField<FuzzySearchResult> FUZZY_SEARCH_RESULT =
+    EventFields.Enum("fuzzySearchResult", FuzzySearchResult.class);
+  public static final IdeActivityDefinition FUZZY_SEARCH_ACTIVITY =
+    GROUP.registerIdeActivity("fuzzySearch", new EventField[]{FUZZY_SEARCH_TYPE},
+                              new EventField[]{FUZZY_SEARCH_TOTAL_RESULTS, FUZZY_SEARCH_RESULT});
 
   @Override
   public EventLogGroup getGroup() {

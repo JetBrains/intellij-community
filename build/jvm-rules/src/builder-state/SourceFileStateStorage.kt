@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
-package org.jetbrains.bazel.jvm.jps.state
+package org.jetbrains.bazel.jvm.worker.state
 
 import androidx.collection.MutableScatterMap
 import androidx.collection.ScatterMap
@@ -21,8 +21,8 @@ import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.emptyStringArray
+import org.jetbrains.bazel.jvm.util.emptyList
+import org.jetbrains.bazel.jvm.util.emptyStringArray
 import java.io.IOException
 import java.nio.file.Path
 

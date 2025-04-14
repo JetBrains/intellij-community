@@ -51,7 +51,7 @@ internal fun openEditorForFile(
       val manager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
       var splitWindow: EditorWindow? = null
       for (value in values) {
-        val file = value.virtualFileId.virtualFile() ?: continue
+        val file = value.virtualFile ?: continue
         if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
           if (splitWindow == null) {
             splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
@@ -86,7 +86,7 @@ internal fun openEditorForFile(
 }
 
 internal fun closeEditorForFile(selectedFile: SwitcherVirtualFile, project: Project) {
-  val virtualFile = selectedFile.virtualFileId.virtualFile() ?: return
+  val virtualFile = selectedFile.virtualFile ?: return
   val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
 
   val maybePreservedItemWindow = null

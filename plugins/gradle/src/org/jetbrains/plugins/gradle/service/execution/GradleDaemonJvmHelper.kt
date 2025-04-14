@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
@@ -62,7 +60,7 @@ object GradleDaemonJvmHelper {
   fun isProjectUsingDaemonJvmCriteria(externalProjectPath: Path, gradleVersion: GradleVersion): Boolean {
     return Registry.`is`("gradle.daemon.jvm.criteria") && when {
       isDaemonJvmCriteriaRequired(gradleVersion) -> true
-      isDaemonJvmCriteriaSupported(gradleVersion) && GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)?.version != null -> true
+      isDaemonJvmCriteriaSupported(gradleVersion) && GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath).version != null -> true
       else -> false
     }
   }
@@ -110,19 +108,12 @@ object GradleDaemonJvmHelper {
 
     val taskResult = CompletableFuture<Boolean>()
 
-    val taskCallback = object : TaskCallback {
-      override fun onSuccess() {
-        taskResult.complete(true)
-      }
-
-      override fun onFailure() {
-        taskResult.complete(false)
-      }
-    }
-
-    val executionSpec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, taskSettings)
+    val executionSpec = TaskExecutionSpec.create()
+      .withProject(project)
+      .withSystemId(GradleConstants.SYSTEM_ID)
+      .withSettings(taskSettings)
       .withUserData(taskUserData)
-      .withCallback(taskCallback)
+      .withCallback(taskResult)
       .build()
 
     ExternalSystemUtil.runTask(executionSpec)

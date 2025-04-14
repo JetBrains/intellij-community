@@ -5,7 +5,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.where
 import com.intellij.python.hatch.runtime.getHatchCommand
 import com.jetbrains.python.Result
 import java.nio.file.Path

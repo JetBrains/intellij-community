@@ -4,6 +4,7 @@ package com.intellij.serviceContainer
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.InternalCoroutineContextKey
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -23,11 +24,11 @@ suspend inline fun <reified T : Any> instance(): T {
 @Experimental
 suspend fun <T : Any> instance(keyClass: Class<T>): T {
   val ctx = currentCoroutineContext()
-  val manager = ctx.contextComponentManager() as ComponentManagerImpl
+  val manager = ctx.contextComponentManager() as ComponentManagerEx
   return manager.getServiceAsync(keyClass)
 }
-
-private fun CoroutineContext.contextComponentManager(): ComponentManager {
+@Internal
+fun CoroutineContext.contextComponentManager(): ComponentManager {
   return checkNotNull(contextComponentManagerOrNull()) {
     "Coroutine is not a child of a service scope"
   }
@@ -37,12 +38,12 @@ private fun CoroutineContext.contextComponentManagerOrNull(): ComponentManager? 
   return get(ComponentManagerElementKey)?.componentManager
 }
 
-internal fun ComponentManagerImpl.asContextElement(): CoroutineContext.Element {
+internal fun ComponentManagerEx.asContextElement(): CoroutineContext.Element {
   return ComponentManagerElement(this)
 }
 
 private class ComponentManagerElement(
-  val componentManager: ComponentManagerImpl,
+  val componentManager: ComponentManagerEx,
 ) : AbstractCoroutineContextElement(ComponentManagerElementKey), IntelliJContextElement {
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
@@ -67,7 +68,7 @@ private object ComponentManagerElementKey : CoroutineContext.Key<ComponentManage
 @Internal
 @TestOnly // Originally implemented to bind the test coroutine to the container. This can be lifted later
 suspend fun <T> withContainerContext(container: ComponentManager, action: suspend CoroutineScope.() -> T): T {
-  val containerScope = (container as ComponentManagerImpl).getCoroutineScope()
+  val containerScope = (container as ComponentManagerEx).getCoroutineScope()
 
   /**
    * Inherit container context, this enables [instance] to work inside [action].

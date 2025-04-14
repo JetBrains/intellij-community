@@ -1,6 +1,6 @@
 <idea-plugin>
   <dependencies>
-    <plugin id="com.intellij.modules.java"/>
+    <plugin id="com.intellij.java"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -98,6 +98,9 @@
 
     <moduleBuilder builderClass="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder"/>
     <fileTemplateGroup implementation="org.jetbrains.plugins.javaFX.wizard.JavaFxModuleTemplateGroup"/>
+
+    <internalFileTemplate name="JavaFXApplication"/>
+    <internalFileTemplate name="FxmlFile"/>
 
     <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.plugins.javaFX.JavafxBundledDictionaryProvider"/>
   </extensions>

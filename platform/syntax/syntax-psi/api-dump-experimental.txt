@@ -12,10 +12,13 @@
 - sf:elementTypeConverterOf(kotlin.Pair[]):com.intellij.platform.syntax.psi.ElementTypeConverter
 *f:com.intellij.platform.syntax.psi.ElementTypeConverters
 - sf:INSTANCE:com.intellij.platform.syntax.psi.ElementTypeConverters
-- f:getConverter(com.intellij.lang.Language):com.intellij.platform.syntax.psi.ElementTypeConverter
+- sf:getConverter(com.intellij.lang.Language):com.intellij.platform.syntax.psi.ElementTypeConverter
+*f:com.intellij.platform.syntax.psi.IntelliJLogger
+- *sf:asSyntaxLogger(com.intellij.openapi.diagnostic.Logger):com.intellij.platform.syntax.Logger
 *:com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 - a:getCommentTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
 - a:getLexer():com.intellij.platform.syntax.lexer.Lexer
+- getPairedBraces():java.util.Collection
 - getWhitespaceTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
 *f:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
 - com.intellij.lang.LanguageExtension
@@ -35,15 +38,18 @@
 - a:getSyntaxTreeBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - a:getTreeBuilt():com.intellij.lang.ASTNode
 - a:setDebugMode(Z):V
-*:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+*f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 - *sf:Companion:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
-- a:createBuilder(com.intellij.lang.ASTNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
-- a:createBuilder(com.intellij.lang.LighterLazyParseableNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- <init>():V
+- f:createBuilder(com.intellij.lang.ASTNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- f:createBuilder(com.intellij.lang.LighterLazyParseableNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
 - bs:createBuilder$default(com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory,com.intellij.lang.ASTNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence,I,java.lang.Object):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
 - bs:createBuilder$default(com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory,com.intellij.lang.LighterLazyParseableNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence,I,java.lang.Object):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
-- s:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+- sf:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 *f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
 - f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+*f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImplKt
+- sf:getSyntaxParserRuntimeFactory(com.intellij.lang.Language):com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
 *c:com.intellij.platform.syntax.psi.lexer.LexerAdapter
 - com.intellij.lexer.Lexer
 - <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.psi.ElementTypeConverter):V

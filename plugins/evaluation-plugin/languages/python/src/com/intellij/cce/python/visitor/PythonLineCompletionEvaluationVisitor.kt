@@ -19,12 +19,11 @@ import com.jetbrains.python.psi.*
 
 class PythonLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.PYTHON
-  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
+  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor =
     when (mode) {
-      CompletionGolfMode.ALL -> return AllVisitor(featureName)
-      CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
+      CompletionGolfMode.ALL -> AllVisitor(featureName)
+      CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
     }
-  }
 
   class AllVisitor(override val feature: String) : LineCompletionAllEvaluationVisitor, PyRecursiveElementVisitor() {
     override val language: Language = Language.PYTHON

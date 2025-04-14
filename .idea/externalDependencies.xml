@@ -9,7 +9,6 @@
     <plugin id="com.intellij.java-i18n" />
     <plugin id="com.intellij.properties" />
     <plugin id="com.intellij.uiDesigner" />
-    <plugin id="org.intellij.groovy" />
     <plugin id="org.editorconfig.editorconfigjetbrains" />
     <plugin id="org.jetbrains.kotlin" />
   </component>

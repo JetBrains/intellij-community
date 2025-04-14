@@ -2688,20 +2688,29 @@ public class StringUtil {
    */
   @Contract(pure = true)
   public static @NotNull String collapseWhiteSpace(@NotNull CharSequence s) {
-    StringBuilder result = new StringBuilder();
-    boolean space = false;
-    for (int i = 0, length = s.length(); i < length; i++) {
+    StringBuilder result = null;
+    int length = s.length();
+    for (int i = 0; i < length;) {
       char ch = s.charAt(i);
-      if (isWhiteSpace(ch)) {
-        if (!space) space = true;
+      int ni = skipWhitespaceOrNewLineForward(s, i);
+      if (ni == i+1 && (i == 0 || ch != ' ' || ni == length) || ni > i+1) {
+        if (result == null) {
+          result = new StringBuilder(length);
+          result.append(s, 0, i);
+        }
+        if (i != 0 && ni != length) {
+          result.append(' ');
+        }
+        i = ni;
       }
       else {
-        if (space && result.length() > 0) result.append(' ');
-        result.append(ch);
-        space = false;
+        if (result != null) {
+          result.append(ch);
+        }
+        i++;
       }
     }
-    return result.toString();
+    return result == null ? s.toString() : result.toString();
   }
 
   @Contract(pure = true)

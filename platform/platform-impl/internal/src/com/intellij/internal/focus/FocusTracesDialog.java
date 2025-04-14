@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
@@ -173,7 +177,7 @@ public final class FocusTracesDialog extends DialogWrapper {
         }
         prev = info.component.get();
         if (prev != null && prev.isDisplayable()) {
-          final Graphics g = prev.getGraphics();
+          final Graphics g = GraphicsUtil.safelyGetGraphics(prev);
           g.setColor(JBColor.RED);
           final Dimension sz = prev.getSize();
           UIUtil.drawDottedRectangle(g, 1, 1, sz.width - 2, sz.height - 2);

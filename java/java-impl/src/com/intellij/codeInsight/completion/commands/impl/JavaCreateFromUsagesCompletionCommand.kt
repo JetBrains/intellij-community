@@ -13,7 +13,6 @@ import com.intellij.lang.java.request.generateActions
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -25,7 +24,6 @@ import javax.swing.Icon
 
 internal class JavaCreateFromUsagesCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    if (!`is`("java.command.completion.create.from.usages")) return emptyList()
     val editor = context.editor
     if (InjectedLanguageEditorUtil.getTopLevelEditor(editor) != editor) return emptyList()
     if (context.isReadOnly) return emptyList()

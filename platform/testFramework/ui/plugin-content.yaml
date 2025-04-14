@@ -1,11 +1,37 @@
 - name: lib/intellij.remoterobot.remote.fixtures.jar
+  library: intellij.remoterobot.remote.fixtures
+  module: intellij.platform.testFramework.ui
+  files:
+  - name: $MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-fixtures/0/remote-fixtures-0.jar
 - name: lib/intellij.remoterobot.robot.server.core.jar
+  library: intellij.remoterobot.robot.server.core
+  module: intellij.platform.testFramework.ui
+  files:
+  - name: $MAVEN_REPOSITORY$/com/intellij/remoterobot/robot-server-core/0/robot-server-core-0.jar
+  - name: $MAVEN_REPOSITORY$/com/intellij/remoterobot/remote-robot/0/remote-robot-0.jar
+  - name: $MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2/slf4j-api-2.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1/kotlin-reflect-1.jar
+  - name: $MAVEN_REPOSITORY$/com/squareup/retrofit2/retrofit/2/retrofit-2.jar
+  - name: $MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/3/okhttp-3.jar
+  - name: $MAVEN_REPOSITORY$/com/squareup/okio/okio/1/okio-1.jar
+  - name: $MAVEN_REPOSITORY$/com/squareup/retrofit2/converter-gson/2/converter-gson-2.jar
+  - name: $MAVEN_REPOSITORY$/org/mozilla/rhino/1/rhino-1.jar
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-swing-junit/3/assertj-swing-junit-3.jar
+  - name: $MAVEN_REPOSITORY$/junit/junit/4/junit-4.jar
+  - name: $MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1/hamcrest-core-1.jar
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-swing/3/assertj-swing-3.jar
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/3/assertj-core-3.jar
+  - name: $MAVEN_REPOSITORY$/org/easytesting/fest-util/1/fest-util-1.jar
+  - name: $MAVEN_REPOSITORY$/org/easytesting/fest-reflect/1/fest-reflect-1.jar
+  - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-dep/1/byte-buddy-dep-1.jar
+  - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm/9/asm-9.jar
+  - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9/asm-commons-9.jar
+- name: lib/okhttp.jar
+  library: okhttp
+  files:
+  - name: $MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5/okhttp-5.jar
+  - name: $MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3/okio-jvm-3.jar
+  reason: withProjectLibrary
 - name: lib/platform-testFramework-ui.jar
-  projectLibraries:
-  - name: okhttp
-    files:
-    - name: $MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5/okhttp-5.jar
-    - name: $MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3/okio-jvm-3.jar
-    reason: withProjectLibrary
   modules:
   - name: intellij.platform.testFramework.ui

@@ -193,7 +193,6 @@ abstract class ModuleManagerBridgeImpl(
     initializeFacets: Boolean,
   ): Unit = loadAllModulesTimeMs.addMeasuredTime {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-    val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
 
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
@@ -209,8 +208,7 @@ abstract class ModuleManagerBridgeImpl(
                                                             diff = targetBuilder,
                                                             isNew = false,
                                                             precomputedExtensionModel = precomputedExtensionModel,
-                                                            plugins = plugins,
-                                                            corePlugin = corePlugin)
+                                                            plugins = plugins)
             }
             module.callCreateComponentsNonBlocking()
             moduleEntity to module
@@ -474,36 +472,33 @@ abstract class ModuleManagerBridgeImpl(
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
     isNew: Boolean,
-    precomputedExtensionModel: PrecomputedExtensionModel?,
+    precomputedExtensionModel: PrecomputedExtensionModel,
     plugins: List<IdeaPluginDescriptorImpl>,
-    corePlugin: IdeaPluginDescriptorImpl?,
   ): ModuleBridge {
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
-    val module = createModule(
+    return createModule(
       symbolicId = moduleEntity.symbolicId,
       name = moduleEntity.name,
       virtualFileUrl = moduleFileUrl,
       entityStorage = versionedStorage,
       diff = diff
-    )
+    ) { module ->
+      module.registerComponents(
+        modules = plugins,
+        precomputedExtensionModel = precomputedExtensionModel,
+        app = ApplicationManager.getApplication(),
+        listenerCallbacks = null
+      )
 
-    module.registerComponents(
-      corePlugin = corePlugin,
-      modules = plugins,
-      app = ApplicationManager.getApplication(),
-      precomputedExtensionModel = precomputedExtensionModel,
-      listenerCallbacks = null
-    )
-
-    if (moduleFileUrl == null) {
-      registerNonPersistentModuleStore(module)
+      if (moduleFileUrl == null) {
+        registerNonPersistentModuleStore(module)
+      }
+      else {
+        val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
+        moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
+      }
     }
-    else {
-      val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
-      moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
-    }
-    return module
   }
 
   fun createModuleInstance(
@@ -511,17 +506,15 @@ abstract class ModuleManagerBridgeImpl(
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
     isNew: Boolean,
-    precomputedExtensionModel: PrecomputedExtensionModel?,
+    precomputedExtensionModel: PrecomputedExtensionModel,
     plugins: List<IdeaPluginDescriptorImpl>,
-    corePlugin: IdeaPluginDescriptorImpl?,
   ): ModuleBridge = createModuleInstanceTimeMs.addMeasuredTime {
     val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
                                                                versionedStorage = versionedStorage,
                                                                diff = diff,
                                                                isNew = isNew,
                                                                precomputedExtensionModel = precomputedExtensionModel,
-                                                               plugins = plugins,
-                                                               corePlugin = corePlugin)
+                                                               plugins = plugins)
     module.callCreateComponents()
     return@addMeasuredTime module
   }
@@ -536,6 +529,7 @@ abstract class ModuleManagerBridgeImpl(
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
+    init: (ModuleBridge) -> Unit,
   ): ModuleBridge
 
   abstract fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)

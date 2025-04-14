@@ -15,5 +15,4 @@ com/intellij/psi/stubs/StubBuilderType
 com/intellij/psi/stubs/StubInconsistencyReporter$EnforcedInconsistencyType
 com/intellij/psi/stubs/StubInconsistencyReporter$SourceOfCheck
 com/intellij/util/CachedValuesFactory
-com/intellij/util/messages/ListenerDescriptor
 com/intellij/util/pico/DefaultPicoContainer

@@ -44,8 +44,8 @@ object ClassPathUtil {
     return arrayOf(
       LoadingState::class.java,  // module 'intellij.platform.diagnostic'
       PathManager::class.java,  // module 'intellij.platform.util'
-      CharArrayCharSequence::class.java, // module 'intellij.platform.util.base.kmp'
-      JavaVersion::class.java, // module 'intellij.platform.util.kmp'
+      CharArrayCharSequence::class.java, // module 'intellij.platform.util.base.multiplatform'
+      JavaVersion::class.java, // module 'intellij.platform.util.multiplatform'
       Strings::class.java,  // module 'intellij.platform.util.base'
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'
       SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'

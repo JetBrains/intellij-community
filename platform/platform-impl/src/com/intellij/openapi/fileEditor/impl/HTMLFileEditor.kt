@@ -42,9 +42,15 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, request: HTMLEditorProvider.Request)
-  : UserDataHolderBase(), FileEditor
-{
+private const val LOADING_KEY = 1
+private const val CONTENT_KEY = 0
+private const val URL_LOADING_TIMEOUT_MS = 10000
+
+internal class HTMLFileEditor(
+  private val project: Project,
+  private val file: LightVirtualFile,
+  request: HTMLEditorProvider.Request,
+) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(true, null, null)
   private val timeoutJob = AtomicReference<Job>()
@@ -54,10 +60,12 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   private var jsRouter: CefMessageRouter? = null
 
   private val multiPanel = object : MultiPanel() {
-    override fun create(key: Int): JComponent = when (key) {
-      LOADING_KEY -> loadingPanel
-      CONTENT_KEY -> contentPanel.component
-      else -> throw IllegalArgumentException("Unknown key: ${key}")
+    override fun create(key: Int): JComponent {
+      return when (key) {
+        LOADING_KEY -> loadingPanel
+        CONTENT_KEY -> contentPanel.component
+        else -> throw IllegalArgumentException("Unknown key: ${key}")
+      }
     }
 
     override fun select(key: Int, now: Boolean): ActionCallback {
@@ -96,9 +104,16 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
-      override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
-        if (userGesture) { navigating.set(true); browse(request.url); true }
-        else false
+      override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean {
+        if (userGesture) {
+          navigating.set(true)
+          browse(request.url)
+          return true
+        }
+        else {
+          return false
+        }
+      }
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
@@ -126,18 +141,24 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     }
 
     contentPanel.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
-      override fun onStatusMessage(browser: CefBrowser, text: @NlsSafe String) =
-        StatusBar.Info.set(text, project)
+      override fun onStatusMessage(browser: CefBrowser, text: @NlsSafe String) = StatusBar.Info.set(text, project)
     }, contentPanel.cefBrowser)
 
     contentPanel.setErrorPage { errorCode, errorText, failedUrl ->
-      if (errorCode == CefLoadHandler.ErrorCode.ERR_ABORTED && navigating.getAndSet(false)) null
-      else ErrorPage.DEFAULT.create(errorCode, errorText, failedUrl)
+      if (errorCode == CefLoadHandler.ErrorCode.ERR_ABORTED && navigating.getAndSet(false)) {
+        null
+      }
+      else {
+        ErrorPage.DEFAULT.create(errorCode, errorText, failedUrl)
+      }
     }
 
     multiPanel.select(CONTENT_KEY, true)
 
-    if (request.url != null) {
+    if (request.url == null) {
+      contentPanel.loadHTML(request.html!!)
+    }
+    else {
       val timeoutText = request.timeoutHtml ?: EditorBundle.message("message.html.editor.timeout")
       timeoutJob.set(htmlTabScope.launch {
         delay(Registry.intValue("html.editor.timeout", URL_LOADING_TIMEOUT_MS).milliseconds)
@@ -145,22 +166,29 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
       })
       contentPanel.loadURL(request.url)
     }
-    else {
-      contentPanel.loadHTML(request.html!!)
-    }
   }
 
-  private fun browse(url: String) =
-    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
+  private fun browse(url: String) = BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
 
   override fun getComponent(): JComponent = multiPanel
+
   override fun getPreferredFocusedComponent(): JComponent = multiPanel
+
   override fun getName(): String = IdeBundle.message("tab.title.html.preview")
-  override fun setState(state: FileEditorState) { }
+
+  override fun setState(state: FileEditorState) {
+  }
+
   override fun isModified(): Boolean = false
+
   override fun isValid(): Boolean = true
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
+
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) {
+  }
+
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) {
+  }
+
   override fun dispose() {
     htmlTabScope.cancel()
     jsRouter?.let { router ->
@@ -168,11 +196,6 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
       router.dispose()
     }
   }
-  override fun getFile(): VirtualFile = file
 
-  private companion object {
-    private const val LOADING_KEY = 1
-    private const val CONTENT_KEY = 0
-    private const val URL_LOADING_TIMEOUT_MS = 10000
-  }
+  override fun getFile(): VirtualFile = file
 }

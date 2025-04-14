@@ -1,12 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.java.syntax.parser.ReferenceParser;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
-import com.intellij.lang.java.lexer.JavaDocLexer;
-import com.intellij.lang.java.parser.BasicReferenceParser;
-import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.*;
@@ -20,6 +16,9 @@ import java.util.function.Supplier;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
+/**
+ * @see com.intellij.java.syntax.element.JavaSyntaxElementType
+ */
 public interface JavaElementType {
   class JavaCompositeElementType extends BasicJavaElementType.JavaCompositeElementType {
     public JavaCompositeElementType(@NotNull String debugName,
@@ -221,10 +220,8 @@ public interface JavaElementType {
     new JavaCompositeElementType("CASE_LABEL_ELEMENT_LIST", () -> new PsiCaseLabelElementListImpl(),
                                  BASIC_CASE_LABEL_ELEMENT_LIST);
 
-  ILazyParseableElementType CODE_BLOCK = new FrontBackICodeBlockElementType(() -> JavaParser.INSTANCE,
-                                                                       PsiUtil::getLanguageLevel,
-                                                                       (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level),
-                                                                       JavaParserUtil::obtainTokens) {
+  ILazyParseableElementType CODE_BLOCK = new FrontBackICodeBlockElementType(PsiUtil::getLanguageLevel,
+                                                                            JavaParserUtil::obtainTokens) {
     @Override
     public ASTNode createNode(final CharSequence text) {
       return new PsiCodeBlockImpl(text);
@@ -236,45 +233,15 @@ public interface JavaElementType {
     }
   };
 
-  IElementType MEMBERS = new MemberThinCodeFragmentElementType(() -> JavaParser.INSTANCE,
-                                                                                        (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-                                                                                        (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
-  );
-
-
-  IElementType STATEMENTS = new StatementThinCodeFragmentElementType(() -> JavaParser.INSTANCE,
-                                                                     (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(
-                                                                       level),
-                                                                     (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
-  );
-
-  IElementType EXPRESSION_TEXT = new ExpressionThinCodeFragmentElementType(() -> JavaParser.INSTANCE,
-                                                                           (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(
-                                                                             level),
-                                                                           (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(
-                                                                             level)
-  );
-
-  IElementType REFERENCE_TEXT = new ReferenceThinCodeFragmentElementType(() -> JavaParser.INSTANCE,
-                                                                         (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(
-                                                                           level),
-                                                                         (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
-  );
-
+  IElementType MEMBERS = new MemberThinCodeFragmentElementType();
+  IElementType STATEMENTS = new StatementThinCodeFragmentElementType();
+  IElementType EXPRESSION_TEXT = new ExpressionThinCodeFragmentElementType();
+  IElementType REFERENCE_TEXT = new ReferenceThinCodeFragmentElementType();
   IElementType TYPE_WITH_DISJUNCTIONS_TEXT = new FrontBackTypeTextElementType("TYPE_WITH_DISJUNCTIONS_TEXT",
-                                                                              BasicReferenceParser.DISJUNCTIONS,
-                                                                              () -> JavaParser.INSTANCE,
-                                                                              (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-                                                                              (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level),
+                                                                              ReferenceParser.DISJUNCTIONS,
                                                                               BASIC_TYPE_WITH_DISJUNCTIONS_TEXT);
   IElementType TYPE_WITH_CONJUNCTIONS_TEXT = new FrontBackTypeTextElementType("TYPE_WITH_CONJUNCTIONS_TEXT",
-                                                                              BasicReferenceParser.DISJUNCTIONS,
-                                                                              () -> JavaParser.INSTANCE,
-                                                                              (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-                                                                              (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level),
+                                                                              ReferenceParser.DISJUNCTIONS,
                                                                               BASIC_TYPE_WITH_CONJUNCTIONS_TEXT);
-
-  IElementType DUMMY_ELEMENT = new JavaDummyElementType(level -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-                                                            level -> JavaParserDefinition.createLexerWithMarkdownEscape(level)
-  );
+  IElementType DUMMY_ELEMENT = new JavaDummyElementType();
 }

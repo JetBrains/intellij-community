@@ -4,7 +4,11 @@ package org.jetbrains.intellij.build.bazel
 import com.intellij.openapi.util.NlsSafe
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.*
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -14,7 +18,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.IdentityHashMap
+import java.util.TreeMap
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
@@ -188,6 +193,11 @@ internal class BazelBuildFileGenerator(
     val community = ArrayList<ModuleDescriptor>()
     val ultimate = ArrayList<ModuleDescriptor>()
     for (module in project.model.project.modules) {
+      if (module.name == "intellij.platform.buildScripts.bazel") {
+        // Skip bazel generator itself since it's a standalone Bazel project
+        continue
+      }
+
       val descriptor = getModuleDescriptor(module)
       if (descriptor.isCommunity) {
         community.add(descriptor)
@@ -238,7 +248,7 @@ internal class BazelBuildFileGenerator(
 
   fun getBazelDependencyLabel(module: ModuleDescriptor, dependent: ModuleDescriptor): String? {
     if (module.module.name == "intellij.idea.community.build.zip") {
-      return "@rules_jvm//zip:build-zip"
+      return "@rules_jvm//zip"
     }
 
     val dependentIsCommunity = dependent.isCommunity

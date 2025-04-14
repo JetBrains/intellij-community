@@ -165,12 +165,12 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.util.xmlDom",
     "intellij.platform.tracing.rt",
     "intellij.platform.util.base",
-    "intellij.platform.util.base.kmp",
+    "intellij.platform.util.base.multiplatform",
     "intellij.platform.diagnostic",
     // it contains common telemetry related code (utils, TelemetryContext) for OpenTelemetry
     "intellij.platform.diagnostic.telemetry.rt",
     "intellij.platform.util",
-    "intellij.platform.util.kmp",
+    "intellij.platform.util.multiplatform",
     "intellij.platform.core",
     // it has package `kotlin.coroutines.jvm.internal` - should be packed into the same JAR as coroutine lib,
     // to ensure that package index will not report one more JAR in a search path

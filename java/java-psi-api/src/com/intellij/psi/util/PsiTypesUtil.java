@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -92,7 +93,7 @@ public final class PsiTypesUtil {
    */
   public static @NotNull String getDefaultValueOfType(@Nullable PsiType type, boolean customDefaultValues) {
     if (type instanceof PsiPrimitiveType) {
-      return PsiTypes.booleanType().equals(type) ? PsiKeyword.FALSE : "0";
+      return PsiTypes.booleanType().equals(type) ? JavaKeywords.FALSE : "0";
     }
     if (customDefaultValues) {
       if (type instanceof PsiArrayType) {
@@ -102,13 +103,13 @@ public final class PsiTypesUtil {
         if (componentType instanceof PsiClassType) {
           final PsiClassType classType = (PsiClassType)componentType;
           if (classType.resolve() instanceof PsiTypeParameter) {
-            return PsiKeyword.NULL;
+            return JavaKeywords.NULL;
           }
         }
 
         PsiType erasedComponentType = TypeConversionUtil.erasure(componentType);
         StringBuilder buffer = new StringBuilder();
-        buffer.append(PsiKeyword.NEW);
+        buffer.append(JavaKeywords.NEW);
         buffer.append(" ");
         buffer.append(erasedComponentType.getCanonicalText());
         buffer.append("[0]");
@@ -155,7 +156,7 @@ public final class PsiTypesUtil {
         }
       }
     }
-    return PsiKeyword.NULL;
+    return JavaKeywords.NULL;
   }
 
   /**
@@ -792,11 +793,11 @@ public final class PsiTypesUtil {
     * (e.g. 'when')
    */
   public static boolean isRestrictedIdentifier(@Nullable String typeName, @NotNull LanguageLevel level) {
-    return PsiKeyword.VAR.equals(typeName) && JavaFeature.LVTI.isSufficient(level) ||
-           PsiKeyword.YIELD.equals(typeName) && JavaFeature.SWITCH_EXPRESSION.isSufficient(level) ||
-           PsiKeyword.RECORD.equals(typeName) && JavaFeature.RECORDS.isSufficient(level) ||
-           (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && JavaFeature.SEALED_CLASSES.isSufficient(level) ||
-           PsiKeyword.VALUE.equals(typeName) && JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(level);
+    return JavaKeywords.VAR.equals(typeName) && JavaFeature.LVTI.isSufficient(level) ||
+           JavaKeywords.YIELD.equals(typeName) && JavaFeature.SWITCH_EXPRESSION.isSufficient(level) ||
+           JavaKeywords.RECORD.equals(typeName) && JavaFeature.RECORDS.isSufficient(level) ||
+           (JavaKeywords.SEALED.equals(typeName) || JavaKeywords.PERMITS.equals(typeName)) && JavaFeature.SEALED_CLASSES.isSufficient(level) ||
+           JavaKeywords.VALUE.equals(typeName) && JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(level);
   }
 
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {

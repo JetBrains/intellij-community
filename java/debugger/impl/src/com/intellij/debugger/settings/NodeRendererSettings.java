@@ -41,6 +41,7 @@ import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.sun.jdi.Value;
@@ -516,7 +517,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         if (!debugProcess.isAttached()) {
           throw EvaluateExceptionUtil.PROCESS_EXITED;
         }
-        final EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(originalValue);
+        EvaluationContextImpl thisEvaluationContext = ((EvaluationContextImpl)evaluationContext).createEvaluationContext(originalValue);
+        XEvaluationOrigin.setOrigin(thisEvaluationContext, XEvaluationOrigin.RENDERER);
         return evaluator.evaluate(thisEvaluationContext);
       }
       catch (final EvaluateException ex) {

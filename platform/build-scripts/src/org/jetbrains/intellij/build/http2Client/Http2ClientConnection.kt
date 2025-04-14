@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.http2Client
 
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -19,7 +20,7 @@ internal class Http2ClientConnection internal constructor(
   private val commonHeaders: Array<AsciiString>,
   @JvmField internal val connection: Http2ConnectionProvider,
 ) {
-  suspend fun <T> use(block: suspend (Http2ClientConnection) -> T): T {
+  suspend inline fun <T> use(crossinline block: suspend (Http2ClientConnection) -> T): T {
     return connection.use {
       block(this)
     }
@@ -31,9 +32,13 @@ internal class Http2ClientConnection internal constructor(
 
   suspend fun head(path: CharSequence): HttpResponseStatus {
     return connection.stream { stream, result ->
-      stream.pipeline().addLast(object : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
+      stream.pipeline().addLast(object : SimpleChannelInboundHandler<Http2HeadersFrame>() {
         override fun channelRead0(context: ChannelHandlerContext, frame: Http2HeadersFrame) {
           result.complete(HttpResponseStatus.parseLine(frame.headers().status()))
+        }
+
+        override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
+          result.completeExceptionally(cause)
         }
       })
 
@@ -43,7 +48,7 @@ internal class Http2ClientConnection internal constructor(
 
   suspend fun getRedirectLocation(path: CharSequence): CharSequence? {
     return connection.stream { stream, result ->
-      stream.pipeline().addLast(object : InboundHandlerResultTracker<Http2HeadersFrame>(result) {
+      stream.pipeline().addLast(object : SimpleChannelInboundHandler<Http2HeadersFrame>() {
         override fun channelRead0(context: ChannelHandlerContext, frame: Http2HeadersFrame) {
           result.complete(
             when (HttpResponseStatus.parseLine(frame.headers().status())) {
@@ -55,6 +60,10 @@ internal class Http2ClientConnection internal constructor(
               }
             }
           )
+        }
+
+        override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
+          result.completeExceptionally(cause)
         }
       })
 

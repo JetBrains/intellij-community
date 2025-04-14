@@ -5,5 +5,5 @@ import com.intellij.lang.Language
 import org.intellij.plugins.markdown.lang.MarkdownCompatibilityChecker
 
 class JupyterMarkdownCompatibilityChecker : MarkdownCompatibilityChecker {
-  override fun isSupportedLanguage(language: Language) = language.id == "Jupyter"
+  override fun isSupportedLanguage(language: Language): Boolean = language.id == "Jupyter"
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -17,7 +18,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   private static final Comparator<Object> CRAZY_ORDER = (o1, o2) -> -Integer.compare(System.identityHashCode(o1), System.identityHashCode(o2));
 
   @Override
-  public @NotNull Collection<Result> findAll() {
+  public @NotNull @Unmodifiable Collection<Result> findAll() {
     assertNotProcessing();
     List<Result> result = new ArrayList<>();
     Processor<Result> processor = Processors.cancelableCollectProcessor(result);

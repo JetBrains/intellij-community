@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.List;
  */
 public final class JvmPlainTextSymbolCompletionContributor implements PlainTextSymbolCompletionContributor {
   @Override
-  public @NotNull Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix) {
+  public @NotNull @Unmodifiable Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix) {
     PsiClassOwner jvmFile = ObjectUtils.tryCast(file, PsiClassOwner.class);
     if (jvmFile == null) return Collections.emptyList();
     List<LookupElement> result = new ArrayList<>();

@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
-import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
-import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeResultsSorter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -25,7 +25,8 @@ class SeTabVm(
 ) {
   val searchResults: StateFlow<Flow<SeResultListEvent>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
-  val filterEditor: ObservableOptionEditor<SeFilterState>? = tab.getFilterEditor()
+  val filterEditor: SeFilterEditor? = tab.getFilterEditor()
+  val tabId: String get() = tab.id
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
@@ -41,8 +42,6 @@ class SeTabVm(
     })
   }
 
-  private val resultsSorter = SeResultsSorter(tab)
-
   init {
     coroutineScope.launch {
       isActiveFlow.combine(dumbModeStateFlow) { isActive, _ ->
@@ -56,7 +55,7 @@ class SeTabVm(
           val params = SeParams(searchPattern, filterData)
 
           flow {
-            resultsSorter.getItems(params).map { item ->
+            tab.getItems(params).map { item ->
               shouldLoadMoreFlow.first { it }
               item
             }.onCompletion {
@@ -69,6 +68,8 @@ class SeTabVm(
           _searchResults.value = it
         }
       }
+    }.invokeOnCompletion {
+      Disposer.dispose(tab)
     }
   }
 

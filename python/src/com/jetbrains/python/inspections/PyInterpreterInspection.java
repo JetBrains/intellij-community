@@ -256,6 +256,10 @@ public final class PyInterpreterInspection extends PyInspection {
         return new UseExistingInterpreterFix(systemWideSdk, module);
       }
 
+      if (PyCondaSdkCustomizer.Companion.getInstance().getSuggestSharedCondaEnvironments()) {
+        return new PySetUpCondaFix();
+      }
+
       final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));
       if (detectedSystemWideSdk != null) {
         return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);

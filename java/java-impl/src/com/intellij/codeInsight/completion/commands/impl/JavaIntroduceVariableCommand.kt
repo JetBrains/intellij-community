@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+import com.intellij.codeInsight.completion.command.CommandProvider
+import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.getDataContext
 import com.intellij.codeInsight.completion.command.getTargetContext
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.idea.ActionsBundle
 import com.intellij.lang.ContextAwareActionHandler
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -20,7 +25,26 @@ import com.intellij.refactoring.actions.IntroduceVariableAction
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class JavaIntroduceVariableCommand : ApplicableCompletionCommand() {
+internal class JavaIntroduceVariableCommandProvider : CommandProvider {
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
+    val editor = context.editor
+    val psiFile = context.psiFile
+    val offset = context.offset
+    val factory = JavaRefactoringActionHandlerFactory.getInstance()
+    val variableHandler = factory.createIntroduceVariableHandler()
+    if (variableHandler is ContextAwareActionHandler &&
+        variableHandler.isAvailableForQuickList(editor, psiFile, getDataContext(psiFile, editor, getTargetContext(offset, editor)))) {
+      return listOf(createCommand())
+    }
+    return emptyList()
+  }
+
+  private fun createCommand(): CompletionCommand {
+    return JavaIntroduceVariableCommand()
+  }
+}
+
+internal class JavaIntroduceVariableCommand : CompletionCommand(), CompletionCommandWithPreview {
   override val name: String
     get() = "Introduce variable"
 
@@ -29,16 +53,6 @@ internal class JavaIntroduceVariableCommand : ApplicableCompletionCommand() {
 
   override val icon: Icon
     get() = AllIcons.Nodes.Variable
-
-  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    if (editor == null) return false
-    val factory = JavaRefactoringActionHandlerFactory.getInstance()
-    val variableHandler = factory.createIntroduceVariableHandler()
-    if (variableHandler is ContextAwareActionHandler) {
-      return variableHandler.isAvailableForQuickList(editor, psiFile, getDataContext(psiFile, editor, getTargetContext(offset, editor)))
-    }
-    return false
-  }
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val action = IntroduceVariableAction()
@@ -50,5 +64,9 @@ internal class JavaIntroduceVariableCommand : ApplicableCompletionCommand() {
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event)
     }
+  }
+
+  override fun getPreview(): IntentionPreviewInfo? {
+    return IntentionPreviewInfo.Html(ActionsBundle.message("action.IntroduceVariable.description"))
   }
 }

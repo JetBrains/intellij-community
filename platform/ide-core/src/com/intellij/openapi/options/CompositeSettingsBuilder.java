@@ -2,12 +2,13 @@
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
 
 public interface CompositeSettingsBuilder<Settings> {
-  @NotNull
+  @NotNull @Unmodifiable
   Collection<SettingsEditor<Settings>> getEditors();
   @NotNull
   JComponent createCompoundEditor();

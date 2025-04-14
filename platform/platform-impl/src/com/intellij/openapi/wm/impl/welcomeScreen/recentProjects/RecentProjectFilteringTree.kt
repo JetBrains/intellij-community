@@ -17,7 +17,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
@@ -44,6 +43,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -57,7 +57,8 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-internal class RecentProjectFilteringTree(
+@ApiStatus.Internal
+class RecentProjectFilteringTree(
   treeComponent: Tree,
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>,
@@ -97,7 +98,6 @@ internal class RecentProjectFilteringTree(
     treeComponent.isRootVisible = false
     treeComponent.cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
     treeComponent.rowHeight = 0 // Fix tree renderer size on macOS
-    treeComponent.background = WelcomeScreenUIManager.getProjectsBackground()
     treeComponent.toggleClickCount = 0
 
     treeComponent.setUI(FullRendererComponentTreeUI())
@@ -184,7 +184,7 @@ internal class RecentProjectFilteringTree(
     }
   }
 
-  internal fun selectLastOpenedProject() {
+  fun selectLastOpenedProject() {
     val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
     val projectPath = recentProjectsManager.getLastOpenedProject() ?: return
 

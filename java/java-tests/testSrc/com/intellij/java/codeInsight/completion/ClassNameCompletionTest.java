@@ -343,6 +343,43 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
                             }""");
   }
 
+  @NeedsIndex.Full
+  public void testImplicitClassWithNestedClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_24, () -> {
+      myFixture.configureByText("Main.java", """
+        public static void main(String[] args){
+        }
+        
+        private class AAAAAAAAB{
+        
+          void test(){
+            call(AAAAAAAA<caret>)
+          }
+        
+          void call(Class<?> a){
+        
+          }
+        }
+        """);
+      myFixture.completeBasic();
+      myFixture.checkResult("""
+                              public static void main(String[] args){
+                              }
+                              
+                              private class AAAAAAAAB{
+                              
+                                void test(){
+                                  call(AAAAAAAAB)
+                                }
+                              
+                                void call(Class<?> a){
+                              
+                                }
+                              }
+                              """);
+    });
+  }
+
   private void doJavaTest(char toType) {
     final String path = "/nameCompletion/java";
     myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");

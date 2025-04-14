@@ -5,11 +5,6 @@
   modules:
   - name: intellij.devkit.runtimeModuleRepository.jps
 - name: lib/devkit.jar
-  projectLibraries:
-  - name: workspace-model-codegen
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar
-    reason: <- intellij.devkit.workspaceModel
   modules:
   - name: intellij.devkit
   contentModules:
@@ -31,3 +26,11 @@
   - name: intellij.devkit.stacktrace
   - name: intellij.devkit.apiDump
   - name: intellij.devkit.apiDump.lang
+- name: lib/modules/intellij.devkit.scaffolding.jar
+  contentModules:
+  - name: intellij.devkit.scaffolding
+- name: lib/workspace-model-codegen.jar
+  library: workspace-model-codegen
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/workspace-model-codegen/0/workspace-model-codegen-0.jar
+  reason: <- intellij.devkit.workspaceModel

@@ -6,12 +6,12 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValueDescriptor
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
@@ -28,11 +28,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
-  suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult>
+  suspend fun evaluate(frameId: XStackFrameId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
-  suspend fun evaluateXExpression(evaluatorId: XDebuggerEvaluatorId, xExpressionDto: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
+  suspend fun evaluateXExpression(frameId: XStackFrameId, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
-  suspend fun evaluateInDocument(evaluatorId: XDebuggerEvaluatorId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
+  suspend fun evaluateInDocument(frameId: XStackFrameId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
 
   companion object {
     @JvmStatic
@@ -69,7 +69,7 @@ sealed interface XValueComputeChildrenEvent {
   @Serializable
   data class TooManyChildren(
     val remaining: Int,
-    @Serializable(with = SendChannelSerializer::class) val addNextChildren: SendChannel<Unit>? = null
+    @Serializable(with = SendChannelSerializer::class) val addNextChildren: SendChannel<Unit>? = null,
   ) : XValueComputeChildrenEvent
 }
 
@@ -83,9 +83,12 @@ sealed interface XEvaluationResult {
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
 }
 
+/**
+ * @see com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+ */
 @ApiStatus.Internal
 @Serializable
-data class XValueId(val uid: UID)
+data class XValueId(override val uid: com.intellij.platform.rpc.UID) : Id
 
 @ApiStatus.Internal
 @Serializable
@@ -96,6 +99,8 @@ data class XValueDto(
   @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
   val valueMark: RpcFlow<XValueMarkerDto?>,
+  val presentation: RpcFlow<XValueSerializedPresentation>,
+  val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
 )
 
 @ApiStatus.Internal
@@ -105,27 +110,23 @@ data class XValueMarkerId(val id: UID)
 
 @ApiStatus.Internal
 @Serializable
-data class XDebuggerEvaluatorId(val id: UID)
+data class XDebuggerEvaluatorDto(val canEvaluateInDocument: Boolean)
 
 @ApiStatus.Internal
 @Serializable
-data class XDebuggerEvaluatorDto(val id: XDebuggerEvaluatorId, val canEvaluateInDocument: Boolean)
-
-@ApiStatus.Internal
-@Serializable
-sealed interface XValuePresentationEvent {
+sealed interface XValueSerializedPresentation {
   @ApiStatus.Internal
   @Serializable
-  data class SetSimplePresentation(
+  data class SimplePresentation(
     @JvmField val icon: IconId?,
     @JvmField val presentationType: String?,
     @JvmField val value: String,
     @JvmField val hasChildren: Boolean,
-  ) : XValuePresentationEvent
+  ) : XValueSerializedPresentation
 
   @ApiStatus.Internal
   @Serializable
-  data class SetAdvancedPresentation(
+  data class AdvancedPresentation(
     @JvmField val icon: IconId?,
     @JvmField val hasChildren: Boolean,
     @JvmField val separator: String,
@@ -133,15 +134,7 @@ sealed interface XValuePresentationEvent {
     @JvmField val presentationType: String?,
     @JvmField val isAsync: Boolean,
     @JvmField val parts: List<XValueAdvancedPresentationPart>,
-  ) : XValuePresentationEvent
-
-  @ApiStatus.Internal
-  @Serializable
-  data class SetFullValueEvaluator(val fullValueEvaluatorDto: XFullValueEvaluatorDto) : XValuePresentationEvent
-
-  @ApiStatus.Internal
-  @Serializable
-  data object ClearFullValueEvaluator : XValuePresentationEvent
+  ) : XValueSerializedPresentation
 }
 
 @ApiStatus.Internal

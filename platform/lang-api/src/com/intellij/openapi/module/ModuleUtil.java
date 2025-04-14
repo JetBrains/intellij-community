@@ -11,6 +11,7 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,7 +39,7 @@ public final class ModuleUtil extends ModuleUtilCore {
 
   private ModuleUtil() {}
 
-  public static @NotNull Collection<Module> getModulesOfType(@NotNull Project project, @NotNull ModuleType<?> moduleType) {
+  public static @NotNull @Unmodifiable Collection<Module> getModulesOfType(@NotNull Project project, @NotNull ModuleType<?> moduleType) {
     return CachedValuesManager.getManager(project)
       .getParameterizedCachedValue(project, MODULES_BY_TYPE_KEY, MODULE_BY_TYPE_VALUE_PROVIDER, false, project)
       .get(moduleType);

@@ -285,6 +285,22 @@ elements:
                   #language=Markdown
                   description: Description of `internalChildElement`.
         - element:
+            name: xi:include
+            namespace: xmlns:xi="http://www.w3.org/2001/XInclude"
+            #language=Markdown
+            description: Description of `xi:include`.
+            attributes:
+              - attribute:
+                  name: href
+                  #language=Markdown
+                  description: Description of `xi:include@href`.
+            children:
+              - element:
+                  name: xi:fallback
+                  namespace: xmlns:xi="http://www.w3.org/2001/XInclude"
+                  #language=Markdown
+                  description: Description of `xi:fallback`.
+        - element:
             name: "*"
             attributes:
               - attribute:

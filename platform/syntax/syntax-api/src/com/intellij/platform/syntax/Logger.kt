@@ -6,14 +6,20 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface Logger {
   fun error(string: String)
+
   fun error(string: String, vararg attachment: Attachment)
-  fun warn(string: String, exception: RuntimeException? = null)
 
-  class Attachment(val name: String?, val content: String)
-}
+  fun warn(string: String, exception: Throwable? = null)
 
-internal object NoopLogger : Logger {
-  override fun error(string: String) {}
-  override fun error(string: String, vararg attachment: Logger.Attachment) {}
-  override fun warn(string: String, exception: RuntimeException?) {}
+  fun info(string: String, exception: Throwable? = null)
+
+  fun debug(string: String, exception: Throwable? = null)
+
+  fun trace(exception: Throwable)
+
+  fun trace(string: String)
+
+  fun isDebugEnabled(): Boolean
+
+  class Attachment(val name: String, val content: String)
 }

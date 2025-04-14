@@ -9,10 +9,12 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeView
 import com.intellij.ide.ProhibitAWTEvents
 import com.intellij.ide.impl.DataManagerImpl
+import com.intellij.ide.impl.DataManagerImpl.KeyedDataProvider
+import com.intellij.ide.impl.DataManagerImpl.ParametrizedDataProvider
 import com.intellij.ide.impl.DataValidators
-import com.intellij.ide.impl.GetDataRuleType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.AnActionEvent.InjectedDataContextSupplier
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER
 import com.intellij.openapi.actionSystem.impl.Utils.isModalContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -30,10 +32,16 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.containers.*
+import com.intellij.util.containers.ConcurrentBitSet
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Interner
+import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.keyFMap.KeyFMap
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentMapOf
 import java.awt.Component
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
@@ -45,7 +53,7 @@ import javax.swing.JComponent
 private val LOG = Logger.getInstance(PreCachedDataContext::class.java)
 
 private var ourPrevMapEventCount = 0
-private val ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap<Component, FList<ProviderData>>()
+private val ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap<Component, CachedData>()
 private val ourComponents = ContainerUtil.createWeakSet<Component>()
 private val ourInstances = UnsafeWeakList<PreCachedDataContext>()
 private val ourDataKeysIndices = ConcurrentHashMap<String, Int>()
@@ -56,7 +64,7 @@ private var ourIsCapturingSnapshot = false
 internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, InjectedDataContextSupplier {
   private val myComponentRef: ComponentRef
   private val myUserData: AtomicReference<KeyFMap>
-  private val myCachedData: FList<ProviderData>
+  private val myCachedData: CachedData
   private val myDataManager: DataManagerImpl
   private val myDataKeysCount: Int
 
@@ -65,7 +73,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     myUserData = AtomicReference(KeyFMap.EMPTY_MAP)
     myDataManager = DataManager.getInstance() as DataManagerImpl
     if (component == null) {
-      myCachedData = FList.emptyList()
+      myCachedData = CachedData(persistentHashMapOf())
       myDataKeysCount = DataKey.allKeysCount()
       return
     }
@@ -86,15 +94,15 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
             .takeWhile { ourPrevMaps[it] == null || it === component && !ourComponents.contains(it) }
             .toList().asReversed()
           val topParent = if (components.isEmpty()) component else UIUtil.getParent(components[0])
-          val initial = if (topParent == null) FList.emptyList() else ourPrevMaps[topParent]!!
+          val initial = if (topParent == null) null else ourPrevMaps[topParent]!!
 
           var keyCount: Int
-          var cachedData: FList<ProviderData>
+          var cachedData: CachedData?
           val sink = MySink()
           while (true) {
             sink.keys = null
-            cachedData = cacheComponentsData(sink, components, initial, myDataManager)
-            cachedData = runSnapshotRules(sink, component, cachedData)
+            cachedData = cacheComponentsData(sink, components, initial)
+            runSnapshotRules(sink, component, cachedData)
             keyCount = sink.keys?.size ?: DataKey.allKeysCount()
             // retry if providers add new keys
             if (keyCount == DataKey.allKeysCount()) break
@@ -114,7 +122,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
 
   private constructor(
     compRef: ComponentRef,
-    cachedData: FList<ProviderData>,
+    cachedData: CachedData,
     userData: AtomicReference<KeyFMap>,
     dataManager: DataManagerImpl,
     dataKeysCount: Int
@@ -139,16 +147,17 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     if (dataProvider == null) return this
     val isEDT = EDT.isCurrentThreadEdt()
     var keyCount: Int
-    var cachedData: FList<ProviderData>
+    var cachedData: CachedData
     val sink = MySink()
     while (true) {
       val component = SoftReference.dereference(myComponentRef.ref)
       sink.keys = null
       sink.hideEditor = hideEditor(component)
-      cacheProviderData(sink, dataProvider, myDataManager)
-      cachedData = if (sink.map == null) myCachedData else myCachedData.prepend(sink.map)
+      sink.uiSnapshot = myCachedData.uiSnapshot.builder()
+      cacheProviderData(sink, dataProvider)
+      cachedData = CachedData(sink.uiSnapshot?.build() ?: persistentMapOf())
       // do not provide CONTEXT_COMPONENT in BGT
-      cachedData = runSnapshotRules(sink, if (isEDT) component else null, cachedData)
+      runSnapshotRules(sink, if (isEDT) component else null, cachedData)
       keyCount = sink.keys?.size ?: DataKey.allKeysCount()
       // retry if the provider adds new keys
       if (keyCount == DataKey.allKeysCount()) break
@@ -168,7 +177,6 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) return myComponentRef.modalityState
     if (PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
     if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
-    if (myCachedData.isEmpty()) return null
 
     val isEDT = EDT.isCurrentThreadEdt()
     if (isEDT && ourIsCapturingSnapshot) {
@@ -178,22 +186,8 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     val rulesSuppressed = isEDT && LoadingState.COMPONENTS_LOADED.isOccurred &&
                           Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
     val rulesAllowed = !CommonDataKeys.PROJECT.`is`(dataId) && !rulesSuppressed && !noRulesSection
-    var answer = getDataInner(dataId, rulesAllowed, !noRulesSection)
 
-    val map = myCachedData[0]
-    if (answer == null && rulesAllowed) {
-      val keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1)
-      if (!map.nullsByContextRules.get(keyIndex)) {
-        answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, ContextRuleProvider())
-        if (answer != null) {
-          map.computedData.put(dataId, answer)
-          map.nullsByRules.clear(keyIndex)
-        }
-        else {
-          map.nullsByContextRules.set(keyIndex)
-        }
-      }
-    }
+    val answer = getDataInner(dataId, rulesAllowed, !noRulesSection)
     if (answer == null && rulesSuppressed) {
       val throwable = Throwable()
       AppExecutorUtil.getAppExecutorService().execute {
@@ -203,46 +197,45 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
         }
       }
     }
-    answer = wrapUnsafeData(answer)
-    return if (answer === CustomizedDataContext.EXPLICIT_NULL) null else answer
+    return when {
+      answer === CustomizedDataContext.EXPLICIT_NULL -> null
+      else -> wrapUnsafeData(answer)
+    }
   }
 
   protected open fun getDataInner(dataId: String, rulesAllowed: Boolean, ruleValuesAllowed: Boolean): Any? {
     val keyIndex: Int = getDataKeyIndex(dataId)
     if (keyIndex == -1) return CustomizedDataContext.EXPLICIT_NULL // DataKey not found
 
-    var answer: Any? = null
-    for (map in myCachedData) {
-      ProgressManager.checkCanceled()
-      var isComputed = false
-      answer = map.uiSnapshot[dataId]
-      if (answer == null) {
-        answer = map.computedData[dataId]
-        isComputed = true
+    var answer: Any?
+    ProgressManager.checkCanceled()
+    var isComputed = false
+    answer = myCachedData.uiData(dataId) ?: myCachedData.bgtComputed[dataId]?.also {
+      isComputed = true
+    }
+    if (answer === CustomizedDataContext.EXPLICIT_NULL) {
+      return answer
+    }
+    else if (answer != null) {
+      if (isComputed) {
+        reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed)
+        if (!ruleValuesAllowed) return null
       }
-      if (answer === CustomizedDataContext.EXPLICIT_NULL) break
-      if (answer != null) {
-        if (isComputed) {
-          reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed)
-          if (!ruleValuesAllowed) return null
-        }
-        answer = DataValidators.validOrNull(answer, dataId, this)
-        if (answer != null) break
-        if (!isComputed) return null
-        // allow slow data providers and rules to re-calc the value
-        map.computedData.remove(dataId)
-      }
-      if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue
+      answer = DataValidators.validOrNull(answer, dataId, this)
+      if (answer != null) return answer
+      if (!isComputed) return null
+      // allow slow data providers and rules to re-calc the value
+      myCachedData.bgtComputed.remove(dataId)
+    }
+    if (!rulesAllowed || myCachedData.nullsByRules.get(keyIndex)) return null
 
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, map)
+    answer = myDataManager.getDataFromRules(dataId, ContextRuleProvider())
 
-      if (answer == null) {
-        map.nullsByRules.set(keyIndex)
-      }
-      else {
-        map.computedData.put(dataId, answer)
-        break
-      }
+    if (answer == null) {
+      myCachedData.nullsByRules.set(keyIndex)
+    }
+    else {
+      myCachedData.bgtComputed[dataId] = answer
     }
     return answer
   }
@@ -278,35 +271,23 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) return myComponentRef.modalityState
     if (PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
     if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
-    if (myCachedData.isEmpty()) return null
 
-    for (map in myCachedData) {
-      var answer = map.uiSnapshot[dataId]
-      if (answer == null && !uiOnly) answer = map.computedData[dataId]
-      if (answer != null) {
-        return if (answer === CustomizedDataContext.EXPLICIT_NULL) null else answer
-      }
+    val answer = myCachedData.uiData(dataId) ?: run {
+      if (!uiOnly) myCachedData.bgtComputed[dataId] else null
     }
-    return null
+    return when {
+      answer === CustomizedDataContext.EXPLICIT_NULL -> null
+      else -> answer
+    }
   }
 
   companion object {
     @JvmStatic
     fun clearAllCaches() {
-      for (list in ourPrevMaps.values) {
-        for (map in list) {
-          map.uiSnapshot.clear()
-          map.computedData.clear()
-        }
-      }
+      ourPrevMaps.values.forEach { it.clear() }
       ourPrevMaps.clear()
       ourComponents.clear()
-      for (context in ourInstances) {
-        for (map in context.myCachedData) {
-          map.uiSnapshot.clear()
-          map.computedData.clear()
-        }
-      }
+      ourInstances.forEach { it.myCachedData.clear() }
       ourInstances.clear()
     }
 
@@ -314,8 +295,8 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     fun customize(context: AsyncDataContext, provider: Any?): AsyncDataContext {
       if (provider == null) return context
       val sink = MySink()
-      cacheProviderData(sink, provider, DataManager.getInstance() as DataManagerImpl)
-      val snapshot = sink.map?.uiSnapshot
+      cacheProviderData(sink, provider)
+      val snapshot = sink.uiSnapshot?.build()
       if (snapshot == null) return context
       return AsyncDataContext { dataId: String ->
         DataManager.getInstance().getCustomizedData(dataId, context, DataProvider { snapshot[it] })
@@ -354,15 +335,15 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
 
   private class InjectedDataContext(
     compRef: ComponentRef,
-    cachedData: FList<ProviderData>,
+    cachedData: CachedData,
     userData: AtomicReference<KeyFMap>,
     dataManager: DataManagerImpl,
     dataKeysCount: Int
   ) : PreCachedDataContext(compRef, cachedData, userData, dataManager, dataKeysCount) {
-    override fun getDataInner(dataId: String, rulesAllowedBase: Boolean, ruleValuesAllowed: Boolean): Any? {
-      return InjectedDataKeys.getInjectedData(dataId, DataProvider { dataId ->
-        super.getDataInner(dataId, rulesAllowedBase, ruleValuesAllowed)
-      })
+    override fun getDataInner(dataId: String, rulesAllowed: Boolean, ruleValuesAllowed: Boolean): Any? {
+      return InjectedDataKeys.getInjectedData(dataId) { dataId ->
+        super.getDataInner(dataId, rulesAllowed, ruleValuesAllowed)
+      }
     }
   }
 }
@@ -378,22 +359,17 @@ private fun getDataKeyIndex(dataId: String): Int {
   return keyIndex
 }
 
-private fun cacheComponentsData(
-  sink: MySink,
-  components: List<Component>,
-  initial: FList<ProviderData>,
-  dataManager: DataManagerImpl
-): FList<ProviderData> {
-  var cachedData = initial
-  if (components.isEmpty()) return cachedData
+private fun cacheComponentsData(sink: MySink, components: List<Component>, initial: CachedData?): CachedData {
+  if (components.isEmpty()) return CachedData(initial?.uiSnapshot ?: persistentMapOf())
+  lateinit var cachedData: CachedData
+  sink.uiSnapshot = initial?.uiSnapshot?.builder()
   val start = System.currentTimeMillis()
   for (comp in components) {
-    sink.map = null
     sink.hideEditor = hideEditor(comp)
     val dataProvider = if (comp is UiDataProvider) comp else DataManagerImpl.getDataProviderEx(comp)
-    cacheProviderData(sink, dataProvider, dataManager)
-    cachedData = if (sink.map == null) cachedData else cachedData.prepend(sink.map)
-    ourPrevMaps.put(comp, cachedData)
+    cacheProviderData(sink, dataProvider)
+    cachedData = CachedData(sink.uiSnapshot?.build() ?: persistentMapOf())
+    ourPrevMaps[comp] = cachedData
   }
   val time = System.currentTimeMillis() - start
   @Suppress("ControlFlowWithEmptyBody")
@@ -403,72 +379,68 @@ private fun cacheComponentsData(
   return cachedData
 }
 
-private fun cacheProviderData(
-  sink: MySink,
-  dataProvider: Any?,
-  dataManager: DataManagerImpl
-) {
-  DataSink.uiDataSnapshot(sink, dataProvider)
-  sink.map?.let { map -> // no data - no rules
-    for (key in dataManager.keysForRuleType(GetDataRuleType.FAST)) {
-      val data = dataManager.getDataFromRules(
-        key.name, GetDataRuleType.FAST, DataProvider { map.uiSnapshot[it] })
-      if (data == null) continue
-      map.uiSnapshot.putIfAbsent(key.name, data)
-    }
+private fun cacheProviderData(sink: MySink, dataProvider: Any?) {
+  sink.closed = false
+  try {
+    DataSink.uiDataSnapshot(sink, dataProvider)
+  }
+  finally {
+    sink.closed = true
   }
   if (sink.hideEditor) {
-    val map = sink.map ?: ProviderData().also { sink.map = it }
-    map.uiSnapshot.put(CommonDataKeys.EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
-    map.uiSnapshot.put(CommonDataKeys.HOST_EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
-    map.uiSnapshot.put(InjectedDataKeys.EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
+    val map = sink.uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { sink.uiSnapshot = it }
+    map[CommonDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
+    map[CommonDataKeys.HOST_EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
+    map[InjectedDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
   }
 }
 
-private fun runSnapshotRules(
-  sink: MySink,
-  component: Component?,
-  cachedData: FList<ProviderData>
-): FList<ProviderData> {
-  val noMap = sink.map == null
+private fun runSnapshotRules(sink: MySink, component: Component?, data: CachedData) {
   val snapshot: DataSnapshot = object : DataSnapshot {
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> get(key: DataKey<T>): T? {
       if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT) return component as T?
-      for (map in cachedData) {
-        val answer = map.uiSnapshot[key.name]
-        when {
-          answer === CustomizedDataContext.EXPLICIT_NULL -> return null
-          answer != null -> return answer as T
-        }
+      val answer = data.uiSnapshot[key.name]
+      return when {
+        answer === CustomizedDataContext.EXPLICIT_NULL -> null
+        answer != null -> answer as T
+        else -> null
       }
-      return null
     }
   }
   UiDataRule.forEachRule { rule ->
     val prev = sink.source
+    sink.closed = false
     sink.source = rule
-    sink.cachedDataForRules = cachedData
+    sink.uiComputed = data.uiComputed
     try {
       rule.uiDataSnapshot(sink, snapshot)
     }
     finally {
-      sink.cachedDataForRules = null
+      sink.uiComputed = null
       sink.source = prev
+      sink.closed = true
     }
   }
-  return if (noMap && sink.map != null) cachedData.prepend(sink.map) else cachedData
 }
 
 private class MySink : DataSink {
-  var map: ProviderData? = null
-  var source: Any? = null
-  var keys: Array<DataKey<*>>? = null
+  var uiSnapshot: PersistentMap.Builder<String, Any>? = null
+  var uiComputed: ConcurrentHashMap<String, Any>? = null
 
+  var source: Any? = null
+
+  var keys: Array<DataKey<*>>? = null
   var hideEditor: Boolean = false
-  var cachedDataForRules: FList<ProviderData>? = null
+
+  var closed: Boolean = true
+
+  private fun checkClosed() {
+    assert(!closed) { "Closed sink must not be used" }
+  }
 
   override fun <T : Any> set(key: DataKey<T>, data: T?) {
+    checkClosed()
     if (data == null) return
     if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
         key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
@@ -477,50 +449,61 @@ private class MySink : DataSink {
     }
     val validated = when {
       data === CustomizedDataContext.EXPLICIT_NULL -> data
-      key == PlatformCoreDataKeys.BGT_DATA_PROVIDER -> {
-        val existing = map?.uiSnapshot[key.name] as DataProvider?
-        when {
-          existing == null -> data
-          cachedDataForRules == null -> CompositeDataProvider.compose(data as DataProvider, existing)
-          else -> CompositeDataProvider.compose(existing, data as DataProvider)
+      key == BGT_DATA_PROVIDER -> {
+        if (data !is DataProvider) {
+          throw IllegalArgumentException("BGT_DATA_PROVIDER must be a DataProvider")
         }
+        @Suppress("UNCHECKED_CAST")
+        val lazyKey = (data as? MyLazyBase<*, *>)?.key as? DataKey<Any>
+        if (lazyKey == BGT_DATA_PROVIDER) {
+          throw IllegalArgumentException("BGT_DATA_PROVIDER must not be lazy")
+        }
+        // drop the existing value from the snapshot (it would always win)
+        // and combine it as "existing lazy" with the incoming lazy provider
+        val compositeData = if (lazyKey != null && uiComputed == null) {
+          uiSnapshot?.remove(lazyKey.name)?.let { snapshotValue ->
+            CompositeDataProvider.compose(data, MyLazy(lazyKey) { snapshotValue })
+          }
+        } else null
+        val existing = (uiComputed?.get(key.name) ?: uiSnapshot?.get(key.name)) as DataProvider?
+        composeKeyedProvider(lazyKey, compositeData ?: data, existing, uiComputed == null)
       }
       else -> DataValidators.validOrNull(data, key.name, source!!)
     }
     if (validated == null) return
-    val map = map ?: ProviderData().also { map = it }
-    if (cachedDataForRules != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
-      if (map.uiSnapshot[key.name] != null) {
+    val map = uiComputed ?: uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { uiSnapshot = it }
+    if (uiComputed != null && key != BGT_DATA_PROVIDER) {
+      if (uiSnapshot?.get(key.name) != null || map[key.name] != null) {
         return
       }
-      for (map in cachedDataForRules) {
-        if (map.uiSnapshot[key.name] != null) {
-          return
-        }
-      }
     }
-    map.uiSnapshot.put(key.name, validated)
+    map[key.name] = validated
     if (key == CommonDataKeys.EDITOR && validated !== CustomizedDataContext.EXPLICIT_NULL) {
-      map.uiSnapshot.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.name, validated)
+      map[CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.name] = validated
     }
   }
 
   override fun <T : Any> setNull(key: DataKey<T>) {
-    if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT || key == PlatformCoreDataKeys.IS_MODAL_CONTEXT || key == PlatformDataKeys.MODALITY_STATE) {
+    checkClosed()
+    if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
+        key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+        key == PlatformDataKeys.MODALITY_STATE) {
       return
     }
-    val map = map ?: ProviderData().also { map = it }
-    map.uiSnapshot.put(key.name, CustomizedDataContext.EXPLICIT_NULL)
+    val map = uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { uiSnapshot = it }
+    map[key.name] = CustomizedDataContext.EXPLICIT_NULL
   }
 
   override fun <T : Any> lazy(key: DataKey<T>, data: () -> T?) {
-    set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, MyLazy(key, data))
+    set(BGT_DATA_PROVIDER, MyLazy(key, data))
   }
 
   override fun <T : Any> lazyNull(key: DataKey<T>) {
-    set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, DataProvider { dataId ->
-      if (key.`is`(dataId)) CustomizedDataContext.EXPLICIT_NULL else null
-    })
+    set(BGT_DATA_PROVIDER, MyLazyNull(key))
+  }
+
+  override fun <T : Any> lazyValue(key: DataKey<T>, data: (DataMap) -> T?) {
+    set(BGT_DATA_PROVIDER, MyLazyValue(key, data))
   }
 
   override fun uiDataSnapshot(provider: UiDataProvider) {
@@ -564,14 +547,67 @@ private class MySink : DataSink {
   }
 }
 
-private class MyLazy<T>(val key: DataKey<T>, val supplier: () -> T?) : DataProvider, DataValidators.SourceWrapper {
-  override fun getData(dataId: String): Any? {
-    return if (key.`is`(dataId)) supplier.invoke() else null
+private fun composeKeyedProvider(
+  lazyKey: DataKey<*>?,
+  data: DataProvider,
+  existing: DataProvider?,
+  toFront: Boolean
+): DataProvider = when {
+  existing == null && lazyKey == null -> {
+    data
   }
+  existing !is KeyedDataProvider && lazyKey != null -> {
+    KeyedDataProvider(persistentHashMapOf<String, DataProvider>().put(lazyKey.name, data), existing)
+  }
+  existing is KeyedDataProvider && lazyKey == null -> {
+    val first = if (toFront) data else existing
+    val second = if (toFront) existing else data
+    KeyedDataProvider(existing.map, CompositeDataProvider.compose(first, second))
+  }
+  existing is KeyedDataProvider && lazyKey != null -> {
+    val existingByKey = existing.map[lazyKey.name]
+    val first = if (toFront) data else existingByKey
+    val second = if (toFront) existingByKey else data
+    KeyedDataProvider((existing.map as PersistentMap).put(
+      lazyKey.name, if (first == null) second!! else CompositeDataProvider.compose(first, second)), existing.generic)
+  }
+  else -> {
+    val first = if (toFront) data else existing!!
+    val second = if (toFront) existing else data
+    KeyedDataProvider(persistentHashMapOf(), CompositeDataProvider.compose(first, second))
+  }
+}
 
-  override fun unwrapSource(): Any {
-    return supplier
+private sealed class MyLazyBase<T, V: Any>(val key: DataKey<T>, val supplier: V) : DataProvider, DataValidators.SourceWrapper {
+  inline fun ifMyOrNull(dataId: String, block: () -> Any?): Any? = when {
+    key.`is`(dataId) -> block()
+    else -> null
   }
+  override fun unwrapSource(): Any = supplier
+  override fun toString(): String = "Lazy(${key.name})"
+}
+
+private class MyLazyNull<T>(key: DataKey<T>) : MyLazyBase<T, Any>(key, Unit) {
+  override fun getData(dataId: String): Any? = ifMyOrNull(dataId) {
+    CustomizedDataContext.EXPLICIT_NULL
+  }
+}
+
+private class MyLazy<T>(key: DataKey<T>, supplier: () -> T?) : MyLazyBase<T, () -> T?>(key, supplier) {
+  override fun getData(dataId: String): Any? = ifMyOrNull(dataId) {
+    supplier()
+  }
+}
+
+private class MyLazyValue<T>(key: DataKey<T>, supplier: (DataMap) -> T?) : MyLazyBase<T, (DataMap) -> T?>(key, supplier), ParametrizedDataProvider {
+  override fun getData(dataId: String): Any? = throw UnsupportedOperationException()
+  override fun getData(dataId: String, dataProvider: DataProvider): Any? = ifMyOrNull(dataId) {
+    supplier.invoke(dataProvider.toDataMap())
+  }
+}
+
+private fun DataProvider.toDataMap() = object : DataMap {
+  override fun <T : Any> get(key: DataKey<T>): T? = key.getData(this@toDataMap)
 }
 
 private fun hideEditor(component: Component?): Boolean {
@@ -584,17 +620,28 @@ internal fun wrapUnsafeData(data: Any?): Any? = when {
   else -> data
 }
 
-private class ProviderData : DataProvider, DataValidators.SourceWrapper {
-  val uiSnapshot = ConcurrentHashMap<String, Any>()
-  val computedData = ConcurrentHashMap<String, Any>()
+private class CachedData(uiSnapshot: PersistentMap<String, Any>) : DataProvider, DataValidators.SourceWrapper {
+  @Volatile
+  var uiSnapshot: PersistentMap<String, Any> = uiSnapshot
+    private set
+  val uiComputed = ConcurrentHashMap<String, Any>()
+  val bgtComputed = ConcurrentHashMap<String, Any>()
 
   // to avoid lots of nulls in maps
   val nullsByRules = ConcurrentBitSet.create()
-  val nullsByContextRules = ConcurrentBitSet.create()
 
-  override fun getData(dataId: String): Any? {
-    return uiSnapshot[dataId] ?: computedData[dataId]
+  fun uiData(dataId: String): Any? = when {
+    BGT_DATA_PROVIDER.`is`(dataId) -> uiComputed[dataId] ?: uiSnapshot[dataId]
+    else -> uiSnapshot[dataId] ?: uiComputed[dataId]
   }
+
+  fun clear() {
+    uiSnapshot = persistentHashMapOf()
+    uiComputed.clear()
+    bgtComputed.clear()
+  }
+
+  override fun getData(dataId: String): Any? = uiData(dataId)
 
   override fun unwrapSource(): Any {
     return emptyMap<Any, Any>()

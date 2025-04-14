@@ -1,21 +1,26 @@
+- name: lib/kotlinx-document-store-mvstore.jar
+  library: kotlinx-document-store-mvstore
+  files:
+  - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0/kotlinx-document-store-mvstore-0.jar
+  - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0/kotlinx-document-store-core-jvm-0.jar
+  reason: withProjectLibrary
+- name: lib/ktor-client-logging.jar
+  library: ktor-client-logging
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3/ktor-client-logging-jvm-3.jar
+  reason: withProjectLibrary
+- name: lib/maven-model.jar
+  modules:
+  - name: intellij.maven.model
+- name: lib/package-search-api-client.jar
+  library: package-search-api-client
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3/packagesearch-api-client-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3/packagesearch-http-models-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3/packagesearch-api-models-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3/packagesearch-version-utils-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4/krypto-jvm-4.jar
+  reason: withProjectLibrary
 - name: lib/repository-search.jar
-  projectLibraries:
-  - name: kotlinx-document-store-mvstore
-    files:
-    - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0/kotlinx-document-store-mvstore-0.jar
-    - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0/kotlinx-document-store-core-jvm-0.jar
-    reason: <- intellij.repository.search
-  - name: ktor-client-logging
-    files:
-    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3/ktor-client-logging-jvm-3.jar
-    reason: <- intellij.repository.search
-  - name: package-search-api-client
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3/packagesearch-api-client-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3/packagesearch-http-models-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3/packagesearch-api-models-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3/packagesearch-version-utils-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4/krypto-jvm-4.jar
-    reason: <- intellij.repository.search
   modules:
   - name: intellij.repository.search

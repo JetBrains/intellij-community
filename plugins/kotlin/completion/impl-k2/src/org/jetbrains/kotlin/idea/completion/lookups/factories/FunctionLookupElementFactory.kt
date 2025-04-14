@@ -308,18 +308,22 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
         val insertLambda = !preferParentheses && lookupObject.inputTrailingLambdaIsRequired
         val (openingBracket, closingBracket) = if (insertLambda) '{' to '}' else '(' to ')'
 
-        if (isReplaceCompletion) {
-            val offset1 = chars.skipSpaces(offset)
-            if (offset1 < chars.length) {
-                if (chars[offset1] == '<') {
-                    val token = context.file.findElementAt(offset1)!!
-                    if (token.node.elementType == KtTokens.LT) {
-                        val parent = token.parent
-                        /* if type argument list is on multiple lines this is more likely wrong parsing*/
-                        if (parent is KtTypeArgumentList && parent.getText().indexOf('\n') < 0) {
+        val offset1 = chars.skipSpaces(offset)
+        var skipParentheses = false
+        if (offset1 < chars.length) {
+            if (chars[offset1] == '<') {
+                val token = context.file.findElementAt(offset1)!!
+                if (token.node.elementType == KtTokens.LT) {
+                    val parent = token.parent
+                    /* if type argument list is on multiple lines this is more likely wrong parsing*/
+                    if (parent is KtTypeArgumentList && parent.getText().indexOf('\n') < 0) {
+                        if (isReplaceCompletion) {
                             offset = parent.endOffset
-                            insertTypeArguments = false
+                        } else {
+                            offset = offset1
+                            skipParentheses = true
                         }
+                        insertTypeArguments = false
                     }
                 }
             }
@@ -344,21 +348,25 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
 
                 inBracketsShift = 1
                 " {  }"
-            } else {
+            } else if (!skipParentheses) {
                 if (isSmartEnterCompletion) "("
                 else "()"
-            }
+            } else ""
             document.insertString(offset, text)
             context.commitDocument()
 
-            openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)!!
-            closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
+            openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)
+            closeBracketOffset = openingBracketOffset?.let {
+                document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
+            }
         }
 
         if (!insertTypeArguments) {
             if (shouldPlaceCaretInBrackets(completionChar, lookupObject) || closeBracketOffset == null) {
                 val additionalOffset = if (insertLambda) 2 else 1
-                caretModel.moveToOffset(openingBracketOffset + additionalOffset)
+                if (openingBracketOffset != null) {
+                    caretModel.moveToOffset(openingBracketOffset + additionalOffset)
+                }
 
                 context.laterRunnable = if (insertLambda) Runnable {
                     CodeCompletionHandlerBase(

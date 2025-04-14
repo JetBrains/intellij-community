@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.plugins.parser.impl
 
-import com.intellij.platform.plugins.parser.impl.elements.ActionElement
-import com.intellij.platform.plugins.parser.impl.elements.ContentElement
-import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.DependsElement
-import com.intellij.platform.plugins.parser.impl.elements.MiscExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.util.Java11Shim
 import java.time.LocalDate
 
@@ -35,7 +31,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
 
   override var isUseIdeaClassLoader: Boolean = false
   override var isBundledUpdateAllowed: Boolean = false
-  override var implementationDetail: Boolean = false
+  override var isImplementationDetail: Boolean = false
   override var isRestartRequired: Boolean = false
   override var isLicenseOptional: Boolean = false
   override var isIndependentFromCoreClassLoader: Boolean = false
@@ -90,15 +86,15 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override val projectContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
   override val moduleContainerBuilder: ScopedElementsContainerBuilder = ScopedElementsContainerBuilderMemoryOptimized()
 
-  private var _miscExtensions: MutableMap<String, MutableList<MiscExtensionElement>>? = null
-  override fun addExtension(qualifiedExtensionPointName: String, extension: MiscExtensionElement) {
-    if (_miscExtensions == null) {
-      _miscExtensions = HashMap()
+  private var _extensions: MutableMap<String, MutableList<ExtensionElement>>? = null
+  override fun addExtension(qualifiedExtensionPointName: String, extension: ExtensionElement) {
+    if (_extensions == null) {
+      _extensions = HashMap()
     }
-    _miscExtensions!!.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extension)
+    _extensions!!.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extension)
   }
-  override val miscExtensions: Map<String, List<MiscExtensionElement>>
-    get() = _miscExtensions ?: Java11Shim.INSTANCE.mapOf()
+  override val extensions: Map<String, List<ExtensionElement>>
+    get() = _extensions ?: Java11Shim.INSTANCE.mapOf()
 
   private var _contentModules: MutableList<ContentElement>? = null
   override fun addContentModule(contentModule: ContentElement) {
@@ -138,7 +134,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     resourceBundleBaseName = resourceBundleBaseName,
     isUseIdeaClassLoader = isUseIdeaClassLoader,
     isBundledUpdateAllowed = isBundledUpdateAllowed,
-    implementationDetail = implementationDetail,
+    isImplementationDetail = isImplementationDetail,
     isRestartRequired = isRestartRequired,
     isLicenseOptional = isLicenseOptional,
     isIndependentFromCoreClassLoader = isIndependentFromCoreClassLoader,
@@ -152,7 +148,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     appElementsContainer = appContainerBuilder.build(),
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),
-    miscExtensions = miscExtensions,
+    extensions = extensions,
     contentModules = contentModules,
     dependencies = dependencies,
   )

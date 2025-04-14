@@ -7,7 +7,7 @@ import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.Deferred
 
 /**
- * Represents some process that was launched via [EelExecApi.executeProcess].
+ * Represents some process that was launched via [EelExecApi.execute].
  *
  */
 interface EelProcess: KillableProcess {

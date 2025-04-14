@@ -13,7 +13,7 @@ import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver {
+open class DriverImpl(host: JmxHost?, override val isRemDevMode: Boolean) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 

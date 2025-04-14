@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
+import org.jetbrains.plugins.gradle.GradleJavaCoroutineScopeService.Companion.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 /**
@@ -21,13 +21,12 @@ class DownloadGradleSourcesCommand(text: String, line: Int) : PerformanceCommand
 
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
-    GradleCoroutineScopeProvider.getInstance(project).cs
-      .launch {
-        if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, GradleConstants.SYSTEM_ID)) {
-          val spec = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID).withVmOptions("-Didea.gradle.download.sources.force=true")
-          ExternalSystemUtil.refreshProjects(spec)
-        }
+    project.gradleCoroutineScope.launch {
+      if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, GradleConstants.SYSTEM_ID)) {
+        val spec = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID).withVmOptions("-Didea.gradle.download.sources.force=true")
+        ExternalSystemUtil.refreshProjects(spec)
       }
+    }
   }
 
   override fun getName(): String {

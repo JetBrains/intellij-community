@@ -57,11 +57,11 @@ public abstract class MetaAnnotationUtil {
     }
   };
 
-  public static Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
+  public static @Unmodifiable Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
     return getAllAnnotationClassesMap(module).get(Pair.pair(annotationName, includeTests));
   }
 
-  private static @NotNull Map<Pair<String, Boolean>, Collection<PsiClass>> getAllAnnotationClassesMap(@NotNull Module module) {
+  private static @NotNull @Unmodifiable Map<Pair<String, Boolean>, Collection<PsiClass>> getAllAnnotationClassesMap(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       Map<Pair<String, Boolean>, Collection<PsiClass>> map = ConcurrentFactoryMap.createMap(key -> {
         return findAnnotationClasses(module, key.getFirst(), key.getSecond());
@@ -73,7 +73,7 @@ public abstract class MetaAnnotationUtil {
     });
   }
 
-  private static @NotNull Collection<PsiClass> findAnnotationClasses(@NotNull Module module,
+  private static @NotNull @Unmodifiable Collection<PsiClass> findAnnotationClasses(@NotNull Module module,
                                                                      @NotNull String qualifiedName,
                                                                      boolean includeTests) {
     PsiClass annotationClass = JavaPsiFacade.getInstance(module.getProject())
@@ -98,11 +98,11 @@ public abstract class MetaAnnotationUtil {
     }
   }
 
-  public static Collection<String> getAnnotationNamesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
+  public static @Unmodifiable Collection<String> getAnnotationNamesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
     return getAllAnnotationClassNamesMap(module).get(Pair.pair(annotationName, includeTests));
   }
 
-  private static Collection<String> toNames(Collection<PsiClass> classes) {
+  private static @Unmodifiable Collection<String> toNames(Collection<PsiClass> classes) {
     return classes.stream()
       .map(PsiClass::getQualifiedName)
       .filter(Objects::nonNull)
@@ -122,7 +122,7 @@ public abstract class MetaAnnotationUtil {
     });
   }
 
-  private static Collection<PsiClass> getChildLibraryAnnotations(@NotNull Module module, String annotation) {
+  private static @Unmodifiable Collection<PsiClass> getChildLibraryAnnotations(@NotNull Module module, String annotation) {
     return getLibraryAnnotationClassesMap(module).get(annotation);
   }
 
@@ -152,7 +152,7 @@ public abstract class MetaAnnotationUtil {
     });
   }
 
-  public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
+  public static @Unmodifiable Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
     if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) ==
         null) {
       return Collections.emptySet();
@@ -177,7 +177,7 @@ public abstract class MetaAnnotationUtil {
     return result;
   }
 
-  public static Collection<PsiClass> getAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
+  public static @Unmodifiable Collection<PsiClass> getAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
     Map<String, Collection<PsiClass>> map = CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       Map<String, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {
         return findAnnotatedTypes(module, key);
@@ -188,7 +188,7 @@ public abstract class MetaAnnotationUtil {
     return map.get(annotationName);
   }
 
-  private static @NotNull Collection<PsiClass> findAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
+  private static @NotNull @Unmodifiable Collection<PsiClass> findAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
     PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject()).findClass(annotationName, scope);
     if (psiClass == null || !psiClass.isAnnotationType()) {
@@ -197,7 +197,7 @@ public abstract class MetaAnnotationUtil {
     return getChildren(psiClass, scope);
   }
 
-  private static @NotNull Collection<PsiClass> findAnnotationTypesWithChildren(Collection<PsiClass> annotationClasses,
+  private static @NotNull @Unmodifiable Collection<PsiClass> findAnnotationTypesWithChildren(Collection<PsiClass> annotationClasses,
                                                                                GlobalSearchScope scope) {
     if (scope == GlobalSearchScope.EMPTY_SCOPE) return annotationClasses;
 

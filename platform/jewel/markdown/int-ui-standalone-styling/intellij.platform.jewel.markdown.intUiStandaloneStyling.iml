@@ -9,13 +9,13 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20-RC2/kotlin-compose-compiler-plugin-2.1.20-RC2.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20/kotlin-compose-compiler-plugin-2.1.20.jar</arg>
               </args>
             </arrayArg>
           </arrayArguments>
@@ -38,8 +38,8 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>

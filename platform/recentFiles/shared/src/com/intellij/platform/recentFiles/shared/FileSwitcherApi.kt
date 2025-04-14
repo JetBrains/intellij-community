@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface FileSwitcherApi : RemoteApi<Unit> {
-  suspend fun getRecentFileEvents(projectId: ProjectId): Flow<RecentFilesEvent>
+  suspend fun getRecentFileEvents(fileKind: RecentFileKind, projectId: ProjectId): Flow<RecentFilesEvent>
   suspend fun updateRecentFilesBackendState(request: RecentFilesBackendRequest): Boolean
 
   companion object {
@@ -34,15 +34,23 @@ sealed interface RecentFilesBackendRequest {
   val projectId: ProjectId
 
   @Serializable
-  data class NewSearchWithParameters(val onlyEdited: Boolean, val pinned: Boolean, val frontendEditorSelectionHistory: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest
+  data class FetchMetadata(val filesKind: RecentFileKind, val frontendRecentFiles: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest
 
   @Serializable
-  data class HideFiles(val filesToHide: List<SwitcherRpcDto.File>, override val projectId: ProjectId) : RecentFilesBackendRequest
+  data class FetchFiles(val filesKind: RecentFileKind, val frontendEditorSelectionHistory: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest
+
+  @Serializable
+  data class HideFiles(val filesKind: RecentFileKind, val filesToHide: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest
 
   @Serializable
   data class ScheduleRehighlighting(override val projectId: ProjectId) : RecentFilesBackendRequest
 }
 
+@ApiStatus.Internal
+@Serializable
+enum class RecentFileKind {
+  RECENTLY_EDITED, RECENTLY_OPENED, RECENTLY_OPENED_UNPINNED
+}
 
 @ApiStatus.Internal
 @Serializable
@@ -65,14 +73,20 @@ sealed interface SwitcherRpcDto {
 @Serializable
 sealed interface RecentFilesEvent {
   @Serializable
+  class ItemsUpdated(val batch: List<SwitcherRpcDto>, val putOnTop: Boolean) : RecentFilesEvent
+
+  @Serializable
   class ItemsAdded(val batch: List<SwitcherRpcDto>) : RecentFilesEvent
 
   @Serializable
-  class ItemsRemoved(val batch: List<SwitcherRpcDto>) : RecentFilesEvent
+  class ItemsRemoved(val batch: List<VirtualFileId>) : RecentFilesEvent
 
   @Serializable
   class AllItemsRemoved : RecentFilesEvent
 
   @Serializable
-  class EndOfUpdates : RecentFilesEvent
+  class UncertainChangeOccurred: RecentFilesEvent
 }
+
+@ApiStatus.Internal
+const val SWITCHER_ELEMENTS_LIMIT: Int = 30

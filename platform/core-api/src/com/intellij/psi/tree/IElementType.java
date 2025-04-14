@@ -252,7 +252,7 @@ public class IElementType {
    * @return the list of matching element types.
    */
   @ApiStatus.Internal
-  public static <R> @NotNull List<@NotNull R> mapNotNull(@NotNull Function<IElementType, ? extends R> p) {
+  public static <R> @NotNull @Unmodifiable List<@NotNull R> mapNotNull(@NotNull Function<? super IElementType, ? extends R> p) {
     List<R> matches = new ArrayList<>();
     for (IElementType value : ourRegistry) {
       if (value != null) {

@@ -2,8 +2,8 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
-import sun.swing.SwingUtilities2
 import java.awt.FontMetrics
 import java.io.File
 import javax.swing.JComponent
@@ -15,7 +15,7 @@ internal open class ClippingTitle(prefix: String = " - ", suffix: String = "") :
     @Contract(pure = true)
     fun clipString(component: JComponent, string: String, maxWidth: Int, fileSeparatorChar: String = File.separator): String {
       val fm = component.getFontMetrics(component.font)
-      val symbolWidth = SwingUtilities2.stringWidth(component, fm, ellipsisSymbol)
+      val symbolWidth = UIUtil.computeStringWidth(component, fm, ellipsisSymbol)
 
 
       return when {
@@ -27,7 +27,7 @@ internal open class ClippingTitle(prefix: String = " - ", suffix: String = "") :
           var str = ""
           var stringWidth = 0
           for (i in separate.lastIndex downTo 1) {
-            stringWidth += SwingUtilities2.stringWidth(component, fm, separate[i] + fileSeparatorChar)
+            stringWidth += UIUtil.computeStringWidth(component, fm, separate[i] + fileSeparatorChar)
             if (stringWidth <= availTextWidth) {
               str = fileSeparatorChar + separate[i] + str
             }
@@ -51,8 +51,8 @@ internal open class ClippingTitle(prefix: String = " - ", suffix: String = "") :
     }
 
   override fun shrink(label: JComponent, fm: FontMetrics, maxWidth: Int): String {
-    val prefixWidth = SwingUtilities2.stringWidth(label, fm, prefix)
-    val suffixWidth = SwingUtilities2.stringWidth(label, fm, suffix)
+    val prefixWidth = UIUtil.computeStringWidth(label, fm, prefix)
+    val suffixWidth = UIUtil.computeStringWidth(label, fm, suffix)
 
     return when {
       maxWidth > longWidth -> {

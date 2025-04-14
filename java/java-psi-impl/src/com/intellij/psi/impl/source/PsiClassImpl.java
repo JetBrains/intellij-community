@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
@@ -169,7 +170,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiModifierList getModifierList() {
-    return (PsiModifierList)getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override
@@ -180,12 +181,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiReferenceList getExtendsList() {
-    return (PsiReferenceList)getStubOrPsiChild(JavaStubElementTypes.EXTENDS_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.EXTENDS_LIST, PsiReferenceList.class);
   }
 
   @Override
   public PsiReferenceList getImplementsList() {
-    return (PsiReferenceList)getStubOrPsiChild(JavaStubElementTypes.IMPLEMENTS_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.IMPLEMENTS_LIST, PsiReferenceList.class);
   }
 
   @Override
@@ -200,7 +201,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public @Nullable PsiReferenceList getPermitsList() {
-    return (PsiReferenceList)getStubOrPsiChild(JavaStubElementTypes.PERMITS_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.PERMITS_LIST, PsiReferenceList.class);
   }
 
   @Override
@@ -299,7 +300,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public @Nullable PsiRecordHeader getRecordHeader() {
-    return (PsiRecordHeader)getStubOrPsiChild(JavaStubElementTypes.RECORD_HEADER);
+    return getStubOrPsiChild(JavaStubElementTypes.RECORD_HEADER, PsiRecordHeader.class);
   }
 
   @Override
@@ -379,7 +380,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return (PsiTypeParameterList)getStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.TYPE_PARAMETER_LIST, PsiTypeParameterList.class);
   }
 
   @Override
@@ -460,7 +461,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return stub.isValueClass();
     }
 
-    return hasModifierProperty(PsiKeyword.VALUE);
+    return hasModifierProperty(JavaKeywords.VALUE);
   }
 
   @Override

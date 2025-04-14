@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger
 
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.util.ConcurrencyUtil
 
 /**
@@ -58,7 +58,7 @@ import com.intellij.util.ConcurrencyUtil
 fun ExecutionWithDebuggerToolsTestCase.processBreakpoints(test: suspend SequenceScope<Nothing?>.() -> Unit) {
   val executor = ConcurrencyUtil.newSingleThreadExecutor("DebuggerTestExecutor")
 
-  debugProcess.addProcessListener(object : ProcessAdapter() {
+  debugProcess.addProcessListener(object : ProcessListener {
     override fun processTerminated(event: ProcessEvent) {
       executor.shutdown()
     }

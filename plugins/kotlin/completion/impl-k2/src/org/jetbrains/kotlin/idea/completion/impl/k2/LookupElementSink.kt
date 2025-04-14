@@ -56,6 +56,13 @@ internal class LookupElementSink(
         resultSet.restartCompletionOnPrefixChange(prefixCondition)
     }
 
+    fun runRemainingContributors(
+        parameters: CompletionParameters,
+        consumer: (CompletionResult) -> Unit,
+    ) {
+        resultSet.runRemainingContributors(parameters, consumer)
+    }
+
     private fun decorateLookupElement(
         element: LookupElement,
     ): LookupElementDecorator<LookupElement> {

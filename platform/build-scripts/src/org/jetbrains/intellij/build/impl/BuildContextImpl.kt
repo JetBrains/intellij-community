@@ -1,10 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.dynatrace.hash4j.hashing.HashStream64
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
-import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
@@ -12,15 +11,39 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.*
-import org.jetbrains.intellij.build.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuiltinModulesFileData
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.ContentModuleFilter
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.computeAppInfoXml
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
-import org.jetbrains.intellij.build.jarCache.SourceBuilder
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.productRunner.ModuleBasedProductRunner
 import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
@@ -324,12 +347,13 @@ class BuildContextImpl internal constructor(
   @Suppress("SpellCheckingInspection")
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
+    
     val macroName = when (os) {
       OsFamily.WINDOWS -> "%IDE_HOME%"
       OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
       OsFamily.LINUX -> "\$IDE_HOME"
     }
-    val useMultiRoutingFs = !isQodana && isIjentWslFsEnabledByDefaultForProduct(productProperties.platformPrefix)
+    val useMultiRoutingFs = !isQodana && isMultiRoutingFileSystemEnabledForProduct(productProperties.platformPrefix)
 
     val bcpJarNames = productProperties.xBootClassPathJarNames + if (useMultiRoutingFs) listOf(PLATFORM_CORE_NIO_FS) else emptyList()
     if (bcpJarNames.isNotEmpty()) {
@@ -403,27 +427,6 @@ class BuildContextImpl internal constructor(
   }
 
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
-
-  override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
-    jarCacheManager.computeIfAbsent(
-      sources = sources,
-      targetFile = targetFile,
-      nativeFiles = null,
-      span = Span.current(),
-      producer = object : SourceBuilder {
-        override val useCacheAsTargetFile: Boolean
-          get() = false
-
-        override fun updateDigest(digest: HashStream64) {
-          digest.putInt(-1)
-        }
-
-        override suspend fun produce(targetFile: Path) {
-          buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
-        }
-      },
-    )
-  }
 
   override val appInfoXml: String by lazy {
     computeAppInfoXml(context = this, appInfo = applicationInfo)

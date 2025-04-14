@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache;
 
+import com.intellij.java.syntax.element.JavaDocSyntaxTokenType;
+import com.intellij.java.syntax.lexer.JavaDocLexer;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.lang.java.lexer.JavaDocLexer;
+import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -16,7 +17,6 @@ import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,9 +55,9 @@ public final class RecordUtil {
     if (text.contains(DEPRECATED_TAG)) {
       JavaDocLexer lexer = new JavaDocLexer(LanguageLevel.HIGHEST);
       lexer.start(text);
-      IElementType token;
+      SyntaxElementType token;
       while ((token = lexer.getTokenType()) != null) {
-        if (token == JavaDocTokenType.DOC_TAG_NAME && DEPRECATED_TAG.equals(lexer.getTokenText())) {
+        if (token == JavaDocSyntaxTokenType.DOC_TAG_NAME && DEPRECATED_TAG.equals(lexer.getTokenText())) {
           return true;
         }
         lexer.advance();

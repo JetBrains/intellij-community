@@ -13,8 +13,11 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInspection.options.OptMultiSelector;
+import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
+import com.intellij.codeInspection.ui.OptPaneUtils;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
@@ -76,9 +79,9 @@ import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 @ApiStatus.Internal
@@ -148,6 +151,9 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
     if (command instanceof ModShowConflicts showConflicts) {
       return executeShowConflicts(context, showConflicts, editor, tail);
+    }
+    if (command instanceof ModEditOptions<?> options) {
+      return executeEditOptions(context, options, editor);
     }
     if (command instanceof ModStartTemplate startTemplate) {
       return executeStartTemplate(context, startTemplate, editor);
@@ -239,8 +245,18 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
   }
 
+  private static <T extends OptionContainer> boolean executeEditOptions(@NotNull ActionContext context,
+                                                                        @NotNull ModEditOptions<T> options,
+                                                                        @Nullable Editor editor) {
+    T container = options.containerSupplier().get();
+    OptPaneUtils.editOptions(context.project(), container, options.title(), () -> {
+      ModCommandExecutor.executeInteractively(context, options.title(), editor, () -> options.nextCommand().apply(container));
+    });
+    return true;
+  }
+
   private static boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
-    List<? extends @NotNull MemberChooserElement> result;
+    List<? extends OptMultiSelector.@NotNull OptElement> result;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       result = modChooser.defaultSelection();
     }
@@ -553,7 +569,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
     ActionContextPointer(@NotNull ActionContext context) {
       myProject = context.project();
-      myFile = Objects.requireNonNull(context.file().getVirtualFile());
+      myFile = requireNonNull(context.file().getVirtualFile());
       myElementPointer = context.element() != null ? SmartPointerManager.createPointer(context.element()) : null;
       Document document = context.file().getFileDocument();
       myOffsetMarker = document.createRangeMarker(context.offset(), context.offset());

@@ -128,8 +128,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     PARAM_SPEC, PARAM_SPEC_EXT,
     TYPE_VAR_TUPLE, TYPE_VAR_TUPLE_EXT
   );
-public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager";
-  public static final String ASYNC_CONTEXT_MANAGER = "contextlib.AbstractAsyncContextManager";
+
   public static final Set<String> TYPE_DICT_QUALIFIERS = Set.of(REQUIRED, REQUIRED_EXT, NOT_REQUIRED, NOT_REQUIRED_EXT, READONLY, READONLY_EXT);
 
   public static final String UNPACK = "typing.Unpack";
@@ -201,7 +200,8 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
     .add(TUPLE)
     .add(CALLABLE)
     .add(TYPE)
-    .add("typing.no_type_check")
+    .add(PyKnownDecorator.TYPING_NO_TYPE_CHECK.getQualifiedName().toString())
+    .add(PyKnownDecorator.TYPING_NO_TYPE_CHECK_EXT.getQualifiedName().toString())
     .add(UNION)
     .add(OPTIONAL)
     .add(LIST)
@@ -2051,6 +2051,7 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
       if (classType == null) return null;
 
       final String qName = classType.getClassQName();
+      if (qName == null) return null;
       if (!SYNC_TYPES.contains(qName) && !ASYNC_TYPES.contains(qName)) return null;
       
       PyType yieldType = null;

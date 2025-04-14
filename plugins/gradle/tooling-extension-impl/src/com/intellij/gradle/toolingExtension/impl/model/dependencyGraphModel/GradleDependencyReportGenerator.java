@@ -28,10 +28,6 @@ public class GradleDependencyReportGenerator {
     @NotNull Configuration configuration,
     @NotNull Project project
   ) {
-    if (!project.getConfigurations().contains(configuration)) {
-      throw new IllegalArgumentException("configurations of the project should be used");
-    }
-
     IdGenerator idGenerator = new IdGenerator(nextId);
     ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult();
     ResolvedComponentResult root = resolutionResult.getRoot();

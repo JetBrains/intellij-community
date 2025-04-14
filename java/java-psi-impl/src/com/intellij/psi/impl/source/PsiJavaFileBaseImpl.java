@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -149,7 +150,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private void cleanupBrokenPackageKeyword() {
     PsiElement child = getFirstChild();
     while (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiErrorElement) {
-      if (child instanceof PsiErrorElement && child.getFirstChild() != null && child.getFirstChild().textMatches(PsiKeyword.PACKAGE)) {
+      if (child instanceof PsiErrorElement && child.getFirstChild() != null && child.getFirstChild().textMatches(JavaKeywords.PACKAGE)) {
         child.delete();
         break;
       }

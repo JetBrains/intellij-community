@@ -9,15 +9,15 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-RC2-0.3/rhizomedb-compiler-plugin-2.1.20-RC2-0.3.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-RC2-0.3/rpc-compiler-plugin-2.1.20-RC2-0.3.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.2/rhizomedb-compiler-plugin-2.1.20-0.2.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.2/rpc-compiler-plugin-2.1.20-0.2.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -101,7 +101,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
-    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />

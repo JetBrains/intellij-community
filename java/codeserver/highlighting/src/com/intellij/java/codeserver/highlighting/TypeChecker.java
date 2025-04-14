@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -156,7 +157,7 @@ final class TypeChecker {
   }
 
   void checkIllegalVoidType(@NotNull PsiKeyword type) {
-    if (!PsiKeyword.VOID.equals(type.getText())) return;
+    if (!JavaKeywords.VOID.equals(type.getText())) return;
 
     PsiElement parent = type.getParent();
     if (parent instanceof PsiErrorElement) return;

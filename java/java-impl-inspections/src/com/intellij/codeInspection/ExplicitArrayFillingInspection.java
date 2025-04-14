@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,7 +70,7 @@ public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalI
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
                                    JavaBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
                                    QuickFixFactory.getInstance()
-                                     .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.FOR)));
+                                     .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", JavaKeywords.FOR)));
             return;
           }
           registerProblem(statement, false);

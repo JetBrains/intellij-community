@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.merge.ChangesViewConflictsBanner
 import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -45,7 +46,8 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
   }
 
   private val changesScrollPane = createScrollPane(changesView, true)
-  private val centerPanel = simplePanel(changesScrollPane).andTransparent()
+  private val scrollableBordersPanel = simplePanel(changesScrollPane).andTransparent()
+  private val centerPanel = simplePanel(scrollableBordersPanel).andTransparent()
   private val conflictsBanner =
     ChangesViewConflictsBanner(
       VcsBundle.message("changes.view.conflicts.banner.title"),
@@ -68,12 +70,12 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
     toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      ScrollableContentBorder.setup(changesScrollPane, Side.TOP, centerPanel)
+      ScrollableContentBorder.setup(changesScrollPane, Side.TOP_AND_BOTTOM, scrollableBordersPanel)
       addToTop(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
-      ScrollableContentBorder.setup(changesScrollPane, Side.LEFT, centerPanel)
+      ScrollableContentBorder.setup(changesScrollPane, Side.TOP_AND_BOTTOM, scrollableBordersPanel)
       addToLeft(toolbar.component)
     }
   }
@@ -86,6 +88,9 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
       }
       else {
         conflictsBanner.close()
+      }
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) {
+        project.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
       }
     }
   }

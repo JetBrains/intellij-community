@@ -23,17 +23,15 @@ internal class NodeData(
   val lexemeCount: Int,
   val convertedLexTypes: Array<IElementType>,
   val lexTypes: Array<SyntaxElementType>,
-  var charTable: CharTable?, // todo make it not-null
+  var charTable: CharTable?,
   val astFactory: ASTFactory?, // parserDefinition as? ASTFactory
   val textArray: CharArray?,
   val file: PsiFile?,
 ) {
   val chameleonCache = Int2ObjectOpenHashMap<LazyParseableToken>()
 
-  // todo inline?
   fun getLexemeType(index: Int): IElementType = convertedLexTypes[index]
 
-  // todo inline?
   fun getLexemeStart(index: Int): Int = lexStarts[index]
 
   fun createLeaf(type: IElementType, start: Int, end: Int): TreeElement {

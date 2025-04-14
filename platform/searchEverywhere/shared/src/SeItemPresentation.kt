@@ -26,7 +26,7 @@ sealed interface SeItemPresentation {
 
 @ApiStatus.Internal
 @Serializable
-class SeTextItemPresentation(override val text: @Nls String) : SeItemPresentation
+class SeSimpleItemPresentation(override val text: @Nls String) : SeItemPresentation
 
 @ApiStatus.Internal
 sealed interface SeActionItemPresentation : SeItemPresentation {
@@ -114,4 +114,18 @@ class SeTargetItemPresentation(
       return (nameMatcher as? MinusculeMatcher)?.matchingFragments(text)?.map { SerializableRange(it) }
     }
   }
+}
+
+@ApiStatus.Internal
+@Serializable
+class SeTextSearchItemPresentation(
+  override val text: @NlsSafe String,
+  val textChunks: List<SerializableTextChunk>,
+  private val backgroundColorId: ColorId?,
+  val fileString: @NlsSafe String
+) : SeItemPresentation {
+  val backgroundColor: Color? get() = backgroundColorId?.color()
+
+  @Serializable
+  class SerializableTextChunk(val text: @NlsSafe String, val foregroundColorId: ColorId?, val fontType: Int)
 }

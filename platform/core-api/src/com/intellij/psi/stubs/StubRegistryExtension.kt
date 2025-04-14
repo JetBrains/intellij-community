@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.psi.tree.IElementType
@@ -22,6 +22,10 @@ interface StubRegistryExtension {
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface StubRegistry {
+  fun registerStubSerializingFactory(type: IElementType, factory: StubSerializingElementFactory<*, *>) {
+    registerStubFactory(type, factory)
+    registerStubSerializer(type, factory)
+  }
   fun registerStubFactory(type: IElementType, factory: StubElementFactory<*, *>)
   fun registerLightStubFactory(type: IElementType, factory: LightStubElementFactory<*, *>)
   fun registerStubSerializer(type: IElementType, serializer: ObjectStubSerializer<*, *>)

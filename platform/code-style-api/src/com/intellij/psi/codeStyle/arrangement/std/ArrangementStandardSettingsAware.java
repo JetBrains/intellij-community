@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -79,13 +80,14 @@ public interface ArrangementStandardSettingsAware {
    *            'public' modifier is deselected if returned collection contains set of all supported visibility modifiers
    */
   @NotNull
+  @Unmodifiable
   Collection<Set<ArrangementSettingsToken>> getMutexes();
 
   /**
    * Helps to create links from the 'Actions on Save' page in Settings (Preferences) to the Arrangement tab of the language-specific
    * Code Style page.
    */
-  default @NotNull Collection<ArrangementTabInfo> getArrangementTabInfos() {
+  default @NotNull @Unmodifiable Collection<ArrangementTabInfo> getArrangementTabInfos() {
     ExtensionPoint<KeyedLazyInstance<Rearranger<?>>> point = Rearranger.EXTENSION.getPoint();
     if (point == null) return Collections.emptyList();
 

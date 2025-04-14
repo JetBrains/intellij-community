@@ -19,4 +19,11 @@ internal class IjLoggerFactory : KLoggerFactory {
   override fun logger(name: String): KLogger {
     return KLogger(IjLogger(Logger.getInstance(name)))
   }
+
+  override fun setLoggingContext(map: Map<String, String>?) {
+  }
+
+  override fun getLoggingContext(): Map<String, String>? {
+    return null
+  }
 }

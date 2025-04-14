@@ -1,39 +1,38 @@
+- name: lib/completion-ranking-python-with-full-line.jar
+  library: completion-ranking-python-with-full-line
+  module: intellij.python.community.impl
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
+- name: lib/io.github.z4kn4fein.semver.jvm.jar
+  library: io.github.z4kn4fein.semver.jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
+  reason: <- intellij.python.community.impl
+- name: lib/jetbrains.ml.models.python.imports.ranking.model.jar
+  library: jetbrains.ml.models.python.imports.ranking.model
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross.jar
+  reason: <- intellij.python.ml.features
+- name: lib/jsr305.jar
+  library: jsr305
+  files:
+  - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
+  reason: <- intellij.python.community.impl
+- name: lib/libthrift.jar
+  library: libthrift
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
+  reason: withProjectLibrary
+- name: lib/ml-completion-prev-exprs-models.jar
+  library: ml-completion-prev-exprs-models
+  module: intellij.python.community.impl
+  files:
+  - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
 - name: lib/python-ce.jar
-  projectLibraries:
-  - name: XmlRPC
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
-    reason: withProjectLibrary
-  - name: io.github.z4kn4fein.semver.jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
-    reason: <- intellij.python.community.impl
-  - name: jetbrains.ml.models.python.imports.ranking.model
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross.jar
-    reason: <- intellij.python.ml.features
-  - name: jsr305
-    files:
-    - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
-    reason: <- intellij.python.community.impl
-  - name: libthrift
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
-    reason: withProjectLibrary
-  - name: tuweni-toml
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
-    - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
-    reason: <- intellij.python.community.impl
   modules:
   - name: intellij.python.community
   - name: intellij.python.community.core.impl
   - name: intellij.python.community.impl
-    libraries:
-      ml-completion-prev-exprs-models:
-      - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
-      completion-ranking-python-with-full-line:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
   - name: intellij.python.community.impl.poetry
   - name: intellij.python.community.impl.installer
   - name: intellij.python.community.impl.venv
@@ -69,3 +68,14 @@
   - name: intellij.python.ast
   - name: intellij.python.syntax
   - name: intellij.python.syntax.core
+- name: lib/tuweni-toml.jar
+  library: tuweni-toml
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
+  - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
+  reason: <- intellij.python.community.impl
+- name: lib/xmlrpc.jar
+  library: XmlRPC
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
+  reason: withProjectLibrary

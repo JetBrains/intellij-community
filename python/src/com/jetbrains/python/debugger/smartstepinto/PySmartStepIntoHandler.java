@@ -46,7 +46,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   }
 
   @Override
-  public String getPopupTitle(@NotNull XSourcePosition position) {
+  public String getPopupTitle() {
     return PyBundle.message("debug.popup.title.step.into.function");
   }
 

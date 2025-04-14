@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
-import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -29,17 +28,16 @@ import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -53,8 +51,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -596,28 +592,22 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createOptimizeImportsFix(final boolean fixOnTheFly, @NotNull PsiFile file) {
+  public @NotNull ModCommandAction createOptimizeImportsFix(final boolean fixOnTheFly, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     VirtualFile virtualFile = file.getVirtualFile();
     boolean isInContent = virtualFile != null && (ModuleUtilCore.projectContainsFile(file.getProject(), virtualFile, false) || ScratchUtil.isScratch(virtualFile));
     return new OptimizeImportsFix(fixOnTheFly, isInContent, virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(file.getProject(), virtualFile));
   }
 
-  private static final class OptimizeImportsFix implements IntentionAction {
+  private static final class OptimizeImportsFix implements ModCommandAction {
     private final boolean myOnTheFly;
     private final boolean myInContent;
     private final ThreeState extensionsAllowToChangeFileSilently;
 
     private OptimizeImportsFix(boolean onTheFly, boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
       this.extensionsAllowToChangeFileSilently = extensionsAllowToChangeFileSilently;
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
       myOnTheFly = onTheFly;
       myInContent = isInContent;
-    }
-
-    @Override
-    public @NotNull String getText() {
-      return QuickFixBundle.message("optimize.imports.fix");
     }
 
     @Override
@@ -626,27 +616,34 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      PsiFile file = context.file();
       if (!(file instanceof PsiJavaFile)) {
-        return false;
+        return null;
       }
       if (ApplicationManager.getApplication().isDispatchThread() && myOnTheFly && !timeToOptimizeImports(file, myInContent, extensionsAllowToChangeFileSilently)) {
-        return false;
+        return null;
       }
       VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
-      return myInContent ||
-             ScratchUtil.isScratch(virtualFile) ||
-             virtualFile.getFileSystem() instanceof NonPhysicalFileSystem;
+      boolean available = myInContent ||
+                  ScratchUtil.isScratch(virtualFile) ||
+                  virtualFile.getFileSystem() instanceof NonPhysicalFileSystem;
+      return available ? Presentation.of(getFamilyName()) : null;
     }
 
     @Override
-    public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-      invokeOnTheFlyImportOptimizer(file);
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      PsiFile file = context.file();
+      ModCommand command = ModCommand.psiUpdate(file, f -> {
+        new JavaImportOptimizer().processFile(f).run();
+      });
+      if (command.isEmpty()) {
+        VirtualFile vFile = file.getViewProvider().getVirtualFile();
+        LOG.error("Import optimizer hasn't optimized any imports",
+                  new Throwable(vFile.getPath()),
+                  CoreAttachmentFactory.createAttachment(vFile));
+      }
+      return command;
     }
   }
 
@@ -728,24 +725,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
     return OrderEntryFix.registerFixes(reference, registrar);
-  }
-
-  private static void invokeOnTheFlyImportOptimizer(@NotNull PsiFile file) {
-    final Project project = file.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) return;
-
-    String beforeText = file.getText();
-    long oldStamp = document.getModificationStamp();
-    DocumentUtil.writeInRunUndoTransparentAction(() -> new OptimizeImportsProcessor(project, file).run());
-    if (oldStamp != document.getModificationStamp()) {
-      String afterText = file.getText();
-      if (Comparing.strEqual(beforeText, afterText)) {
-        LOG.error("Import optimizer hasn't optimized any imports",
-                  new Throwable(file.getViewProvider().getVirtualFile().getPath()),
-                  CoreAttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
-      }
-    }
   }
 
   @Override
@@ -842,7 +821,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+  public @NotNull ModCommandAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return new WrapWithAdapterMethodCallFix(type, expression, null);
   }
 

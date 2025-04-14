@@ -19,7 +19,7 @@ jvm_library(
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/frontmatter/toml:markdown-frontmatter-toml",
     "//plugins/markdown/frontmatter/yaml:markdown-frontmatter-yaml",
-    "//json",
+    "//json/backend",
     "//platform/backend",
     "@lib//:kotlin-stdlib",
   ],

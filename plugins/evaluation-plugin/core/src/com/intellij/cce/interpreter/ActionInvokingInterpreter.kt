@@ -5,7 +5,6 @@ import com.intellij.cce.actions.*
 import com.intellij.cce.core.Session
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
-import java.util.*
 
 class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
                                 private val handler: InterpretationHandler,
@@ -24,7 +23,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
       return emptyList()
     }
     var shouldCompleteToken = filter.shouldCompleteToken()
-    var currentSessionId: UUID? = null
+    var currentSessionId: SessionId? = null
     var isCanceled = false
     val actions = fileActions.actions.reorder(order)
     for (action in actions) {
@@ -40,7 +39,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
         }
         is CallFeature -> {
           if (shouldCompleteToken) {
-            val session = featureInvoker.callFeature(action.expectedText, action.offset, action.nodeProperties)
+            val session = featureInvoker.callFeature(action.expectedText, action.offset, action.nodeProperties, action.sessionId.id)
             sessions.add(session)
             sessionHandler(session)
           }

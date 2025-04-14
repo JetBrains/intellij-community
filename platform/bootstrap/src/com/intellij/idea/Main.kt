@@ -197,6 +197,8 @@ private fun initRemoteDev(args: List<String>) {
 
   val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
   if (isSplitMode) {
+    System.setProperty("jb.privacy.policy.text", "<!--999.999-->")
+    System.setProperty("jb.consents.confirmation.enabled", "false")
     System.setProperty("idea.initially.ask.config", "never")
   }
 
@@ -230,7 +232,7 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 private fun isInAquaSession(): Boolean {
   if (!SystemInfoRt.isMac) return false
 
-  if (System.getenv("AWT_FORCE_HEADFUL") != null) {
+  if ("true" == System.getenv("AWT_FORCE_HEADFUL")) {
     return false // the value is forcefully set, assume the worst case
   }
 

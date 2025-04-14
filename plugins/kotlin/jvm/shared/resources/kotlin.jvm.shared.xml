@@ -34,6 +34,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.inspections.JavaOutsideModuleDetector"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
 
     <buildProcess.parametersProvider
@@ -43,7 +45,7 @@
 
     <library.presentationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.framework.JavaRuntimePresentationProvider"/>
 
-    <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
+    <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.jvm.shared.configuration.KotlinSourceRootDetector"/>
 
     <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
 

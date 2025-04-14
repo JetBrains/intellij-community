@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KaRestrictedAnalysisException
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
@@ -63,14 +64,22 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         } catch(e: ProcessCanceledException) {
             throw e
         } catch (e: Throwable) {
-            val cause = (e as? ExecutionException)?.cause ?: e
+            val cause = unwrapEvaluationException(e)
 
-            stats.compilerFailExceptionClass = extractExceptionCauseClass(e)
+            stats.compilerFailExceptionClass = extractExceptionCauseClass(cause)
 
             val isJustInvalidUserCode = cause is IncorrectCodeFragmentException
             onFinish(if (isJustInvalidUserCode) EvaluationCompilerResult.COMPILATION_FAILURE
                      else EvaluationCompilerResult.COMPILER_INTERNAL_ERROR)
-            throw e
+            throw cause
+        }
+    }
+
+    private fun unwrapEvaluationException(e: Throwable): Throwable {
+        var current = e
+        while (true) {
+            val next = (current as? KaRestrictedAnalysisException)?.cause ?: (current as? ExecutionException)?.cause ?: return current
+            current = next
         }
     }
 

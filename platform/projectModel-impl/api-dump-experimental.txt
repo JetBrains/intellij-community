@@ -70,3 +70,4 @@
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 - com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 - a:getData():com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+- a:getRecursive():Z

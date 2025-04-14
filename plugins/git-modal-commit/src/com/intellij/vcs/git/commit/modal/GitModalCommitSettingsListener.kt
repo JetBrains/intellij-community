@@ -2,13 +2,16 @@
 package com.intellij.vcs.git.commit.modal
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.vcs.commit.CommitModeManager
 
 internal class GitModalCommitSettingsListener() : AdvancedSettingsChangeListener {
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
     if (id == GitModalCommitModeProvider.SETTING_ID && oldValue != newValue) {
-      ApplicationManager.getApplication().messageBus.syncPublisher(CommitModeManager.SETTINGS).settingsChanged()
+      runInEdt {
+        ApplicationManager.getApplication().messageBus.syncPublisher(CommitModeManager.SETTINGS).settingsChanged()
+      }
     }
   }
 }

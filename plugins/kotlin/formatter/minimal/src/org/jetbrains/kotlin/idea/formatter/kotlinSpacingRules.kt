@@ -550,7 +550,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         // Add space after a semicolon if there is another child at the same line
         inPosition(left = KtTokens.SEMICOLON).customRule { _, left, _ ->
           val nodeAfterLeft = left.requireNode().treeNext
-          if (nodeAfterLeft is PsiWhiteSpace && !nodeAfterLeft.textContains('\n')) {
+          if (nodeAfterLeft !is PsiWhiteSpace || !nodeAfterLeft.textContains('\n')) {
             createSpacing(1)
           }
           else {

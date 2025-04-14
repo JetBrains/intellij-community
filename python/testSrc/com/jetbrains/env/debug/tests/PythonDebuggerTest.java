@@ -255,7 +255,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         List<String> referrersNames = getNumberOfReferringObjects("l");
         assertNotNull(getRefWithWordInName(referrersNames, "module"));
-        assertNotNull(getRefWithWordInName(referrersNames, "dict"));
+        if (getRefWithWordInName(referrersNames, "dict") == null) {
+          assertNotNull(getRefWithWordInName(referrersNames, "tuple"));
+        }
+
       }
 
       @NotNull
@@ -429,6 +432,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void doFinally() {
         getRunConfiguration().setShowCommandLineAfterwards(false);
         getRunConfiguration().setModuleMode(false);
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
     });
   }

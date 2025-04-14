@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy.NEVER_AUTOCOMPLETE
 import com.intellij.codeInsight.lookup.LookupElement
@@ -23,6 +24,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 internal class CommandCompletionLookupElement(
   lookupElement: LookupElement,
+  val command: CompletionCommand,
   val hostStartOffset: Int,
   val suffix: String,
   val icon: Icon?,
@@ -35,6 +37,12 @@ internal class CommandCompletionLookupElement(
 
   override fun getAutoCompletionPolicy(): AutoCompletionPolicy? {
     return NEVER_AUTOCOMPLETE
+  }
+
+  internal val hasPreview: Boolean = command is CompletionCommandWithPreview
+
+  internal val preview: IntentionPreviewInfo? by lazy {
+    (command as? CompletionCommandWithPreview)?.getPreview()
   }
 }
 

@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.plugins.parser.impl.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -30,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Function;
 
 import static com.intellij.ide.plugins.DynamicPluginsTestUtil.createPluginLoadingResult;
 import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
@@ -233,8 +231,8 @@ public class PluginManagerTest {
     var text = new StringBuilder();
     for (var descriptor : loadPluginResult.pluginSet.getEnabledModules()) {
       text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString());
-      if (descriptor.moduleName != null) {
-        text.append(" | ").append(descriptor.moduleName);
+      if (descriptor.getModuleName() != null) {
+        text.append(" | ").append(descriptor.getModuleName());
       }
       text.append('\n');
     }
@@ -374,7 +372,7 @@ public class PluginManagerTest {
       var descriptor = PluginDescriptorLoadUtilsKt.createFromDescriptor(
         pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
       list.add(descriptor);
-      descriptor.jarFiles = List.of();
+      descriptor.setJarFiles(List.of());
     }
     parentContext.close();
     var result = new PluginLoadingResult(false);
@@ -400,45 +398,5 @@ public class PluginManagerTest {
       writeXmlElement(child, writer);
     }
     writer.writeEndElement();
-  }
-
-  @SuppressWarnings("unused")
-  private static String dumpDescriptors(IdeaPluginDescriptorImpl @NotNull [] descriptors) {
-    // place breakpoint in PluginManagerCore#loadDescriptors before sorting
-    var sb = new StringBuilder("<root>");
-    Function<String, String> escape = s -> {
-      return s.equals("com.intellij") || s.startsWith("com.intellij.modules.") ? s : "-" + s.replace(".", "-") + "-";
-    };
-    for (var d : descriptors) {
-      sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPluginPath().getFileName().getParent()).append("/META-INF/plugin.xml\">");
-      sb.append("\n    <id>").append(escape.apply(d.getPluginId().getIdString())).append("</id>");
-      sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
-      for (PluginId module : d.pluginAliases) {
-        sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
-      }
-      for (var dependency : d.pluginDependencies) {
-        if (!dependency.isOptional()) {
-          sb.append("\n    <depends>").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
-        }
-        else {
-          var optionalConfigPerId = dependency.subDescriptor;
-          if (optionalConfigPerId == null) {
-            sb.append("\n    <depends optional=\"true\" config-file=\"???\">")
-              .append(escape.apply(dependency.getPluginId().getIdString()))
-              .append("</depends>");
-          }
-          else {
-              sb.append("\n    <depends optional=\"true\" config-file=\"")
-                .append(optionalConfigPerId.getPluginPath().getFileName().toString())
-                .append("\">")
-                .append(escape.apply(dependency.getPluginId().getIdString()))
-                .append("</depends>");
-          }
-        }
-      }
-      sb.append("\n  </idea-plugin>");
-    }
-    sb.append("\n</root>");
-    return sb.toString();
   }
 }

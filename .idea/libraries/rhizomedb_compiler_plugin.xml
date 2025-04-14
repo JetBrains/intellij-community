@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="rhizomedb-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:rhizomedb-compiler-plugin:2.1.20-RC2-0.3">
+    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:rhizomedb-compiler-plugin:2.1.20-0.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-RC2-0.3/rhizomedb-compiler-plugin-2.1.20-RC2-0.3.jar">
-          <sha256sum>fad60cee502b92bceee6129983d163f486593fb3689237f6207d9f447151341c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.2/rhizomedb-compiler-plugin-2.1.20-0.2.jar">
+          <sha256sum>423a8816d9b02365dfee9bb7ae4776fcc064d50fb01e25233a92ec497eca365d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-RC2-0.3/rhizomedb-compiler-plugin-2.1.20-RC2-0.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.2/rhizomedb-compiler-plugin-2.1.20-0.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-RC2-0.3/rhizomedb-compiler-plugin-2.1.20-RC2-0.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.20-0.2/rhizomedb-compiler-plugin-2.1.20-0.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

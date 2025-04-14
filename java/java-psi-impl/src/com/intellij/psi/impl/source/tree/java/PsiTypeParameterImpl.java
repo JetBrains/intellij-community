@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   public PsiTypeParameterImpl(final PsiTypeParameterStub stub) {
@@ -207,7 +206,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public @NotNull PsiReferenceList getExtendsList() {
-    return (PsiReferenceList)Objects.requireNonNull(getStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST));
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST, PsiReferenceList.class);
   }
 
   @Override

@@ -60,8 +60,8 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
 
   private fun getIsAttributeAndPath(element: PsiElement, originalElement: PsiElement): Pair<Boolean, List<String>>? {
     val context = findContextElement(originalElement) ?: return null
-    val elementName = (element as? PsiNamedElement)?.name ?: return null
-    if (elementName == (context as? PsiNamedElement)?.name) { // assume no parent and child with the same name
+    val elementName = getElementName(element) ?: return null
+    if (elementName == getContextElementName (context)) { // assume no parent and child with the same name
       return (context is XmlAttribute) to getXmlElementPath(context)
     }
     // handle lookup element
@@ -70,6 +70,18 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
     val parentTag = context.parentOfType<XmlTag>(withSelf = isAttribute) ?: return null
     val parentPath = getXmlElementPath(parentTag)
     return isAttribute to (parentPath + elementName)
+  }
+
+  private fun getElementName(element: PsiElement): String? {
+    // because in case of elements defined with XSD:
+    if (element is XmlTag && element.containingFile.virtualFile.extension == "xsd") {
+      return element.getAttribute("name")?.value
+    }
+    return (element as? PsiNamedElement)?.name
+  }
+
+  private fun getContextElementName(context: PsiElement): String? {
+    return (context as? XmlTag)?.localName ?: (context as? PsiNamedElement)?.name
   }
 
   private fun findContextElement(context: PsiElement): XmlElement? {

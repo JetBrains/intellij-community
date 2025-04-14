@@ -33,7 +33,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/markdown-utils",
     "//platform/statistics",
-    "//json",
+    "//json/backend",
   ],
   runtime_deps = [":community-impl-huggingFace_resources"]
 )

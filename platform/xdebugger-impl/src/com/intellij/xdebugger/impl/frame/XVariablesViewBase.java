@@ -37,11 +37,12 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Point;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
 
 public abstract class XVariablesViewBase extends XDebugView {
   private final XDebuggerTreePanel myTreePanel;
@@ -52,9 +53,18 @@ public abstract class XVariablesViewBase extends XDebugView {
   private @NotNull CompletableFuture<XDebuggerTreeNode> myLoaded = new CompletableFuture<>();
   private final Map<Object, XDebuggerTreeState> myTreeStates = new FixedHashMap<>(Registry.get("debugger.tree.states.depth").asInteger());
 
-  protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
-    myTreePanel = new XDebuggerTreePanel(
-      project, editorsProvider, this, null, this instanceof XWatchesView ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
+  protected XVariablesViewBase(@NotNull Project project,
+                               @NotNull XDebuggerEditorsProvider editorsProvider,
+                               @Nullable XValueMarkers<?, ?> markers) {
+    boolean isWatchesView = this instanceof XWatchesView;
+    String frontendGroupId = isWatchesView
+                             ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP_FRONTEND
+                             : XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND;
+    String monolithGroupId = isWatchesView
+                             ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP
+                             : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP;
+    String actionGroupId = areFrontendDebuggerActionsEnabled() ? frontendGroupId : monolithGroupId;
+    myTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, actionGroupId, markers);
     getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
     getTree().addTreeListener(new XDebuggerTreeListener() {
       @Override
@@ -198,9 +208,9 @@ public abstract class XVariablesViewBase extends XDebugView {
     private final XDebuggerTreePanel myTreePanel;
 
     MySelectionListener(Editor editor,
-                               XStackFrame stackFrame,
-                               Project project,
-                               XDebuggerTreePanel panel) {
+                        XStackFrame stackFrame,
+                        Project project,
+                        XDebuggerTreePanel panel) {
       myEditor = editor;
       myStackFrame = stackFrame;
       myProject = project;

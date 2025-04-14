@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
@@ -138,16 +137,19 @@ final class AnnotatorRunner {
         }
         else {
           newInfos = new ArrayList<>(sizeAfter - sizeBefore);
+          // first compute quick fixes using injected document offsets, then convert them to the host offsets in addConvertedToHostInfo below
+          Document document = myPsiFile.getViewProvider().getDocument();
+          boolean isFromInjection = myPsiFile.getViewProvider() instanceof InjectedFileViewProvider;
           for (int i = sizeBefore; i < sizeAfter; i++) {
             Annotation annotation = annotationHolder.get(i);
-            Document document = PsiDocumentManager.getInstance(myProject).getDocument(InjectedLanguageManager.getInstance(myProject).getTopLevelFile(myPsiFile));
             HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
-            if (myPsiFile.getViewProvider() instanceof InjectedFileViewProvider) {
+            if (isFromInjection) {
               info.markFromInjection();
             }
+            int sizeNewBefore = newInfos.size();
             addConvertedToHostInfo(info, newInfos);
             if (LOG.isDebugEnabled()) {
-              LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos);
+              LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos.subList(sizeNewBefore, newInfos.size()));
             }
             myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
           }

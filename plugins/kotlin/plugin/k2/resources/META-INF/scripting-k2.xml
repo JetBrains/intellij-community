@@ -23,12 +23,6 @@
             dynamic="true"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptConfigurationsSource"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
             interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"
             dynamic="true"/>
@@ -99,6 +93,10 @@
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider"/>
 
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptConfigurationHandler"/>
+
+    <vfs.asyncListener implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptFileListener"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager"/>
 
@@ -123,7 +121,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-     <scriptDefinitionsSource
+    <scriptDefinitionsSource
             id="BridgeScriptDefinitionsContributor"
             implementation="org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor"/>
 
@@ -135,9 +133,6 @@
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDefinitionSource"/>
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource"/>
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource"/>
-
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.ScriptTemplatesFromDependenciesDefinitionSource"/>
@@ -145,7 +140,7 @@
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
     <action id="LoadMainKtsConfiguration"
-            class="org.jetbrains.kotlin.idea.script.k2.ReloadDependenciesScriptAction"
+            class="org.jetbrains.kotlin.idea.script.k2.ReloadMainKtsScriptDependenciesAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <add-to-group group-id="EditorContextBarMenu"/>
     </action>

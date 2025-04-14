@@ -591,6 +591,15 @@ public class PyTypingTest extends PyTestCase {
              x = f()
              expr = x.foo
              """);
+    doTest("tuple[Any, Any]", """
+      from typing import Any
+      
+      class A[T]:
+          v: T
+
+      def f(a1: A[Any], a2: A):
+          expr = a1.v, a2.v
+      """);
   }
 
   // PY-18427 PY-76243
@@ -1960,6 +1969,22 @@ public class PyTypingTest extends PyTestCase {
                  expr = a""");
   }
 
+  // PY-79861
+  public void testWalrusIsSubclass() {
+    doTest("Type[str | dict | int]",
+           """
+             if issubclass(a := list, str | dict | int):
+                 expr = a""");
+  }
+
+  // PY-79861
+  public void testWalrusCallable() {
+    doTest("Type[Callable]",
+           """
+             if callable(a := 42):
+                 expr = a""");
+  }
+
   // PY-44974
   public void testBitwiseOrUnionIsInstanceIntNone() {
     doTest("int | None",
@@ -1975,6 +2000,14 @@ public class PyTypingTest extends PyTestCase {
            """
              a = [42]
              if isinstance(a, None | int):
+                 expr = a""");
+  }
+
+  // PY-79861
+  public void testWalrusIsInstance() {
+    doTest("int",
+           """
+             if isinstance((a := [42]), int):
                  expr = a""");
   }
 
@@ -6346,58 +6379,40 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
-  // PY-79480
-  public void testInheritedAttributeWithTypeAnnotationInParentConstructor() {
-    doTest("str | None", """
-      import typing
-
-      class FakeBase:
-          def __init__(self):
-              self._some_var: typing.Optional[str] = ""
-
-      class Fake(FakeBase):
-          def __init__(self):
-              super().__init__()
-              self._some_var = None
-
-          def some_method(self):
-              expr = self._some_var
-      """);
+  // PY-43122
+  public void testPropertyOfImportedClass() {
+    doMultiFileStubAwareTest("str",
+                             """
+                               from mod import A, B
+                               
+                               a = A()
+                               b = B(a)
+                               expr = b.b_attr
+                               """);
   }
 
-  public void testInheritedAttributeWithTypeAnnotationInParent() {
-    doTest("str | None", """
-      import typing
-
-      class FakeBase:
-          _some_var: typing.Optional[str]
-
-      class Fake(FakeBase):
-          def __init__(self):
-              super().__init__()
-              self._some_var = None
-
-          def some_method(self):
-              expr = self._some_var
-      """);
-  }
-
-  public void testInheritedAttributeWithTypeAnnotationInChild() {
-    doTest("str | None", """
-      import typing
-
-      class FakeBase:
-          def __init__(self):
-              self._some_var = 1
-
-      class Fake(FakeBase):
-          def __init__(self):
-              super().__init__()
-              self._some_var: typing.Optional[str] = None
-
-          def some_method(self):
-              expr = self._some_var
-      """);
+  // PY-43122
+  public void testPropertyOfClass() {
+    doTest("str",
+                             """
+                               class A:
+                                   def __init__(self) -> None:
+                                       pass
+                               
+                                   @property
+                                   def a_property(self) -> str:
+                                       return 'foo'
+                               
+                               
+                               class B:
+                                   def __init__(self, a: A) -> None:
+                                       self.b_attr = a.a_property
+                               
+                               
+                               a = A()
+                               b = B(a)
+                               expr = b.b_attr
+                               """);
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

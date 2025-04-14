@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.completion.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.PreferByKindWeigher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -64,7 +65,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
         Objects.requireNonNull(PsiTreeUtil.getParentOfType(caretElement.getPrevSibling(), PsiStatement.class, false));
       newVarDeclarationTemplate = elementFactory.createVariableDeclarationStatement(myNewVarName,
                                                                                     elementFactory.createType(myQualifierClass),
-                                                                                    elementFactory.createExpressionFromText(PsiKeyword.NULL, null));
+                                                                                    elementFactory.createExpressionFromText(JavaKeywords.NULL, null));
 
     }
 

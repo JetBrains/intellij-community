@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -112,7 +113,7 @@ final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerati
   }
 
   @Override
-  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
     for (GlobalSearchScope scope : myScopes) {
       result.addAll(scope.getUnloadedModulesBelongingToScope());

@@ -58,7 +58,7 @@ fun Driver.invokeGlobalBackendAction(actionId: String, project: Project? = null,
 }
 
 fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, place: String? = null, rdTarget: RdTarget? = null) {
-  val target = rdTarget ?: if (isRemoteIdeMode) RdTarget.FRONTEND else RdTarget.DEFAULT
+  val target = rdTarget ?: if (isRemDevMode) RdTarget.FRONTEND else RdTarget.DEFAULT
   val actionManager = service<ActionManager>(target)
   val action = withContext(OnDispatcher.EDT) {
     actionManager.getAction(actionId)

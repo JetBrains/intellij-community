@@ -480,7 +480,7 @@ public final class FindInProjectUtil {
     }
   }
 
-  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, DataProvider {
+  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, UiDataProvider {
     protected final @NotNull Project myProject;
     protected final @NotNull FindModel myFindModel;
 
@@ -539,18 +539,10 @@ public final class FindInProjectUtil {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (UsageView.USAGE_SCOPE.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(UsageView.USAGE_SCOPE, () -> {
         return getScopeFromModel(myProject, myFindModel);
-      }
-      return null;
+      });
     }
   }
 

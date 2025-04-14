@@ -61,7 +61,7 @@ class ClassLoaderConfigurator(
       mainToClassPath.put(pluginId, MainInfo(classLoader = it))
     }
 
-    if (mainDescriptor.pluginDependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
+    if (mainDescriptor.dependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
       // dynamically enabled optional dependency module in old format
       // based on what's happening in [configureDependenciesInOldFormat]
       assert(moduleDescriptor.pluginClassLoader == null) {
@@ -101,7 +101,7 @@ class ClassLoaderConfigurator(
         throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
 
-      assert(module.pluginDependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.pluginDependencies}" }
+      assert(module.dependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.dependencies}" }
       val dependencies = getSortedDependencies(module)
       // if the module depends on an unavailable plugin, it will not be loaded
       if (dependencies.any { it.pluginClassLoader == null }) {
@@ -213,7 +213,7 @@ class ClassLoaderConfigurator(
     }
 
     var libDirectories = Collections.emptyList<Path>()
-    val libDir = module.path.resolve("lib")
+    val libDir = module.pluginPath.resolve("lib")
     if (Files.exists(libDir)) {
       libDirectories = Collections.singletonList(libDir)
     }
@@ -238,7 +238,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
-    for (dependency in module.pluginDependencies) {
+    for (dependency in module.dependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
       if (!isKotlinPlugin(module.pluginId) &&
           isKotlinPlugin(dependency.pluginId) &&
@@ -263,7 +263,7 @@ class ClassLoaderConfigurator(
         classPath = ClassPath(jarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
         parents = deps,
         pluginDescriptor = module,
-        coreLoader = if (module.isDependentOnCoreClassLoader) coreLoader else coreLoader.parent,
+        coreLoader = if (module.isIndependentFromCoreClassLoader) coreLoader.parent else coreLoader,
         resolveScopeManager = null,
         packagePrefix = module.packagePrefix,
         libDirectories = ArrayList(),
@@ -306,7 +306,7 @@ class ClassLoaderConfigurator(
 
   private fun setPluginClassLoaderForModuleAndOldSubDescriptors(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader) {
     rootDescriptor.pluginClassLoader = classLoader
-    for (dependency in rootDescriptor.pluginDependencies) {
+    for (dependency in rootDescriptor.dependencies) {
       val subDescriptor = dependency.subDescriptor
       if (subDescriptor != null && pluginSet.isPluginEnabled(dependency.pluginId)) {
         setPluginClassLoaderForModuleAndOldSubDescriptors(subDescriptor, classLoader)
@@ -456,7 +456,7 @@ private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: IdeaPlugi
 }
 
 private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): List<String> {
-  val dependencies = descriptor.dependencies.modules
+  val dependencies = descriptor.moduleDependencies.modules
   if (dependencies.isEmpty()) {
     return Collections.emptyList()
   }

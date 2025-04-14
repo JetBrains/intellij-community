@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.ide.JavaUiBundle
@@ -29,7 +29,7 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     val items = mutableListOf<Any>()
     items.add(defaultItem ?: "")
 
-    val highestPreviewLevel = LanguageLevel.HIGHEST.previewLevel
+    val highestPreviewLevel = LanguageLevel.HIGHEST.getPreviewLevel()
     val highestWithPreview = highestPreviewLevel ?: LanguageLevel.HIGHEST
 
     fun MutableList<Any>.filterAndAdd(levels: Collection<LanguageLevel>) = levels.filter(levelFilter).also { addAll(it) }

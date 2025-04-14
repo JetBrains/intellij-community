@@ -15,8 +15,9 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.apache.maven.model.Model;
+import org.apache.maven.repository.internal.MavenWorkspaceReader;
 import org.eclipse.aether.artifact.Artifact;
-import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.repository.WorkspaceRepository;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
@@ -24,16 +25,20 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMapWrapper;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
-public class Maven3WorkspaceMapReader implements WorkspaceReader {
+public class Maven3WorkspaceMapReader implements MavenWorkspaceReader {
 
   private final WorkspaceRepository myRepository = new WorkspaceRepository();
 
   private final MavenWorkspaceMapWrapper myWorkspaceMap;
+
+  private final Map<MavenId, Model> myMavenModelMap = new HashMap<>();
 
   public Maven3WorkspaceMapReader(MavenWorkspaceMap workspaceMap, Properties systemProperties) {
     myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap, systemProperties);
@@ -68,5 +73,21 @@ public class Maven3WorkspaceMapReader implements WorkspaceReader {
     }
 
     return res;
+  }
+
+  @Override
+  public Model findModel(Artifact artifact) {
+    return myMavenModelMap.get(new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion()));
+  }
+
+  public void fillSessionCache(Map<MavenId, Model> map) {
+    myMavenModelMap.putAll(map);
+    for (MavenId mavenId : map.keySet()) {
+      Model model = map.get(mavenId);
+      if (null == model) continue;
+      File pomFile = model.getPomFile();
+      if (null == pomFile) continue;
+      myWorkspaceMap.register(mavenId, pomFile);
+    }
   }
 }

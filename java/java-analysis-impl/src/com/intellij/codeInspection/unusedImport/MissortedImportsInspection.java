@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.unusedImport;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportList;
@@ -41,7 +41,8 @@ public final class MissortedImportsInspection extends GlobalSimpleInspectionTool
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     if (!(file instanceof PsiJavaFile javaFile) || FileTypeUtils.isInServerPageFile(file)) return;
     PsiImportList importList = javaFile.getImportList();
-    PsiImportStatementBase[] imports = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
+    if (importList == null) return;
+    PsiImportStatementBase[] imports = importList.getAllImportStatements();
     int currentEntryIndex = 0;
     for (PsiImportStatementBase importStatement : imports) {
       ProgressManager.checkCanceled();
@@ -52,8 +53,8 @@ public final class MissortedImportsInspection extends GlobalSimpleInspectionTool
       int entryIndex = JavaCodeStyleManager.getInstance(javaFile.getProject()).findEntryIndex(importStatement);
       if (entryIndex < currentEntryIndex) {
         // mis-sorted import found
-        IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(false, javaFile);
-        problemsHolder.registerProblem(importList, getDisplayNameText(), new IntentionWrapper(fix));
+        ModCommandAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(false, javaFile);
+        problemsHolder.problem(importList, getDisplayNameText()).fix(fix).register();
         return;
       }
       currentEntryIndex = entryIndex;

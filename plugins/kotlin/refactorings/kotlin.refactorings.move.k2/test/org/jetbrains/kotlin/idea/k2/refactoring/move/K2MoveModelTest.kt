@@ -578,4 +578,76 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
     }
+
+    fun `test moving override function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open fun fn() {}
+            }
+            
+            open class Derived : Base() {
+                override fun fn<caret>() {
+                    super.fn()
+                }
+            }
+        """.trimIndent()) as KtFile
+        val overrideFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(overrideFunction), null)
+        }
+    }
+
+    fun `test moving open function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open fun fn<caret>() {}
+            }
+            
+            open class Derived : Base() {
+                override fun fn() {
+                    super.fn()
+                }
+            }
+        """.trimIndent()) as KtFile
+        val openFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(openFunction), null)
+        }
+    }
+
+    fun `test moving abstract class function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                abstract fun fn<caret>()
+            }
+        """.trimIndent()) as KtFile
+        val abstractFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(abstractFunction), null)
+        }
+    }
+
+    fun `test moving abstract interface function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            interface Foo {
+                fun fn<caret>()
+            }
+        """.trimIndent()) as KtFile
+        val abstractFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(abstractFunction), null)
+        }
+    }
+
+    fun `test moving open interface function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            interface Foo {
+                fun fn<caret>() {}
+            }
+        """.trimIndent()) as KtFile
+        val openFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(openFunction), null)
+        }
+    }
 }

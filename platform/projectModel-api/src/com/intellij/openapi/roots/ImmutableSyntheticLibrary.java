@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,17 +37,17 @@ public class ImmutableSyntheticLibrary extends SyntheticLibrary {
   }
 
   @Override
-  public @NotNull Collection<VirtualFile> getSourceRoots() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getSourceRoots() {
     return mySourceRoots;
   }
 
   @Override
-  public @NotNull Collection<VirtualFile> getBinaryRoots() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getBinaryRoots() {
     return myBinaryRoots;
   }
 
   @Override
-  public @NotNull Set<VirtualFile> getExcludedRoots() {
+  public @NotNull @Unmodifiable Set<VirtualFile> getExcludedRoots() {
     return myExcludedRoots;
   }
 

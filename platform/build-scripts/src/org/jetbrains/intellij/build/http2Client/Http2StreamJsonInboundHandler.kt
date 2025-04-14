@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.http2Client
 
 import io.netty.buffer.ByteBufAllocator
@@ -9,6 +9,7 @@ import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpHeaderValues
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http2.DefaultHttp2DataFrame
 import io.netty.handler.codec.http2.Http2DataFrame
 import io.netty.handler.codec.http2.Http2HeadersFrame
 import io.netty.handler.codec.http2.Http2StreamFrame
@@ -90,7 +91,7 @@ private suspend fun <T : Any> Http2ClientConnection.post(path: AsciiString, data
       ),
       endStream = false,
     )
-    stream.writeData(ByteBufUtil.writeUtf8(bufferAllocator, data), endStream = true)
+    stream.writeAndFlush(DefaultHttp2DataFrame(ByteBufUtil.writeUtf8(bufferAllocator, data), true)).joinCancellable()
   }
 }
 

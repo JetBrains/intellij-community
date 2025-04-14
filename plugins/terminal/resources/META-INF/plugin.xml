@@ -144,9 +144,6 @@
       <keyboard-shortcut first-keystroke="meta C" keymap="Mac OS X 10.5+"/>
     </action>
 
-    <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
-      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-    </action>
     <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.block.completion.TerminalInsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
     </action>

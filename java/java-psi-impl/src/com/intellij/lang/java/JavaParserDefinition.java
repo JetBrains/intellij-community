@@ -1,16 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
+import com.intellij.java.syntax.JavaSyntaxDefinition;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.java.lexer.JavaDocLexer;
-import com.intellij.lang.java.lexer.JavaLexer;
-import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.platform.syntax.psi.lexer.LexerAdapter;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypePsiElementMappingRegistry;
@@ -24,26 +23,45 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaElementTypeConverter;
+
 public class JavaParserDefinition implements ParserDefinition {
   public static final IFileElementType JAVA_FILE = new JavaFileElementType();
 
+  /**
+   * @deprecated Use {@link JavaSyntaxDefinition#createLexer(LanguageLevel)} instead.
+   */
+  @Deprecated
   @Override
   public @NotNull Lexer createLexer(@Nullable Project project) {
     LanguageLevel level = project != null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevel.HIGHEST;
     return createLexer(level);
   }
 
+  /**
+   * @deprecated Use {@link JavaSyntaxDefinition#createLexer(LanguageLevel)} instead.
+   */
+  @Deprecated
   public static @NotNull Lexer createLexer(@NotNull LanguageLevel level) {
-    return new JavaLexer(level);
+    return new LexerAdapter(JavaSyntaxDefinition.createLexer(level), getJavaElementTypeConverter());
   }
 
-  /** @return A lexer which handles JEP-467 bracket escapes when parsing Java types */
+  /**
+   * @return A lexer which handles JEP-467 bracket escapes when parsing Java types
+   *
+   * @deprecated Use {@link JavaSyntaxDefinition#createLexerWithMarkdownEscape(LanguageLevel)} instead.
+   */
+  @Deprecated
   public static @NotNull Lexer createLexerWithMarkdownEscape(@NotNull LanguageLevel level) {
-    return new JavaTypeEscapeLexer(new JavaLexer(level));
+    return new LexerAdapter(JavaSyntaxDefinition.createLexerWithMarkdownEscape(level), getJavaElementTypeConverter());
   }
 
+  /**
+   * @deprecated Use {@link JavaSyntaxDefinition#createDocLexer(LanguageLevel)} instead.
+   */
+  @Deprecated
   public static @NotNull Lexer createDocLexer(@NotNull LanguageLevel level) {
-    return new JavaDocLexer(level);
+    return new LexerAdapter(JavaSyntaxDefinition.createDocLexer(level), getJavaElementTypeConverter());
   }
 
   @Override

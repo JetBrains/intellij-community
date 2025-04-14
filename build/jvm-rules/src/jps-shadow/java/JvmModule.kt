@@ -1,6 +1,7 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java
 
-import org.jetbrains.bazel.jvm.emptyList
+import org.jetbrains.bazel.jvm.util.emptyList
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.Usage

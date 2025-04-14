@@ -4,9 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.util.collectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.DomainObjectCollection;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.gradle.api.PolymorphicDomainObjectContainer;
 
 public final class GradleCollectionUtil {
 
@@ -18,11 +16,16 @@ public final class GradleCollectionUtil {
     collection.all(action);
   }
 
-  public static List<String> collectionToString(Iterable<?> collection) {
-    List<String> result = new ArrayList<>();
-    for (Object item : collection) {
-      result.add(String.valueOf(item));
+  public static <T, U extends T> void register(
+    PolymorphicDomainObjectContainer<T> collection,
+    String name,
+    Class<U> type,
+    Action<? super U> action
+  ) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
+      collection.register(name, type, action);
+      return;
     }
-    return result;
+    collection.create(name, type, action);
   }
 }

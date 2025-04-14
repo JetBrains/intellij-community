@@ -58,19 +58,26 @@ public final class ProblemDescriptorUtil {
 
   public static @NotNull String extractHighlightedText(@Nullable TextRange range, @Nullable PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
-    String ref = psiElement.getText();
+    CharSequence fileText = psiElement.getContainingFile().getViewProvider().getDocument().getImmutableCharSequence();
+    TextRange elementRange = psiElement.getTextRange();
+    CharSequence elementSequence;
+    if (elementRange == null) {
+      elementSequence = psiElement.getText();
+    }
+    else {
+      elementSequence = fileText.subSequence(elementRange.getStartOffset(), elementRange.getEndOffset());
+    }
+    CharSequence ref = elementSequence;
     if (range != null) {
-      final TextRange elementRange = psiElement.getTextRange();
       if (elementRange != null) {
         range = range.shiftRight(-elementRange.getStartOffset());
-        if (range.getStartOffset() >= 0 && ref.length() > range.getLength()) {
-          ref = range.substring(ref);
+        if (range.getStartOffset() >= 0 && elementSequence.length() > range.getLength()) {
+          ref = elementSequence.subSequence(range.getStartOffset(), range.getEndOffset());
         }
       }
     }
-    ref = ref.replace('\n', ' ').trim();
-    ref = StringUtil.first(ref, 100, true);
-    return ref.trim().replaceAll("\\s+", " ");
+    String result = StringUtil.first(ref, 100, true).toString();
+    return StringUtil.collapseWhiteSpace(result);
   }
 
   public static @NotNull String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element, boolean appendLineNumber) {

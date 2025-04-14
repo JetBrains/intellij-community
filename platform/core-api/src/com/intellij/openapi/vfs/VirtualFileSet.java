@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import java.util.Set;
  */
 public interface VirtualFileSet extends Set<VirtualFile> {
   @NotNull
+  @Unmodifiable
   Set<VirtualFile> freezed();
 
   void freeze();

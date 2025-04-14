@@ -29,6 +29,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val moreButton = stripeButton("More")
   val debugButton = stripeButton("Debug")
   val findButton = stripeButton("Find")
+  val cmakeButton = stripeButton("CMake")
 
   fun IdeaFrameUI.openMoreToolWindow(name: String) {
     moreButton.click()
@@ -66,6 +67,10 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun toolwindowIsPresented(): Boolean {
+    return button.getToolWindow().isVisible()
+  }
+
   fun close() {
     driver.withContext(OnDispatcher.EDT) {
       button.getToolWindow().hide()
@@ -85,6 +90,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun isVisible(): Boolean
     fun stretchWidth(value: Int)
     fun hide()
+    fun stretchHeight(value: Int)
   }
 
   @Remote("com.intellij.ide.actions.ActivateToolWindowAction\$Manager")

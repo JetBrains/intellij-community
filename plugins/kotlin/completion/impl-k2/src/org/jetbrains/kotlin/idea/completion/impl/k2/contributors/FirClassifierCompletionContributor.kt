@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.shortenCommand
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.name.FqName
@@ -61,44 +61,71 @@ internal open class FirClassifierCompletionContributor(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
     ) {
+        val defaultFactory = (psiFactory::createExpression).asFactory()
         val factory = when (positionContext) {
             is KotlinTypeNameReferencePositionContext -> ({ type: String -> psiFactory.createType(type) }).asFactory()
-            else -> (psiFactory::createExpression).asFactory()
+            else -> defaultFactory
         }
 
-        when (val receiver = positionContext.explicitReceiver) {
+        when (val explicitReceiver = positionContext.explicitReceiver) {
             null -> completeWithoutReceiver(positionContext, factory, weighingContext)
+                .forEach(sink::addElement)
 
             else -> {
-                receiver.reference()?.let {
-                    completeWithReceiver(positionContext, factory, weighingContext, it)
-                } ?: emptySequence()
+                val reference = explicitReceiver.reference()
+                    ?: return
+
+                val symbols = reference.resolveToSymbols()
+                if (symbols.isNotEmpty()) {
+                    symbols.asSequence()
+                        .mapNotNull { it.staticScope }
+                        .flatMap { scopeWithKind ->
+                            scopeWithKind.completeClassifiers(positionContext)
+                                .mapNotNull { classifierSymbol ->
+                                    createClassifierLookupElement(classifierSymbol, factory)?.applyWeighs(
+                                        context = weighingContext,
+                                        symbolWithOrigin = KtSymbolWithOrigin(
+                                            classifierSymbol,
+                                            CompletionSymbolOrigin.Scope(scopeWithKind.kind)
+                                        )
+                                    )
+                                }
+                        }.forEach(sink::addElement)
+                } else {
+                    runChainCompletion(positionContext, explicitReceiver) { receiverExpression,
+                                                                            positionContext,
+                                                                            importingStrategy ->
+                        val selectorExpression = receiverExpression.selectorExpression
+                            ?: return@runChainCompletion emptySequence()
+
+                        val reference = receiverExpression.reference()
+                            ?: return@runChainCompletion emptySequence()
+
+                        // TODO val weighingContext = WeighingContext.create(parameters, positionContext)
+                        reference.resolveToSymbols()
+                            .asSequence()
+                            .mapNotNull { it.staticScope }
+                            .flatMap { it.completeClassifiers(positionContext) }
+                            .mapNotNull { it ->
+                                createClassifierLookupElement(
+                                    classifierSymbol = it,
+                                    factory = defaultFactory,
+                                    importingStrategy = importingStrategy,
+                                )
+                            }.map { it.withPresentableText(selectorExpression.text + "." + it.lookupString) }
+                    }
+                }
             }
-        }.forEach(sink::addElement)
+        }
     }
 
     context(KaSession)
-    private fun completeWithReceiver(
+    private fun KaScopeWithKind.completeClassifiers(
         positionContext: KotlinNameReferencePositionContext,
-        factory: MethodBasedElementFactory<*>,
-        context: WeighingContext,
-        reference: KtReference,
-    ): Sequence<LookupElementBuilder> = reference
-        .resolveToSymbols()
-        .asSequence()
-        .mapNotNull { it.staticScope }
-        .flatMap { scopeWithKind ->
-            scopeWithKind.scope
-                .classifiers(scopeNameFilter)
-                .filter { filterClassifiers(it) }
-                .filter { visibilityChecker.isVisible(it, positionContext) }
-                .mapNotNull { classifierSymbol ->
-                    createClassifierLookupElement(classifierSymbol, factory)?.applyWeighs(
-                        context = context,
-                        symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol, CompletionSymbolOrigin.Scope(scopeWithKind.kind))
-                    )
-                }
-        }
+    ): Sequence<KaClassifierSymbol> = scope
+        .classifiers(scopeNameFilter)
+        .filter { filterClassifiers(it) }
+        .filter { visibilityChecker.isVisible(it, positionContext) }
 
     context(KaSession)
     private fun completeWithoutReceiver(

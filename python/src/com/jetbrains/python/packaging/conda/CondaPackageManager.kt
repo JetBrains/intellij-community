@@ -2,8 +2,6 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -11,13 +9,12 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManagerRunner
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -35,7 +32,8 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> =
     try {
-      runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name))
+      runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name),
+               withBackgroundProgress = false)
       Result.success(Unit)
     }
     catch (ex: ExecutionException) {
@@ -81,7 +79,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
   }
 
 
-  private suspend fun runConda(operation: String, arguments: List<String>, @Nls text: String): String {
+  private suspend fun runConda(operation: String, arguments: List<String>, @Nls text: String, withBackgroundProgress: Boolean = true): String {
     return withContext(Dispatchers.IO) {
       val targetConfig = sdk.targetEnvConfiguration
       val targetReq = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
@@ -98,13 +96,8 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       val process = targetEnv.createProcess(targetedCommandLine)
       val commandLine = targetedCommandLine.collectCommandsSynchronously()
       val commandLineString = StringUtil.join(commandLine, " ")
-      val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
 
-      val result = withBackgroundProgress(project, text, true) {
-        reportRawProgress<ProcessOutput?> {
-          handler.runProcess(10 * 60 * 1000)
-        } as ProcessOutput
-      }
+      val result = PythonPackageManagerRunner.runProcess(this@CondaPackageManager, process, commandLineString, text, withBackgroundProgress)
 
       result.checkSuccess(thisLogger())
       if (result.isTimeout) throw PyExecutionException(message("conda.packaging.exception.timeout"), operation, arguments, result)

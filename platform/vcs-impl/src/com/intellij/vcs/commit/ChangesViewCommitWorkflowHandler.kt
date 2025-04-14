@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -8,9 +8,13 @@ import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
@@ -43,6 +47,7 @@ class ChangesViewCommitWorkflowHandler(
 
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
+  private var knownActiveResolvedConflicts: Set<Any> = emptySet()
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
@@ -100,8 +105,15 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
-    if (!inclusionModel.isInclusionEmpty()) {
+    val resolvedConflictsInclusion = getResolvedConflictsInclusion()
+    if (resolvedConflictsInclusion.isNotEmpty()) {
+      inclusionModel.addInclusion(resolvedConflictsInclusion)
+    }
+    knownActiveResolvedConflicts = resolvedConflictsInclusion
+
+    if (!isInclusionEmpty()) {
       val possibleInclusion = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
+      possibleInclusion.addAll(resolvedConflictsInclusion)
       possibleInclusion.addAll(changeLists.asSequence().flatMap { it.changes })
       possibleInclusion.addAll(unversionedFiles)
 
@@ -115,6 +127,18 @@ class ChangesViewCommitWorkflowHandler(
 
     inclusionModel.changeLists = changeLists
     ui.setCompletionContext(changeLists)
+  }
+
+  private fun getResolvedConflictsInclusion(): Set<Any> {
+    val mergeConflictManager = MergeConflictManager.getInstance(project)
+    val defaultChangeList = ChangeListManager.getInstance(project).defaultChangeList
+
+    val resolvedChanges = defaultChangeList.changes.filter(mergeConflictManager::isResolvedConflict)
+    val changesPaths = resolvedChanges.map { ChangesUtil.getFilePath(it) }.toSet()
+    val resolvedUnchanged = mergeConflictManager.getResolvedConflictPaths().filter { it !in changesPaths }
+    val included = resolvedChanges + resolvedUnchanged
+
+    return included.toSet()
   }
 
   fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
@@ -139,9 +163,16 @@ class ChangesViewCommitWorkflowHandler(
       val newChanges = activeChanges - knownActiveChanges
       inclusionModel.addInclusion(newChanges)
 
-      // include all active changes if nothing is included
-      if (inclusionModel.isInclusionEmpty()) inclusionModel.addInclusion(activeChanges)
+      // include all active changes if nothing is included or the current inclusion included by default resolved conflicts
+      if (isInclusionEmpty()) {
+        inclusionModel.addInclusion(activeChanges)
+      }
     }
+  }
+
+  private fun isInclusionEmpty(): Boolean {
+    return inclusionModel.isInclusionEmpty() || (MergeConflictManager.isForceIncludeResolvedConflicts()
+                                                 && inclusionModel.getInclusion().all { it in knownActiveResolvedConflicts })
   }
 
   private fun setSelection(changeList: LocalChangeList) {
@@ -281,6 +312,7 @@ class ChangesViewCommitWorkflowHandler(
   // save state on project close
   // using this method ensures change list comment and commit options are updated before project state persisting
   override fun projectClosingBeforeSave(project: Project) {
+    commitMessagePolicy.saveStateOnDispose()
     saveStateBeforeDispose()
     disposeCommitOptions()
   }

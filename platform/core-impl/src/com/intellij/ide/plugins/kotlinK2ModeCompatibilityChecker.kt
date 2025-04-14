@@ -57,7 +57,7 @@ internal fun pluginCanWorkInK1Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
 
 
 private fun getSupportKotlinPluginModeEPs(plugin: IdeaPluginDescriptorImpl): List<ExtensionDescriptor> {
-  return plugin.epNameToExtensions[SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME] ?: emptyList()
+  return plugin.extensions[SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME] ?: emptyList()
 }
 
 
@@ -102,8 +102,8 @@ fun isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin: 
 }
 
 private fun nonOptionallyDependsOnKotlinPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
-  return plugin.pluginDependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
-         plugin.dependencies.plugins.any { isKotlinPlugin(it.id) }
+  return plugin.dependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
+         plugin.moduleDependencies.plugins.any { isKotlinPlugin(it.id) }
 }
 
 private const val SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME = "org.jetbrains.kotlin.supportsKotlinPluginMode"

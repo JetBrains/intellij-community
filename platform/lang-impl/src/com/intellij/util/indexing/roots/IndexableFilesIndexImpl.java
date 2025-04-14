@@ -79,10 +79,8 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
       WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
-    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots =
-      builder.getIteratorsFromRoots(libraryOrigins, entityStorage, project);
-    iterators.addAll(iteratorsFromRoots.getContentIterators());
-    iterators.addAll(iteratorsFromRoots.getExternalIterators());
+    List<IndexableFilesIterator> iteratorsFromRoots = builder.getIteratorsFromRoots(entityStorage, project, libraryOrigins);
+    iterators.addAll(iteratorsFromRoots);
 
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
     if (!Registry.is("ide.workspace.model.sdk.remove.custom.processing")) {
@@ -102,18 +100,18 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
         ProgressManager.checkCanceled();
         iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
       }
-    }
 
-    LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-    Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
-    libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
-    for (LibraryTable libraryTable : SequencesKt.asIterable(libs)) {
-      for (Library library : libraryTable.getLibraries()) {
-        ProgressManager.checkCanceled();
-        if (moduleDependencyIndex.hasDependencyOn(library)) {
-          for (IndexableFilesIterator iterator : Companion.createIteratorList(library)) {
-            if (libraryOrigins.add(iterator.getOrigin())) {
-              iterators.add(iterator);
+      LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
+      Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
+      libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
+      for (LibraryTable libraryTable : SequencesKt.asIterable(libs)) {
+        for (Library library : libraryTable.getLibraries()) {
+          ProgressManager.checkCanceled();
+          if (moduleDependencyIndex.hasDependencyOn(library)) {
+            for (IndexableFilesIterator iterator : Companion.createIteratorList(library)) {
+              if (libraryOrigins.add(iterator.getOrigin())) {
+                iterators.add(iterator);
+              }
             }
           }
         }
@@ -127,7 +125,6 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
         addedFromDependenciesIndexedStatusService = true;
         ProgressManager.checkCanceled();
         iterators.addAll(cacheService.saveLibsAndInstantiateLibraryIterators());
-        iterators.addAll(iteratorsFromRoots.getCustomIterators());
         ProgressManager.checkCanceled();
         iterators.addAll(cacheService.saveIndexableSetsAndInstantiateIterators());
         cacheService.saveExcludePolicies();
@@ -140,8 +137,6 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
           iterators.add(new SyntheticLibraryIndexableFilesIteratorImpl(library));
         }
       }
-
-      iterators.addAll(iteratorsFromRoots.getCustomIterators());
 
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         iterators.add(new IndexableSetContributorFilesIterator(contributor, project));

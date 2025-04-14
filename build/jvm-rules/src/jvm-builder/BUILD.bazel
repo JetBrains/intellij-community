@@ -1,0 +1,49 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("//:jvm.bzl", "jvm_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:src/jvm-args.bzl", "get_jvm_flags")
+
+kt_jvm_library(
+    name = "jvm-builder-lib",
+    srcs = glob(["**/*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "//:collection",
+        "//zip",
+        "//:opentelemetry-api",
+        "//src/worker-util",
+        "//src/builder-state",
+        "//src/jps-shadow",
+        "//:jps",
+        "//src/jvm-builder-core",
+        "//src/kotlin/kotlin-builder",
+        "//src/worker-framework",
+        "//:arrow-vector",
+        "//:arrow-memory-netty",
+        "//:arrow-memory-core",
+    ],
+    runtime_deps = [
+        # arrow wants slf4j
+        "//:slf4j-api",
+        # use IJ logger as backend for slf4j
+        "//:log4j-over-slf4j",
+        # ByteBufferBackedInputStream is used by arrow
+        "//:jackson-databind",
+        # jps needs these libs
+        "//:qdox",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+java_binary(
+    name = "jvm-builder",
+    runtime_deps = [":jvm-builder-lib"],
+    main_class = "org.jetbrains.bazel.jvm.worker.JpsBuildWorker",
+    jvm_flags = get_jvm_flags([
+        "-Dkotlin.environment.keepalive=true",
+        "-Djps.use.experimental.storage=true",
+        "-XX:+HeapDumpOnOutOfMemoryError"
+#         "-agentpath:/Users/develar/async-profiler-3.0-cc76f05-macos/lib/libasyncProfiler.dylib=log=/Users/develar/dumps/p.log,quiet",
+    ]),
+    visibility = ["//visibility:public"],
+)

@@ -93,6 +93,7 @@ public final class ServiceDescriptor {
    * Allows restricting to specified OS only.
    */
   @Attribute
+  @ApiStatus.Internal
   public final ExtensionDescriptor.Os os;
 
   /**

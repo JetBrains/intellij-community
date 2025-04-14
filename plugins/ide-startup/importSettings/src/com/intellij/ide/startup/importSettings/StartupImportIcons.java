@@ -15,6 +15,12 @@ public final class StartupImportIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, StartupImportIcons.class.getClassLoader(), cacheKey, flags);
   }
 
+  public static final class Cursor {
+    /** 20x20 */ public static final @NotNull Icon Cursor_20 = load("cursor/Cursor_20.svg", 1936510092, 0);
+    /** 24x24 */ public static final @NotNull Icon Cursor_24 = load("cursor/Cursor_24.svg", -248122723, 0);
+    /** 48x48 */ public static final @NotNull Icon Cursor_48 = load("cursor/Cursor_48.svg", 1829118960, 0);
+  }
+
   public static final class Icons {
     /** 16x32 */ public static final @NotNull Icon Build = load("icons/build.svg", 263576131, 0);
     /** 16x16 */ public static final @NotNull Icon ColorPicker = load("icons/colorPicker.svg", -2131734344, 0);
@@ -110,5 +116,11 @@ public final class StartupImportIcons {
     /** 20x20 */ public static final @NotNull Icon VSCode_20 = load("vscode/VSCode_20.svg", 816236048, 0);
     /** 24x24 */ public static final @NotNull Icon VSCode_24 = load("vscode/VSCode_24.svg", -1984837998, 0);
     /** 48x48 */ public static final @NotNull Icon VSCode_48 = load("vscode/VSCode_48.svg", -291179470, 0);
+  }
+
+  public static final class Windsurf {
+    /** 20x20 */ public static final @NotNull Icon Windsurf_20 = load("windsurf/Windsurf_20.svg", -236661048, 2);
+    /** 24x24 */ public static final @NotNull Icon Windsurf_24 = load("windsurf/Windsurf_24.svg", 505636127, 2);
+    /** 48x48 */ public static final @NotNull Icon Windsurf_48 = load("windsurf/Windsurf_48.svg", -1442794669, 2);
   }
 }

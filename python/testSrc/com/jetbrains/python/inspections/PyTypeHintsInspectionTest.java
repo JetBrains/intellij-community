@@ -2511,6 +2511,79 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testClassIsAlreadyParameterized() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+                   
+                   DefaultStrT = TypeVar("DefaultStrT", default=str)
+                   T = TypeVar("T")
+                   T1 = TypeVar("T1")
+                   
+                   class Base(Generic[T, T1, DefaultStrT]): ...
+                   class Foo(Base[int, float]): ...
+                   foo = Foo[<warning descr="Class 'Foo' is already parameterized">int</warning>]()
+                   
+                   class Bar(Generic[T]): ...
+                   class Baz(Bar[int]): ...
+                   baz = Baz[<warning descr="Class 'Baz' is already parameterized">int</warning>]()
+                   
+                   class NoErr(Bar[int]):
+                        def __class_getitem__(cls, item) -> str:
+                            return "str"
+                   
+                   n = NoErr[int]()
+                   """);
+  }
+
+  //PY-76894
+  public void testRawConcatenateUsage() {
+    doTestByText("""
+                   from typing import ParamSpec, Concatenate, Any, TypeVar, Callable, TypeAlias
+
+                   P = ParamSpec('P')
+                   T = TypeVar('T')
+
+                   # Raw Concatenate in function parameters is not allowed
+                   def func1(x: <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, P]</warning>) -> int:
+                       ...
+                   
+                   var: <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, <warning descr="Unbound type variable">P</warning>]</warning>
+                   
+                   def return_concat() -> <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, P]</warning>:
+                      ...
+
+                   # Concatenate in type alias is allowed
+                   ConcatenateAlias = Concatenate[int, P]
+                   ConcatenateAlias2: TypeAlias = Concatenate[int, P]
+                   type ConcatenateAlias3[**P] = Concatenate[int, P]
+
+                   # Concatenate in Callable is allowed
+                   def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[Any, P], T]:
+                       ...
+                   """);
+  }
+
+  // PY-80248
+  public void testReferenceToTypeStatementIsValidTypeHint() {
+    doTestByText("""
+                type my_type = str
+                
+                def func1(x: my_type) -> str: ...
+                """);
+  }
+
+  // PY-80278
+  public void testReferenceToNamedTupleIsValidTypeHint() {
+    doTestByText("""
+               from collections import namedtuple
+               
+               Instruction = namedtuple("Instruction", ["register", "op", "value", "base", "check", "limit"])
+               
+               def foo() -> Instruction:  # No warning expected
+                   return Instruction(1, 2, 3, 4, 5, 6)
+               """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -11,6 +11,7 @@ import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -145,7 +146,7 @@ public final class JavaErrorKinds {
       }
       else {
         PsiType type = ((PsiExpression)value).getType();
-        text = type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+        text = type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
       }
       return message("annotation.attribute.incompatible.type", context.typeText(), text);
     });
@@ -444,7 +445,7 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.cannot.be.referenced.from.static.context")
       .withDescription((psi, ctx) -> message(
         "class.cannot.be.referenced.from.static.context",
-        formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? PsiKeyword.SUPER : PsiKeyword.THIS)));
+        formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? JavaKeywords.SUPER : JavaKeywords.THIS)));
   public static final Parameterized<PsiClass, InheritTypeClashContext> CLASS_INHERITANCE_DIFFERENT_TYPE_ARGUMENTS =
     parameterized(PsiClass.class, InheritTypeClashContext.class, "class.inheritance.different.type.arguments")
       .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
@@ -1002,7 +1003,7 @@ public final class JavaErrorKinds {
           return switch (specialValue) {
             case UNCONDITIONAL_PATTERN -> message("switch.label.duplicate.unconditional.pattern");
             case DEFAULT_VALUE -> message("switch.label.duplicate.default");
-            case NULL_VALUE -> message("switch.label.duplicate", PsiKeyword.NULL);
+            case NULL_VALUE -> message("switch.label.duplicate", JavaKeywords.NULL);
           };
         }
         else if (value instanceof PsiEnumConstant constant) {

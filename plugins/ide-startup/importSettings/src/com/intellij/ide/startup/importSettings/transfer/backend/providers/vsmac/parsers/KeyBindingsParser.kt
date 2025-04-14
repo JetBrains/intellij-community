@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vsmac.parsers
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.parsers
 
 import com.intellij.ide.startup.importSettings.models.KeyBinding
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.SmartList
 import org.jdom.Element
-import java.io.File
+import java.nio.file.Path
 import javax.swing.KeyStroke
 
 private val logger = logger<KeyBindingsParser>()
@@ -24,7 +24,7 @@ class KeyBindingsParser(private val settings: Settings) {
 
   private val customShortcuts = mutableListOf<KeyBinding>()
 
-  fun process(file: File): Unit = try {
+  fun process(file: Path): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = JDOMUtil.load(file)

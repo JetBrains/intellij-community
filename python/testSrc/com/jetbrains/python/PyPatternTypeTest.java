@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyAssertTypeInspection;
 import com.jetbrains.python.inspections.PyInspection;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 public class PyPatternTypeTest extends PyInspectionTestCase {
@@ -33,6 +34,16 @@ m: object
 match m:
     case 1:
         assert_type(m, Literal[1])
+        """);
+  }
+
+  public void testMatchLiteralPatternNarrowsWalrus() {
+    doTestByText("""
+from typing import assert_type, Literal
+
+match m := input():
+    case "one" | "two":
+        assert_type(m, Literal["one", "two"])
         """);
   }
 
@@ -399,6 +410,22 @@ match m:
                    """);
   }
 
+  // PY-79716
+  public void testMatchClassPatternShadowingCapture() {
+    doTestByText("""
+from typing import assert_type
+
+class C:
+    foo: str
+    bar: int
+
+def f(x):
+    match x:
+        case C(foo=x, bar=y):
+            assert_type(x, str)
+                   """);
+  }
+
   public void testMatchClassPatternCaptureSelf() {
     doTestByText("""
 from typing import assert_type
@@ -462,5 +489,84 @@ match m:
      case tuple():
          assert_type(m, tuple)"""
     );
+  }
+
+  public void testMatchClassPatternCapture() {
+    doTestByText("""
+from typing import assert_type
+
+class A:
+    __match_args__ = ("a", "b")
+    a: str
+    b: int
+
+m: A
+
+match m:
+    case A(i, j):
+        assert_type(i, str)
+        assert_type(j, int)
+                   """);
+  }
+
+  public void testMatchClassPatternCaptureDataclass() {
+    doTestByText("""
+from dataclasses import dataclass
+from typing import assert_type
+
+@dataclass
+class A:
+    a: str
+    b: int
+
+m: A
+
+match m:
+    case A(i, j):
+        assert_type(i, str)
+        assert_type(j, int)
+                   """);
+  }
+
+  public void testMatchClassPatternCaptureDataclassNoMatchArgs() {
+    doTestByText("""
+from dataclasses import dataclass
+from typing import assert_type
+
+@dataclass(match_args=False)
+class A:
+    a: str
+    b: int
+
+m: A
+
+match m:
+    case A(i, j):
+        assert_type(i, Any)
+        assert_type(j, Any)
+                   """);
+  }
+
+  public void testMatchClassPatternCaptureDataclassTransform() {
+    doTestByText("""
+from typing import dataclass_transform, Callable
+
+
+@dataclass_transform()
+def f[T](**kwargs) -> Callable[[type[T]], T]:
+    ...
+
+@f(match_args=True)
+class C:
+    foo: int
+    bar: str
+
+
+x = C(foo=1, bar="s")
+match x:
+    case C(y, z):
+        assert_type(y, int)
+        assert_type(z, str)
+                   """);
   }
 }

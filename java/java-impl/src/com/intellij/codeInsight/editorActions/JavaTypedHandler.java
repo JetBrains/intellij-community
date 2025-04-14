@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
+import com.intellij.codeInsight.completion.command.CommandCompletionFactoryKt;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -234,6 +236,14 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
       while (parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
       if (parent instanceof PsiParameterList list && PsiTreeUtil.isAncestor(list, lastElement, false) ||
           (parent instanceof PsiParameter && !(parent instanceof PsiPatternVariable))) {
+        if (CommandCompletionFactoryKt.commandCompletionEnabled() &&
+            parent instanceof PsiParameter parameter &&
+            lastElement instanceof PsiJavaToken javaToken &&
+            javaToken.textMatches(".") &&
+            prevSibling instanceof PsiIdentifier identifier &&
+            parameter.getIdentifyingElement() == identifier) {
+          return true;
+        }
         return false;
       }
 
@@ -255,11 +265,11 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
 
     int offset = editor.getCaretModel().getOffset();
     if (charTyped == ' ' &&
-        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, PsiKeyword.NEW)) {
+        StringUtil.endsWith(editor.getDocument().getImmutableCharSequence(), 0, offset, JavaKeywords.NEW)) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC, f -> {
-        PsiElement leaf = f.findElementAt(offset - PsiKeyword.NEW.length());
+        PsiElement leaf = f.findElementAt(offset - JavaKeywords.NEW.length());
         return leaf instanceof PsiKeyword &&
-               leaf.textMatches(PsiKeyword.NEW) &&
+               leaf.textMatches(JavaKeywords.NEW) &&
                !PsiJavaPatterns.psiElement().insideStarting(PsiJavaPatterns.psiExpressionStatement()).accepts(leaf);
       });
       return Result.STOP;

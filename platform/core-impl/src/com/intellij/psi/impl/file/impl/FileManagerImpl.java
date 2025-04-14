@@ -307,7 +307,7 @@ public final class FileManagerImpl implements FileManager {
 
   @Override
   public void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider) {
-    // todo ijpl-339 investigate if we need a context here
+    // todo IJPL-339 investigate if we need a context here
     if (viewProvider == null) {
       // Let's drop all providers.
       // Please add a new method if you need to drop only a single provider. But this seems to be a suspicious idea,
@@ -753,7 +753,7 @@ public final class FileManagerImpl implements FileManager {
   @RequiresReadLock
   private boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
     VirtualFile file = viewProvider.getVirtualFile();
-    // todo ijpl-339 maybe rework evaluate validity
+    // todo IJPL-339 maybe rework evaluate validity
     //      so that all view providers are invalidated together?
     CodeInsightContext context = getRawContext(viewProvider);
     if (getRawCachedViewProvider(file, context) != viewProvider) {

@@ -94,8 +94,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   // true if canceled successfully
   private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("doCancel(" + this +
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("doCancel(" + this +
                 (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
                 (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
     }
@@ -166,7 +166,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public String toString() {
-    return System.identityHashCode(this) + (debug.get()>0 ? "; " + myTraceableDisposable.getStackTrace() + "\n;" : "") + (isCanceled() ? "X" : "V");
+    return System.identityHashCode(this) + (isCanceled() ? (isRunning() ? "X" : "S") : "V");
   }
 
   @Override

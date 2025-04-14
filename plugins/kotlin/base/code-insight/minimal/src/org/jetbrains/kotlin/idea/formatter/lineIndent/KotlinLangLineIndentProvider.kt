@@ -312,7 +312,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             }
 
             val hasCommaAfterClosingBrace = after.afterIgnoringWhiteSpaceOrComment().isAt(Comma)
-            if (hasCommaAfterClosingBrace) {
+            if (after.isAt(rightBraceType) && hasCommaAfterClosingBrace) {
                 val isEmptyBlock = before.isAt(BlockOpeningBrace) && after.isAt(BlockClosingBrace)
                 if (!isEmptyBlock) {
                     return createIndentCalculator(createAlignMultilineIndent(leftBrace), leftBrace.startOffset)

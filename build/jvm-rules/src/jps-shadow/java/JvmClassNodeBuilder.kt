@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "SSBasedInspection", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.jps.dependency.java
@@ -7,8 +8,8 @@ import androidx.collection.MutableScatterSet
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.diagnostic.logger
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.emptySet
+import org.jetbrains.bazel.jvm.util.emptyList
+import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.jps.dependency.NodeBuilder
 import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.java.nodeBuilder.AnnotationCrawler

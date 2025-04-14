@@ -28,13 +28,15 @@ import static com.intellij.codeInsight.intention.CustomizableIntentionAction.Ran
  * in {@link QuickFix#applyFix(Project, CommonProblemDescriptor)}
  * to retrieve the PSI context the fix will work on.
  * See also {@link LocalQuickFixOnPsiElement} which uses {@link com.intellij.psi.SmartPsiElementPointer} instead of storing PSI elements.
- * <p/>
+ * <p>
  * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
  * change icon in quick fix popup menu.
- * <p/>
+ * <p>
  * Implement {@link com.intellij.codeInsight.intention.HighPriorityAction HighPriorityAction} or
  * {@link com.intellij.codeInsight.intention.LowPriorityAction LowPriorityAction} to change ordering.
- *
+ * <p>
+ * To learn how to implement preview correctly, read <a href="https://plugins.jetbrains.com/docs/intellij/code-intentions-preview.html">Intention Action Preview (IntelliJ Platform Docs)</a>.
+ * 
  * @author max
  * @see ProblemDescriptor
  * @see com.intellij.openapi.util.Iconable
@@ -71,6 +73,8 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @param project current project
    * @param previewDescriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
    * @return an object that describes the action preview to display
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-intentions-preview.html">Intention Action Preview (IntelliJ Platform Docs)</a>
+   * @see <a href="https://www.jetbrains.com/help/inspectopedia/ActionIsNotPreviewFriendly.html">Field blocks intention preview (Inspectopedia)</a>
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     if (!startInWriteAction()) return IntentionPreviewInfo.EMPTY;

@@ -11,16 +11,20 @@ f:org.jetbrains.jewel.samples.showcase.components.ChipsAndTreeKt
 - sf:ChipsSample(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 - sf:SelectableLazyColumnSample(androidx.compose.runtime.Composer,I):V
 - sf:TreeSample(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.samples.showcase.components.ComboBoxesKt
+- sf:ComboBoxes(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BannersKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BannersKt
 - <init>():V
-- f:getLambda$-111402978$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
-- f:getLambda$-1119478921$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
-- f:getLambda$-1712340672$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
-- f:getLambda$-704264729$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
-- f:getLambda$1272458185$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
+- f:getLambda$-1578753761$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
+- f:getLambda$-2015827864$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
+- f:getLambda$-336793573$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
+- f:getLambda$-570238283$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda$-570677818$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
+- f:getLambda$-985892010$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 - f:getLambda$1289745735$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
-- f:getLambda$1581258860$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
+- f:getLambda$1505420299$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
+- f:getLambda$22183933$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BordersKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BordersKt
 - <init>():V
@@ -60,19 +64,12 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ChipsAndT
 - f:getLambda$2078915271$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$367636904$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$461327139$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$DropdownsKt
-- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$DropdownsKt
+f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ComboBoxesKt
+- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ComboBoxesKt
 - <init>():V
-- f:getLambda$-1067894694$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
-- f:getLambda$-1405365094$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda$-1451072959$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
-- f:getLambda$-2025542909$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda$-2087773330$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
-- f:getLambda$-210504435$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
-- f:getLambda$-994754728$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda$1081116035$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda$1491726401$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda$1825103392$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
+- f:getLambda$-1611273135$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda$-2049027872$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
+- f:getLambda$1819384926$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ScrollbarsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ScrollbarsKt
 - <init>():V
@@ -116,8 +113,6 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsK
 - f:getLambda$-1070103804$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$-186585630$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$-408485079$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-f:org.jetbrains.jewel.samples.showcase.components.DropdownsKt
-- sf:Dropdowns(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.components.IconsKt
 - sf:Icons(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.components.LinksKt
@@ -163,6 +158,10 @@ f:org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons$Components
 - f:getToolbar():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getTooltip():org.jetbrains.jewel.ui.icon.PathIconKey
 - f:getTree():org.jetbrains.jewel.ui.icon.PathIconKey
+f:org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons$ProgrammingLanguages
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons$ProgrammingLanguages
+- f:getKotlin():org.jetbrains.jewel.ui.icon.PathIconKey
 f:org.jetbrains.jewel.samples.showcase.components.SliderKt
 - sf:Sliders(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.components.SplitLayoutsKt

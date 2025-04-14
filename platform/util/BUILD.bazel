@@ -36,21 +36,21 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:caffeine",
     "//platform/util/coroutines",
-    "//platform/util/kmp",
+    "//platform/util/multiplatform",
     ":troveCompileOnly_provided",
   ],
   exports = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//platform/util/base",
-    "//platform/util/kmp",
+    "//platform/util/multiplatform",
   ],
   runtime_deps = [
     ":util_resources",
     "@lib//:commons-io",
     "@lib//:commons-codec",
+    "@lib//:commons-lang3",
   ]
 )
 ### auto-generated section `build intellij.platform.util` end
@@ -142,6 +142,7 @@ kt_javac_options(
   add_exports = [
     "java.desktop/sun.font=ALL-UNNAMED",
     "java.desktop/sun.awt.image=ALL-UNNAMED",
+    "java.desktop/sun.swing=ALL-UNNAMED",
   ]
 )
 

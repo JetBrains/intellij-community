@@ -1,21 +1,15 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.jps.dependency.storage
 
-import org.h2.mvstore.DataUtils
 import org.h2.mvstore.WriteBuffer
-import org.jetbrains.jps.dependency.ExternalizableGraphElement
-import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
-import org.jetbrains.jps.dependency.impl.doReadGraphElement
-import org.jetbrains.jps.dependency.impl.doReadGraphElementCollection
-import java.nio.ByteBuffer
 
 internal class WriteBufGraphDataOutput(
   private val buffer: WriteBuffer,
-  private val stringEnumerator: StringEnumerator,
 ) : GraphDataOutput {
-  override fun <T : ExternalizableGraphElement> writeGraphElement(element: T) {
-    doWriteGraphElement(this, element)
-  }
+  private val stringMap = createStringMap()
 
   override fun writeRawLong(v: Long) {
     buffer.putLong(v)
@@ -46,11 +40,11 @@ internal class WriteBufGraphDataOutput(
   }
 
   override fun writeInt(v: Int) {
-    buffer.putVarInt(v)
+    buffer.putInt(v)
   }
 
   override fun writeLong(v: Long) {
-    buffer.putVarLong(v)
+    buffer.putLong(v)
   }
 
   override fun writeFloat(v: Float) {
@@ -61,66 +55,44 @@ internal class WriteBufGraphDataOutput(
     buffer.putDouble(v)
   }
 
+  @Suppress("DuplicatedCode")
   override fun writeUTF(s: String) {
-    buffer.putVarInt(stringEnumerator.enumerate(s))
+    val index = stringMap.getOrDefault(s, -1)
+    if (index >= 0) {
+      writeUInt29(buffer, index shl 1)
+    }
+    else {
+      val bytes = s.toByteArray()
+      writeUInt29(buffer, (bytes.size shl 1) or 1)
+      buffer.put(bytes)
+      stringMap.set(s, stringMap.size)
+    }
   }
 }
 
-internal class WriteBufGraphDataInput(
-  private val buffer: ByteBuffer,
-  private val stringEnumerator: StringEnumerator,
-  private val elementInterner: ((ExternalizableGraphElement) -> ExternalizableGraphElement)?,
-) : GraphDataInput {
-  override fun <T : ExternalizableGraphElement> readGraphElement(): T {
-    return doReadGraphElement(this) {
-      @Suppress("UNCHECKED_CAST")
-      if (elementInterner == null) it else elementInterner(it) as T
+@Suppress("DuplicatedCode")
+private fun writeUInt29(buffer: WriteBuffer, value: Int) {
+  when {
+    value < 0x80 -> {
+      buffer.put(value.toByte())
     }
-  }
 
-  override fun <T : ExternalizableGraphElement, C : MutableCollection<in T>> readGraphElementCollection(result: C): C {
-    return doReadGraphElementCollection(this, result) {
-      @Suppress("UNCHECKED_CAST")
-      if (elementInterner == null) it else elementInterner(it) as T
+    value < 0x4000 -> {
+      buffer.put(((value shr 7) or 0x80).toByte())
+      buffer.put((value and 0x7F).toByte())
     }
-  }
 
-  override fun readRawLong(): Long = buffer.getLong()
+    value < 0x200000 -> {
+      buffer.put(((value shr 14) or 0x80).toByte())
+      buffer.put(((value shr 7) or 0x80).toByte())
+      buffer.put((value and 0x7F).toByte())
+    }
 
-  override fun readFully(b: ByteArray) {
-    buffer.get(b)
-  }
-
-  override fun readFully(b: ByteArray, off: Int, len: Int) {
-    buffer.get(b, off, len)
-  }
-
-  override fun skipBytes(n: Int): Int {
-    buffer.position(buffer.position() + n)
-    return n
-  }
-
-  override fun readBoolean(): Boolean = buffer.get() == 1.toByte()
-
-  override fun readByte(): Byte = buffer.get()
-
-  override fun readUnsignedByte(): Int = buffer.get().toInt() and 0xFF
-
-  override fun readShort(): Short = buffer.getShort()
-
-  override fun readUnsignedShort(): Int = buffer.getShort().toInt() and 0xFFFF
-
-  override fun readChar(): Char = buffer.getChar()
-
-  override fun readInt(): Int = DataUtils.readVarInt(buffer)
-
-  override fun readLong(): Long = DataUtils.readVarLong(buffer)
-
-  override fun readFloat(): Float = buffer.getFloat()
-
-  override fun readDouble(): Double = buffer.getDouble()
-
-  override fun readUTF(): String {
-    return stringEnumerator.valueOf(DataUtils.readVarInt(buffer))
+    else -> {
+      buffer.put(((value shr 22) or 0x80).toByte())
+      buffer.put(((value shr 15) or 0x80).toByte())
+      buffer.put(((value shr 8) or 0x80).toByte())
+      buffer.put((value and 0xFF).toByte())
+    }
   }
 }

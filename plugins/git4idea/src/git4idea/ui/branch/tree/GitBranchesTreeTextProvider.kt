@@ -19,7 +19,6 @@ internal  object GitBranchesTreeTextProvider {
         else -> value.getText()
       }
       is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
-      is GitRepository -> DvcsUtil.getShortRepositoryName(value)
       is GitBranchesTreeModel.RefTypeUnderRepository -> value.type.getText()
       is RefUnderRepository -> getText(value.ref, selectedRepo, isMultirepo, isPrefixGrouping)
       is GitReference -> if (isPrefixGrouping) value.name.split('/').last() else value.name

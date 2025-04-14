@@ -4,13 +4,15 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -48,20 +50,35 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
 
   override fun createCenterPanel(): JComponent {
     val errorSink = ShowingMessageErrorSync
-    return panel {
-      model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
-        // At this moment dialog is not displayed, so there is no modality state
-        // The whole idea of context passing is doubtful
-                                                                      Dispatchers.EDT + ModalityState.any().asContextElement(), ProjectPathFlows.create(basePath)))
-      model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
-      mainPanel = PythonAddCustomInterpreter(model, moduleOrProject = dialogPresenter.moduleOrProject, errorSink = errorSink)
-      mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
-
-    }.apply {
-      model.scope.launch(model.uiContext) {
-        model.initialize()
-        mainPanel.onShown()
+    lateinit var centerPanelPlaceHolder: Placeholder
+    val rootPanel = panel {
+      row {
+        centerPanelPlaceHolder = placeholder().align(Align.FILL)
       }
     }
+
+    rootPanel.launchOnShow("PythonAddLocalInterpreterDialog launchOnShow") {
+      centerPanelPlaceHolder.component = panel {
+        model = PythonLocalAddInterpreterModel(
+          PyInterpreterModelParams(
+            this@launchOnShow,
+            // At this moment dialog is not displayed, so there is no modality state
+            // The whole idea of context passing is doubtful
+            Dispatchers.EDT + ModalityState.any().asContextElement(),
+            ProjectPathFlows.create(basePath)
+          )
+        )
+        model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
+        mainPanel = PythonAddCustomInterpreter(model, moduleOrProject = dialogPresenter.moduleOrProject, errorSink = errorSink)
+        mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
+      }.apply {
+        model.scope.launch(model.uiContext) {
+          model.initialize(dialogPresenter.moduleOrProject.project,)
+          mainPanel.onShown()
+        }
+      }
+    }
+
+    return rootPanel
   }
 }

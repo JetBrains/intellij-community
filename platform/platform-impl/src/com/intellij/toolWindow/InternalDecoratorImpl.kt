@@ -5,9 +5,9 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Queryable
@@ -577,12 +577,13 @@ class InternalDecoratorImpl internal constructor(
       width: Int,
       height: Int,
       ) {
-      g.color = JBColor.border()
       if (insets.top > 0) {
+        g.color = JBUI.CurrentTheme.MainToolbar.borderColor()
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
                             (y + insets.top - 1).toDouble())
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
       }
+      g.color = JBColor.border()
       if (paintLeftExternalBorder) {
         LinePainter2D.paint(g, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
         LinePainter2D.paint(g, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())

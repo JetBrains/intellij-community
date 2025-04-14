@@ -2,19 +2,19 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
-  protected abstract val serviceContainer: ComponentManagerImpl
+  protected abstract val serviceContainer: ComponentManagerEx
 
   private val asyncSettingsSavingComponents = SynchronizedClearableLazy {
     val result = mutableListOf<SettingsSavingComponent>()

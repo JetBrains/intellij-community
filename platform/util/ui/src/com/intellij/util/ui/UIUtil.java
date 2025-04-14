@@ -28,16 +28,18 @@ import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 import sun.font.FontUtilities;
+import sun.swing.SwingUtilities2;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.FocusManager;
 import javax.swing.*;
+import javax.swing.FocusManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
@@ -63,13 +65,12 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
@@ -413,6 +414,20 @@ public final class UIUtil {
     FontRenderContext frc = g.getFontRenderContext();
     Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  public static int computeStringWidth(@NotNull JComponent c, @Nullable String string) {
+    Font font = c.getFont();
+    if (font == null) font = getLabelFont();
+    return computeStringWidth(c, c.getFontMetrics(font), string);
+  }
+
+  /**
+   * Helper method that hides dependency on Swing.
+   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations..
+   */
+  public static int computeStringWidth(@NotNull JComponent c, @NotNull FontMetrics fontMetrics, @Nullable String string) {
+    return SwingUtilities2.stringWidth(c, fontMetrics, string);
   }
 
   public static void drawLabelDottedRectangle(final @NotNull JLabel label, final @NotNull Graphics g) {

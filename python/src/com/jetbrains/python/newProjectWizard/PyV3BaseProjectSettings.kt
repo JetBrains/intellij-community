@@ -14,6 +14,7 @@ import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.sdk.configurePythonSdk
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -25,7 +26,7 @@ import kotlinx.coroutines.launch
 class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   lateinit var sdkCreator: PySdkCreator
 
-  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> = coroutineScope {
+  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
       launch(CoroutineName("Generating git") + Dispatchers.IO) {
@@ -34,9 +35,13 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
         }
       }
     }
-    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@coroutineScope it }
-    sdk.setAssociationToModule(module)
-    module.pythonSdk = sdk
+    if (supportsNotEmptyModuleStructure) {
+      sdkCreator.createPythonModuleStructure(module).getOr { return@coroutineScope it }
+    }
+    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module)
+      .getOr { return@coroutineScope it }
+
+    configurePythonSdk(project, module, sdk)
     return@coroutineScope com.jetbrains.python.Result.success(Pair(sdk, interpreterStatistics))
   }
 

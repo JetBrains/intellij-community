@@ -128,6 +128,14 @@ public final class ObjectNode {
     }
   }
 
+  @TestOnly
+  void assertNoReferencesKept(@NotNull Class<Disposable> disposableClass) {
+    assert getObject().getClass() != disposableClass;
+    for (ObjectNode node : myChildren.getAllNodes()) {
+      node.assertNoReferencesKept(disposableClass);
+    }
+  }
+
   ObjectNode findChildNode(@NotNull Disposable object) {
     return myChildren.findChildNode(object);
   }
@@ -266,7 +274,7 @@ public final class ObjectNode {
     void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer);
 
     @NotNull
-    Collection<ObjectNode> getAllNodes();
+    @Unmodifiable Collection<ObjectNode> getAllNodes();
   }
 
   private static final NodeChildren EMPTY = new NodeChildren() {

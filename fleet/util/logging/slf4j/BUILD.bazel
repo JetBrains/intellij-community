@@ -1,0 +1,23 @@
+### auto-generated section `build fleet.util.logging.slf4j` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "fleet-util-logging-slf4j_resources",
+  files = glob(["resourcesJvmMain/**/*"]),
+  strip_prefix = "resourcesJvmMain"
+)
+
+jvm_library(
+  name = "fleet-util-logging-slf4j",
+  module_name = "fleet.util.logging.slf4j",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:slf4j-api",
+    "//fleet/util/logging/api:fleet-util-logging-api",
+  ],
+  exports = ["@lib//:slf4j-api"],
+  runtime_deps = [":fleet-util-logging-slf4j_resources"]
+)
+### auto-generated section `build fleet.util.logging.slf4j` end

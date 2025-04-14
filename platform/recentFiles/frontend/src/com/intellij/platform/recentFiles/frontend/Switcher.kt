@@ -39,11 +39,12 @@ import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_INDEX
 import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_ORIGINAL_INDEXES
 import com.intellij.platform.recentFiles.frontend.SwitcherLogger.SHOWN_TIME_ACTIVITY
 import com.intellij.platform.recentFiles.frontend.SwitcherSpeedSearch.Companion.installOn
-import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModel
-import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModelState
-import com.intellij.platform.recentFiles.frontend.model.PreservingSelectionModel
+import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
+import com.intellij.platform.recentFiles.frontend.model.RecentFilesCoroutineScopeProvider
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
+import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -76,6 +77,7 @@ import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val ACTION_PLACE = "Switcher"
@@ -90,9 +92,7 @@ object Switcher : BaseSwitcherAction(null) {
     val title: @Nls String,
     launchParameters: SwitcherLaunchEventParameters,
     onlyEditedFiles: Boolean?,
-    givenFilesModel: FlowBackedListModel<SwitcherVirtualFile>,
-    private val uiUpdateScope: CoroutineScope,
-    private val modelUpdateScope: CoroutineScope,
+    private val frontendModel: FrontendRecentFilesModel,
     private val remoteApi: FileSwitcherApi,
   ) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
     val popup: JBPopup?
@@ -100,6 +100,7 @@ object Switcher : BaseSwitcherAction(null) {
     private var navigationData: SwitcherLogger.NavigationData? = null
     internal val toolWindows: JBList<SwitcherListItem>
     internal val files: JBList<SwitcherVirtualFile>
+    private val listModel: CollectionListModel<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
     private val pathLabel: JLabel = HintUtil.createAdComponent(
       " ",
@@ -122,20 +123,27 @@ object Switcher : BaseSwitcherAction(null) {
     private val speedSearch: SwitcherSpeedSearch?
     private var hint: JBPopup? = null
 
+    private val uiUpdateScope: CoroutineScope
+    private val modelUpdateScope: CoroutineScope
+
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.PROJECT] = project
       sink[PlatformCoreDataKeys.SELECTED_ITEM] =
-        if (files.isSelectionEmpty) null else (files.selectedValuesList.singleOrNull() as? SwitcherVirtualFile)?.virtualFileId?.virtualFile()
+        if (files.isSelectionEmpty) null else (files.selectedValuesList.singleOrNull() as? SwitcherVirtualFile)?.virtualFile
       sink[PlatformDataKeys.SPEED_SEARCH_TEXT] =
         if (speedSearch?.isPopupActive == true) speedSearch.enteredPrefix else null
       sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] =
         files.selectedValuesList.filterIsInstance<SwitcherVirtualFile>()
-          .mapNotNull { it.virtualFileId.virtualFile() }
+          .mapNotNull { it.virtualFile }
           .takeIf { it.isNotEmpty() }
           ?.toTypedArray()
     }
 
     init {
+      val serviceScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope
+      uiUpdateScope = serviceScope.childScope("Switcher UI updates")
+      modelUpdateScope = serviceScope.childScope("Switcher backend requests")
+
       onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else launchParameters) { e ->
         ActionUtil.performInputEventHandlerWithCallbacks(ActionUiKind.POPUP, ACTION_PLACE, e) {
           navigate(e)
@@ -252,73 +260,61 @@ object Switcher : BaseSwitcherAction(null) {
       clickListener.installOn(toolWindows)
 
       // setup files
-      Disposer.register(this, givenFilesModel)
-      val maybeSearchableModel = speedSearch?.wrap(givenFilesModel) ?: givenFilesModel
-      val preservingSelectionModel = PreservingSelectionModel(maybeSearchableModel)
-      if (Registry.`is`("switcher.preserve.selection.on.model.update")) {
-        maybeSearchableModel.addListDataListener(object : ListDataListener {
-          override fun intervalAdded(e: ListDataEvent?) {
-            if (e == null) return
-            cancelScheduledUiUpdate()
-            LOG.debug("Switcher add interval: $e")
-            // select the first item, if it's the only one
-            if (preservingSelectionModel.isSelectionEmpty && maybeSearchableModel.size == 1) {
-              LOG.debug("Switcher add first item: $e")
-              files.requestFocusInWindow()
-              preservingSelectionModel.setSelectionInterval(0, 0)
-              return
-            }
-
-            // otherwise, select the first file not opened in the focused editor after it is received
-            if (preservingSelectionModel.selectedIndices.isEmpty() && maybeSearchableModel.size > 1) {
-              LOG.debug("Switcher add non-first item: $e")
-              val firstModelEntry = maybeSearchableModel.getElementAt(0)
-              if (firstModelEntry.virtualFileId.virtualFile() == FileEditorManager.getInstance(project).selectedEditor?.file) {
-                LOG.debug("Switcher added item == editor, selecting 2nd item: $e")
-                preservingSelectionModel.setSelectionInterval(1, 1)
-              }
-              else {
-                LOG.debug("Switcher added item != editor, selecting 1st item: $e")
-                preservingSelectionModel.setSelectionInterval(0, 0)
-              }
-            }
-          }
-
-          override fun intervalRemoved(e: ListDataEvent?) {
-            if (maybeSearchableModel.size == 0) {
-              LOG.debug("Switcher removed item, empty model: $e")
-              scheduleUiUpdate {
-                toolWindows.requestFocusInWindow()
-                ScrollingUtil.ensureSelectionExists(toolWindows)
-              }
-            }
-          }
-
-          override fun contentsChanged(e: ListDataEvent?) {}
-        })
+      val initialData = when {
+        !pinned -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_OPENED_UNPINNED)
+        onlyEdited -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_EDITED)
+        else -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_OPENED)
       }
+      listModel = CollectionListModel(initialData)
+      val maybeSearchableModel = speedSearch?.wrap(listModel) ?: listModel
+      maybeSearchableModel.addListDataListener(object : ListDataListener {
+        override fun intervalAdded(e: ListDataEvent?) {
+          if (e == null) return
+          cancelScheduledUiUpdate()
+          LOG.debug("Switcher add interval: $e")
+          // select the first item, if it's the only one
+          if (files.selectionModel.isSelectionEmpty && maybeSearchableModel.size == 1) {
+            LOG.debug("Switcher add first item: $e")
+            files.requestFocusInWindow()
+            files.selectionModel.setSelectionInterval(0, 0)
+            return
+          }
+
+          // otherwise, select the first file not opened in the focused editor after it is received
+          if (files.selectionModel.selectedIndices.isEmpty() && maybeSearchableModel.size > 1) {
+            LOG.debug("Switcher add non-first item: $e")
+            val firstModelEntry = maybeSearchableModel.getElementAt(0)
+            if (firstModelEntry.virtualFile == FileEditorManager.getInstance(project).selectedEditor?.file) {
+              LOG.debug("Switcher added item == editor, selecting 2nd item: $e")
+              files.selectionModel.setSelectionInterval(1, 1)
+            }
+            else {
+              LOG.debug("Switcher added item != editor, selecting 1st item: $e")
+              files.selectionModel.setSelectionInterval(0, 0)
+            }
+          }
+          updatePathLabel()
+        }
+
+        override fun intervalRemoved(e: ListDataEvent?) {
+          if (maybeSearchableModel.size == 0) {
+            LOG.debug("Switcher removed item, empty model: $e")
+            scheduleUiUpdate {
+              toolWindows.requestFocusInWindow()
+              ScrollingUtil.ensureSelectionExists(toolWindows)
+            }
+          }
+          else if (e != null) {
+            val lastSelectedIndex = min(e.index0, e.index1)
+            val newSelectedIndex = lastSelectedIndex.coerceIn(0, maybeSearchableModel.size - 1)
+            files.selectionModel.setSelectionInterval(newSelectedIndex, newSelectedIndex)
+          }
+        }
+
+        override fun contentsChanged(e: ListDataEvent?) {}
+      })
 
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter<SwitcherVirtualFile>(maybeSearchableModel, null)
-        .apply { selectionModel = preservingSelectionModel }
-
-      modelUpdateScope.launch(start = CoroutineStart.UNDISPATCHED) {
-        givenFilesModel.state.collect {
-          when (it) {
-            FlowBackedListModelState.CREATED, FlowBackedListModelState.LOADING -> scheduleUiUpdate { setFilesListBusy(true) }
-            else -> scheduleUiUpdate { setFilesListBusy(false) }
-          }
-        }
-      }
-      if (files.model.size > 0) {
-        val fileFromSelectedEditor = FileEditorManager.getInstance(project).selectedEditor?.file
-        val firstFileInList = files.model.getElementAt(0).virtualFileId.virtualFile()
-        if (firstFileInList != null && firstFileInList == fileFromSelectedEditor) {
-          files.setSelectedIndex(1)
-        }
-        else {
-          files.setSelectedIndex(0)
-        }
-      }
 
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
@@ -334,12 +330,24 @@ object Switcher : BaseSwitcherAction(null) {
           popupUpdater?.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
         }
       }
+      toolWindows.selectionModel.addListSelectionListener(filesSelectionListener)
+      files.selectionModel.addListSelectionListener(filesSelectionListener)
+
+      if (files.model.size > 0) {
+        val fileFromSelectedEditor = FileEditorManager.getInstance(project).selectedEditor?.file
+        val firstFileInList = files.model.getElementAt(0).virtualFile
+        if (firstFileInList != null && firstFileInList == fileFromSelectedEditor) {
+          files.setSelectedIndex(1)
+        }
+        else {
+          files.setSelectedIndex(0)
+        }
+      }
+
 
       files.selectionMode = if (pinned) ListSelectionModel.MULTIPLE_INTERVAL_SELECTION else ListSelectionModel.SINGLE_SELECTION
       files.accessibleContext.accessibleName = IdeBundle.message("recent.files.accessible.file.list")
       files.setEmptyText(IdeBundle.message("recent.files.file.list.empty.text"))
-      toolWindows.selectionModel.addListSelectionListener(filesSelectionListener)
-      files.selectionModel.addListSelectionListener(filesSelectionListener)
       files.setCellRenderer(renderer)
       files.border = JBUI.Borders.empty(5, 0)
       files.addKeyListener(onKeyRelease)
@@ -434,15 +442,6 @@ object Switcher : BaseSwitcherAction(null) {
       pathLabel.text = if (statusText.isNullOrEmpty()) " " else statusText
     }
 
-    private fun setFilesListBusy(isBusy: Boolean) {
-      if (isBusy) {
-        files.emptyText.text = IdeBundle.message("recent.files.file.list.loading.empty.text")
-      } else {
-        files.emptyText.text = IdeBundle.message("recent.files.file.list.empty.text")
-      }
-      files.setPaintBusy(isBusy)
-    }
-
     private fun closeTabOrToolWindow() {
       if (speedSearch != null && speedSearch.isPopupActive) {
         speedSearch.updateEnteredPrefix()
@@ -460,6 +459,7 @@ object Switcher : BaseSwitcherAction(null) {
 
         when (item) {
           is SwitcherVirtualFile -> {
+            listModel.remove(item)
             closeEditorForFile(item, project)
             filesToHide.add(item)
           }
@@ -470,8 +470,10 @@ object Switcher : BaseSwitcherAction(null) {
         }
       }
 
-      if (filesToHide.isNotEmpty()) {
-        scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.HideFiles(filesToHide.map { it.rpcModel }, project.projectId()))
+      val currentlyShownFileType = if (cbShowOnlyEditedFiles?.isSelected == true) RecentFileKind.RECENTLY_EDITED else RecentFileKind.RECENTLY_OPENED
+      // emulate previous implementation behaviour where removing an item from the recently CHANGED files list was erased on its reopen
+      if (filesToHide.isNotEmpty() && currentlyShownFileType == RecentFileKind.RECENTLY_OPENED) {
+        frontendModel.applyFrontendChanges(currentlyShownFileType, filesToHide.mapNotNull { it.virtualFile }, false)
       }
     }
 
@@ -534,7 +536,15 @@ object Switcher : BaseSwitcherAction(null) {
 
     private fun updateFilesByCheckBox(event: ItemEvent) {
       val onlyEdited = ItemEvent.SELECTED == event.stateChange
-      scheduleBackendRecentFilesUpdate(createFilesSearchRequestRequest(onlyEdited, pinned, project))
+
+      if (onlyEdited) {
+        listModel.replaceAll(frontendModel.getRecentFiles(RecentFileKind.RECENTLY_EDITED))
+      }
+      else {
+        listModel.replaceAll(frontendModel.getRecentFiles(RecentFileKind.RECENTLY_OPENED))
+      }
+      toolWindows.revalidate()
+      toolWindows.repaint()
     }
 
     fun navigate(e: InputEvent?) {

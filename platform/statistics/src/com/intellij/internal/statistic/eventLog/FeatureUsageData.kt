@@ -66,7 +66,7 @@ class FeatureUsageData(val recorderId: String) {
     // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
                                                 "file_path", "anonymous_id", "client_id", "system_qdcld_project_id", "system_qdcld_org_id",
-                                                "auto_license_type")
+                                                "auto_license_type", "automated_plugin_version")
 
     private val QODANA_EVENTS_DATA: QodanaEventsData = calcQodanaEventsData()
   }
@@ -118,6 +118,17 @@ class FeatureUsageData(val recorderId: String) {
   fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
     info?.let {
       StatisticsUtil.addPluginInfoTo(info, data)
+    }
+    return this
+  }
+
+  fun addAutomatedPluginVersion(info: PluginInfo?): FeatureUsageData {
+    info?.let {
+      if (!info.type.isSafeToReport()) return@let
+      val version = info.version
+      if (!version.isNullOrEmpty()) {
+        data["automated_plugin_version"] = version
+      }
     }
     return this
   }

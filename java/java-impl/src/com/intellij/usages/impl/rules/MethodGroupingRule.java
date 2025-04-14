@@ -4,8 +4,8 @@ package com.intellij.usages.impl.rules;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -63,7 +63,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     return null;
   }
 
-  private static class MethodUsageGroup implements UsageGroup, DataProvider {
+  private static class MethodUsageGroup implements UsageGroup, UiDataProvider {
     private final SmartPsiElementPointer<PsiMethod> myMethodPointer;
     private final @NlsSafe String myName;
     private final Icon myIcon;
@@ -169,22 +169,14 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)this::getSlowData;
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return getMethod();
-      }
-      else if (UsageView.USAGE_INFO_KEY.is(dataId)) {
+      });
+      sink.lazy(UsageView.USAGE_INFO_KEY, () -> {
         PsiMethod method = getMethod();
         return method == null ? null : new UsageInfo(method);
-      }
-      return null;
+      });
     }
   }
 }

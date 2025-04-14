@@ -238,7 +238,7 @@ private class ProjectNotificationsModel {
     listener = newListener
     return Runnable {
       newListener.add(initNotifications)
-      setStatusMessage(project, initNotifications.last())
+      setStatusMessage(project, initNotifications.lastOrNull())
       fireStateChanged()
     }
   }

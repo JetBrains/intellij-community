@@ -6,6 +6,7 @@ import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel
 import com.android.tools.idea.gradle.dsl.model.ProjectBuildModelImpl
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,7 +19,6 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleDeclarativeEntitySource
 import java.nio.file.Path
 
@@ -39,15 +39,20 @@ class GradleLibrariesResolver {
     }
   }
 
-  suspend fun resolveAndAddLibraries(storage: MutableEntityStorage, context: ProjectResolverContext,
-                                    entitySource: GradleDeclarativeEntitySource, projectBuildModel: ProjectBuildModelImpl): Map<LibDepData, List<LibDepData>> {
+  fun resolveAndAddLibraries(
+    project: Project,
+    storage: MutableEntityStorage,
+    context: ProjectResolverContext,
+    entitySource: GradleDeclarativeEntitySource,
+    projectBuildModel: ProjectBuildModelImpl,
+  ): Map<LibDepData, List<LibDepData>> {
     val originalDependencies = projectBuildModel.allIncludedBuildModels.flatMap { it.javaApplication().dependencies().artifacts() }
       .plus(projectBuildModel.allIncludedBuildModels.flatMap { it.javaApplication().testing().dependencies().artifacts() })
       .map { LibDepData(it) }.distinct()
 
     val result = hashMapOf<LibDepData, MutableList<LibDepData>>()
     result.putAll(originalDependencies.map { Pair(it, mutableListOf<LibDepData>()) })
-    val gradleHomeCache = getGradleCacheVirtualFileUrl(context)
+    val gradleHomeCache = getGradleCacheVirtualFileUrl(project, context)
     if(gradleHomeCache != null) {
 
       val libraryRootFoundDependencies = if(Registry.`is`("gradle.declarative.preimport.add.transitive.library.dependencies", false))
@@ -55,19 +60,19 @@ class GradleLibrariesResolver {
       else originalDependencies.map { Pair(it, findLibraryRootDirectory(gradleHomeCache, it)) }.filter { it.second != null }
 
       libraryRootFoundDependencies.map {
-        addLibraryRoot(it, context, entitySource, storage)
+        addLibraryRoot(project, it, entitySource, storage)
       }
     }
     return result
   }
 
-  private suspend fun addLibraryRoot(
+  private fun addLibraryRoot(
+    project: Project,
     pair: Pair<LibDepData, VirtualFile?>,
-    context: ProjectResolverContext,
     entitySource: GradleDeclarativeEntitySource,
     storage: MutableEntityStorage,
   ) {
-    val libRoot = findLibraryRootJar(pair.second!!, context.project().workspaceModel.getVirtualFileUrlManager())
+    val libRoot = findLibraryRootJar(pair.second!!, project.workspaceModel.getVirtualFileUrlManager())
     if (libRoot != null) {
       val libEntity = LibraryEntity("Gradle: " + pair.first.compactNotation(), LibraryTableId.ProjectLibraryTableId,
                                     listOf(libRoot), entitySource) {
@@ -122,7 +127,7 @@ class GradleLibrariesResolver {
     return libraryRootFoundDependencies
   }
 
-  private suspend fun getGradleCacheVirtualFileUrl(context: ProjectResolverContext): VirtualFileUrl? {
+  private fun getGradleCacheVirtualFileUrl(project: Project, context: ProjectResolverContext): VirtualFileUrl? {
     val gh = context.settings.gradleHome
     if(gh == null) return null
     var gradleHome = Path.of(gh)
@@ -130,7 +135,7 @@ class GradleLibrariesResolver {
       if(gradleHome.parent == null) return null
       gradleHome = gradleHome.parent
     }
-    return gradleHome.resolve("caches/modules-2/files-2.1").toVirtualFileUrl(context.project().workspaceModel.getVirtualFileUrlManager())
+    return gradleHome.resolve("caches/modules-2/files-2.1").toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
   }
 
   private fun findLibraryRootDirectory(gradleHomeCache: VirtualFileUrl, library: LibDepData): VirtualFile? {

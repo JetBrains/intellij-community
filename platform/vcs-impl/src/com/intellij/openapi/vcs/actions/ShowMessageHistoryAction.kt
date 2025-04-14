@@ -114,14 +114,10 @@ internal class ShowMessageHistoryAction : DumbAwareAction() {
       .setAutoPackHeightOnFiltering(false)
       .createPopup()
       .apply {
-        setDataProvider { dataId ->
-          when (dataId) {
-            // default list action does not work as "CopyAction" is invoked first, but with other copy provider
-            COPY_PROVIDER.name -> object : TextCopyProvider() {
-              override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-              override fun getTextLinesToCopy() = listOfNotNull(selectedMessage).nullize()
-            }
-            else -> null
+        setUiDataProvider { sink ->
+          sink[COPY_PROVIDER] = object : TextCopyProvider() {
+            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+            override fun getTextLinesToCopy() = listOfNotNull(selectedMessage).nullize()
           }
         }
       }

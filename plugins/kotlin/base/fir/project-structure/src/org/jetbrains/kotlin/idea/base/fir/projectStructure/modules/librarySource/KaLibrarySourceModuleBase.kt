@@ -9,11 +9,9 @@ import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.psi.search.GlobalSearchScope
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleBase
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -23,15 +21,13 @@ abstract class KaLibrarySourceModuleBase : KaLibrarySourceModule, KaModuleBase()
     abstract override val binaryLibrary: KaLibraryModuleBase<*, *>
 
     override val libraryName: String get() = binaryLibrary.libraryName
-    override val directDependsOnDependencies: List<KaModule> get() = emptyList()
-    override val directFriendDependencies: List<KaModule> get() = emptyList()
 
-    @OptIn(KaImplementationDetail::class)
-    override val directRegularDependencies: List<KaModule>
-        // should be empty, mitigation of KT-74010
-        get() = listOf(KaBuiltinsModuleImpl(targetPlatform, project))
+    // Library source dependencies should mirror the backing binary library module's dependencies.
+    override val directRegularDependencies: List<KaModule> get() = binaryLibrary.directRegularDependencies
+    override val directFriendDependencies: List<KaModule> get() = binaryLibrary.directFriendDependencies
+    override val directDependsOnDependencies: List<KaModule> get() = binaryLibrary.directDependsOnDependencies
+    override val transitiveDependsOnDependencies: List<KaModule> get() = binaryLibrary.transitiveDependsOnDependencies
 
-    override val transitiveDependsOnDependencies: List<KaModule> get() = emptyList()
     override val targetPlatform: TargetPlatform get() = binaryLibrary.targetPlatform
     override val project: Project get() = binaryLibrary.project
 

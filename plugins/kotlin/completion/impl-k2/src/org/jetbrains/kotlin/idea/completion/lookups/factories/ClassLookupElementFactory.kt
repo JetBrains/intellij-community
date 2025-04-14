@@ -31,7 +31,7 @@ internal object ClassLookupElementFactory {
 }
 
 
-private data class ClassifierLookupObject(
+internal data class ClassifierLookupObject(
     override val shortName: Name,
     val importingStrategy: ImportStrategy
 ) : KotlinLookupObject

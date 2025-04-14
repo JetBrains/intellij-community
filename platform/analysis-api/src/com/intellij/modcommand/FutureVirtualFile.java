@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Virtual file that doesn't exist yet.
@@ -13,10 +14,22 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public final class FutureVirtualFile extends LightVirtualFile {
   private final VirtualFile myParent;
+  private final boolean myDirectory;
 
-  public FutureVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @NotNull FileType fileType) {
+  /**
+   * @param parent parent file (may also be a future file)
+   * @param name file name
+   * @param fileType file type (null = directory)
+   */
+  public FutureVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable FileType fileType) {
     super(name, fileType, "");
     myParent = parent;
+    myDirectory = fileType == null;
+  }
+
+  @Override
+  public boolean isDirectory() {
+    return myDirectory;
   }
 
   @Override

@@ -138,7 +138,6 @@ com.intellij.ide.structureView.StructureViewBuilder
 - sf:PROVIDER:com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
 - createStructureViewSuspend(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- bs:createStructureViewSuspend$suspendImpl(com.intellij.ide.structureView.StructureViewBuilder,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - s:getProvider():com.intellij.ide.structureView.StructureViewBuilderProvider
 com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder

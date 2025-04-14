@@ -9,12 +9,12 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20-RC2/kotlin-compose-compiler-plugin-2.1.20-RC2.jar</args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20/kotlin-compose-compiler-plugin-2.1.20.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -68,7 +68,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.autolink" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.autolink" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.decoratedWindow" />
@@ -76,26 +76,9 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.intUiStandaloneStyling" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
-    <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library name="org.lwjgl.lwjgl" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.lwjgl:lwjgl:3.3.1">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar">
-              <sha256sum>cf83f90e32fb973ff5edfca4ef35f55ca51bb70a579b6a1f290744f552e8e484</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.lwjgl.lwjgl.tinyfd" type="repository">
         <properties include-transitive-deps="false" maven-id="org.lwjgl:lwjgl-tinyfd:3.3.1">
@@ -135,7 +118,24 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmStrikethrough" />
+    <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="org.lwjgl.lwjgl" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.lwjgl:lwjgl:3.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar">
+              <sha256sum>cf83f90e32fb973ff5edfca4ef35f55ca51bb70a579b6a1f290744f552e8e484</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

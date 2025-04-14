@@ -38,7 +38,7 @@ private val closingTag = Pattern.compile("</\\w+\\s*>")
 
 @JvmField
 val commonBlockElements: Set<String> =
-  setOf("body", "p", "br", "td", "li", "title", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "table", "ol", "ul")
+  setOf("body", "p", "br", "td", "li", "title", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "table", "ol", "ul", "pre")
 
 private val commonMarkupElements = setOf("span", "i", "b", "u", "font", "a", "s", "strong", "sub", "sup")
 

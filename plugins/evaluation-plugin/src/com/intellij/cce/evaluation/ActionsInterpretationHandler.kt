@@ -54,49 +54,56 @@ class ActionsInterpretationHandler(
     }
     var fileCount = 0
     for (chunk in environment.chunks(datasetContext)) {
-      if (config.interpret.filesLimit?.let { it <= fileCount } == true) {
-        break
-      }
-
-      workspace.fullLineLogsStorage.enableLogging(chunk.name)
-      try {
-        val result = logsSaver.invokeRememberingLogs {
-          chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
-            featuresStorage.saveSession(session, chunk.name)
-          }
+      val iterations = interpretationConfig.iterationCount ?: 1
+      for (iteration in 1..iterations) {
+        if (config.interpret.filesLimit?.let { it <= fileCount } == true) {
+          break
         }
 
-        if (result.sessions.isNotEmpty()) {
-          val sessionsInfo = FileSessionsInfo(
-            projectName = chunk.datasetName,
-            filePath = chunk.name,
-            text = result.presentationText ?: "",
-            sessions = result.sessions
-          )
-          workspace.sessionsStorage.saveSessions(sessionsInfo)
-          fileCount += 1
-        }
-        else {
-          if (chunk.sessionsExist) {
-            LOG.warn("No sessions collected from file: ${chunk.name}")
-          }
-        }
-      }
-      catch (e: StopEvaluationException) {
-        throw e
-      }
-      catch (e: Throwable) {
+        val iterationLabel = if (interpretationConfig.iterationCount != null) "Iteration $iteration" else ""
+        val chunkName = if (iterationLabel.isNotEmpty()) "${chunk.name} - $iterationLabel" else chunk.name
+
+        workspace.fullLineLogsStorage.enableLogging(chunkName)
+
         try {
-          workspace.errorsStorage.saveError(
-            FileErrorInfo(chunk.name, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
-          )
+          val result = logsSaver.invokeRememberingLogs {
+            chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
+              featuresStorage.saveSession(session, chunkName)
+            }
+          }
+
+          if (result.sessions.isNotEmpty()) {
+            val sessionsInfo = FileSessionsInfo(
+              projectName = chunk.datasetName,
+              filePath = chunkName,
+              text = result.presentationText ?: "",
+              sessions = result.sessions
+            )
+            workspace.sessionsStorage.saveSessions(sessionsInfo)
+            fileCount += 1
+          }
+          else {
+            if (chunk.sessionsExist) {
+              LOG.warn("No sessions collected from file: $chunkName")
+            }
+          }
         }
-        catch (e2: Throwable) {
-          LOG.error("Exception on saving error info.", e2)
+        catch (e: StopEvaluationException) {
+          throw e
         }
-        handler.onErrorOccurred(e, 0)
+        catch (e: Throwable) {
+          try {
+            workspace.errorsStorage.saveError(
+              FileErrorInfo(chunkName, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
+            )
+          }
+          catch (e2: Throwable) {
+            LOG.error("Exception on saving error info.", e2)
+          }
+          handler.onErrorOccurred(e, 0)
+        }
+        if (handler.isCancelled() || handler.isLimitExceeded()) break
       }
-      if (handler.isCancelled() || handler.isLimitExceeded()) break
     }
     logsSaver.save(config.actions?.language, config.interpret.trainTestSplit)
     SetupStatsCollectorStep.deleteLogs()

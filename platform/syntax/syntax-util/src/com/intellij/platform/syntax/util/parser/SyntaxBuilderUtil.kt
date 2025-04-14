@@ -106,7 +106,7 @@ object SyntaxBuilderUtil {
     marker.collapse(codeBlock)
 
     if (braceCount > 0) {
-      marker.setCustomEdgeTokenBinders(null, WhitespacesBinders.defaultRightBinder())
+      marker.setCustomEdgeTokenBinders(null, WhitespacesBinders.greedyRightBinder())
     }
 
     return marker

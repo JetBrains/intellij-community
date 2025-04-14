@@ -902,6 +902,7 @@
           <action id="Performance.MemTester" class="com.intellij.ide.actions.MemTestAction"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
+          <action id="BrowseSpecialPaths" class="com.intellij.diagnostic.specialPaths.BrowseSpecialPathsAction" />
           <action id="CollectTroubleshootingInformation" class="com.intellij.troubleshooting.ui.CollectTroubleshootingInformationAction"
                   internal="true"/>
         </group>
@@ -1135,6 +1136,7 @@
       <separator/>
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
+      <reference ref="BrowseSpecialPaths"/>
       <reference ref="CollectZippedLogs"/>
       <separator/>
       <reference ref="CreateDesktopEntry"/>

@@ -219,7 +219,7 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
         }
         is Result.Success -> {
           // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
+          systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).firstOrNull()
         }
       }
     }

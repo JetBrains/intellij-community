@@ -67,7 +67,7 @@ fun generateLambda(
         return generateLambda(inputVariable, expression, reformat)
     }
 
-    val lambdaExpression = generateLambda(expression, *arrayOf(indexVariable, inputVariable), reformat = reformat)
+    val lambdaExpression = generateLambda(expression, indexVariable, inputVariable, reformat = reformat)
 
     // replace "index++" with "index" or "index + 1" (see IntroduceIndexMatcher)
     val indexPlusPlus = lambdaExpression.findDescendantOfType<KtUnaryExpression> { unaryExpression ->

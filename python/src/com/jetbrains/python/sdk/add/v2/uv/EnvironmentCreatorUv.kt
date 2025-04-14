@@ -15,10 +15,23 @@ import java.nio.file.Path
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.nio.file.Paths
+import kotlin.io.path.exists
 
-internal class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("uv", model) {
+
+internal class EnvironmentCreatorUv(
+  model: PythonMutableTargetAddInterpreterModel,
+  private val moduleOrProject: ModuleOrProject?,
+) : CustomNewEnvironmentCreator("uv", model) {
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
   override val installationVersion: String? = null
@@ -26,6 +39,30 @@ internal class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterMode
   override fun onShown() {
     // FIXME: validate base interpreters against pyprojecttoml version. See poetry
     basePythonComboBox.setItems(model.baseInterpreters)
+
+    model.scope.launch(Dispatchers.IO + model.uiContext) {
+      model.myProjectPathFlows.projectPathWithDefault.collect {
+        val venvPath = it.resolve(".venv")
+
+        venvExistenceValidationState.set(
+          if (venvPath.exists())
+            VenvExistenceValidationState.Error(Paths.get(".venv"))
+          else
+            VenvExistenceValidationState.Invisible
+        )
+      }
+    }
+  }
+
+  override fun onVenvSelectExisting() {
+    PythonNewProjectWizardCollector.logExistingVenvFixUsed()
+
+    if (moduleOrProject != null) {
+      model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = UV)
+    }
+    else {
+      model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PYTHON)
+    }
   }
 
   override fun savePathToExecutableToProperties(path: Path?) {

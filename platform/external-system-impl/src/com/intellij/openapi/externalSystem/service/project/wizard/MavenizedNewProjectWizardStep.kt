@@ -14,6 +14,7 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID
@@ -42,18 +43,18 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
 
   abstract fun findAllParents(): List<Data>
 
-  final override val parentProperty = propertyGraph.lazyProperty(::suggestParentByPath)
-  final override val groupIdProperty = propertyGraph.lazyProperty(::suggestGroupIdByParent)
-  final override val artifactIdProperty = propertyGraph.lazyProperty(::suggestArtifactIdByName)
-  final override val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
+  final override val parentProperty: GraphProperty<DataView<Data>> = propertyGraph.lazyProperty(::suggestParentByPath)
+  final override val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestGroupIdByParent)
+  final override val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestArtifactIdByName)
+  final override val versionProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestVersionByParent)
 
-  final override var parent by parentProperty
-  final override var groupId by groupIdProperty
-  final override var artifactId by artifactIdProperty
-  final override var version by versionProperty
+  final override var parent: DataView<Data> by parentProperty
+  final override var groupId: String by groupIdProperty
+  final override var artifactId: String by artifactIdProperty
+  final override var version: String by versionProperty
 
-  val parents by lazy { parentsData.map(::createView) }
-  val parentsData by lazy { findAllParents() }
+  val parents: List<DataView<Data>> by lazy { parentsData.map(::createView) }
+  val parentsData: List<Data> by lazy { findAllParents() }
   final override var parentData: Data?
     get() = DataView.getData(parent)
     set(value) {

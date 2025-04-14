@@ -2661,4 +2661,54 @@ def foo(param: str | int) -> TypeGuard[str]:
                    expects_list(v)
                    """);
   }
+
+  public void testExplicitlyParameterizedGenericConstructorCall() {
+    doTestByText("""
+                   class A[T]:
+                       def __init__(self, v: T) -> None: ...
+
+                   A[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">""</warning>)
+                   """);
+  }
+
+  public void testGenericInstanceAttribute() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Node[T]:
+                       x: T
+
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+
+                   p = Node[int]()
+                   type(p).<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+                   i: int = p.x
+                   j: int = Node[int]().x
+                   p.x = 1
+                   
+                   class A:
+                       attr1: list[int]
+                       attr2: list[Self]
+                       attr3: Self
+                   
+                   A.attr1
+                   A.attr2
+                   A.attr3
+                   """);
+  }
+
+  public void testGenericInstanceAttribute2() {
+    doTestByText("""
+                   class Node[T]:
+                       m: map[str, list[T]]
+                   
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">m</warning> = {}
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">m</warning>
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">m</warning> # TODO = {}
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">m</warning>
+                   """);
+  }
 }

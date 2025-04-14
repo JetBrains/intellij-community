@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
@@ -41,9 +42,9 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
 
     context(KaSession)
     fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
-        val factories = listOf(
+        val factories = listOfNotNull(
             UnresolvedNameReferenceImportQuickFixFactory,
-            MismatchedArgumentsImportQuickFixFactory,
+            MismatchedArgumentsImportQuickFixFactory.takeIf { Registry.`is`("kotlin.k2.auto.import.mismatched.arguments.factory.enabled") },
             DelegateMethodImportQuickFixFactory,
             ArrayAccessorImportQuickFixFactory,
             ComponentFunctionImportQuickFixFactory,

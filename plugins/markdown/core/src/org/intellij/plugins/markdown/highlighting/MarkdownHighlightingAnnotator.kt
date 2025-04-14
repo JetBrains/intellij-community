@@ -72,11 +72,16 @@ class MarkdownHighlightingAnnotator : Annotator {
   private fun PsiElement.traverseAndCreateAnnotationsForContent(holder: AnnotationHolder, textAttributesKey: TextAttributesKey) {
     val contentRanges = mutableListOf<TextRange>()
 
-    val type = elementType
-    if (type !is OuterLanguageElementType && firstChild == null) {
-      contentRanges.add(textRange)
-    }
+    accept(object : PsiRecursiveElementVisitor() {
+      override fun visitElement(element: PsiElement) {
+        val type = element.elementType
+        if (type !is OuterLanguageElementType && element.firstChild == null) {
+          contentRanges.add(element.textRange)
+        }
 
+        super.visitElement(element)
+      }
+    })
     /**
      * If an original sequence was separated by [OuterLanguageElementType]s, then there are several ranges.
      * In other cases, the result contains one element.

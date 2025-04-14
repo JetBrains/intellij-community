@@ -2,21 +2,17 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.MethodInvokeUtils.getMethodHandlesImplLookup
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.impl.DebuggerContextImpl
-import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.debugger.impl.DebuggerUtilsImpl
-import com.intellij.debugger.impl.ThreadDumpItemsProvider
-import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
+import com.intellij.debugger.impl.*
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
@@ -31,23 +27,25 @@ import com.intellij.unscramble.JavaThreadDumpItem
 import com.intellij.util.lang.JavaVersion
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.jetbrains.annotations.NonNls
-import java.lang.Long
+import java.lang.Long as JLong
 import java.util.concurrent.CancellationException
 import kotlin.Int
-import kotlin.Pair
 import kotlin.String
 import kotlin.Throwable
 import kotlin.checkNotNull
 import kotlin.let
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlin.to
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import com.intellij.debugger.JavaDebuggerBundle
 
 class ThreadDumpAction : DumbAwareAction() {
+
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project == null) {
@@ -59,12 +57,12 @@ class ThreadDumpAction : DumbAwareAction() {
     val managerThread = context.managerThread!!
     if (session != null && session.isAttached) {
       executeOnDMT(managerThread) {
-        val dumpItems = buildThreadDump(context)
-        withContext(Dispatchers.EDT) {
-          val xSession = session.xDebugSession
-          if (xSession != null) {
-            DebuggerUtilsEx.addDumpItems(project, dumpItems, xSession.ui, session.searchScope)
-          }
+        // Pass parts of the dump to the ThreadDumpPanel via a channel as soon as they are computed
+        val dumpItemsChannel = produce(capacity = Channel.BUFFERED) {
+          buildThreadDump(context, channel)
+        }
+        launch(Dispatchers.EDT) {
+          collectAndShowDumpItems(project, session, dumpItemsChannel)
         }
       }
     }
@@ -100,31 +98,46 @@ class ThreadDumpAction : DumbAwareAction() {
              "(" + DebuggerUtilsEx.getSourceName(location, "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")"
     }
 
-    private suspend fun buildThreadDump(context: DebuggerContextImpl): List<DumpItem> {
-      fun fallback() =
-        buildJavaPlatformThreadDump(context).map(::JavaThreadDumpItem)
+    @ApiStatus.Internal
+    suspend fun buildThreadDump(context: DebuggerContextImpl, dumpItemsChannel: SendChannel<List<DumpItem>>) {
+
+      suspend fun fallback() =
+        dumpItemsChannel.send(
+          buildJavaPlatformThreadDump(context).map(::JavaThreadDumpItem)
+        )
 
       if (!Registry.`is`("debugger.thread.dump.extended")) {
-        return fallback()
+        fallback()
+        return
       }
-
-      return try {
+      try {
         val providers = extendedProviders.extensionList.map { it.getProvider(context) }
 
-        suspend fun getAllItems(suspendContext: SuspendContextImpl?) =
-          withBackgroundProgress(context.project, JavaDebuggerBundle.message("thread.dump.extended.progress")) {
-            providers
-              .flatMap { it.getItems(suspendContext) }
-              .sortedWith(DumpItem.BY_INTEREST)
+        suspend fun getAllItems(suspendContext: SuspendContextImpl?) {
+          coroutineScope {
+            // Compute parts of the dump asynchronously
+            providers.map { p ->
+              launch {
+                withBackgroundProgress(context.project, p.progressText) {
+                  try {
+                    val items = p.getItems(suspendContext)
+                    dumpItemsChannel.send(items)
+                  }
+                  catch (e: CancellationException) {
+                    thisLogger().debug("${p.progressText} was cancelled by user.")
+                    throw e
+                  }
+                }
+              }
+            }
           }
+        }
 
-        if (providers.any { it.requiresEvaluation() }) {
+        if (providers.any { it.requiresEvaluation }) {
           val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.ms", 500).milliseconds
           try {
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
-              withDebugContext(suspendContext) {
-                getAllItems(suspendContext)
-              }
+              getAllItems(suspendContext)
             }
           }
           catch (_: TimeoutCancellationException) {
@@ -133,7 +146,14 @@ class ThreadDumpAction : DumbAwareAction() {
           }
         }
         else {
-          getAllItems(null)
+          val vm = context.debugProcess!!.virtualMachineProxy
+          vm.suspend()
+          try {
+            getAllItems(null)
+          }
+          finally {
+            vm.resume()
+          }
         }
       }
       catch (e: Throwable) {
@@ -159,6 +179,17 @@ class ThreadDumpAction : DumbAwareAction() {
         vm.resume()
       }
     }
+
+    private suspend fun collectAndShowDumpItems(project: Project, session: DebuggerSession, dumpItemsChannel: ReceiveChannel<List<DumpItem>>) {
+      val xSession = session.xDebugSession
+      if (xSession != null) {
+        val threadDumpPanel = DebuggerUtilsEx.createThreadDumpPanel(project, emptyList(), xSession.ui, session.searchScope)
+
+        for (items in dumpItemsChannel) {
+          threadDumpPanel.addDumpItems(items)
+        }
+      }
+    }
   }
 }
 
@@ -174,7 +205,7 @@ private fun renderObject(monitor: ObjectReference): String {
   catch (e: Throwable) {
     monitorTypeName = "Error getting object type: '" + e.message + "'"
   }
-  return "<0x" + Long.toHexString(monitor.uniqueID()) + "> (a " + monitorTypeName + ")"
+  return "<0x" + JLong.toHexString(monitor.uniqueID()) + "> (a " + monitorTypeName + ")"
 }
 
 private fun threadStatusToJavaThreadState(status: Int): String {
@@ -203,9 +234,23 @@ private fun threadStatusToState(status: Int): String {
   }
 }
 
-private fun threadName(threadReference: ThreadReference): String {
-  return threadReference.name() + "@" + threadReference.uniqueID()
+private fun javaThreadStateToState(javaThreadState: String): String {
+  return when (javaThreadState) {
+    Thread.State.BLOCKED.name -> "waiting for monitor entry"
+    Thread.State.NEW.name -> "not started"
+    Thread.State.RUNNABLE.name -> "runnable"
+    Thread.State.TIMED_WAITING.name -> "sleeping"
+    Thread.State.WAITING.name -> "waiting"
+    Thread.State.TERMINATED.name -> "zombie"
+    else -> "undefined"
+  }
 }
+
+private fun threadName(threadReference: ThreadReference): String =
+  threadName(threadReference.name(), threadReference)
+
+private fun threadName(threadNameRaw: String, threadReference: ObjectReference): String =
+  threadNameRaw + "@" + threadReference.uniqueID()
 
 private fun getThreadField(
   fieldName: String,
@@ -228,82 +273,98 @@ private fun getThreadField(
 
 private fun buildThreadStates(
   vmProxy: VirtualMachineProxyImpl,
-  virtualThreads: List<Pair<ThreadReference, String>>,
+  virtualThreads: List<Triple<ThreadReference, String, Long>>,
 ): List<ThreadState> {
-
-  // By default it includes only platform threads. Unless JDWP's option includevirtualthreads is enabled.
-  // TODO: remove duplicates if includevirtualthreads is enabled.
-  val platformThreads = getPlatformThreadsWithStackTraces(vmProxy)
-
-  val allThreads = platformThreads + virtualThreads.asSequence()
 
   val result = mutableListOf<ThreadState>()
   val nameToThreadMap = mutableMapOf<String, ThreadState>()
   val waitingMap = mutableMapOf<String, String>() // key 'waits_for' value
-  for ((threadReference, rawStackTrace) in allThreads) {
+
+  fun processOne(threadReference: ThreadReference, virtualThreadInfo: Pair<String, Long>?) {
     ProgressManager.checkCanceled()
 
-    val buffer = StringBuilder()
-    val threadStatus = threadReference.status()
-    if (threadStatus == ThreadReference.THREAD_STATUS_ZOMBIE) {
-      continue
+    val threadName: String
+    val stateString: String
+    val javaThreadStateString: String
+    val isVirtual: Boolean
+    val isDaemon: Boolean
+    val tid: Long?
+    val prio: Int?
+    val rawStackTrace: String
+    if (virtualThreadInfo != null) {
+      val nameStateAndStackTrace = splitFirstTwoAndRemainingLines(virtualThreadInfo.first)
+      val nameRaw = nameStateAndStackTrace.first
+      javaThreadStateString = nameStateAndStackTrace.second
+      rawStackTrace = nameStateAndStackTrace.third
+
+      if (javaThreadStateString == Thread.State.TERMINATED.name) return
+
+      threadName = threadName(nameRaw, threadReference)
+      stateString = javaThreadStateToState(javaThreadStateString)
+
+      tid = virtualThreadInfo.second
+
+      isVirtual = true
+      isDaemon = false
+      prio = null
     }
-    val threadName = threadName(threadReference)
-    val threadState = ThreadState(threadName, threadStatusToState(threadStatus))
-    nameToThreadMap[threadName] = threadState
-    result += threadState
-    threadState.javaThreadState = threadStatusToJavaThreadState(threadStatus)
+    else {
+      val threadStatus = threadReference.status()
+      if (threadStatus == ThreadReference.THREAD_STATUS_ZOMBIE) return
 
-    buffer.append("\"").append(threadName).append("\"")
+      threadName = threadName(threadReference)
+      stateString = threadStatusToState(threadStatus)
+      javaThreadStateString = threadStatusToJavaThreadState(threadStatus)
 
-    val threadType = threadReference.referenceType()
-    if (threadType != null) {
+      isVirtual = threadReference is ThreadReferenceImpl && threadReference.isVirtual
+
+      rawStackTrace = getStackTrace(threadReference)
+
       // Since Project Loom some of Thread's fields are encapsulated into FieldHolder,
       // so we try to look up fields in the thread itself and in its holder.
+      val threadType = threadReference.referenceType()
       val (holderObj, holderType) = when (val value = getThreadField("holder", threadType, threadReference, null, null)) {
         is ObjectReference -> value to value.referenceType()
         else -> null to null
       }
-
-      when (val value = getThreadField("daemon", threadType, threadReference, holderType, holderObj)) {
-        is BooleanValue ->
-          if (value.booleanValue()) {
-            buffer.append(" daemon")
-            threadState.isDaemon = true
-          }
-      }
-
-      when (val value = getThreadField("priority", threadType, threadReference, holderType, holderObj)) {
-        is IntegerValue ->
-          buffer.append(" prio=").append(value.intValue())
-      }
-
-      when (val value = getThreadField("tid", threadType, threadReference, holderType, holderObj)) {
-        is LongValue -> {
-          buffer.append(" tid=0x").append(Long.toHexString(value.longValue()))
-          buffer.append(" nid=NA")
-        }
-      }
+      isDaemon = (getThreadField("daemon", threadType, threadReference, holderType, holderObj) as BooleanValue?)?.booleanValue() ?: false
+      prio = (getThreadField("priority", threadType, threadReference, holderType, holderObj) as IntegerValue?)?.intValue()
+      tid = (getThreadField("tid", threadType, threadReference, holderType, holderObj) as LongValue?)?.longValue()
     }
 
-    if (threadReference is ThreadReferenceImpl && threadReference.isVirtual()) {
+    val threadState = ThreadState(threadName, stateString)
+    threadState.javaThreadState = javaThreadStateString
+    nameToThreadMap[threadName] = threadState
+    result += threadState
+
+    val buffer = StringBuilder()
+    buffer.append('"').append(threadName).append('"')
+
+    if (isDaemon) {
+      buffer.append(" daemon")
+      threadState.isDaemon = true
+    }
+    if (prio != null) {
+      buffer.append(" prio=").append(prio)
+    }
+    if (tid != null) {
+      buffer.append(" tid=0x").append(JLong.toHexString(tid))
+      buffer.append(" nid=NA")
+    }
+    if (isVirtual) {
       buffer.append(" virtual")
       threadState.isVirtual = true
     }
 
-    //ThreadGroupReference groupReference = threadReference.threadGroup();
-    //if (groupReference != null) {
-    //  buffer.append(", ").append(JavaDebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
-    //}
-    val state = threadState.state
-    if (state != null) {
-      buffer.append(" ").append(state)
-    }
+    buffer.append(" ").append(threadState.state)
 
     buffer.append("\n  java.lang.Thread.State: ").append(threadState.javaThreadState)
 
+    // There could be too many virtual threads and it's too expensive to collect locking information for all of them.
+    val collectMonitorsInfo = virtualThreadInfo == null ||
+                              virtualThreads.size < Registry.intValue("debugger.thread.dump.virtual.threads.with.monitors.max.count", 1000)
     try {
-      if (vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
+      if (collectMonitorsInfo && vmProxy.canGetOwnedMonitorInfo() && vmProxy.canGetMonitorInfo()) {
         val list = threadReference.ownedMonitors()
         for (reference in list) {
           if (!vmProxy.canGetMonitorFrameInfo()) { // java 5 and earlier
@@ -318,7 +379,7 @@ private fun buildThreadStates(
         }
       }
 
-      val waitedMonitor = if (vmProxy.canGetCurrentContendedMonitor()) threadReference.currentContendedMonitor() else null
+      val waitedMonitor = if (collectMonitorsInfo && vmProxy.canGetCurrentContendedMonitor()) threadReference.currentContendedMonitor() else null
       if (waitedMonitor != null) {
         if (vmProxy.canGetMonitorInfo()) {
           val waitedMonitorOwner = waitedMonitor.owningThread()
@@ -332,7 +393,7 @@ private fun buildThreadStates(
       }
 
       val lockedAt = mutableMapOf<Int, MutableList<ObjectReference>>()
-      if (vmProxy.canGetMonitorFrameInfo()) {
+      if (collectMonitorsInfo && vmProxy.canGetMonitorFrameInfo()) {
         for (m in threadReference.ownedMonitorsAndFrames()) {
           if (m is MonitorInfo) { // see JRE-937
             val monitors = lockedAt.getOrPut(m.stackDepth()) { mutableListOf() }
@@ -364,9 +425,24 @@ private fun buildThreadStates(
     catch (_: IncompatibleThreadStateException) {
       buffer.append("\n\t Incompatible thread state: thread not suspended")
     }
+
     val hasEmptyStack = rawStackTrace.isEmpty()
     threadState.setStackTrace(buffer.toString(), hasEmptyStack)
     ThreadDumpParser.inferThreadStateDetail(threadState)
+  }
+
+  // By default, it includes only platform threads. Unless JDWP's option includevirtualthreads is enabled.
+  val threadsFromVM = vmProxy.virtualMachine.allThreads()
+  threadsFromVM.forEach {
+    processOne(it, null)
+  }
+
+  val threadsFromVMSet = threadsFromVM.toSet()
+  virtualThreads.forEach { (vthread, stackTrace, tid) ->
+    // thread might be already processed if JDWP's option includevirtualthreads is enabled.
+    if (vthread !in threadsFromVMSet) {
+      processOne(vthread, stackTrace to tid)
+    }
   }
 
   for ((waiting, awaited) in waitingMap) {
@@ -390,58 +466,67 @@ private fun buildThreadStates(
   return result
 }
 
-private fun getPlatformThreadsWithStackTraces(vmProxy: VirtualMachineProxyImpl): Sequence<Pair<ThreadReference, String>> {
-  return vmProxy.virtualMachine.allThreads().asSequence().map { threadReference ->
-    ProgressManager.checkCanceled()
+private fun getStackTrace(threadReference: ThreadReference): String {
+  val frames =
+    try {
+      threadReference.frames()
+    }
+    catch (e: IncompatibleThreadStateException) {
+      logger<ThreadDumpAction>().error(e)
+      return "Incompatible thread state: thread not suspended"
+    }
 
-    val frames =
+  return buildString {
+    for (stackFrame in frames) {
+      if (this.isNotEmpty()) {
+        append('\n')
+      }
+      append("\t")
       try {
-        threadReference.frames()
+        append(ThreadDumpAction.renderLocation(stackFrame.location()))
       }
-      catch (_: IncompatibleThreadStateException) {
-        return@map threadReference to "Incompatible thread state: thread not suspended"
-      }
-
-    threadReference to buildString {
-      for (stackFrame in frames) {
-        if (this.isNotEmpty()) {
-          append('\n')
-        }
-        append("\t")
-        try {
-          append(ThreadDumpAction.renderLocation(stackFrame.location()))
-        }
-        catch (e: InvalidStackFrameException) {
-          append("Invalid stack frame: ").append(e.message)
-        }
+      catch (e: InvalidStackFrameException) {
+        logger<ThreadDumpAction>().error(e)
+        append("Invalid stack frame: ").append(e.message)
       }
     }
   }
+}
+
+private fun splitFirstTwoAndRemainingLines(text: String): Triple<String, String, String> {
+  val first = text.lineSequence().first()
+  val second = text.lineSequence().drop(1).first()
+  val remaining = text.lineSequence().drop(2).joinToString("\n")
+  return Triple(first, second, remaining)
 }
 
 private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
   override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
     val vm = context.debugProcess!!.virtualMachineProxy
 
-    val dumpVirtualThreads =
+    private val shouldDumpVirtualThreads =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&
       // Virtual threads first appeared in Java 19 as part of Project Loom.
       JavaVersion.parse(vm.version()).feature >= 19 &&
       // Check if VirtualThread class is at least loaded.
       vm.classesByName("java.lang.VirtualThread").isNotEmpty()
 
-    override fun requiresEvaluation() = dumpVirtualThreads
+    override val progressText: String get() = JavaDebuggerBundle.message(
+      if (shouldDumpVirtualThreads) "thread.dump.platform.and.virtual.threads.progress" else "thread.dump.platform.threads.progress"
+    )
+
+    override val requiresEvaluation get() = shouldDumpVirtualThreads
 
     override fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem> {
       val virtualThreads =
-        if (dumpVirtualThreads) evaluateAndGetAllVirtualThreads(suspendContext!!)
+        if (shouldDumpVirtualThreads) evaluateAndGetAllVirtualThreads(suspendContext!!)
         else emptyList()
 
       return buildThreadStates(vm, virtualThreads)
         .map(::JavaThreadDumpItem)
     }
 
-    private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Pair<ThreadReference, String>> {
+    private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Triple<ThreadReference, String, Long>> {
       val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
 
       val lookupImpl = getMethodHandlesImplLookup(evaluationContext)
@@ -461,19 +546,23 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
         thisLogger().error(e)
         return emptyList()
       }
-      val packedThreadsAndStackTraces = (evaluated as ArrayReference?)?.values ?: emptyList()
+      if (evaluated == null) return emptyList()
+
+      val (packedThreadsAndStackTraces, threadIds) = (evaluated as ArrayReference).values.map { (it as ArrayReference).values }
 
       ProgressManager.checkCanceled()
       return buildList {
-        var i = 0
-        while (i < packedThreadsAndStackTraces.size) {
-          val stackTrace = (packedThreadsAndStackTraces[i++] as StringReference).value()
+        var tidIdx = 0
+        var stIdx = 0
+        while (stIdx < packedThreadsAndStackTraces.size) {
+          val stackTrace = (packedThreadsAndStackTraces[stIdx++] as StringReference).value()
           while (true) {
-            val thread = packedThreadsAndStackTraces[i++]
+            val thread = packedThreadsAndStackTraces[stIdx++]
             if (thread == null) {
               break
             }
-            add(thread as ThreadReference to stackTrace)
+            val threadId = (threadIds[tidIdx++] as LongValue).value()
+            add(Triple(thread as ThreadReference, stackTrace, threadId))
           }
         }
       }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage.sharding;
 
+import com.intellij.util.indexing.IndexExtension;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -48,4 +49,14 @@ public interface ShardableIndexExtension {
       return 3;
     }
   }
+
+  /**
+   * Implementation version, without taking shards# into account.
+   * Motivation: generally, shards count should be a part of {@link IndexExtension#getVersion()} -- e.g. change in shardsCount _must_
+   * trigger re-indexing -- but in some cases shards count is not important. It all comes down to the exact interpretation of
+   * {@link IndexExtension#getVersion()}: is it a version of current index layout, or it is a version of index layout that could be
+   * _open-and-read_ by current code? This method returns "version that could be open-and-read", while {@link IndexExtension#getVersion()}
+   * returns a current layout version.
+   */
+  int shardlessVersion();
 }

@@ -7,16 +7,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public class TestDataProvider implements DataProvider {
   private final Project myProject;
@@ -61,23 +57,6 @@ public class TestDataProvider implements DataProvider {
       return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
     }
     else {
-      Editor editor = CommonDataKeys.EDITOR.getData(this);
-      if (editor != null) {
-        Object managerData = manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
-        if (managerData != null) {
-          return managerData;
-        }
-        if (!(editor instanceof ImaginaryEditor)) {
-          JComponent component = editor.getContentComponent();
-          if (component instanceof EditorComponentImpl) {
-            Object editorComponentData = ((EditorComponentImpl)component).getData(dataId);
-            if (editorComponentData != null) {
-              return editorComponentData;
-            }
-          }
-        }
-      }
-
       if (myWithRules) {
         return DataManager.getInstance().getCustomizedData(dataId, DataContext.EMPTY_CONTEXT, myDelegateWithoutRules);
       }

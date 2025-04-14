@@ -2124,8 +2124,8 @@ f:com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 - s:getSelectedRanges(java.util.List,com.intellij.openapi.editor.Editor,I):java.util.List
 - s:isInsideMarkerArea(java.awt.event.MouseEvent):Z
 - s:isRangeHovered(com.intellij.openapi.editor.Editor,I,I,I,I):Z
-- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,I):V
-- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I):V
+- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,I,Z):V
+- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I,Z):V
 - s:paintDefault(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.util.List,com.intellij.openapi.vcs.ex.VisibleRangeMerger$FlagsProvider,I):V
 - s:paintDefault(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.util.List,com.intellij.openapi.vcs.ex.VisibleRangeMerger$FlagsProvider,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I):V
 - s:paintRange(java.awt.Graphics,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,I,Z):V

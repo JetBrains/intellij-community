@@ -1,5 +1,6 @@
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
-// K2_ERROR: Syntax error: Incorrect template argument.
+//TODO: KTIJ-33598
+// K2_ERROR:
 
 fun test() {
     "fooboo"

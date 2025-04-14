@@ -2,9 +2,13 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.application.options.EditorFontsConstants
+import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSystemInfo
+import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -31,7 +35,6 @@ import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 import java.awt.Color
 import java.util.*
 import javax.swing.JComponent
@@ -49,7 +52,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 ) {
   override fun createPanel(): DialogPanel {
     val optionsProvider = TerminalOptionsProvider.instance
-    val osSpecificOptions = TerminalOsSpecificOptions.getInstance()
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
 
@@ -215,7 +217,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
-            .bindSelected(osSpecificOptions::copyOnSelection)
+            .bindSelected(optionsProvider::copyOnSelection)
+            .visible(isMac(project) || isWindows(project))
         }
         row {
           checkBox(message("settings.paste.on.middle.mouse.button.click"))
@@ -236,7 +239,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.use.option.as.meta.key.label"))
             .bindSelected(optionsProvider::useOptionAsMetaKey)
-            .visible(SystemInfo.isMac)
+            .visible(isMac(project))
         }
         panel {
           configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
@@ -343,5 +346,25 @@ private fun String.parseSpacing(): Float =
   catch (_: Exception) {
     1.0f
   }
+
+/**
+ * [TerminalOptionsConfigurable] is created on backend under local [ClientId].
+ * But some options need to be shown depending on client OS.
+ * So, it is a hack to check the client OS from the configurable code.
+ */
+private fun isMac(project: Project): Boolean {
+  return getClientSystemInfo(project)?.macClient ?: SystemInfo.isMac
+}
+
+private fun isWindows(project: Project): Boolean {
+  return getClientSystemInfo(project)?.windowsClient ?: SystemInfo.isWindows
+}
+
+private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
+  val clientId = project.sessions(ClientKind.CONTROLLER).singleOrNull()?.clientId ?: return null
+  return ClientId.withExplicitClientId(clientId) {
+    ClientSystemInfo.getInstance()
+  }
+}
 
 private val LOG = logger<TerminalOptionsConfigurable>()

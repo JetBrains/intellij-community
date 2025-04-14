@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -43,8 +42,14 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
+import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -53,7 +58,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.XDebuggerUtil.INLINE_BREAKPOINTS_KEY;
+import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableSharedFlow;
+import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
+import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 
 @ApiStatus.Internal
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
@@ -62,6 +71,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private final @Nullable P myProperties;
   protected final S myState;
   private final XBreakpointManagerImpl myBreakpointManager;
+  private final CoroutineScope myCoroutineScope;
+  private final XBreakpointId myId;
   private Icon myIcon;
   private CustomizedBreakpointPresentation myCustomizedPresentation;
   private boolean myConditionEnabled = true;
@@ -69,23 +80,15 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private boolean myLogExpressionEnabled = true;
   private XExpression myLogExpression;
   private volatile boolean myDisposed;
+  private final MutableSharedFlow<Unit> myBreakpointChangedFlow = createMutableSharedFlow(0, 1);
 
   public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
     myState = state;
     myType = type;
     myProperties = properties;
     myBreakpointManager = breakpointManager;
-    initExpressions();
-  }
-
-  protected XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, S breakpointState) {
-    myState = breakpointState;
-    myType = type;
-    myBreakpointManager = breakpointManager;
-    myProperties = type.createProperties();
-    if (myProperties != null) {
-      ComponentSerializationUtil.loadComponentState(myProperties, myState.getPropertiesElement());
-    }
+    myCoroutineScope = childScope(breakpointManager.getCoroutineScope(), "XBreakpoint", EmptyCoroutineContext.INSTANCE, true);
+    myId = storeGlobally(this, myCoroutineScope);
     initExpressions();
   }
 
@@ -106,9 +109,24 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myBreakpointManager;
   }
 
+  @ApiStatus.Internal
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull XBreakpointId getBreakpointId() {
+    return myId;
+  }
+
   public final void fireBreakpointChanged() {
     clearIcon();
     myBreakpointManager.fireBreakpointChanged(this);
+    myBreakpointChangedFlow.tryEmit(Unit.INSTANCE);
+  }
+
+  public final Flow<Unit> breakpointChangedFlow() {
+    return myBreakpointChangedFlow;
   }
 
   @Override
@@ -296,7 +314,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setDependencyState(XBreakpointDependencyState state) {
-    myState.setDependencyState(state);
+    if (myState.getDependencyState() != state) {
+      myState.setDependencyState(state);
+      fireBreakpointChanged();
+    }
   }
 
   public @Nullable String getGroup() {
@@ -304,7 +325,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setGroup(String group) {
-    myState.setGroup(StringUtil.nullize(group));
+    String newGroup = StringUtil.nullize(group);
+    if (!Objects.equals(newGroup, myState.getGroup())) {
+      myState.setGroup(newGroup);
+      fireBreakpointChanged();
+    }
   }
 
   public @NlsSafe String getUserDescription() {
@@ -312,11 +337,16 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setUserDescription(String description) {
-    myState.setDescription(StringUtil.nullize(description));
+    String newDescription = StringUtil.nullize(description);
+    if (!Objects.equals(newDescription, myState.getDescription())) {
+      myState.setDescription(newDescription);
+      fireBreakpointChanged();
+    }
   }
 
   public final void dispose() {
     myDisposed = true;
+    cancel(myCoroutineScope, null);
     doDispose();
   }
 
@@ -534,6 +564,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public void setCustomizedPresentation(CustomizedBreakpointPresentation presentation) {
     myCustomizedPresentation = presentation;
+    // Don't call fireBreakpointChanged() here, since it should be queued outside
+    // See XBreakpointManagerImpl.updateBreakpointPresentation()
   }
 
   public @NotNull GutterIconRenderer createGutterIconRenderer() {

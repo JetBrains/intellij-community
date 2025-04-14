@@ -336,7 +336,6 @@ com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSugg
 - sf:Companion:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion$Companion
 - a:getVariant(kotlin.coroutines.Continuation):java.lang.Object
 - getVariants(kotlin.coroutines.Continuation):java.lang.Object
-- bs:getVariants$suspendImpl(com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion$Companion
 - f:build(com.intellij.openapi.util.UserDataHolderBase,kotlin.jvm.functions.Function3):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
 - f:build(com.intellij.openapi.util.UserDataHolderBase,kotlinx.coroutines.flow.Flow):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion

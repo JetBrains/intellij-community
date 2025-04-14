@@ -1,21 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
-import com.intellij.ide.impl.DataValidators
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorComposite
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.performWhenLoaded
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.docking.DockContainer
@@ -23,7 +21,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -39,8 +36,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
       return project.serviceIfCreated<FileEditorManager>() as FileEditorManagerEx?
     }
   }
-
-  private val dataProviders = ArrayList<EditorDataProvider>()
 
   open val dockContainer: DockContainer?
     get() = null
@@ -192,39 +187,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   abstract fun getNextWindow(window: EditorWindow): EditorWindow?
 
   abstract fun getPrevWindow(window: EditorWindow): EditorWindow?
-
-  /** @deprecated Use [com.intellij.openapi.actionSystem.UiDataRule] instead */
-  @Deprecated("Use [UiDataRule] instead", level = DeprecationLevel.ERROR)
-  override fun getData(dataId: String, editor: Editor, caret: Caret): Any? {
-    for (dataProvider in dataProviders) {
-      val o = dataProvider.getData(dataId, editor, caret) ?: continue
-      return DataValidators.validOrNull(o, dataId, dataProvider)
-    }
-    return null
-  }
-
-  /** @deprecated Use [com.intellij.openapi.actionSystem.UiDataRule] instead */
-  @Deprecated("Use [UiDataRule] instead", level = DeprecationLevel.ERROR)
-  override fun registerExtraEditorDataProvider(provider: EditorDataProvider, parentDisposable: Disposable?) {
-    dataProviders.add(provider)
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable) { dataProviders.remove(provider) }
-    }
-  }
-
-  @Deprecated("Drop together with [registerExtraEditorDataProvider]")
-  internal class DataRule : UiDataRule {
-    override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
-      val project = snapshot[PlatformDataKeys.PROJECT] ?: return
-      val caret = snapshot[PlatformDataKeys.CARET] ?: return
-      getInstanceEx(project).dataProviders.forEach { provider ->
-        DataSink.uiDataSnapshot(sink, object : DataProvider, DataValidators.SourceWrapper {
-          override fun getData(dataId: @NonNls String): Any? = provider.getData(dataId, caret.editor, caret)
-          override fun unwrapSource(): Any = provider
-        })
-      }
-    }
-  }
 
   open fun refreshIcons() {}
 

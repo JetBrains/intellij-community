@@ -339,7 +339,6 @@ class MainToolbar(
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
-      widthCalculationListeners.clear()
     }
   }
 

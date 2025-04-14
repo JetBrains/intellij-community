@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 package some.very.very.very.long.packagename
 
 interface A

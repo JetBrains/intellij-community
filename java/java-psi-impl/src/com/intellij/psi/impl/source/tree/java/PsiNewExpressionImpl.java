@@ -133,7 +133,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return resolveConstructor();
   }
 
-  public PsiPolyVariantCachingReference getConstructorFakeReference() {
+  private PsiPolyVariantCachingReference getConstructorFakeReference() {
     return CachedValuesManager.getCachedValue(this, () -> new CachedValueProvider.Result<>(new PsiPolyVariantCachingReference() {
       @Override
       public JavaResolveResult @NotNull [] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {

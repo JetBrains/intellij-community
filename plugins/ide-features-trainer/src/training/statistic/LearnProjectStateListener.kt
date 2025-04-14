@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.statistic
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
@@ -110,7 +111,7 @@ private fun notifyAboutNewLessons(project: Project, newLessons: List<Lesson>) {
   val previousOpenedVersion = CourseManager.instance.previousOpenedVersion
   StatisticBase.logNewLessonsNotification(newLessonsCount, previousOpenedVersion)
   val notification = iftNotificationGroup.createNotification(LearnBundle.message("notification.about.new.lessons"), NotificationType.INFORMATION)
-  notification.icon = FeaturesTrainerIcons.FeatureTrainer
+  notification.icon = AllIcons.Actions.Learn
 
   notification.addAction(object : NotificationAction(LearnBundle.message("notification.show.new.lessons")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {

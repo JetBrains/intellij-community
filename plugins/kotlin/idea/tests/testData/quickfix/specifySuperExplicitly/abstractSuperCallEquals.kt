@@ -1,6 +1,7 @@
 // "Generate 'equals()'" "true"
 // WITH_STDLIB
 // ERROR: Abstract member cannot be accessed directly
+// K2_AFTER_ERROR: Abstract member cannot be accessed directly.
 
 interface I
 
@@ -23,3 +24,4 @@ class B : A(), I {
 
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.UpdateToCorrectMethodFix

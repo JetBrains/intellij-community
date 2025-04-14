@@ -10,14 +10,15 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathUtil
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -26,52 +27,101 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
 
-@ApiStatus.Internal
-fun MutableEntityStorage.getDefinitionLibraryEntity(
-    definition: ScriptDefinition, project: Project, entitySource: KotlinScriptEntitySource
-): LibraryEntity? {
-    val libraryId = LibraryId(".${definition.fileExtension} definition dependencies", LibraryTableId.ProjectLibraryTableId)
-    val entity = libraryId.resolve(this)
-    if (entity != null) {
-        return entity
+val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
+
+fun MutableEntityStorage.createOrUpdateLibrary(
+    libraryName: String, roots: List<LibraryRoot>, source: KotlinScriptEntitySource
+): LibraryDependency {
+    val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
+    val existingLibrary = this.resolve(libraryId)
+
+    if (existingLibrary == null) {
+        createLibrary(libraryId, roots, source)
+    } else {
+        modifyLibraryEntity(existingLibrary) {
+            this.roots = roots.toMutableList()
+        }
     }
 
-    val classes =
-        toVfsRoots(definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies].toClassPathOrEmpty()).sortedBy { it.name }
-
-    val sources =
-        toVfsRoots(definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources].toClassPathOrEmpty()).sortedBy { it.name }
-
-    if (classes.isEmpty() && sources.isEmpty()) {
-        return null
-    }
-
-    val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-
-    val classRoots = classes.map {
-        LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.COMPILED)
-    }
-
-    val sourceRoots = sources.map {
-        LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.SOURCES)
-    }
-
-    return addEntity(
-        LibraryEntity(libraryId.name, libraryId.tableId, classRoots + sourceRoots, entitySource)
-    )
+    return LibraryDependency(libraryId, false, DependencyScope.COMPILE)
 }
 
-inline fun <reified T : ScriptConfigurationsSource<*>> Project.scriptConfigurationsSourceOfType(): T? =
-    SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(this).filterIsInstance<T>().firstOrNull().safeAs<T>()
+fun VirtualFile.sourceLibraryRoot(project: Project): LibraryRoot {
+    val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+    return LibraryRoot(toVirtualFileUrl(urlManager), LibraryRootTypeId.SOURCES)
+}
+
+fun VirtualFile.compiledLibraryRoot(project: Project): LibraryRoot {
+    val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+    return LibraryRoot(toVirtualFileUrl(urlManager), LibraryRootTypeId.COMPILED)
+}
+
+fun MutableEntityStorage.getOrCreateLibrary(
+    libraryName: String, roots: List<LibraryRoot>, source: KotlinScriptEntitySource
+): LibraryDependency {
+    val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
+    if (!this.contains(libraryId)) createLibrary(libraryId, roots, source)
+
+    return LibraryDependency(libraryId, false, DependencyScope.COMPILE)
+}
+
+fun MutableEntityStorage.createLibrary(
+    libraryId: LibraryId, roots: List<LibraryRoot>, source: KotlinScriptEntitySource
+): LibraryEntity {
+    val sortedRoots = roots.sortedWith(ROOT_COMPARATOR)
+    val libraryEntity = LibraryEntity(libraryId.name, libraryId.tableId, sortedRoots, source)
+
+    return addEntity(libraryEntity)
+}
+
+val ROOT_COMPARATOR: Comparator<LibraryRoot> = Comparator { o1, o2 ->
+    when {
+        o1 == o2 -> 0
+        o1 == null -> -1
+        o2 == null -> 1
+        else -> o1.url.url.compareTo(o2.url.url)
+    }
+}
+
+@ApiStatus.Internal
+fun MutableEntityStorage.getOrCreateDefinitionDependency(
+    definition: ScriptDefinition, project: Project, entitySource: EntitySource
+): LibraryDependency {
+    val libraryId = LibraryId(".${definition.fileExtension} definition dependencies", LibraryTableId.ProjectLibraryTableId)
+    if (!this.contains(libraryId)) {
+        val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+
+        val classes = definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies]
+            .toClassPathOrEmpty()
+            .mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
+            .sortedBy { it.name }
+
+        val sources = definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources]
+            .toClassPathOrEmpty()
+            .mapNotNull { ScriptClassPathUtil.findVirtualFile(it.path) }
+            .sortedBy { it.name }
+
+        val classRoots = classes.map {
+            LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.COMPILED)
+        }
+
+        val sourceRoots = sources.map {
+            LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.SOURCES)
+        }
+
+        addEntity(
+            LibraryEntity(libraryId.name, libraryId.tableId, classRoots + sourceRoots, entitySource)
+        )
+    }
+
+    return LibraryDependency(libraryId, false, DependencyScope.COMPILE)
+}
 
 inline fun <reified T : ScriptDefinitionsSource> Project.scriptDefinitionsSourceOfType(): T? =
     SCRIPT_DEFINITIONS_SOURCES.getExtensions(this).filterIsInstance<T>().firstOrNull().safeAs<T>()
 
 val SCRIPT_DEFINITIONS_SOURCES: ProjectExtensionPointName<ScriptDefinitionsSource> =
     ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionsSource")
-
-val SCRIPT_CONFIGURATIONS_SOURCES: ProjectExtensionPointName<ScriptConfigurationsSource<*>> =
-    ProjectExtensionPointName("org.jetbrains.kotlin.scriptConfigurationsSource")
 
 @set: org.jetbrains.annotations.TestOnly
 var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(

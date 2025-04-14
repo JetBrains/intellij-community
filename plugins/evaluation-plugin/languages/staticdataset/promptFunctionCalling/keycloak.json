@@ -1,0 +1,504 @@
+[
+  {
+    "path": "README.md",
+    "sessionsCount": 1,
+    "actions": [
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17d1",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Explain KeycloakSession class",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "exact_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17e4",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "CLASS",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What methods does class AuthenticationManager have?",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "exact_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17d2",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How to create an array in kotlin?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17d3",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Which key combination renames class?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "documentation_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17d4",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "CLASS",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Find all usages of the class RealmModel in the project",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "find_usages"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17e6",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "CLASS",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Find all places in code where constructor of the class UserSessionModel is used",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "find_usages"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17e0",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Find all usages of the method createUser from the class UserProvider in the project",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "find_usages"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17d8",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "CLASS",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Give me the files that contain the text 'KeycloakModelUtils'",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "find_text"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17e1",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What is the syntax for kotlin data class?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17e2",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Find all files that contain a substring that matches given regex: `\\.authenticate`",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "find_text"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17f1",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How to open UML diagram for a class?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "documentation_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17f2",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How to format code?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "documentation_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17f3",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How to give more memory to IDE?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "documentation_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17f4",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Which icons are used for non-suspending breakpoints?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "documentation_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17f5",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Is there a live template for System.out.println?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "documentation_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17f6",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How to open presentation mode?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "documentation_search"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17g1",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How to write a self join in SQL? Look up actual information in SQL docs",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17g2",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Search in docs to answer this question: what is the React context API used for?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17g3",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How to create flask App?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17g4",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Could you explain what the `WITH TIES` clause does in SQL and when you might use it?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17g5",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How does Go handle garbage collection and how it's different from other programming languages?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17g6",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Could you explain the difference between `::` and `::<>` in Rust when importing modules?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h1",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What's the current LTS version of Node.js and what are its key features?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h2",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What are the best practices for using Kotlin coroutines in 2025?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h3",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What are the recent security vulnerabilities in the Spring Framework that I should be aware of?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h4",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How do I implement server-side rendering in the latest version of Next.js?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h5",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What are the new APIs in Java 21 that can make my code more efficient?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h6",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What are the differences between OAuth 2.0 and OAuth 2.1 specifications?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h7",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How can I optimize Docker image size for a Spring Boot application using the latest techniques?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h8",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What are the current recommended methods for securing GraphQL APIs against common vulnerabilities?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17h9",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What are the latest performance benchmarks for popular NoSQL databases in 2025?",
+            "chatSessionModes": "CHAT",
+            "expectedFunctions": "search_web"
+          }
+        },
+        "type": "CALL_FEATURE"
+      }
+    ]
+  }
+]

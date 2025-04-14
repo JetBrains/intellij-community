@@ -12,8 +12,16 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XNavigatable
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceActionBase.Companion.NAVIGATION_TIMEOUT
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.seconds
 
@@ -25,7 +33,8 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
     val project = node.tree.project
 
     project.service<XDebuggerJumpToSourceCoroutineScope>().cs.launch(Dispatchers.EDT) {
-      val navigated = navigateToSource(project, value)
+      val session = DebuggerUIUtil.getSessionProxy(e)
+      val navigated = navigateToSource(project, value, session)
       if (navigated && dialog != null && `is`("debugger.close.dialog.on.navigate")) {
         dialog.close(DialogWrapper.CANCEL_EXIT_CODE)
       }
@@ -35,7 +44,7 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
   /**
    * @return true if the source position is computed and a navigation request is sent, otherwise false
    */
-  protected abstract suspend fun navigateToSource(project: Project, value: XValue): Boolean
+  protected abstract suspend fun navigateToSource(project: Project, value: XValue, session: XDebugSessionProxy?): Boolean
 
   companion object {
     private val NAVIGATION_TIMEOUT = 10.seconds

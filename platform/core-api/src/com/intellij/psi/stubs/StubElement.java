@@ -8,6 +8,7 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public interface StubElement<T extends PsiElement> extends Stub {
 
   @Override
   @NotNull
+  @Unmodifiable
   List<StubElement<?>> getChildrenStubs();
 
   /**

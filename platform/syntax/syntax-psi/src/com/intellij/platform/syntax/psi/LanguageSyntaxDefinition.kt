@@ -6,6 +6,7 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -33,6 +34,7 @@ interface LanguageSyntaxDefinition {
   fun getCommentTokens(): SyntaxElementTypeSet
 
   // todo add necessary methods when required
+  fun getPairedBraces(): Collection<SyntaxGeneratedParserRuntime.BracePair> = emptyList()
 }
 
 /**

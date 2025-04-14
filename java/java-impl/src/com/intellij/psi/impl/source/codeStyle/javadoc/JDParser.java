@@ -40,6 +40,7 @@ public class JDParser {
 
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
+  private final @Nullable JDPreformattingContext myPreformattingContext;
 
   private static final String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
   private static final String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
@@ -68,8 +69,33 @@ public class JDParser {
   private static final String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
 
   public JDParser(@NotNull CodeStyleSettings settings) {
+    this(settings, null);
+  }
+
+  public JDParser(@NotNull CodeStyleSettings settings, @Nullable PsiDocComment oldComment) {
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     myCommonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    myPreformattingContext = getPreformattingContext(oldComment);
+  }
+
+  public @Nullable JDPreformattingContext getPreformattingContext(@Nullable PsiElement element) {
+    if (!(element instanceof PsiDocComment comment)) return null;
+    DocTextInfo docTextInfo = getDocTextInfo(comment);
+    boolean isMarkdown = comment.isMarkdownComment();
+
+    if (!isMarkdown && !JAVADOC_HEADER.equals(docTextInfo.commentHeader)) return null;
+
+    List<Boolean> markers = new ArrayList<>();
+
+    List<String> l = toArray(docTextInfo.comment, markers, isMarkdown);
+    if (l == null) return null;
+
+    preprocessLines(l, markers, isMarkdown);
+
+    EmptyLinesInfo emptyLinesInfo = getEmptyLinesInfo(l, isMarkdown);
+
+    if (emptyLinesInfo == null) return null;
+    return new JDPreformattingContext(emptyLinesInfo.prefixLinesCount, emptyLinesInfo.suffixLinesCount);
   }
 
   public void formatCommentText(@NotNull PsiElement element, @NotNull CommentFormatter formatter) {
@@ -83,7 +109,7 @@ public class JDParser {
   }
 
   private static boolean isJavadoc(CommentInfo info) {
-    return info.docComment.isMarkdownComment() || JAVADOC_HEADER.equals(info.commentHeader);
+    return info.docComment.isMarkdownComment() || JAVADOC_HEADER.equals(info.docTextInfo.commentHeader);
   }
 
   private static CommentInfo getElementsCommentInfo(@Nullable PsiElement psiElement) {
@@ -110,6 +136,11 @@ public class JDParser {
   }
 
   private static CommentInfo getCommentInfo(@NotNull PsiDocComment docComment, @NotNull PsiElement owner) {
+    DocTextInfo docTextInfo = getDocTextInfo(docComment);
+    return new CommentInfo(docComment, owner, docTextInfo);
+  }
+
+  private static @NotNull JDParser.DocTextInfo getDocTextInfo(@NotNull PsiDocComment docComment) {
     String commentHeader = null;
     String commentFooter = null;
 
@@ -134,17 +165,17 @@ public class JDParser {
       sb.append(text);
     }
 
-    return new CommentInfo(docComment, owner, commentHeader, sb.toString(), commentFooter);
+    return new DocTextInfo(commentHeader, sb.toString(), commentFooter);
   }
 
   private @NotNull JDComment parse(@NotNull CommentInfo info, @NotNull CommentFormatter formatter) {
     JDComment comment = createComment(info.commentOwner, formatter, info.docComment.isMarkdownComment());
-    parse(info.comment, comment);
-    if (info.commentHeader != null) {
-      comment.setFirstCommentLine(info.commentHeader);
+    parse(info.docTextInfo.comment, comment);
+    if (info.docTextInfo.commentHeader != null) {
+      comment.setFirstCommentLine(info.docTextInfo.commentHeader);
     }
-    if (info.commentFooter != null) {
-      comment.setLastCommentLine(info.commentFooter);
+    if (info.docTextInfo.commentFooter != null) {
+      comment.setLastCommentLine(info.docTextInfo.commentFooter);
     }
     return comment;
   }
@@ -180,41 +211,18 @@ public class JDParser {
     int size = l.size();
     if (size == 0) return;
 
-    // preprocess strings - removes leading token
-    for (int i = 0; i < size; i++) {
-      String line = l.get(i);
-      line = line.trim();
-      if (!line.isEmpty()) {
-        if(!comment.getIsMarkdown()){
-          if (line.charAt(0) == '*') {
-            if ((markers.get(i)).booleanValue()) {
-              if (line.length() > 1 && line.charAt(1) == ' ') {
-                line = line.substring(2);
-              }
-              else {
-                line = line.substring(1);
-              }
-            }
-            else {
-              line = line.substring(1).trim();
-            }
-          }
-        } else {
-          // Note: Markdown comments are not trimmed like html ones, except for javadoc tags
-          String newLine;
-          int tagStart = CharArrayUtil.shiftForward(line, 3, " \t");
-          if (tagStart != line.length() && line.charAt(tagStart) == '@') {
-            newLine = line.substring(tagStart);
-          } else {
-            newLine = StringUtil.trimStart(line, "/// ");
-            if (Strings.areSameInstance(newLine, line)) {
-              newLine = StringUtil.trimStart(line, "///");
-            }
-          }
-          line = newLine;
-        }
+    preprocessLines(l, markers, comment.getIsMarkdown());
+
+    if (myPreformattingContext != null) {
+      comment.setPrefixEmptyLineCount(myPreformattingContext.getPrefixLinesCount());
+      comment.setSuffixEmptyLineCount(myPreformattingContext.getSuffixLinesCount());
+    }
+    else {
+      EmptyLinesInfo emptyLinesInfo = getEmptyLinesInfo(l, comment.getIsMarkdown());
+      if (emptyLinesInfo != null) {
+      comment.setPrefixEmptyLineCount(emptyLinesInfo.prefixLinesCount);
+      comment.setSuffixEmptyLineCount(emptyLinesInfo.suffixLinesCount);
       }
-      l.set(i, line);
     }
 
     StringBuilder sb = new StringBuilder();
@@ -275,6 +283,64 @@ public class JDParser {
     }
   }
 
+  private @Nullable EmptyLinesInfo getEmptyLinesInfo(@NotNull List<String> l, boolean isMarkdown) {
+    if (!mySettings.shouldKeepEmptyTrailingLines()) return null;
+    // counting for the empty lines in the prefix and the suffix of the javadoc to restore them in the future
+    int prefixLineCount = 0;
+    int suffixLineCount = 0;
+    int size = l.size();
+    while (prefixLineCount < size && l.get(prefixLineCount).isEmpty()) prefixLineCount++;
+    if (prefixLineCount == size) {
+      if (isMarkdown) prefixLineCount--;
+
+      return new EmptyLinesInfo(prefixLineCount, 0);
+    }
+    else {
+      while (suffixLineCount < size && l.get(size - suffixLineCount - 1).isEmpty()) suffixLineCount++;
+
+      return new EmptyLinesInfo(prefixLineCount, suffixLineCount);
+    }
+  }
+
+  private static void preprocessLines(List<String> l, List<Boolean> markers, boolean isMarkdown) {
+    // preprocess strings - removes leading token
+    for (int i = 0; i < l.size(); i++) {
+      String line = l.get(i);
+      line = line.trim();
+      if (!line.isEmpty()) {
+        if(!isMarkdown){
+          if (line.charAt(0) == '*') {
+            if ((markers.get(i)).booleanValue()) {
+              if (line.length() > 1 && line.charAt(1) == ' ') {
+                line = line.substring(2);
+              }
+              else {
+                line = line.substring(1);
+              }
+            }
+            else {
+              line = line.substring(1).trim();
+            }
+          }
+        } else {
+          // Note: Markdown comments are not trimmed like html ones, except for javadoc tags
+          String newLine;
+          int tagStart = CharArrayUtil.shiftForward(line, 3, " \t");
+          if (tagStart != line.length() && line.charAt(tagStart) == '@') {
+            newLine = line.substring(tagStart);
+          } else {
+            newLine = StringUtil.trimStart(line, "/// ");
+            if (Strings.areSameInstance(newLine, line)) {
+              newLine = StringUtil.trimStart(line, "///");
+            }
+          }
+          line = newLine;
+        }
+      }
+      l.set(i, line);
+    }
+  }
+
   /**
    * Breaks the specified string by the specified separators into array of strings
    *
@@ -286,7 +352,7 @@ public class JDParser {
    */
   private @Nullable List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers, boolean markdownComment) {
     if (s == null) return null;
-    s = markdownComment ? s : s.trim();
+    s = markdownComment ? s.stripTrailing() : s.strip();
     if (s.isEmpty()) return null;
     boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES && !markdownComment;
     List<String> list = new ArrayList<>();
@@ -948,7 +1014,12 @@ public class JDParser {
     return false;
   }
 
-  private record CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment,
-                             String commentFooter) {
+  private record CommentInfo(PsiDocComment docComment, PsiElement commentOwner, DocTextInfo docTextInfo) {
+  }
+  
+  private record DocTextInfo(String commentHeader, String comment, String commentFooter) {
+  }
+
+  private record EmptyLinesInfo(int prefixLinesCount, int suffixLinesCount) {
   }
 }

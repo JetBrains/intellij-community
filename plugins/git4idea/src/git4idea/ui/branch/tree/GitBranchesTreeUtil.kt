@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.TreeUtil
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import java.awt.event.ActionEvent
@@ -36,13 +35,11 @@ object GitBranchesTreeUtil {
 
   internal fun canSelect(project: Project, tree: JTree, node: Any?): Boolean {
     val model = tree.model
-    // if GitRepository and TopLevelRepository nodes present in the model at the same time, only TopLevelRepository can be selected
-    if (node is GitRepository && model is GitBranchesTreeMultiRepoFilteringModel) return model.isLeaf(node)
-
     return when (node) {
       is PopupFactoryImpl.ActionItem -> GitBranchesTreePopupFilterByAction.isSelected(project)
-      is GitRepository -> GitBranchesTreePopupFilterByRepository.isSelected(project)
-      is GitBranchesTreeModel.TopLevelRepository -> GitBranchesTreePopupFilterByRepository.isSelected(project)
+      is GitBranchesTreeModel.RepositoryNode -> {
+        if (model is GitBranchesTreeMultiRepoFilteringModel && !node.isLeaf) false else GitBranchesTreePopupFilterByRepository.isSelected(project)
+      }
       else -> model.isLeaf(node)
     }
   }

@@ -2,7 +2,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
@@ -35,7 +35,7 @@ public final class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspe
   @Override
   protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
-    return new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, aClass);
+    return LocalQuickFix.from(new AddAnnotationModCommandAction(CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, aClass));
   }
 
   @Override

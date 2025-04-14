@@ -7,10 +7,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.PathUtil
@@ -113,19 +115,20 @@ private suspend fun doStartProcess(
   workingDirectory: Path,
   initialTermSize: TermSize,
 ): PtyProcess {
-  // TODO migrate to generated builders in 252 (not available in 251)
-  @Suppress("DEPRECATION")
-  val execOptions = EelExecApi.ExecuteProcessOptions.Builder(command.first())
+  val execOptions = eelApi.exec.execute(command.first())
     .args(command.takeLast(command.size - 1))
     .env(envs)
     .workingDirectory(workingDirectory.asEelPath())
     .ptyOrStdErrSettings(EelExecApi.Pty(initialTermSize.columns, initialTermSize.rows, true))
-    .build()
-  val processResult = eelApi.exec.execute(execOptions)
+  val processResult = execOptions.eelIt()
   return when (processResult) {
     is EelResult.Ok -> processResult.value.convertToJavaProcess() as PtyProcess
     is EelResult.Error -> throw ErrnoException(processResult.error)
   }
+}
+
+internal fun shouldUseEelApi(): Boolean {
+  return `is`("terminal.use.EelApi", false)
 }
 
 internal class ErrnoException(val error: ExecuteProcessError): Exception(error.message)

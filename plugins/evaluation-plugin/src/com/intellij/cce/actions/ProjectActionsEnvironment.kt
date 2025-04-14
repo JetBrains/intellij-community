@@ -54,7 +54,7 @@ open class ProjectActionsEnvironment(
   }
   private var datasetRefIsHandled = false
 
-  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
+  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language), strategy)
   override val checkSdk: EvaluationStep? = CheckProjectSdkStep(project, config.language)
 
   override val preparationDescription: String = "Generating actions by selected files"
@@ -83,7 +83,7 @@ open class ProjectActionsEnvironment(
     if (!datasetRefIsHandled) {
       if (datasetRef != null) {
         datasetRef.prepare(datasetContext)
-        val path = datasetContext.path(datasetRef.name)
+        val path = datasetContext.path(datasetRef)
         val finalPath = DatasetRefConverter().convert(datasetRef, datasetContext, project) ?: path
         datasetContext.replaceActionsStorage(ActionsSingleFileStorage(finalPath))
      }

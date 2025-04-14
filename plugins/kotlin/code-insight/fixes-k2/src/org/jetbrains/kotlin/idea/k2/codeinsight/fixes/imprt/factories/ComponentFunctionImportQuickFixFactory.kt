@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.psi.KtExpression
 internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
         when (diagnostic) {
-            is KaFirDiagnostic.ComponentFunctionMissing -> {
+            is KaFirDiagnostic.ComponentFunctionMissing,
+            is KaFirDiagnostic.ComponentFunctionAmbiguity -> {
                 val destructuredExpression = diagnostic.psi as? KtExpression ?: return null
                 ImportContext(destructuredExpression, ImportPositionTypeAndReceiver.OperatorCall(destructuredExpression))
             }
@@ -26,6 +27,7 @@ internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixF
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name> {
         val missingName = when (diagnostic) {
             is KaFirDiagnostic.ComponentFunctionMissing -> diagnostic.missingFunctionName
+            is KaFirDiagnostic.ComponentFunctionAmbiguity -> diagnostic.functionWithAmbiguityName
             else -> null
         }
 

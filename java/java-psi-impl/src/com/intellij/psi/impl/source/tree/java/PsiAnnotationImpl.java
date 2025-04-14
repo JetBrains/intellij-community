@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -19,8 +19,6 @@ import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> implements PsiAnnotation {
   private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR =
@@ -63,7 +61,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
   @Override
   public @NotNull PsiAnnotationParameterList getParameterList() {
-    return (PsiAnnotationParameterList)Objects.requireNonNull(getStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST));
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST, PsiAnnotationParameterList.class);
   }
 
   @Override

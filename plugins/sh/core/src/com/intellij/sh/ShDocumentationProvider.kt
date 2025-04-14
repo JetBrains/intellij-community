@@ -16,7 +16,7 @@ import com.intellij.platform.eel.path.EelPath.Companion.parse
 import com.intellij.platform.eel.path.pathSeparator
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.where
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement

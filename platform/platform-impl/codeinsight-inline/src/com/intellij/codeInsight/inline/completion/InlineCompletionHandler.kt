@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentChangesTrackerImpl
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.UserFactorsListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -37,10 +39,20 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
@@ -80,28 +92,25 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     val logsListener = InlineCompletionLogsListener(editor)
     addEventListener(logsListener)
     invalidationListeners.addListener(logsListener)
+    addEventListener(UserFactorsListener())
   }
 
   /**
    * Frontend always starts a session. Backend never starts a session. Instead, the backend will send a notification to the frontend.
    */
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun startSessionOrNull(
     request: InlineCompletionRequest,
     provider: InlineCompletionProvider
   ): InlineCompletionSession?
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun doHide(context: InlineCompletionContext, finishType: FinishType)
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun createSessionManager(): InlineCompletionSessionManager
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun afterInsert(providerId: InlineCompletionProviderID)
 
   fun addEventListener(listener: InlineCompletionEventListener) {
@@ -405,6 +414,10 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
       if (event.providerId != this@isEnabledConsideringEventRequirements.id && this !is RemDevAggregatorInlineCompletionProvider) {
         return false
       }
+    }
+    val editorType = InlineCompletionEditorType.get(editor)
+    if (!isEditorTypeSupported(editorType)) {
+      return false
     }
     return isEnabled(event)
   }

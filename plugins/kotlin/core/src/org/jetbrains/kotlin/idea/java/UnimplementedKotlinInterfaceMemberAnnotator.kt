@@ -18,8 +18,7 @@ import org.jetbrains.kotlin.config.jvmDefaultMode
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
-import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_DEFAULT_FQ_NAME
+import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_STATIC_FQ_NAME
 import org.jetbrains.kotlin.utils.ifEmpty
 
 class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
@@ -60,12 +59,7 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
         val psiMethod = method.method
         if (psiMethod.isBinaryOrigin) return false
 
-        val hasJvmDefaultOrJvmStatic = psiMethod.modifierList.annotations.any { annotation ->
-            val qualifiedName = annotation.qualifiedName
-            qualifiedName == JVM_DEFAULT_FQ_NAME.asString() || qualifiedName == JVM_STATIC_ANNOTATION_FQ_NAME.asString()
-        }
-
-        if (hasJvmDefaultOrJvmStatic) return false
+        if (psiMethod.modifierList.annotations.any { it.qualifiedName == JVM_STATIC_FQ_NAME.asString() }) return false
 
         val jvmDefaultMode = psiMethod.languageVersionSettings.jvmDefaultMode
         return !jvmDefaultMode.isEnabled

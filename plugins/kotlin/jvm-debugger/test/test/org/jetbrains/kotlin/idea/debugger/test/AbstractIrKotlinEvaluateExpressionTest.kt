@@ -9,14 +9,12 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.memory.utils.InstanceValueDescriptor
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
-import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.ExtensionPoint
@@ -41,7 +39,6 @@ import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.debugger.evaluate.DebugContextProvider
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
-import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinterDelegate
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
@@ -163,12 +160,20 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 }
             }
 
-            printFrame(this) {
+            printFrameIfNeeded(this) {
                 resume(this)
             }
         }
 
         finish()
+    }
+
+    private fun printFrameIfNeeded(suspendContext: SuspendContextImpl, completion: SuspendContextImpl.() -> Unit) {
+        if (!isFrameTest) {
+            completion(suspendContext)
+            return
+        }
+        printFrame(suspendContext, completion)
     }
 
     private fun performMultipleBreakpointTest(data: EvaluationTestData) {
@@ -178,33 +183,12 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                     try {
                         evaluate(this, expression, CodeFragmentKind.EXPRESSION, expected)
                     } finally {
-                        printFrame(this) { resume(this) }
+                        printFrameIfNeeded(this) { resume(this) }
                     }
                 }
             }
         }
         finish()
-    }
-
-    private fun printFrame(suspendContext: SuspendContextImpl, completion: () -> Unit) {
-        if (!isFrameTest) {
-            completion()
-            return
-        }
-
-        processStackFramesOnPooledThread {
-            for (stackFrame in this) {
-                val result = FramePrinter(suspendContext).print(stackFrame)
-                print(result, ProcessOutputTypes.SYSTEM)
-            }
-            assert(debugProcess.isAttached)
-            suspendContext.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
-                override fun contextAction(suspendContext: SuspendContextImpl) {
-                    completion()
-                }
-                override fun commandCancelled() = error(message = "Test was cancelled")
-            })
-        }
     }
 
     override fun evaluate(suspendContext: SuspendContextImpl, textWithImports: TextWithImportsImpl) {

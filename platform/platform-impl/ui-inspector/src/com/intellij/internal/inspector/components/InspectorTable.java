@@ -9,7 +9,9 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.*;
+import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -37,6 +39,8 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -72,6 +76,8 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
   private final MyModel myModel;
   private StripeTable myTable;
   private ConsoleView myPreviewComponent;
+  private JBTabsImpl myTabs;
+  private List<UiInspectorAccessibilityInspection> myFailedInspections;
 
   InspectorTable(final @NotNull List<? extends PropertyBean> clickInfo, @Nullable Project project) {
     super(true, 0.75f);
@@ -101,8 +107,27 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     init(null);
   }
 
+  InspectorTable(final @NotNull Component component, @Nullable Project project, List<UiInspectorAccessibilityInspection> failedInspections) {
+    super(true, 0.75f);
+    myProject = project;
+    myModel = new MyModel(component);
+    myFailedInspections = failedInspections;
+    init(component);
+  }
+
+  InspectorTable(final @NotNull List<? extends PropertyBean> clickInfo, @Nullable Project project, List<UiInspectorAccessibilityInspection> failedInspections) {
+    super(true, 0.75f);
+    myProject = project;
+    myModel = new MyModel(clickInfo);
+    myFailedInspections = failedInspections;
+    init(null);
+  }
+
   private void init(@Nullable Component component) {
     setSplitterProportionKey("UiInspector.table.splitter.proportion");
+
+    assert myProject != null;
+    myTabs = new JBTabsImpl(myProject);
 
     myTable = new StripeTable(myModel);
     TableSpeedSearch.installOn(myTable);
@@ -178,15 +203,34 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
 
     setFirstComponent(new JBScrollPane(myTable));
     if (component != null) {
-      setSecondComponent(new DimensionsComponent(component));
+      myTabs.setHideTabs(true);
+      TabInfo previewTab = new TabInfo(new DimensionsComponent(component));
+      previewTab.setText(InternalActionsBundle.message("ui.inspector.accessibility.audit.previewText"));
+      myTabs.addTab(previewTab);
+      setSecondComponent(myTabs.getComponent());
     }
   }
 
   public void refresh() {
     myModel.refresh();
-    if (myModel.myComponent != null) {
-      setSecondComponent(new DimensionsComponent(myModel.myComponent));
+
+    TabInfo previewTab = null;
+    for (TabInfo tab : myTabs.getTabs()) {
+      if (InternalActionsBundle.message("ui.inspector.accessibility.audit.previewText").equals(tab.getText())) {
+        previewTab = tab;
+        break;
+      }
     }
+
+    if (previewTab != null) {
+      previewTab.setComponent(new DimensionsComponent(myModel.myComponent));
+    } else {
+      previewTab = new TabInfo(new DimensionsComponent(myModel.myComponent));
+      previewTab.setText(InternalActionsBundle.message("ui.inspector.accessibility.audit.previewText"));
+      myTabs.addTab(previewTab);
+    }
+
+    setSecondComponent(myTabs.getComponent());
   }
 
   @Override
@@ -417,9 +461,15 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
       }
       selectedProperty = property;
 
+      myTabs.setHideTabs(true);
+      myTabs.removeAllTabs();
+
       if (value instanceof Dimension || value instanceof Rectangle || value instanceof Border || value instanceof Insets) {
         if (myModel.myComponent != null) {
-          setSecondComponent(new DimensionsComponent(myModel.myComponent));
+          TabInfo previewTab = new TabInfo(new DimensionsComponent(myModel.myComponent));
+          previewTab.setText(InternalActionsBundle.message("ui.inspector.accessibility.audit.previewText"));
+          myTabs.addTab(previewTab);
+          setSecondComponent(myTabs.getComponent());
         }
       }
       else if (myProject != null) {
@@ -447,7 +497,32 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
         };
         ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, previewUpdateIndicator);
 
-        setSecondComponent(myPreviewComponent.getComponent());
+        TabInfo previewTab = new TabInfo(myPreviewComponent.getComponent());
+        previewTab.setText(InternalActionsBundle.message("ui.inspector.accessibility.audit.previewText"));
+        myTabs.addTab(previewTab);
+
+        setSecondComponent(myTabs.getComponent());
+
+        int inspectionCount = 0;
+        if (myFailedInspections != null && !myFailedInspections.isEmpty() && myModel.myComponent instanceof Accessible) {
+          for (UiInspectorAccessibilityInspection failedInspection : myFailedInspections) {
+            if (failedInspection.getPropertyName().equalsIgnoreCase(selectedProperty.trim())) {
+              myTabs.setHideTabs(false);
+
+              inspectionCount++;
+
+              String inspectionName = InternalActionsBundle.message("ui.inspector.accessibility.audit.inspectionText", inspectionCount);
+
+              JTextArea textArea = new JTextArea(failedInspection.getDescription());
+              textArea.setEditable(false);
+
+              TabInfo newTab = new TabInfo(new JBScrollPane(textArea));
+              newTab.setText(inspectionName);
+
+              myTabs.addTab(newTab);
+            }
+          }
+        }
       }
     }
 
@@ -608,7 +683,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     }
   }
 
-  private static final class PropertyNameRenderer extends DefaultTableCellRenderer {
+  private final class PropertyNameRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
@@ -621,6 +696,20 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
       boolean changed = false;
       if (model instanceof MyModel) {
         changed = ((MyModel)model).myProperties.get(row).changed;
+      }
+
+      String propertyName = (value != null) ? value.toString() : "";
+      if (myFailedInspections != null) {
+        for (UiInspectorAccessibilityInspection failedInspection : myFailedInspections) {
+          if (failedInspection.getPropertyName().equalsIgnoreCase(propertyName.trim())) {
+            this.setIcon(failedInspection.getIcon());
+            this.setHorizontalTextPosition(LEFT);
+            break;
+          }
+          else {
+            this.setIcon(null);
+          }
+        }
       }
 
       Color fg = isSelected ? table.getSelectionForeground()

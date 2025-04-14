@@ -7,6 +7,7 @@ import com.intellij.core.CoreBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.ReadModuleContext
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.xml.dom.XmlInterner
@@ -14,7 +15,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
@@ -35,7 +36,13 @@ class DescriptorListLoadingContext(
   val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
   val essentialPlugins: List<PluginId> by lazy { customEssentialPlugins ?: ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() }
   private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
-  
+
+  fun patchPlugin(builder: PluginDescriptorBuilder) {
+    if (builder.version == null) {
+      builder.version = defaultVersion
+    }
+  }
+
   @JvmField
   internal val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
 
@@ -66,7 +73,7 @@ class DescriptorListLoadingContext(
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.logger.warn("Cannot load $file", e)
     globalErrors.add(Supplier {
-      CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", pluginPathToUserString(file))
+      CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", PluginUtils.pluginPathToUserString(file))
     })
   }
 
@@ -92,9 +99,6 @@ class DescriptorListLoadingContext(
       ref[0] = null
     }
   }
-
-  val visitedFiles: MutableList<String>
-    get() = threadLocalXmlFactory.get()[0]!!.visitedFiles
 
   fun checkOptionalConfigShortName(configFile: String, descriptor: IdeaPluginDescriptor): Boolean {
     val configNames = optionalConfigNames
@@ -149,8 +153,6 @@ private val EXTRA_STRINGS = Arrays.asList(
 private class MyXmlInterner : XmlInterner {
   @Suppress("SSBasedInspection")
   private val strings = ObjectOpenHashSet<String>(256)
-
-  @JvmField val visitedFiles = ArrayList<String>(3)
 
   init {
     strings.addAll(CLASS_NAMES)

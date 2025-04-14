@@ -432,14 +432,21 @@ public class ConsoleHistoryController implements Disposable {
           editor.setHighlighter(new LexerEditorHighlighter(highlighter, editor.getColorsScheme()));
           return editor;
         }
+
+        @Override
+        protected void doOKAction() {
+          if (myConsole.getCurrentEditor().getComponent().isShowing()) {
+            setConsoleText(new Entry(getSelectedText(), -1), false, true);
+          }
+          super.doOKAction();
+        }
       };
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
       chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - 1));
+      chooser.setModal(false);
 
-      if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
-        setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
-      }
+      chooser.show();
     }
 
 

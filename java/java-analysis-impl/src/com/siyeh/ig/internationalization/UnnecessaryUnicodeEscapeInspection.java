@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -122,22 +122,14 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
         if (!isEscape) {
           continue;
         }
-        int nextChar = i + 1;
-        while (nextChar < length && text.charAt(nextChar) == 'u') {
-          nextChar++; // \uuuuFFFD is a legal Unicode escape
-        }
-        if (nextChar == i + 1 || nextChar + 3 >= length) {
-          continue;
-        }
-        if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        final int nextChar = detectUnicodeEscape(text, i, length);
+        if (nextChar != -1) {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
-          if (d == '\uFFFD') {
+          if (d == '\uFFFD' || (d == '\\' && detectUnicodeEscape(text, escapeEnd - 1, length) != -1)) {
             // this character is used as a replacement when a unicode character can't be displayed
             // replacing the escape with the character may cause confusion, so ignore it.
+            // skip if another escape sequence follows '\' without being properly escaped.
             continue;
           }
           final int type = Character.getType(d);
@@ -175,6 +167,23 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           registerErrorAtOffset(element, i - range.getStartOffset(), escapeEnd - i, Character.valueOf(d), rangeMarker);
         }
       }
+    }
+
+    private static int detectUnicodeEscape(String text, int offset, int length) {
+      int nextChar = offset + 1;
+      while (nextChar < length && text.charAt(nextChar) == 'u') {
+        nextChar++; // \uuuuFFFD is a legal Unicode escape
+      }
+      if (nextChar == offset + 1 || nextChar + 3 >= length) {
+        return -1;
+      }
+      if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        return nextChar;
+      }
+      return -1;
     }
   }
 }

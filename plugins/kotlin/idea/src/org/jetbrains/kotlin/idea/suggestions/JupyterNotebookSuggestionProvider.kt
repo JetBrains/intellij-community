@@ -14,12 +14,14 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 
 
+// Universal checker for all notebook languages
 private val JupyterAndNotebookFilesEnablementChecker: PluginEnablementChecker = PluginEnablementChecker(
     notebookLanguages = null,
     dismissedKey = "jupyter.suggestion.dismissed",
@@ -44,6 +46,7 @@ private val KotlinNotebookEnablementChecker: PluginEnablementChecker = PluginEna
     ) + JupyterAndNotebookFilesEnablementChecker.pluginIds,
 )
 
+// More universal checkers should go later in the list
 private val enablementCheckers = listOf(
     KotlinNotebookEnablementChecker,
     JupyterAndNotebookFilesEnablementChecker,
@@ -58,13 +61,22 @@ internal class JupyterNotebookSuggestionProvider : PluginSuggestionProvider {
         // Copy the file extension from `com.intellij.jupyter.core.jupyter.JupyterFileType` to avoid
         // having a dependency on the Jupyter module.
         if (file.extension != "ipynb") return null
-        if (enablementCheckers.any { it.pluginsInstalledAndEnabled() }) return null
-        if (enablementCheckers.any { it.isSuggestionDismissed() }) return null
 
-        // We should only consider notebooks configured to use the Kotlin kernel.
+        val notebookLanguage = getNotebookLanguage(file)
+        val enablementChecker = enablementCheckers.first { checker ->
+            checker.isNotebookLanguageSupported(notebookLanguage)
+        }
+
+        if (enablementChecker.isSuggestionDismissed()) return null
+        if (enablementChecker.pluginsInstalledAndEnabled()) return null
+
+        return JupyterPluginSuggestion(project, enablementChecker)
+    }
+
+    private fun getNotebookLanguage(file: VirtualFile): String? {
         // Any error in the JSON file or format will be ignored as it is handled as part
         // of opening the file in the editor.
-        val notebookLanguage = try {
+        return try {
             val json = JsonParser.parseString(file.readText())
             json.asJsonObject["metadata"]
                 ?.asJsonObject?.get("language_info")
@@ -72,14 +84,8 @@ internal class JupyterNotebookSuggestionProvider : PluginSuggestionProvider {
                 ?.asString
                 ?.lowercase()
         } catch (_: Throwable) {
-            return null
+            null
         }
-
-        val enablementChecker = enablementCheckers.first { checker ->
-            checker.notebookLanguages == null ||
-                    notebookLanguage != null && notebookLanguage in checker.notebookLanguages
-        }
-        return JupyterPluginSuggestion(project, enablementChecker)
     }
 }
 
@@ -118,13 +124,18 @@ private class JupyterPluginSuggestion(
 }
 
 private class PluginEnablementChecker(
-    val notebookLanguages: Set<String>?,
+    private val notebookLanguages: Set<String>?,
     private val dismissedKey: String,
-    val suggestionText: String,
-    val suggestionActionText: String,
+    val suggestionText: @NlsContexts.Label String,
+    val suggestionActionText: @NlsContexts.Label String,
     val requiresIdeRestart: Boolean,
     val pluginIds: List<String>,
 ) {
+    fun isNotebookLanguageSupported(languageId: String?): Boolean {
+        if (notebookLanguages == null) return true
+        if (languageId == null) return false
+        return languageId in notebookLanguages
+    }
     fun isSuggestionDismissed(): Boolean = PropertiesComponent.getInstance().isTrueValue(dismissedKey)
     fun dismissSuggestion(): Unit = PropertiesComponent.getInstance().setValue(dismissedKey, true)
     fun pluginsInstalledAndEnabled(): Boolean {

@@ -1,7 +1,7 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory"/>
+    <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory" dynamic="false"/>
 
     <extensionPoint name="appStarter"
                     interface="com.intellij.openapi.application.ApplicationStarter"
@@ -88,13 +88,13 @@
                     dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->
-    <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
+    <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean" dynamic="true"/>
 
-    <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension"/>
+    <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" dynamic="false"/>
 
     <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
-                    area="IDEA_PROJECT"/>
-    <extensionPoint name="fileTypeRegistrar" interface="com.intellij.ide.highlighter.FileTypeRegistrar"/>
+                    area="IDEA_PROJECT" dynamic="false"/>
+    <extensionPoint name="fileTypeRegistrar" interface="com.intellij.ide.highlighter.FileTypeRegistrar" dynamic="false"/>
 
     <extensionPoint name="gitRepositoryInitializer"
                     interface="com.intellij.openapi.GitRepositoryInitializer"
@@ -110,7 +110,7 @@
 
     <extensionPoint name="undoReportHandler" interface="com.intellij.openapi.command.impl.UndoReportHandler" dynamic="true"/>
 
-    <extensionPoint name="cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT"/>
+    <extensionPoint name="cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT" dynamic="false"/>
 
     <extensionPoint name="lang.syntaxHighlighterFactory"
                     beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP"
@@ -121,8 +121,7 @@
     <extensionPoint name="projectOpenProcessor"
                     interface="com.intellij.projectImport.ProjectOpenProcessor"
                     dynamic="true"/>
-    <extensionPoint name="projectSetProcessor"
-                    interface="com.intellij.projectImport.ProjectSetProcessor"/>
+    <extensionPoint name="projectSetProcessor" interface="com.intellij.projectImport.ProjectSetProcessor" dynamic="true"/>
     <extensionPoint name="lowLevelProjectOpenProcessor"
                     interface="com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor"
                     dynamic="true"/>
@@ -155,7 +154,7 @@
     <extensionPoint name="editorAutoClosingHandler" interface="com.intellij.openapi.fileEditor.impl.EditorAutoClosingHandler" dynamic="true"/>
 
     <extensionPoint name="http.localFileFinder" interface="com.intellij.openapi.fileEditor.impl.http.LocalFileFinder" dynamic="true"/>
-    <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider"/>
+    <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider" dynamic="false"/>
 
     <extensionPoint name="editorActionHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.EditorActionHandler"/>
@@ -167,10 +166,10 @@
 
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
 
-    <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean">
+    <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean" dynamic="false">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.TypedActionHandler"/>
     </extensionPoint>
-    <extensionPoint name="rawEditorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean">
+    <extensionPoint name="rawEditorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean" dynamic="false">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.TypedActionHandler"/>
     </extensionPoint>
 
@@ -196,7 +195,7 @@
 
     <extensionPoint name="defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
 
-    <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
+    <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider" dynamic="false"/>
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider" dynamic="true"/>
     <extensionPoint name="welcomeTabFactory" interface="com.intellij.openapi.wm.WelcomeTabFactory" dynamic="true"/>
     <extensionPoint name="interactiveCourseFactory" interface="com.intellij.openapi.wm.InteractiveCourseFactory" dynamic="true"/>
@@ -206,7 +205,7 @@
     <extensionPoint name="welcome.projectDetector" interface="com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector" dynamic="true"/>
 
     <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider" dynamic="true"/>
-    <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker"/>
+    <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker" dynamic="false"/>
     <extensionPoint name="statistic.eventLog.externalEventLogSettings" interface="com.intellij.internal.statistic.eventLog.ExternalEventLogSettings" dynamic="true"/>
     <extensionPoint name="statistic.eventLog.externalListenerProvider" interface="com.intellij.internal.statistic.eventLog.ExternalEventLogListenerProviderExtension" dynamic="true"/>
 
@@ -217,7 +216,7 @@
 
     <extensionPoint name="backedVirtualFileProvider" interface="com.intellij.notebook.editor.BackedVirtualFileProvider" dynamic="true"/>
 
-    <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
+    <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP" dynamic="false">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
 
@@ -279,7 +278,7 @@
       <with attribute="implementationClass" implements="com.intellij.navigation.ItemPresentationProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="classpathStorageProvider" interface="com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider"/>
+    <extensionPoint name="classpathStorageProvider" interface="com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider" dynamic="false"/>
     <extensionPoint name="fileTypeOverrider" interface="com.intellij.openapi.fileTypes.impl.FileTypeOverrider" dynamic="true"/>
 
     <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor" dynamic="true"/>
@@ -321,7 +320,7 @@
 
     <extensionPoint name="remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider" dynamic="true"/>
 
-    <extensionPoint name="colorAndFontOptionsImportHandler" interface="com.intellij.application.options.colors.ImportHandler"/>
+    <extensionPoint name="colorAndFontOptionsImportHandler" interface="com.intellij.application.options.colors.ImportHandler" dynamic="true"/>
 
     <extensionPoint name="codeInsight.template.postfixTemplateProvider"
                     dynamic="true"
@@ -352,7 +351,7 @@
     <extensionPoint name="diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.merge.external.AutomaticExternalMergeTool" interface="com.intellij.diff.merge.external.AutomaticExternalMergeTool" dynamic="true"/>
-    <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
+    <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener" dynamic="true"/>
 
     <extensionPoint name="execution.syntheticConfigurationTypeProvider"
                     interface="com.intellij.execution.configurations.SyntheticConfigurationTypeProvider"
@@ -374,32 +373,32 @@
 
     <extensionPoint name="jbProtocolCommand" interface="com.intellij.openapi.application.JBProtocolCommand" dynamic="true"/>
 
-    <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" />
+    <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" dynamic="false" />
     <extensionPoint name="vfs.local.fileOperationsHandler" interface="com.intellij.openapi.vfs.LocalFileOperationsHandler" dynamic="true" />
 
-    <extensionPoint name="gutterMarkPreprocessor" interface="com.intellij.openapi.editor.GutterMarkPreprocessor" />
+    <extensionPoint name="gutterMarkPreprocessor" interface="com.intellij.openapi.editor.GutterMarkPreprocessor" dynamic="true" />
     <extensionPoint name="remote.credentialsType" interface="com.intellij.remote.CredentialsType" dynamic="true"/>
     <extensionPoint name="remote.credentialsLanguageContribution"
                     interface="com.intellij.remote.ext.CredentialsLanguageContribution" dynamic="true"/>
     <extensionPoint name="stripTrailingSpacesFilterFactory" interface="com.intellij.openapi.editor.StripTrailingSpacesFilterFactory" dynamic="true"/>
 
-    <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
-    <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
+    <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean" dynamic="false"/>
+    <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean" dynamic="false"/>
 
     <extensionPoint name="notificationRemindLaterHandler" interface="com.intellij.notification.NotificationRemindLaterHandler" dynamic="true"/>
 
     <extensionPoint name="troubleInfoCollector" interface="com.intellij.troubleshooting.TroubleInfoCollector" dynamic="true"/>
     <extensionPoint name="generalTroubleInfoCollector" interface="com.intellij.troubleshooting.GeneralTroubleInfoCollector" dynamic="true"/>
 
-    <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory"/>
+    <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory" dynamic="false"/>
 
-    <extensionPoint name="protanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
-    <extensionPoint name="deuteranopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
-    <extensionPoint name="tritanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
-    <extensionPoint name="achromatopsiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="protanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
+    <extensionPoint name="deuteranopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
+    <extensionPoint name="tritanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
+    <extensionPoint name="achromatopsiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport" dynamic="false"/>
 
-    <extensionPoint name="bundledInspectionProfile" beanClass="com.intellij.configurationStore.BundledSchemeEP"/>
-    <extensionPoint name="projectNameProvider" interface="com.intellij.openapi.project.ex.ProjectNameProvider"/>
+    <extensionPoint name="bundledInspectionProfile" beanClass="com.intellij.configurationStore.BundledSchemeEP" dynamic="false"/>
+    <extensionPoint name="projectNameProvider" interface="com.intellij.openapi.project.ex.ProjectNameProvider" dynamic="true"/>
     <extensionPoint name="streamProviderFactory" interface="com.intellij.configurationStore.StreamProviderFactory" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="updateSettingsProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider" dynamic="true"/>
@@ -430,22 +429,22 @@
       <with attribute="implementationClass" implements="com.intellij.injected.editor.InjectedFileChangesHandlerProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="systemProperty" beanClass="com.intellij.openapi.util.SystemPropertyBean"/>
+    <extensionPoint name="systemProperty" beanClass="com.intellij.openapi.util.SystemPropertyBean" dynamic="false"/>
 
     <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT" dynamic="true"/>
 
-    <extensionPoint name="search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper"/>
+    <extensionPoint name="search.traverseUiHelper" interface="com.intellij.ide.ui.search.TraverseUIHelper" dynamic="false"/>
 
     <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean" dynamic="true"/>
 
-    <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider"/>
+    <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider" dynamic="true"/>
 
     <extensionPoint name="aboutPopupDescriptionProvider" interface="com.intellij.ide.AboutPopupDescriptionProvider" dynamic="true"/>
 
     <extensionPoint name="editorFactoryMouseListener" interface="com.intellij.openapi.editor.event.EditorMouseListener" dynamic="true"/>
     <extensionPoint name="editorFactoryMouseMotionListener" interface="com.intellij.openapi.editor.event.EditorMouseMotionListener" dynamic="true"/>
 
-    <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler"/>
+    <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler" dynamic="true"/>
 
     <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer" dynamic="true"/>
     <extensionPoint name="projectServiceInitializer" interface="com.intellij.openapi.project.impl.ProjectServiceInitializer" dynamic="true"/>
@@ -462,7 +461,7 @@
     <extensionPoint name="unknownSdkContributor" interface="com.intellij.openapi.projectRoots.impl.UnknownSdkContributor" dynamic="true"/>
 
     <extensionPoint name="pathMacroContributor" interface="com.intellij.openapi.application.PathMacroContributor" dynamic="true"/>
-    <extensionPoint name="titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider"/>
+    <extensionPoint name="titleInfoProvider" interface="com.intellij.openapi.wm.impl.TitleInfoProvider" dynamic="true"/>
 
     <extensionPoint name="lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
 
@@ -479,7 +478,7 @@
     <extensionPoint name="iw.actionProvider" interface="com.intellij.openapi.editor.markup.InspectionWidgetActionProvider" dynamic="true"/>
     <extensionPoint name="textEditorCustomizer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer" dynamic="true"/>
 
-    <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider"/>
+    <extensionPoint name="jcef.appRequiredArgumentsProvider" interface="com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider" dynamic="false"/>
     <extensionPoint name="documentationActionProvider" interface="com.intellij.codeInsight.documentation.DocumentationActionProvider" dynamic="true"/>
 
     <extensionPoint name="newProjectWizard.language" interface="com.intellij.ide.wizard.LanguageNewProjectWizard" dynamic="true"/>
@@ -527,11 +526,11 @@
 
     <extensionPoint name="fragments.dsl.builder.extender" interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender" dynamic="true"/>
 
-    <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider"/>
+    <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider" dynamic="false"/>
 
-    <extensionPoint name="persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener"/>
+    <extensionPoint name="persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener" dynamic="false"/>
 
-    <extensionPoint name="beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT"/>
+    <extensionPoint name="beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT" dynamic="false"/>
 
     <extensionPoint name="warmupConfigurator" interface="com.intellij.ide.warmup.WarmupConfigurator" dynamic="true" />
 
@@ -552,6 +551,10 @@
                     interface="com.intellij.platform.ml.monitoring.MLTaskGroupListener"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.diagnostic.specialPathsProvider"
+                    interface="com.intellij.diagnostic.specialPaths.SpecialPathsProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="defender.config" interface="com.intellij.diagnostic.WindowsDefenderChecker$Extension" dynamic="true" />
     <extensionPoint name="authorizationProvider" interface="com.intellij.ide.impl.AuthorizationProvider" dynamic="true" />
     <extensionPoint name="flsConfigurationProvider" interface="com.intellij.ide.impl.FLSConfigurationProvider" dynamic="true" />
@@ -561,11 +564,11 @@
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
 
-    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions"/>
+    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions" dynamic="false"/>
     
-    <extensionPoint name="textEditorNecromancerAwaker" interface="com.intellij.openapi.editor.impl.zombie.NecromancerAwaker"/>
+    <extensionPoint name="textEditorNecromancerAwaker" interface="com.intellij.openapi.editor.impl.zombie.NecromancerAwaker" dynamic="true"/>
 
-    <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean">
+    <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo"/>
     </extensionPoint>
 
@@ -576,7 +579,7 @@
 
     <extensionPoint name="endUserAgreementUpdater" beanClass="com.intellij.ide.gdpr.EndUserAgreement$PluginAgreementUpdateDescriptor" dynamic="true"/>
 
-    <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate"/>
+    <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate" dynamic="false"/>
 
     <extensionPoint name="proxySettingsOverrideProvider" interface="com.intellij.util.net.ProxySettingsOverrideProvider" dynamic="true"/>
     <extensionPoint name="navbarLeftSide" dynamic="true" interface="com.intellij.ide.navigationToolbar.NavBarLeftSideExtension"/>
@@ -619,6 +622,8 @@
 
     <extensionPoint name="logLevelConfigurationListener" interface="com.intellij.diagnostic.logs.LogLevelConfigurationManager$Listener" dynamic="true"/>
 
+    <extensionPoint name="pluginInstallationCustomization" interface="com.intellij.ide.plugins.newui.PluginInstallationCustomization" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.ui.content.impl.toolWindowContentPostprocessor"
                     interface="com.intellij.ui.content.impl.ToolWindowContentPostProcessor"
                     dynamic="true"/>
@@ -635,6 +640,5 @@
     <extensionPoint name="adEntityProvider"
                     interface="com.intellij.openapi.editor.impl.ad.document.AdEntityProvider"
                     dynamic="true"/>
-
   </extensionPoints>
 </idea-plugin>

@@ -152,7 +152,7 @@ fun sharedSourceRootFixture(vararg moduleFixtures: TestFixture<Module>): TestFix
 
   initialized(sharedSourceRoot.init()) {
     // the root directory is deleted by the the sourceRootFixture of the first module.
-    // todo ijpl-339 do we need to remove entries from modules?
+    // todo IJPL-339 do we need to remove entries from modules?
   }
 }
 

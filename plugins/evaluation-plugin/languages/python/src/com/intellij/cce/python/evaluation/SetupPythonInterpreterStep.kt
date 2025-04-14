@@ -2,7 +2,9 @@
 package com.intellij.cce.python.evaluation
 
 import com.intellij.cce.core.Language
+import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluation.SetupSdkStep
+import com.intellij.cce.evaluation.data.ExecutionMode
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
@@ -26,6 +28,9 @@ class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() 
   override val description: String = "Configure project Python Interpreter if needed"
 
   override fun isApplicable(language: Language): Boolean = language == Language.PYTHON
+
+  override fun isApplicable(language: Language, strategy: EvaluationStrategy): Boolean =
+    strategy.executionMode == ExecutionMode.LOCAL && isApplicable(language)
 
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace? {
     val pythonPluginEnabled = PluginManagerCore.getPlugin(PluginId.getId(pythonPluginId))?.isEnabled ?: false
@@ -58,7 +63,9 @@ class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() 
         if (sdk != null) {
           WriteAction.run<Throwable> {
             val sdkTable = ProjectJdkTable.getInstance()
-            sdkTable.addJdk(sdk)
+            if (sdkTable.findJdk(sdk.name) == null) {
+              sdkTable.addJdk(sdk)
+            }
             projectRootManager.projectSdk = sdk
           }
           println("Python interpreter \"${sdk.name}\" (${sdk.homePath}) will be used as a project SDK")

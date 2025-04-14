@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 object JavaPluginLayout {
@@ -11,8 +10,6 @@ object JavaPluginLayout {
     return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->
       spec.directoryName = "java"
       spec.mainJarName = "java-impl.jar"
-
-      spec.excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
 
       spec.withProjectLibrary("netty-jps", "rt/netty-jps.jar")
 
@@ -77,13 +74,13 @@ object JavaPluginLayout {
 
       spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
 
-      spec.withProjectLibrary("Eclipse", "ecj", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("Eclipse", "ecj")
       // used in JPS - do not use uber jar
-      spec.withProjectLibrary("jgoodies-common", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("jps-javac-extension", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("kotlin-metadata", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("jgoodies-common")
+      spec.withProjectLibrary("jps-javac-extension")
+      spec.withProjectLibrary("kotlin-metadata")
       // gpl-cpe license - do not use uber jar
-      spec.withProjectLibrary("jb-jdi", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("jb-jdi")
 
       spec.withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")
       // explicitly pack jshell-frontend and sa-jdwp as a separate JARs

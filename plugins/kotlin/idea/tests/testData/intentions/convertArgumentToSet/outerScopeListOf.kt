@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // IS_APPLICABLE: false
+// PROBLEM: none
 
 // shouldn't offer
 val b = listOf("a", "b", "c", "e")

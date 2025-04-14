@@ -16,7 +16,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertFalse
@@ -423,8 +425,8 @@ class BackgroundWriteActionTest {
     edtWriteAction {
       runBlockingCancellable {
         assertRead()
-        assertNoWrite()
-        assertNoWil()
+        assertWrite() // since it is invoked on a thread with permission to write
+        assertWil()
       }
     }
   }
@@ -452,5 +454,41 @@ class BackgroundWriteActionTest {
       checkpoint(7)
     }
     checkpoint(8)
+  }
+
+  @RepeatedTest(100)
+  fun `write access allowed inside explicit WA`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    repeat(1000) {
+      launch {
+        edtWriteAction {
+          ApplicationManager.getApplication().assertWriteAccessAllowed()
+        }
+      }
+      launch {
+        backgroundWriteAction {
+          ApplicationManager.getApplication().assertWriteAccessAllowed()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `prevention of WA is thread-local`(): Unit = concurrencyTest {
+    launch {
+      getGlobalThreadingSupport().prohibitWriteActionsInside().use {
+        checkpoint(1)
+        checkpoint(4)
+        assertThrows<IllegalStateException> {
+          backgroundWriteAction {  }
+        }
+        checkpoint(5)
+      }
+    }
+    launch {
+      checkpoint(2)
+      backgroundWriteAction { // can safely start
+      }
+      checkpoint(3)
+    }
   }
 }

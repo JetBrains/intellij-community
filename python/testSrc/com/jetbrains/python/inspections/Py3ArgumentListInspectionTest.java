@@ -376,4 +376,29 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testMismatchedConditionalImplementationsHaveBothTooFewAndTooManyParameters() {
     doTest();
   }
+
+  public void testNoTypeCheck() {
+    doTestByText(
+      """
+        from typing import no_type_check
+        
+        @no_type_check
+        def func(a): ...
+        
+        func(<warning descr="Parameter 'a' unfilled">)</warning>
+        func(1, <warning descr="Unexpected argument">2</warning>)
+        """
+    );
+    doTestByText(
+      """
+        from typing_extensions import no_type_check
+        
+        @no_type_check
+        def func(a): ...
+        
+        func(<warning descr="Parameter 'a' unfilled">)</warning>
+        func(1, <warning descr="Unexpected argument">2</warning>)
+        """
+    );
+  }
 }

@@ -14,6 +14,7 @@ public interface ErrorInfo extends ThrowableInfo {
   interface Fix {
     @Nls
     String getName();
+    default Integer getMnemonic() { return null; }
     default boolean isSilent() {
       return true;
     }

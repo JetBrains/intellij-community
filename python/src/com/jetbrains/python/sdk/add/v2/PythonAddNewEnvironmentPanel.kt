@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
@@ -13,18 +13,12 @@ import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.JBColor
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.GotItTooltip
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
@@ -43,13 +37,15 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.awt.Point
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
@@ -80,6 +76,15 @@ internal class PythonAddNewEnvironmentPanel(
   // PY-79134: an anchor to display the promo notification on
   // TODO: remove after promo ends
   private lateinit var popupAnchor: Cell<*>
+  private val promoPopup: GotItTooltip = GotItTooltip("python.uv.promo.tooltip", message("sdk.create.custom.uv.promo.text"))
+    .withShowCount(1)
+    .withLink(message("sdk.create.custom.uv.promo.link")) {
+      selectedMode.set(CUSTOM)
+      custom.newInterpreterManager.set(UV)
+      promoPopup.gotIt()
+      promoPopup.hidePopup()
+    }
+    .withTimeout(15_000)
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
@@ -90,18 +95,21 @@ internal class PythonAddNewEnvironmentPanel(
   private lateinit var custom: PythonAddCustomInterpreter
   private lateinit var model: PythonMutableTargetAddInterpreterModel
 
-  fun buildPanel(outerPanel: Panel) {
+  fun buildPanel(outerPanel: Panel, coroutineScope: CoroutineScope) {
     //presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
-    model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
-                                                                    Dispatchers.EDT + ModalityState.current().asContextElement(), projectPathFlows))
+    model = PythonLocalAddInterpreterModel(
+      PyInterpreterModelParams(
+        coroutineScope,
+        Dispatchers.EDT + ModalityState.current().asContextElement(),
+        projectPathFlows
+      )
+    )
     model.navigator.selectionMode = selectedMode
     //presenter.controller = model
 
     custom = PythonAddCustomInterpreter(model, errorSink = ShowingMessageErrorSync)
 
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
-
-
 
     with(outerPanel) {
       if (allowedInterpreterTypes.size > 1) { // No need to show control with only one selection
@@ -157,40 +165,31 @@ internal class PythonAddNewEnvironmentPanel(
     model.scope.launch(Dispatchers.EDT + modalityState) {
       initMutex.withLock {
         if (!initialized) {
-          model.initialize()
+          model.initialize(null)
           pythonBaseVersionComboBox.setItems(model.baseInterpreters)
           custom.onShown()
           updateVenvLocationHint()
           model.navigator.restoreLastState(allowedInterpreterTypes)
           initialized = true
 
-          val state = PythonAddNewEnvironmentState.getInstance()
+          val customButton = popupAnchor
+            .component
+            .parent
+            .components
+            ?.find { it is SegmentedButtonComponent<*> }
+            ?.let { it as JPanel }
+            ?.components[2] as? JComponent
 
-          if (state.isFirstVisit) {
-            JBPopupFactory.getInstance()
-              .createHtmlTextBalloonBuilder(
-                message("sdk.create.custom.uv.promo"),
-                null,
-                JBColor.namedColor("GotItTooltip.foreground"),
-                JBColor.namedColor("GotItTooltip.background"),
-                null,
-              )
-              .setBorderColor(JBColor.namedColor("GotItTooltip.borderColor"))
-              .setFadeoutTime(15_000)
-              .setClickHandler(
-                {
-                  selectedMode.set(CUSTOM)
-                  custom.newInterpreterManager.set(UV)
-                },
-                true
-              )
-              .createBalloon()
-              .show(
-                RelativePoint.getCenterOf(popupAnchor.component),
-                Balloon.Position.atRight
-              )
+          if (customButton == null) {
+            return@withLock
+          }
 
-            state.isFirstVisit = false
+          promoPopup.show(customButton, GotItTooltip.BOTTOM_MIDDLE)
+          custom.newInterpreterManager.afterChange(promoPopup) {
+            if (promoPopup.wasCreated()) {
+              promoPopup.gotIt()
+              promoPopup.hidePopup()
+            }
           }
         }
       }
@@ -210,7 +209,14 @@ internal class PythonAddNewEnvironmentPanel(
     }.getOrThrow().first
   }
 
-  override suspend fun getSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> {
+  override suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> {
+    return when (selectedMode.get()) {
+      CUSTOM -> custom.currentSdkManager.createPythonModuleStructure(module)
+      else -> Result.success(Unit)
+    }
+  }
+
+  override suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> {
     model.navigator.saveLastState()
     val sdk = when (selectedMode.get()) {
       PROJECT_VENV -> {

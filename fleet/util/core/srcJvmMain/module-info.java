@@ -9,6 +9,7 @@ module fleet.util.core {
   exports fleet.util.reducible;
   exports fleet.util.serialization;
   exports fleet.util.text;
+  exports fleet.util.text.matcher;
   exports fleet.util.tree;
 
   requires kotlin.stdlib;
@@ -22,6 +23,6 @@ module fleet.util.core {
   requires fleet.reporting.shared;
   requires kotlinx.datetime;
   requires fleet.reporting.api;
-  requires fleet.util.multiplatform;
+  requires static fleet.util.multiplatform;
   requires kotlin.codepoints.jvm;
 }

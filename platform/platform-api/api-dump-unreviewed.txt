@@ -1083,6 +1083,7 @@ e:com.intellij.ide.ui.TargetUIType
 - java.lang.Enum
 - sf:CLASSIC:com.intellij.ide.ui.TargetUIType
 - sf:NEW:com.intellij.ide.ui.TargetUIType
+- sf:NEXT:com.intellij.ide.ui.TargetUIType
 - sf:UNSPECIFIED:com.intellij.ide.ui.TargetUIType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ide.ui.TargetUIType
@@ -1223,7 +1224,6 @@ com.intellij.ide.warmup.WarmupConfigurator
 - sf:Companion:com.intellij.ide.warmup.WarmupConfigurator$Companion
 - a:getConfiguratorPresentableName():java.lang.String
 - prepareEnvironment(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
-- bs:prepareEnvironment$suspendImpl(com.intellij.ide.warmup.WarmupConfigurator,java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 - a:runWarmup(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.warmup.WarmupConfigurator$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
@@ -1899,6 +1899,7 @@ c:com.intellij.openapi.actionSystem.ex.TooltipLinkProvider$TooltipLink
 - f:action:java.lang.Runnable
 - f:tooltip:java.lang.String
 - <init>(java.lang.String,java.lang.Runnable):V
+f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
 a:com.intellij.openapi.application.ApplicationStarterEx
 - com.intellij.openapi.application.ApplicationStarter
 - <init>():V
@@ -2023,10 +2024,6 @@ com.intellij.openapi.editor.actionSystem.ActionPlan
 - a:getText():com.intellij.util.text.ImmutableCharSequence
 - a:replace(I,I,java.lang.String):V
 - a:setCaretOffset(I):V
-f:com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
-- com.intellij.openapi.actionSystem.DataContextWrapper
-- s:create(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.Caret):com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
-- getRawCustomData(java.lang.String):java.lang.Object
 a:com.intellij.openapi.editor.actionSystem.EditorAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
@@ -5080,6 +5077,7 @@ com.intellij.openapi.wm.InteractiveCourseFactory
 f:com.intellij.openapi.wm.InteractiveCourseFactory$Companion
 - f:getINTERACTIVE_COURSE_FACTORY_EP():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.openapi.wm.LightEditFrame
+f:com.intellij.openapi.wm.PermissionsKt
 f:com.intellij.openapi.wm.RegisterToolWindowTask
 - sf:Companion:com.intellij.openapi.wm.RegisterToolWindowTask$Companion
 - <init>(java.lang.String,com.intellij.openapi.wm.ToolWindowAnchor,javax.swing.JComponent,Z,Z,Z,Z,com.intellij.openapi.wm.ToolWindowFactory,javax.swing.Icon,java.util.function.Supplier):V
@@ -5183,7 +5181,6 @@ com.intellij.openapi.wm.ToolWindowFactory
 - init(com.intellij.openapi.wm.ToolWindow):V
 - isApplicable(com.intellij.openapi.project.Project):Z
 - isApplicableAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- bs:isApplicableAsync$suspendImpl(com.intellij.openapi.wm.ToolWindowFactory,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - isDoNotActivateOnStart():Z
 - shouldBeAvailable(com.intellij.openapi.project.Project):Z
 a:com.intellij.openapi.wm.ToolWindowManager
@@ -5875,6 +5872,7 @@ c:com.intellij.ui.EditorNotificationPanel
 - f:createActionLabel(java.lang.String,java.lang.String):com.intellij.ui.HyperlinkLabel
 - f:createActionLabel(java.lang.String,java.lang.String,Z):com.intellij.ui.HyperlinkLabel
 - p:executeAction(java.lang.String):V
+- p:executeAction(java.lang.String,javax.swing.event.HyperlinkEvent):V
 - findLabelByName(java.lang.String):com.intellij.ui.HyperlinkLabel
 - p:getActionPlace():java.lang.String
 - getBackground():java.awt.Color
@@ -6255,13 +6253,13 @@ c:com.intellij.ui.InlineBanner
 - f:addAction(java.lang.String,java.lang.Runnable):com.intellij.ui.InlineBanner
 - f:addAction(java.lang.String,javax.swing.Icon,java.lang.Runnable):com.intellij.ui.components.labels.LinkLabel
 - f:close():V
-- p:getStatus():com.intellij.ui.EditorNotificationPanel$Status
+- getStatus():com.intellij.ui.EditorNotificationPanel$Status
 - removeFromParent():V
 - f:setCloseAction(java.lang.Runnable):com.intellij.ui.InlineBanner
 - f:setGearAction(java.lang.String,java.lang.Runnable):com.intellij.ui.InlineBanner
 - f:setIcon(javax.swing.Icon):com.intellij.ui.InlineBanner
 - f:setMessage(java.lang.String):com.intellij.ui.InlineBanner
-- p:setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
+- setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
 - f:showCloseButton(Z):com.intellij.ui.InlineBanner
 a:com.intellij.ui.InlineBannerBase
 - com.intellij.ui.components.JBPanel
@@ -6270,11 +6268,11 @@ a:com.intellij.ui.InlineBannerBase
 - pf:getIconPanel():javax.swing.JPanel
 - pf:getMessage():javax.swing.JEditorPane
 - pf:getMessageText():java.lang.String
-- p:getStatus():com.intellij.ui.EditorNotificationPanel$Status
+- getStatus():com.intellij.ui.EditorNotificationPanel$Status
 - p:paintComponent(java.awt.Graphics):V
 - setBounds(I,I,I,I):V
 - pf:setMessageText(java.lang.String):V
-- p:setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
+- setStatus(com.intellij.ui.EditorNotificationPanel$Status):V
 a:com.intellij.ui.InplaceAddEditRemovePanel
 - com.intellij.ui.AddEditRemovePanel
 - <init>(com.intellij.ui.AddEditRemovePanel$TableModel,java.util.List):V
@@ -7480,6 +7478,7 @@ c:com.intellij.ui.components.JBList
 - getScrollableBlockIncrement(java.awt.Rectangle,I,I):I
 - getScrollableUnitIncrement(java.awt.Rectangle,I,I):I
 - installCellRenderer(com.intellij.util.NotNullFunction):V
+- installCellRenderer(java.util.function.Function):V
 - isEmpty():Z
 - p:itemToText(I,java.lang.Object):java.lang.String
 - paint(java.awt.Graphics):V
@@ -7492,6 +7491,7 @@ c:com.intellij.ui.components.JBList
 - setEmptyText(java.lang.String):V
 - setExpandableItemsEnabled(Z):V
 - setOffsetFromElementTopForDnD(com.intellij.util.Function):V
+- setOffsetFromElementTopForDnD(java.util.function.Function):V
 - setPaintBusy(Z):V
 - setUI(javax.swing.plaf.ListUI):V
 - pf:super_getPreferredSize():java.awt.Dimension

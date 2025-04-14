@@ -292,7 +292,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (root instanceof TestProxyRoot) {
       ((TestProxyRoot)root).setHandler(handler);
     }
-    handler.addProcessListener(new ProcessAdapter() {
+    handler.addProcessListener(new ProcessListener() {
       @Override
       public void startNotified(@NotNull ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {

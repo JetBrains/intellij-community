@@ -5,10 +5,15 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BundledMavenDownloader
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAutoWithCustomDirName
+import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
@@ -19,7 +24,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 object CommunityRepositoryModules {
   /**
@@ -107,6 +112,8 @@ object CommunityRepositoryModules {
 
       spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "maven-event-listener.jar")
 
+      spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
+
       spec.doNotCopyModuleLibrariesAutomatically(listOf(
         "intellij.maven.artifactResolver.common",
         "intellij.maven.artifactResolver.m31",
@@ -116,6 +123,7 @@ object CommunityRepositoryModules {
         "intellij.maven.server.m40",
         "intellij.maven.server.indexer",
       ))
+
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
@@ -180,9 +188,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
-    pluginAuto("intellij.emojipicker") { spec ->
-      spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
-    },
     pluginAuto(listOf("intellij.textmate")) { spec ->
       spec.withResource("lib/bundles", "lib/bundles")
     },
@@ -203,6 +208,15 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     githubPlugin("intellij.vcs.github.community", productCode = "IC"),
     gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),
+    pluginAuto(listOf("intellij.compilation.charts")) { spec ->
+      spec.withModule("intellij.compilation.charts.jps")
+    },
+    plugin("intellij.repository.search") { spec ->
+      spec.withModule("intellij.maven.model", relativeJarPath = "maven-model.jar")
+      spec.withProjectLibrary("package-search-api-client")
+      spec.withProjectLibrary("ktor-client-logging")
+      spec.withProjectLibrary("kotlinx-document-store-mvstore")
+    }
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
@@ -237,6 +251,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.preview-designer")
       spec.withModule("intellij.android.wear-designer")
       spec.withModule("intellij.android.motion-editor")
+      spec.withModule("intellij.android.visual-lint")
 
       // libs:
       spec.withProjectLibrary("layoutlib")
@@ -284,13 +299,12 @@ object CommunityRepositoryModules {
       }
 
       spec.excludeProjectLibrary("Gradle")
-      // android jar is already quite big - put into separate JAR
-      spec.withProjectLibrary("jewel-ide-laf-bridge", "jewel-ide-laf-bridge.jar")
 
       // modules:
       // adt-ui.jar
       spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
-      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-242", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-242.jar")
+      spec.withModuleLibrary("jewel-ide-laf-bridge-243", "intellij.android.adt.ui.compose", "jewel-ide-laf-bridge-243.jar")
+      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-243", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-243.jar")
       spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
 
@@ -339,7 +353,10 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.backup.api", "android.jar")
       spec.withModule("intellij.android.lint", "android.jar")
       spec.withModule("intellij.android.templates", "android.jar")
+      spec.withModule("intellij.android.testartifacts", "android.jar")
       spec.withModule("intellij.android.apkanalyzer", "android.jar")
+      spec.withModule("intellij.android.apkanalyzer.apk", "android.jar")
+      spec.withModule("intellij.android.apkanalyzer.gradle", "android.jar")
       spec.withModule("intellij.android.app-inspection.api", "android.jar")
       spec.withModule("intellij.android.app-inspection.ide", "android.jar")
       spec.withModule("intellij.android.app-inspection.ide.gradle", "android.jar")
@@ -374,6 +391,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.device-explorer-common", "android.jar")
       //spec.withModule("intellij.android.device-manager", "android.jar")
       spec.withModule("intellij.android.device-manager-v2", "android.jar")
+      spec.withModule("intellij.android.gmaven", "android.jar")
       spec.withModule("intellij.android.ml-api", "android.jar")
       // Packaged as a gradle-dsl plugin
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
@@ -411,6 +429,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.rendering", "android.jar")
       spec.withModule("intellij.android.room", "android.jar")
       //spec.withModule("intellij.android.samples-browser", "android.jar") AS Koala Merge
+      spec.withModule("intellij.android.screenshot-test", "android.jar")
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
@@ -466,7 +485,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.utp", "utp.jar")
 
       // libs:
-      spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
+      //spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
 
 
@@ -623,7 +642,7 @@ object CommunityRepositoryModules {
         "intellij.vcs.github"
       ))
       spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
+        PluginVersionEvaluatorResult(pluginVersion = "$version-$productCode")
       }
     }
   }
@@ -634,7 +653,7 @@ object CommunityRepositoryModules {
       spec.directoryName = "vcs-gitlab-$productCode"
       spec.mainJarName = "vcs-gitlab.jar"
       spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
+        PluginVersionEvaluatorResult(pluginVersion = "$version-$productCode")
       }
     }
   }
@@ -668,7 +687,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
   val antDir = pluginDir.resolve("dist")
   return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).use {
     val sources = ArrayList<ZipSource>()
-    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.MERGED, reason = "ant")
+    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.STANDALONE_MERGED, reason = "ant")
     copyDir(
       sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
       targetDir = antDir,
@@ -686,15 +705,17 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
     sources.sort()
 
     val antTargetFile = antDir.resolve("ant.jar")
-    buildJar(targetFile = antTargetFile, sources = sources)
+    checkForNoDiskSpace(context) {
+      buildJar(targetFile = antTargetFile, sources = sources)
+    }
 
     sources.map { source ->
       ProjectLibraryEntry(
         path = antTargetFile,
         data = libraryData,
         libraryFile = source.file,
-        hash = source.hash,
-        size = source.size,
+        hash = 0,
+        size = 0,
         relativeOutputFile = "dist/ant.jar",
       )
     }

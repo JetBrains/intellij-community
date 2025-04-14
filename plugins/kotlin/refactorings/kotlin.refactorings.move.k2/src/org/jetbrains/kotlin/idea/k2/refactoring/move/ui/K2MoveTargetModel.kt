@@ -21,14 +21,12 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
 import org.jetbrains.kotlin.name.FqName
@@ -36,7 +34,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
-import javax.swing.tree.DefaultMutableTreeNode
 
 sealed interface K2MoveTargetModel {
     val directory: PsiDirectory
@@ -234,7 +231,7 @@ sealed interface K2MoveTargetModel {
             classChooser.text = ""
 
             classChooser.addActionListener {
-                val chooser = object : TreeJavaClassChooserDialog(
+                val chooser = TreeJavaClassChooserDialog(
                     RefactoringBundle.message("choose.destination.class"),
                     project,
                     project.projectScope().restrictToKotlinSources(),
@@ -242,16 +239,7 @@ sealed interface K2MoveTargetModel {
                     null,
                     null,
                     true
-                ) {
-                    override fun getSelectedFromTreeUserObject(node: DefaultMutableTreeNode?): PsiClass? {
-                        val psiClass = super.getSelectedFromTreeUserObject(node)
-                        if (psiClass != null) return psiClass
-
-                        val userObject = node?.getUserObject()
-                        if (userObject !is KtClassOrObjectTreeNode) return null
-                        return userObject.getValue().toLightClass()
-                    }
-                }
+                )
                 chooser.showDialog()
                 destinationClass = chooser.selected?.unwrapped as? KtClassOrObject
                 classChooser.text = destinationClass?.fqName?.asString() ?: ""

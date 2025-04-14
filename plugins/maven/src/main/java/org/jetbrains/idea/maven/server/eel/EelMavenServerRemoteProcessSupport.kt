@@ -2,14 +2,17 @@
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
+import com.intellij.execution.configurations.ParameterTargetValuePart
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,11 +20,13 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
@@ -160,7 +165,10 @@ private class EelMavenCmdState(
     eelParams.charset = parameters.charset
     eelParams.vmParametersList.add("-classpath")
     eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull {
-      runBlockingCancellable { EelPathUtils.maybeUploadPath(scope, Path(it), eel.descriptor).toString() }
+      transferLocalContentToRemote(
+        source = Path(it),
+        target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
+      ).asEelPath().toString()
     }.joinToString(eel.fs.pathSeparator))
 
     return eelParams
@@ -172,9 +180,10 @@ private class EelMavenCmdState(
         for (part in item.parts) {
           when (part) {
             is ParameterTargetValuePart.Const -> append(part.localValue)
-            is ParameterTargetValuePart.Path -> runBlockingCancellable {
-              append(EelPathUtils.maybeUploadPath(scope, Path.of(part.localValue), eel.descriptor).toString())
-            }
+            is ParameterTargetValuePart.Path -> append(transferLocalContentToRemote(
+              source = Path.of(part.localValue),
+              target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
+            ).asEelPath().toString())
             ParameterTargetValuePart.PathSeparator -> append(eel.fs.pathSeparator)
             is ParameterTargetValuePart.PromiseValue -> append(part.localValue) // todo?
           }
@@ -194,12 +203,12 @@ private class EelMavenCmdState(
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
       val exe = Path.of(cmd.exePath).asEelPath()
-      val builder = EelExecApi.ExecuteProcessOptions.Builder(exe.toString())
+      val builder = eel.exec.execute(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
         .workingDirectory(EelPath.parse(getWorkingDirectory(), eel.descriptor))
 
-      eel.exec.execute(builder.build()).getOrThrow()
+      builder.getOrThrow()
     }
 
     return object : KillableColoredProcessHandler(eelProcess.convertToJavaProcess(), cmd) {

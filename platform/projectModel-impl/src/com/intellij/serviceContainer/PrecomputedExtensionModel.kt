@@ -39,7 +39,7 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   val nameToExtensions = java.util.Map.copyOf(mutableNameToExtensions)
   // step 2 - collect container level extensions
   executeRegisterTask(modules) { pluginDescriptor ->
-    val map = pluginDescriptor.epNameToExtensions
+    val map = pluginDescriptor.extensions
     for ((name, list) in map.entries) {
       nameToExtensions.get(name)?.add(pluginDescriptor to list)
     }
@@ -62,7 +62,7 @@ private inline fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, 
 @ApiStatus.Internal
 inline fun executeRegisterTaskForOldContent(mainPluginDescriptor: IdeaPluginDescriptorImpl,
                                             crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
-  for (dep in mainPluginDescriptor.pluginDependencies) {
+  for (dep in mainPluginDescriptor.dependencies) {
     val subDescriptor = dep.subDescriptor
     if (subDescriptor?.pluginClassLoader == null) {
       continue
@@ -70,11 +70,11 @@ inline fun executeRegisterTaskForOldContent(mainPluginDescriptor: IdeaPluginDesc
 
     task(subDescriptor)
 
-    for (subDep in subDescriptor.pluginDependencies) {
+    for (subDep in subDescriptor.dependencies) {
       val d = subDep.subDescriptor
       if (d?.pluginClassLoader != null) {
         task(d)
-        assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
+        assert(d.dependencies.isEmpty() || d.dependencies.all { it.subDescriptor == null })
       }
     }
   }

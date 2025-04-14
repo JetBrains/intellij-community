@@ -9,31 +9,36 @@ fun <K, V> ConcurrentHashMapWasmJs(): ConcurrentHashMap<K, V> = ConcurrentHashMa
 
 internal fun <K, V> ConcurrentHashMapWasm(base: MutableMap<K, V>): ConcurrentHashMap<K, V> = object : MutableMap<K, V> by base, ConcurrentHashMap<K, V> {
   override fun putIfAbsent(key: K, value: V): V? {
-    if (!containsKey(key)) {
+    return if (!containsKey(key)) {
       put(key, value)
     }
-    return get(key)
+    else {
+      get(key)
+    }
   }
 
   override fun computeIfAbsent(key: K, f: (K) -> V): V {
-    return get(key) ?: f(key).also { set(key, it) }
+    return get(key) ?: f(key).also { put(key, it) }
   }
 
   override fun compute(key: K, f: (K, V?) -> V?): V? {
-    val result = f(key, get(key))
-    if (result != null) {
-      set(key, result)
-    } else {
+    val oldValue = get(key)
+    val newValue = f(key, oldValue)
+    if (newValue != null) {
+      put(key, newValue)
+    }
+    else {
       remove(key)
     }
-    return result
+    return newValue
   }
 
   override fun remove(key: K, value: V): Boolean {
     return if (get(key) == value) {
       remove(key)
       true
-    } else {
+    }
+    else {
       false
     }
   }

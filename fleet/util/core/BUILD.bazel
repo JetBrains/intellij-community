@@ -1,11 +1,16 @@
 ### auto-generated section `build fleet.util.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jvm_provided_library(
+  name = "fleet-util-multiplatform_provided",
+  lib = "//fleet/util/multiplatform:fleet-util-multiplatform"
+)
 
 jvm_library(
   name = "fleet-util-core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -18,8 +23,8 @@ jvm_library(
     "//fleet/multiplatform.shims:multiplatform-shims",
     "//fleet/fastutil",
     "@lib//:kotlinx-datetime-jvm",
-    "//fleet/util/multiplatform:fleet-util-multiplatform",
     "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
+    ":fleet-util-multiplatform_provided",
   ],
   exports = [
     "//fleet/util/logging/api:fleet-util-logging-api",

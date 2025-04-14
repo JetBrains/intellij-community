@@ -102,10 +102,15 @@ public class XmlTextExtractor extends TextExtractor {
             flushGroup(unknown);
             unknownBefore = unknown;
             return;
-          } else {
-            inlineTags.add(tag);
-            markupIndices.add(group.size());
           }
+
+          if (isInlineNonTextTag(tag.getName())) {
+            unknownIndices.add(group.size());
+            return; // skip the tag's contents
+          }
+
+          inlineTags.add(tag);
+          markupIndices.add(group.size());
         }
         if (each instanceof OuterLanguageElement || each instanceof XmlEntityRef) {
           flushGroup(true);
@@ -158,6 +163,9 @@ public class XmlTextExtractor extends TextExtractor {
           component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
           components.add(component);
         }
+        unknownIndices.clear();
+        markupIndices.clear();
+        inlineTags.clear();
         TextContent content = TextContent.join(components);
         if (content != null) {
           if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
@@ -210,10 +218,16 @@ public class XmlTextExtractor extends TextExtractor {
     return myEnabledDialects.contains(element.getContainingFile().getLanguage().getClass());
   }
 
-  private static final Set<String> NON_TEXT_TAGS = Set.of("code", "pre");
-
   private static boolean isNonText(XmlTag tag) {
-    return tag instanceof HtmlTag && NON_TEXT_TAGS.contains(tag.getName());
+    return tag instanceof HtmlTag && (isInlineNonTextTag(tag.getName()) || isBlockNonTextTag(tag.getName()));
+  }
+
+  private static boolean isBlockNonTextTag(String name) {
+    return "pre".equals(name);
+  }
+
+  private static boolean isInlineNonTextTag(String name) {
+    return "code".equals(name);
   }
 
   public static class Xml extends XmlTextExtractor {
@@ -250,9 +264,8 @@ public class XmlTextExtractor extends TextExtractor {
       Set<String> inlineTags = ContainerUtil.newHashSet(settings.HTML_INLINE_ELEMENTS.split(","));
       return tag -> {
         String name = tag.getName();
-        if (NON_TEXT_TAGS.contains(name)) return TagKind.Unknown;
-        if (HtmlUtilsKt.commonBlockElements.contains(name)) return TagKind.Block;
-        if (inlineTags.contains(name)) return TagKind.Inline;
+        if (HtmlUtilsKt.commonBlockElements.contains(name) || isBlockNonTextTag(name)) return TagKind.Block;
+        if (inlineTags.contains(name) || isInlineNonTextTag(name)) return TagKind.Inline;
         return TagKind.Unknown;
       };
     }

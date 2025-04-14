@@ -1,13 +1,21 @@
 - name: lib/aether-dependency-resolver.jar
   modules:
   - name: intellij.java.aetherDependencyResolver
+- name: lib/completion-ranking-java.jar
+  library: completion-ranking-java
+  module: intellij.java.impl
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
 - name: lib/debugger-memory-agent.jar
+  library: debugger-memory-agent
+  module: intellij.java.debugger.memory.agent
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1/debugger-memory-agent-1.jar
 - name: lib/ecj/eclipse.jar
-  projectLibraries:
-  - name: Eclipse
-    files:
-    - name: $PROJECT_DIR$/community/lib/ecj-4.jar
-    reason: withProjectLibrary
+  library: Eclipse
+  files:
+  - name: $PROJECT_DIR$/community/lib/ecj-4.jar
+  reason: withProjectLibrary
 - name: lib/frontend-split/java-frontend.jar
   modules:
   - name: intellij.java.frontend
@@ -17,12 +25,8 @@
   - name: intellij.java.frontback.psi.impl
   - name: intellij.java.frontback.impl
   - name: intellij.java.debugger.impl.shared
+  - name: intellij.java.syntax
 - name: lib/java-impl.jar
-  projectLibraries:
-  - name: netty-codec-protobuf
-    files:
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
-    reason: <- intellij.java.compiler.impl
   modules:
   - name: intellij.java.compiler
   - name: intellij.java.debugger
@@ -54,9 +58,6 @@
   - name: intellij.java.indexing.impl
   - name: intellij.java.psi.impl
   - name: intellij.java.impl
-    libraries:
-      completion-ranking-java:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
   - name: intellij.java.impl.inspections
   - name: intellij.java.impl.refactorings
   - name: intellij.jsp.spi
@@ -84,17 +85,15 @@
   - name: intellij.java.compiler.instrumentationUtil
   - name: intellij.java.compiler.instrumentationUtil.java8
 - name: lib/jb-jdi.jar
-  projectLibraries:
-  - name: jb-jdi
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
-    reason: withProjectLibrary
+  library: jb-jdi
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
+  reason: withProjectLibrary
 - name: lib/jgoodies-common.jar
-  projectLibraries:
-  - name: jgoodies-common
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1/jgoodies-common-1.jar
-    reason: withProjectLibrary
+  library: jgoodies-common
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1/jgoodies-common-1.jar
+  reason: withProjectLibrary
 - name: lib/jps-builders-6.jar
   modules:
   - name: intellij.platform.jps.build.javac.rt
@@ -105,27 +104,41 @@
       qdox-java-parser:
       - name: $MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2/qdox-2.jar
 - name: lib/jps-javac-extension.jar
-  projectLibraries:
-  - name: jps-javac-extension
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar
-    reason: withProjectLibrary
+  library: jps-javac-extension
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar
+  reason: withProjectLibrary
 - name: lib/jps-launcher.jar
   modules:
   - name: intellij.platform.jps.build.launcher
 - name: lib/jshell-frontend.jar
+  library: jshell-frontend
+  module: intellij.java.execution.impl
+  files:
+  - name: $PROJECT_DIR$/community/java/execution/impl/jshell-frontend.jar
 - name: lib/jshell-protocol.jar
   modules:
   - name: intellij.java.jshell.protocol
 - name: lib/kotlin-metadata.jar
-  projectLibraries:
-  - name: kotlin-metadata
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
-    reason: withProjectLibrary
+  library: kotlin-metadata
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
+  reason: withProjectLibrary
 - name: lib/maven-resolver-connector-basic.jar
+  library: org.apache.maven.resolver:maven-resolver-connector-basic
+  module: intellij.java.aetherDependencyResolver
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1/maven-resolver-connector-basic-1.jar
 - name: lib/maven-resolver-transport-file.jar
+  library: org.apache.maven.resolver:maven-resolver-transport-file
+  module: intellij.java.aetherDependencyResolver
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1/maven-resolver-transport-file-1.jar
 - name: lib/maven-resolver-transport-http.jar
+  library: org.apache.maven.resolver:maven-resolver-transport-http
+  module: intellij.java.aetherDependencyResolver
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1/maven-resolver-transport-http-1.jar
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend
@@ -144,18 +157,30 @@
 - name: lib/modules/intellij.jvm.analysis.impl.jar
   contentModules:
   - name: intellij.jvm.analysis.impl
+- name: lib/netty-codec-protobuf.jar
+  library: netty-codec-protobuf
+  files:
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4/netty-codec-protobuf-4.jar
+  reason: <- intellij.java.compiler.impl
 - name: lib/rt/debugger-agent.jar
+  library: debugger-agent
+  module: intellij.java.debugger.agent.holder
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1/debugger-agent-1.jar
 - name: lib/rt/netty-jps.jar
-  projectLibraries:
-  - name: netty-jps
-    files:
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-all/4/netty-all-4.jar
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-buffer/4/netty-buffer-4.jar
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-codec/4/netty-codec-4.jar
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-http/4/netty-codec-http-4.jar
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-common/4/netty-common-4.jar
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-handler/4/netty-handler-4.jar
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-resolver/4/netty-resolver-4.jar
-    - name: $MAVEN_REPOSITORY$/io/netty/netty-transport/4/netty-transport-4.jar
-    reason: withProjectLibrary
+  library: netty-jps
+  files:
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-all/4/netty-all-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-buffer/4/netty-buffer-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec/4/netty-codec-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-http/4/netty-codec-http-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-common/4/netty-common-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-handler/4/netty-handler-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-resolver/4/netty-resolver-4.jar
+  - name: $MAVEN_REPOSITORY$/io/netty/netty-transport/4/netty-transport-4.jar
+  reason: withProjectLibrary
 - name: lib/sa-jdwp.jar
+  library: sa-jdwp
+  module: intellij.java.debugger.impl
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sa-jdwp/1/sa-jdwp-1.jar

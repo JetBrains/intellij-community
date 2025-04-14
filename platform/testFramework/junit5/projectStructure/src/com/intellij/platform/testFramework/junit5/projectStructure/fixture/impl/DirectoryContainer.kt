@@ -9,4 +9,6 @@ internal interface DirectoryContainer {
   val files: List<FileBuilderImpl>
 
   val modules: List<ModuleBuilderImpl>
+
+  val sdks: List<SdkBuilderImpl>
 }

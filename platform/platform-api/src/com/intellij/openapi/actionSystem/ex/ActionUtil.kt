@@ -13,6 +13,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.platform.ide.core.permissions.Permission
+import com.intellij.platform.ide.core.permissions.PermissionDeniedException
+import com.intellij.platform.ide.core.permissions.RequiresPermissions
+import com.intellij.platform.ide.core.permissions.checkPermissionsGranted
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -141,6 +145,10 @@ object ActionUtil {
   @JvmField
   val WOULD_BE_ENABLED_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_ENABLED_IF_NOT_DUMB_MODE")
 
+  @ApiStatus.Internal
+  @JvmField
+  val UNSATISFIED_PERMISSIONS: Key<List<Permission>> = Key.create("UNSATISFIED_PERMISSIONS")
+
   @JvmStatic
   private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
 
@@ -258,6 +266,10 @@ object ActionUtil {
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
+
+      if (presentation.isEnabled && action is RequiresPermissions) {
+        checkPermissionsGranted(*action.getRequiredPermissions().toTypedArray())
+      }
     }
     catch (_: SlowOperationCanceledException) {
       return false
@@ -267,6 +279,15 @@ object ActionUtil {
         return true
       }
       throw ex
+    }
+    catch (pde: PermissionDeniedException) {
+      if (Registry.`is`("ide.permissions.api.enabled")) {
+        presentation.isEnabled = false
+        presentation.putClientProperty(UNSATISFIED_PERMISSIONS, pde.permissions)
+      }
+      else {
+        LOG.error("Was thrown despite `ide.permissions.api.enabled` being false :$pde")
+      }
     }
     finally {
       if (!allowed) {
@@ -362,6 +383,9 @@ object ActionUtil {
     e: AnActionEvent,
     popupShow: Consumer<in JBPopup>?,
   ) {
+    if (action is RequiresPermissions) {
+      checkPermissionsGranted(*action.getRequiredPermissions().toTypedArray())
+    }
     if (action is ActionGroup && !e.presentation.isPerformGroup) {
       val dataContext = e.dataContext
       val place = ActionPlaces.getActionGroupPopupPlace(e.place)

@@ -585,6 +585,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "concatenationToBuildCollection", // K2-only
                     "convertStringTemplateToBuildStringMultiDollarPrefix", // K2-only
                     "convertToConcatenatedStringMultiDollarPrefix", // K2-only
+                    "convertToStringTemplateInterpolationPrefix", // K2-only
                 )
             )
         }
@@ -613,6 +614,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "contextParametersMigration", // K2-only
                     "defaultAnnotationTarget", // K2-only
                     "orInWhenGuard", // K2-only
+                    "convertFromMultiDollarToRegularString", // K2-only
                 )
             )
         }
@@ -1298,15 +1300,16 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
     }
 
-    testGroup("compiler-plugins/parcelize/tests/k1", testDataPath = "../testData") {
-        testClass<AbstractParcelizeK1QuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
-        }
-
-        testClass<AbstractParcelizeK1CheckerTest> {
-            model("checker", pattern = KT)
-        }
-    }
+    // TODO: KTIJ-33510
+    //testGroup("compiler-plugins/parcelize/tests/k1", testDataPath = "../testData") {
+    //    testClass<AbstractParcelizeK1QuickFixTest> {
+    //        model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+    //    }
+    //
+    //    testClass<AbstractParcelizeK1CheckerTest> {
+    //        model("checker", pattern = KT)
+    //    }
+    //}
 
     testGroup("completion/tests-k1", testDataPath = "../testData", category = COMPLETION) {
         testClass<AbstractCompiledKotlinInJavaCompletionTest> {

@@ -3,15 +3,14 @@ package com.intellij.terminal.frontend.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.frontend.TerminalInput
 import com.intellij.terminal.frontend.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.block.ui.getClipboardText
+import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
@@ -24,7 +23,6 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.select
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.simpleTerminalController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
-import java.awt.datatransfer.DataFlavor
 
 internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -88,32 +86,9 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   }
 
   private fun pasteIntoInput(input: TerminalInput) {
-    var text = getClipboardText() ?: return
-    // The following logic was borrowed from JediTerm.
-    // Sanitize clipboard text to use CR as the line separator.
-    // See https://github.com/JetBrains/jediterm/issues/136.
-    if (text.isNotEmpty()) {
-      // On Windows, Java automatically does this CRLF->LF sanitization, but
-      // other terminals on Unix typically also do this sanitization.
-      if (!SystemInfoRt.isWindows) {
-        text = text.replace("\r\n", "\n")
-      }
-      // Now convert this into what the terminal typically expects.
-      text = text.replace("\n", "\r")
-      input.sendBracketedString(text)
-    }
-  }
-
-  private fun getClipboardText(): String? {
-    val content = CopyPasteManager.getInstance().contents ?: return null
-    val text = try {
-      content.getTransferData(DataFlavor.stringFlavor) as String
-    }
-    catch (t: Throwable) {
-      thisLogger().error("Failed to get text from clipboard", t)
-      return null
-    }
-    return text
+    val text = getClipboardText() ?: return
+    val sanitizedText = sanitizeLineSeparators(text)
+    input.sendBracketedString(sanitizedText)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

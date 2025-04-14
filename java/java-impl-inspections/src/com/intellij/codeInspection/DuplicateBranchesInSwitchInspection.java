@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
@@ -731,13 +732,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     static @Nullable String getSwitchLabelText(@Nullable PsiSwitchLabelStatementBase switchLabel) {
       if (switchLabel != null) {
         if (switchLabel.isDefaultCase()) {
-          return PsiKeyword.DEFAULT;
+          return JavaKeywords.DEFAULT;
         }
         PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
         if (labelElementList != null) {
           PsiCaseLabelElement[] expressions = labelElementList.getElements();
           if (expressions.length != 0) {
-            return PsiKeyword.CASE + ' ' + expressions[0].getText();
+            return JavaKeywords.CASE + ' ' + expressions[0].getText();
           }
         }
       }

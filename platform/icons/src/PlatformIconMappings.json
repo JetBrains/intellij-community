@@ -32,6 +32,10 @@
       "moveToLeftTop.svg": "actions/moveToLeftTop.svg",
       "moveToRightBottom.svg": "actions/moveToRightBottom.svg",
       "moveToRightTop.svg": "actions/moveToRightTop.svg",
+      "moveToWindow.svg": [
+        "actions/moveToWindow.svg",
+        "actions/MoveTo2.svg"
+      ],
       "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
@@ -50,6 +54,7 @@
       "selectAll.svg": "actions/selectall.svg",
       "shortcutFilter.svg": "actions/shortcutFilter.svg",
       "stopRefresh.svg": "actions/stopRefresh.svg",
+      "stopWatch.svg": "actions/stopWatch.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
       "realIntentionBulb.svg": "actions/realIntentionBulb.svg",
@@ -990,7 +995,8 @@
     },
     "webReferences": {
       "server.svg": "webreferences/server.svg",
-      "openApi.svg": "webreferences/openapi.svg"
+      "openApi.svg": "webreferences/openapi.svg",
+      "messageQueue.svg": "webreferences/messageQueue.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",

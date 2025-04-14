@@ -48,21 +48,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
       // class duplication checks
       if (!addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
-        Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
-        Predicate<? super NodeSource> belongsToChunk = context.getParams().belongsToCurrentCompilationChunk();
-        Set<NodeSource> candidates = collect(
-          filter(present.getNodeSources(addedClass.getReferenceID()), s -> !deletedSources.contains(s) && belongsToChunk.test(s)), new HashSet<>()
-        );
-
-        if (!isEmpty(filter(candidates, src -> !context.isCompiled(src)))) {
-          collect(context.getDelta().getSources(addedClass.getReferenceID()), candidates);
-          final StringBuilder msg = new StringBuilder();
-          msg.append("Possibly duplicated classes in the same compilation chunk; Scheduling for recompilation sources: ");
-          for (NodeSource candidate : candidates) {
-            context.affectNodeSource(candidate);
-            msg.append(candidate).append("; ");
-          }
-          debug(msg.toString());
+        if (affectNodeSourcesIfNotCompiled(context, asIterable(addedClass.getReferenceID()), present, "Possibly duplicated classes in the same compilation chunk; Scheduling for recompilation sources: ")) {
+          affectSources(context, context.getDelta().getSources(addedClass.getReferenceID()), "Found conflicting class declarations ", true);
           continue; // if duplicates are found, do not perform further checks for classes with the same short name
         }
       }

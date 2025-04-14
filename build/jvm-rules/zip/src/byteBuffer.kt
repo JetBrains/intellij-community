@@ -1,19 +1,33 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
+import io.netty.buffer.AdaptiveByteBufAllocator
+import io.netty.buffer.ByteBufAllocator
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+val byteBufferAllocator: ByteBufAllocator = run {
+  System.setProperty("io.netty.tryReflectionSetAccessible", "true")
+
+  if (System.getProperty("io.netty.allocator.type", "adaptive") == "adaptive") {
+    val allocator = ByteBufAllocator.DEFAULT
+    if (allocator is AdaptiveByteBufAllocator) {
+      return@run allocator
+    }
+  }
+  AdaptiveByteBufAllocator(/* preferDirect = */ true, /* useCacheForNonEventLoopThreads = */ false)
+}
+
 // not thread-safe, intended only for single thread for one time use
-internal class ByteBufferAllocator() : AutoCloseable {
+internal class SingleByteBufferAllocator() : AutoCloseable {
   private var byteBuffer: ByteBuffer? = null
 
+  @Synchronized
   fun allocate(size: Int): ByteBuffer {
     var result = byteBuffer
     if (result != null && result.capacity() < size) {
-      // clear references to object to make sure that it can be collected by GC
       byteBuffer = null
       unmapBuffer(result)
       result = null
@@ -21,14 +35,17 @@ internal class ByteBufferAllocator() : AutoCloseable {
 
     if (result == null) {
       result = ByteBuffer.allocateDirect(roundUpInt(size, 65_536))!!
-      result.order(ByteOrder.LITTLE_ENDIAN)
       byteBuffer = result
     }
-    result.rewind()
-    result.limit(size)
+
     return result
+      // not `clear` as we in any case set limit to size
+      .rewind()
+      .order(ByteOrder.LITTLE_ENDIAN)
+      .limit(size)
   }
 
+  @Synchronized
   override fun close() {
     byteBuffer?.let { unmapBuffer(it) }
   }
@@ -47,6 +64,6 @@ fun unmapBuffer(buffer: ByteBuffer) {
   }
 }
 
-private fun roundUpInt(x: Int, @Suppress("SameParameterValue") blockSizePowerOf2: Int): Int {
+internal fun roundUpInt(x: Int, blockSizePowerOf2: Int): Int {
   return x + blockSizePowerOf2 - 1 and -blockSizePowerOf2
 }

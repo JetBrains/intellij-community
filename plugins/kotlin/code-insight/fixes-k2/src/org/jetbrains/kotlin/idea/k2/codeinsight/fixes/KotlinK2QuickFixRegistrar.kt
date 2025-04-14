@@ -182,6 +182,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RestrictedRetentionForExpressionAnnotationFactories.quickFixFactory)
         registerFactory(ModifierRequiredFixFactories.addInfixModifierFixFactory)
         registerFactory(ModifierRequiredFixFactories.addOperatorModifierFixFactory)
+        registerFactory(AddSemicolonBeforeLambdaExpressionFixFactory.addSemicolonBeforeLambdaExpressionFixFactory)
+        registerFactory(AbstractSuperCallFixFactories.errorFixFactory)
+        registerFactory(AbstractSuperCallFixFactories.warningFactory)
+        registerFactory(JavaClassOnCompanionFixFactories.factory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -292,6 +296,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ImportQuickFixFactories.noSetMethodFactory)
 
         registerFactory(ImportQuickFixFactories.componentFunctionMissingFactory)
+        registerFactory(ImportQuickFixFactories.componentFunctionAmbiguityFactory)
 
         registerFactory(ImportQuickFixFactories.iteratorMissingFactory)
         registerFactory(ImportQuickFixFactories.iteratorAmbiguityFactory)

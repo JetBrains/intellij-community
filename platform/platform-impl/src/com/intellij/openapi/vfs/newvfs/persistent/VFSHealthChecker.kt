@@ -409,7 +409,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     return report.apply {
       try {
         readAction {
-          val rootIds = impl.treeAccessor().listRoots()
+          val rootIds = impl.listRoots()
           val records = impl.connection().records()
           val maxAllocatedID = records.maxAllocatedID()
           rootsCount = rootIds.size
@@ -662,7 +662,7 @@ fun main(args: Array<String>) {
     throw error
   }
   println("VFS roots:")
-  records.forEachRoot { rootUrl, rootId ->
+  records.forEachRoot { rootUrl: String, rootId: Int ->
     println("\troot[$rootId]: url: '$rootUrl")
   }
 

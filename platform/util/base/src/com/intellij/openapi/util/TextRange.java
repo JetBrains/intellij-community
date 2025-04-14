@@ -158,13 +158,10 @@ public class TextRange implements Segment, Serializable {
 
   @Contract(pure = true)
   public @NotNull TextRange cutOut(@NotNull TextRange subRange) {
-    if (subRange.getStartOffset() > getLength()) {
-      throw new IllegalArgumentException("SubRange: " + subRange + "; this=" + this);
-    }
+    assertProperRange(subRange);
     if (subRange.getEndOffset() > getLength()) {
       throw new IllegalArgumentException("SubRange: " + subRange + "; this=" + this);
     }
-    assertProperRange(subRange);
     return new TextRange(myStartOffset + subRange.getStartOffset(),
                          Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
   }

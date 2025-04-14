@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.objectTree.ReferenceDelegatingDisposableInternal;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.*;
 
@@ -143,6 +144,11 @@ public final class Disposer {
     register(parentDisposable, disposable);
     return disposable;
   }
+  
+  private static Disposable dereferenceIfNeeded(@NotNull Disposable disposable) {
+    return disposable instanceof ReferenceDelegatingDisposableInternal
+           ? ((ReferenceDelegatingDisposableInternal)disposable).getDisposableDelegate() : disposable;
+  }
 
   /**
    * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
@@ -153,7 +159,7 @@ public final class Disposer {
    *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
-    ourTree.register(parent, child);
+    ourTree.register(dereferenceIfNeeded(parent), child);
   }
 
   /**
@@ -161,7 +167,7 @@ public final class Disposer {
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
-    return ourTree.tryRegister(parent, child);
+    return ourTree.tryRegister(dereferenceIfNeeded(parent), child);
   }
 
   /**
@@ -186,11 +192,11 @@ public final class Disposer {
    */
   @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
-    return ourTree.isDisposed(disposable);
+    return ourTree.isDisposed(dereferenceIfNeeded(disposable));
   }
 
   public static void dispose(@NotNull Disposable disposable) {
-    dispose(disposable, true);
+    dispose(dereferenceIfNeeded(disposable), true);
   }
 
   /**
@@ -198,11 +204,11 @@ public final class Disposer {
    */
   @ApiStatus.Internal
   public static void disposeChildren(@NotNull Disposable disposable, @NotNull Predicate<? super Disposable> predicate) {
-    ourTree.executeAllChildren(disposable, predicate);
+    ourTree.executeAllChildren(dereferenceIfNeeded(disposable), predicate);
   }
 
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, processUnregistered);
+    ourTree.executeAll(dereferenceIfNeeded(disposable), processUnregistered);
   }
 
   @ApiStatus.Internal
@@ -240,7 +246,7 @@ public final class Disposer {
   }
 
   public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
-    return getTree().getDisposalTrace(disposable);
+    return getTree().getDisposalTrace(dereferenceIfNeeded(disposable));
   }
 
   /**
@@ -249,7 +255,7 @@ public final class Disposer {
    */
   @TestOnly
   public static @Nullable Throwable getRegistrationTrace(@NotNull Disposable disposable) {
-    return getTree().getRegistrationTrace(disposable);
+    return getTree().getRegistrationTrace(dereferenceIfNeeded(disposable));
   }
 
   @ApiStatus.Internal

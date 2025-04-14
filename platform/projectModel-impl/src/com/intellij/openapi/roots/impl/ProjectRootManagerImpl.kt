@@ -10,12 +10,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
@@ -52,6 +55,9 @@ open class ProjectRootManagerImpl(
   private val rootCache: OrderRootsCache
   private var isStateLoaded = false
 
+  @Volatile
+  var shouldFireRootsChanged: Ref<Boolean>? = null
+
   init {
     @Suppress("LeakingThis")
     rootCache = getOrderRootsCache(project)
@@ -63,6 +69,11 @@ open class ProjectRootManagerImpl(
           projectSdkName = jdk.getName()
           projectSdkType = jdk.getSdkType().getName()
         }
+      }
+    })
+    project.messageBus.simpleConnect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
+      override fun moduleRemoved(project: Project, module: Module) {
+        moduleRootManagerInstances.remove(module)
       }
     })
   }
@@ -346,18 +357,23 @@ open class ProjectRootManagerImpl(
     if (app != null) {
       val isStateLoaded = isStateLoaded
       if (stateChanged) {
-        coroutineScope.launch {
-          // make sure we execute it only after any current modality dialog
-          withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        if (!project.isInitialized) {
+          shouldFireRootsChanged = Ref.create(isStateLoaded)
+        }
+        else {
+          coroutineScope.launch {
+            // make sure we execute it only after any current modality dialog
+            withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+            }
+            applyState(isStateLoaded)
           }
-          applyState(isStateLoaded)
         }
       }
     }
     isStateLoaded = true
   }
 
-  private suspend fun applyState(isStateLoaded: Boolean) {
+  internal suspend fun applyState(isStateLoaded: Boolean) {
     if (isStateLoaded) {
       LOG.debug("Run write action for projectJdkChanged()")
       backgroundWriteAction {
@@ -524,4 +540,13 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun markRootsForRefresh(): List<VirtualFile> = emptyList()
+}
+
+private class ProjectRootManagerInitProjectActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
+    val projectRootManager = project.serviceAsync<ProjectRootManager>() as? ProjectRootManagerImpl ?: return
+    val shouldFireRootsChanged = projectRootManager.shouldFireRootsChanged?.get() ?: return
+    projectRootManager.shouldFireRootsChanged = null
+    projectRootManager.applyState(shouldFireRootsChanged)
+  }
 }

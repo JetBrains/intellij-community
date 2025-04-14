@@ -4,34 +4,21 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import java.io.File
-import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.notExists
-import kotlin.io.path.pathString
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.makeFailureResult
 
@@ -105,10 +92,8 @@ interface ScriptConfigurationManager : ScriptDependencyAware {
         fun getInstance(project: Project): ScriptConfigurationManager = project.service()
 
         @JvmStatic
-        fun compositeScriptConfigurationManager(project: Project) =
+        fun compositeScriptConfigurationManager(project: Project): CompositeScriptConfigurationManager =
             getInstance(project).cast<CompositeScriptConfigurationManager>()
-
-        fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> = roots.mapNotNull { classpathEntryToVfs(it.toPath()) }
 
         @Suppress("TestOnlyProblems")
         @TestOnly
@@ -140,67 +125,7 @@ interface ScriptConfigurationManager : ScriptDependencyAware {
 
         @TestOnly
         fun clearCaches(project: Project) {
-            ClasspathToVfsConverter.clearCaches()
             defaultScriptingSupport(project).updateScriptDefinitionsReferences()
-        }
-    }
-}
-
-object ClasspathToVfsConverter {
-
-    private enum class FileType {
-        NOT_EXISTS, DIRECTORY, REGULAR_FILE, UNKNOWN
-    }
-
-    private val cache = ConcurrentHashMap<String, Pair<FileType, VirtualFile?>>()
-
-    private val Path.fileType: FileType
-        get() {
-            return when {
-                notExists() -> FileType.NOT_EXISTS
-                isDirectory() -> FileType.DIRECTORY
-                isRegularFile() -> FileType.REGULAR_FILE
-                else -> FileType.UNKNOWN
-            }
-        }
-
-    fun clearCaches() = cache.clear()
-
-    // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
-    fun classpathEntryToVfs(path: Path): VirtualFile? {
-        val key = path.pathString
-        val newType = path.fileType
-
-        //we cannot use `refreshAndFindFileByPath` under read lock
-        fun VirtualFileSystem.findLocalFileByPath(filePath: String): VirtualFile? {
-            val application = ApplicationManager.getApplication()
-
-            return if (!application.isDispatchThread() && application.isReadAccessAllowed()
-                || isUnitTestMode()
-            ) {
-                findFileByPath(filePath)
-            } else {
-                refreshAndFindFileByPath(filePath)
-            }
-        }
-
-        fun compute(filePath: String): Pair<FileType, VirtualFile?> {
-            return newType to when (newType) {
-                FileType.NOT_EXISTS, FileType.UNKNOWN -> null
-                FileType.DIRECTORY -> StandardFileSystems.local()?.findLocalFileByPath(filePath)
-                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.findLocalFileByPath(filePath + URLUtil.JAR_SEPARATOR)
-            }
-        }
-
-        val (oldType, oldVFile) = cache.computeIfAbsent(key, ::compute)
-
-        if (oldType != newType
-            || oldVFile?.isValid == false
-            || oldVFile == null && (oldType == FileType.DIRECTORY || oldType == FileType.REGULAR_FILE)
-        ) {
-            return cache.compute(key) { k, _ -> compute(k) }?.second
-        } else {
-            return oldVFile
         }
     }
 }

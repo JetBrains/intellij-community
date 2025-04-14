@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
-import com.intellij.openapi.options.ObservableOptionEditor
-import com.intellij.platform.searchEverywhere.SeFilterState
+import com.intellij.openapi.Disposable
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
@@ -12,9 +11,10 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface SeTab {
+interface SeTab: Disposable {
   val name: @Nls String
   val shortName: @Nls String
+  val id: String
 
   /**
    * Retrieves a flow of search result events based on the provided parameters.
@@ -25,7 +25,7 @@ interface SeTab {
    */
   fun getItems(params: SeParams): Flow<SeResultEvent>
 
-  fun getFilterEditor(): ObservableOptionEditor<SeFilterState>?
+  fun getFilterEditor(): SeFilterEditor?
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
 }

@@ -30,6 +30,9 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
+                    serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
+
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
@@ -530,7 +533,7 @@
     <customDecoratorStubType implementation="com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStubType"/>
 
     <!-- typing -->
-    <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider"/>
+    <typeProvider id="pyTypingTypeProvider" implementation="com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider" order="before pythonDocstringTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypingNewTypeTypeProvider"/>
@@ -571,7 +574,9 @@
     <!--stdlib-->
     <canonicalPathProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibCanonicalPathProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.stdlib.PyStdlibInspectionExtension"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"
+                  order="before pyTypingTypeProvider"
+    />
     <typeProvider implementation="com.jetbrains.python.codeInsight.decorator.PyDecoratedFunctionTypeProvider"
                   id="pyDecoratedFunctionTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider"

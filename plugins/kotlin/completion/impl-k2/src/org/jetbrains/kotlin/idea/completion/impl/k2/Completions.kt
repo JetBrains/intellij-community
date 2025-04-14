@@ -198,6 +198,8 @@ internal object Completions {
             }
 
             is KDocLinkNamePositionContext -> {
+                FirKDocParameterNameContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
                 FirKDocCallableCompletionContributor(parameters, sink)
                     .complete(positionContext, weighingContext)
                 FirClassifierCompletionContributor(parameters, sink)

@@ -442,8 +442,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private VirtualFile @NotNull [] loadAllChildren() {
     boolean isCaseSensitive = isCaseSensitive();
     synchronized (myData) {
-      boolean wasChildrenLoaded = owningPersistentFS().areChildrenLoaded(this);
-      List<? extends ChildInfo> children = owningPersistentFS().listAll(this);
+      PersistentFSImpl pFS = owningPersistentFS();
+      boolean wasChildrenLoaded = pFS.areChildrenLoaded(this);
+      List<? extends ChildInfo> children = pFS.listAll(this);
       int[] result = ArrayUtil.newIntArray(children.size());
       VirtualFile[] files;
       if (children.isEmpty()) {
@@ -487,8 +488,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           prevChildren.remove(id);
           VirtualFileSystemEntry file = vfsData.getFileById(id, this, true);
           if (file == null) {
-            int attributes = owningPersistentFS().getFileAttributes(id);
-            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !owningPersistentFS().mayHaveChildren(id);
+            int attributes = pFS.getFileAttributes(id);
+            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pFS.mayHaveChildren(id);
             file = createChildImpl(id, child.getNameId(), attributes, isEmptyDirectory);
           }
           files[i] = file;
@@ -849,7 +850,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public @NotNull List<VirtualFile> getCachedChildren() {
+  public @NotNull @Unmodifiable List<VirtualFile> getCachedChildren() {
     return Arrays.asList(getArraySafely(false));
   }
 

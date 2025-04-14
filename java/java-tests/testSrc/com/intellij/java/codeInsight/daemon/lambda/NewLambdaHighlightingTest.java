@@ -151,6 +151,7 @@ class NewLambdaHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
   @Test void testLambdaWithExplicitTypeAndTargetTypeParameter() { doTest(); }
   @Test void testAmbiguousConstructorCallWithLambdaInside() { doTest(); }
   @Test void testMultiResolveSameFunction() {doTest();}
+  @Test void testMultiResolveThreeFunctions() {doTest();}
   @Test void testWrongTargetTypeDoNotReportIncompatibleTypeInside() {doTest();}
 
   @Override

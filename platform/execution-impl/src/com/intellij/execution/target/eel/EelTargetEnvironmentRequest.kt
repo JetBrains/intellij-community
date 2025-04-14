@@ -151,13 +151,15 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     }
 
     request.localPortBindings.forEach { localPortBinding ->
+      val acceptor = runBlockingMaybeCancellable {
+        eel.tunnels.getAcceptorForRemotePort().port((localPortBinding.target ?: 0).toUShort()).getOrThrow()
+      }
+
+      val socket = Socket()
+
+      socket.connect(InetSocketAddress(localPortBinding.local))
+
       forwardingScope.launch {
-        val acceptor = eel.tunnels.getAcceptorForRemotePort().port((localPortBinding.target ?: 0).toUShort()).getOrThrow()
-
-        val socket = Socket()
-
-        socket.connect(InetSocketAddress(localPortBinding.local))
-
         launch {
           val connection = acceptor.incomingConnections.receive()
 
@@ -169,16 +171,17 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
           }
         }
 
+        @Suppress("OPT_IN_USAGE")
         awaitCancellationAndInvoke {
           acceptor.close()
           socket.close()
         }
-
-        myLocalPortBindings[localPortBinding] = ResolvedPortBinding(
-          localEndpoint = LocalHostPort(localPortBinding.local),
-          targetEndpoint = LocalHostPort(acceptor.boundAddress.port.toInt())
-        )
       }
+
+      myLocalPortBindings[localPortBinding] = ResolvedPortBinding(
+        localEndpoint = LocalHostPort(localPortBinding.local),
+        targetEndpoint = LocalHostPort(acceptor.boundAddress.port.toInt())
+      )
     }
   }
 
@@ -276,13 +279,13 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val command = commandLine.collectCommandsSynchronously()
-    val builder = EelExecApi.ExecuteProcessOptions.Builder(command.first())
+    val builder = eel.exec.execute(command.first())
 
     builder.args(command.drop(1))
     builder.env(commandLine.environmentVariables)
     builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
 
-    return runBlockingCancellable { eel.exec.execute(builder.build()).getOrThrow().convertToJavaProcess() }
+    return runBlockingCancellable { builder.getOrThrow().convertToJavaProcess() }
   }
 
   override val targetPlatform: TargetPlatform = request.targetPlatform
