@@ -94,7 +94,7 @@ class XMixedModeExecutionStack(
       highLevelExecutionStack?.executionLineIconRenderer
   }
 
-  suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
+  private suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
     logger.info("Preparation for frame computation completed")
 
     val lowLevelAcc = XAccumulatingStackFrameContainer()
