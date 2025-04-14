@@ -6,11 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
-import com.intellij.terminal.backend.fus.installFusListener
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
@@ -54,7 +52,6 @@ internal fun createTerminalSession(
   coroutineScope: CoroutineScope,
 ): TerminalSession {
   val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
-  installFusListener(observableTtyConnector, parentDisposable = coroutineScope.asDisposable())
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
   val services: JediTermServices = createJediTermServices(observableTtyConnector, initialSize, maxHistoryLinesCount, settings)
