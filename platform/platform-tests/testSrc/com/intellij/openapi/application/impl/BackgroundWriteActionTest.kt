@@ -14,6 +14,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -521,6 +522,27 @@ class BackgroundWriteActionTest {
         }
       }
 
+    }
+  }
+
+  @Test
+  fun `prompt cancellation of pending wa does not break subsequent ra`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val future = Job()
+    launch {
+      readAction {
+        future.asCompletableFuture().join()
+      }
+    }
+    val pendingWa = launch {
+      Thread.sleep(50)
+      application.runWriteAction {
+        Assertions.fail<Nothing>("Should not start")
+      }
+    }
+    delay(10)
+    pendingWa.cancelAndJoin()
+    future.cancel()
+    readAction {
     }
   }
 }

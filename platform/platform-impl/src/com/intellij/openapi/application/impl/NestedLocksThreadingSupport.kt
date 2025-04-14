@@ -893,23 +893,27 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
     val permit = computationState.getThisThreadPermit()
 
-    when (permit) {
-      null -> {
-        val writeIntent = computationState.acquireWriteIntentPermit()
-        return PreparatoryWriteIntent(writeIntent, true, computationState, listener)
+    try {
+      when (permit) {
+        null -> {
+          val writeIntent = computationState.acquireWriteIntentPermit()
+          return PreparatoryWriteIntent(writeIntent, true, computationState, listener)
+        }
+        is ParallelizablePermit.Read -> {
+          error("WriteAction can not be called from ReadAction")
+        }
+        is ParallelizablePermit.WriteIntent -> {
+          checkWriteFromRead("Write", "Write Intent")
+          return PreparatoryWriteIntent(permit.writeIntentPermit, false, computationState, listener)
+        }
+        is ParallelizablePermit.Write -> {
+          checkWriteFromRead("Write", "Write")
+          return PreparatoryWriteIntent(permit.writePermit, false, computationState, listener)
+        }
       }
-      is ParallelizablePermit.Read -> {
-        endPendingWriteAction(computationState)
-        error("WriteAction can not be called from ReadAction")
-      }
-      is ParallelizablePermit.WriteIntent -> {
-        checkWriteFromRead("Write", "Write Intent")
-        return PreparatoryWriteIntent(permit.writeIntentPermit, false, computationState, listener)
-      }
-      is ParallelizablePermit.Write -> {
-        checkWriteFromRead("Write", "Write")
-        return PreparatoryWriteIntent(permit.writePermit, false, computationState, listener)
-      }
+    } catch (e : Throwable) {
+      endPendingWriteAction(computationState)
+      throw e
     }
   }
 
