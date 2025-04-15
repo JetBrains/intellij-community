@@ -251,8 +251,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
     return object : WindowsDistributionCustomizer() {
       init {
-        icoPath = "$projectHome/adt-branding/src/artwork/androidstudio.ico"
-        icoPathForEAP = "$projectHome/adt-branding/src/artwork/preview/androidstudio.ico"
+        icoPath = "$projectHome/adt-branding/resources/artwork/androidstudio.ico"
+        icoPathForEAP = "$projectHome/adt-branding/resources/artwork/preview/androidstudio.ico"
         buildZipArchiveWithBundledJre = false
         buildZipArchiveWithoutBundledJre = true
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
@@ -283,8 +283,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     return object : LinuxDistributionCustomizer() {
       init {
         buildArtifactWithoutRuntime = true
-        iconPngPath = "$projectHome/adt-branding/src/artwork/icon_AS_128.png"
-        iconPngPathForEAP = "$projectHome/adt-branding/src/artwork/preview/icon_AS_128.png"
+        iconPngPath = "$projectHome/adt-branding/resources/artwork/icon_AS_128.png"
+        iconPngPathForEAP = "$projectHome/adt-branding/resources/artwork/preview/icon_AS_128.png"
       }
 
       override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio"
@@ -308,8 +308,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // For now we have all 3 platform icons checked in and we change
       // the icons manually. Fix this when the other platforms have the
       // same mechanisms for our .ico and .svg files
-      icnsPath = "$projectHome/adt-branding/src/artwork/AndroidStudio.icns"
-      icnsPathForEAP = "$projectHome/adt-branding/src/artwork/preview/AndroidStudio.icns"
+      icnsPath = "$projectHome/adt-branding/resources/artwork/AndroidStudio.icns"
+      icnsPathForEAP = "$projectHome/adt-branding/resources/artwork/preview/AndroidStudio.icns"
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
