@@ -106,7 +106,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
           val contentRoots = resolveContentRoots(virtualFileUrlManager, externalProject, sourceSet, contentRootIndex)
           val sourceRootData = GradleSourceRootData(externalProject, sourceSet, projectModuleEntity, sourceSetEntitySource, contentRoots)
 
-          if (sourceRootData.contentRootUrls.any { contentRootsByUrl.contains(it) } ) {
+          if (sourceRootData.contentRootUrls.any { contentRootsByUrl[it].let { it != null && it.entitySource == sourceSetEntitySource } } ) {
             continue
           }
           if (isUnloadedModule(project, sourceRootData)) {
