@@ -50,8 +50,8 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
 @Order(ExternalSystemConstants.UNORDERED)
 public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
 
-  private final IdentityHashMap<GradleBuildScriptClasspathModel, List<BuildScriptClasspathData.ClasspathEntry>> buildScriptEntriesMap =
-    new IdentityHashMap<>();
+  private final HashMap<GradleBuildScriptClasspathModel, List<BuildScriptClasspathData.ClasspathEntry>> buildScriptEntriesMap =
+    new HashMap<>();
 
   @Override
   public void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {
