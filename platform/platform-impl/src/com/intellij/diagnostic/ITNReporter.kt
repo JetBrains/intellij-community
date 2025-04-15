@@ -39,7 +39,7 @@ internal val NOTIFY_SUCCESS_EACH_REPORT = AtomicBoolean(true) // dirty hack, rep
 @InternalIgnoreDependencyViolation
 open class ITNReporter internal constructor(private val postUrl: String) : ErrorReportSubmitter() {
   @ApiStatus.Internal
-  constructor() : this("https://ea-report.jetbrains.com/trackerRpc/idea/createScr")
+  constructor() : this("http://localhost:8080/trackerRpc/idea/createScr")
 
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
@@ -107,7 +107,7 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
     return true
   }
 
-  private fun onSuccess(project: Project?, reportId: Int, callback: (SubmittedReportInfo) -> Unit) {
+  private fun onSuccess(project: Project?, reportId: Long, callback: (SubmittedReportInfo) -> Unit) {
     val reportUrl = ITNProxy.getBrowseUrl(reportId)
     callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
 
