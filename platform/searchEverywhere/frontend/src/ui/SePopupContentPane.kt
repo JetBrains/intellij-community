@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
@@ -17,6 +16,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchIte
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBList
@@ -69,7 +69,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
             else ->  throw IllegalStateException("Item is not handled: $presentation")
           }
         }
-        is SeResultListMoreRow -> text(IdeBundle.message("search.everywhere.points.loading"))
+        is SeResultListMoreRow -> icon(AnimatedIcon.Default.INSTANCE)
       }
     }
 
@@ -102,7 +102,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
         withContext(Dispatchers.EDT) {
           resultListModel.reset()
           if (vm.searchPattern.value.isNotEmpty()) {
-            resultListModel.addElement(SeResultListMoreRow)
+            textField.setSearchInProgress(true)
           }
         }
 
@@ -115,13 +115,13 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
 
         listEventFlow.collect { listEvent ->
           withContext(Dispatchers.EDT) {
+            textField.setSearchInProgress(false)
             when (listEvent) {
               is SeResultListUpdateEvent -> {
                 resultListModel.freeze(indexToFreezeFromListOffset())
                 resultListModel.addFromEvent(listEvent.event)
               }
-
-              SeResultListStopEvent -> {
+              is SeResultListStopEvent -> {
                 resultListModel.removeLoadingItem()
               }
             }
@@ -225,10 +225,6 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
 
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
     //stopSearching();
-
-    if (indexes.size == 1 && resultListModel[indexes[0]] is SeResultListMoreRow) {
-      return
-    }
 
     val itemDataList = indexes.map {
       resultListModel[it]

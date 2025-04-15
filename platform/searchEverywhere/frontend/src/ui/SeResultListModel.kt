@@ -41,6 +41,14 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
       is SeResultAddedEvent -> {
         val index = firstIndexOrNull(false) { event.itemData.weight > it.weight } ?: lastIndexToInsertItem
         add(index, SeResultListItemRow(event.itemData))
+
+        /* Animated icon in the text field disappears when the first result appears.
+         * So let the loading row will be in the list from the moment the first
+         * item appears until the last item appears.
+         */
+        if (size == 1) {
+          addElement(SeResultListMoreRow)
+        }
       }
       is SeResultReplacedEvent -> {
         val index = firstIndexOrNull(true) { event.oldItemData == it }
