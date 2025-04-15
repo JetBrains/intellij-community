@@ -9,5 +9,6 @@
     <colorSettingsPage implementation="com.intellij.editorconfig.frontend.settings.EditorConfigColorSettingsPage"/>
     <lang.foldingBuilder language="EditorConfig"
                          implementationClass="com.intellij.editorconfig.frontend.lang.editor.EditorConfigFoldingBuilder"/>
+    <statementUpDownMover implementation="com.intellij.editorconfig.frontend.editor.EditorConfigStatementUpDownMover"/>
   </extensions>
 </idea-plugin>

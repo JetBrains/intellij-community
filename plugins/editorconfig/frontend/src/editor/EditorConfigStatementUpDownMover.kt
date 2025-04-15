@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.editorconfig.language.codeinsight.actions
+package com.intellij.editorconfig.frontend.editor
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange
-import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
@@ -14,14 +13,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 
-class EditorConfigStatementUpDownMover : LineMover() {
+internal class EditorConfigStatementUpDownMover : LineMover() {
+
   override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
     if (file !is EditorConfigPsiFile) return false
     if (editor.selectionModel.hasSelection()) {
       return super.checkAvailable(editor, file, info, down)
     }
 
-    val range = StatementUpDownMover.getLineRangeFromSelection(editor)
+    val range = getLineRangeFromSelection(editor)
     if (!canMove(editor, range, down)) return false
     val (startElement, _) = getElementRange(editor, file, range) ?: return false
     val option = startElement.parentOfType<EditorConfigOption>(withSelf = true)
