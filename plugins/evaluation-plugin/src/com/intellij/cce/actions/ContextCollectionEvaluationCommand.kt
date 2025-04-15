@@ -69,6 +69,7 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
         evaluationRootInfo,
         environment.project,
         environment.processor,
+        environment.setupSteps,
         feature.name,
         environment.featureInvoker
       ) {

@@ -58,7 +58,7 @@
                     interface="com.intellij.cce.actions.OpenProjectMethodProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.setupSdkStep" area="IDEA_PROJECT"
-                    interface="com.intellij.cce.evaluation.SetupSdkStep"
+                    interface="com.intellij.cce.evaluation.SetupSdkStepFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.evaluableFeature"
                     interface="com.intellij.cce.evaluable.EvaluableFeature"

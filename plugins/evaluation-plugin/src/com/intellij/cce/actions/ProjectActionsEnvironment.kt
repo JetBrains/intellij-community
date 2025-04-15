@@ -5,7 +5,6 @@ import com.intellij.cce.core.*
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.common.CommonActionsInvoker
 import com.intellij.cce.evaluation.*
-import com.intellij.cce.evaluation.step.CheckProjectSdkStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.interpreter.*
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
@@ -41,6 +40,7 @@ open class ProjectActionsEnvironment(
   private val evaluationRootInfo: EvaluationRootInfo,
   val project: Project,
   val processor: GenerateActionsProcessor,
+  override val setupSteps: List<EvaluationStep>,
   private val featureName: String,
   val featureInvoker: FeatureInvoker,
 ) : EvaluationEnvironment {
@@ -53,9 +53,6 @@ open class ProjectActionsEnvironment(
     }
   }
   private var datasetRefIsHandled = false
-
-  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language), strategy)
-  override val checkSdk: EvaluationStep? = CheckProjectSdkStep(project, config.language)
 
   override val preparationDescription: String = "Generating actions by selected files"
 

@@ -8,7 +8,7 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonMultiLineEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonTextCompletionEvaluationVisitor"/>
     <lineCompletionVisitorFactory implementation="com.intellij.cce.python.visitor.PythonLineCompletionVisitorFactory"/>
-    <setupSdkStep implementation="com.intellij.cce.python.evaluation.SetupPythonInterpreterStep"/>
+    <setupSdkStep implementation="com.intellij.cce.python.evaluation.SetupPythonInterpreterStepFactory"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonCompletionContextEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonDocGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.python.visitor.PythonCodeGenerationVisitor"/>

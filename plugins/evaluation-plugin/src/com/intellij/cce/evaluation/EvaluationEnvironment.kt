@@ -16,8 +16,7 @@ import java.nio.file.Path
  */
 interface EvaluationEnvironment : AutoCloseable {
 
-  val setupSdk: EvaluationStep?
-  val checkSdk: EvaluationStep?
+  val setupSteps: List<EvaluationStep>
 
   val preparationDescription: String
 
@@ -38,8 +37,7 @@ interface SimpleFileEnvironment : EvaluationEnvironment {
 
   val datasetRef: DatasetRef
 
-  override val setupSdk: EvaluationStep? get() = null
-  override val checkSdk: EvaluationStep? get() = null
+  override val setupSteps: List<EvaluationStep> get() = emptyList()
 
   override val preparationDescription: String get() = "Checking that dataset file is available"
 

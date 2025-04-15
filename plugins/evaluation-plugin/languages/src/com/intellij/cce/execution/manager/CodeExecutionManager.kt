@@ -26,7 +26,6 @@ abstract class CodeExecutionManager {
 
   abstract val language: Language
   abstract val executionMode: ExecutionMode?
-  var shouldSetup: Boolean = true
 
   private val executionBasedMetrics = listOf(AIA_EXECUTION_SUCCESS_RATIO, AIA_TEST_LINE_COVERAGE, AIA_TEST_BRANCH_COVERAGE, AIA_TEST_FILE_PROVIDED)
 
@@ -59,8 +58,6 @@ abstract class CodeExecutionManager {
     val codeFile = getGeneratedCodeFile(basePath, code)
     // Save code in a temp file
     codeFile.writeText(code)
-    // Setup environment
-    setupEnvironment(project, sdk)
     // Compile
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
