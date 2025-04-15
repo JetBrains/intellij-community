@@ -30,6 +30,9 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 data class CorePluginDescription(
@@ -137,6 +140,12 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
   private val pluginIdToInfo = LinkedHashMap<String, ModuleInfo>()
 
   private val _errors = mutableListOf<PluginValidationError>()
+  private val xIncludeLoader =
+    LoadFromSourceXIncludeLoader(
+      pathsIncludedFromLibrariesViaXiInclude = validationOptions.pathsIncludedFromLibrariesViaXiInclude, 
+      modules = sourceModules,
+      directoriesToIndex = listOf("META-INF", "idea", ""),
+    )
 
   fun validate(): PluginValidationResult {
     // 1. collect plugin and module file info set
@@ -613,7 +622,6 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
   private fun loadRawPluginDescriptor(file: Path): RawPluginDescriptor? {
     if (!file.exists()) return null
     
-    val xIncludeLoader = LoadFromSourceXIncludeLoader()
     val xmlInput = createNonCoalescingXmlStreamReader(file.inputStream(), file.pathString)
     val rawPluginDescriptor = PluginDescriptorFromXmlStreamConsumer(ValidationReadModuleContext, xIncludeLoader).let {
       it.consume(xmlInput)
@@ -642,25 +650,62 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     override val elementOsFilter: (OS) -> Boolean
       get() = { true }
   }
+}
 
-  private inner class LoadFromSourceXIncludeLoader : XIncludeLoader {
-    override fun loadXIncludeReference(path: String): XIncludeLoader.LoadedXIncludeReference? {
-      if (path in validationOptions.pathsIncludedFromLibrariesViaXiInclude || path.startsWith("META-INF/tips-")) {
-        //todo: support loading from libraries
-        return XIncludeLoader.LoadedXIncludeReference("<idea-plugin/>".byteInputStream(), "dummy tag for external $path")
+private class LoadFromSourceXIncludeLoader(
+  private val pathsIncludedFromLibrariesViaXiInclude: Set<String>, 
+  private val modules: List<PluginModelValidator.Module>,
+  private val directoriesToIndex: List<String>,
+) : XIncludeLoader {
+  private val shortXmlPathToFullPaths = collectXmlFilesInIndexedDirectories()
+
+  private fun collectXmlFilesInIndexedDirectories(): Map<String, List<Path>> {
+    val shortNameToPaths = LinkedHashMap<String, MutableList<Path>>()
+    for (module in modules) {
+      for (sourceRoot in module.sourceRoots) {
+        for (directoryName in directoriesToIndex) {
+          val directory = if (directoryName == "") sourceRoot else sourceRoot.resolve(directoryName)
+          if (directory.isDirectory()) {
+            val prefix = if (directoryName == "") "" else "$directoryName/" 
+            for (xmlFile in directory.listDirectoryEntries("*.xml")) {
+              val shortPath = "$prefix${xmlFile.name}"
+              if (shortPath == "META-INF/plugin.xml") {
+                continue
+              }
+              shortNameToPaths.computeIfAbsent(shortPath) { ArrayList() }.add(xmlFile)
+            }
+          }
+        }
       }
-      val files: Sequence<Path?> = sourceModules.asSequence()
-        .flatMap { it.sourceRoots }
-        .map { it.resolve(path) }
-        .filter { it.exists() }
-      val file = files.firstOrNull()
-      if (file != null) {
-        return XIncludeLoader.LoadedXIncludeReference(file.inputStream(), file.pathString)
-      }
-      return null
     }
+    return shortNameToPaths
   }
 
+  override fun loadXIncludeReference(path: String): XIncludeLoader.LoadedXIncludeReference? {
+    if (path in pathsIncludedFromLibrariesViaXiInclude 
+        || path.startsWith("META-INF/tips-")
+        || path.startsWith("com/intellij/database/dialects/") //contains many files which slow down tests
+        || path.startsWith("com/intellij/sql/dialects/") //contains many files which slow down tests
+    ) {
+      //todo: support loading from libraries
+      return XIncludeLoader.LoadedXIncludeReference("<idea-plugin/>".byteInputStream(), "dummy tag for external $path")
+    }
+    val directoryName = path.substringBeforeLast(delimiter = '/', missingDelimiterValue = "")
+    val files = if (directoryName in directoriesToIndex) {
+      shortXmlPathToFullPaths[path] ?: emptyList()
+    }
+    else {
+      modules.asSequence()
+        .flatMap { it.sourceRoots }
+        .map { it.resolve(path) }
+        .filterTo(ArrayList()) { it.exists() }
+    }
+    val file = files.firstOrNull()
+    if (file != null) {
+      return XIncludeLoader.LoadedXIncludeReference(file.inputStream(), file.pathString)
+    }
+    return null
+  }
 }
 
 internal data class ModuleInfo(
