@@ -13,16 +13,16 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.toSize
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.registry.Registry
 import java.awt.BorderLayout
+import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
+import org.jetbrains.jewel.foundation.util.JewelLogger
 
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelComposePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
@@ -85,10 +85,12 @@ public fun JewelToolWindowNoThemeComposePanel(
 
 private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanelWrapper) -> Unit): JewelComposePanelWrapper {
     if (System.getProperty("skiko.library.path") == null) {
-        System.setProperty("skiko.library.path", PathManager.getLibPath() + "/skiko-awt-runtime-all")
-    }
-    if (ApplicationManager.getApplication().isInternal) {
-        System.setProperty("compose.swing.render.on.graphics", Registry.stringValue("compose.swing.render.on.graphics"))
+        val bundledSkikoFolder = File(PathManager.getLibPath(), "/skiko-awt-runtime-all")
+        if (bundledSkikoFolder.isDirectory && bundledSkikoFolder.canRead()) {
+            System.setProperty("skiko.library.path", PathManager.getLibPath() + "/skiko-awt-runtime-all")
+        } else {
+            JewelLogger.getInstance("SkikoLoader").warn("Bundled Skiko not found/not readable, falling back to default")
+        }
     }
     val jewelPanel = JewelComposePanelWrapper()
     jewelPanel.layout = BorderLayout()
