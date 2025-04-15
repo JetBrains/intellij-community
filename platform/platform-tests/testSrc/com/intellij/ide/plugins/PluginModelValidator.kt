@@ -48,11 +48,19 @@ data class PluginValidationOptions(
   val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
   val pathsIncludedFromLibrariesViaXiInclude: Set<String> = emptySet(),
   val modulesToSkip: Set<String> = emptySet(),
+  
   /**
    * Describes different core plugins (with ID `com.intellij`) located in the project sources. 
    * All of them are checked, but only the first one is used when checking dependencies from other plugins.  
    */
   val corePluginDescriptions: List<CorePluginDescription> = COMMUNITY_CORE_PLUGINS,
+  
+  /**
+   * Set of modules containing `plugin.xml` files which should be ignored because they correspond to smaller editions of plugins,
+   * and other module contains `plugin.xml` file with the same ID. 
+   * It's better to avoid such configurations, and include all optional parts as content modules in a single `plugin.xml`. 
+   */
+  val mainModulesOfAlternativePluginVariants: Set<String> = emptySet(),
 )
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
@@ -188,10 +196,10 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         packageName = descriptor.`package`,
         descriptor = descriptor,
       )
-      if (sourceModuleName !in alternativeCorePluginMainModules) {
+      if (sourceModuleName !in alternativeCorePluginMainModules && sourceModuleName !in validationOptions.mainModulesOfAlternativePluginVariants) {
         val prev = pluginIdToInfo.put(id, moduleInfo)
         // todo how do we can exclude it automatically
-        if (prev != null && id != "com.jetbrains.ae.database" && id != "org.jetbrains.plugins.github") {
+        if (prev != null) {
           throw PluginValidationError(
             "Duplicated plugin id: $id",
             moduleMetaInfo.sourceModule,
