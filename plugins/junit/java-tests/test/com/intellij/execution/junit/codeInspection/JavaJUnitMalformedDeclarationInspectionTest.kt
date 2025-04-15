@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import org.intellij.lang.annotations.Language
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 
@@ -32,6 +33,52 @@ class JavaJUnitMalformedDeclarationInspectionTest {
 
   class Latest : JUnitMalformedDeclarationInspectionTestBase(JUNIT5_LATEST) {
     /* Malformed extensions */
+    fun `test nested method source annotation no highlighting`() {
+      myFixture.addClass("""
+        package org.example;
+        
+        import org.junit.jupiter.params.ParameterizedTest;
+        import org.junit.jupiter.params.provider.MethodSource;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        
+        @ParameterizedTest(name = "jdk {0}")
+        @MethodSource("allJdks")
+        @Retention(RetentionPolicy.RUNTIME)
+        @interface TestAllJdks {}
+      """.trimIndent())
+
+      myFixture.addClass("""
+        package org.example;
+        
+        import org.example.TestAllJdks;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        
+        @TestAllJdks
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface TestInterface {}
+      """.trimIndent())
+
+      @Language("JAVA") val text = """
+        import org.example.TestInterface;
+        import org.junit.jupiter.params.provider.Arguments;
+        import java.util.stream.Stream;
+
+        class MyTests {
+            public static Stream<Arguments> allJdks() {
+                return Stream.of(Arguments.of(8), Arguments.of(11), Arguments.of(17));
+            }
+
+            @TestInterface
+            public void my(int jdk) {
+                System.out.println("testing with " + jdk);
+            }
+        }
+      """.trimIndent()
+      myFixture.testHighlighting(JvmLanguage.JAVA, text)
+    }
+
     fun `test malformed extension no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {
