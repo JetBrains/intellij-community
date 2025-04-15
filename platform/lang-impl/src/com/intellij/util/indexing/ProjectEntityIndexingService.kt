@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -412,7 +413,8 @@ class ProjectEntityIndexingService(
 
     private fun <E : WorkspaceEntity> isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity: E): Boolean {
       return newEntity is LibraryEntity &&
-             (newEntity as LibraryEntity).symbolicId.tableId is GlobalLibraryTableId
+             (newEntity as LibraryEntity).symbolicId.tableId is GlobalLibraryTableId &&
+             !Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")
     }
 
     private fun <E : WorkspaceEntity, C : WorkspaceEntity> handleDependencies(
