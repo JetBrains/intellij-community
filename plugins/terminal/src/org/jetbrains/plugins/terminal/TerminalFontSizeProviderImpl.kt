@@ -18,7 +18,7 @@ internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposab
   private var fontSize: Float? = null
 
   init {
-    val connection = ApplicationManager.getApplication().getMessageBus().connect()
+    val connection = ApplicationManager.getApplication().getMessageBus().connect(this)
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       resetFontSize() // presentation mode, Zoom IDE...
     })
