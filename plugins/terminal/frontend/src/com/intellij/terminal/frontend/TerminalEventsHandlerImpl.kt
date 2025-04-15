@@ -3,8 +3,12 @@ package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.BackspaceHandler
 import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -326,14 +330,24 @@ internal open class TerminalEventsHandlerImpl(
     val project = editor.project ?: return
     val lookup = LookupManager.getActiveLookup(editor)
     if (lookup != null) {
-      val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project)
-      LookupTypedHandler.beforeCharTyped(
-        charTyped,
-        project,
-        editor,
-        editor,
-        psiFile
-      )
+      if (charTyped.code.toByte() == Ascii.BS) {
+        val originalHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)
+        val backspaceHandler = BackspaceHandler(originalHandler)
+        backspaceHandler.doExecute(
+          editor,
+          editor.getCaretModel().getCurrentCaret(),
+          DataManager.getInstance().getDataContext(editor.getComponent()))
+      }
+      else {
+        val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project)
+        LookupTypedHandler.beforeCharTyped(
+          charTyped,
+          project,
+          editor,
+          editor,
+          psiFile
+        )
+      }
     }
   }
 

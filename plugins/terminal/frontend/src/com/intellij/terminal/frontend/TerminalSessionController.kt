@@ -22,6 +22,9 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
@@ -88,20 +91,9 @@ internal class TerminalSessionController(
       is TerminalContentUpdatedEvent -> {
         fusActivity.eventReceived(event)
         updateOutputModel { model ->
-          val styles = event.styles.map { it.toStyleRange() }
-          LookupManager.getInstance(project).activeLookup?.let { lookup ->
-            lookup.performGuardedChange(Runnable {
-              fusActivity.beforeModelUpdate()
-              model.updateContent(event.startLineLogicalIndex, event.text, styles)
-              fusActivity.afterModelUpdate()
-            })
-
-          } ?: {
-            fusActivity.beforeModelUpdate()
-            model.updateContent(event.startLineLogicalIndex, event.text, styles)
-            fusActivity.afterModelUpdate()
-            }
-          }
+          fusActivity.beforeModelUpdate()
+          updateOutputModelContent(model, event)
+          fusActivity.afterModelUpdate()
         }
       }
       is TerminalCursorPositionChangedEvent -> {
@@ -150,7 +142,15 @@ internal class TerminalSessionController(
 
   private suspend fun updateOutputModel(block: (TerminalOutputModel) -> Unit) {
     withContext(edtContext) {
-      block(getCurrentOutputModel())
+      val doUpdate = Runnable {
+        block(getCurrentOutputModel())
+      }
+      val lookup = LookupManager.getInstance(project).activeLookup
+      if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
+        lookup.performGuardedChange(doUpdate)
+      } else {
+        doUpdate.run()
+      }
     }
   }
 
