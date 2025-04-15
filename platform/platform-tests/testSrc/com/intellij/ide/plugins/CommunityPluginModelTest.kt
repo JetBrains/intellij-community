@@ -14,6 +14,10 @@ class CommunityPluginModelTest {
     val communityPath = PlatformTestUtil.getCommunityPath()
     val options = PluginValidationOptions(
       skipUnresolvedOptionalContentModules = true,
+      referencedPluginIdsOfExternalPlugins = setOf(
+        "com.intellij.modules.python-in-mini-ide-capable", //defined in the ultimate part
+        "com.intellij.modules.rider", //defined in the ultimate part
+      ),
       modulesToSkip = setOf(
         "intellij.android.device-explorer",
       ),
