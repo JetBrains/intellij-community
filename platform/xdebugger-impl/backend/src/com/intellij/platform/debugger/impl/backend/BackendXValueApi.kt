@@ -27,6 +27,11 @@ import java.awt.Font
 import javax.swing.Icon
 
 internal class BackendXValueApi : XValueApi {
+  override suspend fun computeTooltipPresentation(xValueId: XValueId): Flow<XValueSerializedPresentation> {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
+    return xValueModel.computeTooltipPresentation()
+  }
+
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
     return computeContainerChildren(xValueModel.cs, xValueModel.xValue, xValueModel.session)

@@ -12,6 +12,7 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
@@ -54,6 +55,7 @@ class BackendXValueModel internal constructor(
   init {
     xValue.computePresentation(
       cs,
+      XValuePlace.TREE,
       presentationHandler = {
         _presentation.tryEmit(it)
       },
@@ -61,6 +63,22 @@ class BackendXValueModel internal constructor(
         _fullValueEvaluator.value = it
       }
     )
+  }
+
+  fun computeTooltipPresentation(): Flow<XValueSerializedPresentation> {
+    return channelFlow {
+      val channelCs = this
+      xValue.computePresentation(
+        channelCs,
+        XValuePlace.TOOLTIP,
+        presentationHandler = {
+          trySend(it)
+        },
+        fullValueEvaluatorHandler = {
+          // ignore, take TREE into account only
+        }
+      )
+    }.buffer(1)
   }
 
   fun setMarker(marker: ValueMarkup?) {

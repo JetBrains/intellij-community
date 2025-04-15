@@ -19,6 +19,7 @@ import javax.swing.Icon
 
 internal fun XValue.computePresentation(
   cs: CoroutineScope,
+  place: XValuePlace,
   presentationHandler: (XValueSerializedPresentation) -> Unit,
   fullValueEvaluatorHandler: (XFullValueEvaluator?) -> Unit,
 ) {
@@ -59,9 +60,7 @@ internal fun XValue.computePresentation(
         fullValueEvaluatorHandler(null)
       }
     }
-    // TODO: for now XValuePlace.POPUP is not used at all by implementors,
-    //  so let's use XValuePlace.TREE here for simplicity
-    xValue.computePresentation(valueNode, XValuePlace.TREE)
+    xValue.computePresentation(valueNode, place)
 
     launch {
       try {
