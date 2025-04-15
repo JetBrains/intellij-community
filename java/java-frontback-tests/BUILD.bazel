@@ -28,6 +28,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/testFramework/shared:java-testFramework-shared",
+    "//platform/syntax/syntax-psi:psi",
+    "//java/java-syntax:syntax",
   ]
 )
 

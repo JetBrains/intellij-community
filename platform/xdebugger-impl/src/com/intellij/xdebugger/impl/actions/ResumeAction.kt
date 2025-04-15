@@ -3,22 +3,21 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction
+import com.intellij.xdebugger.impl.performDebuggerActionAsync
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import java.awt.event.KeyEvent
 
-// This action should be migrated to FrontendResumeAction when debugger toolwindow won't be LUXed in Remote Dev
-@Deprecated("Don't use this action directly, implement your own instead by using XDebugSession.resume")
-open class ResumeAction : DumbAwareAction() {
+open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {
       e.presentation.isEnabled = false
       return
     }
-    val session = DebuggerUIUtil.getSession(e) as XDebugSessionImpl?
+    val session = DebuggerUIUtil.getSessionProxy(e)
     if (session != null && !session.isStopped) {
       e.presentation.isEnabled = session.isPaused && !session.isReadOnly
     }
@@ -33,9 +32,9 @@ open class ResumeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val session = DebuggerUIUtil.getSession(e) ?: return
-    performDebuggerAction(e) {
-      session.resume()
+    val session = DebuggerUIUtil.getSessionProxy(e) ?: return
+    performDebuggerActionAsync(e) {
+      XDebugSessionApi.getInstance().resume(session.id)
     }
   }
 }

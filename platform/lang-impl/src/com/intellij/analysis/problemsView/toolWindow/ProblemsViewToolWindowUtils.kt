@@ -30,13 +30,9 @@ object ProblemsViewToolWindowUtils {
     return getToolWindow(project)?.contentManager?.selectedContent?.component as? ProblemsViewTab
   }
 
-  fun addTab(project: Project, provider: ProblemsViewPanelProvider) {
-    ProblemsView.addPanel(project, provider)
-  }
+  fun addTab(project: Project, provider: ProblemsViewPanelProvider): Unit = ProblemsView.addPanel(project, provider)
 
-  fun removeTab(project: Project, id: String) {
-    ProblemsView.removePanel(project, id)
-  }
+  fun removeTab(project: Project, id: String): Unit = ProblemsView.removePanel(project, id)
 
   fun selectTab(project: Project, id: String) {
     val toolWindow = getToolWindow(project) ?: return

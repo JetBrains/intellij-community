@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.actions.MarkRootsManager;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -61,8 +62,11 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   public static final DataKey<String> TEST_DIRECTORY_NAME_KEY = DataKey.create("CreateDirectoryOrPackageAction.testName");
 
   public CreateDirectoryOrPackageAction() {
-    super(IdeBundle.messagePointer("action.create.new.directory.or.package"),
-          IdeBundle.messagePointer("action.create.new.directory.or.package"));
+  }
+
+  @SuppressWarnings({"unused", "ActionPresentationInstantiatedInCtor"})
+  protected CreateDirectoryOrPackageAction(boolean initMessages) {
+    super(ActionsBundle.messagePointer("action.NewDir.GoToAction.text"));
   }
 
   @Override
@@ -250,6 +254,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
           variant.rootType != null ? ModuleSourceRootEditHandler.getEditHandler(variant.rootType) : null;
 
         Icon icon = handler == null ? null : handler.getRootIcon();
+        if (icon == null) icon = variant.icon;
         if (icon == null) icon = AllIcons.Nodes.Folder;
 
         CompletionItem completionItem = new CompletionItem(contributor, relativePath, icon, variant.rootType);

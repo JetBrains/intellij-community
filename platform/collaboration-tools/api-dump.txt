@@ -163,12 +163,22 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
 - sf:Companion:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - sf:HEADER_NAME:java.lang.String
 - <init>():V
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():Z
+- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+- bs:copy$default(com.intellij.collaboration.api.util.LinkHttpHeaderValue,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+- equals(java.lang.Object):Z
 - f:getFirstLink():java.lang.String
 - f:getLastLink():java.lang.String
 - f:getNextLink():java.lang.String
 - f:getPrevLink():java.lang.String
+- hashCode():I
+- f:isDeprecated():Z
 - sf:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
 f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue

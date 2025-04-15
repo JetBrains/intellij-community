@@ -11,9 +11,12 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.sdk.*
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -53,22 +56,20 @@ suspend fun setupPoetrySdkUnderProgress(
                     ?: return Result.failure(FileNotFoundException("Can't find path to project or module"))
 
   val actualProject = project ?: module?.project
-  val pythonExecutablePath =  if (actualProject != null) {
-      withBackgroundProgress(actualProject, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
-        setUpPoetry(projectPath, python, installPackages, poetryPath)
-      }
-  } else {
+  val pythonExecutablePath = if (actualProject != null) {
+    withBackgroundProgress(actualProject, PyBundle.message("python.sdk.dialog.title.setting.up.poetry.environment"), true) {
+      setUpPoetry(projectPath, python, installPackages, poetryPath)
+    }
+  }
+  else {
     setUpPoetry(projectPath, python, installPackages, poetryPath)
   }.getOrElse { return Result.failure(it) }
 
-  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData()).onSuccess { sdk ->
-    module?.let { sdk.setAssociationToModule(it) }
-  }
+  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData())
 }
 
 internal val Sdk.isPoetry: Boolean
-  get() = sdkAdditionalData is PyPoetrySdkAdditionalData
-
+  get() = getOrCreateAdditionalData() is PyPoetrySdkAdditionalData
 
 internal fun sdkHomes(sdks: List<Sdk>): Set<String> {
   return sdks.mapNotNull { it.homePath }.toSet()

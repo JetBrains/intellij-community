@@ -53,7 +53,7 @@ fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, internalNam
   }
 
   this.awaitCancellationAndInvoke {
-    service.deregister(ijent.descriptor)
+    service.unregister(ijent.descriptor)
   }
 
   // Compute a path after registration

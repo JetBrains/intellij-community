@@ -25,11 +25,20 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
 
   private final PsiClass innerClass;
   private boolean referencesStaticallyAccessible = true;
+  private boolean allowReferencesToLocalVariables = true;
 
   public InnerClassReferenceVisitor(@NotNull PsiClass innerClass) {
     this.innerClass = innerClass;
   }
 
+  public InnerClassReferenceVisitor(@NotNull PsiClass innerClass, boolean allowReferencesToLocalVariables) {
+    this.innerClass = innerClass;
+    this.allowReferencesToLocalVariables = allowReferencesToLocalVariables;
+  }
+
+  /**
+   * Also useful in determining if a local class can be a record (because records are implicitly static).
+   */
   public boolean canInnerClassBeStatic() {
     final PsiClass superClass = innerClass.getSuperClass();
     if (superClass != null && !isClassStaticallyAccessible(superClass)) {
@@ -88,8 +97,15 @@ public class InnerClassReferenceVisitor extends JavaRecursiveElementWalkingVisit
       return;
     }
     final PsiElement target = expression.resolve();
-    if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+    if (target == null) {
+      referencesStaticallyAccessible = false; // TODO(bartekpacia): We probably should introduce the 3rd "unknown" state to signal this
       return;
+    }
+    if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+      if (!allowReferencesToLocalVariables && !PsiTreeUtil.isAncestor(innerClass, target, true)) {
+        referencesStaticallyAccessible = false;
+        return;
+      }
     }
     if (target instanceof PsiMethod || target instanceof PsiField) {
       final PsiMember member = (PsiMember)target;

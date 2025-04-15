@@ -7,6 +7,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.FontRasterizationSettings
+import androidx.compose.ui.text.FontSmoothing
+import androidx.compose.ui.text.PlatformParagraphStyle
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -19,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
+import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -189,8 +195,38 @@ public fun retrieveTextStyle(
         fontFamily = derivedFont.asComposeFontFamily(),
         // TODO textDecoration might be defined in the AWT theme
         lineHeight = lineHeight,
+        platformStyle = retrievePlatformTextStyle(),
     )
 }
+
+@OptIn(ExperimentalTextApi::class)
+public fun retrievePlatformTextStyle(): PlatformTextStyle {
+    val uiSettings = UISettings.instanceOrNull
+    val aa = uiSettings?.ideAAType ?: AntialiasingType.GREYSCALE
+    val platformDefaultFontRasterization = FontRasterizationSettings.PlatformDefault
+
+    return PlatformTextStyle(
+        null,
+        paragraphStyle =
+            PlatformParagraphStyle(
+                fontRasterizationSettings =
+                    FontRasterizationSettings(
+                        smoothing = aa.asComposeFontSmoothing(),
+                        hinting = platformDefaultFontRasterization.hinting,
+                        subpixelPositioning = platformDefaultFontRasterization.subpixelPositioning,
+                        platformDefaultFontRasterization.autoHintingForced,
+                    )
+            ),
+    )
+}
+
+@OptIn(ExperimentalTextApi::class)
+private fun AntialiasingType.asComposeFontSmoothing(): FontSmoothing =
+    when (this) {
+        AntialiasingType.GREYSCALE -> FontSmoothing.AntiAlias
+        AntialiasingType.SUBPIXEL -> FontSmoothing.SubpixelAntiAlias
+        AntialiasingType.OFF -> FontSmoothing.None
+    }
 
 public val JBValue.dp: Dp
     get() = unscaled.dp

@@ -1,0 +1,23 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+//file:noinspection UnnecessaryQualifiedReference
+
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
+import com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyReportTask
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil
+
+import java.nio.file.Path
+import java.nio.file.Paths
+
+@SuppressWarnings('GroovyAssignabilityCheck')
+interface Properties {
+  public static final String taskName = TASK_NAME
+  public static final Path outputPath = Paths.get(OUTPUT_PATH)
+}
+
+GradleLifecycleUtil.afterProject(gradle) { project ->
+  GradleCollectionUtil.register(project.tasks, Properties.taskName, GradleDependencyReportTask) { task ->
+    task.content = GradleDependencyReportTask.collectDependencies(project)
+    task.outputPath = Properties.outputPath
+  }
+}

@@ -42,6 +42,10 @@ object DummyJBAccountInfoService : JBAccountInfoService {
     TODO("Not yet implemented")
   }
 
+  override fun dryRunIssueTrialLicense(productCode: String): CompletableFuture<JBAccountInfoService.LicenseListResult> {
+    TODO("Not yet implemented")
+  }
+
   override fun recordAgreementAcceptance(productCode: String, documentName: String, acceptedVersion: Version): CompletableFuture<JBAccountInfoService.AgreementAcceptanceResult> {
     TODO("Not yet implemented")
   }

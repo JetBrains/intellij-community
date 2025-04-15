@@ -87,7 +87,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myPsiLock = myViewProvider.getFilePsiLock();
   }
 
-  public void setContentElementType(IElementType contentElementType) {
+  public void setContentElementType(@NotNull IElementType contentElementType) {
     LOG.assertTrue(contentElementType instanceof ILazyParseableElementType, contentElementType);
     myContentElementType = contentElementType;
   }
@@ -96,7 +96,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myContentElementType;
   }
 
-  protected void init(@NotNull IElementType elementType, IElementType contentElementType) {
+  protected void init(@NotNull IElementType elementType, @NotNull IElementType contentElementType) {
     myElementType = elementType;
     setContentElementType(contentElementType);
   }

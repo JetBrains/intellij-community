@@ -8,4 +8,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-class RepositoryId(val projectId: ProjectId, val rootPath: VirtualFileId)
+data class RepositoryId(val projectId: ProjectId, val rootPath: VirtualFileId)

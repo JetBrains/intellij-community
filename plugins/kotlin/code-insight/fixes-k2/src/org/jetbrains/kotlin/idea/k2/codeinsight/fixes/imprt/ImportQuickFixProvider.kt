@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
@@ -18,9 +19,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.DelegateMethodImportQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.MismatchedArgumentsImportQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.UnresolvedNameReferenceImportQuickFixFactory
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.*
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
@@ -43,10 +42,13 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
 
     context(KaSession)
     fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
-        val factories = listOf(
+        val factories = listOfNotNull(
             UnresolvedNameReferenceImportQuickFixFactory,
-            MismatchedArgumentsImportQuickFixFactory,
+            MismatchedArgumentsImportQuickFixFactory.takeIf { Registry.`is`("kotlin.k2.auto.import.mismatched.arguments.factory.enabled", true) },
             DelegateMethodImportQuickFixFactory,
+            ArrayAccessorImportQuickFixFactory,
+            ComponentFunctionImportQuickFixFactory,
+            IteratorImportQuickFixFactory,
         )
 
         return factories.flatMap { it.run { createQuickFixes(diagnostics) } }
@@ -181,9 +183,9 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             symbol is KaNamedFunctionSymbol && symbol.isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
             symbol is KaNamedFunctionSymbol && symbol.isInfix -> ImportFixHelper.ImportKind.INFIX_FUNCTION
             symbol is KaNamedFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
-            
+
             symbol is KaEnumEntrySymbol -> ImportFixHelper.ImportKind.CLASS
-            
+
             else -> null
         }
 
@@ -191,7 +193,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             symbol is KaNamedClassSymbol && symbol.classKind.isObject -> ImportFixHelper.ImportKind.OBJECT
             symbol is KaNamedClassSymbol -> ImportFixHelper.ImportKind.CLASS
             symbol is KaTypeAliasSymbol -> ImportFixHelper.ImportKind.TYPE_ALIAS
-            
+
             else -> null
         }
     }

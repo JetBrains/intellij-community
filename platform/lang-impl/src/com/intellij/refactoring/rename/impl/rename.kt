@@ -26,6 +26,7 @@ import com.intellij.refactoring.rename.ui.commandName
 import com.intellij.refactoring.rename.ui.progressTitle
 import com.intellij.refactoring.rename.ui.withBackgroundIndicator
 import com.intellij.util.Query
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -306,6 +307,11 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
   val application = ApplicationManager.getApplication()
   ThreadingAssertions.assertEventDispatchThread()
   require(application.isUnitTestMode)
+
+  target.validator().validate(newName)
+    .asSafely<RenameValidationResult.Companion.RenameValidationResultData>()
+    ?.takeIf { it.level == RenameValidationResult.Companion.RenameValidationResultProblemLevel.ERROR }
+    ?.let { throw IllegalArgumentException(it.message(newName)) }
 
   val targetPointer = target.createPointer()
   val options = RenameOptions(

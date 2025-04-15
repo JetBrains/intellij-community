@@ -49,3 +49,4 @@ class MyInterfaceImpl: MyInterface {
 
 // STEP_INTO: 38
 // SKIP_CONSTRUCTORS: true
+// JVM_DEFAULT_MODE: enable

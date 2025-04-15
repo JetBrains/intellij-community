@@ -34,7 +34,7 @@ public final class CommentSplitter extends BaseSplitter {
   }
 
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
       return;
     }

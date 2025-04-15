@@ -3,6 +3,10 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction
+import com.intellij.configurationStore.ComponentSerializationUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -18,7 +22,8 @@ import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -77,9 +82,9 @@ object XBreakpointUtil {
       offset = textLength
     }
 
-    val breakpoint = PANEL_PROVIDER.findBreakpoint(project, editorDocument, offset)
+    val breakpoint = findBreakpoint(project, editorDocument, offset)
     if (breakpoint != null) {
-      return Pair.create(PANEL_PROVIDER.getBreakpointGutterIconRenderer(breakpoint), breakpoint)
+      return Pair.create(getBreakpointGutterIconRenderer(breakpoint), breakpoint)
     }
 
     val session = XDebuggerManager.getInstance(project).currentSession as XDebugSessionImpl?
@@ -101,8 +106,56 @@ object XBreakpointUtil {
   }
 
   @ApiStatus.Internal
-  @JvmField
-  val PANEL_PROVIDER: BreakpointPanelProvider<*> = XBreakpointPanelProvider()
+  fun getBreakpointGutterIconRenderer(breakpoint: Any): GutterIconRenderer? {
+    if (breakpoint is XLineBreakpointImpl<*>) {
+      val highlighter = breakpoint.highlighter
+      if (highlighter != null) {
+        return highlighter.getGutterIconRenderer()
+      }
+    }
+    return null
+  }
+
+  private fun findBreakpoint(project: Project, document: Document, offset: Int): XBreakpoint<*>? {
+    val breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager()
+    val line = document.getLineNumber(offset)
+    val file = FileDocumentManager.getInstance().getFile(document)
+    if (file == null) {
+      return null
+    }
+    for (type in XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
+      val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line)
+      if (breakpoint != null) {
+        return breakpoint
+      }
+    }
+
+    return null
+  }
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun subscribeOnBreakpointsChanges(project: Project, disposable: Disposable, onBreakpointChange: (XBreakpoint<*>) -> Unit) {
+    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, object : XBreakpointListener<XBreakpoint<*>> {
+      override fun breakpointAdded(breakpoint: XBreakpoint<*>) {
+        onBreakpointChange(breakpoint)
+      }
+
+      override fun breakpointChanged(breakpoint: XBreakpoint<*>) {
+        onBreakpointChange(breakpoint)
+      }
+
+      override fun breakpointRemoved(breakpoint: XBreakpoint<*>) {
+        onBreakpointChange(breakpoint)
+      }
+    })
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun getAllBreakpointItems(project: Project): List<BreakpointItem> {
+    return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).getAllBreakpointItems()
+  }
 
   /**
    * Toggle line breakpoint with editor support:
@@ -112,12 +165,14 @@ object XBreakpointUtil {
    */
   @Deprecated("use {@link #toggleLineBreakpoint(Project, XSourcePosition, boolean, Editor, boolean, boolean, boolean)}")
   @JvmStatic
-  fun toggleLineBreakpoint(project: Project,
-                           position: XSourcePosition,
-                           editor: Editor?,
-                           temporary: Boolean,
-                           moveCaret: Boolean,
-                           canRemove: Boolean): Promise<XLineBreakpoint<*>?> =
+  fun toggleLineBreakpoint(
+    project: Project,
+    position: XSourcePosition,
+    editor: Editor?,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+  ): Promise<XLineBreakpoint<*>?> =
     toggleLineBreakpoint(project, position, true, editor, temporary, moveCaret, canRemove)
 
   /**
@@ -126,13 +181,15 @@ object XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @JvmStatic
-  fun toggleLineBreakpoint(project: Project,
-                           position: XSourcePosition,
-                           selectVariantByPositionColumn: Boolean,
-                           editor: Editor?,
-                           temporary: Boolean,
-                           moveCaret: Boolean,
-                           canRemove: Boolean): Promise<XLineBreakpoint<*>?> {
+  fun toggleLineBreakpoint(
+    project: Project,
+    position: XSourcePosition,
+    selectVariantByPositionColumn: Boolean,
+    editor: Editor?,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+  ): Promise<XLineBreakpoint<*>?> {
     val info = getAvailableLineBreakpointInfo(project, position, selectVariantByPositionColumn, editor)
     val typeWinner = info.first
     val lineWinner = info.second
@@ -156,23 +213,56 @@ object XBreakpointUtil {
     return res
   }
 
+  @ApiStatus.Internal
   @JvmStatic
-  fun getAvailableLineBreakpointTypes(project: Project,
-                                      linePosition: XSourcePosition,
-                                      editor: Editor?): List<XLineBreakpointType<*>> =
+  fun <B : XBreakpoint<P>, P : XBreakpointProperties<*>, T : XBreakpointType<B, P>> createBreakpoint(
+    type: T,
+    state: BreakpointState,
+    breakpointManager: XBreakpointManagerImpl,
+  ): XBreakpointBase<B, P, *> {
+    return if (type is XLineBreakpointType<*> && state is LineBreakpointState) {
+      @Suppress("UNCHECKED_CAST")
+      XLineBreakpointImpl<P>(type as XLineBreakpointType<P>, breakpointManager, createProperties(type, state), state) as XBreakpointBase<B, P, *>
+    }
+    else {
+      XBreakpointBase<B, P, BreakpointState>(type, breakpointManager, createProperties(type, state), state)
+    }
+  }
+
+  private fun <P : XBreakpointProperties<*>> createProperties(
+    type: XBreakpointType<*, P>,
+    state: BreakpointState,
+  ): P? {
+    val properties = type.createProperties()
+    if (properties != null) {
+      ComponentSerializationUtil.loadComponentState(properties as PersistentStateComponent<*>, state.propertiesElement)
+    }
+    return properties
+  }
+
+  @JvmStatic
+  fun getAvailableLineBreakpointTypes(
+    project: Project,
+    linePosition: XSourcePosition,
+    editor: Editor?,
+  ): List<XLineBreakpointType<*>> =
     getAvailableLineBreakpointTypes(project, linePosition, false, editor)
 
   @JvmStatic
-  fun getAvailableLineBreakpointTypes(project: Project,
-                                      position: XSourcePosition,
-                                      selectTypeByPositionColumn: Boolean,
-                                      editor: Editor?): List<XLineBreakpointType<*>> =
+  fun getAvailableLineBreakpointTypes(
+    project: Project,
+    position: XSourcePosition,
+    selectTypeByPositionColumn: Boolean,
+    editor: Editor?,
+  ): List<XLineBreakpointType<*>> =
     getAvailableLineBreakpointInfo(project, position, selectTypeByPositionColumn, editor).first
 
-  private fun getAvailableLineBreakpointInfo(project: Project,
-                                             position: XSourcePosition,
-                                             selectTypeByPositionColumn: Boolean,
-                                             editor: Editor?): Pair<List<XLineBreakpointType<*>>, Int> {
+  private fun getAvailableLineBreakpointInfo(
+    project: Project,
+    position: XSourcePosition,
+    selectTypeByPositionColumn: Boolean,
+    editor: Editor?,
+  ): Pair<List<XLineBreakpointType<*>>, Int> {
     val lineStart = position.line
     val file = position.file
 

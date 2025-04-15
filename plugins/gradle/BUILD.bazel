@@ -41,7 +41,7 @@ jvm_library(
     "//platform/inspect",
     "@lib//:fastutil-min",
     "@lib//:commons-cli",
-    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/core-ui",
     "//platform/util-class-loader:util-classLoader",
     "//platform/platform-util-io:ide-util-io",

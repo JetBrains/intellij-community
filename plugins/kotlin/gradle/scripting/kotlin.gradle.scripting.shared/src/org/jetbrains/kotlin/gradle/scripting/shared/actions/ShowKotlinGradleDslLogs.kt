@@ -16,7 +16,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.BrowserHyperlinkListener
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -51,7 +50,7 @@ class ShowKotlinGradleDslLogs : IntentionAction, AnAction(), DumbAware {
 
             JBPopupFactory.getInstance()
                 .createHtmlTextBalloonBuilder(
-                  KotlinIdeaGradleBundle.message(
+                  KotlinGradleScriptingBundle.message(
                         "text.gradle.dsl.logs.cannot.be.found.automatically.see.how.to.find.logs",
                         gradleTroubleshootingLink
                     ),

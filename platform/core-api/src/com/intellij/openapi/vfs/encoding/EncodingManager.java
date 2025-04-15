@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -24,7 +25,7 @@ public abstract class EncodingManager extends EncodingRegistry {
     return ApplicationManager.getApplication().getService(EncodingManager.class);
   }
 
-  public abstract @NotNull Collection<Charset> getFavorites();
+  public abstract @NotNull @Unmodifiable Collection<Charset> getFavorites();
 
   @Override
   public abstract boolean isNative2AsciiForPropertiesFiles();

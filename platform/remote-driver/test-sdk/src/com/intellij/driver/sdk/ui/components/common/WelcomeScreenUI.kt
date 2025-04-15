@@ -9,7 +9,7 @@ import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.ui
 
 fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreenUI {
-  val welcomeScreenClass = if (isRemoteIdeMode) "TabbedWelcomeScreen" else "FlatWelcomeFrame"
+  val welcomeScreenClass = if (isRemDevMode) "TabbedWelcomeScreen" else "FlatWelcomeFrame"
   return x("//div[@class='${welcomeScreenClass}']", WelcomeScreenUI::class.java).apply(action)
 }
 

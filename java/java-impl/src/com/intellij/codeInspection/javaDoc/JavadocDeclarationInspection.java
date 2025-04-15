@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
@@ -547,7 +547,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
 
   private static boolean isEmptyTag(PsiDocTag tag) {
     return Stream.of(tag.getChildren())
-      .filter(e -> e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA ||
+      .filter(e -> PsiDocToken.isDocToken(e, JavaDocTokenType.DOC_COMMENT_DATA) ||
                    e instanceof PsiDocTagValue ||
                    e instanceof PsiInlineDocTag)
       .allMatch(JavadocDeclarationInspection::isEmpty);
@@ -555,7 +555,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
 
   private static boolean isEmptyThrowsTag(PsiDocTag tag) {
     return Stream.of(tag.getChildren())
-      .filter(e -> e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA)
+      .filter(e -> PsiDocToken.isDocToken(e, JavaDocTokenType.DOC_COMMENT_DATA))
       .allMatch(JavadocDeclarationInspection::isEmpty);
   }
 

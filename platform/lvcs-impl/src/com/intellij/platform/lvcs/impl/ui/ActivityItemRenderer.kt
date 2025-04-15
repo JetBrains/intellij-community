@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.openapi.util.NlsContexts
@@ -46,6 +46,10 @@ internal class ActivityItemRenderer(private val presentationFunction: (item: Act
 
     val cellBackgroundColor = if (isSelected) list.selectionBackground
     else if (index == ListHoverListener.getHoveredIndex(list)) JBUI.CurrentTheme.List.Hover.background(cellHasFocus)
+    else if (activityPresentation.color != -1) {
+      @Suppress("UseJBColor")
+      JBColor(activityPresentation.color, Color(activityPresentation.color).darker().rgb)
+    }
     else null
 
     val rowComponent = createRowComponent(list, activityPresentation.text, activityPresentation.icon, value.timestamp,

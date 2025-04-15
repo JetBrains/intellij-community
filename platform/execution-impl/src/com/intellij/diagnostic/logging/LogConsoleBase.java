@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.diagnostic.logging;
 
@@ -7,9 +7,9 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.AnsiEscapeDecoder;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
@@ -435,7 +435,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   public void attachStopLogConsoleTrackingListener(final ProcessHandler process) {
     if (process != null) {
-      final ProcessAdapter stopListener = new ProcessAdapter() {
+      final ProcessListener stopListener = new ProcessListener() {
         @Override
         public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);

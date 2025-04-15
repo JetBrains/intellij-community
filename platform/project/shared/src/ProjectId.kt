@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.project
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -12,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 @JvmField
 @ApiStatus.Internal
 val PROJECT_ID: Key<ProjectId> = Key.create<ProjectId>("ProjectImpl.PROJECT_ID")
+
+private val LOG = fileLogger()
 
 /**
  * Represents a unique identifier for a [Project].
@@ -96,7 +99,10 @@ fun ProjectId.findProjectOrNull(): Project? {
  */
 @ApiStatus.Internal
 fun ProjectId.findProject(): Project {
-  return findProjectOrNull() ?: error("Project is not found for $this")
+  return findProjectOrNull() ?: run {
+    LOG.error("Project is not found for $this. Opened projects: ${ProjectManager.getInstance().openProjects.joinToString { it.projectId().toString() }}")
+    error("Project is not found for $this")
+  }
 }
 
 /**

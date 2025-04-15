@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityD
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -84,7 +85,7 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
                                        : linkedProjectSettings.getExternalProjectPath();
 
     ImportSpecBuilder importSpec = new ImportSpecBuilder(project, projectSystemId);
-    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, projectSystemId)) {
+    if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, projectSystemId)) {
       ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
     }
   }

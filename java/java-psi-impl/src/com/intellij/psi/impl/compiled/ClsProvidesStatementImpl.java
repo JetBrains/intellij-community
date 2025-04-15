@@ -42,7 +42,8 @@ public class ClsProvidesStatementImpl extends ClsRepositoryPsiElement<PsiProvide
 
   @Override
   public PsiReferenceList getImplementationList() {
-    StubElement<PsiReferenceList> stub = getStub().findChildStubByType(JavaStubElementTypes.PROVIDES_WITH_LIST);
+    StubElement<PsiReferenceList> stub =
+      (StubElement<PsiReferenceList>)getStub().findChildStubByElementType(JavaStubElementTypes.PROVIDES_WITH_LIST);
     return stub != null ? stub.getPsi() : null;
   }
 

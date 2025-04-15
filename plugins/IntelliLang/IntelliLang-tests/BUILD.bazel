@@ -23,6 +23,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//jps/jps-builders:build",
     "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
     "//jps/model-api:model",
     "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "@lib//:assert_j",

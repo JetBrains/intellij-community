@@ -3,6 +3,7 @@ package org.jetbrains.jps.model
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
+import com.intellij.util.currentJavaVersion
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import org.assertj.core.api.Assertions.assertThat
@@ -13,7 +14,7 @@ class JdkVersionDetectorTest {
   @Test fun detectJdkVersion() {
     val jdkHome = SystemProperties.getJavaHome()
     val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome)
-    assertThat(jdkVersion?.version?.trim()).isEqualTo(JavaVersion.current().trim())
+    assertThat(jdkVersion?.version?.trim()).isEqualTo(currentJavaVersion().trim())
     assertThat(jdkVersion?.arch).isEqualTo(CpuArch.CURRENT)
 
     if (SystemInfoRt.isMac && jdkHome.endsWith("/Contents/Home")) {

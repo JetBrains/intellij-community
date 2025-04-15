@@ -40,6 +40,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
     <scratchFileLanguageProvider language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.KtScratchFileLanguageProvider"/>
 

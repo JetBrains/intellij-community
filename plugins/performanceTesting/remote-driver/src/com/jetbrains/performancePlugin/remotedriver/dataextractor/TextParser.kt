@@ -42,8 +42,8 @@ object TextParser {
     return thisText + ((currentComponent as? Container)?.components?.flatMap { gatherExtraTextRec(baseComponent, it) } ?: emptyList())
   }
 
-  fun parseCellRenderer(component: Component): List<String> {
-    val data = mutableListOf<String>()
+  fun parseCellRenderer(component: Component): List<TextData> {
+    val data = mutableListOf<TextData>()
 
     val g = CellReaderGraphics2d(graphics, data)
     parseData(g, component)

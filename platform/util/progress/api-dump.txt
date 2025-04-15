@@ -4,10 +4,8 @@ f:com.intellij.platform.util.progress.ContextKt
 com.intellij.platform.util.progress.ProgressReporter
 - indeterminateStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:indeterminateStep$default(com.intellij.platform.util.progress.ProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:indeterminateStep$suspendImpl(com.intellij.platform.util.progress.ProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - itemStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:itemStep$default(com.intellij.platform.util.progress.ProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:itemStep$suspendImpl(com.intellij.platform.util.progress.ProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - a:sizedStep(I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:sizedStep$default(com.intellij.platform.util.progress.ProgressReporter,I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 com.intellij.platform.util.progress.ProgressState
@@ -22,12 +20,10 @@ com.intellij.platform.util.progress.SequentialProgressReporter
 - indeterminateStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:indeterminateStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,I,java.lang.Object):V
 - bs:indeterminateStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:indeterminateStep$suspendImpl(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - itemStep(java.lang.String):V
 - itemStep(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:itemStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,I,java.lang.Object):V
 - bs:itemStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:itemStep$suspendImpl(com.intellij.platform.util.progress.SequentialProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - a:nextStep(I,java.lang.String):V
 - a:nextStep(I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:nextStep$default(com.intellij.platform.util.progress.SequentialProgressReporter,I,java.lang.String,I,java.lang.Object):V

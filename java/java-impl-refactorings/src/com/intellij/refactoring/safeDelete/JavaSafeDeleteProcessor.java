@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -881,7 +882,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   private static @Nullable PsiMethod getOverridingConstructorOfSuperCall(PsiElement element) {
     if (element instanceof PsiReferenceExpression ref &&
-        PsiKeyword.SUPER.equals(element.getText()) &&
+        JavaKeywords.SUPER.equals(element.getText()) &&
         ref.getParent() instanceof PsiMethodCallExpression call &&
         call.getParent() instanceof PsiExpressionStatement st &&
         st.getParent() instanceof PsiCodeBlock block &&

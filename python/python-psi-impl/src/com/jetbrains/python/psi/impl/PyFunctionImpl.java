@@ -546,12 +546,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    */
   @Override
   public @Nullable Modifier getModifier() {
-    final String deconame = getClassOrStaticMethodDecorator();
-    if (PyNames.CLASSMETHOD.equals(deconame)) {
-      return CLASSMETHOD;
-    }
-    else if (PyNames.STATICMETHOD.equals(deconame)) {
-      return STATICMETHOD;
+    final PyKnownDecorator decorator = getClassOrStaticMethodDecorator();
+    if (decorator != null) {
+      if (decorator.isClassMethod()) {
+        return CLASSMETHOD;
+      }
+      else if (decorator.isStaticMethod()) {
+        return STATICMETHOD;
+      }
     }
 
     final String funcName = getName();
@@ -573,12 +575,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       // implicit classmethod __class_getitem__
       if (PyNames.CLASS_GETITEM.equals(funcName) && level.isAtLeast(LanguageLevel.PYTHON37)) {
         return CLASSMETHOD;
-      }
-
-      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
-      for (PyKnownDecoratorUtil.KnownDecorator knownDecorator : PyKnownDecoratorUtil.getKnownDecorators(this, context)) {
-        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTCLASSMETHOD) return CLASSMETHOD;
-        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTSTATICMETHOD) return STATICMETHOD;
       }
     }
 
@@ -709,21 +705,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
    *
    * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
    */
-  private @Nullable String getClassOrStaticMethodDecorator() {
+  private @Nullable PyKnownDecorator getClassOrStaticMethodDecorator() {
     PyDecoratorList decolist = getDecoratorList();
     if (decolist != null) {
       PyDecorator[] decos = decolist.getDecorators();
       if (decos.length > 0) {
         for (int i = decos.length - 1; i >= 0; i -= 1) {
           PyDecorator deco = decos[i];
-          String deconame = deco.getName();
-          if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
-            return deconame;
-          }
-          for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getIterable()) {
-            String name = provider.toKnownDecorator(deconame);
-            if (name != null) {
-              return name;
+          List<PyKnownDecorator> knownDecorators = PyKnownDecoratorUtil.asKnownDecorators(deco, TypeEvalContext.codeInsightFallback(getProject()));
+          for (PyKnownDecorator decorator : knownDecorators) {
+            if (decorator.isClassMethod() || decorator.isStaticMethod()) {
+              return decorator;
             }
           }
         }

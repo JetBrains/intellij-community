@@ -166,7 +166,7 @@ object PluginAutoUpdater {
       // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
       // bit more formalized and a bit more flexible to be reused here (TODO).
       val unmetDependencies = findUnsatisfiedDependencies(
-        updateDesc.pluginDependencies,
+        updateDesc.dependencies,
         enabledPluginsAndModulesIds
       )
       if (unmetDependencies.isNotEmpty()) {

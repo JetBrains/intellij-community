@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.action
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -7,7 +8,9 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.application
 import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalUtil
 
@@ -17,12 +20,14 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return TerminalEngine.getValue() == engine
+    return TerminalOptionsProvider.instance.terminalEngine == engine
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
-      TerminalEngine.setValue(engine)
+      TerminalOptionsProvider.instance.terminalEngine = engine
+      // Call save manually, because otherwise this change will be synced to backend only at some time later.
+      saveSettingsForRemoteDevelopment(application)
 
       TerminalToolWindowManager.getInstance(e.project!!).createNewSession()
     }
@@ -38,7 +43,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
                                           // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                                           // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                                           // show this option as well to avoid strange behavior when nothing is selected in the popup.
-                                          TerminalEngine.getValue() == TerminalEngine.NEW_TERMINAL)
+                                          TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.NEW_TERMINAL)
     e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
 
     if (engine == TerminalEngine.REWORKED) {

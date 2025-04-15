@@ -3,10 +3,12 @@ package com.intellij.driver.sdk.ui.components.common
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.elements.jBlist
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.openapi.util.SystemInfo.isLinux
 import java.awt.Point
+import kotlin.time.Duration.Companion.seconds
 
 val Finder.toolbarHeader: FrameHeaderUI
   get() = x(xQuery {
@@ -29,7 +31,11 @@ fun Finder.openMenuItem(vararg items: String) {
 
   if (xx(xQuery { or(byClass("LinuxIdeMenuBar"), byClass("IdeJMenuBar")) }).list().isNotEmpty()) {
     items.dropLast(1).forEach { path ->
-      actionMenuButtonByText(path).moveMouse(point = Point(10, 10))
+      actionMenuButtonByText(path).apply {
+        waitFound(5.seconds)
+        moveMouse(point = Point(10, 10))
+        moveMouse()
+      }
     }
     actionMenuButtonByText(items.last()).click(point = Point(10, 10))
   }

@@ -3,13 +3,11 @@
 
 package org.jetbrains.intellij.build.bazel
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.concurrent.thread
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
@@ -17,10 +15,14 @@ import kotlin.io.path.invariantSeparatorsPathString
  */
 internal class JpsModuleToBazel {
   companion object {
+    const val BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV = "BUILD_WORKSPACE_DIRECTORY"
+
     @JvmStatic
     fun main(args: Array<String>) {
+      val workspaceDir: Path? = System.getenv(BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV)?.let { Path.of(it).normalize() }
+      val projectDir = searchUltimateRootUpwards(workspaceDir ?: Path.of(System.getProperty("user.dir")))
+
       val m2Repo = Path.of(System.getProperty("user.home"), ".m2/repository")
-      val projectDir = Path.of(PathManager.getHomePath())
       val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo.toString()), true)
       val jarRepositories = loadJarRepositories(projectDir)
 
@@ -42,34 +44,21 @@ internal class JpsModuleToBazel {
           .toList(),
       )
 
-      val communityTargets = communityFiles.keys
-        .asSequence()
-        .map { projectDir.relativize(it).invariantSeparatorsPathString }
-        .sorted()
-        .joinToString("\n") { path ->
-          val dir = path.removePrefix("community/").takeIf { it != "community" } ?: ""
-          val ruleDir = "build/jvm-rules/"
-          if (dir.startsWith(ruleDir)) {
-            "@rules_jvm//${dir.removePrefix(ruleDir)}:all"
-          }
-          else {
-            "@community//$dir:all"
-          }
-        }
-      val ultimateTargets = ultimateFiles.keys
-        .sorted()
-        .map { projectDir.relativize(it).invariantSeparatorsPathString }
-        .filter { !it.startsWith("rider/test/cases-supplementary") }
-        .joinToString("\n") {
-          "//$it:all"
-        }
-      Files.writeString(projectDir.resolve("build/bazel-community-targets.txt"), communityTargets)
-      Files.writeString(projectDir.resolve("build/bazel-targets.txt"), communityTargets + "\n" + ultimateTargets)
-
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
 
       // save cache only on success. do not surround with try/finally
       urlCache.save()
+    }
+
+    fun searchUltimateRootUpwards(start: Path): Path {
+      var current = start
+      while (true) {
+        if (Files.exists(current.resolve(".ultimate.root.marker"))) {
+          return current
+        }
+
+        current = current.parent ?: throw IllegalStateException("Cannot find ultimate root starting from $start")
+      }
     }
   }
 }

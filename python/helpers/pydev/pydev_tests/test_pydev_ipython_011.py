@@ -2,11 +2,16 @@ import os
 import sys
 import time
 import unittest
+import warnings
 
 import pytest
 
+pytest.importorskip('IPython')
+
 from _pydev_bundle.pydev_stdin import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
+from _pydev_bundle.pydev_ipython_console_011 import PyDevTerminalInteractiveShell
+from _pydev_bundle.pydev_ipython_completer import init_shell_completer
 from _pydev_comm.pydev_rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
 from _pydevd_bundle.pydevd_constants import IS_PY2
@@ -25,14 +30,18 @@ def eq_(a, b):
         raise AssertionError('%s != %s' % (a, b))
 
 
-try:
-    from IPython import core
-    has_ipython = True
-except:
-    has_ipython = False
+@pytest.fixture
+def assert_no_warnings():
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        yield
 
 
-@pytest.mark.skipif(not has_ipython, reason='IPython not available')
+def test_no_deprecations(assert_no_warnings):
+    shell = PyDevTerminalInteractiveShell()
+    init_shell_completer(shell)
+
+
 class TestBase(unittest.TestCase):
 
     def setUp(self):
@@ -65,7 +74,6 @@ class TestBase(unittest.TestCase):
         io.stdout = sys.stdout = self.original_stdout
 
 
-@pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestPyDevFrontEnd(TestBase):
 
     def testAddExec_1(self):
@@ -128,7 +136,7 @@ class TestPyDevFrontEnd(TestBase):
         eq_(res[0][3], '12')  # '12' == IToken.TYPE_IPYTHON_MAGIC
         assert len(res[0][1]) > 100, 'docstring for %cd should be a reasonably long string'
 
-@pytest.mark.skipif(not has_ipython, reason='IPython not available')
+
 class TestRunningCode(TestBase):
 
     def test_print(self):

@@ -588,7 +588,7 @@ public final class DiffUtil {
       activatable.showNotify();
     }
     else {
-      UiNotifyConnector.installOn(component, activatable);
+      UiNotifyConnector.installOn(component, activatable, false);
     }
   }
 

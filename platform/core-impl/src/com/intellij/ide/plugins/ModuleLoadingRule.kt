@@ -3,6 +3,8 @@ package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
 
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as ElementModuleLoadingRule
+
 /**
  * Specified when a content module of a plugin should be loaded.
  */
@@ -16,8 +18,7 @@ enum class ModuleLoadingRule(val required: Boolean) {
   REQUIRED(required = true),
 
   /**
-   * The same as [REQUIRED], but *.class files from the module will be put to the main plugin JAR, and classes from the module content descriptor will be loaded by the main plugin
-   * classloader.
+   * The same as [REQUIRED], but classes from the module content descriptor will be loaded by the main plugin classloader.
    * Use this option only for existing modules which are highly coupled with other required modules, where using a separate classloader breaks behavior or compatibility with other
    * plugins. 
    * For new modules, use [REQUIRED] instead.
@@ -36,5 +37,15 @@ enum class ModuleLoadingRule(val required: Boolean) {
    * Classes from the module content descriptor will be loaded by a separate classloader.
    * This *isn't implemented yet* and currently treated the same way as [OPTIONAL].
    */
-  ON_DEMAND(required = false)
+  ON_DEMAND(required = false);
+
+  companion object {
+    fun ElementModuleLoadingRule.fromElementValue(): ModuleLoadingRule = when (this) {
+      ElementModuleLoadingRule.REQUIRED -> REQUIRED
+      ElementModuleLoadingRule.EMBEDDED -> EMBEDDED
+      ElementModuleLoadingRule.OPTIONAL -> OPTIONAL
+      ElementModuleLoadingRule.ON_DEMAND -> ON_DEMAND
+      else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
+    }
+  }
 }

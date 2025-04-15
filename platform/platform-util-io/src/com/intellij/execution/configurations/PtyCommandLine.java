@@ -2,22 +2,19 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.process.LocalPtyOptions;
-import com.intellij.execution.process.ProcessService;
-import com.intellij.openapi.application.Application;
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +39,6 @@ public class PtyCommandLine extends GeneralCommandLine {
   }
 
   private final LocalPtyOptions.Builder myOptionsBuilder = getDefaultPtyOptions().builder();
-  private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
-  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = SystemProperties.getBooleanProperty("pty4j.open.child.tty", SystemInfo.isMac);
 
   public PtyCommandLine() { }
 
@@ -83,20 +78,12 @@ public class PtyCommandLine extends GeneralCommandLine {
     return this;
   }
 
-  @NotNull
-  PtyCommandLine withWindowsAnsiColorDisabled() {
-    myWindowsAnsiColorEnabled = false;
-    return this;
-  }
-
   /**
-   * Allow preserving the subprocess output after its termination on certain *nix OSes (notably, macOS).
-   * One side effect is that the subprocess won't terminate until all the output has been read from it.
-   *
-   * @see com.pty4j.PtyProcessBuilder#setUnixOpenTtyToPreserveOutputAfterTermination(boolean)
+   * @deprecated do not use it
    */
+  @SuppressWarnings("unused")
+  @Deprecated
   public @NotNull PtyCommandLine withUnixOpenTtyToPreserveOutputAfterTermination(boolean unixOpenTtyToPreserveOutputAfterTermination) {
-    myUnixOpenTtyToPreserveOutputAfterTermination = unixOpenTtyToPreserveOutputAfterTermination;
     return this;
   }
 
@@ -159,13 +146,15 @@ public class PtyCommandLine extends GeneralCommandLine {
       }
     }
 
-    String[] command = ArrayUtilRt.toStringArray(commands);
-    File workDirectory = getWorkDirectory();
-    String directory = workDirectory != null ? workDirectory.getPath() : null;
+    Path workingDirectory = getWorkingDirectory();
     LocalPtyOptions options = getPtyOptions();
-    Application app = ApplicationManager.getApplication();
-    return ProcessService.getInstance()
-      .startPtyProcess(command, directory, env, options, app, isRedirectErrorStream(), myWindowsAnsiColorEnabled, myUnixOpenTtyToPreserveOutputAfterTermination);
+    return LocalProcessService.getInstance().startPtyProcess(
+      commands,
+      workingDirectory != null ? workingDirectory.toString() : null,
+      env,
+      options,
+      isRedirectErrorStream()
+    );
   }
 
   @ApiStatus.Internal

@@ -1258,7 +1258,6 @@ c:com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - sf:BGT_DATA_PROVIDER:com.intellij.openapi.actionSystem.DataKey
 - sf:CONTEXT_COMPONENT:com.intellij.openapi.actionSystem.DataKey
 - sf:FILE_EDITOR:com.intellij.openapi.actionSystem.DataKey
-- sf:FILE_TEXT:com.intellij.openapi.actionSystem.DataKey
 - sf:HELP_ID:com.intellij.openapi.actionSystem.DataKey
 - sf:IS_MODAL_CONTEXT:com.intellij.openapi.actionSystem.DataKey
 - sf:MODULE:com.intellij.openapi.actionSystem.DataKey
@@ -1291,7 +1290,6 @@ com.intellij.openapi.application.ApplicationStarter
 - main(java.util.List):V
 - premain(java.util.List):V
 - processExternalCommandLine(java.util.List,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:processExternalCommandLine$suspendImpl(com.intellij.openapi.application.ApplicationStarter,java.util.List,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.application.ApplicationStarter$Companion
 - sf:ANY_MODALITY:I
 - sf:NON_MODAL:I
@@ -1557,6 +1555,8 @@ com.intellij.openapi.options.Configurable$NoMargin
 com.intellij.openapi.options.Configurable$NoScroll
 com.intellij.openapi.options.Configurable$Promo
 - a:getPromoIcon():javax.swing.Icon
+com.intellij.openapi.options.Configurable$SingleEditorConfiguration
+- a:getDialogInitialSize():java.awt.Dimension
 com.intellij.openapi.options.Configurable$TopComponentController
 - sf:EMPTY:com.intellij.openapi.options.Configurable$TopComponentController
 - a:setLeftComponent(java.awt.Component):V
@@ -2035,13 +2035,14 @@ com.intellij.openapi.ui.popup.JBPopup
 - a:setCaption(java.lang.String):V
 - a:setCaptionIcon(javax.swing.Icon):V
 - a:setCaptionIconPosition(Z):V
-- a:setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+- setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - a:setFinalRunnable(java.lang.Runnable):V
 - a:setLocation(java.awt.Point):V
 - a:setMinimumSize(java.awt.Dimension):V
 - a:setRequestFocus(Z):V
 - a:setSize(java.awt.Dimension):V
 - setSize(java.awt.Point,java.awt.Dimension):V
+- setUiDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - a:setUiVisible(Z):V
 - setUserData(java.util.List):V
 - show(com.intellij.openapi.ui.popup.PopupShowOptions):V
@@ -2159,6 +2160,7 @@ c:com.intellij.openapi.vcs.UrlFilePath
 - <init>(java.lang.String,Z):V
 - p:findFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - p:getPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+f:com.intellij.openapi.vfs.FilePermissionsKt
 a:com.intellij.openapi.vfs.JarFileSystem
 - com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 - com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem
@@ -2490,6 +2492,7 @@ a:com.intellij.openapi.wm.WindowManager
 - a:setAlphaModeRatio(java.awt.Window,F):V
 - a:suggestParentWindow(com.intellij.openapi.project.Project):java.awt.Window
 - updateDefaultFrameInfoOnProjectClose(com.intellij.openapi.project.Project):V
+f:com.intellij.platform.ide.core.permissions.PermissionsKt
 c:com.intellij.projectImport.ProjectAttachProcessor
 - sf:Companion:com.intellij.projectImport.ProjectAttachProcessor$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

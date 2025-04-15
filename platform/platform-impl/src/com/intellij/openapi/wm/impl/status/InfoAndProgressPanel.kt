@@ -15,7 +15,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressPaused
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressResumed
-import com.intellij.notification.ActionCenter
+import com.intellij.notification.impl.ApplicationNotificationsModel
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -365,11 +365,11 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       return text
     }
 
-    if (text.isNullOrEmpty() && requestor != currentRequestor && ActionCenter.EVENT_REQUESTOR != requestor) {
+    if (text.isNullOrEmpty() && requestor != currentRequestor && ApplicationNotificationsModel.EVENT_REQUESTOR != requestor) {
       return mainPanel.statusPanel.text
     }
-    val logMode = mainPanel.statusPanel.updateText(if (ActionCenter.EVENT_REQUESTOR == requestor) "" else text)
-    currentRequestor = if (logMode) ActionCenter.EVENT_REQUESTOR else requestor
+    val logMode = mainPanel.statusPanel.updateText(if (ApplicationNotificationsModel.EVENT_REQUESTOR == requestor) "" else text)
+    currentRequestor = if (logMode) ApplicationNotificationsModel.EVENT_REQUESTOR else requestor
     return text
   }
 

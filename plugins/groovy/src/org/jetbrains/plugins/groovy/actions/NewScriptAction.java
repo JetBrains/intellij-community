@@ -26,7 +26,8 @@ final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("new.script.dialog.title"))
       .addKind(GroovyBundle.message("new.script.list.item.script"), JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_SCRIPT)
@@ -34,7 +35,7 @@ final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile
   }
 
   @Override
-  protected boolean isAvailable(DataContext dataContext) {
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
     return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(PlatformCoreDataKeys.MODULE.getData(dataContext));
   }
 

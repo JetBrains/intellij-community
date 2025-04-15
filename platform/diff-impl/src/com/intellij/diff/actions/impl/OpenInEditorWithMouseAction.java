@@ -96,7 +96,7 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
     if (project == null) return;
     if (!(e.getInputEvent() instanceof MouseEvent inputEvent) ||
         inputEvent.getComponent() == null) return;
-    Runnable callback = e.getData(OpenInEditorAction.AFTER_NAVIGATE_CALLBACK);
+    Runnable callback = e.getData(DiffDataKeys.NAVIGATION_CALLBACK);
 
     Component component = inputEvent.getComponent();
     Point point = inputEvent.getPoint();

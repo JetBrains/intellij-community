@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.coverage.view.CoverageViewManager;
@@ -9,9 +9,9 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -351,7 +351,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public void attachToProcess(final @NotNull ProcessHandler handler,
                               final @NotNull RunConfigurationBase configuration,
                               final RunnerSettings runnerSettings) {
-    handler.addProcessListener(new ProcessAdapter() {
+    handler.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(final @NotNull ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);

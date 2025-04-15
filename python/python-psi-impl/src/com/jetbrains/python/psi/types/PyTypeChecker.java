@@ -856,28 +856,26 @@ public final class PyTypeChecker {
         }
         // TODO Handle ParamSpecs here
       }
-      if (!classType.isDefinition()) {
-        PyCollectionType genericDefinitionType = as(provider.getGenericType(classType.getPyClass(), context), PyCollectionType.class);
-        // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on
-        if (genericDefinitionType != null) {
-          List<PyType> definitionTypeParameters = genericDefinitionType.getElementTypes();
-          if (!(classType instanceof PyCollectionType genericType)) {
-            for (PyType typeParameter : definitionTypeParameters) {
-              if (typeParameter instanceof PyTypeVarTupleType typeVarTupleType) {
-                result.typeVarTuples.put(typeVarTupleType, null);
-              }
-              else if (typeParameter instanceof PyParamSpecType paramSpecType) {
-                result.paramSpecs.put(paramSpecType, null);
-              }
-              else if (typeParameter instanceof PyTypeVarType typeVarType) {
-                result.typeVars.put(typeVarType, null);
-              }
+      PyCollectionType genericDefinitionType = as(provider.getGenericType(classType.getPyClass(), context), PyCollectionType.class);
+      // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on
+      if (genericDefinitionType != null) {
+        List<PyType> definitionTypeParameters = genericDefinitionType.getElementTypes();
+        if (!(classType instanceof PyCollectionType genericType)) {
+          for (PyType typeParameter : definitionTypeParameters) {
+            if (typeParameter instanceof PyTypeVarTupleType typeVarTupleType) {
+              result.typeVarTuples.put(typeVarTupleType, null);
+            }
+            else if (typeParameter instanceof PyParamSpecType paramSpecType) {
+              result.paramSpecs.put(paramSpecType, null);
+            }
+            else if (typeParameter instanceof PyTypeVarType typeVarType) {
+              result.typeVars.put(typeVarType, null);
             }
           }
-          else {
-            mapTypeParametersToSubstitutions(result, definitionTypeParameters, genericType.getElementTypes(),
-                                             Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
-          }
+        }
+        else {
+          mapTypeParametersToSubstitutions(result, definitionTypeParameters, genericType.getElementTypes(),
+                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
         }
       }
       if (!result.typeVars.isEmpty() || !result.typeVarTuples.isEmpty() || !result.paramSpecs.isEmpty()) {
@@ -1423,12 +1421,11 @@ public final class PyTypeChecker {
   }
 
   public static @NotNull GenericSubstitutions unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
-    final var substitutions = new GenericSubstitutions();
     if (receiver != null) {
       PyType receiverType = context.getType(receiver);
       return unifyReceiver(receiverType, context);
     }
-    return substitutions;
+    return new GenericSubstitutions();
   }
 
   static @NotNull GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {

@@ -23,5 +23,21 @@ class XMixedModeProcessHandler(
     handler.startNotify()
   }
 
-  override fun detachIsDefault(): Boolean = (if (config.useLowDebugProcessDetachBehavior) low else high).detachIsDefault()
+  // If the processes can't agree on the detach behavior, we will let the one that wants to detach do that first,
+  // and the other will destroy the process (see destroyProcessImpl method that's called when detachIsDefault() returns false)
+  override fun detachIsDefault(): Boolean = high.detachIsDefault() && low.detachIsDefault()
+
+  // if this method was called, at least one of the processes wants to destroy the process
+  override fun destroyProcessImpl() {
+    val bothWantDestroy = !low.detachIsDefault() && !high.detachIsDefault()
+    if (bothWantDestroy) {
+      super.destroyProcessImpl()
+      return
+    }
+
+    // First, let's detach if any process handler wants it and do destroy afterward
+    val (handlerWantsDetach, handlerWantsDestroy) = if (low.detachIsDefault()) Pair(low, high) else Pair(high, low)
+    handlerWantsDetach.detachProcess()
+    handlerWantsDestroy.destroyProcess()
+  }
 }

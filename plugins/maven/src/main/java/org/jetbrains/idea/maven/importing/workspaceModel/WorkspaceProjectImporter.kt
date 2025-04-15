@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -37,6 +39,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ui.EDT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -46,7 +49,6 @@ import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.telemetry.tracer
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -720,12 +722,16 @@ internal open class WorkspaceProjectImporter(
     }
 
     private class RefreshingFilesTask(private val myFiles: Set<Path>) : MavenProjectsProcessorTask {
+
+      @Service(Service.Level.PROJECT)
+      private class CoroutineService(val coroutineScope: CoroutineScope)
+
       override fun perform(
         project: Project,
         embeddersManager: MavenEmbeddersManager,
         indicator: ProgressIndicator,
       ) {
-        val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+        val cs = project.service<CoroutineService>().coroutineScope
         cs.launch {
           doRefreshFiles(myFiles)
         }

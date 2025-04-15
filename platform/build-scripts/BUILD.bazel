@@ -87,7 +87,7 @@ jvm_library(
     "@lib//:netty",
     "@lib//:netty-tcnative-boringssl",
     "//platform/util/coroutines",
-    "@rules_jvm//zip:build-zip",
+    "@rules_jvm//zip",
   ],
   runtime_deps = [
     "@lib//:commons-cli",

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes
 
 import com.intellij.ide.fileTemplates.FileTemplate
+import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.PluginBundledTemplate
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -37,6 +38,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
+
+private val LOG = Logger.getInstance(FileTypeUsageCounterCollector::class.java)
 
 @ApiStatus.Internal
 object FileTypeUsageCounterCollector : CounterUsagesCollector() {
@@ -119,6 +122,18 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
         pairs.add(EventFields.PluginInfo.with(getPluginInfoByDescriptor(pluginDescriptor)))
       }
     })
+
+    if (fileTemplate is PluginBundledTemplate
+        && !java.lang.Boolean.getBoolean("ide.skip.plugin.templates.registered.check")) {
+      val internalTemplates = FileTemplateManager.getDefaultInstance().getInternalTemplates()
+        .map { t -> t.getName() }
+        .toSet()
+
+      LOG.assertTrue(
+        internalTemplates.contains(fileTemplate.name),
+        "Unknown bundled file template: $fileTemplate, register it in plugin.xml via <internalFileTemplate name=\"${fileTemplate.name}\"/> tag"
+      )
+    }
   }
 
   fun logOpened(
@@ -195,7 +210,7 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
       return
     }
     val fileNameMatchers = fileTypeManager.getStandardMatchers(fileType)
-    fileNameMatchers.asSequence()
+    fileNameMatchers
       .firstOrNull { it.acceptsCharSequence(file.getName()) }
       ?.let {
         data.add(FILE_NAME_PATTERN_FIELD.with(it.getPresentableString()))
@@ -239,11 +254,11 @@ private class ProjectStateObserver(private val project: Project, coroutineScope:
     val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun enteredDumbMode() {
-        flow.value = ProjectState(true, flow.value.dependenciesState)
+        updateState { state -> ProjectState(true, state.dependenciesState) }
       }
 
       override fun exitDumbMode() {
-        flow.value = ProjectState(false, flow.value.dependenciesState)
+        updateState { state -> ProjectState(false, state.dependenciesState) }
       }
     })
 
@@ -254,12 +269,22 @@ private class ProjectStateObserver(private val project: Project, coroutineScope:
       )
 
       project.service<IncompleteDependenciesService>().stateFlow.collect {
-        flow.value = ProjectState(flow.value.isDumb, it)
+        updateState { state -> ProjectState(state.isDumb, it) }
       }
     }
   }
 
   fun getState(): ProjectState = flow.value
+
+  private fun updateState(updater: (ProjectState) -> ProjectState) {
+    while (true) {
+      val state = flow.value
+      val newState = updater(state)
+      if (flow.compareAndSet(state, newState)) {
+        return
+      }
+    }
+  }
 }
 
 private class ProjectState(

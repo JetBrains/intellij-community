@@ -1,0 +1,34 @@
+c:com.intellij.util.text.CharArrayCharSequence
+- java.lang.CharSequence
+- pf:myChars:C[]
+- pf:myEnd:I
+- pf:myStart:I
+- <init>(C[]):V
+- <init>(C[],I,I):V
+- f:charAt(I):C
+- equals(java.lang.Object):Z
+- get(I):C
+- getChars():C[]
+- getChars(C[],I):V
+- getLength():I
+- hashCode():I
+- f:length():I
+- f:readCharsTo(I,C[],I,I):I
+- subSequence(I,I):java.lang.CharSequence
+com.intellij.util.text.CharArrayExternalizable
+- java.lang.CharSequence
+- a:getChars(I,I,C[],I):V
+c:com.intellij.util.text.CharSequenceSubSequence
+- com.intellij.util.text.CharArrayExternalizable
+- java.lang.CharSequence
+- <init>(java.lang.CharSequence):V
+- <init>(java.lang.CharSequence,I,I):V
+- f:charAt(I):C
+- equals(java.lang.Object):Z
+- get(I):C
+- f:getBaseSequence():java.lang.CharSequence
+- getChars(I,I,C[],I):V
+- getLength():I
+- hashCode():I
+- f:length():I
+- subSequence(I,I):java.lang.CharSequence

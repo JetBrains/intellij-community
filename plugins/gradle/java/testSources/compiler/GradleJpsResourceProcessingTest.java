@@ -486,6 +486,16 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     createProjectSubFile("src/integrationTest/java/IntegrationTest.java", "public class IntegrationTest {}");
     createProjectSubFile("src/integrationTest/resources/dir/file-integrationTest.properties");
 
+    String testRoots = isGradleAtLeast("7.4")
+                       ? """
+                       testSources.from(project.sourceSets.integrationTest.java.srcDirs)
+                       testSources.from(project.sourceSets.integrationTest.resources.srcDirs)
+                       """
+                       : """
+                       testSourceDirs += project.sourceSets.integrationTest.java.srcDirs
+                       testSourceDirs += project.sourceSets.integrationTest.resources.srcDirs
+                       """;
+
     importProject(
       """
         apply plugin: 'java'
@@ -498,10 +508,9 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
         idea {
           module {
             inheritOutputDirs = false
-            testSourceDirs += project.sourceSets.integrationTest.java.srcDirs
-            testSourceDirs += project.sourceSets.integrationTest.resources.srcDirs
+            %s
           }
-        }"""
+        }""".formatted(testRoots)
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 

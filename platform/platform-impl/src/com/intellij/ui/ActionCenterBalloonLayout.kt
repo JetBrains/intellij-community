@@ -247,7 +247,7 @@ internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : Ba
         val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(titleLabel))
         if (project != null) {
           closeAll()
-          ActionCenter.getToolWindow(project)?.show()
+          ActionCenter.showLog(project)
         }
       }, null)
 

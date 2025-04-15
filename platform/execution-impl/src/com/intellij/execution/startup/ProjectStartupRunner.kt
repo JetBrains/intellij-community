@@ -5,7 +5,7 @@ import com.intellij.execution.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder.Companion.create
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -97,7 +97,7 @@ private class MyExecutor(executor: Executor, configuration: RunnerAndConfigurati
 }
 
 private suspend fun runActivities(project: Project, projectStartupTaskManager: ProjectStartupTaskManager) {
-  if (!project.isTrusted()) {
+  if (!TrustedProjects.isProjectTrusted(project)) {
     return
   }
 

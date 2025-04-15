@@ -39,6 +39,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -89,7 +90,7 @@ public class HighlightInfo implements Segment {
     return ContainerUtil.concat(myIntentionActionDescriptors, ContainerUtil.flatMap(myLazyQuickFixes, desc-> {
       if (desc.future() != null && desc.future().isDone()) {
         try {
-          return desc.future().get();
+          return List.copyOf(desc.future().get());
         }
         catch (InterruptedException | ExecutionException e) {
           LOG.warn(e);
@@ -258,14 +259,16 @@ public class HighlightInfo implements Segment {
   @NotNull
   @ApiStatus.Internal
   private synchronized Segment getFixTextRange() {
-    if (fixMarker != null) {
-      if (fixMarker == FIX_MARKER_SAME_AS_HIGHLIGHTER) {
-        if (highlighter != null) {
-          return highlighter;
+    RangeMarker myFixMarker = fixMarker;
+    if (myFixMarker != null) {
+      if (myFixMarker == FIX_MARKER_SAME_AS_HIGHLIGHTER) {
+        RangeHighlighterEx myHighlighter = highlighter;
+        if (myHighlighter != null && myHighlighter.isValid()) {
+          return myHighlighter;
         }
       }
-      else {
-        return fixMarker;
+      else if (myFixMarker.isValid()) {
+        return myFixMarker;
       }
     }
     return TextRangeScalarUtil.create(fixRange);
@@ -295,7 +298,7 @@ public class HighlightInfo implements Segment {
     }
     else {
       LOG.error(new IllegalStateException("fileLevelComponents=" + fileLevelComponentsStorage));
-    }
+        }
   }
 
   @ApiStatus.Internal
@@ -831,7 +834,7 @@ public class HighlightInfo implements Segment {
 
   public static final class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private volatile List<? extends IntentionAction> myOptions; // null means not initialized yet
+    private volatile @Unmodifiable List<? extends IntentionAction> myOptions; // null means not initialized yet
     private final @Nullable HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
@@ -849,7 +852,7 @@ public class HighlightInfo implements Segment {
      */
     @Deprecated
     public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable List<? extends IntentionAction> options,
+                                     @Nullable @Unmodifiable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
@@ -859,7 +862,7 @@ public class HighlightInfo implements Segment {
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
-                                     @Nullable List<? extends IntentionAction> options,
+                                     @Nullable @Unmodifiable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
@@ -959,7 +962,7 @@ public class HighlightInfo implements Segment {
       }
 
       IntentionManager intentionManager = IntentionManager.getInstance();
-      List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
+      List<IntentionAction> newOptions = new ArrayList<>(intentionManager.getStandardIntentionOptions(key, element));
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
       InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.getShortName(), element);
       if (toolWrapper != null) {
@@ -1114,7 +1117,12 @@ public class HighlightInfo implements Segment {
     myIntentionActionDescriptors = List.copyOf(result);
     updateFields(getIntentionActionDescriptors(), document);
   }
-  synchronized void updatePsiTimeStamp(long psiTimeStamp) {
+
+  /**
+   * only for internal usages
+   */
+  @ApiStatus.Internal
+  public synchronized void updateLazyFixesPsiTimeStamp(long psiTimeStamp) {
     List<LazyFixDescription> newFixes = ContainerUtil.map(myLazyQuickFixes,
                                                      d -> d.psiModificationStamp() == 0
                                                           ? new LazyFixDescription(d.fixesComputer(), psiTimeStamp, d.future())
@@ -1123,6 +1131,7 @@ public class HighlightInfo implements Segment {
       myLazyQuickFixes = newFixes;
     }
   }
+  // must be called from synchronized(this)
   private void updateFields(@NotNull @Unmodifiable List<? extends IntentionActionDescriptor> descriptors, @Nullable Document document) {
     long newFixRange = TextRangeScalarUtil.toScalarRange(getFixTextRange());
     for (IntentionActionDescriptor descriptor : descriptors) {
@@ -1147,7 +1156,7 @@ public class HighlightInfo implements Segment {
 
       // highlighter already has been created, we need to update IntentionActionDescriptor.myFixRange
       Long2ObjectMap<RangeMarker> cache = getRangeMarkerCache();
-      updateDescriptorFixRanges(descriptors, document, cache);
+      updateDescriptorFixRanges(descriptors, document, cache, newFixRange);
       if (highlighter != null && highlighter.isValid()) {
         long highlighterRange = TextRangeScalarUtil.toScalarRange(highlighter);
         updateFixMarker(document, cache, newFixRange, highlighterRange);
@@ -1218,20 +1227,23 @@ public class HighlightInfo implements Segment {
   synchronized void updateQuickFixFields(@NotNull Document document,
                                          @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                          long finalHighlighterRange) {
-    updateFixMarker(document, range2markerCache, TextRangeScalarUtil.toScalarRange(getFixTextRange()), finalHighlighterRange);
-    updateDescriptorFixRanges(getIntentionActionDescriptors(), document, range2markerCache);
+    long fixTextRange = TextRangeScalarUtil.coerce(TextRangeScalarUtil.toScalarRange(getFixTextRange()), 0, document.getTextLength());
+    updateFixMarker(document, range2markerCache, fixTextRange, finalHighlighterRange);
+    updateDescriptorFixRanges(getIntentionActionDescriptors(), document, range2markerCache, fixTextRange);
   }
 
-  private synchronized void updateDescriptorFixRanges(@NotNull List<? extends IntentionActionDescriptor> descriptors,
-                                                      @NotNull Document document,
-                                                      @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
+  // must be called from synchronized(this)
+  private static void updateDescriptorFixRanges(@NotNull List<? extends IntentionActionDescriptor> descriptors,
+                                                @NotNull Document document,
+                                                @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                                long fixTextRange) {
     for (IntentionActionDescriptor descriptor : descriptors) {
       Segment descriptorFixRange = descriptor.myFixRange;
       if (descriptorFixRange instanceof TextRange tr) {
         descriptor.myFixRange = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(tr));
       }
       else if (descriptorFixRange == null) {
-        descriptor.myFixRange = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(getFixTextRange()));
+        descriptor.myFixRange = getOrCreate(document, range2markerCache, fixTextRange);
       }
     }
   }
@@ -1244,7 +1256,7 @@ public class HighlightInfo implements Segment {
       fixMarker = FIX_MARKER_SAME_AS_HIGHLIGHTER;
     }
     else {
-      fixMarker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.coerce(newFixRange, 0, document.getTextLength()));
+      fixMarker = getOrCreate(document, range2markerCache, newFixRange);
     }
   }
 
@@ -1286,8 +1298,10 @@ public class HighlightInfo implements Segment {
                                            anchorInfo.type.getSeverity(null), false, null, false, 0,
                                            anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(),
                                            anchorInfo.hasHint(), anchorInfo.getLazyQuickFixes());
-    info.highlighter = anchorInfo.getHighlighter();
-    info.myIntentionActionDescriptors = ContainerUtil.concat(ContainerUtil.map(infos, i-> ((HighlightInfo)i).myIntentionActionDescriptors));
+    synchronized (info) {
+      info.highlighter = anchorInfo.getHighlighter();
+      info.myIntentionActionDescriptors = ContainerUtil.concat(ContainerUtil.map(infos, i-> ((HighlightInfo)i).myIntentionActionDescriptors));
+    }
     return info;
   }
   private static @Nullable @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
@@ -1340,8 +1354,8 @@ public class HighlightInfo implements Segment {
       Future<? extends List<IntentionActionDescriptor>> future = desc.future();
       if (future == null) {
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
-        future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(document, computer));
-        return new LazyFixDescription(computer, psiFile.getManager().getModificationTracker().getModificationCount(), future);
+        future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(document, psiFile.getProject(), desc.psiModificationStamp(), computer));
+        return new LazyFixDescription(computer, desc.psiModificationStamp(), future);
       }
       else {
         return desc;
@@ -1359,24 +1373,33 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   private List<IntentionActionDescriptor> doComputeLazyQuickFixes(@NotNull Document document,
+                                                                  @NotNull Project project,
+                                                                  long oldPsiModificationStamp,
                                                                   @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
+    if (project.isDisposed()
+        || PsiDocumentManager.getInstance(project).isUncommited(document)
+        || PsiManager.getInstance(project).getModificationTracker().getModificationCount() != oldPsiModificationStamp
+    ) {
+      return List.of();
+    }
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors());
-    List<IntentionActionDescriptor> newDescriptors = new ArrayList<>();
+    List<IntentionActionDescriptor> newDescriptors = Collections.synchronizedList(new ArrayList<>());
     QuickFixActionRegistrar registrarDelegate = new QuickFixActionRegistrar() {
       @Override
       public void register(@NotNull IntentionAction action) {
-        register(getFixTextRange(), action, null);
+        doRegister(getFixTextRange(), action, null);
       }
 
       @Override
       public void register(@NotNull TextRange fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key) {
-        register((Segment)fixRange, action, key);
+        doRegister(fixRange, action, key);
       }
-      void register(@NotNull Segment fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key) {
+      private void doRegister(@NotNull Segment fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key) {
         IntentionActionDescriptor descriptor = new IntentionActionDescriptor(action, null, null, null, key, myProblemGroup, severity, fixRange);
         newDescriptors.add(descriptor);
         synchronized (HighlightInfo.this) {
           updateFields(List.of(descriptor), document);
+          assertIntentionActionDescriptorsAreRangeMarkerBased(List.of(descriptor));
         }
       }
     };
@@ -1387,7 +1410,7 @@ public class HighlightInfo implements Segment {
 
   private static void assertIntentionActionDescriptorsAreRangeMarkerBased(@NotNull List<? extends IntentionActionDescriptor> descriptors) {
     for (IntentionActionDescriptor descriptor : descriptors) {
-      assert descriptor.myFixRange  == null || descriptor.myFixRange instanceof RangeMarker : descriptors;
+      assert descriptor.myFixRange  == null || descriptor.myFixRange instanceof RangeMarker : descriptor +"; descriptors:"+descriptors;
     }
   }
 
@@ -1406,7 +1429,7 @@ public class HighlightInfo implements Segment {
         future = ReadAction.nonBlocking(()->{
           AtomicReference<List<IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
           ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
-            () -> result.set(doComputeLazyQuickFixes(document, computer)));
+            () -> result.set(doComputeLazyQuickFixes(document, project, description.psiModificationStamp, computer)));
           return result.get();
         }).submit(ForkJoinPool.commonPool());
         return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
@@ -1448,5 +1471,20 @@ public class HighlightInfo implements Segment {
   synchronized List<? extends @NotNull Consumer<? super QuickFixActionRegistrar>>
   getLazyQuickFixes() {
     return ContainerUtil.map(myLazyQuickFixes, p -> p.fixesComputer());
+  }
+
+  @NotNull
+  HighlightInfo copy() {
+    HighlightInfo info =
+      new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, description, toolTip, severity,
+                        isAfterEndOfLine(), needUpdateOnTyping(), isFileLevelAnnotation(), navigationShift, myProblemGroup, toolId,
+                        gutterIconRenderer, group, hasHint(), List.of());
+    synchronized (info) {
+      info.myIntentionActionDescriptors = myIntentionActionDescriptors;
+      info.myLazyQuickFixes = myLazyQuickFixes;
+      info.myFlags = myFlags;
+      info.fixMarker = fixMarker;
+    }
+    return info;
   }
 }

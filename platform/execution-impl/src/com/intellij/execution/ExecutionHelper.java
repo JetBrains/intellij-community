@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution;
 
@@ -34,7 +34,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Consumer;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
@@ -445,7 +448,7 @@ public final class ExecutionHelper {
                                                             @NotNull ExecutionMode mode,
                                                             final @NotNull String presentableCmdline) {
     ProcessOutput outputCollected = new ProcessOutput();
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         String eventText = event.getText();

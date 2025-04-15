@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="grpc-core" type="repository">
-    <properties maven-id="io.grpc:grpc-core:1.66.0">
+    <properties maven-id="io.grpc:grpc-core:1.71.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.66.0/grpc-core-1.66.0.jar">
-          <sha256sum>136b7a7c411a45089dc2b26f0f032f4ae466d9b5d3bfe3a513421d6f35d2c2bd</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.71.0/grpc-core-1.71.0.jar">
+          <sha256sum>03099494c60cb9fea5802ebba8d767e44697062ec05e5207b5ae897e09bd38e9</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.66.0/grpc-api-1.66.0.jar">
-          <sha256sum>8fadb1f4f0a18971c082497f34cbb78a51897ca8af4b212aa2a99c7de9ad995c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.71.0/grpc-api-1.71.0.jar">
+          <sha256sum>49771bad244de122f05780c12f3e74ba9a301be125d0941a85e649212f4a8a01</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar">
           <sha256sum>ba734e1e84c09d615af6a09d33034b4f0442f8772dec120efb376d86a565ae15</sha256sum>
@@ -17,8 +17,8 @@
         <artifact url="file://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0.jar">
           <sha256sum>c7b478503ec524e55df19b424d46d27c8a68aeb801664fadd4f069b71f52d0f6</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.66.0/grpc-context-1.66.0.jar">
-          <sha256sum>7b7521aa2116014d08dc08825e13d70eac8eb646d09dd44980b6f4d1883e6713</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.71.0/grpc-context-1.71.0.jar">
+          <sha256sum>dd0484ac5d0baf7ee810331504dc6202c7b426bc88dce24100e77f576904dd52</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -29,21 +29,21 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.66.0/grpc-core-1.66.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.66.0/grpc-api-1.66.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.71.0/grpc-core-1.71.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.71.0/grpc-api-1.71.0.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.66.0/grpc-context-1.66.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.71.0/grpc-context-1.71.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.66.0/grpc-core-1.66.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.66.0/grpc-api-1.66.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-core/1.71.0/grpc-core-1.71.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-api/1.71.0/grpc-api-1.71.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/android/annotations/4.1.1.4/annotations-4.1.1.4-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1.24/animal-sniffer-annotations-1.24-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/perfmark/perfmark-api/0.27.0/perfmark-api-0.27.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.66.0/grpc-context-1.66.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-context/1.71.0/grpc-context-1.71.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

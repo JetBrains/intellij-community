@@ -10,6 +10,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "//platform/core-api:core",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework",
     "//platform/util/coroutines",

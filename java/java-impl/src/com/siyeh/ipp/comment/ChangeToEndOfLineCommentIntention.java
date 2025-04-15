@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.comment;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -26,7 +27,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public final class ChangeToEndOfLineCommentIntention extends MCIntention {
+public final class ChangeToEndOfLineCommentIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {

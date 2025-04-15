@@ -45,7 +45,6 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/core-ui",
-    "@lib//:asm",
   ],
   runtime_deps = [":kotlin-jvm-k1_resources"]
 )

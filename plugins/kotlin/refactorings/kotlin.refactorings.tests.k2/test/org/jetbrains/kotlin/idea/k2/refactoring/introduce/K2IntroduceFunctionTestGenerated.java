@@ -93,6 +93,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/destructuringEntry.kt");
         }
 
+        @TestMetadata("emptySpaces.kt")
+        public void testEmptySpaces() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/emptySpaces.kt");
+        }
+
         @TestMetadata("enumQualifier.kt")
         public void testEnumQualifier() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/enumQualifier.kt");
@@ -301,6 +306,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @TestMetadata("quotedName.kt")
         public void testQuotedName() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/quotedName.kt");
+        }
+
+        @TestMetadata("receiverParameter.kt")
+        public void testReceiverParameter() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/receiverParameter.kt");
         }
 
         @TestMetadata("refInReturn.kt")

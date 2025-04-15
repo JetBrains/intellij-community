@@ -1192,32 +1192,10 @@ f:com.intellij.diagnostic.logs.LogLevelConfigurationManager
 - f:addCategories(java.util.List):V
 - f:getCategories():java.util.List
 - sf:getInstance():com.intellij.diagnostic.logs.LogLevelConfigurationManager
-- loadState(com.intellij.diagnostic.logs.LogLevelConfigurationManager$State):V
 - noStateLoaded():V
 - f:setCategories(java.util.List):V
 f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$Companion
 - f:getInstance():com.intellij.diagnostic.logs.LogLevelConfigurationManager
-f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
-- sf:Companion:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$Companion
-- f:categories:java.util.List
-- <init>():V
-- <init>(java.util.List):V
-- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.util.List
-- f:copy(java.util.List):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
-- bs:copy$default(com.intellij.diagnostic.logs.LogLevelConfigurationManager$State,java.util.List,I,java.lang.Object):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
-- equals(java.lang.Object):Z
-- hashCode():I
-bc:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
-- kotlinx.serialization.internal.GeneratedSerializer
-- sf:INSTANCE:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$$serializer
-- f:childSerializers():kotlinx.serialization.KSerializer[]
-- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.diagnostic.logs.LogLevelConfigurationManager$State
-- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.diagnostic.logs.LogLevelConfigurationManager$State):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
-f:com.intellij.diagnostic.logs.LogLevelConfigurationManager$State$Companion
-- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.errorreport.error.InternalEAPException
 - java.lang.Exception
 - <init>(java.lang.String):V
@@ -1985,17 +1963,21 @@ a:com.intellij.ide.actions.CloseEditorsActionBase
 - pa:isFileToClose(com.intellij.openapi.fileEditor.impl.EditorComposite,com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorManagerEx):Z
 - p:isFileToCloseInContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.fileEditor.impl.EditorComposite,com.intellij.openapi.fileEditor.impl.EditorWindow):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.CloseProjectAction
+c:com.intellij.ide.actions.CloseProjectAction
 - com.intellij.ide.actions.CloseProjectsActionBase
 - <init>():V
+- p:canClose(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:shouldShow(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actions.CloseProjectsActionBase
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - pa:canClose(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
+- pf:getProjectEvenIfNotInitialized(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.project.Project
 - pa:shouldShow(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- p:showWelcomeFrameIfNeeded():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.CopyAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -2014,9 +1996,11 @@ f:com.intellij.ide.actions.CopyUrlAction
 c:com.intellij.ide.actions.CutAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.ide.lightEdit.LightEditCompatible
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getRequiredPermissions():java.util.Collection
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.DeleteAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -2095,6 +2079,8 @@ c:com.intellij.ide.actions.OpenFileAction
 - sf:Companion:com.intellij.ide.actions.OpenFileAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- p:createFileChooserDescriptor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- p:doOpenFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - pf:getPathToSelect():com.intellij.openapi.vfs.VirtualFile
 - sf:openFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
@@ -2114,9 +2100,11 @@ c:com.intellij.ide.actions.PasteAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAware
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getRequiredPermissions():java.util.Collection
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.PinActiveTabAction
 - com.intellij.openapi.project.DumbAwareAction
@@ -2180,13 +2168,6 @@ c:com.intellij.ide.actions.RefreshAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - registerShortcutOn(javax.swing.JComponent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-com.intellij.ide.actions.ReportFeedbackService
-- sf:Companion:com.intellij.ide.actions.ReportFeedbackService$Companion
-- a:collectLogs(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- a:getCoroutineScope():kotlinx.coroutines.CoroutineScope
-- s:getInstance():com.intellij.ide.actions.ReportFeedbackService
-f:com.intellij.ide.actions.ReportFeedbackService$Companion
-- f:getInstance():com.intellij.ide.actions.ReportFeedbackService
 c:com.intellij.ide.actions.RestartIdeAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -2281,6 +2262,7 @@ a:com.intellij.ide.actions.SettingsEntryPointAction$UpdateAction
 - p:<init>(java.lang.String):V
 - isIdeUpdate():Z
 - isNewAction():Z
+- isPluginUpdate():Z
 - isRestartRequired():Z
 - markAsRead():V
 f:com.intellij.ide.actions.ShowContentAction
@@ -2331,6 +2313,7 @@ c:com.intellij.ide.actions.ShowSettingsUtilImpl
 - com.intellij.openapi.options.ShowSettingsUtil
 - sf:Companion:com.intellij.ide.actions.ShowSettingsUtilImpl$Companion
 - <init>():V
+- closeSettings(com.intellij.openapi.project.Project,java.awt.Component):V
 - sf:createDimensionKey(com.intellij.openapi.options.Configurable):java.lang.String
 - editConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable):Z
 - editConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable,java.lang.Runnable):Z
@@ -3303,19 +3286,6 @@ c:com.intellij.ide.impl.ProjectUtilService
 - pf:getProject():com.intellij.openapi.project.Project
 f:com.intellij.ide.impl.ProjectUtilService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.impl.ProjectUtilService
-com.intellij.ide.impl.TrustStateListener
-- sf:Companion:com.intellij.ide.impl.TrustStateListener$Companion
-- sf:TOPIC:com.intellij.util.messages.Topic
-- onProjectTrusted(com.intellij.openapi.project.Project):V
-- onProjectTrustedFromNotification(com.intellij.openapi.project.Project):V
-- onProjectUntrusted(com.intellij.openapi.project.Project):V
-f:com.intellij.ide.impl.TrustStateListener$Bridge
-- com.intellij.ide.trustedProjects.TrustedProjectsListener
-- <init>():V
-- onProjectTrusted(com.intellij.openapi.project.Project):V
-- onProjectTrustedFromNotification(com.intellij.openapi.project.Project):V
-- onProjectUntrusted(com.intellij.openapi.project.Project):V
-f:com.intellij.ide.impl.TrustStateListener$Companion
 f:com.intellij.ide.lightEdit.LightEditorInfoImpl
 - com.intellij.ide.lightEdit.LightEditorInfo
 - disposeEditor():V
@@ -3349,6 +3319,43 @@ f:com.intellij.ide.lightEdit.project.LightEditDumbService
 - waitForSmartMode():V
 - wrapGently(javax.swing.JComponent,com.intellij.openapi.Disposable):javax.swing.JComponent
 - wrapWithSpoiler(javax.swing.JComponent,java.lang.Runnable,com.intellij.openapi.Disposable):javax.swing.JComponent
+a:com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
+- com.intellij.ide.navigationToolbar.NavBarModelExtension
+- <init>():V
+- additionalRoots(com.intellij.openapi.project.Project):java.util.Collection
+- adjustElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:getPresentableText(java.lang.Object):java.lang.String
+c:com.intellij.ide.navigationToolbar.DefaultNavBarExtension
+- com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
+- <init>():V
+- adjustElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPresentableText(java.lang.Object):java.lang.String
+- processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
+com.intellij.ide.navigationToolbar.NavBarModelExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:additionalRoots(com.intellij.openapi.project.Project):java.util.Collection
+- a:adjustElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getData(java.lang.String,com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
+- getIcon(java.lang.Object):javax.swing.Icon
+- getLeafElement(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement
+- getLeafElement(com.intellij.openapi.actionSystem.DataMap):com.intellij.psi.PsiElement
+- a:getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPopupMenuGroup(com.intellij.openapi.actionSystem.DataContext):java.lang.String
+- getPopupMenuGroup(com.intellij.openapi.actionSystem.DataProvider):java.lang.String
+- a:getPresentableText(java.lang.Object):java.lang.String
+- getPresentableText(java.lang.Object,Z):java.lang.String
+- normalizeChildren():Z
+- processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,com.intellij.openapi.actionSystem.DataSnapshot):V
+f:com.intellij.ide.navigationToolbar.NavBarRootPaneExtension
+- <init>():V
+a:com.intellij.ide.navigationToolbar.NavBarRootPaneExtension$NavBarWrapperPanel
+- javax.swing.JPanel
+- com.intellij.ide.ui.UISettingsListener
+- <init>(java.awt.LayoutManager):V
+- p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 f:com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 - sf:SECRET_KEY_SIZE_BYTES:I
 - s:decryptText(B[],B[]):com.intellij.credentialStore.OneTimeString
@@ -3559,10 +3566,12 @@ e:com.intellij.ide.plugins.PluginEnabledState
 f:com.intellij.ide.plugins.PluginHostsConfigurable
 - com.intellij.openapi.options.Configurable
 - com.intellij.openapi.options.Configurable$NoScroll
+- com.intellij.openapi.options.Configurable$SingleEditorConfiguration
 - <init>():V
 - apply():V
 - createComponent():javax.swing.JComponent
 - disposeUIResources():V
+- getDialogInitialSize():java.awt.Dimension
 - getDisplayName():java.lang.String
 - isModified():Z
 - reset():V
@@ -4134,10 +4143,20 @@ f:com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 - com.intellij.troubleshooting.TroubleInfoCollector
 - <init>():V
 - collectInfo(com.intellij.openapi.project.Project):java.lang.String
+f:com.intellij.ide.trustedProjects.TrustedProjects
+- sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedProjects
+- sf:isProjectTrusted(com.intellij.openapi.project.Project):Z
+- sf:isProjectTrusted(java.nio.file.Path):Z
+- sf:isProjectTrusted(java.nio.file.Path,com.intellij.openapi.project.Project):Z
+- sf:setProjectTrusted(com.intellij.openapi.project.Project,Z):V
+- sf:setProjectTrusted(java.nio.file.Path,com.intellij.openapi.project.Project,Z):V
+- sf:setProjectTrusted(java.nio.file.Path,Z):V
 f:com.intellij.ide.trustedProjects.TrustedProjectsDialog
 - sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedProjectsDialog
-- f:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
+- sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
+- bs:confirmLoadingUntrustedProject$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):Z
 - f:confirmLoadingUntrustedProjectAsync(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- bs:confirmLoadingUntrustedProjectAsync$default(com.intellij.ide.trustedProjects.TrustedProjectsDialog,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:confirmOpeningOrLinkingUntrustedProject(java.nio.file.Path,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - bs:confirmOpeningOrLinkingUntrustedProject$default(com.intellij.ide.trustedProjects.TrustedProjectsDialog,java.nio.file.Path,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 com.intellij.ide.trustedProjects.TrustedProjectsLocator
@@ -4298,6 +4317,7 @@ f:com.intellij.ide.ui.customization.CustomActionsSchema
 - f:isCorrectActionGroup(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):Z
 - f:isModified(com.intellij.ide.ui.customization.CustomActionsSchema):Z
 - loadState(org.jdom.Element):V
+- noStateLoaded():V
 - f:removeIconCustomization(java.lang.String):V
 - sf:removeSettingsGroup(java.lang.String):V
 - f:setCustomizationSchemaForCurrentProjects():V
@@ -5524,6 +5544,7 @@ f:com.intellij.idea.IdeaLogger
 - s:dropFrequentExceptionsCaches():V
 - error(java.lang.String,java.lang.Throwable,com.intellij.openapi.diagnostic.Attachment[]):V
 - error(java.lang.String,java.lang.Throwable,java.lang.String[]):V
+- info(java.lang.String,java.lang.Throwable):V
 - warn(java.lang.String,java.lang.Throwable):V
 f:com.intellij.idea.LoggerFactory
 - com.intellij.openapi.diagnostic.Logger$Factory
@@ -5542,19 +5563,14 @@ f:com.intellij.internal.statistic.collectors.fus.ui.GotItTooltipAllowlistEP
 - f:setPrefix(java.lang.String):V
 f:com.intellij.jps.impl.JpsPluginBean
 f:com.intellij.notification.ActionCenter
-- sf:EVENT_REQUESTOR:java.lang.String
-- sf:MODEL_CHANGED:com.intellij.util.messages.Topic
-- sf:TOOL_WINDOW_ID:java.lang.String
-- <init>():V
-- s:expireNotifications(com.intellij.openapi.project.Project):V
-- s:fireModelChanged():V
-- s:getNotifications(com.intellij.openapi.project.Project):java.util.List
-- s:getToolWindow(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindow
-- s:getToolwindowName():java.lang.String
-- s:showNotification(com.intellij.openapi.project.Project):V
-- s:toggleLog(com.intellij.openapi.project.Project):V
-com.intellij.notification.ActionCenter$EventListener
-- a:modelChanged():V
+- sf:INSTANCE:com.intellij.notification.ActionCenter
+- sf:activateLog(com.intellij.openapi.project.Project):V
+- sf:activateLog(com.intellij.openapi.project.Project,Z):V
+- bs:activateLog$default(com.intellij.openapi.project.Project,Z,I,java.lang.Object):V
+- sf:getNotifications(com.intellij.openapi.project.Project):java.util.List
+- sf:getToolwindowName():java.lang.String
+- sf:showLog(com.intellij.openapi.project.Project):V
+- sf:toggleLog(com.intellij.openapi.project.Project):V
 f:com.intellij.notification.EventLog
 - <init>():V
 - s:getEventLog(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindow
@@ -5651,7 +5667,6 @@ f:com.intellij.notification.impl.NotificationsManagerImpl
 - s:createBalloon(javax.swing.JComponent,com.intellij.notification.Notification,Z,Z,com.intellij.openapi.util.Ref,com.intellij.openapi.Disposable):com.intellij.openapi.ui.popup.Balloon
 - s:createBalloonScrollPane(java.awt.Component,Z):javax.swing.JScrollPane
 - expire(com.intellij.notification.Notification):V
-- expireAll():V
 - s:findWindowForBalloon(com.intellij.openapi.project.Project):java.awt.Window
 - s:frameActivateBalloonListener(com.intellij.openapi.Disposable,java.lang.Runnable):V
 - getNotificationsOfType(java.lang.Class,com.intellij.openapi.project.Project):com.intellij.notification.Notification[]
@@ -5705,14 +5720,10 @@ com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
 - sf:Companion:com.intellij.openapi.actionSystem.ActionUpdaterInterceptor$Companion
 - allowsFastUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):Z
 - expandActionGroup(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:expandActionGroup$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - getGroupChildren(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:getGroupChildren$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - runUpdateSessionForInputEvent(java.util.List,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:runUpdateSessionForInputEvent$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,java.util.List,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - treatDefaultActionGroupAsDynamic():Z
 - updateAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:updateAction$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.actionSystem.ActionUpdaterInterceptor$Companion
 - f:expandActionGroup(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - f:getGroupChildren(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
@@ -6221,7 +6232,7 @@ f:com.intellij.openapi.command.impl.StartMarkAction$AlreadyStartedException
 - <init>(java.lang.String,com.intellij.openapi.editor.Document,com.intellij.openapi.command.undo.DocumentReference[]):V
 - getAffectedDocuments():com.intellij.openapi.command.undo.DocumentReference[]
 - getDocument():com.intellij.openapi.editor.Document
-Ff:com.intellij.openapi.command.impl.UndoManagerImpl
+f:com.intellij.openapi.command.impl.UndoManagerImpl
 - com.intellij.openapi.command.undo.UndoManager
 - s:ourNeverAskUser:Z
 - addAffectedFiles(com.intellij.openapi.vfs.VirtualFile[]):V
@@ -8403,7 +8414,6 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - a:getCurrentFile():com.intellij.openapi.vfs.VirtualFile
 - a:getCurrentFileEditorFlow():kotlinx.coroutines.flow.StateFlow
 - a:getCurrentWindow():com.intellij.openapi.fileEditor.impl.EditorWindow
-- getData(java.lang.String,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret):java.lang.Object
 - getDockContainer():com.intellij.ui.docking.DockContainer
 - a:getEditorsWithProviders(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.Pair
 - sf:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -8430,7 +8440,6 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - f:openFileWithProviders(com.intellij.openapi.vfs.VirtualFile,Z,com.intellij.openapi.fileEditor.impl.EditorWindow):com.intellij.openapi.util.Pair
 - f:openFileWithProviders(com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.util.Pair
 - refreshIcons():V
-- registerExtraEditorDataProvider(com.intellij.openapi.fileEditor.EditorDataProvider,com.intellij.openapi.Disposable):V
 - f:requestOpenFile(com.intellij.openapi.vfs.VirtualFile):V
 - runWhenLoaded(com.intellij.openapi.editor.Editor,java.lang.Runnable):V
 - a:setCurrentWindow(com.intellij.openapi.fileEditor.impl.EditorWindow):V
@@ -8726,7 +8735,6 @@ f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 - <init>():V
 - accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - acceptRequiresReadAction():Z
-- createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
 - getEditorTypeId():java.lang.String
 - getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
 - sf:openEditor(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request):com.intellij.openapi.fileEditor.FileEditor
@@ -9468,55 +9476,6 @@ a:com.intellij.openapi.options.UiDslUnnamedConfigurable$Simple
 - f:createPanel():com.intellij.openapi.ui.DialogPanel
 - f:isModified():Z
 - f:reset():V
-f:com.intellij.openapi.options.advanced.AdvancedSettingBean
-- com.intellij.openapi.extensions.PluginAware
-- com.intellij.util.KeyedLazyInstance
-- sf:Companion:com.intellij.openapi.options.advanced.AdvancedSettingBean$Companion
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- bundle:java.lang.String
-- defaultValue:java.lang.String
-- descriptionKey:java.lang.String
-- enumClass:java.lang.String
-- groupKey:java.lang.String
-- id:java.lang.String
-- property:java.lang.String
-- service:java.lang.String
-- titleKey:java.lang.String
-- trailingLabelKey:java.lang.String
-- <init>():V
-- f:description():java.lang.String
-- f:getAccessor():com.intellij.serialization.MutableAccessor
-- f:getDefaultValueObject():java.lang.Object
-- getInstance():com.intellij.openapi.options.advanced.AdvancedSettingBean
-- getKey():java.lang.String
-- f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
-- f:getServiceInstance():java.lang.Object
-- f:group():java.lang.String
-- f:isEnabled():Z
-- f:isVisible():Z
-- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
-- f:title():java.lang.String
-- f:trailingLabel():java.lang.String
-- f:type():com.intellij.openapi.options.advanced.AdvancedSettingType
-- f:valueFromString(java.lang.String):java.lang.Object
-- f:valueToString(java.lang.Object):java.lang.String
-f:com.intellij.openapi.options.advanced.AdvancedSettingBean$Companion
-f:com.intellij.openapi.options.advanced.AdvancedSettingsImpl
-- com.intellij.openapi.options.advanced.AdvancedSettings
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
-- <init>():V
-- dispose():V
-- getState():com.intellij.openapi.options.advanced.AdvancedSettingsImpl$AdvancedSettingsState
-- getStateModificationCount():J
-- f:isNonDefault(java.lang.String):Z
-- loadState(com.intellij.openapi.options.advanced.AdvancedSettingsImpl$AdvancedSettingsState):V
-- f:setSetting(java.lang.String,java.lang.Object,com.intellij.openapi.Disposable):V
-- setSetting(java.lang.String,java.lang.Object,com.intellij.openapi.options.advanced.AdvancedSettingType):V
-f:com.intellij.openapi.options.advanced.AdvancedSettingsImpl$AdvancedSettingsState
-- <init>():V
-- f:getSettings():java.util.Map
-- f:setSettings(java.util.Map):V
 c:com.intellij.openapi.options.colors.pages.GeneralColorsPage
 - com.intellij.application.options.colors.InspectionColorSettingsPage
 - com.intellij.openapi.options.colors.ColorSettingsPage
@@ -9712,6 +9671,7 @@ c:com.intellij.openapi.options.newEditor.SettingsDialog
 - p:getDimensionServiceKey():java.lang.String
 - f:getEditor():com.intellij.openapi.options.newEditor.AbstractEditor
 - p:getHelpId():java.lang.String
+- getInitialSize():java.awt.Dimension
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:getStyle():com.intellij.openapi.ui.DialogWrapper$DialogStyle
 - p:setHelpTooltip(javax.swing.JButton):V
@@ -10045,6 +10005,7 @@ f:com.intellij.openapi.ui.WindowWrapperBuilder
 - <init>(com.intellij.openapi.ui.WindowWrapper$Mode,javax.swing.JComponent):V
 - build():com.intellij.openapi.ui.WindowWrapper
 - setDimensionServiceKey(java.lang.String):com.intellij.openapi.ui.WindowWrapperBuilder
+- setInitialSize(java.awt.Dimension):com.intellij.openapi.ui.WindowWrapperBuilder
 - setOnCloseHandler(com.intellij.openapi.util.BooleanGetter):com.intellij.openapi.ui.WindowWrapperBuilder
 - setOnShowCallback(java.lang.Runnable):com.intellij.openapi.ui.WindowWrapperBuilder
 - setParent(java.awt.Component):com.intellij.openapi.ui.WindowWrapperBuilder
@@ -14288,6 +14249,7 @@ c:com.intellij.ui.TableSpeedSearch
 - p:isMatchingRow(I,java.lang.String):Z
 - p:isSpeedSearchEnabled():Z
 - p:selectElement(java.lang.Object,java.lang.String):V
+- setFilteringMode(Z):V
 - setupListeners():V
 a:com.intellij.ui.TableViewSpeedSearch
 - com.intellij.ui.SpeedSearchBase
@@ -15846,6 +15808,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - setSpeedSearchEmptyText(java.lang.String):V
 - setStretchToOwnerHeight(Z):V
 - setStretchToOwnerWidth(Z):V
+- setUiDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - setUiVisible(Z):V
 - setUserData(java.util.List):V
 - setWarning(java.lang.String):V
@@ -15869,7 +15832,7 @@ c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(com.intellij.ui.PopupBorder):V
 - computePreferredSize():java.awt.Dimension
-- setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+- setDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ui.popup.ActionPopupOptions
 - autoSelectionEnabled():Z

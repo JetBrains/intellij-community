@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers
 
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSXmlParser
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
 import com.intellij.openapi.diagnostic.logger
 
 class VSParser(hive: VSHive) {

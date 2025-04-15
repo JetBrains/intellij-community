@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -20,7 +21,7 @@ public final class GlobalSearchScopeUtil {
     return ReadAction.compute(() -> GlobalSearchScope.filesScope(project, getLocalScopeFiles((LocalSearchScope)scope)));
   }
 
-  public static @NotNull Set<VirtualFile> getLocalScopeFiles(final @NotNull LocalSearchScope scope) {
+  public static @NotNull @Unmodifiable Set<VirtualFile> getLocalScopeFiles(final @NotNull LocalSearchScope scope) {
     return ReadAction.compute(() -> {
       Set<VirtualFile> files = new LinkedHashSet<>();
       for (PsiElement element : scope.getScope()) {

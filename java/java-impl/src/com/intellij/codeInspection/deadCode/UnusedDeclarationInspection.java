@@ -109,11 +109,6 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
   }
 
   @Override
-  protected @NotNull UnusedSymbolLocalInspection createUnusedSymbolLocalInspection() {
-    return new UnusedSymbolLocalInspection();
-  }
-
-  @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       tabs(

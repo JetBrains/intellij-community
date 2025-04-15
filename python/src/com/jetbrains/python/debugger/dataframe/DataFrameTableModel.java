@@ -6,7 +6,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
-import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
+import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
@@ -20,23 +20,23 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
 
   public DataFrameTableModel(int rows,
                              int columns,
-                             PyDataViewerPanel dataProvider,
+                             PyDataViewerCommunityPanel dataProvider,
                              PyDebugValue debugValue,
                              DataFrameViewStrategy strategy) {
     super(rows, columns, dataProvider, debugValue, strategy);
     myRowHeaderModel = new RowHeaderModel();
   }
-  /* we use labels for the first column so we need to offset columns by one everywhere */
+  /* we use labels for the first column, so we need to offset columns by one everywhere */
 
   @Override
   public Object getValueAt(int row, int col) {
 
     Object value = super.getValueAt(row, col);
-    if (value == AsyncArrayTableModel.EMPTY_CELL_VALUE) {
+    if (value == EMPTY_CELL_VALUE) {
       return value;
     }
     TableValueDescriptor descriptor = createValueWithDescriptor(col, value);
-    return descriptor != null ? descriptor : AsyncArrayTableModel.EMPTY_CELL_VALUE;
+    return descriptor != null ? descriptor : EMPTY_CELL_VALUE;
   }
 
   private TableValueDescriptor createValueWithDescriptor(int frameCol, Object value) {

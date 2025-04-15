@@ -25,6 +25,10 @@ interface GradleExecutionTestFixture : IdeaTestFixture {
 
   suspend fun executeTasksAsync(commandLine: String, isRunAsTest: Boolean, isDebug: Boolean)
 
+  fun <R> assertAnyGradleTaskExecution(numExec: Int, action: () -> R): R
+
+  suspend fun <R> assertAnyGradleTaskExecutionAsync(numExec: Int, action: suspend () -> R): R
+
   fun <R> waitForAnyGradleTaskExecution(action: () -> R): R
 
   suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R

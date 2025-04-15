@@ -3,7 +3,6 @@ package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.trustedProjects.TrustedProjects
-import com.intellij.ide.trustedProjects.TrustedProjectsLocator.Companion.locateProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
@@ -220,7 +219,7 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
         }
         is Result.Success -> {
           // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
+          systemPythonBinary = pythonService.findSystemPythons(forceRefresh = true).firstOrNull()
         }
       }
     }
@@ -235,7 +234,7 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
 }
 
 private suspend fun openProject(projectPath: Path): Project {
-  TrustedProjects.setProjectTrusted(locateProject(projectPath, null), isTrusted = true)
+  TrustedProjects.setProjectTrusted(projectPath, true)
   val projectManager = ProjectManagerEx.getInstanceEx()
   val project = projectManager.openProjectAsync(projectPath, OpenProjectTask {
     runConfigurators = false

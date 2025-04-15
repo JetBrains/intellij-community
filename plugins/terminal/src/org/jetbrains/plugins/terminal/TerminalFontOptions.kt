@@ -13,20 +13,23 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.abs
 
 @State(
-  name = "TerminalFontOptions",
+  name = TerminalFontOptions.COMPONENT_NAME,
   storages = [Storage("terminal-font.xml")],
 )
 @ApiStatus.Internal
 class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() {
   companion object {
     @JvmStatic fun getInstance(): TerminalFontOptions = service<TerminalFontOptions>()
+
+    internal const val COMPONENT_NAME: String = "TerminalFontOptions"
   }
 
   private val listeners = CopyOnWriteArrayList<TerminalFontOptionsListener>()
 
-  private var columnSpacing = DEFAULT_COLUMN_SPACING
+  private var columnSpacing = DEFAULT_TERMINAL_COLUMN_SPACING
 
   fun addListener(listener: TerminalFontOptionsListener, disposable: Disposable) {
     listeners.add(listener)
@@ -45,20 +48,25 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     )
   }
 
-  fun setSettings(preferences: TerminalFontSettings) {
+  fun setSettings(settings: TerminalFontSettings) {
+    val oldSettings = getSettings()
+
     val newPreferences = FontPreferencesImpl()
     // start with the console preferences as the default
     AppConsoleFontOptions.getInstance().fontPreferences.copyTo(newPreferences)
     // then overwrite the subset that the terminal settings provide
     newPreferences.clearFonts()
-    newPreferences.addFontFamily(preferences.fontFamily)
-    newPreferences.setFontSize(preferences.fontFamily, preferences.fontSize)
-    newPreferences.lineSpacing = preferences.lineSpacing
+    newPreferences.addFontFamily(settings.fontFamily)
+    newPreferences.setFontSize(settings.fontFamily, settings.fontSize)
+    newPreferences.lineSpacing = settings.lineSpacing
     // then apply the settings that aren't a part of FontPreferences
-    columnSpacing = preferences.columnSpacing
+    columnSpacing = settings.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
     update(newPreferences)
-    listeners.forEach { it.fontOptionsChanged() }
+
+    if (settings != oldSettings) {
+      fireListeners()
+    }
   }
 
   override fun createFontState(fontPreferences: FontPreferences): PersistentTerminalFontPreferences =
@@ -69,15 +77,39 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
   override fun loadState(state: PersistentTerminalFontPreferences) {
     columnSpacing = state.COLUMN_SPACING
     super.loadState(state)
+
+    // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
+    // So, notify the listeners on every `loadState` to not miss the change.
+    fireListeners()
   }
 
   override fun noStateLoaded() {
     // the state is mostly inherited from the console settings
     val defaultState = PersistentTerminalFontPreferences(AppConsoleFontOptions.getInstance().fontPreferences)
-    // but it can be changed here later, for example, if we want to change the default line spacing
+    // except the line spacing: it is only inherited if it's different from the default, otherwise we use our own default
+    val userSetConsoleLineSpacing = defaultState.LINE_SPACING
+    val defaultConsoleLineSpacing = FontPreferences.DEFAULT_LINE_SPACING
+    if (sameLineSpacings(userSetConsoleLineSpacing, defaultConsoleLineSpacing)) {
+      defaultState.LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING
+    }
     loadState(defaultState)
   }
+
+  private fun fireListeners() {
+    for (listener in listeners) {
+      listener.fontOptionsChanged()
+    }
+  }
 }
+
+// readability delegates
+internal fun sameFontSizes(a: Float, b: Float): Boolean = sameFloatValues(a, b)
+internal fun sameLineSpacings(a: Float, b: Float): Boolean = sameFloatValues(a, b)
+internal fun sameColumnSpacings(a: Float, b: Float): Boolean = sameFloatValues(a, b)
+
+// the usual pain with comparing floating values, the threshold is an arbitrary "a difference that small doesn't make sense" value
+private fun sameFloatValues(userSetConsoleLineSpacing: Float, defaultConsoleLineSpacing: Float): Boolean =
+  abs(userSetConsoleLineSpacing - defaultConsoleLineSpacing) < 0.0001
 
 @ApiStatus.Internal
 interface TerminalFontOptionsListener {
@@ -104,15 +136,42 @@ data class TerminalFontSettings(
   val fontSize: Float,
   val lineSpacing: Float,
   val columnSpacing: Float,
-)
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TerminalFontSettings
+
+    if (!sameFontSizes(fontSize, other.fontSize)) return false
+    if (!sameLineSpacings(lineSpacing, other.lineSpacing)) return false
+    if (!sameColumnSpacings(columnSpacing, other.columnSpacing)) return false
+    if (fontFamily != other.fontFamily) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = (fontSize.toInt()).hashCode()
+    result = 31 * result + ((lineSpacing * 10).toInt()).hashCode()
+    result = 31 * result + ((columnSpacing * 10).toInt()).hashCode()
+    result = 31 * result + fontFamily.hashCode()
+    return result
+  }
+}
 
 @ApiStatus.Internal
 class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPreferences {
   @Suppress("unused") // for serialization
-  constructor(): super()
+  constructor(): super() {
+    LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING // to ensure that values different from OUR default are saved
+  }
+
   constructor(fontPreferences: FontPreferences): super(fontPreferences)
 
-  var COLUMN_SPACING: Float = DEFAULT_COLUMN_SPACING
+  var COLUMN_SPACING: Float = DEFAULT_TERMINAL_COLUMN_SPACING
 }
 
-private const val DEFAULT_COLUMN_SPACING = 1.0f
+internal val DEFAULT_TERMINAL_FONT_SIZE: Float get() = FontPreferences.DEFAULT_FONT_SIZE.toFloat()
+internal const val DEFAULT_TERMINAL_LINE_SPACING = 1.0f
+internal const val DEFAULT_TERMINAL_COLUMN_SPACING = 1.0f

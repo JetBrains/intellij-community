@@ -2000,6 +2000,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/AutoIndentInWhenClauseWithoutCondition.after.kt");
             }
 
+            @TestMetadata("BeforeEnumEntries.after.kt")
+            public void testBeforeEnumEntries() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/BeforeEnumEntries.after.kt");
+            }
+
             @TestMetadata("BeforePropertyGetter.after.kt")
             public void testBeforePropertyGetter() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/BeforePropertyGetter.after.kt");

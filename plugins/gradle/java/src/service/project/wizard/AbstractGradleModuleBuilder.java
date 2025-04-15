@@ -58,6 +58,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria;
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper;
 import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
@@ -77,9 +78,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
-import static org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFileKt.GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME;
-import static org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFileKt.GRADLE_FOLDER;
 
 @ApiStatus.Internal
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
@@ -271,9 +269,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       return;
     }
     var externalProjectPath = NioPathUtil.toCanonicalPath(rootProjectPath);
-    var daemonJvmPropertiesPath = rootProjectPath.resolve(GRADLE_FOLDER).resolve(GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME);
     var vcs = GitSilentFileAdderProvider.create(project);
-    vcs.markFileForAdding(daemonJvmPropertiesPath, false);
+    vcs.markFileForAdding(GradleDaemonJvmPropertiesFile.getPropertyPath(rootProjectPath), false);
     GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria)
       .whenComplete((__, ___) -> vcs.finish())
       .whenComplete((isSuccess, exception) -> {

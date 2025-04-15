@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.containsPrefixedStringOperands
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToStringLiteral
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToRawStringLiteral
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isFirstStringPlusExpressionWithoutNewLineInOperands
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -29,7 +28,6 @@ internal class ConvertToRawStringTemplateIntention :
 
     override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
         if (!isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null
-        if (element.containsPrefixedStringOperands()) return null
         return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
     }
 
@@ -43,6 +41,6 @@ internal class ConvertToRawStringTemplateIntention :
       updater: ModPsiUpdater,
     ) {
         val replaced = elementContext.replacement.element?.let { element.replaced(it) } ?: return
-        convertToStringLiteral(replaced, actionContext, updater)
+        convertToRawStringLiteral(replaced, actionContext, updater)
     }
 }

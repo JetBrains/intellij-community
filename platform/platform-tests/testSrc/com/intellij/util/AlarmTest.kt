@@ -11,20 +11,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 class AlarmTest {
@@ -44,6 +44,7 @@ class AlarmTest {
     val disposable = Disposer.newDisposable()
     disposable.use {
       val counter = AtomicInteger()
+
       @Suppress("DEPRECATION")
       val alarm = SingleAlarm.pooledThreadSingleAlarm(delay = 1, parentDisposable = disposable) {
         counter.incrementAndGet()
@@ -177,6 +178,44 @@ class AlarmTest {
       alarm.waitForAllExecuted(1000, TimeUnit.MILLISECONDS)
     }
     assertThat(error).hasMessage(errorMessage)
+  }
+
+  @Test
+  fun `all canceled tasks are awaited`() = timeoutRunBlocking {
+    val counter = AtomicInteger()
+    val alarm = SingleAlarm(
+      {
+        assertEquals(1, counter.incrementAndGet())
+        try {
+          Thread.sleep(100)
+        } finally {
+          assertEquals(0, counter.decrementAndGet())
+        }
+      }, 10, null, Alarm.ThreadToUse.POOLED_THREAD, null, null)
+    repeat(10) {
+      alarm.cancelAndRequest(false)
+      delay(20.milliseconds)
+    }
+  }
+
+  @Test
+  fun `all canceled tasks are awaited 2`() = timeoutRunBlocking {
+    val counter = AtomicInteger()
+    val alarm = SingleAlarm(
+      {
+        assertEquals(1, counter.incrementAndGet())
+        try {
+          Thread.sleep(100)
+        } finally {
+          assertEquals(0, counter.decrementAndGet())
+        }
+      }, 10, null, Alarm.ThreadToUse.POOLED_THREAD, null, null)
+    delay(50)
+    alarm.cancelAndRequest(false)
+    alarm.cancelAndRequest(false)
+    delay(50)
+    alarm.cancelAndRequest(false)
+    alarm.cancelAndRequest(false)
   }
 }
 

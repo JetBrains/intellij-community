@@ -26,6 +26,7 @@
         <entry key="kotlinc.kotlin-scripting-dependencies" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-scripting-jvm" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlinx-serialization-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-dataframe-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.lombok-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.low-level-api-fir" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.noarg-compiler-plugin" value="kotlin.util.compiler-classpath" />

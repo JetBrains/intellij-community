@@ -921,13 +921,7 @@ public final class FileUtilRt {
   }
 
   private static DirectoryNotEmptyException directoryNotEmptyExceptionWithMoreDiagnostic(@NotNull Path path) throws IOException {
-    DirectoryStream.Filter<Path> alwaysTrue = new DirectoryStream.Filter<Path>() {
-      @Override
-      public boolean accept(Path entry) {
-        return true;
-      }
-    };
-    try (DirectoryStream<Path> children = Files.newDirectoryStream(path, alwaysTrue)) {
+    try (DirectoryStream<Path> children = Files.newDirectoryStream(path)) {
       StringBuilder sb = new StringBuilder();
       for (Path child : children) {
         sb.append(child.getFileName()).append(", ");

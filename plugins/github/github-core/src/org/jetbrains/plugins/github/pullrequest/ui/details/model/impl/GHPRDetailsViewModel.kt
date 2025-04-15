@@ -22,7 +22,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
@@ -77,7 +77,7 @@ internal class GHPRDetailsViewModelImpl(
 
   override val isUpdating = MutableStateFlow(false)
 
-  private val twVm by lazy { project.service<GHPRToolWindowViewModel>() }
+  private val vm by lazy { project.service<GHPRProjectViewModel>() }
   override val securityService: GHPRSecurityService = dataContext.securityService
   override val avatarIconsProvider: IconsProvider<String> = dataContext.avatarIconsProvider
   override val branchesVm = GHPRBranchesViewModel(cs, project, dataContext.repositoryDataService.repositoryMapping, detailsState)
@@ -106,7 +106,7 @@ internal class GHPRDetailsViewModelImpl(
   }
 
   override fun openPullRequestInfoAndTimeline(number: Long) {
-    twVm.projectVm.value?.openPullRequestInfoAndTimeline(number)
+    vm.connectedProjectVm.value?.openPullRequestInfoAndTimeline(number)
   }
 
   suspend fun destroy() = cs.cancelAndJoinSilently()

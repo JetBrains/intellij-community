@@ -9,9 +9,22 @@ import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
+import org.junit.Ignore
+
+@SuppressWarnings("JUnitTestCase")
+@Ignore("This is a helper class, not a test")
+internal class MLSortingHelper : MLSortingTestCase() {
+  override fun customizeSettings(settings: MLRankingSettingsState): MLRankingSettingsState {
+    return settings.withRankingEnabled(true).withDiffEnabled(false)
+  }
+
+  override fun configureExperimentStatus(actualSettingsState: MLRankingSettingsState) {}
+}
 
 class RankingProvidersTest : LightPlatformTestCase() {
   private lateinit var testLanguage: Language
+
+  private val mlSortingTestCase = MLSortingHelper()
 
   fun `test no providers registered`() {
     checkActiveProvider(null, 0)
@@ -75,6 +88,7 @@ class RankingProvidersTest : LightPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
+    mlSortingTestCase.setUp()
     testLanguage = TestLanguage()
   }
 
@@ -86,6 +100,7 @@ class RankingProvidersTest : LightPlatformTestCase() {
       addSuppressedException(e)
     }
     finally {
+      mlSortingTestCase.tearDown()
       super.tearDown()
     }
   }

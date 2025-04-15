@@ -28,7 +28,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -40,7 +40,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -52,7 +52,7 @@ KaLibraryModule:
   libraryName: org.jetbrains:annotations-java5:24.0.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains:annotations-java5:24.0.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:

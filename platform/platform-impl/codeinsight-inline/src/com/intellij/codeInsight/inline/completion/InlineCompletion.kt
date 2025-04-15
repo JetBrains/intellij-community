@@ -6,10 +6,12 @@ import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseLis
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.observable.util.addKeyListener
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
@@ -17,13 +19,14 @@ import com.intellij.util.application
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 
 object InlineCompletion {
-  private val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
+  private val KEY = Key.create<Pair<InlineCompletionHandler, Disposable>>("inline.completion.handler")
   private val LOG = logger<InlineCompletionHandler>()
 
-  fun getHandlerOrNull(editor: Editor): InlineCompletionHandler? = editor.getUserData(KEY)
+  fun getHandlerOrNull(editor: Editor): InlineCompletionHandler? = editor.getUserData(KEY)?.first
 
   fun install(editor: EditorEx, scope: CoroutineScope) {
     if (!SwingUtilities.isEventDispatchThread()) {
@@ -37,7 +40,7 @@ object InlineCompletion {
     val currentHandler = getHandlerOrNull(editor)
 
     val disposable = Disposer.newDisposable("inline-completion").also {
-      EditorUtil.disposeWithEditor(editor, it)
+      it.disposeWithEditorIfNeeded(editor)
     }
 
     val workingScope = scope.childScope(supervisor = !application.isUnitTestMode) // Completely fail only in tests
@@ -54,7 +57,7 @@ object InlineCompletion {
       remove(editor)
     }
 
-    editor.putUserData(KEY, handler)
+    editor.putUserData(KEY, handler to disposable)
 
     editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
@@ -67,13 +70,24 @@ object InlineCompletion {
   }
 
   fun remove(editor: Editor) {
-    val handler = editor.getUserData(KEY)
+    val (handler, disposable) = editor.getUserData(KEY) ?: return
 
-    if (handler != null) {
-      handler.cancel(FinishType.EDITOR_REMOVED)
-      application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerUninstalled(editor, handler)
-      editor.putUserData(KEY, null)
-      LOG.trace { "[Inline Completion] Handler is removed for $editor." }
+    handler.cancel(FinishType.EDITOR_REMOVED)
+    Disposer.dispose(disposable)
+
+    application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerUninstalled(editor, handler)
+    editor.putUserData(KEY, null)
+    LOG.trace { "[Inline Completion] Handler is removed for $editor." }
+  }
+
+  private fun Disposable.disposeWithEditorIfNeeded(editor: Editor) {
+    val isDisposed = AtomicReference(false)
+    whenDisposed { isDisposed.set(true) }
+
+    EditorUtil.disposeWithEditor(editor) {
+      if (isDisposed.compareAndSet(false, true)) {
+        Disposer.dispose(this@disposeWithEditorIfNeeded)
+      }
     }
   }
 }

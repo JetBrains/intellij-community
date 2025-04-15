@@ -89,7 +89,7 @@ public class XmlTokenizerBase<T extends PsiElement> extends Tokenizer<T> {
   private @NotNull Splitter createExclusionAwareSplitter(List<TextRange> excludeRanges, int offset) {
     return new Splitter() {
       @Override
-      public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+      public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
         mySplitter.split(text, range, tokenRange -> {
           if (ContainerUtil.all(excludeRanges, excludeRange -> !excludeRange.intersects(tokenRange.shiftRight(offset)))) {
             consumer.consume(tokenRange);

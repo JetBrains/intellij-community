@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -63,5 +63,8 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="TEST" />
   </component>
 </module>

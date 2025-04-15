@@ -526,21 +526,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <actionConfigurationCustomizer implementation="org.jetbrains.kotlin.idea.actions.KotlinActionsManager"/>
     <searchEverywhereResultsEqualityProvider implementation="org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProvider"/>
-    <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
-    <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>
-
-    <directClassInheritorsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher"/>
-
-    <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithFlexibleTypesSearcher"/>
-    <indexPatternSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTodoSearcher"/>
-
-    <classesWithAnnotatedMembersSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinClassesWithAnnotatedMembersSearcher"/>
-    <useScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDeclarationScopeOptimizer"/>
-    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinPropertyAccessorsReferenceSearcher"/>
-    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConstructorDelegationCallReferenceSearcher"/>
-    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodReferenceSearcher"/>
-    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinConventionMethodReferencesSearcher"/>
-    <methodReferencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.DefaultAnnotationMethodKotlinImplicitReferenceSearcher"/>
 
     <refactoring.safeDelete.JavaSafeDeleteDelegate
             id="kotlinJavaSafeDeleteDelegate"
@@ -559,10 +544,10 @@
     <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector"
                              id="kotlin"
                              order="first"/> <!--before lombok -->
-
-    <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
-
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.inspections.JavaOutsideModuleDetector"/>
+    <projectService
+      serviceInterface="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider"
+      serviceImplementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl"/>
+    <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProviderImpl$LibraryKindScanner"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">

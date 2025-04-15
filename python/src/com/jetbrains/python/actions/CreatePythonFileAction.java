@@ -18,7 +18,8 @@ public class CreatePythonFileAction extends CreateFileFromTemplateAction impleme
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(PyBundle.message("create.python.file.action.new.python.file"))
       .addKind(PyBundle.message("create.python.file.action.python.file"), PythonFileType.INSTANCE.getIcon(), "Python Script")

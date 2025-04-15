@@ -136,7 +136,7 @@ public final class JdkBundle {
 
     JdkVersionInfo versionInfo;
     if (boot) {
-      versionInfo = new JdkVersionInfo(JavaVersion.current(), null, CpuArch.CURRENT, null);
+      versionInfo = new JdkVersionInfo(CurrentJavaVersion.currentJavaVersion(), null, CpuArch.CURRENT, null);
     }
     else {
       versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(actualHome.getPath());

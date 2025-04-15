@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -75,7 +75,10 @@ public class WSLDistribution implements AbstractWslDistribution {
   private static final String DEFAULT_WSL_IP = "127.0.0.1";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  static final String DEFAULT_SHELL = "/bin/sh";
+
+  @ApiStatus.Internal
+  public static final String DEFAULT_SHELL = "/bin/sh";
+
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
   private static final String SHELL_PARAMETER = "$SHELL";
   public static final String WSL_EXE = "wsl.exe";
@@ -89,7 +92,8 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
    */
-  static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
+  @ApiStatus.Internal
+  public static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
@@ -261,9 +265,10 @@ public class WSLDistribution implements AbstractWslDistribution {
     return WslIjentManager.getInstance().isIjentAvailable() && !options.isLaunchWithWslExe();
   }
 
-  final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
-                                                                     @Nullable Project project,
-                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
+  @ApiStatus.Internal
+  public final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
+                                                                            @Nullable Project project,
+                                                                            @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
     Path executable = getExecutablePath();
     boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
@@ -280,7 +285,7 @@ public class WSLDistribution implements AbstractWslDistribution {
       prependCommand(linuxCommand, "sudo", "-S", "-p", "''");
       //TODO[traff]: ask password only if it is needed. When user is logged as root, password isn't asked.
 
-      SUDO_LISTENER_KEY.set(commandLine, new ProcessAdapter() {
+      SUDO_LISTENER_KEY.set(commandLine, new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           OutputStream input = event.getProcessHandler().getProcessInput();
@@ -302,7 +307,6 @@ public class WSLDistribution implements AbstractWslDistribution {
           else {
             // fixme notify user?
           }
-          super.startNotified(event);
         }
       });
     }

@@ -1,18 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.*
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
-import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -22,26 +20,29 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 open class AddModifierFix(
     element: KtModifierListOwner,
-    @SafeFieldForPreview
-    protected val modifier: KtModifierKeywordToken
-) : KotlinCrossLanguageQuickFixAction<KtModifierListOwner>(element), KotlinUniversalQuickFix {
-    override fun getText(): String {
-        val element = element ?: return ""
-        if (modifier in modalityModifiers || modifier in KtTokens.VISIBILITY_MODIFIERS || modifier == KtTokens.CONST_KEYWORD) {
-            return KotlinBundle.message("fix.add.modifier.text", RemoveModifierFixBase.getElementName(element), modifier.value)
-        }
-        return KotlinBundle.message("fix.add.modifier.text.generic", modifier.value)
+    protected val modifier: KtModifierKeywordToken,
+) : PsiUpdateModCommandAction<KtModifierListOwner>(element) {
+    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? =
+        getPresentationImpl(element)
+
+    fun getPresentationImpl(element: KtModifierListOwner): Presentation? {
+        if (!element.canRefactorElement()) return null
+        val actionName =
+            if (modifier in modalityModifiers || modifier in KtTokens.VISIBILITY_MODIFIERS || modifier == KtTokens.CONST_KEYWORD) {
+                KotlinBundle.message("fix.add.modifier.text", RemoveModifierFixBase.getElementName(element), modifier.value)
+            } else {
+                KotlinBundle.message("fix.add.modifier.text.generic", modifier.value)
+            }
+        return Presentation.of(actionName).withFixAllOption(this)
     }
 
-    override fun getFamilyName(): String = KotlinBundle.message("fix.add.modifier.family")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.modifier.family")
 
-    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? {
-        return element?.containingFile
-    }
-
-    protected fun invokeOnElement(element: KtModifierListOwner?) {
-        if (element == null) return
-
+    override fun invoke(
+        context: ActionContext,
+        element: KtModifierListOwner,
+        updater: ModPsiUpdater,
+    ) {
         element.addModifier(modifier)
 
         when (modifier) {
@@ -65,16 +66,7 @@ open class AddModifierFix(
         }
     }
 
-    override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
-        val originalElement = element
-        invokeOnElement(originalElement)
-    }
-
-    // TODO: consider checking if this fix is available by testing if the [element] can be refactored by calling
-    //  FIR version of [org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt#canRefactor]
-    override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean = element != null
-
-    interface Factory<T : AddModifierFix> {
+    interface Factory<T : ModCommandAction> {
         fun createFactory(modifier: KtModifierKeywordToken): QuickFixesPsiBasedFactory<PsiElement> {
             return createFactory(modifier, KtModifierListOwner::class.java)
         }
@@ -86,7 +78,7 @@ open class AddModifierFix(
             return quickFixesPsiBasedFactory { e ->
                 val modifierListOwner =
                     PsiTreeUtil.getParentOfType(e, modifierOwnerClass, false) ?: return@quickFixesPsiBasedFactory emptyList()
-                listOfNotNull(createIfApplicable(modifierListOwner, modifier))
+                listOfNotNull(createIfApplicable(modifierListOwner, modifier)?.asIntention())
             }
         }
 
@@ -124,14 +116,14 @@ open class AddModifierFix(
     }
 
     companion object : Factory<AddModifierFix> {
-        val addAbstractModifier = AddModifierFix.createFactory(KtTokens.ABSTRACT_KEYWORD)
-        val addAbstractToContainingClass = AddModifierFix.createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
-        val addOpenToContainingClass = AddModifierFix.createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
-        val addFinalToProperty = AddModifierFix.createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
-        val addInnerModifier = createFactory(KtTokens.INNER_KEYWORD)
-        val addOverrideModifier = createFactory(KtTokens.OVERRIDE_KEYWORD)
-        val addDataModifier = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
-        val addInlineToFunctionWithReified = createFactory(KtTokens.INLINE_KEYWORD, KtNamedFunction::class.java)
+        val addAbstractModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD)
+        val addAbstractToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
+        val addOpenToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
+        val addFinalToProperty: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
+        val addInnerModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INNER_KEYWORD)
+        val addOverrideModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OVERRIDE_KEYWORD)
+        val addDataModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
+        val addInlineToFunctionWithReified: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INLINE_KEYWORD, KtNamedFunction::class.java)
 
         val modifiersWithWarning: Set<KtModifierKeywordToken> = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
         private val modalityModifiers = modifiersWithWarning + KtTokens.OPEN_KEYWORD

@@ -81,9 +81,8 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
     return defaultValue
   }
 
-  fun getSourcePositionFuture(location: Location?): CompletableFuture<SourcePosition?> = invokeCommandAsCompletableFuture {
-    getSourcePositionAsync(location)
-  }
+  fun getSourcePositionFuture(location: Location?): CompletableFuture<SourcePosition?> =
+    DebuggerUtilsAsync.reschedule(invokeCommandAsCompletableFuture { getSourcePositionAsync(location) })
 
   override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? =
     getCachedSourcePosition(location, { action -> readAction(action) }) { fileType: FileType? ->

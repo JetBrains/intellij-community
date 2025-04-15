@@ -2,14 +2,12 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.*
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditServiceListener
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.idea.AppMode
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.MnemonicHelper
@@ -85,6 +83,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   private var header: DefaultFrameHeader? = null
 
   private val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope()
+  private val displayChangeListener = DisplayChangeDetector.Listener { updateComponentsAndResize() }
 
   companion object {
     @JvmField
@@ -175,6 +174,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
         }
       }
     })
+    if (AppMode.isRemoteDevHost()) {
+      // The welcome frame is created and positioned before a client connects,
+      // so it needs to be repositioned when information about client display arrives.
+      DisplayChangeDetector.getInstance().addListener(displayChangeListener)
+    }
 
     setupCloseAction()
     MnemonicHelper.init(this)
@@ -275,6 +279,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
     Disposer.dispose(screen)
     WelcomeFrame.resetInstance()
+    if (AppMode.isRemoteDevHost()) {
+      DisplayChangeDetector.getInstance().removeListener(displayChangeListener)
+    }
   }
 
   override fun isWindowDisposed(): Boolean = isDisposed

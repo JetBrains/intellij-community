@@ -17,6 +17,7 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -180,6 +182,7 @@ internal class CommandCompletionListener : LookupManagerListener {
     if (newLookup !is LookupImpl) return
     val completionService = editor.project?.getService(CommandCompletionService::class.java)
     completionService?.addFilters(newLookup, nonWrittenFiles, psiFile, editor)
+    installLookupIntentionPreviewListener(newLookup)
     val highlightingListener = CommandCompletionHighlightingListener(topLevelEditor, newLookup, psiFile, nonWrittenFiles, completionService)
     newLookup.addLookupListener(highlightingListener)
     Disposer.register(newLookup, highlightingListener)
@@ -221,13 +224,20 @@ private class CommandCompletionHighlightingListener(
       clear(lookup.editor)
       return
     }
-    update(lookup, element)
+
+    if (element.useLookupString) {
+      updatePromptHighlighting(lookup, element)
+    }
+    else {
+      clear(lookup.editor)
+    }
     updateHighlighting(lookup, element)
     super.uiRefreshed()
   }
 
   override fun lookupCanceled(event: LookupEvent) {
-    clear(event.lookup.editor)
+    val editor = runReadAction { event.lookup.editor }
+    clear(editor)
     super.lookupCanceled(event)
   }
 
@@ -255,7 +265,7 @@ private class CommandCompletionHighlightingListener(
     }
   }
 
-  private fun update(lookup: LookupImpl, item: CommandCompletionLookupElement) {
+  private fun updatePromptHighlighting(lookup: LookupImpl, item: CommandCompletionLookupElement) {
     val installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_LISTENER_KEY) { AtomicBoolean(false) }
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, editor.document.immutableCharSequence,
                                                                    lookup.lookupOriginalStart)
@@ -288,9 +298,14 @@ private class CommandCompletionHighlightingListener(
       clear(lookup.editor)
       return
     }
-    update(lookup, element)
-    updateIcon(lookup, element)
+    if (element.useLookupString) {
+      updatePromptHighlighting(lookup, element)
+    }
+    else {
+      clear(lookup.editor)
+    }
     updateHighlighting(lookup, element)
+    updateIcon(lookup, element)
     super.currentItemChanged(event)
   }
 
@@ -306,19 +321,9 @@ private class CommandCompletionHighlightingListener(
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
     val endOffset = min(highlightInfo.range.endOffset, startOffset)
-    if (highlightInfo.range.startOffset <= endOffset) {
+    if (highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
       highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
-    }
-    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) {
-      for (info in lookup.items
-        .mapNotNull { it?.`as`(CommandCompletionLookupElement::class.java) }
-        .mapNotNull { it.highlighting }
-        .sortedByDescending { it.priority }) {
-        val endOffset = min(info.range.endOffset, startOffset)
-        if (info.range.startOffset <= min(info.range.endOffset, startOffset)) {
-          highlightManager.addRangeHighlight(editor, info.range.startOffset, endOffset, info.attributesKey, false, rangeHighlighters)
-        }
-      }
+      highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, endOffset, highlightInfo.attributesKey, false, rangeHighlighters)
     }
     if (rangeHighlighters.isNotEmpty()) {
       lookup.putUserData(LOOKUP_HIGHLIGHTING, rangeHighlighters)
@@ -385,7 +390,11 @@ internal class CommandCompletionLookupCustomizer : LookupCustomizer {
     val service = project.service<CommandCompletionService>()
     val editor = lookupImpl.editor
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val element: PsiElement? = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, editor.caretModel.offset)
+    val element: PsiElement? =
+      //it is used only in backend in split mode, so it is allowed to be on EDT
+      SlowOperations.knownIssue("IJPL-181979").use {
+        InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, editor.caretModel.offset)
+      }
     val language = element?.language ?: psiFile.language
     val factory = service.getFactory(language)
     if (factory != null) {

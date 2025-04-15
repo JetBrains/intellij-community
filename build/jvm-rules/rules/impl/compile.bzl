@@ -1,5 +1,3 @@
-load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
-
 # Copyright 2018 The Bazel Authors. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +11,8 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load(
     "@rules_kotlin//kotlin/internal:defs.bzl",
@@ -191,62 +191,6 @@ def _new_plugin_from(plugin_id_to_configuration, plugins_for_phase):
         options = options,
     )
 
-def _fold_jars_action(ctx, rule_kind, toolchains, output_jar, input_jars, action_type = ""):
-    """Set up an action to Fold the input jars into a normalized output jar."""
-    args = ctx.actions.args()
-    args.add_all([
-        "--normalize",
-        "--exclude_build_data",
-        "--add_missing_directories",
-    ])
-    args.add_all([
-        "--deploy_manifest_lines",
-        "Target-Label: %s" % str(ctx.label),
-        "Injecting-Rule-Kind: %s" % rule_kind,
-    ])
-    args.add("--output", output_jar)
-    args.add_all(input_jars, before_each = "--sources")
-    ctx.actions.run(
-        mnemonic = "KotlinFoldJars" + action_type,
-        inputs = input_jars,
-        outputs = [output_jar],
-        executable = toolchains.java.single_jar,
-        arguments = [args],
-        progress_message = "Merging Kotlin output jar %%{label}%s from %d inputs" % (
-            "" if not action_type else " (%s)" % action_type,
-            len(input_jars),
-        ),
-    )
-
-def _run_merge_jdeps_action(ctx, report_unused_deps, jdeps, output, deps):
-    """Creates a Jdeps merger action invocation."""
-
-    mnemonic = "JdepsMerge"
-    progress_message = "%s %%{label} { jdeps: %d }" % (
-        mnemonic,
-        len(jdeps),
-    )
-
-    inputs = depset(jdeps)
-    if not report_unused_deps == "off":
-        # for sandboxing to work, and for this action to be deterministic, the compile jars need to be passed as inputs
-        inputs = depset(jdeps, transitive = [depset([], transitive = [dep.transitive_compile_time_jars for dep in deps])])
-
-    ctx.actions.run(
-        mnemonic = mnemonic,
-        inputs = inputs,
-        outputs = [output],
-        use_default_shell_env = True,
-        executable = ctx.attr._jdeps_merger.files_to_run.executable,
-        execution_requirements = {
-            "supports-workers": "1",
-            "supports-multiplex-workers": "1",
-            "supports-worker-cancellation": "1",
-        },
-        arguments = ["--flagfile=|jdeps|" + output.path + "|" + str(ctx.label) + "|" + report_unused_deps],
-        progress_message = progress_message,
-    )
-
 def kt_jvm_produce_jar_actions(ctx, rule_kind):
     """This macro sets up a compile action for a Kotlin jar.
 
@@ -272,47 +216,27 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
 
     output_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
 
-    outputs_struct = None
-
     transitiveInputs = [compile_deps.compile_jars]
     _collect_runtime_jars(perTargetPlugins, transitiveInputs)
     _collect_runtime_jars(ctx.attr.deps, transitiveInputs)
 
-    outputs_struct = _run_jps_builder(
-          ctx = ctx,
-          output_jar = output_jar,
-          rule_kind = rule_kind,
-          toolchains = toolchains,
-          srcs = srcs,
-          associates = associates,
-          compile_deps = compile_deps,
-          transitiveInputs = transitiveInputs,
-          plugins = plugins,
-      )
-#     else:
-#         outputs_struct = _run_kt_java_builder_actions(
-#             ctx = ctx,
-#             output_jar = output_jar,
-#             rule_kind = rule_kind,
-#             toolchains = toolchains,
-#             srcs = srcs,
-#             generated_ksp_src_jars = [],
-#             associates = associates,
-#             compile_deps = compile_deps,
-#             annotation_processors = [],
-#             transitiveInputs = transitiveInputs,
-#             plugins = plugins,
-#         )
-
-    compile_jar = outputs_struct.compile_jar
-    generated_src_jars = outputs_struct.generated_src_jars
-    annotation_processing = outputs_struct.annotation_processing
+    compile_jar = _run_jvm_builder(
+        ctx = ctx,
+        output_jar = output_jar,
+        rule_kind = rule_kind,
+        toolchains = toolchains,
+        srcs = srcs,
+        associates = associates,
+        compile_deps = compile_deps,
+        transitiveInputs = transitiveInputs,
+        plugins = plugins,
+    )
 
     source_jar = java_common.pack_sources(
         ctx.actions,
         output_source_jar = ctx.outputs.srcjar,
         sources = srcs.kt + srcs.java,
-        source_jars = srcs.src_jars + generated_src_jars,
+        source_jars = srcs.src_jars,
         java_toolchain = toolchains.java,
     )
 
@@ -320,7 +244,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
         output_jar = output_jar,
         compile_jar = compile_jar,
         source_jar = source_jar,
-        jdeps = outputs_struct.output_jdeps,
         deps = compile_deps.deps,
         runtime_deps = [_java_info(d) for d in ctx.attr.runtime_deps],
         exports = [_java_info(d) for d in getattr(ctx.attr, "exports", [])],
@@ -339,7 +262,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
             ),
             # intellij aspect needs this
             outputs = struct(
-                jdeps = outputs_struct.output_jdeps,
                 jars = [struct(
                     class_jar = output_jar,
                     ijar = compile_jar,
@@ -348,219 +270,11 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
             ),
             transitive_compile_time_jars = java_info.transitive_compile_time_jars,
             transitive_source_jars = java_info.transitive_source_jars,
-            annotation_processing = annotation_processing,
-            additional_generated_source_jars = generated_src_jars,
             all_output_jars = [output_jar],
         ),
     )
 
-def _get_or_create_single_jdeps_output(report_unused_deps, java_infos, ctx, compile_deps):
-    jdeps = [java_info.outputs.jdeps for java_info in java_infos if java_info.outputs.jdeps]
-    if len(jdeps) == 1:
-        return jdeps[0]
-    elif jdeps:
-        output_jdeps = ctx.actions.declare_file(ctx.label.name + ".jdeps")
-        _run_merge_jdeps_action(
-            ctx = ctx,
-            report_unused_deps = report_unused_deps,
-            jdeps = jdeps,
-            deps = compile_deps.deps,
-            output = output_jdeps,
-        )
-
-def _compile_java_sources(ctx, output, srcs, generated_ksp_src_jars, compile_deps, kt_stubs_for_java, toolchains, strict_deps):
-    """Compiles Java sources if present, otherwise uses KT ABI jar."""
-
-    kotlincOpts = ctx.attr.kotlinc_opts[KotlincOptions]
-
-    javac_options = []
-    if kotlincOpts.warn == "off":
-        javac_options.append("-XepDisableAllChecks")
-        javac_options.append("-Xlint:none")
-        javac_options.append("-nowarn")
-
-    javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
-    if javac_opts and javac_opts.add_exports:
-        javac_options.extend(["--add-exports " + it for it in javac_opts.add_exports])
-
-        # exporting a package from system module is not allowed with --release
-        if kotlincOpts.jvm_target != 0:
-            javac_options.append("-target " + str(kotlincOpts.jvm_target))
-            javac_options.append("-source " + str(kotlincOpts.jvm_target))
-    elif kotlincOpts.jvm_target != 0:
-        javac_options.append("--release " + str(kotlincOpts.jvm_target))
-
-    if srcs.kt:
-        # assemblage consideration for Kotlin annotation processing
-        javac_options.append("-proc:none")
-
-    return java_common.compile(
-        ctx,
-        source_files = srcs.java,
-        source_jars = srcs.src_jars + generated_ksp_src_jars,
-        output = output,
-        deps = compile_deps.deps + ([] if kt_stubs_for_java == None else [kt_stubs_for_java]),
-        java_toolchain = toolchains.java,
-        javac_opts = javac_options,
-        neverlink = getattr(ctx.attr, "neverlink", False),
-        strict_deps = strict_deps,
-    )
-
-def _run_kt_java_builder_actions(
-        ctx,
-        output_jar,
-        rule_kind,
-        toolchains,
-        srcs,
-        generated_ksp_src_jars,
-        associates,
-        compile_deps,
-        annotation_processors,
-        transitiveInputs,
-        plugins):
-    """Runs the necessary KotlinBuilder and JavaBuilder actions to compile a jar
-
-    Returns:
-        A struct containing the a list of output_jars and a struct annotation_processing jars
-    """
-    has_kt_sources = srcs.kt or srcs.src_jars
-
-    java_infos = []
-    outputs = []
-    kt_compile_jar = None
-
-    kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
-
-    kt_stubs_for_java = None
-    kt_output_jar = None
-    has_java_sources = srcs.java or srcs.src_jars or generated_ksp_src_jars
-
-    emit_jdeps = kotlinc_options.emit_jdeps
-
-    # build Kotlin
-    if has_kt_sources:
-        args = init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
-
-        kt_output_jar = ctx.actions.declare_file(ctx.label.name + "-kt.jar") if has_java_sources else output_jar
-        outputs.append(kt_output_jar)
-
-        if not "kt_abi_plugin_incompatible" in ctx.attr.tags:
-            kt_compile_jar = ctx.actions.declare_file(ctx.label.name + ("-kt.abi.jar" if has_java_sources else ".abi.jar"))
-            outputs.append(kt_compile_jar)
-            args.add("--abi-out", kt_compile_jar)
-        else:
-            kt_compile_jar = kt_output_jar
-
-        args.add("--out", kt_output_jar)
-
-        kt_jdeps = None
-        if emit_jdeps:
-            kt_jdeps = ctx.actions.declare_file(ctx.label.name + "-kt.jdeps")
-            args.add("--jdeps-out", kt_jdeps)
-            outputs.append(kt_jdeps)
-
-        ctx.actions.run(
-            mnemonic = "KotlinCompile",
-            inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
-            use_default_shell_env = True,
-            outputs = outputs,
-            executable = ctx.attr._kotlin_builder.files_to_run.executable,
-            execution_requirements = {
-                "supports-workers": "1",
-                "supports-multiplex-workers": "1",
-                "supports-worker-cancellation": "1",
-            },
-            arguments = [args],
-            progress_message = "Compile %%{label} { kt: %d, java: %d }" % (len(srcs.kt), len(srcs.java)),
-            env = {
-                "LC_CTYPE": "en_US.UTF-8",
-            },
-        )
-
-        if not annotation_processors or not srcs.kt:
-            kt_stubs_for_java = JavaInfo(compile_jar = kt_compile_jar, output_jar = kt_output_jar, neverlink = True)
-
-        kt_java_info = JavaInfo(
-            output_jar = kt_output_jar,
-            compile_jar = kt_compile_jar,
-            jdeps = kt_jdeps,
-            deps = compile_deps.deps,
-            runtime_deps = [d[JavaInfo] for d in ctx.attr.runtime_deps],
-            exports = [d[JavaInfo] for d in getattr(ctx.attr, "exports", [])],
-            neverlink = getattr(ctx.attr, "neverlink", False),
-        )
-        java_infos.append(kt_java_info)
-
-    compile_jar = kt_compile_jar
-    ap_generated_src_jar = None
-    if has_java_sources:
-        java_output_jar = output_jar if kt_output_jar == None else ctx.actions.declare_file(ctx.label.name + "-java.jar")
-
-        java_part_java_info = _compile_java_sources(
-            ctx = ctx,
-            output = java_output_jar,
-            srcs = srcs,
-            generated_ksp_src_jars = generated_ksp_src_jars,
-            compile_deps = compile_deps,
-            kt_stubs_for_java = kt_stubs_for_java,
-            toolchains = toolchains,
-            strict_deps = kotlinc_options.strict_java_deps,
-        )
-
-        java_infos.append(java_part_java_info)
-        ap_generated_src_jar = java_part_java_info.annotation_processing.source_jar
-        compile_jars = [jars.ijar for jars in java_part_java_info.java_outputs]
-        output_jars = [jars.class_jar for jars in java_part_java_info.java_outputs]
-
-        if kt_output_jar == None:
-            if not len(output_jars) == 1:
-                fail("expect the only output")
-            if not len(compile_jars) == 1:
-                fail("expect the only compile_jar")
-            if not output_jars[0] == java_output_jar:
-                fail("java_output is not equal to result")
-
-            compile_jar = compile_jars[0]
-        else:
-            _fold_jars_action(
-                ctx,
-                rule_kind = rule_kind,
-                toolchains = toolchains,
-                output_jar = output_jar,
-                action_type = "Runtime",
-                input_jars = [kt_output_jar, java_output_jar],
-            )
-
-            # merge ABI jars into final compile jar
-            compile_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
-            _fold_jars_action(
-                ctx,
-                rule_kind = rule_kind,
-                toolchains = toolchains,
-                output_jar = compile_jar,
-                action_type = "Abi",
-                input_jars = compile_jars + [kt_compile_jar],
-            )
-    elif kt_output_jar == None:
-        ctx.actions.symlink(output = output_jar, target_file = toolchains.kt.empty_jar)
-
-    annotation_processing = None
-    #     if annotation_processors:
-    #         outputs_list = [java_info.outputs for java_info in java_infos]
-    #         annotation_processing = _create_annotation_processing(
-    #             annotation_processors = annotation_processors,
-    #             ap_class_jar = [jars.class_jar for outputs in outputs_list for jars in outputs.jars][0],
-    #             ap_source_jar = ap_generated_src_jar,
-    #         )
-
-    return struct(
-        compile_jar = compile_jar,
-        generated_src_jars = generated_ksp_src_jars,
-        annotation_processing = annotation_processing,
-        output_jdeps = _get_or_create_single_jdeps_output(kotlinc_options.report_unused_deps, java_infos, ctx, compile_deps) if emit_jdeps else None,
-    )
-
-def _run_jps_builder(
+def _run_jvm_builder(
         ctx,
         output_jar,
         rule_kind,
@@ -570,10 +284,10 @@ def _run_jps_builder(
         compile_deps,
         transitiveInputs,
         plugins):
-    """Runs the necessary JpsBuilder actions to compile a jar
+    """Runs the necessary JvmBuilder actions to compile a jar
 
     Returns:
-        A struct containing the a list of output_jars and a struct annotation_processing jars
+        ABI jar
     """
 
     kotlin_inc_threshold = ctx.attr._kotlin_inc_threshold[BuildSettingInfo].value
@@ -587,37 +301,29 @@ def _run_jps_builder(
 
     outputs = [output_jar]
     abi_jar = output_jar
-    if not "kt_abi_plugin_incompatible" in ctx.attr.tags:
-        abi_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
-        outputs.append(abi_jar)
-        args.add("--abi-out", abi_jar)
-
-    # todo JDEPS for JVM
-    # emit_jdeps = kotlinc_options.emit_jdeps
-    #kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
-    jdeps = None
-    emit_jdeps = False
-    if emit_jdeps:
-        jdeps = ctx.actions.declare_file(ctx.label.name + ".jdeps")
-        outputs.append(jdeps)
-        args.add("--jdeps-out", jdeps)
+    abi_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
+    outputs.append(abi_jar)
+    args.add("--abi-out", abi_jar)
 
     javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
     if javac_opts and javac_opts.add_exports:
         args.add_all("--add-export", javac_opts.add_exports)
 
     isIncremental = (kotlin_inc_threshold != -1 and len(srcs.kt) >= kotlin_inc_threshold) or (java_inc_threshold != -1 and len(srcs.java) >= java_inc_threshold)
-    if isIncremental:
-        args.add("--incremental")
+    if not isIncremental:
+        args.add("--non-incremental")
 
     javaCount = len(srcs.java)
     args.add("--java-count", javaCount)
     ctx.actions.run(
-        mnemonic = "JpsCompile",
+        mnemonic = "JvmCompile",
+        env = {
+            "MALLOC_ARENA_MAX": "2",
+        },
         inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
         use_default_shell_env = True,
         outputs = outputs,
-        executable = ctx.attr._jps_builder.files_to_run.executable,
+        executable = ctx.attr._jvm_builder.files_to_run.executable,
         execution_requirements = {
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
@@ -626,15 +332,10 @@ def _run_jps_builder(
             "supports-multiplex-sandboxing": "1",
         },
         arguments = [args],
-        progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, ", incremental" if isIncremental else ""),
+        progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),
     )
 
-    return struct(
-        compile_jar = abi_jar,
-        generated_src_jars = [],
-        annotation_processing = None,
-        output_jdeps = jdeps,
-    )
+    return abi_jar
 
 def _collect_runtime_jars(targets, transitive):
     for t in targets:

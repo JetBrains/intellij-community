@@ -359,11 +359,13 @@ c:com.intellij.openapi.vcs.actions.AnnotateActionGroup
 f:com.intellij.openapi.vcs.actions.AnnotateToggleAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.project.DumbAware
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - s:doAnnotate(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.openapi.vcs.annotate.FileAnnotation,com.intellij.openapi.vcs.AbstractVcs):V
 - s:doAnnotate(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,com.intellij.openapi.vcs.annotate.FileAnnotation,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.localVcs.UpToDateLineNumberProvider):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getRequiredPermissions():java.util.Collection
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -699,6 +701,7 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - getLogicallyLockedFolders():java.util.Map
 - getModifiedWithoutEditing():java.util.List
 - getRegisteredExecutors():java.util.List
+- getResolvedConflictPaths():java.util.List
 - getState():org.jdom.Element
 - getStatus(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.FileStatus
 - getStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
@@ -719,6 +722,7 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - isIgnoredInUpdateMode():Z
 - isInUpdate():Z
 - isLogicallyLocked(com.intellij.openapi.vfs.VirtualFile):Z
+- isResolvedConflict(com.intellij.openapi.vcs.FilePath):Z
 - s:isUnder(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.VcsDirtyScope):Z
 - isUnversioned(com.intellij.openapi.vfs.VirtualFile):Z
 - isUnversionedInUpdateMode():Z
@@ -926,12 +930,9 @@ com.intellij.openapi.vcs.changes.ChangesViewModifier
 com.intellij.openapi.vcs.changes.ChangesViewModifier$ChangesViewModifierListener
 - java.util.EventListener
 - a:updated():V
-f:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
-- com.intellij.openapi.Disposable
+Fa:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 - sf:TOPIC:com.intellij.util.messages.Topic
-- <init>(com.intellij.openapi.project.Project):V
-- dispose():V
-- getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+- f:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$ChangesViewWorkflowListener
 - java.util.EventListener
@@ -1099,6 +1100,7 @@ com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 - com.intellij.openapi.vcs.changes.FileHolder
 - sf:TOPIC:com.intellij.util.messages.Topic
 - sf:VCS_IGNORED_FILES_HOLDER_EP:com.intellij.openapi.extensions.ProjectExtensionPointName
+- sf:VCS_RESOLVED_CONFLICTS_FILES_HOLDER_EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - sf:VCS_UNVERSIONED_FILES_HOLDER_EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - isInUpdatingMode():Z
 com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider
@@ -1165,11 +1167,14 @@ f:com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction
 f:com.intellij.openapi.vcs.changes.actions.RefreshAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
+- sf:Companion:com.intellij.openapi.vcs.changes.actions.RefreshAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:doRefresh(com.intellij.openapi.project.Project):V
+- sf:doRefresh(com.intellij.openapi.project.Project):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.openapi.vcs.changes.actions.RefreshAction$Companion
+- f:doRefresh(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -2413,6 +2418,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - p:createToolbarComponent():javax.swing.JComponent
 - p:createTreeList(com.intellij.openapi.project.Project,Z,Z):com.intellij.openapi.vcs.changes.ui.ChangesTree
 - p:createViewerBorder():javax.swing.border.Border
+- s:findPathToObjectWithTag(com.intellij.openapi.vcs.changes.ui.ChangesTree,java.lang.Object,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag):javax.swing.tree.TreePath
 - getDiffAction():com.intellij.openapi.actionSystem.AnAction
 - p:getDiffRequestProducer(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - getGrouping():com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
@@ -2505,6 +2511,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - sf:MODIFIED_WITHOUT_EDITING_TAG:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - psf:MODULE_SORT_WEIGHT:I
 - psf:REPOSITORY_SORT_WEIGHT:I
+- psf:RESOLVED_CONFLICTS_SORT_WEIGHT:I
 - sf:SWITCHED_FILES_TAG:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - sf:SWITCHED_ROOTS_TAG:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - sf:TO_TEXT_CONVERTER:com.intellij.util.containers.Convertor
@@ -2696,6 +2703,8 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - getUnversionedFiles():com.intellij.util.containers.JBIterable
 - installPopupHandler(com.intellij.openapi.actionSystem.ActionGroup):V
 - p:isEmptyTextVisible():Z
+- p:isIncludable(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
+- p:isInclusionEnabled(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 - p:isInclusionVisible(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 - isOverSelection(java.awt.Point):Z
 - processMouseEvent(java.awt.event.MouseEvent):V
@@ -2716,8 +2725,9 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - sf:KEEP_NON_EMPTY:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - sf:KEEP_SELECTED_OBJECTS:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - pf:myProject:com.intellij.openapi.project.Project
+- pf:myShowConflictsNode:Z
 - <init>(com.intellij.openapi.project.Project,Z,Z):V
-- p:<init>(com.intellij.openapi.project.Project,Z,Z,Z):V
+- p:<init>(com.intellij.openapi.project.Project,Z,Z,Z,Z):V
 - addGroupingChangeListener(java.beans.PropertyChangeListener):V
 - addSelectionListener(java.lang.Runnable):V
 - addSelectionListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
@@ -2980,6 +2990,7 @@ a:com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 - getIncludedChanges():java.util.List
 - getIncludedUnversionedFiles():java.util.List
 - getInclusionModel():com.intellij.openapi.vcs.changes.InclusionModel
+- getInitialSize():java.awt.Dimension
 - p:getOKAction():javax.swing.Action
 - getPreferredFocusableComponent():javax.swing.JComponent
 - getPreferredFocusedComponent():javax.swing.JComponent
@@ -3998,7 +4009,6 @@ c:com.intellij.openapi.vcs.impl.VcsRootIterator
 - s:iterateVfUnderVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 com.intellij.openapi.vcs.impl.VcsStartupActivity
 - execute(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- bs:execute$suspendImpl(com.intellij.openapi.vcs.impl.VcsStartupActivity,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - a:getOrder():I
 - runActivity(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.vcs.impl.projectlevelman.AllVcses

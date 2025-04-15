@@ -309,7 +309,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public @NotNull Set<String> getTypes() {
+  public @NotNull @Unmodifiable Set<String> getTypes() {
     return Collections.unmodifiableSet(myTypes);
   }
 

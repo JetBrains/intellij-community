@@ -178,8 +178,14 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
         myFileDataCache.values().remove(fileData);
       }
     }
-    myFileDataCache.put(path, newData);
-    myRemoveQueue.add(newData);
+    // This service gets instantiated alongside JavaFileCodeStyleFacade in decompiler.
+    // If this project is default, then it should not be used as a storage of any (temporary) data, as it has lifecycle bigger than any data.
+    // In particular, default projects are disposed as application services, and during dispose of the default project any leftover data would
+    // cause a leak.
+    if (!myProject.isDefault()) {
+      myFileDataCache.put(path, newData);
+      myRemoveQueue.add(newData);
+    }
     return newData;
   }
 

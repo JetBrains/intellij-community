@@ -53,7 +53,7 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
 
     override fun getPathParameters(): List<Pair<String, Path>> = buildList {
         PluginStartupApplicationService.getInstance().getAliveFlagPath().let {
-            if (!it.isBlank()) {
+            if (it.isNotBlank()) {
                 add(Pair("-Dkotlin.daemon.client.alive.path=", Path.of(it)))
             }
         }

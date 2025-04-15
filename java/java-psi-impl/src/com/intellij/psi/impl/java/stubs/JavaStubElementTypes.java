@@ -1,18 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.*;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.util.JavaImplicitClassUtil;
+import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,14 +48,6 @@ public interface JavaStubElementTypes {
     @Override
     public @NotNull ASTNode createCompositeNode() {
       return new ImplicitClassElement();
-    }
-
-    @Override
-    public void indexStub(@NotNull PsiClassStub stub, @NotNull IndexSink sink) {
-      StubElement parent = stub.getParentStub();
-      if (parent instanceof PsiJavaFileStub) {
-        sink.occurrence(JavaStubIndexKeys.IMPLICIT_CLASSES, JavaImplicitClassUtil.getJvmName(((PsiJavaFileStub)parent).getPsi().getName()));
-      }
     }
   };
 
@@ -108,12 +95,7 @@ public interface JavaStubElementTypes {
     new JavaClassReferenceListElementType("EXTENDS_LIST", BasicJavaElementType.BASIC_EXTENDS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, PsiKeyword.EXTENDS);
-      }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
+        return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, JavaKeywords.EXTENDS);
       }
     };
 
@@ -121,36 +103,21 @@ public interface JavaStubElementTypes {
     new JavaClassReferenceListElementType("PERMITS_LIST", BasicJavaElementType.BASIC_PERMITS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.PERMITS_KEYWORD, PsiKeyword.PERMITS);
-      }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
+        return new ReferenceListElement(this, JavaTokenType.PERMITS_KEYWORD, JavaKeywords.PERMITS);
       }
     };
   JavaClassReferenceListElementType IMPLEMENTS_LIST =
     new JavaClassReferenceListElementType("IMPLEMENTS_LIST", BasicJavaElementType.BASIC_IMPLEMENTS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, PsiKeyword.IMPLEMENTS);
-      }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
+        return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, JavaKeywords.IMPLEMENTS);
       }
     };
   JavaClassReferenceListElementType THROWS_LIST =
     new JavaClassReferenceListElementType("THROWS_LIST", BasicJavaElementType.BASIC_THROWS_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, PsiKeyword.THROWS);
-      }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
+        return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, JavaKeywords.THROWS);
       }
     };
   JavaClassReferenceListElementType EXTENDS_BOUND_LIST =
@@ -159,17 +126,12 @@ public interface JavaStubElementTypes {
       public @NotNull ASTNode createCompositeNode() {
         return new TypeParameterExtendsBoundsListElement();
       }
-
-      @Override
-      public boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
-        return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
-      }
     };
   JavaClassReferenceListElementType PROVIDES_WITH_LIST =
     new JavaClassReferenceListElementType("PROVIDES_WITH_LIST", BasicJavaElementType.BASIC_PROVIDES_WITH_LIST) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
-        return new ReferenceListElement(this, JavaTokenType.WITH_KEYWORD, PsiKeyword.WITH);
+        return new ReferenceListElement(this, JavaTokenType.WITH_KEYWORD, JavaKeywords.WITH);
       }
     };
 
@@ -199,5 +161,5 @@ public interface JavaStubElementTypes {
    * @deprecated use {@link JavaParserDefinition#JAVA_FILE}
    */
   @Deprecated @ApiStatus.ScheduledForRemoval
-  IStubFileElementType<?> JAVA_FILE = JavaParserDefinition.JAVA_FILE;
+  IFileElementType JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

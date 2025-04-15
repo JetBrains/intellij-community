@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.plugin.k2` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "kotlin-plugin-k2_resources",
@@ -8,9 +7,22 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "kotlin-plugin-k2",
+  module_name = "kotlin.plugin.k2",
   visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/kotlin/kotlin.searching/base",
+    "//plugins/kotlin/code-insight/structural-search-k2:kotlin-code-insight-structural-search-k2",
+    "//plugins/kotlin/injection/k2:kotlin-injection-k2",
+    "//plugins/kotlin/injection/base:kotlin-base-injection",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+    "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
+    "//plugins/kotlin/kotlin.ide:ide",
+  ],
   runtime_deps = [
     ":kotlin-plugin-k2_resources",
     "//plugins/kotlin/plugin/common:kotlin-plugin-common",
@@ -106,7 +118,6 @@ java_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/kotlin.searching:searching-k2",
-    "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
     "//plugins/kotlin/compiler-plugins/assignment/common:kotlin-compiler-plugins-assignment-common-k2",
@@ -114,16 +125,10 @@ java_library(
     "//plugins/kotlin/compiler-plugins/assignment/maven:kotlin-compiler-plugins-assignment-maven",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/k2:kotlin-compiler-plugins-kotlinx-serialization-k2",
     "//plugins/kotlin/compiler-plugins/parcelize/k2:kotlin-compiler-plugins-parcelize-k2",
-    "//plugins/kotlin/code-insight/structural-search-k2:kotlin-code-insight-structural-search-k2",
     "//plugins/kotlin/i18n",
-    "//plugins/kotlin/injection/k2:kotlin-injection-k2",
-    "//plugins/kotlin/injection/base:kotlin-base-injection",
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/onboarding-gradle",
     "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
-    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
-    "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
-    "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/kotlin.performanceExtendedPlugin:performanceExtendedPlugin",

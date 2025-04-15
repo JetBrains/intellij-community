@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Version
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
@@ -24,6 +23,7 @@ import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.createSpecification
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -34,40 +34,29 @@ import javax.swing.UIManager
 
 object PyPackageInstallUtils {
   fun offeredPackageForNotFoundModule(project: Project, sdk: Sdk, moduleName: String): String? {
-    val pipPackageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
-
-    val shouldToInstall = checkShouldToInstall(project, sdk, pipPackageName)
+    val shouldToInstall = checkShouldToInstall(project, sdk, moduleName)
     if (!shouldToInstall)
       return null
-    return pipPackageName
+    return PyPsiPackageUtil.moduleToPackageName(moduleName)
   }
 
-  fun checkShouldToInstall(project: Project, sdk: Sdk, packageName: String): Boolean {
-    return !checkIsInstalled(project, sdk, packageName) && checkExistsInRepository(project, sdk, packageName)
+  fun checkShouldToInstall(project: Project, sdk: Sdk, moduleName: String): Boolean {
+    val packageName = PyPsiPackageUtil.moduleToPackageName(moduleName)
+    return !checkIsInstalled(project, sdk, packageName) && checkExistsInRepository(packageName)
   }
 
-  fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
-    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
-    val normalizedName = normalizePackageName(packageName)
-    val isStdLib = PyStdlibUtil.getPackages()?.any { normalizePackageName(it) == normalizedName } == true
+  private fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
+    val isStdLib = (PyStdlibUtil.getPackages() as Set<*>).contains(packageName)
     if (isStdLib) {
       return true
     }
-    return packageManager.installedPackages.any { normalizePackageName(it.name) == normalizedName }
+    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
+    return packageManager.installedPackages.any { normalizePackageName(it.name) == packageName }
   }
 
-  fun checkExistsInRepository(project: Project, sdk: Sdk, packageName: String): Boolean {
-    if (!PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
-      return false
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode )
-      return PyPIPackageUtil.INSTANCE.isInPyPI(packageName)
-
-    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
-    val repositoryManager = packageManager.repositoryManager
+  private fun checkExistsInRepository(packageName: String): Boolean {
     val normalizedName = normalizePackageName(packageName)
-    return repositoryManager.allPackages().any { normalizePackageName(it) == normalizedName }
+    return PyPIPackageUtil.INSTANCE.isInPyPI(normalizedName)
   }
 
 
@@ -77,10 +66,7 @@ object PyPackageInstallUtils {
     }
     if (!isConfirmed)
       return
-    val result = withBackgroundProgress(project = project, PyBundle.message("python.packaging.installing.package", packageName),
-                                        cancellable = true) {
-      installPackage(project, sdk, packageName)
-    }
+    val result = installPackage(project, sdk, packageName, true)
     result.getOrThrow()
   }
 
@@ -119,13 +105,32 @@ object PyPackageInstallUtils {
     }
   }
 
-  suspend fun installPackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
-    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
-    val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.createPackageSpecification(packageName, version)
-                               ?: return Result.failure(Exception("Could not find any repositories"))
+  suspend fun installPackage(
+    project: Project,
+    sdk: Sdk,
+    packageName: String,
+    withBackgroundProgress: Boolean,
+    versionSpec: String? = null,
+    options: List<String> = emptyList(),
+  ): Result<List<PythonPackage>> {
+    val pythonPackageManager = runCatching {
+      PythonPackageManager.forSdk(project, sdk)
+    }.getOrElse {
+      return Result.failure(it)
+    }
 
-    return pythonPackageManager.installPackage(packageSpecification, emptyList())
+    val spec = withContext(Dispatchers.IO) {
+      pythonPackageManager.repositoryManager.createSpecification(packageName, versionSpec)
+    } ?: return Result.failure(Exception("Package $packageName not found in any repository"))
+
+    return if (withBackgroundProgress) {
+      pythonPackageManager.installPackage(spec, options, withBackgroundProgress = true)
+    }
+    else {
+      pythonPackageManager.installPackage(spec, options, withBackgroundProgress)
+    }
   }
+
 
   /**
    * NOTE calling this functions REQUIRED init package list before the calling!
@@ -155,7 +160,6 @@ object PyPackageInstallUtils {
   }
 
 
-
   fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint) {
     PyPackageCoroutine.launch(project) {
       runPackagingOperationOrShowErrorDialog(pythonSdk, PyBundle.message("python.new.project.install.failed.title", packageName),
@@ -183,7 +187,8 @@ object PyPackageInstallUtils {
     sdk: Sdk,
   ): PythonPackageManager? = try {
     PythonPackageManager.forSdk(project, sdk)
-  } catch (_: Throwable) {
+  }
+  catch (_: Throwable) {
     null
   }
 

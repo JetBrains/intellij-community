@@ -80,7 +80,6 @@
 + -cucumber-groovy-
 + -com-jetbrains-php-framework-
 + -com-intellij-guice-
-+ -org-jetbrains-plugins-clangConfig-
 + -com-intellij-database-
 + -com-intellij-persistence-
 + -com-jetbrains-performancePlugin-

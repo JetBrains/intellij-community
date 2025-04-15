@@ -17,7 +17,7 @@ jvm_library(
     "//platform/core-api:core",
     "//grid/impl",
     "//platform/platform-impl:ide-impl",
-    "//json",
+    "//json/backend",
   ],
   runtime_deps = [":json-impl_resources"]
 )

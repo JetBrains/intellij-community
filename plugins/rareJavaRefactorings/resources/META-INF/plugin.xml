@@ -2,7 +2,7 @@
   <id>com.intellij.java.rareRefactorings</id>
   <name>Additional Java Refactorings</name>
   <category>Refactorings Tools</category>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
   <depends>com.intellij.modules.platform</depends>
   <description>
     Provides the "Convert Raw Types to Generics", "Remove Middle Man", "Replace Temp with Query" and "Wrap Method Return Value" refactorings

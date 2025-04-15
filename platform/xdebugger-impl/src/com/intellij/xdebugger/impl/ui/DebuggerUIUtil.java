@@ -48,11 +48,12 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -410,9 +411,9 @@ public final class DebuggerUIUtil {
     XWatchesView view = e.getData(XWatchesView.DATA_KEY);
     Project project = e.getProject();
     if (view == null && project != null) {
-      XDebugSession session = getSession(e);
-      if (session != null) {
-        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+      XDebugSessionProxy proxy = getSessionProxy(e);
+      if (proxy != null) {
+        XDebugSessionTab tab = proxy.getSessionTab();
         if (tab != null) {
           return tab.getWatchesView();
         }
@@ -496,15 +497,17 @@ public final class DebuggerUIUtil {
 
   public static @Nullable XDebugSessionData getSessionData(AnActionEvent e) {
     XDebugSessionData data = e.getData(XDebugSessionData.DATA_KEY);
-    if (data == null) {
-      XDebugSession session = getSession(e);
-      if (session != null) {
-        data = ((XDebugSessionImpl)session).getSessionData();
-      }
-    }
-    return data;
+    if (data != null) return data;
+
+    XDebugSessionProxy proxy = getSessionProxy(e);
+    if (proxy == null) return null;
+    return proxy.getSessionData();
   }
 
+  /**
+   * @deprecated Use {@link DebuggerUIUtil#getSessionProxy(AnActionEvent)} instead.
+   */
+  @Deprecated
   public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     if (session == null) {
@@ -514,6 +517,15 @@ public final class DebuggerUIUtil {
       }
     }
     return session;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XDebugSessionProxy getSessionProxy(@NotNull AnActionEvent e) {
+    XDebugSessionProxy session = e.getData(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY);
+    if (session != null) return session;
+    Project project = e.getProject();
+    if (project == null) return null;
+    return XDebugManagerProxy.getInstance().getCurrentSessionProxy(project);
   }
 
 

@@ -3,10 +3,11 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.python.community.execService.ProcessOutputTransformer
-import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.hatch.HatchRuntime
 import com.intellij.python.hatch.PyHatchBundle
+import com.intellij.python.hatch.runtime.HatchConstants
+import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyError.ExecException
@@ -110,9 +111,21 @@ class HatchCli(private val runtime: HatchRuntime) {
    * ├── LICENSE.txt
    * ├── README.md
    * └── pyproject.toml
+   *
+   * @param[initExistingProject] Initialize an existing project
    */
-  suspend fun new(projectName: String): Result<String, PyError> {
-    return runtime.executeAndHandleErrors("new", projectName, transformer = ZeroCodeStdoutTransformer)
+  suspend fun new(projectName: String, location: Path? = null, initExistingProject: Boolean = false): Result<String, PyError> {
+    val options = listOf(
+      initExistingProject to "--init",
+      true to projectName,
+      (location != null) to location,
+    ).makeOptions()
+    return runtime.executeInteractive("new", *options) { eelProcess ->
+      if (initExistingProject) {
+        eelProcess.stdin.sendWholeText("$projectName\n")
+      }
+      Result.success("Created")
+    }
   }
 
   /**
@@ -133,7 +146,21 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Run commands within project environments
    */
-  fun run(): Result<Unit, ExecException> = TODO()
+  suspend fun run(envName: String, vararg command: String): Result<String, ExecException> {
+    val envRuntime = runtime.withEnv(HatchConstants.AppEnvVars.ENV to envName)
+    return envRuntime.executeAndHandleErrors("run", *command) { output ->
+      val scenario = output.stderr.trim()
+      val content = when {
+        output.exitCode == 0 -> {
+          val installDetailsContent = output.stdout.replace("─", "").trim()
+          val info = installDetailsContent.lines().drop(1).dropLast(2).joinToString("\n")
+          "$scenario\n$info"
+        }
+        else -> scenario
+      }
+      Result.success(content)
+    }
+  }
 
   /**
    * Manage Hatch
@@ -208,12 +235,11 @@ class HatchCli(private val runtime: HatchRuntime) {
 }
 
 
-internal fun List<Pair<Boolean?, String?>>.makeOptions(): Array<String> {
+internal fun List<Pair<Boolean?, *>>.makeOptions(): Array<String> {
   return this.mapNotNull { (flag, option) ->
     when (flag) {
-      true -> option
-      false -> "$option=0"
-      null -> null
+      true -> option.toString()
+      else -> null
     }
   }.toTypedArray()
 }

@@ -39,6 +39,7 @@ object PythonCommunityPluginModules {
     "intellij.python.terminal",
     "intellij.python.ml.features",
     "intellij.python.pyproject",
+    "intellij.python.hatch",
   )
 
   /**

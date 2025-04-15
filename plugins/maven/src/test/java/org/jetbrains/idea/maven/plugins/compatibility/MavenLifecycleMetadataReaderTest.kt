@@ -2,11 +2,15 @@
 package org.jetbrains.idea.maven.plugins.compatibility
 
 import com.intellij.maven.testFramework.MavenTestCase
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil
+import org.jetbrains.idea.maven.utils.MavenPluginInfo
+import kotlin.io.path.isRegularFile
 
 class MavenLifecycleMetadataReaderTest : MavenTestCase() {
 
   fun `test read data`() {
-    val lifecycleInfo = MavenLifecycleMetadataReader().read(
+    val lifecycleInfo = MavenLifecycleMetadataReader.read("myplugin:myplugin:1.0",
       """
         <lifecycleMappingMetadata>
           <pluginExecutions>
@@ -40,8 +44,26 @@ class MavenLifecycleMetadataReaderTest : MavenTestCase() {
         </lifecycleMappingMetadata>
       """.toByteArray()
     )
-    assertTrue(lifecycleInfo.runOnIncremental("some-goal"))
+    assertNotNull(lifecycleInfo)
+    assertTrue(lifecycleInfo!!.runOnIncremental("some-goal"))
     assertTrue(lifecycleInfo.runOnConfiguration("some-goal"))
     assertTrue(lifecycleInfo.runOnConfiguration("another-goal"))
+  }
+
+  fun `testMockPlugin` () {
+    val helper = MavenCustomRepositoryHelper(dir, "plugins")
+    val path = helper.getTestData("plugins")
+    val pathToFile = path.resolve("com/intellij/mavenplugin/maven-plugin-test-lifecycle/1.0/maven-plugin-test-lifecycle-1.0.jar")
+
+    assertTrue(pathToFile.isRegularFile())
+    val info = MavenArtifactUtil.readPluginInfo(pathToFile)
+    assertNotNull(info)
+    val lifecycles = info!!.lifecycles
+    assertNotNull(lifecycles)
+    assertTrue(lifecycles!!.runOnConfiguration("second"))
+    assertFalse(lifecycles.runOnConfiguration("first"))
+
+    assertFalse(lifecycles!!.runOnIncremental("second"))
+    assertTrue(lifecycles.runOnIncremental("first"))
   }
 }

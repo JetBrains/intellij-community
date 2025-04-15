@@ -65,6 +65,11 @@ public abstract class ShowSettingsUtil {
   public abstract boolean editConfigurable(Component parent, @NonNls @NotNull String dimensionServiceKey, @NotNull Configurable configurable);
 
   /**
+   * Closes both types of settings - modal and non-modal
+   * @param project - current project
+   */
+  public abstract void closeSettings(@NotNull Project project, @NotNull Component component);
+  /**
    * OS-specific name.
    */
   public static @Nls String getSettingsMenuName() {

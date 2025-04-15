@@ -68,6 +68,7 @@ internal data class Element(
   var name: String? = null,
   var descriptiveName: String? = null,
   var sdkDocsFixedPath: List<String> = emptyList(),
+  var namespace: String? = null,
   var since: String? = null,
   var until: String? = null,
   var deprecatedSince: String? = null,

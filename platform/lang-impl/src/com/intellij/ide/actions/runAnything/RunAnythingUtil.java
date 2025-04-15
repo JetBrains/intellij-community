@@ -6,10 +6,9 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,6 +19,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -92,17 +92,13 @@ public final class RunAnythingUtil {
 
   public static void executeMatched(@NotNull DataContext dataContext, @NotNull String pattern) {
     List<String> commands = RunAnythingCache.getInstance(fetchProject(dataContext)).getState().getCommands();
-
-    Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
-    if (module == null) {
-      LOG.info("RunAnything: module hasn't been found, command will be executed in context of 'null' module.");
-    }
-
-    for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
+    //noinspection unchecked
+    for (RunAnythingProvider<Object> provider : RunAnythingProvider.EP_NAME.getExtensions()) {
       Object value = provider.findMatchingValue(dataContext, pattern);
       if (value != null) {
-        //noinspection unchecked
-        provider.execute(dataContext, value);
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          provider.execute(dataContext, value);
+        }
         commands.remove(pattern);
         commands.add(pattern);
         break;

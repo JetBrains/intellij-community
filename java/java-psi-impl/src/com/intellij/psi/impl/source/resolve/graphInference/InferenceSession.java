@@ -317,7 +317,7 @@ public class InferenceSession {
     if (!prohibitCaching) {
       prohibitCaching = MethodCandidateInfo.isOverloadCheck() ||
                         !(parent instanceof PsiMethodCallExpression &&
-                          ((PsiMethodCallExpression)parent).getMethodExpression().multiResolve(false).length == 1);
+                          ((PsiMethodCallExpression)parent).multiResolve(false).length == 1);
     }
     return ThreadLocalTypes.performWithTypes(types -> {
       myTempTypes = types;

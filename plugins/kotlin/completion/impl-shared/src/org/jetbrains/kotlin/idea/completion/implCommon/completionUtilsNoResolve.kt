@@ -168,9 +168,12 @@ fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val pare
 }
 
 fun findValueArgument(expression: KtExpression): KtValueArgument? {
-    // Search for value argument among parent and grandparent to avoid parsing errors like KTIJ-18231
-    return expression.parent as? KtValueArgument
-        ?: expression.parent.parent as? KtValueArgument
+    // Search for value argument among parents to avoid parsing errors like KTIJ-18231 and KTIJ-30471
+    // The parsing errors in value argument lists in the relevant positions always seem to be a binary
+    // operation with an identifier as operation.
+    return expression.parents
+        .dropWhile { it is KtBinaryExpression && it.operationToken == KtTokens.IDENTIFIER }
+        .firstOrNull() as? KtValueArgument
 }
 
 infix fun <T> ElementPattern<T>.and(rhs: ElementPattern<T>) = StandardPatterns.and(this, rhs)
@@ -215,7 +218,7 @@ fun isPositionSuitableForNull(position: PsiElement): Boolean = when {
 }
 
 fun isPositionInsideImportOrPackageDirective(position: PsiElement): Boolean =
-   position.parentOfTypes(KtImportDirective::class, KtPackageDirective::class) != null
+    position.parentOfTypes(KtImportDirective::class, KtPackageDirective::class) != null
 
 fun KtElement.reference() = when (this) {
     is KtCallExpression -> calleeExpression?.mainReference

@@ -1,43 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.testFramework.utils.io.deleteChildrenRecursively
-import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createParentDirectories
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
-import kotlin.io.path.exists
 
-
-class ZipReaderTest {
-  @TempDir
-  lateinit var tempDir: Path
-
-  @AfterEach
-  fun tearDown() {
-    if (tempDir.exists()) {
-      tempDir.deleteChildrenRecursively { true }
-    }
-  }
-
+internal class ZipReaderTest {
   @Test
-  fun testReadEmptyZip() {
+  fun testReadEmptyZip(@TempDir tempDir: Path) {
     val archive = tempDir.resolve("empty.jar")
     archive.createParentDirectories()
-    val directory = tempDir.resolve("empty-dir")
-    directory.createDirectories()
-    zip(
-      targetFile = archive,
-      dirs = mapOf(directory to ""),
-      overwrite = true,
-    )
+    zipWithPackageIndex(targetFile = archive, dir = tempDir.resolve("empty-dir"))
     val names = ArrayList<String>()
     readZipFile(archive) { name, _ ->
       names.add(name)
+      ZipEntryProcessorResult.CONTINUE
     }
-    Assertions.assertTrue(names.isEmpty())
+    assertThat(names).isEmpty()
   }
 }

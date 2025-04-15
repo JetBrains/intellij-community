@@ -136,15 +136,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             true
         }
 
-        result.sortWith { u1, u2 ->
-            if (u1.javaClass == u2.javaClass) {
-                PsiUtilCore.compareElementsByPosition(u1.element, u2.element)
-            } else {
-                result.indexOf(u1) - result.indexOf(u2)
-            }
-        }
-
-        return result.toTypedArray()
+        return result.groupBy { it.javaClass }
+            .values
+            .flatMap { it.sortedWith { u1, u2 -> PsiUtilCore.compareElementsByPosition(u1.element, u2.element) } }
+            .toTypedArray()
     }
 
     private fun findUsages(

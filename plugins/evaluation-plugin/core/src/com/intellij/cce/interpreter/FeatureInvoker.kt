@@ -4,7 +4,7 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
 
 interface FeatureInvoker {
-  fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session
+  fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session
 
   fun comparator(generated: String, expected: String, ): Boolean
 }

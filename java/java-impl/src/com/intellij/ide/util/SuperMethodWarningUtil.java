@@ -95,7 +95,7 @@ public final class SuperMethodWarningUtil {
   static @NotNull Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
+    Collection<PsiMethod> superMethods = new ArrayList<>(DeepestSuperMethodsSearch.search(method).findAll());
     superMethods.removeAll(ignore);
 
     if (superMethods.isEmpty()) {

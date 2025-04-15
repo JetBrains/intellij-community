@@ -15,7 +15,7 @@
 
     <mergeableGutterIconRendererProvider implementation="com.intellij.diff.util.DiffGutterRendererMergeableRendererProvider" />
 
-    <actionPromoter implementation="com.intellij.diff.actions.impl.DiffNavigationActionPromoter"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.diff.settings.DiffSettingsProvider"/>
   </extensions>
 
   <applicationListeners>

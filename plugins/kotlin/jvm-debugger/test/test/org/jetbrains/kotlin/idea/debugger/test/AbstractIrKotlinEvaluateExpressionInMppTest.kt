@@ -207,14 +207,17 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
     private fun configureLanguageFeatures(module: DebuggerTestModule, files: List<TestFileWithModule>, context: ConfigurationContext) {
         val facet = (KotlinFacetSettingsProvider.getInstance(project) ?: error("Missing 'KotlinFacetSettingsProvider'"))
             .getSettings(context.workspaceModuleMap[module] ?: error("Missing 'module': ${module.name}")) ?: error("Missing facet")
+        val settings = facet.compilerSettings ?: error("Missing compiler settings")
 
         files.forEach { testFile ->
             testFile.directives.listValues(DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE.name).orEmpty()
                 .map { languageFeatureString -> LanguageFeature.fromString(languageFeatureString) }
                 .forEach { languageFeature ->
-                    (facet.compilerSettings ?: error("Missing compiler settings"))
-                        .additionalArguments += " -XXLanguage:+$languageFeature"
+                    settings.additionalArguments += " -XXLanguage:+$languageFeature"
                 }
+            testFile.directives[DebuggerPreferenceKeys.JVM_DEFAULT_MODE.name]?.let { jvmDefaultMode ->
+                settings.additionalArguments += " -jvm-default=$jvmDefaultMode"
+            }
         }
     }
 

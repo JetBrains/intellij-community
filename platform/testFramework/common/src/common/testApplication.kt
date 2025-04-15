@@ -177,7 +177,8 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
   try {
     // 40 seconds - tests maybe executed on cloud agents where I/O is very slow
-    val pluginSet = loadedModuleFuture.asCompletableFuture().get(40, TimeUnit.SECONDS)
+    val timeout = System.getProperty("intellij.testFramework.modules.timeout.seconds", "40").toLong()
+    val pluginSet = loadedModuleFuture.asCompletableFuture().get(timeout, TimeUnit.SECONDS)
     app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
     val task = suspend {
@@ -210,7 +211,8 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
-    withTimeout(Duration.ofSeconds(40).toMillis()) {
+    val timeout = System.getProperty("intellij.testFramework.services.timeout.seconds", "40").toLong()
+    withTimeout(Duration.ofSeconds(timeout).toMillis()) {
       val pathMacroJob = preloadCriticalServices(
         app = app,
         asyncScope = app.getCoroutineScope(),

@@ -6,10 +6,10 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
 
 internal class TerminalDiscardedHistoryTracker(private val textBuffer: TerminalTextBuffer) {
-  private var discardedLogicalLinesCount: Int = 0
+  private var discardedLogicalLinesCount: Long = 0L
 
-  fun getDiscardedLogicalLinesCount(): Int {
-    return if (textBuffer.isUsingAlternateBuffer) 0 else discardedLogicalLinesCount
+  fun getDiscardedLogicalLinesCount(): Long {
+    return if (textBuffer.isUsingAlternateBuffer) 0L else discardedLogicalLinesCount
   }
 
   init {

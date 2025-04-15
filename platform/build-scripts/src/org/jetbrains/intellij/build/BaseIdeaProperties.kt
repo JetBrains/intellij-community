@@ -19,9 +19,8 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.copyright",
   "intellij.properties",
   "intellij.terminal",
-  "intellij.emojipicker",
   "intellij.textmate",
-  "intellij.editorconfig",
+  "intellij.editorconfig.plugin",
   "intellij.settingsSync",
   "intellij.configurationScript",
   "intellij.json",
@@ -30,8 +29,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.tasks.core",
   "intellij.repository.search",
   "intellij.maven",
-  "intellij.maven.model",
-  "intellij.maven.server",
   "intellij.gradle",
   "intellij.gradle.dependencyUpdater",
   "intellij.android.gradle.declarative.lang.ide",
@@ -86,8 +83,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
-  "plugins/maven-server/lib/maven-server.jar" to "1.8",
-  "plugins/maven-model/lib/maven-model.jar" to "1.8",
+  "plugins/maven/lib/maven-server.jar" to "1.8",
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
@@ -96,6 +92,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
   "plugins/Groovy/lib/groovy-rt.jar" to "1.7",
   "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
+  "plugins/repository-search/lib/maven-model.jar" to "1.8"
 )
 
 val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->

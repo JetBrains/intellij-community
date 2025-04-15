@@ -4,7 +4,7 @@
   <description>Provides a two-panel view for navigating and working with the project structure</description>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.CommanderBundle</resource-bundle>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <selectInTarget implementation="com.intellij.ide.commander.CommanderSelectInTarget"/>

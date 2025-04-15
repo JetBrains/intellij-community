@@ -21,13 +21,6 @@ jvm_library(
     "@lib//:plexus-utils",
     "@lib//:commons-codec",
     "//platform/util",
-  ],
-  exports = [
-    "@lib//:http-client",
-    "@lib//:commons-logging",
-    "@lib//:slf4j-api",
-    "@lib//:slf4j-jdk14",
-    "@lib//:maven-resolver-provider",
   ]
 )
 

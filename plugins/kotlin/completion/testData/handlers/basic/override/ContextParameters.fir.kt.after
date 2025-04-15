@@ -1,0 +1,19 @@
+// FIR_COMPARISON
+
+interface Foo {
+
+    context(a: String)
+    suspend fun foo(): Unit
+}
+
+class Bar : Foo {
+
+    context(a: String)
+    override suspend fun foo() {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+}
+
+// ELEMENT_TEXT: "override suspend fun foo() {...}"
+// TAIL_TEXT: " for String"
+// TYPE_TEXT: "Foo"

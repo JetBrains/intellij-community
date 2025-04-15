@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
-import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +17,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.Ksuid;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -27,7 +27,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitHandlerRebaseEditorManager;
 import git4idea.rebase.GitSimpleEditorHandler;
 import git4idea.rebase.GitUnstructuredEditor;
-import git4idea.util.GitVcsConsoleWriter;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -357,23 +357,26 @@ public abstract class GitImplBase implements Git {
 
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
-      String workingDir = stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory());
-      GitVcsConsoleWriter.getInstance(project).showCommandLine(String.format("[%s] %s", workingDir, handler.printableCommandLine()));
-
       handler.addLineListener(new GitCommandOutputLogger(project, handler));
     }
   }
 
   private static class GitCommandOutputLogger implements GitLineHandlerListener {
-    private final @NotNull GitLineHandler myHandler;
+    private final @NotNull GitHandler myHandler;
 
-    private final GitVcsConsoleWriter myVcsConsoleWriter;
-    private final AnsiEscapeDecoder myAnsiEscapeDecoder;
+    private final String processId = Ksuid.generate();
+    private final Path myWorkingDir;
+    private final GitCommandOutputPrinter myOutputPrinter;
 
     GitCommandOutputLogger(@NotNull Project project, @NotNull GitLineHandler handler) {
       myHandler = handler;
-      myVcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
-      myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+      myWorkingDir = myHandler.getWorkingDirectory().toPath();
+      myOutputPrinter = GitCommandOutputPrinter.getInstance(project);
+    }
+
+    @Override
+    public void processStarted() {
+      myOutputPrinter.showCommandStart(processId, myWorkingDir, myHandler.printableCommandLine());
     }
 
     @Override
@@ -384,15 +387,18 @@ public abstract class GitImplBase implements Git {
         if (outputType == ProcessOutputTypes.STDOUT && myHandler.isStdoutSuppressed()) return;
         if (outputType == ProcessOutputTypes.STDERR && myHandler.isStderrSuppressed()) return;
 
-        List<Pair<String, Key>> lineChunks = new ArrayList<>();
-        myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
-        myVcsConsoleWriter.showMessage(lineChunks);
+        myOutputPrinter.showCommandOutput(processId, myWorkingDir, outputType, line);
       }
       catch (ProcessCanceledException ignore) {
       }
       catch (Exception e) {
         throw new RuntimeException("Logging error for " + myHandler, e);
       }
+    }
+
+    @Override
+    public void processTerminated(int exitCode) {
+      myOutputPrinter.showCommandFinished(processId, myWorkingDir, exitCode);
     }
   }
 

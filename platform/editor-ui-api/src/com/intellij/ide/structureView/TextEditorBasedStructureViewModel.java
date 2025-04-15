@@ -19,6 +19,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -200,7 +201,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   @Override
-  public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
+  public @NotNull @Unmodifiable Collection<NodeProvider<?>> getNodeProviders() {
     return Collections.emptyList();
   }
 

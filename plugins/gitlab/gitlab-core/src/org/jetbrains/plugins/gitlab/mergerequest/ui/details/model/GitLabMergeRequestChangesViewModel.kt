@@ -16,9 +16,11 @@ import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
-internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitViewModel> {
+@ApiStatus.Internal
+interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitViewModel> {
   /**
    * View model of a current change list
    */

@@ -10,9 +10,9 @@ import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.MethodFilter
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerSession
+import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.Engine
@@ -31,7 +31,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.dumbAction
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -41,6 +40,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 
 class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
@@ -55,15 +55,14 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
 
     override fun findSmartStepTargetsAsync(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> {
         val promise = AsyncPromise<List<SmartStepTarget>>()
-        session.process.managerThread.schedule(object : DebuggerContextCommandImpl(session.contextManager.context) {
-            override suspend fun threadActionSuspend(suspendContext: SuspendContextImpl) {
-                promise.compute { findSmartStepTargetsInternal(position, session) }
-            }
-
-            override fun commandCancelled() {
+        val debuggerContext = session.contextManager.context
+        executeOnDMT(debuggerContext) {
+            promise.compute { findSmartStepTargetsInternal(position, session) }
+        }.invokeOnCompletion {
+            if (it is CancellationException) {
                 promise.setError("Cancelled")
             }
-        })
+        }
         return promise
     }
 

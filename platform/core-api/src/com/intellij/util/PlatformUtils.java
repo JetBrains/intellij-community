@@ -50,6 +50,7 @@ public final class PlatformUtils {
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String RUSTROVER_PREFIX = "RustRover";
   public static final String WRITERSIDE_PREFIX = "Writerside";
+  public static final String GITCLIENT_PREFIX = "GitClient";
 
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client

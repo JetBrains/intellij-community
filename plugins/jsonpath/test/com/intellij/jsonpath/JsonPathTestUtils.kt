@@ -7,6 +7,6 @@ import com.intellij.testFramework.PlatformTestUtil
 
 abstract class JsonPathParsingTestCase(subFolder: String) : ParsingTestCase(subFolder, ".jsonpath", JsonPathParserDefinition()) {
   override fun getTestDataPath(): String {
-    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonpath/parser"
+    return PlatformTestUtil.getCommunityPath() + "/json/backend/tests/testData/jsonpath/parser"
   }
 }

@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.json.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.json.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//platform/markdown-utils",
+    "//spellchecker",
+    "@lib//:guava",
+    "//platform/analysis-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "@lib//:gson",
+    "//RegExpSupport:regexp",
+    "//platform/indexing-impl",
+    "//platform/refactoring",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "@lib//:jackson-dataformat-yaml",
+    "@lib//:jetbrains-markdown",
+    "@lib//:caffeine",
+    "@lib//:stream_ex",
+    "@lib//:kotlinx-collections-immutable",
+    "//json",
+    "@lib//:jackson-module-kotlin",
+  ],
+  exports = ["//json"],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.json.backend` end

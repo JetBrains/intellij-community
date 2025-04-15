@@ -716,6 +716,7 @@ public final class CommonJavaRefactoringUtil {
                                           @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
                                           @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
     if (docComment == null) return;
+    PsiDocComment oldDocComment = (PsiDocComment)docComment.copy();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiDocTag[] paramTags = docComment.findTagsByName("param");
     if (parameters.length > 0 && newParameters.size() < parameters.length && paramTags.length == 0) return;
@@ -778,10 +779,14 @@ public final class CommonJavaRefactoringUtil {
                ? docComment.addAfter(psiDocTag, anchor)
                : docComment.add(psiDocTag);
     }
-    formatJavadocIgnoringSettings(method, docComment);
+    formatJavadocIgnoringSettings(method, docComment, oldDocComment);
   }
 
   public static void formatJavadocIgnoringSettings(@NotNull PsiMethod method, @NotNull PsiDocComment docComment) {
+    formatJavadocIgnoringSettings(method, docComment, null);
+  }
+
+  public static void formatJavadocIgnoringSettings(@NotNull PsiMethod method, @NotNull PsiDocComment docComment, @Nullable PsiDocComment oldComment) {
     PsiFile containingFile = method.getContainingFile();
     if (containingFile == null) {
       return;
@@ -793,7 +798,7 @@ public final class CommonJavaRefactoringUtil {
     boolean javadocEnabled = settings.ENABLE_JAVADOC_FORMATTING;
     try {
       settings.ENABLE_JAVADOC_FORMATTING = true;
-      CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
+      CommentFormatter formatter = new CommentFormatter(method.getContainingFile(), oldComment);
       formatter.processComment(docComment.getNode());
     } finally {
       settings.ENABLE_JAVADOC_FORMATTING = javadocEnabled;

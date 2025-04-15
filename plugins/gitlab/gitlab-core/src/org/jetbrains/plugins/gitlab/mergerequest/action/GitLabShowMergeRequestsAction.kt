@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabShowMergeRequestsAction : DumbAwareAction() {
@@ -18,7 +18,7 @@ class GitLabShowMergeRequestsAction : DumbAwareAction() {
       e.presentation.description = null
       return
     }
-    val isAvailable = project.service<GitLabToolWindowViewModel>().isAvailable.value
+    val isAvailable = project.service<GitLabProjectViewModel>().isAvailable.value
 
     e.presentation.isEnabledAndVisible = isAvailable
     e.presentation.description = if (isAvailable) {
@@ -30,8 +30,8 @@ class GitLabShowMergeRequestsAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-      selectTab(null)
+    e.project!!.service<GitLabProjectViewModel>().activateAndAwaitProject {
+      viewMergeRequestList()
     }
   }
 }

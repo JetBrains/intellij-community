@@ -584,6 +584,7 @@ public int method(int parameter) {
     javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_PRESERVE_LINE_FEEDS = true
+      JD_KEEP_EMPTY_LINES = false
     }
 
     doClassTest(
@@ -1054,6 +1055,7 @@ String test(int aParameter, int bParameter) {
   }
 
   fun testJavadocWithTabs() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
     doClassTest(
       "\t/**\n" +
       "\t \t *\n" +
@@ -1854,6 +1856,194 @@ public class Test {
     """.trimIndent())
   }
 
+  fun testJavaDocNoKeepEmptyLinesWithDescriptionAndParam() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      /**
+       *
+       *
+       * description
+       *
+       *
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+       void f(int a) {
+       }
+    """.trimIndent(), """
+      /**
+       * description
+       * after blank line between
+       *
+       * @param a method param
+       */
+      void f(int a) {
+      }
+    """.trimIndent())
+  }
+
+  fun testJavaDocKeepEmptyLinesWithDescriptionAndParam() {
+    doTextTest("""
+      /**
+       *
+       *
+       * description
+       *
+       *
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+       void f(int a) {
+       }
+    """.trimIndent(), """
+      /**
+       *
+       *
+       * description
+       * <p>
+       * <p>
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+      void f(int a) {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoKeepEmptyLinesWithDescriptionAndParam() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent(), """
+       /// description
+       /// after blank line
+       ///
+       /// @param a
+       void f(int a) {
+       }
+    """.trimIndent())
+  }
+
+
+  fun testMarkdownKeepEmptyLinesWithDescriptionAndParam() {
+    doTextTest("""
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent(), """
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent())
+  }
+
+  fun testJavadocNoKeepEmptyLinesOnlyEmptyLines() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      /**
+       * 
+       * 
+       * 
+       *
+       */
+      public class Main {}
+    """.trimIndent(), """
+      /**
+       *
+       */
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testJavadocKeepEmptyLinesOnlyEmptyLines() {
+    doTextTest("""
+      /**
+       * 
+       * 
+       * 
+       *
+       */
+      public class Main {}
+    """.trimIndent(), """
+      /**
+       *
+       *
+       *
+       *
+       */
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoKeepEmptyLinesOnlyEmptyLines() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      ///
+      ///
+      ///
+      public class Main {}
+    """.trimIndent(), """
+      ///
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownKeepEmptyLinesOnlyEmptyLines() {
+    doTextTest("""
+      ///
+      ///
+      ///
+      public class Main {}
+    """.trimIndent(), """
+      ///
+      ///
+      ///
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
   fun testMarkdownSpacing(){
     doTextTest("""
       ///I'm stuck to the leading slashes !
@@ -1871,6 +2061,7 @@ public class Test {
       ///     Purposefully misaaligned stuff
       public class Main {}
     """.trimIndent(), """
+      ///
       ///     Purposefully misaaligned stuff
       public class Main {
       }
@@ -2003,6 +2194,7 @@ public class Test {
     }
 
     doTextTest("""
+    /// 
     ///         | Latin | Greek |
     ///         |-------|-------|
     ///         | a     | alpha |
@@ -2017,6 +2209,7 @@ public class Test {
     ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
     /// 
     """.trimIndent(), """
+    ///
     ///         | Latin | Greek |
     ///         |-------|-------|
     ///         | a     | alpha |
@@ -2029,6 +2222,7 @@ public class Test {
     ///    * Another sub element
     /// ---
     ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+    ///
     """.trimIndent())
   }
 

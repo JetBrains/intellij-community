@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="11" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -25,12 +25,12 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" exported="" name="http-client" level="project" />
-    <orderEntry type="library" exported="" name="commons-logging" level="project" />
-    <orderEntry type="library" exported="" name="slf4j-api" level="project" />
-    <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
+    <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
+    <orderEntry type="library" name="maven-resolver-provider" level="project" />
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-file" type="repository">
         <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-file:1.9.22">

@@ -10,7 +10,10 @@ import org.jetbrains.annotations.ApiStatus;
  *   <li><b>{@link GetDataRuleType#PROVIDER}</b> - a classic rule invoked on a single level data provider</li>
  *   <li><b>{@link GetDataRuleType#CONTEXT}</b> - a classic rule invoked on the full context data provider</li>
  * </ul>
+ *
+ * @deprecated Use {@link com.intellij.openapi.actionSystem.DataSink#lazyValue} instead.
  */
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public enum GetDataRuleType {
   /**

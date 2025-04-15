@@ -1,5 +1,8 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.searchEverywhereMl.ranking.core.id
 
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.KEY_NOT_COMPUTED_EVENT
 import com.intellij.searchEverywhereMl.ranking.core.id.MissingKeyProviderCollector.report
 

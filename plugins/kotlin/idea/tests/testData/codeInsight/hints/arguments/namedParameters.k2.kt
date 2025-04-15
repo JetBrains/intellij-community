@@ -21,7 +21,15 @@ fun m() {
 
 class Buzz(val name: String)
 
+data class Data(val myUsefulInfo: Int)
+
+fun bar(myUsefulInfo: Int) {}
+
 fun buzzyFun(buzz: Buzz) {
     buzzyFun(Buzz(name))
     buzzyFun(Buzz(/*<# [namedParameters.kt:546]name| = #>*/"me"))
+
+    val myUsefulInfo = 42
+    bar(myUsefulInfo) // 1 - no hint
+    bar(data.myUsefulInfo) // 2 - redundant hint
 }

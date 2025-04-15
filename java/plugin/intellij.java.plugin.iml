@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.compiler.charts" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.frontend" scope="RUNTIME" />
@@ -35,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.java.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.performancePlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="RUNTIME" />
   </component>
 </module>

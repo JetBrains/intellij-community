@@ -20,7 +20,7 @@ import kotlin.coroutines.cancellation.CancellationException
 @ApiStatus.Internal
 @Deprecated("will be moved to inline.completion.v2")
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 39)
+  private val GROUP = EventLogGroup("inline.completion", 40)
 
   const val INVOKED_EVENT_ID: String = "invoked"
   const val SHOWN_EVENT_ID: String = "shown"

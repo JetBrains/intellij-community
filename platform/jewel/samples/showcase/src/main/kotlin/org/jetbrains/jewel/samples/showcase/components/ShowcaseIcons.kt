@@ -37,4 +37,8 @@ public object ShowcaseIcons {
         public val tooltip: PathIconKey = PathIconKey("icons/components/tooltip.svg", ShowcaseIcons::class.java)
         public val tree: PathIconKey = PathIconKey("icons/components/tree.svg", ShowcaseIcons::class.java)
     }
+
+    public object ProgrammingLanguages {
+        public val Kotlin: PathIconKey = PathIconKey("icons/kotlin.svg", ShowcaseIcons::class.java)
+    }
 }

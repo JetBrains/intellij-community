@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
@@ -6,7 +6,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.JdkApiCompatabilityCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
@@ -62,7 +62,7 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
     }
 
     LocalQuickFix createFix(LanguageLevel level) {
-      return myMethod == null || LanguageLevelUtil.getLastIncompatibleLanguageLevel(myMethod, level) != null
+      return myMethod == null || JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(myMethod, level) != null
              ? null
              : new AddUtf8CharsetFix(this);
     }

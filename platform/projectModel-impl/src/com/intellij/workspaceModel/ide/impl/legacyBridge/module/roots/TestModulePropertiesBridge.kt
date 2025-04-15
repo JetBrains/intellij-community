@@ -4,7 +4,9 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
+import com.intellij.openapi.roots.TestModulePropertiesProvider
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -57,5 +59,11 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
 
   private fun getModuleEntity(): ModuleEntity? {
     return workspaceModel.currentSnapshot.resolve(ModuleId(currentModule.name))
+  }
+}
+
+internal class TestModulePropertiesBridgeProvider(val project: Project): TestModulePropertiesProvider {
+  override fun getTestModuleProperties(module: Module): TestModuleProperties {
+    return TestModulePropertiesBridge(module)
   }
 }

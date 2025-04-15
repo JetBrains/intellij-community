@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -11,17 +11,17 @@ import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Errors.UNSAFE_CALL
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
 import org.jetbrains.kotlin.types.TypeUtils
@@ -83,10 +83,11 @@ fun getAddExclExclCallFix(element: PsiElement?, checkImplicitReceivers: Boolean 
 object UnsafeCallExclExclFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val psiElement = diagnostic.psiElement
-        if (diagnostic.factory == UNSAFE_CALL && psiElement is KtArrayAccessExpression) {
-            psiElement.arrayExpression?.let { return getAddExclExclCallFix(it) }
+        return if (diagnostic.factory == UNSAFE_CALL && psiElement is KtArrayAccessExpression) {
+            getAddExclExclCallFix(psiElement.arrayExpression)?.asIntention()
+        } else {
+            getAddExclExclCallFix(psiElement, checkImplicitReceivers = true)?.asIntention()
         }
-        return getAddExclExclCallFix(psiElement, checkImplicitReceivers = true)
     }
 }
 
@@ -105,7 +106,7 @@ object SmartCastImpossibleExclExclFixFactory : KotlinSingleIntentionActionFactor
         val nullableExpectedType = TypeUtils.makeNullable(expectedType)
         if (!type.isSubtypeOf(nullableExpectedType)) return null
 
-        return getAddExclExclCallFix(element)
+        return getAddExclExclCallFix(element)?.asIntention()
     }
 }
 
@@ -138,6 +139,6 @@ object MissingIteratorExclExclFixFactory : KotlinSingleIntentionActionFactory() 
             else -> return null
         }
 
-        return getAddExclExclCallFix(element)
+        return getAddExclExclCallFix(element)?.asIntention()
     }
 }

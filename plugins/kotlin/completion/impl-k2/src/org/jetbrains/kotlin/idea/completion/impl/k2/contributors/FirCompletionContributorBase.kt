@@ -6,7 +6,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.RegistryManager
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -21,18 +24,23 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.renderer.render
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
     protected val parameters: KotlinFirCompletionParameters,
@@ -68,6 +76,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
+        presentableText: @NlsSafe String? = null, // TODO decompose
         withTrailingLambda: Boolean = false, // TODO find a better solution
     ): Sequence<LookupElementBuilder> {
         val namedSymbol = when (val symbol = signature.symbol) {
@@ -93,6 +102,9 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                     options = options,
                 )?.let { yield(it) }
             }
+        }.map { builder ->
+            if (presentableText == null) builder
+            else builder.withPresentableText(presentableText)
         }.map { lookup ->
             if (!context.isPositionInsideImportOrPackageDirective) {
                 lookup.callableWeight = CallableMetadataProvider.getCallableMetadata(
@@ -109,6 +121,47 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         }
     }
 
+    protected fun runChainCompletion(
+        positionContext: KotlinNameReferencePositionContext,
+        explicitReceiver: KtElement,
+        createLookupElements: KaSession.(
+            receiverExpression: KtDotQualifiedExpression,
+            positionContext: KotlinExpressionNameReferencePositionContext,
+            importingStrategy: ImportStrategy.AddImport,
+        ) -> Sequence<LookupElement>,
+    ) {
+        if (!RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) return
+
+        sink.runRemainingContributors(parameters.delegate) { completionResult ->
+            val lookupElement = completionResult.lookupElement
+            val (_, importStrategy) = lookupElement.`object` as? ClassifierLookupObject
+                ?: return@runRemainingContributors
+
+            val nameToImport = when (importStrategy) {
+                is ImportStrategy.AddImport -> importStrategy.nameToImport
+                is ImportStrategy.InsertFqNameAndShorten -> importStrategy.fqName
+                ImportStrategy.DoNothing -> null
+            } ?: return@runRemainingContributors
+
+            val expression = KtPsiFactory.contextual(explicitReceiver)
+                .createExpression(nameToImport.render() + "." + positionContext.nameExpression.text) as KtDotQualifiedExpression
+
+            val receiverExpression = expression.receiverExpression as? KtDotQualifiedExpression
+                ?: return@runRemainingContributors
+
+            val nameExpression = expression.selectorExpression as? KtNameReferenceExpression
+                ?: return@runRemainingContributors
+
+            analyze(nameExpression) {
+                createLookupElements(
+                    /* receiverExpression = */ receiverExpression,
+                    /* positionContext = */ KotlinExpressionNameReferencePositionContext(nameExpression),
+                    /* importingStrategy = */ ImportStrategy.AddImport(nameToImport),
+                ).forEach(sink::addElement)
+            }
+        }
+    }
+
     // todo move out
     // todo move to the corresponding assignment
     protected fun LookupElementBuilder.adaptToExplicitReceiver(
@@ -116,9 +169,10 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         typeText: String,
     ): LookupElement = withInsertHandler { context, item ->
         // Insert type cast if the receiver type does not match.
-        insertHandler?.handleInsert(context, item)
 
-        val explicitReceiverRange = receiver.textRange
+        val explicitReceiverRange = context.document
+            .createRangeMarker(receiver.textRange)
+        insertHandler?.handleInsert(context, item)
 
         val newReceiver = "(${receiver.text} as $typeText)"
         context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
@@ -126,8 +180,9 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
         shortenReferencesInRange(
             file = context.file as KtFile,
-            range = explicitReceiverRange.grown(newReceiver.length),
+            selection = explicitReceiverRange.textRange.grown(newReceiver.length),
         )
+        context.doPostponedOperationsAndUnblockDocument()
     }
 
     // todo move to the corresponding assignment

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.process.LocalPtyOptions;
-import com.intellij.execution.process.ProcessService;
+import com.intellij.execution.process.LocalProcessService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,6 +36,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
 import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
@@ -96,10 +98,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     var shellIntegration = options.getShellIntegration();
-    var usingGenTwoTerminal = isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled();
     boolean isBlockTerminal =
       (isGenOneTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null);
-    if (usingGenTwoTerminal) {
+
+    if (isGenTwoTerminalEnabled()) {
       ReworkedTerminalUsageCollector.logLocalShellStarted(myProject, command);
     }
     else {
@@ -110,21 +112,30 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       TerminalUsageLocalStorage.getInstance().recordBlockTerminalUsed();
     }
 
+    Path workingDirPath = null;
+    try {
+      workingDirPath = Path.of(workingDir);
+    }
+    catch (InvalidPathException ignored) {
+    }
     try {
       long startNano = System.nanoTime();
-      PtyProcess process = (PtyProcess)ProcessService.getInstance().startPtyProcess(
-        command,
-        workingDir,
-        envs,
-        LocalPtyOptions.defaults().builder()
-          .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
-          .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
-          .build(),
-        null,
-        false,
-        false,
-        false
-      );
+      PtyProcess process;
+      if (workingDirPath != null && shouldUseEelApi()) {
+        process = startProcess(List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize));
+      }
+      else {
+        process = (PtyProcess)LocalProcessService.getInstance().startPtyProcess(
+          List.of(command),
+          workingDir,
+          envs,
+          LocalPtyOptions.defaults().builder()
+            .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
+            .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
+            .build(),
+          false
+        );
+      }
       LOG.info("Started " + process.getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano) + " ms from "
                + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
       return process;
@@ -265,5 +276,4 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
            || shellName.equals(ZSH_NAME)
            || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
   }
-
 }

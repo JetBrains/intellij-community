@@ -1116,6 +1116,10 @@ fun <T : CommandChain> T.gitRollbackFile(pathToFile: String): T = apply {
   addCommand("${CMD_PREFIX}gitRollbackFile ${pathToFile}")
 }
 
+fun <T: CommandChain> T.vcsDisableConfirmationPopup(): T = apply {
+  addCommand("${CMD_PREFIX}vcsDisableConfirmationPopup")
+}
+
 fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? = null, newText: String? = null): T = apply {
   val options = StringBuilder()
   if (startOffset != null) {
@@ -1285,4 +1289,12 @@ fun <T : CommandChain> T.inlineJavaMethod(): T = apply {
 @Suppress("KDocUnresolvedReference")
 fun <T : CommandChain> T.moveClassToPackage(targetPackage: String): T = apply {
   addCommand("${CMD_PREFIX}moveClassToPackage $targetPackage")
+}
+
+fun <T : CommandChain> T.openProblemViewPanel(): T = apply {
+  addCommand("${CMD_PREFIX}openProblemViewPanel")
+}
+
+fun <T : CommandChain> T.assertProblemViewCount(expectedProblemCount: Int): T = apply {
+  addCommand("${CMD_PREFIX}assertProblemsViewCount $expectedProblemCount")
 }

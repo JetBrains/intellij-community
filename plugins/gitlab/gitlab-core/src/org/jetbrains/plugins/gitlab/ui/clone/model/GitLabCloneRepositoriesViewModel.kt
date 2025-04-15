@@ -2,17 +2,11 @@
 package org.jetbrains.plugins.gitlab.ui.clone.model
 
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
-import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.checkout.GitCheckoutProvider
-import git4idea.commands.Git
+import git4idea.checkout.GitCloneUtils
 import git4idea.ui.GitShallowCloneViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,7 +18,6 @@ import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
 import java.net.MalformedURLException
 import java.net.URL
-import java.nio.file.Paths
 
 internal interface GitLabCloneRepositoriesViewModel : GitLabClonePanelViewModel {
   val listVm: GitLabCloneRepositoriesListViewModel
@@ -57,7 +50,6 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val accountManager: GitLabAccountManager,
 ) : GitLabCloneRepositoriesViewModel {
   private val apiManager: GitLabApiManager = service<GitLabApiManager>()
-  private val vcsNotifier: VcsNotifier = VcsNotifier.getInstance(project)
 
   private val cs: CoroutineScope = parentCs.childScope(javaClass.name)
 
@@ -109,55 +101,9 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val selectedUrl = _selectedUrl.value ?: error("Clone button is enabled when repository is not selected")
-    val directoryPath = directoryPath.value
-    val parent = Paths.get(directoryPath).toAbsolutePath().parent
-    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
-    if (destinationValidation != null) {
-      notifyCreateDirectoryFailed(destinationValidation.message)
-      return
-    }
-
-    val lfs = LocalFileSystem.getInstance()
-    var destinationParent = lfs.findFileByIoFile(parent.toFile())
-    if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-    }
-    if (destinationParent == null) {
-      notifyDestinationNotFound()
-      return
-    }
-
-    val directoryName = Paths.get(directoryPath).fileName.toString()
-    val parentDirectory = parent.toAbsolutePath().toString()
-
-    GitCheckoutProvider.clone(
-      project,
-      Git.getInstance(),
-      checkoutListener,
-      destinationParent,
-      selectedUrl,
-      directoryName,
-      parentDirectory,
-      shallowCloneVm.getShallowCloneOptions(),
-    )
-  }
-
-  private fun notifyCreateDirectoryFailed(message: String) {
-    thisLogger().error(CollaborationToolsBundle.message("clone.dialog.error.unable.to.create.destination.directory"), message)
-    vcsNotifier.notifyError(
-      CLONE_UNABLE_TO_CREATE_DESTINATION_DIRECTORY,
-      CollaborationToolsBundle.message("clone.dialog.clone.failed"),
-      CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory")
-    )
-  }
-
-  private fun notifyDestinationNotFound() {
-    thisLogger().error(CollaborationToolsBundle.message("clone.dialog.error.destination.not.exist"))
-    vcsNotifier.notifyError(
-      CLONE_UNABLE_TO_FIND_DESTINATION_DIRECTORY,
-      CollaborationToolsBundle.message("clone.dialog.clone.failed"),
-      CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory")
-    )
+    GitCloneUtils.clone(project, selectedUrl, directoryPath.value, shallowCloneVm.getShallowCloneOptions(), checkoutListener,
+                        CLONE_UNABLE_TO_CREATE_DESTINATION_DIRECTORY,
+                        CLONE_UNABLE_TO_FIND_DESTINATION_DIRECTORY)
   }
 
   companion object {

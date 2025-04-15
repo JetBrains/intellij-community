@@ -13,6 +13,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Function;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicExpressionParser {
   private static final boolean useNewImplementation = Registry.is("pratt.java.expression.parser", true);
 

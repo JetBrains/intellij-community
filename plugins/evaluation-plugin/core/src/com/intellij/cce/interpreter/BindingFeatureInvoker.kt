@@ -15,8 +15,8 @@ import com.intellij.cce.evaluation.data.DataProps
 interface BindingFeatureInvoker : FeatureInvoker {
   fun invoke(properties: TokenProperties): BoundEvalData
 
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session =
-    invoke(properties).session(expectedText, offset, properties)
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session =
+    invoke(properties).session(expectedText, offset, properties, sessionId)
 
   override fun comparator(generated: String, expected: String): Boolean = true
 
@@ -26,8 +26,8 @@ interface BindingFeatureInvoker : FeatureInvoker {
 interface BoundEvalData {
   val allBindings: List<Binding<EvalDataDescription<*, *>>>
 
-  fun session(expectedText: String, offset: Int, tokenProperties: TokenProperties): Session {
-    val session = Session(offset, expectedText, expectedText.length, tokenProperties)
+  fun session(expectedText: String, offset: Int, tokenProperties: TokenProperties, sessionId: String): Session {
+    val session = Session(offset, expectedText, expectedText.length, tokenProperties, sessionId)
 
     var lookup = Lookup(
       "",

@@ -2,8 +2,11 @@
 package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
@@ -41,6 +44,7 @@ internal open class TerminalEventsHandlerImpl(
     get() = sessionModel.terminalState.value
 
   override fun keyTyped(e: KeyEvent) {
+    updatePopUpCompletion(e.keyChar)
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
@@ -310,6 +314,21 @@ internal open class TerminalEventsHandlerImpl(
     }
     LOG.debug(mouseFormat.toString() + " (" + charset + ") report : " + button + ", " + x + "x" + y + " = " + command)
     return command.toByteArray(Charset.forName(charset))
+  }
+
+  private fun updatePopUpCompletion(charTyped: Char) {
+    val project = editor.project ?: return
+    val lookup = LookupManager.getActiveLookup(editor)
+    if (lookup != null) {
+      val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project)
+      LookupTypedHandler.beforeCharTyped(
+        charTyped,
+        project,
+        editor,
+        editor,
+        psiFile
+      )
+    }
   }
 
   companion object {

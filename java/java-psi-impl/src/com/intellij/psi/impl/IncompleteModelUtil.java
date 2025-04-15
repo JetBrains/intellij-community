@@ -220,7 +220,7 @@ public final class IncompleteModelUtil {
   public static List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiImportStatementBase || ref.isQualified()) return Collections.emptyList();
-    boolean maybeClass = canBeClass(ref);
+    boolean maybeClass = canBeClassReference(ref);
     if (!(ref.getContainingFile() instanceof PsiJavaFile)) return Collections.emptyList();
     PsiImportList list = ((PsiJavaFile)ref.getContainingFile()).getImportList();
     List<PsiImportStatementBase> imports = new ArrayList<>();
@@ -243,7 +243,11 @@ public final class IncompleteModelUtil {
     return imports;
   }
 
-  private static boolean canBeClass(@NotNull PsiJavaCodeReferenceElement ref) {
+  /**
+   * @param ref reference to check
+   * @return true if this reference could be a reference to a class
+   */
+  public static boolean canBeClassReference(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiMethodCallExpression) return false;
     if (!(ref instanceof PsiReferenceExpression)) return true;

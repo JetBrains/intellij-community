@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static com.intellij.psi.PsiKeyword.*;
+import static com.intellij.java.syntax.parser.JavaKeywords.*;
 
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
@@ -1081,7 +1081,7 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevel.FILE_LANGUAGE_LEVEL_KEY;
+  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevelKey.FILE_LANGUAGE_LEVEL_KEY;
 
   public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_5);

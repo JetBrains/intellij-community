@@ -6,8 +6,11 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.util.containers.forEachGuaranteed
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
+import java.io.Closeable
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -15,17 +18,15 @@ import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
-import kotlin.time.Duration.Companion.minutes
 
 @ApiStatus.Internal
-internal class EelNioBridgeServiceImpl(private val coroutineScope: CoroutineScope) : EelNioBridgeService {
+@VisibleForTesting
+class EelNioBridgeServiceImpl(private val coroutineScope: CoroutineScope) : EelNioBridgeService {
   private val multiRoutingFileSystemProvider = FileSystems.getDefault().provider()
 
   private val rootRegistry = ConcurrentHashMap<EelDescriptor, MutableSet<Path>>()
   private val fsRegistry = ConcurrentHashMap<String, FileSystem>()
   private val idRegistry = ConcurrentHashMap<EelDescriptor, String>()
-
-  private val unregisteredAt = ConcurrentHashMap<EelDescriptor, Pair<Throwable, Job>>()
 
   override fun tryGetEelDescriptor(nioPath: Path): EelDescriptor? {
     return rootRegistry.entries.asSequence()
@@ -50,8 +51,6 @@ internal class EelNioBridgeServiceImpl(private val coroutineScope: CoroutineScop
     // For some reason, Path.of on Windows adds an extra slash at the end. For example, \\docker\id becomes \\docker\id\. Therefore, to compute the key, we need to convert the path to this format.
     val key = Path(localRoot).pathString
 
-    unregisteredAt.remove(descriptor)?.second?.cancel()
-
     fsRegistry.compute(key) { _, existingFileSystem ->
       val result: Ref<FileSystem?> = Ref(null)
       // the computation within MultiRoutingFileSystem can be restarted several times, but it will not terminate until it succeeds
@@ -68,28 +67,8 @@ internal class EelNioBridgeServiceImpl(private val coroutineScope: CoroutineScop
     idRegistry[descriptor] = internalName
   }
 
-  override fun deregister(descriptor: EelDescriptor) {
-    val roots = rootRegistry.remove(descriptor)
-
-    unregisteredAt
-      .computeIfAbsent(descriptor) { descriptor ->
-        Throwable("Previously unregistered here") to coroutineScope.launch(start = CoroutineStart.LAZY) {
-          delay(10.minutes)
-          unregisteredAt.remove(descriptor)
-        }
-      }
-      .second
-      .start()
-
-    if (roots == null) {
-      val error = IllegalArgumentException("Attempt to deregister unknown $descriptor")
-      val firstErrorPair = unregisteredAt.remove(descriptor)
-      if (firstErrorPair != null) {
-        firstErrorPair.second.cancel()
-        error.addSuppressed(firstErrorPair.first)
-      }
-      throw error
-    }
+  override fun unregister(descriptor: EelDescriptor): Boolean {
+    val roots = rootRegistry.remove(descriptor) ?: return false
 
     roots.forEachGuaranteed { localRoot ->
       fsRegistry.compute(localRoot.toString()) { _, existingFileSystem ->
@@ -104,6 +83,40 @@ internal class EelNioBridgeServiceImpl(private val coroutineScope: CoroutineScop
           null
         }
         null
+      }
+    }
+
+    return true
+  }
+
+  @TestOnly
+  fun temporarilyResetState(): Closeable {
+    val oldRootRegistry = HashMap(rootRegistry)
+    val oldFsRegistry = HashMap(fsRegistry)
+    val oldIdRegistry = HashMap(idRegistry)
+
+    for (descriptor in rootRegistry.keys.toList()) {
+      val roots = rootRegistry.remove(descriptor)!!
+
+      for (localRoot in roots) {
+        fsRegistry.compute(localRoot.toString()) { _, existingFileSystem ->
+          MultiRoutingFileSystemProvider.computeBackend(multiRoutingFileSystemProvider, localRoot.toString(), false, false) { underlyingProvider, actualFs ->
+            require(existingFileSystem == actualFs)
+            null
+          }
+          null
+        }
+      }
+    }
+    idRegistry.clear()
+
+    return Closeable {
+      rootRegistry.putAll(oldRootRegistry)
+      fsRegistry.putAll(oldFsRegistry)
+      idRegistry.putAll(oldIdRegistry)
+
+      for ((localRootString, fs) in fsRegistry) {
+        MultiRoutingFileSystemProvider.computeBackend(multiRoutingFileSystemProvider, localRootString, false, false) { _, _ -> fs }
       }
     }
   }

@@ -96,7 +96,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
                                                                         @NotNull MethodsTracker tracker) {
     CompletableFuture<Location> locationAsync = frame.locationAsync();
     CompletableFuture<SourcePosition> positionAsync =
-      locationAsync.thenCompose(location -> DebuggerUtilsAsync.reschedule(getSourcePositionAsync(location, frame)));
+      locationAsync.thenCompose(location -> getSourcePositionAsync(location, frame));
     return locationAsync
       .thenCompose(DebuggerUtilsAsync::method)
       .thenCombine(positionAsync, (method, position) -> {

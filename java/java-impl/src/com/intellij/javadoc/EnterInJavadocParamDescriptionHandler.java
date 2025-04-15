@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateAdapter {
+public final class EnterInJavadocParamDescriptionHandler implements EnterHandlerDelegate {
 
   private final JavadocHelper myHelper = JavadocHelper.getInstance();
 

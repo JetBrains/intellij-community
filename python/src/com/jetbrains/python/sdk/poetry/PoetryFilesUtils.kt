@@ -1,34 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.serviceContainer.AlreadyDisposedException
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.pythonSdk
-import org.apache.tuweni.toml.Toml
-import org.jetbrains.annotations.Nls
-import com.intellij.notification.NotificationListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
@@ -41,9 +26,11 @@ import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.poetry.VersionType.Companion.getVersionType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.toml.lang.psi.TomlKeyValue
 import java.io.IOException
@@ -58,7 +45,7 @@ const val PY_PROJECT_TOML: String = "pyproject.toml"
 const val POETRY_LOCK: String = "poetry.lock"
 const val POETRY_TOML: String = "poetry.toml"
 
-val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
+private val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
 
 suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
   withContext(Dispatchers.IO) {
@@ -73,9 +60,6 @@ suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
     }
   }
 
-
-private suspend fun poetryLock(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, POETRY_LOCK) }
-
 /**
  * The PyProject.toml found in the main content root of the module.
  */
@@ -84,111 +68,6 @@ suspend fun pyProjectToml(module: Module): VirtualFile? = withContext(Dispatcher
 
 internal suspend fun poetryToml(module: Module): VirtualFile? = withContext(Dispatchers.IO) {
   findAmongRoots(module, POETRY_TOML)?.takeIf { readAction { ProjectFileIndex.getInstance(module.project).isInProject(it) } }
-}
-
-/**
- * Watches for edits in PyProjectToml inside modules with a poetry SDK set.
- */
-class PoetryPyProjectTomlWatcher : EditorFactoryListener {
-  private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
-  private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
-  private suspend fun content(): @Nls String = if (getPoetryVersion()?.let { it < "1.1.1" } == true) {
-    PyBundle.message("python.sdk.poetry.pip.file.notification.content")
-  }
-  else {
-    PyBundle.message("python.sdk.poetry.pip.file.notification.content.without.updating")
-  }
-
-  override fun editorCreated(event: EditorFactoryEvent) {
-    val project = event.editor.project ?: return
-    service<PythonSdkCoroutineService>().cs.launch {
-      if (!isPyProjectTomlEditor(event.editor)) return@launch
-      val listener = object : DocumentListener {
-        override fun documentChanged(event: DocumentEvent) {
-          service<PythonSdkCoroutineService>().cs.launch {
-            try {
-              val document = event.document
-
-              val module = document.virtualFile?.let { getModule(it, project) } ?: return@launch
-              // TODO: Should we remove listener when a sdk is changed to non-poetry sdk?
-              //                    if (!isPoetry(module.project)) {
-              //                        with(document) {
-              //                            putUserData(notificationActive, null)
-              //                            val listener = getUserData(changeListenerKey) ?: return
-              //                            removeDocumentListener(listener)
-              //                            putUserData(changeListenerKey, null)
-              //                            return
-              //                        }
-              //                    }
-              if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-                notifyPyProjectTomlChanged(module)
-              }
-
-            }
-            catch (_: AlreadyDisposedException) {
-            }
-          }
-
-        }
-      }
-      with(event.editor.document) {
-        addDocumentListener(listener)
-        putUserData(changeListenerKey, listener)
-      }
-    }
-  }
-
-  override fun editorReleased(event: EditorFactoryEvent) {
-    val listener = event.editor.getUserData(changeListenerKey) ?: return
-    event.editor.document.removeDocumentListener(listener)
-  }
-
-  private suspend fun notifyPyProjectTomlChanged(module: Module) {
-    if (module.getUserData(notificationActive) == true) return
-    @Suppress("DialogTitleCapitalization") val title = when (poetryLock(module)) {
-      null -> PyBundle.message("python.sdk.poetry.pip.file.lock.not.found")
-      else -> PyBundle.message("python.sdk.poetry.pip.file.lock.out.of.date")
-    }
-    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, content(), NotificationType.INFORMATION).setListener(
-      NotificationListener { notification, event ->
-        FileDocumentManager.getInstance().saveAllDocuments()
-        when (event.description) {
-          "#lock" ->
-            runPoetryInBackground(module, listOf("lock"), PyBundle.message("python.sdk.poetry.pip.file.notification.locking"))
-          "#noupdate" ->
-            runPoetryInBackground(module, listOf("lock", "--no-update"),
-                                  PyBundle.message("python.sdk.poetry.pip.file.notification.locking.without.updating"))
-          "#update" ->
-            runPoetryInBackground(module, listOf("update"), PyBundle.message("python.sdk.poetry.pip.file.notification.updating"))
-        }
-        notification.expire()
-        module.putUserData(notificationActive, null)
-      })
-    module.putUserData(notificationActive, true)
-    notification.whenExpired {
-      module.putUserData(notificationActive, null)
-    }
-    notification.notify(module.project)
-  }
-
-  private suspend fun isPyProjectTomlEditor(editor: Editor): Boolean {
-    val file = editor.document.virtualFile ?: return false
-    if (file.name != PY_PROJECT_TOML) return false
-    val project = editor.project ?: return false
-    val module = getModule(file, project) ?: return false
-    val sdk = module.pythonSdk ?: return false
-    if (!sdk.isPoetry) return false
-    return pyProjectToml(module) == file
-  }
-
-  private val Document.virtualFile: VirtualFile?
-    get() = FileDocumentManager.getInstance().getFile(this)
-
-  private suspend fun getModule(file: VirtualFile, project: Project): Module? = withContext(Dispatchers.IO) {
-    ModuleUtil.findModuleForFile(file, project)
-  }
-
-  private val LOCK_NOTIFICATION_GROUP by lazy { NotificationGroupManager.getInstance().getNotificationGroup("pyproject.toml Watcher") }
 }
 
 /**

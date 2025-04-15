@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked.session
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 
 @ApiStatus.Internal
@@ -13,4 +14,5 @@ data class TerminalSessionTab(
   val isUserDefinedName: Boolean,
   val shellCommand: List<String>?,
   val sessionId: TerminalSessionId?,
+  val portForwardingId: TerminalPortForwardingId?,
 )

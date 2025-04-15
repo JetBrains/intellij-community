@@ -67,13 +67,13 @@ public interface SearchableConfigurable extends ConfigurableWithId {
       }
 
       @Override
-      public final Configurable @NotNull [] getConfigurables() {
+      public final @NotNull Configurable @NotNull [] getConfigurables() {
         if (myKids != null) return myKids;
         myKids = buildConfigurables();
         return myKids;
       }
 
-      protected abstract Configurable[] buildConfigurables();
+      protected abstract @NotNull Configurable @NotNull [] buildConfigurables();
     }
   }
 

@@ -1,17 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.searchEverywhereMl.ranking.core
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.TextEmbeddingProvider
+import com.intellij.searchEverywhereMl.isLoggingEnabled
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCacheDataProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereStatisticianService
@@ -28,7 +32,6 @@ internal class SearchEverywhereMLSearchSession(
   project: Project?,
   val mixedListInfo: SearchEverywhereMixedListInfo,
   private val sessionId: Int,
-  private val loggingRandomisation: FeaturesLoggingRandomisation,
 ) {
   val itemIdProvider = SearchEverywhereMlOrderedItemIdProvider { MissingKeyProviderCollector.addMissingProviderForClass(it::class.java) }
 
@@ -41,6 +44,8 @@ internal class SearchEverywhereMLSearchSession(
   // context features are calculated once per Search Everywhere session
   val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
 
+  private val loggingRandomisation = FeaturesLoggingRandomisation()
+
   // search state is updated on each typing, tab or setting change
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
   private val currentSearchState: AtomicReference<SearchEverywhereMlSearchState?> = AtomicReference<SearchEverywhereMlSearchState?>()
@@ -50,7 +55,6 @@ internal class SearchEverywhereMLSearchSession(
 
   fun onSearchRestart(
     project: Project?,
-    experimentStrategy: SearchEverywhereMlExperiment,
     reason: SearchRestartReason,
     tabId: String,
     orderByMl: Boolean,
@@ -61,25 +65,26 @@ internal class SearchEverywhereMLSearchSession(
     searchScope: ScopeDescriptor?,
     isSearchEverywhere: Boolean,
   ) {
+    val tab = SearchEverywhereTab.findById(tabId) ?: return
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
       val startTime = System.currentTimeMillis()
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
-      val experimentGroup = experimentStrategy.experimentGroup
+      val experimentGroup = SearchEverywhereMlExperiment.experimentGroup
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(
         sessionStartTime, startTime, nextSearchIndex, searchReason,
-        tabId, experimentGroup, orderByMl,
+        tab, experimentGroup, orderByMl,
         keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache, mixedListInfo,
         project, searchScope, isSearchEverywhere
       )
     }
 
-    if (prevState != null && experimentStrategy.isLoggingEnabledForTab(prevState.tabId)) {
-      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(prevState.tabId)
+    if (prevState != null && prevState.tab.isLoggingEnabled()) {
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(prevState.tab)
       logger.onSearchRestarted(
         project, sessionId, shouldLogFeatures,
         itemIdProvider, cachedContextInfo, prevState, featureCache,
@@ -89,24 +94,24 @@ internal class SearchEverywhereMLSearchSession(
   }
 
   fun onItemSelected(
-    project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
+    project: Project?,
     indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
   ) {
     val state = getCurrentSearchState()
-    if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
+    if (state != null && state.tab.isLoggingEnabled()) {
       if (project != null) {
         val statisticianService = service<SearchEverywhereStatisticianService>()
         selectedItems.forEach { statisticianService.increaseUseCount(it) }
 
-        if (state.tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID) {
+        if (state.tab == SearchEverywhereTab.All) {
           elementsProvider.invoke()
             .slice(indexes.asIterable())
             .forEach { increaseContributorUseCount(it.contributor.searchProviderId) }
         }
       }
 
-      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tab)
       logger.onItemSelected(
         project, sessionId, shouldLogFeatures, itemIdProvider,
         state, featureCache, indexes, selectedItems, closePopup,
@@ -122,12 +127,11 @@ internal class SearchEverywhereMLSearchSession(
 
   fun onSearchFinished(
     project: Project?,
-    experimentStrategy: SearchEverywhereMlExperiment,
     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
   ) {
     val state = getCurrentSearchState()
-    if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
-      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
+    if (state != null && state.tab.isLoggingEnabled()) {
+      val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tab)
       logger.onSearchFinished(
         project, sessionId, shouldLogFeatures, itemIdProvider,
         state, featureCache, performanceTracker.timeElapsed, mixedListInfo,

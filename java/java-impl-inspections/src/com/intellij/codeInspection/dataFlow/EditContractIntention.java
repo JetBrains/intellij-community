@@ -3,53 +3,52 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.DefaultInferredAnnotationProvider;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.StringValidator;
-import com.intellij.codeInspection.ui.OptPaneUtils;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.*;
+import static java.util.Objects.requireNonNullElse;
 
-public final class EditContractIntention extends BaseIntentionAction implements LowPriorityAction {
+public final class EditContractIntention implements ModCommandAction {
   @Override
   public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.edit.method.contract");
   }
 
-  private static @Nullable PsiMethod getTargetMethod(Editor editor, PsiFile file) {
-    final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
-    if (owner instanceof PsiMethod && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
-      PsiElement original = owner.getOriginalElement();
-      return original instanceof PsiMethod ? (PsiMethod)original : (PsiMethod)owner;
+  private static @Nullable PsiMethod getTargetMethod(@NotNull ActionContext context) {
+    final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(context.file(), context.offset());
+    if (owner instanceof PsiMethod method && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(method)) {
+      return owner.getOriginalElement() instanceof PsiMethod origMethod ? origMethod : method;
     }
     return null;
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiMethod method = getTargetMethod(editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
+    PsiMethod method = getTargetMethod(context);
     PsiAnnotation annotation = method == null ? null : JavaMethodContractUtil.findContractAnnotation(method);
     String text = "(\"...\")";
     if (annotation != null) {
@@ -60,24 +59,29 @@ public final class EditContractIntention extends BaseIntentionAction implements 
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiMethod method = getTargetMethod(editor, file);
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    final PsiMethod method = getTargetMethod(context);
     if (method != null) {
       boolean hasContract = JavaMethodContractUtil.findContractAnnotation(method) != null;
-      setText(hasContract ? JavaBundle.message("intention.text.edit.method.contract.of.0", method.getName())
-                          : JavaBundle.message("intention.text.add.method.contract.to.0", method.getName()));
-      return true;
+      return Presentation.of(hasContract ? JavaBundle.message("intention.text.edit.method.contract.of.0", method.getName())
+                                         : JavaBundle.message("intention.text.add.method.contract.to.0", method.getName())).withPriority(
+        PriorityAction.Priority.LOW);
     }
-    return false;
+    return null;
   }
 
   private static class ContractData implements OptionContainer {
+    @NotNull private final PsiMethod method;
     @NlsSafe String contract = "";
     boolean impure = true;
     @NlsSafe String mutates = "";
 
-    private static @NotNull ContractData fromAnnotation(@Nullable PsiAnnotation existingAnno) {
-      ContractData data = new ContractData();
+    private ContractData(@NotNull PsiMethod method) {
+      this.method = method;
+    }
+
+    private static @NotNull ContractData fromAnnotation(@NotNull PsiMethod method, @Nullable PsiAnnotation existingAnno) {
+      ContractData data = new ContractData(method);
       if (existingAnno != null) {
         data.contract = AnnotationUtil.getStringAttributeValue(existingAnno, "value");
         data.impure = !Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(existingAnno, "pure"));
@@ -86,7 +90,8 @@ public final class EditContractIntention extends BaseIntentionAction implements 
       return data;
     }
 
-    public OptPane getOptionPane(@NotNull PsiMethod method) {
+    @Override
+    public @NotNull OptPane getOptionsPane() {
       return pane(
         string("contract", JavaBundle.message("label.contract"),
                StringValidator.of("java.method.contract", string -> getContractErrorMessage(string, method)))
@@ -95,33 +100,31 @@ public final class EditContractIntention extends BaseIntentionAction implements 
                  string("mutates", JavaBundle.message("label.mutates"),
                         StringValidator.of("java.method.mutates", string -> getMutatesErrorMessage(string, method)))
                    .description(HtmlChunk.raw(JavaBundle.message("edit.contract.dialog.mutates.hint")))
-        ));
+        )).withHelpId("define_contract_dialog");
     }
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiMethod method = getTargetMethod(editor, file);
-    assert method != null;
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    final PsiMethod method = getTargetMethod(context);
+    if (method == null) return ModCommand.nop();
     PsiAnnotation existingAnno = AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(Contract.class.getName()));
-    ContractData data = ContractData.fromAnnotation(existingAnno);
-    OptPaneUtils.editOptions(project, data, data.getOptionPane(method), JavaBundle.message("dialog.title.edit.method.contract"),
-                             "define_contract_dialog", () -> updateContract(method, data));
+    return new ModEditOptions<>(JavaBundle.message("dialog.title.edit.method.contract"),
+                                () -> ContractData.fromAnnotation(method, existingAnno),
+                                false,
+                                data -> updateContract(method, data));
   }
 
-  private static void updateContract(@NotNull PsiMethod method, @NotNull ContractData data) {
+  private static @NotNull ModCommand updateContract(@NotNull PsiMethod method, @NotNull ContractData data) {
     Project project = method.getProject();
-    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
-    manager.deannotate(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-    PsiAnnotation mockAnno = DefaultInferredAnnotationProvider.createContractAnnotation(project, !data.impure, data.contract, data.mutates);
+    var manager = ModCommandAwareExternalAnnotationsManager.getInstance(project);
+    PsiAnnotation mockAnno = DefaultInferredAnnotationProvider.createContractAnnotation(
+      project, !data.impure, data.contract, requireNonNullElse(data.mutates, ""));
     if (mockAnno != null) {
-      try {
-        manager.annotateExternally(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
-                                   mockAnno.getParameterList().getAttributes());
-      }
-      catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
+      return manager.annotateExternallyModCommand(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT,
+                                                  mockAnno.getParameterList().getAttributes());
     }
-    DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EditContractIntention.updateContract");
+    return manager.deannotateModCommand(List.of(method), List.of(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
   }
 
   private static @Nullable @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {
@@ -134,10 +137,5 @@ public final class EditContractIntention extends BaseIntentionAction implements 
     }
     StandardMethodContract.ParseException error = ContractInspection.checkContract(method, contract);
     return error != null ? error.getMessage() : null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

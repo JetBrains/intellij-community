@@ -42,8 +42,11 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
         RecentProjectsManager.getInstance().updateLastProjectPath()
       }
 
-    if (PlatformUtils.isJetBrainsClient()) ExitStarter.forceExitApplication("Close project on client requested exit")
-    else WelcomeFrame.showIfNoProjectOpened()
+    showWelcomeFrameIfNeeded()
+  }
+
+  protected open fun showWelcomeFrameIfNeeded() {
+    WelcomeFrame.showIfNoProjectOpened()
   }
 
   override fun update(e: AnActionEvent) {
@@ -51,7 +54,7 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault && shouldShow(e)
   }
 
-  private fun getProjectEvenIfNotInitialized(e: AnActionEvent): Project? {
+  protected fun getProjectEvenIfNotInitialized(e: AnActionEvent): Project? {
     return e.project ?: ProjectFrameHelper.getFrameHelper(
       ComponentUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)))?.project
   }

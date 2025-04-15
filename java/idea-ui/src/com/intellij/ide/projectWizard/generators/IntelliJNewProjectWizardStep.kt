@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
@@ -10,6 +10,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logContentRootChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleFileLocationChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Intellij.logModuleNameChanged
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
@@ -46,6 +47,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
+  final override val jdkIntentProperty = propertyGraph.property<ProjectWizardJdkIntent?>(null)
   final override val sdkProperty = propertyGraph.property<Sdk?>(null)
   final override val sdkDownloadTaskProperty = propertyGraph.property<SdkDownloadTask?>(null)
   final override val moduleNameProperty = propertyGraph.lazyProperty(::suggestModuleName)
@@ -54,6 +56,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   final override val addSampleCodeProperty = propertyGraph.property(true)
     .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
+  final override var jdkIntent by jdkIntentProperty
   final override var sdk by sdkProperty
   final override var sdkDownloadTask by sdkDownloadTaskProperty
   final override var moduleName by moduleNameProperty

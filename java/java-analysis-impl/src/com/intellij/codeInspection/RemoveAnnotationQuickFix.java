@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ModCommandAwareExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
@@ -93,9 +92,8 @@ public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
   }
 
   private static @NotNull ModCommand deannotateExternal(@NotNull Project project, String qualifiedName, List<PsiModifierListOwner> externalOwners) {
-    if (ExternalAnnotationsManager.getInstance(project) instanceof ModCommandAwareExternalAnnotationsManager manager &&
-        qualifiedName != null) {
-      return manager.deannotateModCommand(externalOwners, List.of(qualifiedName));
+    if (qualifiedName != null) {
+      return ModCommandAwareExternalAnnotationsManager.getInstance(project).deannotateModCommand(externalOwners, List.of(qualifiedName));
     }
     return ModCommand.nop();
   }

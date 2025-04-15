@@ -96,13 +96,6 @@ _KOPTS = {
         ),
         type = attr.string,
     ),
-    "emit_jdeps": struct(
-        args = dict(
-            default = True,
-            doc = "",
-        ),
-        type = attr.bool,
-    ),
     "inc_threshold": struct(
         args = dict(
             default = -1,

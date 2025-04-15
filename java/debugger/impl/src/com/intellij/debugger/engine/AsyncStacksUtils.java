@@ -313,7 +313,7 @@ public final class AsyncStacksUtils {
 
             Path communityRoot = Path.of(PathManager.getCommunityHomePath());
             Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
-            Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(
+            Path downloadedAgent = BuildDependenciesJps.INSTANCE.getModuleLibrarySingleRootSync(
               iml,
               "debugger-agent",
               "https://cache-redirector.jetbrains.com/intellij-dependencies",

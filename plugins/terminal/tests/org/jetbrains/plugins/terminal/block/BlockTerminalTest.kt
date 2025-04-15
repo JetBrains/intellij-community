@@ -9,7 +9,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
@@ -89,11 +88,9 @@ internal class BlockTerminalTest(private val shellPath: Path) {
                        SimpleTextRepeater.Item("Done", false, true, 1))
     setTerminalBufferMaxLines(items.sumOf { it.count })
     val session = startBlockTerminalSession(TermSize(200, 100))
-    Benchmark.newBenchmark("$shellPath - large output is read") {
-      val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
-      session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommand(items))
-      assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
-    }.attempts(1).start()
+    val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+    session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommand(items))
+    assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
   }
 
   val LOG = Logger.getInstance(BlockTerminalTest::class.java)

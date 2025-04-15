@@ -2,20 +2,38 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
-import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
+import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.navigation.actions.TypeDeclarationPlaceAwareProvider
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.psi.*
 
-internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
-    override fun getSymbolTypeDeclarations(symbol: PsiElement): Array<PsiElement>? {
+internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider {
+
+    override fun getSymbolTypeDeclarations(
+        symbol: PsiElement,
+        editor: Editor?,
+        offset: Int
+    ): Array<PsiElement>? =
+        symbolTypeDeclarations(symbol, editor, offset)
+
+    override fun getSymbolTypeDeclarations(symbol: PsiElement): Array<PsiElement>? =
+        symbolTypeDeclarations(symbol, null, null)
+
+    private fun symbolTypeDeclarations(
+        symbol: PsiElement,
+        editor: Editor?,
+        offset: Int?
+    ): Array<PsiElement>? {
         if (symbol.containingFile !is KtFile) return null
 
         return when (symbol) {
@@ -36,7 +54,15 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
                 }
                 else PsiElement.EMPTY_ARRAY
             }
-            is KtCallableDeclaration -> symbol.getTypeDeclarationFromCallable { callableSymbol -> callableSymbol.returnType }
+            is KtCallableDeclaration -> {
+                symbol.getTypeDeclarationFromCallable(callSiteReferenceProvider = {
+                    if (editor != null && offset != null) {
+                        TargetElementUtil.findReference(editor, offset)
+                    } else {
+                        null
+                    }
+                }) { callableSymbol -> callableSymbol.returnType }
+            }
             is KtClassOrObject -> getClassTypeDeclaration(symbol)
             is KtTypeAlias -> getTypeAliasDeclaration(symbol)
             else -> PsiElement.EMPTY_ARRAY
@@ -66,13 +92,21 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         return PsiElement.EMPTY_ARRAY
     }
 
-    private fun KtCallableDeclaration.getTypeDeclarationFromCallable(typeFromSymbol: (KaCallableSymbol) -> KaType?): Array<PsiElement> {
+    private fun KtCallableDeclaration.getTypeDeclarationFromCallable(callSiteReferenceProvider: (() -> PsiReference?)? = null, typeFromSymbol: (KaCallableSymbol) -> KaType?): Array<PsiElement> {
         analyze(this) {
             val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
-            val targetSymbol = type.upperBoundIfFlexible().abbreviationOrSelf.symbol ?: return PsiElement.EMPTY_ARRAY
-            targetSymbol.psi?.let { return arrayOf(it) }
+            val targetSymbol = type.upperBoundIfFlexible().abbreviationOrSelf.symbol?.psi
+                ?: (callSiteReferenceProvider?.invoke()?.element as? KtElement)?.resolvePsiOfTypeAtCallSite()
+            targetSymbol?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY
     }
+
+    private fun KtElement.resolvePsiOfTypeAtCallSite(): PsiElement? =
+        analyze(this) {
+            val memberCall = resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze null
+            val type = memberCall.partiallyAppliedSymbol.signature.returnType
+            type.upperBoundIfFlexible().symbol?.psi
+        }
 }

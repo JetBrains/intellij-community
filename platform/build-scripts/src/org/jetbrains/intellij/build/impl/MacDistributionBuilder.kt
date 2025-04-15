@@ -7,17 +7,41 @@ import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.InMemoryDistFileContent
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LocalDistFileContent
+import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.NativeBinaryDownloader
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
-import org.jetbrains.intellij.build.impl.productInfo.*
+import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
+import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
+import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
+import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
+import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
@@ -25,7 +49,16 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.LocalDate
 import java.util.zip.Deflater
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.walk
+import kotlin.io.path.writeText
 
 private const val NO_RUNTIME_SUFFIX = "-no-jdk"
 
@@ -444,7 +477,7 @@ class MacDistributionBuilder(
           }
         }
 
-        validateProductJson(targetFile, pathInArchive = "${zipRoot}/Resources", macDistributionBuilder.context)
+        validateProductJson(archiveFile = targetFile, pathInArchive = "${zipRoot}/Resources", context = macDistributionBuilder.context)
       }
   }
 

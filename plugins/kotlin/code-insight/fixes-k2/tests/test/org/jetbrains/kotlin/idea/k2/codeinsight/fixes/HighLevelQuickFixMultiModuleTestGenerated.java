@@ -264,50 +264,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addDependency")
-    public static class AddDependency extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("class")
-        public void testClass() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/class/");
-        }
-
-        @TestMetadata("import")
-        public void testImport() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/import/");
-        }
-
-        @TestMetadata("topLevelFunction")
-        public void testTopLevelFunction() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction/");
-        }
-
-        @TestMetadata("topLevelFunction2")
-        public void testTopLevelFunction2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction2/");
-        }
-
-        @TestMetadata("topLevelProperty")
-        public void testTopLevelProperty() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty/");
-        }
-
-        @TestMetadata("topLevelProperty2")
-        public void testTopLevelProperty2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty2/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addMissingActualMembers")
     public static class AddMissingActualMembers extends AbstractHighLevelQuickFixMultiModuleTest {
         @java.lang.Override
@@ -842,6 +798,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/companion/");
         }
 
+        @TestMetadata("conflictingFunction")
+        public void testConflictingFunction() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/conflictingFunction/");
+        }
+
         @TestMetadata("createWithImport")
         public void testCreateWithImport() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/createWithImport/");
@@ -912,6 +873,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/function2/");
         }
 
+        @TestMetadata("functionAlreadyExists")
+        public void testFunctionAlreadyExists() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/functionAlreadyExists/");
+        }
+
         @TestMetadata("functionInInterface")
         public void testFunctionInInterface() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/functionInInterface/");
@@ -955,6 +921,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("innerEnum")
         public void testInnerEnum() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/innerEnum/");
+        }
+
+        @TestMetadata("internalFunction")
+        public void testInternalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/internalFunction/");
         }
 
         @TestMetadata("memberFunctionAndNestedClass")
@@ -1614,11 +1585,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("movePropertyToConstructor")
         public void testMovePropertyToConstructor() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/movePropertyToConstructor/");
-        }
-
-        @TestMetadata("notMakeAbstractFromActual")
-        public void testNotMakeAbstractFromActual() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/notMakeAbstractFromActual/");
         }
 
         @TestMetadata("safeDeleteForbiddenFromActual")

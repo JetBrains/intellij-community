@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -12,7 +13,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
@@ -365,10 +365,10 @@ public abstract class ImportLayoutPanel extends JPanel {
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
-          append(PsiKeyword.IMPORT, SimpleTextAttributes.fromTextAttributes(attributes));
+          append(JavaKeywords.IMPORT, SimpleTextAttributes.fromTextAttributes(attributes));
           if (entry.isStatic()) {
             append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            append(PsiKeyword.STATIC, SimpleTextAttributes.fromTextAttributes(attributes));
+            append(JavaKeywords.STATIC, SimpleTextAttributes.fromTextAttributes(attributes));
           }
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 

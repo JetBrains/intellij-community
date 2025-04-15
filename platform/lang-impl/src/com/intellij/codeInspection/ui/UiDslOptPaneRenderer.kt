@@ -274,6 +274,10 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
               }
           }
         }
+      
+        is OptMultiSelector -> {
+          TODO()
+        }
 
         is OptDropdown -> {
           comboBox(getComboBoxModel(component.options), getComboBoxRenderer())

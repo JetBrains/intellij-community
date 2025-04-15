@@ -71,9 +71,8 @@ object DistributedTestModel : Ext(TestRoot) {
     signal("sendException", RdTestSessionException).async
     signal("exitApp", void).async
     signal("showNotification", string)
-    call("closeProject", void, bool).async
     call("forceLeaveAllModals", bool, void).async
-    call("closeProjectIfOpened", void, bool).async
+    call("closeAllOpenedProjects", void, bool).async
     call("runNextAction", RdTestActionParameters, string.nullable).async
     call("runNextActionGetComponentData", RdTestActionParameters, RdTestComponentData).async
     call("requestFocus", bool, bool).async

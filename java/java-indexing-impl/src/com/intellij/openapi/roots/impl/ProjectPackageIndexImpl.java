@@ -7,14 +7,17 @@ import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class ProjectPackageIndexImpl extends PackageIndex {
+@ApiStatus.Internal
+public final class ProjectPackageIndexImpl extends PackageIndex {
   private static final Logger LOG = Logger.getInstance(ProjectPackageIndexImpl.class);
   private final DirectoryIndex myDirectoryIndex;
 
-  ProjectPackageIndexImpl(@NotNull Project project) {
+  @ApiStatus.Internal
+  public ProjectPackageIndexImpl(@NotNull Project project) {
     myDirectoryIndex = DirectoryIndex.getInstance(project);
   }
 

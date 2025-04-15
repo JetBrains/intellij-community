@@ -22,7 +22,6 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
-    "//platform/execution-impl",
     "//platform/navbar/frontend",
   ],
   runtime_deps = [":execution-serviceView_resources"]

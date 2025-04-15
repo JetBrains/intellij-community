@@ -40,6 +40,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testEmptyClassBodyFunctionMethod()
     }
 
+    fun testContextParameters() {
+         doImplementFileTest()
+    }
+
     override fun testFunctionMethod() {
         super.testFunctionMethod()
     }
@@ -54,6 +58,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testGenericTypesSeveralMethods() {
         super.testGenericTypesSeveralMethods()
+    }
+
+    fun testImplementContextFunction() {
+        doImplementFileTest()
     }
 
     override fun testSuspendOverride() {

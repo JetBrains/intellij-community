@@ -8,7 +8,6 @@ import com.intellij.ide.SpecialConfigFiles;
 import com.intellij.idea.AppExitCodes;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.jna.JnaLoader;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.LogLevel;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.ui.User32Ex;
 import com.intellij.util.Suppressions;
+import com.intellij.util.TimeoutUtil;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.*;
@@ -92,7 +92,7 @@ public final class DirectoryLock {
 
   private volatile @Nullable ServerSocketChannel myServerChannel = null;
 
-  DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
+  public DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
     myPortFile = systemPath.resolve(SpecialConfigFiles.PORT_FILE);
     myLockFile = configPath.resolve(SpecialConfigFiles.LOCK_FILE);
 
@@ -147,51 +147,57 @@ public final class DirectoryLock {
    * Returns {@code null} on successfully locking the directories, a non-null value on successfully activating another instance,
    * or throws a {@link CannotActivateException}.
    */
-  @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException, IOException {
+  public @Nullable CliResult lockOrActivate(@NotNull Path currentDirectory, @NotNull List<String> args) throws CannotActivateException, IOException {
     var configDir = NioFiles.createDirectories(myLockFile.getParent());
     var systemDir = NioFiles.createDirectories(myPortFile.getParent());
     if (Files.isSameFile(systemDir, configDir)) {
       throw new IllegalArgumentException(BootstrapBundle.message("bootstrap.error.same.directories"));
     }
 
-    var listenException = (Exception)null;
-    try {
-      return tryListen();
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      listenException = e;
-    }
+    var suppressed = new ArrayList<Exception>();
+    var command = ProcessHandle.current().info().command().orElse("???");
 
-    var connectException = (Exception)null;
-    try {
-      return tryConnect(args, currentDirectory);
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      connectException = e;
-    }
+    for (int attempt = 0; attempt < 1; attempt++) {
+      try {
+        return tryListen();
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+        suppressed.add(e);
+      }
 
-    var pidException = (Exception)null;
-    try {
-      var otherPid = remotePID();
-      var handle = ProcessHandle.of(otherPid).orElse(null);
-      if (handle != null) {
-        var command = Path.of(handle.info().command().orElse(""));
-        if (command.endsWith(SystemInfoRt.isWindows ? "java.exe" : "java") ||
-            command.endsWith(ApplicationNamesInfo.getInstance().getScriptName() + (SystemInfoRt.isWindows ? "64.exe" : ""))) {
-          var diagnostic = diagnostic();
-          var threadDump = remoteThreadDump(otherPid);
-          var cae = new CannotActivateException(BootstrapBundle.message("bootstrap.error.still.running", command, otherPid), diagnostic, threadDump);
-          cae.addSuppressed(listenException);
-          cae.addSuppressed(connectException);
-          throw cae;
+      try {
+        return tryConnect(args, currentDirectory);
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+        suppressed.add(e);
+      }
+
+      try {
+        var otherPid = remotePID();
+        var handle = ProcessHandle.of(otherPid).orElse(null);
+        if (handle != null && command.equals(handle.info().command().orElse(""))) {
+          cannotActivate(command, otherPid, suppressed);
         }
       }
+      catch (IOException | NumberFormatException e) {
+        LOG.debug(e);
+        suppressed.add(e);
+      }
+
+      LOG.debug("retrying in 200 ms ...");
+      TimeoutUtil.sleep(200);
     }
-    catch (IOException | NumberFormatException e) {
-      LOG.debug(e);
-      pidException = e;
+
+    if (!Path.of(command).endsWith(SystemInfoRt.isWindows ? "java.exe" : "java")) {
+      var user = ProcessHandle.current().info().user().orElse("");
+      var other = ProcessHandle.allProcesses()
+        .filter(ph -> command.equals(ph.info().command().orElse("")) && user.equals(ph.info().user().orElse("")) && ph.pid() != ProcessHandle.current().pid())
+        .findFirst().orElse(null);
+      if (other != null) {
+        cannotActivate(command, other.pid(), suppressed);
+      }
     }
 
     try {
@@ -207,13 +213,17 @@ public final class DirectoryLock {
       return tryListen();
     }
     catch (IOException e) {
-      e.addSuppressed(listenException);
-      e.addSuppressed(connectException);
-      if (pidException != null) {
-        e.addSuppressed(pidException);
-      }
+      suppressed.forEach(e::addSuppressed);
       throw e;
     }
+  }
+
+  private void cannotActivate(String command, long pid, List<Exception> suppressed) throws CannotActivateException {
+    var diagnostic = diagnostic();
+    var threadDump = remoteThreadDump(pid);
+    var cae = new CannotActivateException(BootstrapBundle.message("bootstrap.error.still.running", command, pid), diagnostic, threadDump);
+    suppressed.forEach(cae::addSuppressed);
+    throw cae;
   }
 
   void dispose() {
@@ -327,7 +337,7 @@ public final class DirectoryLock {
       }
       catch (EOFException e) {
         LOG.debug(e);
-        throw new IOException("Communication interrupted");
+        throw new IOException("Communication interrupted", e);
       }
     }
   }

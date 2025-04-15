@@ -1,12 +1,13 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>org.jetbrains.plugins.textmate</id>
   <name>TextMate Bundles</name>
-  <category>Other Tools</category>
+  <category>Languages</category>
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-      Supports syntax highlighting for arbitrary file types, controlled by <a href="https://macromates.com/textmate/manual/bundles">TextMate bundles</a>
-      ]]></description>
+    Supports syntax highlighting for arbitrary file types,
+    controlled by <a href="https://macromates.com/textmate/manual/bundles">TextMate bundles</a>
+  ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
 

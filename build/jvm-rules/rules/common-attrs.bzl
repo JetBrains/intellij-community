@@ -30,18 +30,6 @@ def add_dicts(*dictionaries):
     return result
 
 _implicit_deps = {
-    "_singlejar": attr.label(
-        executable = True,
-        cfg = "exec",
-        default = Label("@bazel_tools//tools/jdk:singlejar"),
-        allow_files = True,
-    ),
-    "_zipper": attr.label(
-        executable = True,
-        cfg = "exec",
-        default = Label("@bazel_tools//tools/zip:zipper"),
-        allow_files = True,
-    ),
     "_java_stub_template": attr.label(
         cfg = "exec",
         default = Label("@bazel_tools//tools/java:java_stub_template.txt"),
@@ -112,21 +100,8 @@ common_attr = add_dicts(
             default = None,
             providers = [_JavacOptions],
         ),
-        "_jdeps_merger": attr.label(
-            doc = "the jdeps merger executable",
-            default = "//:worker-impl",
-            executable = True,
-            allow_files = True,
-            cfg = "exec",
-        ),
-        "_kotlin_builder": attr.label(
-            default = "//src/kotlin-builder:worker-jvm",
-            executable = True,
-            allow_files = True,
-            cfg = "exec",
-        ),
-        "_jps_builder": attr.label(
-            default = "//src/jps-builder:worker-jvm",
+        "_jvm_builder": attr.label(
+            default = "//src/jvm-builder:jvm-builder",
             executable = True,
             allow_files = True,
             cfg = "exec",

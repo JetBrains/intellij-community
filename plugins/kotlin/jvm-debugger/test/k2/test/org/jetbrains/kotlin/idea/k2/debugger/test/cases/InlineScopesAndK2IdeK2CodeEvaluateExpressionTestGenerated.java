@@ -525,6 +525,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                         runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverLaunch.kt");
                     }
 
+                    @TestMetadata("stepOverRunBlockingInsideCoroutine.kt")
+                    public void testStepOverRunBlockingInsideCoroutine() throws Exception {
+                        runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverRunBlockingInsideCoroutine.kt");
+                    }
+
                     @TestMetadata("stepOverSuspendCallAndStopAtFirstLineBug.kt")
                     public void testStepOverSuspendCallAndStopAtFirstLineBug() throws Exception {
                         runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverSuspendCallAndStopAtFirstLineBug.kt");
@@ -865,6 +870,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @TestMetadata("delegatedPropertyInClassWoRenderer.kt")
             public void testDelegatedPropertyInClassWoRenderer() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/frame/delegatedPropertyInClassWoRenderer.kt");
+            }
+
+            @TestMetadata("evaluatableGetters.kt")
+            public void testEvaluatableGetters() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/frame/evaluatableGetters.kt");
             }
 
             @TestMetadata("frameAnonymousObject.kt")
@@ -2097,6 +2107,16 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @TestMetadata("methodWithBreakpoint.kt")
             public void testMethodWithBreakpoint() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/methodWithBreakpoint.kt");
+            }
+
+            @TestMetadata("multifileClassMembers.kt")
+            public void testMultifileClassMembers() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/multifileClassMembers.kt");
+            }
+
+            @TestMetadata("multifileClassMembers-parts-inherit.kt")
+            public void testMultifileClassMembers_parts_inherit() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/multifileClassMembers-parts-inherit.kt");
             }
 
             @TestMetadata("multilineExpressionAtBreakpoint.kt")

@@ -162,9 +162,7 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
       if (printedClassLoaders.add(classLoader)) {
         @Suppress("TestOnlyProblems")
         val parents = when (classLoader) {
-          is PluginClassLoader -> classLoader._getParents().map { it.classLoader }.ifEmpty {
-            listOf(ClassLoaderConfigurator::class.java.classLoader)
-          }
+          is PluginClassLoader -> classLoader.getAllParentsClassLoaders().toList()
           else -> listOf(classLoader.parent)
         }
         writeArrayFieldStart("parents")

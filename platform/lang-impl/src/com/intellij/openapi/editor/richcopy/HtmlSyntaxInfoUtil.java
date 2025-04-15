@@ -26,13 +26,14 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import kotlin.text.StringsKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 
 public final class HtmlSyntaxInfoUtil {
@@ -102,6 +103,7 @@ public final class HtmlSyntaxInfoUtil {
     return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet, true, saturationFactor);
   }
 
+
   @RequiresReadLock
   public static @NotNull StringBuilder appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
     @NotNull StringBuilder buffer,
@@ -110,6 +112,85 @@ public final class HtmlSyntaxInfoUtil {
     @Nullable String codeSnippet,
     boolean doTrimIndent,
     float saturationFactor
+  ) {
+    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(buffer, project, language, codeSnippet, doTrimIndent, saturationFactor, null,
+                                                               HtmlGeneratorProperties.createDefault());
+  }
+
+  /**
+   * This class represents a builder for generating HTML code snippets.
+   */
+  @ApiStatus.Experimental
+  public static class HtmlCodeSnippetBuilder {
+    @NotNull
+    private final StringBuilder buffer;
+    @NotNull
+    private final Project project;
+    @NotNull
+    private final Language language;
+    @Nullable
+    private String codeSnippet;
+    private boolean doTrimIndent;
+    private float saturationFactor = 1.0f;
+    @Nullable
+    private SyntaxInfoBuilder.RangeIterator additionalIterator;
+    @NotNull
+    private HtmlGeneratorProperties properties = HtmlGeneratorProperties.createDefault();
+
+    public HtmlCodeSnippetBuilder(@NotNull StringBuilder buffer, @NotNull Project project, @NotNull Language language) {
+      this.buffer = buffer;
+      this.project = project;
+      this.language = language;
+    }
+
+    public HtmlCodeSnippetBuilder codeSnippet(@Nullable String codeSnippet) {
+      this.codeSnippet = codeSnippet;
+      return this;
+    }
+
+    public HtmlCodeSnippetBuilder doTrimIndent(boolean doTrimIndent) {
+      this.doTrimIndent = doTrimIndent;
+      return this;
+    }
+
+    public HtmlCodeSnippetBuilder saturationFactor(float saturationFactor) {
+      this.saturationFactor = saturationFactor;
+      return this;
+    }
+
+    public HtmlCodeSnippetBuilder additionalIterator(@Nullable SyntaxInfoBuilder.RangeIterator additionalIterator) {
+      this.additionalIterator = additionalIterator;
+      return this;
+    }
+
+    public HtmlCodeSnippetBuilder properties(@NotNull HtmlGeneratorProperties properties) {
+      this.properties = properties;
+      return this;
+    }
+
+    @RequiresReadLock
+    public StringBuilder build() {
+      return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(this.buffer,
+                                                                 this.project,
+                                                                 this.language,
+                                                                 this.codeSnippet,
+                                                                 this.doTrimIndent,
+                                                                 this.saturationFactor,
+                                                                 this.additionalIterator,
+                                                                 this.properties);
+    }
+  }
+
+  @RequiresReadLock
+  private static @NotNull StringBuilder appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+    @NotNull StringBuilder buffer,
+    @NotNull Project project,
+    @NotNull Language language,
+    @Nullable String codeSnippet,
+    boolean doTrimIndent,
+    float saturationFactor,
+    @Nullable SyntaxInfoBuilder.RangeIterator additionalIterator,
+    @NotNull HtmlGeneratorProperties properties
   ) {
     codeSnippet = StringUtil.notNullize(codeSnippet);
     String trimmed = doTrimIndent ? StringsKt.trimIndent(codeSnippet) : codeSnippet;
@@ -125,8 +206,15 @@ public final class HtmlSyntaxInfoUtil {
 
       List<QuickDocSyntaxHighlightingHandler.QuickDocHighlightInfo> semanticHighlighting =
         handler != null ? handler.performSemanticHighlighting(fakePsiFile) : Collections.emptyList();
-      var rangeIterator = semanticHighlighting.isEmpty() ? null : new HighlightInfoIterator(semanticHighlighting, scheme);
-      var html = getHtmlContent(fakePsiFile, preprocessedCode, rangeIterator, scheme, 0, preprocessedCode.length());
+      SyntaxInfoBuilder.RangeIterator rangeIterator =
+        semanticHighlighting.isEmpty() ? null : new HighlightInfoIterator(semanticHighlighting, scheme);
+      if (additionalIterator != null && rangeIterator != null) {
+        rangeIterator = new SyntaxInfoBuilder.CompositeRangeIterator(scheme, rangeIterator, additionalIterator);
+      }
+      else if (additionalIterator != null) {
+        rangeIterator = additionalIterator;
+      }
+      var html = getHtmlContent(fakePsiFile, preprocessedCode, rangeIterator, scheme, 0, preprocessedCode.length(), properties);
       var postProcessedHtml = handler != null && html != null ? handler.postProcessHtml(html.toString()) : html;
       buffer.append(postProcessedHtml);
     }
@@ -141,6 +229,18 @@ public final class HtmlSyntaxInfoUtil {
     int startOffset,
     int endOffset
   ) {
+    return getHtmlContent(file, text, ownRangeIterator, schemeToUse, startOffset, endOffset, HtmlGeneratorProperties.createDefault());
+  }
+
+  private static @Nullable CharSequence getHtmlContent(
+    @NotNull PsiFile file,
+    @NotNull CharSequence text,
+    @Nullable SyntaxInfoBuilder.RangeIterator ownRangeIterator,
+    @NotNull EditorColorsScheme schemeToUse,
+    int startOffset,
+    int endOffset,
+    @NotNull HtmlGeneratorProperties properties
+  ) {
     EditorHighlighter highlighter =
       HighlighterFactory.createHighlighter(file.getViewProvider().getVirtualFile(), schemeToUse, file.getProject());
     highlighter.setText(text);
@@ -151,7 +251,7 @@ public final class HtmlSyntaxInfoUtil {
                        ? highlighterRangeIterator
                        : new SyntaxInfoBuilder.CompositeRangeIterator(schemeToUse, highlighterRangeIterator, ownRangeIterator);
 
-    return getHtmlContent(text, ownRangeIterator, schemeToUse, endOffset);
+    return getHtmlContent(text, ownRangeIterator, schemeToUse, endOffset, properties);
   }
 
   public static @Nullable CharSequence getHtmlContent(
@@ -159,6 +259,16 @@ public final class HtmlSyntaxInfoUtil {
     @NotNull SyntaxInfoBuilder.RangeIterator ownRangeIterator,
     @NotNull EditorColorsScheme schemeToUse,
     int stopOffset
+  ) {
+    return getHtmlContent(text, ownRangeIterator, schemeToUse, stopOffset, HtmlGeneratorProperties.createDefault());
+  }
+
+  private static @Nullable CharSequence getHtmlContent(
+    @NotNull CharSequence text,
+    @NotNull SyntaxInfoBuilder.RangeIterator ownRangeIterator,
+    @NotNull EditorColorsScheme schemeToUse,
+    int stopOffset,
+    @NotNull HtmlGeneratorProperties properties
   ) {
     SyntaxInfoBuilder.Context context = new SyntaxInfoBuilder.Context(text, schemeToUse, 0);
     SyntaxInfoBuilder.MyMarkupIterator iterator = new SyntaxInfoBuilder.MyMarkupIterator(text, ownRangeIterator, schemeToUse);
@@ -170,7 +280,7 @@ public final class HtmlSyntaxInfoUtil {
       iterator.dispose();
     }
     SyntaxInfo info = context.finish();
-    try (HtmlSyntaxInfoReader data = new SimpleHtmlSyntaxInfoReader(info)) {
+    try (HtmlSyntaxInfoReader data = new CustomHtmlSyntaxInfoReader(info, properties)) {
       data.setRawText(text.toString());
       return data.getBuffer();
     }
@@ -312,30 +422,72 @@ public final class HtmlSyntaxInfoUtil {
   }
 
 
-  private static final class SimpleHtmlSyntaxInfoReader extends HtmlSyntaxInfoReader {
+  private static final class CustomHtmlSyntaxInfoReader extends HtmlSyntaxInfoReader {
+    private final HtmlGeneratorProperties myProperties;
 
-    private SimpleHtmlSyntaxInfoReader(SyntaxInfo info) {
+    private CustomHtmlSyntaxInfoReader(SyntaxInfo info, @NotNull HtmlGeneratorProperties properties) {
       super(info, 2);
+      myProperties = properties;
+    }
+
+    @Override
+    protected void generateCloseBodyHtmlTags() {
+      if (myProperties.generateHtmlTags) {
+        super.generateCloseBodyHtmlTags();
+      }
+    }
+
+    @Override
+    protected void appendOpenBodyHtmlTags() {
+      if (myProperties.generateHtmlTags) {
+        super.appendOpenBodyHtmlTags();
+      }
+    }
+
+    @Override
+    protected void appendFontSizeRule() {
+      if (!myProperties.defaultFontSize) {
+        super.appendFontSizeRule();
+      }
     }
 
     @Override
     protected void appendCloseTags() {
-
+      if (myProperties.generateWrappedDivTags) {
+        super.appendCloseTags();
+      }
     }
+
 
     @Override
     protected void appendStartTags() {
-
+      if (myProperties.generateWrappedDivTags) {
+        super.appendStartTags();
+      }
     }
 
     @Override
     protected void defineBackground(int id, @NotNull StringBuilder styleBuffer) {
-
+      if (myProperties.generateBackground) {
+        super.defineBackground(id, styleBuffer);
+      }
     }
 
     @Override
     protected void appendFontFamilyRule(@NotNull StringBuilder styleBuffer, int fontFamilyId) {
+      if (myProperties.generateFontFamily) {
+        super.appendFontFamilyRule(styleBuffer, fontFamilyId);
+      }
+    }
 
+    @Override
+    public void handleText(int startOffset, int endOffset) {
+      if (myProperties.textHandler != null) {
+        myProperties.textHandler.handleText(startOffset, endOffset, myResultBuffer, () -> super.handleText(startOffset, endOffset));
+      }
+      else {
+        super.handleText(startOffset, endOffset);
+      }
     }
   }
 
@@ -362,15 +514,18 @@ public final class HtmlSyntaxInfoUtil {
 
     @Override
     public boolean atEnd() {
-      return !myIterator.hasNext(); }
+      return !myIterator.hasNext();
+    }
 
     @Override
     public int getRangeStart() {
-      return myCurrentInfo.getStartOffset(); }
+      return myCurrentInfo.getStartOffset();
+    }
 
     @Override
     public int getRangeEnd() {
-      return myCurrentInfo.getEndOffset(); }
+      return myCurrentInfo.getEndOffset();
+    }
 
     @Override
     public TextAttributes getTextAttributes() {
@@ -381,5 +536,116 @@ public final class HtmlSyntaxInfoUtil {
     public void dispose() { }
   }
 
+  /**
+   * Represents properties for configuring the HTML generation process.
+   * This class is a record with parameters for toggling various features such as generating background, font family, main tags, and HTML tags.
+   * Additionally, it allows specifying the default font size and a custom text handler for handling text within specified ranges.
+   * This class provides a factory method {@link #createDefault()} to create default properties.
+   */
 
+  @ApiStatus.Experimental
+  public static class HtmlGeneratorProperties {
+    private boolean generateBackground = false;
+    private boolean generateFontFamily = false;
+    private boolean generateWrappedDivTags = false;
+    private boolean generateHtmlTags = false;
+    private boolean defaultFontSize = false;
+    @Nullable
+    private TextHandler textHandler = null;
+
+    private HtmlGeneratorProperties() { }
+
+    public static HtmlGeneratorProperties createDefault() {
+      return new HtmlGeneratorProperties();
+    }
+
+    /**
+     * Enables the generation of background colors for all texts, which are different from default editor background color
+     * during the HTML generation process.
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with the background generation enabled
+     */
+    public HtmlGeneratorProperties generateBackground() {
+      this.generateBackground = true;
+      return this;
+    }
+
+    /**
+     * Enables the generation of the current IDEA font family definitions during the HTML generation process.
+     * Usually, default browser fonts are used.
+     * If this text is used inside IDEA, it is supposed to use IDEA's font families as well
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with font family generation enabled
+     */
+    public HtmlGeneratorProperties generateFontFamily() {
+      this.generateFontFamily = true;
+      return this;
+    }
+
+    /**
+     * Enables the generation of wrapped HTML tags, including enabling the wrapping of content
+     * into a standard set of tags such as div, pre during the HTML generation process.
+     * Should be used together with {@link HtmlGeneratorProperties#generateHtmlTags()}
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with the wrapped tags generation enabled
+     */
+    public HtmlGeneratorProperties generateWrappedTags() {
+      this.generateWrappedDivTags = true;
+      return this;
+    }
+
+    /**
+     * Wrap text into the next tags: `html`, `head`, `body`.
+     * Part of {@link HtmlGeneratorProperties#generateWrappedTags()}
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with HTML tag generation enabled
+     */
+    public HtmlGeneratorProperties generateHtmlTags() {
+      this.generateHtmlTags = true;
+      return this;
+    }
+
+    /**
+     * Enables the generation of font size definitions during the HTML generation process.
+     * Usually, the default browser font size is used.
+     * If this text is used inside IDEA, it is supposed to use IDEA's font size as well
+     *
+     * @return the updated instance of {@code HtmlGeneratorProperties} with font size generation enabled
+     */
+    public HtmlGeneratorProperties generateFontSize() {
+      this.defaultFontSize = true;
+      return this;
+    }
+
+    /**
+     * Sets the custom text handler to be used during HTML generation.
+     *
+     *
+     * @param textHandler the {@code TextHandler} implementation that defines how text will be processed and modified
+     *                    during the HTML generation process; must not be null
+     * @return the updated instance of {@code HtmlGeneratorProperties} with the specified text handler set
+     * @see TextHandler
+     */
+    public HtmlGeneratorProperties textHandler(@NotNull TextHandler textHandler) {
+      this.textHandler = textHandler;
+      return this;
+    }
+
+    /**
+     * Interface for handling text within a specified range and appending the result to a StringBuilder.
+     * Implementations of this interface should define the behavior when text is handled, such as formatting or modifying the text.
+     */
+    @ApiStatus.Experimental
+    public interface TextHandler {
+      /**
+       * Handles the text within the specified range and appends the result to a StringBuilder.
+       *
+       * @param startOffset  the starting offset of the text to handle
+       * @param endOffset    the ending offset of the text to handle
+       * @param resultBuffer the StringBuilder to which the handled text will be appended
+       * @param superHandler a Runnable representing the super handler to invoke and update resultBuffer from original handler
+       */
+      void handleText(int startOffset, int endOffset, @NotNull StringBuilder resultBuffer, @Nullable Runnable superHandler);
+    }
+  }
 }

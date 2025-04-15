@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -202,7 +202,7 @@ private class FileProviderMapImpl : FileProviderMap, AtomicReference<ContextMap<
       if (currentProvider !== provider) {
         return false
       }
-      // todo ijpl-339 support default context???
+      // todo IJPL-339 support default context???
       //  how to handle case when they want to remove default context and we substitute it with another context???
 
       return@update map.remove(context)
@@ -348,7 +348,7 @@ private class ManyItemMap<V : Any>(
     newMap.put(key, value)
 
     val newDefaultContext = if (newMap[defaultContext] == null) {
-      key // todo ijpl-339 does changing the default context require some more care???
+      key // todo IJPL-339 does changing the default context require some more care???
     }
     else {
       defaultContext
@@ -399,7 +399,7 @@ private class ManyItemMap<V : Any>(
     }
 
     val newDefaultContext = when (key) {
-      defaultContext -> newMap.keys.first() // todo ijpl-339 does changing the default context require some more care???
+      defaultContext -> newMap.keys.first() // todo IJPL-339 does changing the default context require some more care???
       else -> defaultContext
     }
     return ManyItemMap(newMap, newDefaultContext)

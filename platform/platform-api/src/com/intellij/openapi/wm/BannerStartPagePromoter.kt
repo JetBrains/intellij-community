@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -117,6 +118,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
 
   protected open val closeAction: ((promoPanel: JPanel) -> Unit)? = null
 
+  @RequiresEdt
   protected abstract fun runAction()
 
   protected open fun onBannerShown() {}

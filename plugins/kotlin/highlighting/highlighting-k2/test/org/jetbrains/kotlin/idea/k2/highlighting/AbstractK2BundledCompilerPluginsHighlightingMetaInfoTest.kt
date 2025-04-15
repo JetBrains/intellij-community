@@ -99,6 +99,9 @@ private object ProjectDescriptorWithStdlibSourcesAndExtraLibraries : ProjectDesc
 
         // annotations for Compose compiler plugin
         "org.jetbrains.compose.runtime:runtime-desktop:1.5.0",
+
+        // functions declarations for Kotlin DataFrame plugin
+        "org.jetbrains.kotlinx:dataframe-core:0.16.0-dev-6330",
     )
 
     // paths are relative to `community/plugins/kotlin/idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins`

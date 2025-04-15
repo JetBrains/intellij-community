@@ -58,7 +58,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -5949507648312297742L
+        const val serializationHash = -521719455547022632L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -438,9 +438,8 @@ class RdTestSession private constructor(
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _exitApp: RdSignal<Unit>,
     private val _showNotification: RdSignal<String>,
-    private val _closeProject: RdCall<Unit, Boolean>,
     private val _forceLeaveAllModals: RdCall<Boolean, Unit>,
-    private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
+    private val _closeAllOpenedProjects: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<RdTestActionParameters, String?>,
     private val _runNextActionGetComponentData: RdCall<RdTestActionParameters, RdTestComponentData>,
     private val _requestFocus: RdCall<Boolean, Boolean>,
@@ -470,9 +469,8 @@ class RdTestSession private constructor(
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _exitApp = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _showNotification = RdSignal.read(ctx, buffer, FrameworkMarshallers.String)
-            val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _forceLeaveAllModals = RdCall.read(ctx, buffer, FrameworkMarshallers.Bool, FrameworkMarshallers.Void)
-            val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            val _closeAllOpenedProjects = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, RdTestActionParameters, __StringNullableSerializer)
             val _runNextActionGetComponentData = RdCall.read(ctx, buffer, RdTestActionParameters, RdTestComponentData)
             val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.Bool, FrameworkMarshallers.Bool)
@@ -483,7 +481,7 @@ class RdTestSession private constructor(
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _getProductCodeAndVersion = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, RdProductInfo)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _exitApp, _showNotification, _closeProject, _forceLeaveAllModals, _closeProjectIfOpened, _runNextAction, _runNextActionGetComponentData, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised, _getProductCodeAndVersion).withId(_id)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _exitApp, _showNotification, _forceLeaveAllModals, _closeAllOpenedProjects, _runNextAction, _runNextActionGetComponentData, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised, _getProductCodeAndVersion).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -497,9 +495,8 @@ class RdTestSession private constructor(
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._exitApp)
             RdSignal.write(ctx, buffer, value._showNotification)
-            RdCall.write(ctx, buffer, value._closeProject)
             RdCall.write(ctx, buffer, value._forceLeaveAllModals)
-            RdCall.write(ctx, buffer, value._closeProjectIfOpened)
+            RdCall.write(ctx, buffer, value._closeAllOpenedProjects)
             RdCall.write(ctx, buffer, value._runNextAction)
             RdCall.write(ctx, buffer, value._runNextActionGetComponentData)
             RdCall.write(ctx, buffer, value._requestFocus)
@@ -522,9 +519,8 @@ class RdTestSession private constructor(
     val sendException: IAsyncSignal<RdTestSessionException> get() = _sendException
     val exitApp: IAsyncSignal<Unit> get() = _exitApp
     val showNotification: ISignal<String> get() = _showNotification
-    val closeProject: RdCall<Unit, Boolean> get() = _closeProject
     val forceLeaveAllModals: RdCall<Boolean, Unit> get() = _forceLeaveAllModals
-    val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
+    val closeAllOpenedProjects: RdCall<Unit, Boolean> get() = _closeAllOpenedProjects
     val runNextAction: RdCall<RdTestActionParameters, String?> get() = _runNextAction
     val runNextActionGetComponentData: RdCall<RdTestActionParameters, RdTestComponentData> get() = _runNextActionGetComponentData
     val requestFocus: RdCall<Boolean, Boolean> get() = _requestFocus
@@ -544,9 +540,8 @@ class RdTestSession private constructor(
     init {
         _sendException.async = true
         _exitApp.async = true
-        _closeProject.async = true
         _forceLeaveAllModals.async = true
-        _closeProjectIfOpened.async = true
+        _closeAllOpenedProjects.async = true
         _runNextAction.async = true
         _runNextActionGetComponentData.async = true
         _requestFocus.async = true
@@ -564,9 +559,8 @@ class RdTestSession private constructor(
         bindableChildren.add("sendException" to _sendException)
         bindableChildren.add("exitApp" to _exitApp)
         bindableChildren.add("showNotification" to _showNotification)
-        bindableChildren.add("closeProject" to _closeProject)
         bindableChildren.add("forceLeaveAllModals" to _forceLeaveAllModals)
-        bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
+        bindableChildren.add("closeAllOpenedProjects" to _closeAllOpenedProjects)
         bindableChildren.add("runNextAction" to _runNextAction)
         bindableChildren.add("runNextActionGetComponentData" to _runNextActionGetComponentData)
         bindableChildren.add("requestFocus" to _requestFocus)
@@ -596,7 +590,6 @@ class RdTestSession private constructor(
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
         RdSignal<String>(FrameworkMarshallers.String),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Boolean, Unit>(FrameworkMarshallers.Bool, FrameworkMarshallers.Void),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<RdTestActionParameters, String?>(RdTestActionParameters, __StringNullableSerializer),
@@ -626,9 +619,8 @@ class RdTestSession private constructor(
             print("sendException = "); _sendException.print(printer); println()
             print("exitApp = "); _exitApp.print(printer); println()
             print("showNotification = "); _showNotification.print(printer); println()
-            print("closeProject = "); _closeProject.print(printer); println()
             print("forceLeaveAllModals = "); _forceLeaveAllModals.print(printer); println()
-            print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
+            print("closeAllOpenedProjects = "); _closeAllOpenedProjects.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
             print("runNextActionGetComponentData = "); _runNextActionGetComponentData.print(printer); println()
             print("requestFocus = "); _requestFocus.print(printer); println()
@@ -654,9 +646,8 @@ class RdTestSession private constructor(
             _sendException.deepClonePolymorphic(),
             _exitApp.deepClonePolymorphic(),
             _showNotification.deepClonePolymorphic(),
-            _closeProject.deepClonePolymorphic(),
             _forceLeaveAllModals.deepClonePolymorphic(),
-            _closeProjectIfOpened.deepClonePolymorphic(),
+            _closeAllOpenedProjects.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
             _runNextActionGetComponentData.deepClonePolymorphic(),
             _requestFocus.deepClonePolymorphic(),

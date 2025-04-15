@@ -6,8 +6,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAccessorCandidate;
-import com.intellij.lang.java.parser.DeclarationParser;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordConstructorCandidate;
+import com.intellij.java.syntax.parser.DeclarationParser;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -40,16 +41,29 @@ class RecordBuilder {
     myRecordText.append("record");
   }
 
-  void addRecordHeader(@Nullable PsiMethod canonicalCtor, @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
+  void addRecordHeader(@Nullable RecordConstructorCandidate canonicalCtorCandidate,
+                       @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldToAccessorCandidateMap) {
     myRecordText.append("(");
     StringJoiner recordComponentsJoiner = new StringJoiner(",");
-    if (canonicalCtor == null) {
-      fieldAccessors.forEach(
-        (field, fieldAccessor) -> recordComponentsJoiner.add(generateComponentText(field, field.getType(), fieldAccessor)));
+    if (canonicalCtorCandidate == null) {
+      fieldToAccessorCandidateMap.forEach((field, fieldAccessor) -> {
+        recordComponentsJoiner.add(generateComponentText(field, field.getType(), fieldAccessor));
+      });
     }
     else {
+      PsiMethod canonicalCtor = canonicalCtorCandidate.getConstructorMethod();
       Arrays.stream(canonicalCtor.getParameterList().getParameters())
-        .map(parameter -> generateComponentText(parameter, fieldAccessors))
+        .map(parameter -> {
+          PsiField field = canonicalCtorCandidate.getCtorParamsToFields().get(parameter);
+          if (field == null) {
+            field = ContainerUtil.find(myOriginClass.getFields(), f -> f.getName().equals(parameter.getName()));
+            if (field == null) {
+              throw new IllegalStateException("no field found corresponding to constructor parameter '" + parameter.getName() + "'");
+            }
+          }
+
+          return generateComponentText(field, parameter, fieldToAccessorCandidateMap.get(field));
+        })
         .forEach(recordComponentsJoiner::add);
     }
     myRecordText.append(recordComponentsJoiner);
@@ -88,33 +102,32 @@ class RecordBuilder {
   @NotNull
   PsiClass build() {
     JavaDummyElement dummyElement = new JavaDummyElement(
-      myRecordText.toString(), builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
-      LanguageLevel.JDK_16);
+      myRecordText.toString(), (builder, languageLevel) -> {
+      new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
+    }, LanguageLevel.JDK_16);
     DummyHolder holder = DummyHolderFactory.createHolder(myOriginClass.getManager(), dummyElement, myOriginClass);
     return (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
   }
 
-  private static @NotNull String generateComponentText(@NotNull PsiParameter parameter,
-                                                       @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
-    PsiField field = null;
-    FieldAccessorCandidate fieldAccessorCandidate = null;
-    for (var entry : fieldAccessors.entrySet()) {
-      if (entry.getKey().getName().equals(parameter.getName())) {
-        field = entry.getKey();
-        fieldAccessorCandidate = entry.getValue();
-        break;
-      }
+  private static @NotNull String generateComponentText(@NotNull PsiField field,
+                                                       @NotNull PsiParameter ctorParameter,
+                                                       @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
+    if (field == null) {
+      throw new IllegalStateException("no field found to which the constructor parameter '" +
+                                      ctorParameter.getType().toString() +
+                                      ctorParameter.getName() +
+                                      "' is assigned");
     }
-    assert field != null;
-    // Do not use parameter.getType() directly, as type annotations may differ; prefer type annotations on the field
+    // Don't use parameter.getType() directly, as type annotations may differ; prefer type annotations on the field
     PsiType componentType = field.getType();
-    if (parameter.getType() instanceof PsiEllipsisType && componentType instanceof PsiArrayType arrayType) {
+    if (ctorParameter.getType() instanceof PsiEllipsisType && componentType instanceof PsiArrayType arrayType) {
       componentType = new PsiEllipsisType(arrayType.getComponentType(), arrayType.getAnnotationProvider());
     }
     return generateComponentText(field, componentType, fieldAccessorCandidate);
   }
 
-  private static @NotNull String generateComponentText(@NotNull PsiField field, @NotNull PsiType componentType,
+  private static @NotNull String generateComponentText(@NotNull PsiField field,
+                                                       @NotNull PsiType componentType,
                                                        @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
     PsiAnnotation[] fieldAnnotations = field.getAnnotations();
     String fieldAnnotationsText = Arrays.stream(fieldAnnotations)

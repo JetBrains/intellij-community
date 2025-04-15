@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.IdeGlassPane
@@ -39,6 +41,7 @@ open class InternalUICustomization {
       return result
     }
   }
+  open fun progressWidget(project: Project): JComponent? = null
 
   open val aiComponentMarker: AiInternalUiComponentMarker = AiInternalUiComponentMarker()
 
@@ -60,11 +63,17 @@ open class InternalUICustomization {
   else
     StripesUxCustomizer ()
 
+  open fun getEditorToolbarButtonLook(): ActionButtonLook? = null
+
+  open fun installBackgroundUpdater(component: JComponent) {}
+
   open fun frameHeaderBackgroundConverter(color: Color?): Color? = color
 
   open fun transformGraphics(component: JComponent, graphics: Graphics): Graphics = graphics
 
-  open fun balloonComponentGraphics(component: JComponent, graphics: Graphics): Graphics = graphics
+  open fun transformButtonGraphics(graphics: Graphics): Graphics = graphics
+
+  open fun preserveGraphics(graphics: Graphics): Graphics = graphics
 
   open fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider? = null
 

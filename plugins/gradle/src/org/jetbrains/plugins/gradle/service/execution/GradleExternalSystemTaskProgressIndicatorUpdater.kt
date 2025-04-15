@@ -20,7 +20,7 @@ import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
+import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -99,8 +99,7 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
       return
     }
     val indicators = taskIndicators.computeIfAbsent(taskId) { ConcurrentHashMap() }
-    val csp = GradleCoroutineScopeProvider.getInstance(project)
-    val indicator = DownloadProgressIndicator(event.message, csp.cs, project, textWrapper)
+    val indicator = DownloadProgressIndicator(event.message, project.gradleCoroutineScope, project, textWrapper)
       .also { it.start() }
     indicators[event.downloadPath] = indicator
   }

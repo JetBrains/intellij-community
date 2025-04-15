@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal fun KtElement.containingFunction(): KtNamedFunction? {
+fun KtElement.containingFunction(): KtNamedFunction? {
     val containingDeclaration = containingDeclarationForPseudocode
     return if (containingDeclaration is KtFunctionLiteral) {
         val call = containingDeclaration.getStrictParentOfType<KtCallExpression>()

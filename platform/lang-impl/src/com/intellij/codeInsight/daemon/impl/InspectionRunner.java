@@ -144,7 +144,7 @@ class InspectionRunner {
                                     "\n"+" inside:"+restrictedInside.size()+ ": "+restrictedInside+
                                     "\n"+"; outside:"+restrictedOutside.size()+": "+restrictedOutside);
     }
-    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, session -> {
+    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, null, session -> {
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
         LocalInspectionTool tool = toolWrapper.getTool();
@@ -582,10 +582,12 @@ class InspectionRunner {
             return;
           }
         }
-        LOG.error(PluginException.createByClass("Inspection '"+myToolWrapper+"' ("+myToolWrapper.getTool().getClass()+")" +
-         " generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
-         " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
-         "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")", null, myToolWrapper.getTool().getClass()));
+        if (isOnTheFly()) {
+          LOG.error(PluginException.createByClass("Inspection '"+myToolWrapper+"' ("+myToolWrapper.getTool().getClass()+")" +
+           " generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
+           " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
+           "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")", null, myToolWrapper.getTool().getClass()));
+        }
       }
 
       saveProblem(problemDescriptor);

@@ -263,6 +263,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
+  public @Nullable List<@NotNull String> getOwnMatchArgs() {
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getMatchArgs();
+    }
+
+    final PyTargetExpression matchArgs = ContainerUtil.find(getClassAttributes(), target -> PyNames.MATCH_ARGS.equals(target.getName()));
+    if (matchArgs != null) {
+      final PyExpression value = matchArgs.findAssignedValue();
+      return PyUtilCore.strListValue(value);
+    }
+
+    return null;
+  }
+
+  @Override
   public PyClass @NotNull [] getSuperClasses(@Nullable TypeEvalContext context) {
     final List<PyClassLikeType> superTypes = getSuperClassTypes(notNullizeContext(context));
     if (superTypes.isEmpty()) {
@@ -674,18 +690,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         final PyDecoratorList decoratorList = method.getDecoratorList();
         if (decoratorList != null) {
           for (PyDecorator deco : decoratorList.getDecorators()) {
+            TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+            List<PyKnownDecorator> knownDecorators = PyKnownDecoratorUtil.asKnownDecorators(deco, context);
+            for (PyKnownDecorator knownDecorator : knownDecorators) {
+              if (knownDecorator.isMutableProperty()) {
+                getter = new Maybe<>(method);
+                setter = new Maybe<>(method);
+                deleter = new Maybe<>(method);
+                break;
+              }
+
+              if (knownDecorator.isProperty()) {
+                getter = new Maybe<>(method);
+                break;
+              }
+            }
+
             final QualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
-              String decoName = qname.toString();
-              for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getExtensionList()) {
-                final String knownName = provider.toKnownDecorator(decoName);
-                if (knownName != null) {
-                  decoName = knownName;
-                }
-              }
-              if (PyNames.PROPERTY.equals(decoName) ||
-                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject())) ||
-                  qname.matches(decoratorName, PyNames.GETTER)) {
+              if (qname.matches(decoratorName, PyNames.GETTER)) {
                 getter = new Maybe<>(method);
               }
               else if (qname.matches(decoratorName, PyNames.SETTER)) {

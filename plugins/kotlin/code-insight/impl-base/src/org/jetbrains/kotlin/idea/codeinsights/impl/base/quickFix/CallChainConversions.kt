@@ -1,18 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction.*
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtTryExpression
-import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
 data class CallChainConversion(
@@ -291,3 +302,79 @@ enum class AssociateFunction(val functionName: String) {
     fun name(hasDestination: Boolean): String =
         if (hasDestination) "${functionName}To" else functionName
 }
+
+@ApiStatus.Internal
+object AssociateFunctionUtil {
+    @ApiStatus.Internal
+    fun KtCallExpression.lambda(): KtLambdaExpression? {
+        return lambdaArguments.singleOrNull()?.getArgumentExpression() as? KtLambdaExpression ?: getLastLambdaExpression()
+    }
+
+    @ApiStatus.Internal
+    fun KtFunctionLiteral.lastStatement(): KtExpression? {
+        return bodyExpression?.statements?.lastOrNull()
+    }
+
+    @ApiStatus.Internal
+    fun getAssociateFunctionAndProblemHighlightType(
+        dotQualifiedExpression: KtDotQualifiedExpression,
+    ): Pair<AssociateFunction, ProblemHighlightType>? {
+        val callExpression = dotQualifiedExpression.callExpression ?: return null
+        val lambda = callExpression.lambda() ?: return null
+        if (lambda.valueParameters.size > 1) return null
+        val functionLiteral = lambda.functionLiteral
+        if (functionLiteral.anyDescendantOfType<KtReturnExpression> { it.labelQualifier != null }) return null
+        val lastStatement = functionLiteral.lastStatement() ?: return null
+        analyze(dotQualifiedExpression) {
+            val (keySelector, valueTransform) = pair(lastStatement) ?: return null
+            val lambdaParameter: KaValueParameterSymbol = functionLiteral.symbol.valueParameters.singleOrNull() ?: return null
+            return when {
+                keySelector.isReferenceTo(lambdaParameter) ->
+                    ASSOCIATE_WITH to GENERIC_ERROR_OR_WARNING
+
+                valueTransform.isReferenceTo(lambdaParameter) ->
+                    ASSOCIATE_BY to GENERIC_ERROR_OR_WARNING
+
+                else -> {
+                    if (functionLiteral.bodyExpression?.statements?.size != 1) return null
+                    ASSOCIATE_BY_KEY_AND_VALUE to INFORMATION
+                }
+            }
+        }
+    }
+
+    context(KaSession)
+    private fun KtExpression.isReferenceTo(another: KaValueParameterSymbol): Boolean {
+        val referenceExpression = this as? KtNameReferenceExpression ?: return false
+        val symbol = referenceExpression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
+        return symbol == another
+    }
+
+    @ApiStatus.Internal
+    fun KaSession.pair(expression: KtExpression): Pair<KtExpression, KtExpression>? {
+        return with(expression) {
+            when (this) {
+                is KtBinaryExpression -> {
+                    if (operationReference.text != "to") return null
+                    val left = left ?: return null
+                    val right = right ?: return null
+                    left to right
+                }
+                is KtCallExpression -> {
+                    if (calleeExpression?.text != "Pair") return null
+                    if (valueArguments.size != 2) return null
+                    val constructorSymbol = resolveToCall()?.singleConstructorCallOrNull()?.symbol ?: return null
+                    val classId = (constructorSymbol.returnType as? KaClassType)?.classId ?: return null
+                    if (classId != PAIR_CLASS_ID) return null
+                    val first = valueArguments[0]?.getArgumentExpression() ?: return null
+                    val second = valueArguments[1]?.getArgumentExpression() ?: return null
+                    first to second
+                }
+                else -> return null
+            }
+        }
+    }
+}
+
+private val PAIR_CLASS_ID =
+    ClassId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("Pair"))

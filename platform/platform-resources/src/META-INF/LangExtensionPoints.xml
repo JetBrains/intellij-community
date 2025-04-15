@@ -176,6 +176,7 @@
     <extensionPoint name="searchEverywhereRemoteConverter" interface="com.intellij.ide.actions.searcheverywhere.remote.RemoteSearchEverywhereConverterSupplier" dynamic="true"/>
     <extensionPoint name="searchEverywhereReorderingService" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService" dynamic="true"/>
     <extensionPoint name="searchEverywherePreviewPrimaryUsageFinder" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewPrimaryUsageFinder" dynamic="true" />
+    <extensionPoint name="searchEverywhere.manager" interface="com.intellij.ide.actions.SearchEverywhereManagerFactory" dynamic="true" />
 
     <extensionPoint name="runAnything.executionProvider" interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider" dynamic="true"/>
     <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler" dynamic="true"/>
@@ -699,6 +700,8 @@
                     interface="com.intellij.platform.backend.documentation.SymbolDocumentationTargetProvider"/>
     <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.psiTargetProvider" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.lookupElementTargetProvider" dynamic="true"
+                    interface="com.intellij.platform.backend.documentation.LookupElementDocumentationTargetProvider"/>
     <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.inlineDocumentationProvider" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.InlineDocumentationProvider"/>
     <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.linkHandler" dynamic="true"
@@ -760,14 +763,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.CommandProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.applicable.command"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.ApplicableCompletionCommand"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.skipper"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper"/>
     </extensionPoint>
+    <extensionPoint name="codeInsight.completion.error.intention" interface="com.intellij.codeInsight.completion.command.commands.ErrorFixCommandProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.offset.provider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

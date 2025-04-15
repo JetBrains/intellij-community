@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -9,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -21,14 +21,18 @@ import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.await
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.GradleJavaCoroutineScopeService.Companion.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadLegacyDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -47,12 +51,23 @@ object GradleArtifactDownloader {
    * @param externalProjectPath path to the directory with the Gradle module that should be used to execute the task.
    */
   @JvmStatic
-  suspend fun downloadArtifact(
+  fun downloadArtifact(
     project: Project,
     executionName: @Nls String,
     artifactNotation: String,
     externalProjectPath: String,
   ): CompletableFuture<Path> {
+    return project.gradleCoroutineScope.async {
+      downloadArtifactImpl(project, executionName, artifactNotation, externalProjectPath)
+    }.asCompletableFuture()
+  }
+
+  private suspend fun downloadArtifactImpl(
+    project: Project,
+    executionName: @Nls String,
+    artifactNotation: String,
+    externalProjectPath: String,
+  ): Path {
     val taskName = "ijDownloadArtifact" + UUID.randomUUID().toString().substring(0, 12)
     val settings = ExternalSystemTaskExecutionSettings().also {
       it.executionName = executionName
@@ -64,53 +79,44 @@ object GradleArtifactDownloader {
     val eelDescriptor = project.getEelDescriptor()
     val eel = eelDescriptor.upgrade()
     val absoluteTaskOutputFileEelPath = createTaskOutputFile(eel)
-    val userData = prepareUserData(
-      artifactNotation,
-      taskName,
-      absoluteTaskOutputFileEelPath.asCanonicalResolvedPath(eel),
-      externalProjectPath
-    )
-    val resultWrapper = CompletableFuture<Path>()
     val taskOutputFile = absoluteTaskOutputFileEelPath.asNioPath()
-    val listener = object : ExternalSystemTaskNotificationListener {
-      override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
-        try {
-          val downloadedArtifactPath = taskOutputFile.readText().asResolvedAbsolutePath(eel)
-          if (!isValidJar(downloadedArtifactPath)) {
-            GradleLog.LOG.warn("Incorrect file header: $downloadedArtifactPath. Unable to process downloaded file as a JAR file")
-            FileUtil.delete(taskOutputFile)
-            resultWrapper.completeExceptionally(IllegalStateException("Incorrect file header: $downloadedArtifactPath."))
-            return
-          }
-          FileUtil.delete(taskOutputFile)
-          resultWrapper.complete(downloadedArtifactPath)
-        }
-        catch (e: IOException) {
-          GradleLog.LOG.warn(e)
-          resultWrapper.completeExceptionally(e)
-          return
-        }
+    try {
+      val userData = prepareUserData(
+        artifactNotation,
+        taskName,
+        absoluteTaskOutputFileEelPath.asCanonicalResolvedPath(eel),
+        externalProjectPath
+      )
+      val future = CompletableFuture<Nothing?>()
+      ExternalSystemUtil.runTask(
+        TaskExecutionSpec.create()
+          .withProject(project)
+          .withSystemId(GradleConstants.SYSTEM_ID)
+          .withSettings(settings)
+          .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+          .withUserData(userData)
+          .withResultListener(future)
+          .withActivateToolWindowBeforeRun(false)
+          .withActivateToolWindowOnFailure(false)
+          .build()
+      )
+      future.await()
+      val downloadedArtifactPath = taskOutputFile.readText().asResolvedAbsolutePath(eel)
+      if (!isValidJar(downloadedArtifactPath)) {
+        throw IllegalStateException("Incorrect file header: $downloadedArtifactPath. Unable to process downloaded file as a JAR file")
       }
-
-      override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
-        FileUtil.delete(taskOutputFile)
-        GradleDependencySourceDownloaderErrorHandler.handle(project = project,
-                                                            externalProjectPath = externalProjectPath,
-                                                            artifact = artifactNotation,
-                                                            exception = exception
-        )
-        resultWrapper.completeExceptionally(IllegalStateException("Unable to download artifact."))
-      }
+      return downloadedArtifactPath
     }
-    val spec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)
-      .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-      .withListener(listener)
-      .withUserData(userData)
-      .withActivateToolWindowBeforeRun(false)
-      .withActivateToolWindowOnFailure(false)
-      .build()
-    ExternalSystemUtil.runTask(spec)
-    return resultWrapper
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      GradleDependencySourceDownloaderErrorHandler.handle(project, externalProjectPath, artifactNotation, e)
+      throw IllegalStateException("Unable to download artifact.", e)
+    }
+    finally {
+      FileUtil.delete(taskOutputFile)
+    }
   }
 
   private fun prepareUserData(artifactNotation: String, taskName: String, taskOutputPath: Path, externalProjectPath: String)
@@ -163,4 +169,20 @@ object GradleArtifactDownloader {
     val eelPath = eel.fs.getPath(this)
     return eelPath.asNioPath()
   }
+
+  private fun TaskExecutionSpecBuilder.withResultListener(future: CompletableFuture<Nothing?>) = withListener(
+    object : ExternalSystemTaskNotificationListener {
+      override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
+        future.complete(null)
+      }
+
+      override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
+        future.cancel(true)
+      }
+
+      override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
+        future.completeExceptionally(exception)
+      }
+    }
+  )
 }

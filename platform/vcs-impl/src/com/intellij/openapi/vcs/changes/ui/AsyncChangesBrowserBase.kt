@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
@@ -17,7 +17,7 @@ abstract class AsyncChangesBrowserBase(project: Project,
   override fun createTreeList(project: Project,
                               showCheckboxes: Boolean,
                               highlightProblems: Boolean): AsyncChangesTree {
-    return AsyncChangesBrowserTreeList(this, project, showCheckboxes, highlightProblems)
+    return AsyncChangesBrowserTreeList(this, project, showCheckboxes, highlightProblems, false)
   }
 
   override fun getViewer(): AsyncChangesTree {
@@ -33,11 +33,13 @@ abstract class AsyncChangesBrowserBase(project: Project,
     viewer.shutdown()
   }
 
-  private class AsyncChangesBrowserTreeList(private val browser: AsyncChangesBrowserBase,
-                                            project: Project,
-                                            showCheckboxes: Boolean,
-                                            highlightProblems: Boolean)
-    : AsyncChangesTree(project, showCheckboxes, highlightProblems) {
+  private class AsyncChangesBrowserTreeList(
+    private val browser: AsyncChangesBrowserBase,
+    project: Project,
+    showCheckboxes: Boolean,
+    highlightProblems: Boolean,
+    showConflictsNode: Boolean
+  ) : AsyncChangesTree(project, showCheckboxes, highlightProblems, showConflictsNode) {
 
     init {
       setDoubleClickAndEnterKeyHandler { browser.onDoubleClick() }

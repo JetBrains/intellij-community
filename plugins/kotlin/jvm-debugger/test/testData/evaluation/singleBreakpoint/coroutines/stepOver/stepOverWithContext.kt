@@ -39,6 +39,8 @@ fun main() = runBlocking {
                     counter++
                 }
             }
+            i.toString()
+            i.toString()
         }
     }
     println("Counter = $counter")

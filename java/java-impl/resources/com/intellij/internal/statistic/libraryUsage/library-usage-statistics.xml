@@ -237,7 +237,7 @@
   <technology name="kvision" root="io.kvision"/>
   <technology name="lagom" root="com.lightbend.lagom"/>
   <technology name="laminar" root="laminar"/>
-  <technology name="langchain4j" root="dev.langchain4j.model.chat"/>
+  <technology name="langchain4j" root="dev.langchain4j"/>
   <technology name="liquibase" root="liquibase"/>
   <technology name="log4j1" root="org.apache.log4j"/>
   <technology name="log4j" root="org.apache.logging.log4j"/>
@@ -247,6 +247,7 @@
   <technology name="macwire" root="macwire"/>
   <technology name="magnolia" root="magnolia1"/>
   <technology name="mapstruct" root="org.mapstruct"/>
+  <technology name="mcp-kotlin-sdk" root="io.modelcontextprotocol.kotlin.sdk"/>
   <technology name="micrometer" root="io.micrometer"/>
   <technology name="micronaut" root="io.micronaut"/>
   <technology name="microprofile" root="org.eclipse.microprofile"/>
@@ -274,6 +275,8 @@
   <technology name="npm-publish" root="dev.petuska.npm.publish"/>
   <technology name="okhttp3" root="okhttp3"/>
   <technology name="okio" root="okio"/>
+  <technology name="openai-java" root="com.openai.models"/>
+  <technology name="openai-kotlin-unofficial" root="com.aallam.openai"/>
   <technology name="opencv" root="org.opencv"/>
   <technology name="openfeign" root="feign"/>
   <technology name="openjpa" root="org.apache.openjpa.persistence"/>
@@ -341,6 +344,7 @@
   <technology name="spire" root="spire"/>
   <technology name="spock" root="spock"/>
   <technology name="spotbugs" root="edu.umd.cs.findbugs.annotations"/>
+  <technology name="spring-ai" root="org.springframework.ai"/>
   <technology name="spring-amqp" root="org.springframework.amqp"/>
   <technology name="spring-batch" root="org.springframework.batch"/>
   <technology name="spring-boot" root="org.springframework.boot"/>
@@ -409,6 +413,7 @@
   <technology name="webtau" root="org.testingisdocumenting.webtau"/>
   <technology name="weld" root="org.jboss.weld"/>
   <technology name="wiremock" root="com.github.tomakehurst.wiremock"/>
+  <technology name="xef-ai" root="com.xebia.functional.xef"/>
   <technology name="xmlgraphics" root="org.apache.xmlgraphics"/>
   <technology name="zio" root="zio"/>
   <technology name="zio-test" root="zio.test"/>

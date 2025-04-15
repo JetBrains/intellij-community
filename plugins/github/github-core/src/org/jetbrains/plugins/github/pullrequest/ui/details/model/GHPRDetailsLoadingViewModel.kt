@@ -4,9 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 
-internal interface GHPRDetailsLoadingViewModel {
+@ApiStatus.Internal
+interface GHPRDetailsLoadingViewModel {
   val detailsVm: StateFlow<ComputedResult<GHPRDetailsViewModel>>
 
   fun requestReload()

@@ -5,6 +5,10 @@ import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.tree.JavaElementTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link com.intellij.java.syntax.parser.JavaParser} instead
+ */
+@Deprecated
 public class JavaParser extends BasicJavaParser {
   public static final JavaParser INSTANCE = new JavaParser();
 

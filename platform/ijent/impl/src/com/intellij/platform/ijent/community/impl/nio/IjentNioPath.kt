@@ -5,6 +5,7 @@ import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -21,6 +22,7 @@ import kotlin.collections.plusAssign
  *   .getPath("/usr/bin/cowsay")
  * ```
  */
+@ApiStatus.Internal
 sealed class IjentNioPath protected constructor(
   internal val nioFs: IjentNioFileSystem,
   cachedAttributes: BasicFileAttributes?,

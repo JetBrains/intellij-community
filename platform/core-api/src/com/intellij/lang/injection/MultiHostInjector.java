@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -87,6 +88,6 @@ public interface MultiHostInjector extends PossiblyDumbAware {
   /**
    * @return PSI element types to feed to {@link #getLanguagesToInject(MultiHostRegistrar, PsiElement)}.
    */
-  @NotNull
+  @NotNull @Unmodifiable
   List<? extends Class<? extends PsiElement>> elementsToInjectIn();
 }

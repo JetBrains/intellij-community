@@ -110,11 +110,14 @@ c:com.intellij.dvcs.branch.DvcsBranchInfo
 - hashCode():I
 a:com.intellij.dvcs.branch.DvcsBranchManager
 - sf:DVCS_BRANCH_SETTINGS_CHANGED:com.intellij.util.messages.Topic
+- pf:myProject:com.intellij.openapi.project.Project
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.dvcs.branch.DvcsBranchSettings,com.intellij.dvcs.branch.BranchType[],com.intellij.dvcs.repo.AbstractRepositoryManager):V
 - p:getDefaultBranchNames(com.intellij.dvcs.branch.BranchType):java.util.Collection
 - getFavoriteBranches(com.intellij.dvcs.branch.BranchType):java.util.Map
+- getFavoriteRefs(com.intellij.dvcs.branch.BranchType,com.intellij.dvcs.repo.Repository):java.util.Set
 - isFavorite(com.intellij.dvcs.branch.BranchType,com.intellij.dvcs.repo.Repository,java.lang.String):Z
 - isGroupingEnabled(com.intellij.dvcs.branch.GroupingKey):Z
+- p:notifyFavoriteSettingsChanged(com.intellij.dvcs.repo.Repository):V
 - setFavorite(com.intellij.dvcs.branch.BranchType,com.intellij.dvcs.repo.Repository,java.lang.String,Z):V
 - setGrouping(com.intellij.dvcs.branch.GroupingKey,Z):V
 com.intellij.dvcs.branch.DvcsBranchManager$DvcsBranchManagerListener

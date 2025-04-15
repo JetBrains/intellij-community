@@ -1,0 +1,6 @@
+- name: lib/compilation-charts-jps.jar
+  modules:
+  - name: intellij.compilation.charts.jps
+- name: lib/compilation-charts.jar
+  modules:
+  - name: intellij.compilation.charts

@@ -6,12 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.SeUsageEventsLogger
-import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -21,13 +20,13 @@ class SePopupVm(val coroutineScope: CoroutineScope,
                 private val sessionRef: DurableRef<SeSessionEntity>,
                 tabs: List<SeTab>,
                 initialSearchPattern: String?,
-                private val onClose: suspend () -> Unit) {
+                private val closePopupHandler: () -> Unit) {
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(0)
   val currentTab: SeTabVm get() = tabVms[currentTabIndex.value.coerceIn(tabVms.indices)]
 
   val currentTabFlow: Flow<SeTabVm>
-  val searchResults: Flow<Flow<SeListItem>>
+  val searchResults: Flow<Flow<SeResultListEvent>>
 
   val searchPattern: MutableStateFlow<String> = MutableStateFlow(initialSearchPattern ?: "")
 
@@ -71,9 +70,9 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     usageLogger.tabSwitched()
   }
 
-  fun dispose() {
-    coroutineScope.launch {
-      onClose()
+  fun showTab(tabId: String) {
+    tabVms.indexOfFirst { it.tabId == tabId }.takeIf { it >= 0 }?.let {
+      currentTabIndex.value = it
     }
   }
 
@@ -84,6 +83,10 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     }
 
     usageLogger.contributorItemSelected()
+  }
+
+  fun closePopup() {
+    closePopupHandler()
   }
 }
 

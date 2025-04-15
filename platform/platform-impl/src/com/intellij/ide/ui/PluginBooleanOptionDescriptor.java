@@ -105,7 +105,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         }
       });
 
-    Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginIdSet(descriptors);
+    Set<PluginId> pluginIds = PluginUtils.toPluginIdSet(descriptors);
 
     DisabledPluginsState.Companion.addDisablePluginListener(new Runnable() {
       @Override

@@ -31,10 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -748,7 +745,7 @@ public final class SwitchUtils {
    * @return list of enum constants which are targets of the specified label; empty list if the supplied element is not a switch label,
    * or it is not an enum switch.
    */
-  public static @NotNull List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
+  public static @NotNull @Unmodifiable List<PsiEnumConstant> findEnumConstants(PsiSwitchLabelStatementBase label) {
     if (label == null) {
       return Collections.emptyList();
     }
@@ -866,7 +863,7 @@ public final class SwitchUtils {
    * @param statement The switch statement to analyze.
    * @return A list of unreachable branches that can be safely removed.
    */
-  public static List<PsiCaseLabelElement> findRemovableUnreachableBranches(PsiCaseLabelElement reachableLabel,
+  public static @Unmodifiable List<PsiCaseLabelElement> findRemovableUnreachableBranches(PsiCaseLabelElement reachableLabel,
                                                                            PsiSwitchBlock statement) {
     PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(reachableLabel, PsiSwitchLabelStatementBase.class);
     List<PsiSwitchLabelStatementBase> allBranches =

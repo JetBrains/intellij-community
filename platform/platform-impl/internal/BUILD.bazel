@@ -39,6 +39,7 @@ jvm_library(
     "@lib//:gson",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlin-reflect",
+    "@lib//:jna",
   ],
   runtime_deps = [":ide-internal_resources"]
 )

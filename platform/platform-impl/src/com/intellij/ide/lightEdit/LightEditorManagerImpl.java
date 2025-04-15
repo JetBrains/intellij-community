@@ -208,8 +208,8 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @Override
-  public @NotNull Collection<VirtualFile> getOpenFiles() {
-    return myEditors.stream().map(info -> info.getFile()).collect(Collectors.toSet());
+  public @NotNull @Unmodifiable Collection<VirtualFile> getOpenFiles() {
+    return myEditors.stream().map(info -> info.getFile()).collect(Collectors.toUnmodifiableSet());
   }
 
   @Override

@@ -78,6 +78,10 @@ internal class KotlinImplicitThisUsage(
         element: KtElement,
         allUsages: Array<out UsageInfo>
     ): KtElement {
+        val parent = element.parent
+        if (parent is KtCallExpression) {
+            return processUsage(changeInfo, parent, allUsages)
+        }
         val newQualifiedCall = KtPsiFactory(element.project).createExpression("$newReceiver.${element.text}"
         ) as KtQualifiedExpression
         return element.replace(newQualifiedCall).parent as KtElement

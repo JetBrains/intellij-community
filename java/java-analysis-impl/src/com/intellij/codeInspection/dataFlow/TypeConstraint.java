@@ -228,6 +228,13 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
   }
 
   /**
+   * @return string representation that may contain additional diagnostic information
+   */
+  default String debugInfo() {
+    return toString();
+  }
+
+  /**
    * @param type {@link DfType} to extract {@link TypeConstraint} from
    * @return an extracted type constraint
    */
@@ -368,6 +375,11 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     @Override
     default String toShortString() {
       return StringUtil.getShortName(toString());
+    }
+
+    @Override
+    default String debugInfo() {
+      return toString() + '[' + superTypes().joining(",") + ']';
     }
 
     @Override
@@ -701,6 +713,15 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
     @Override
     public int hashCode() {
       return 31 * myInstanceOf.hashCode() + myNotInstanceOf.hashCode();
+    }
+
+    @Override
+    public String debugInfo() {
+      return EntryStream.of("instanceof ", myInstanceOf,
+                            "not instanceof ", myNotInstanceOf)
+        .removeValues(Set::isEmpty)
+        .mapKeyValue((prefix, set) -> StreamEx.of(set).map(e -> e.debugInfo()).joining(", ", prefix, ""))
+        .joining(" ");
     }
 
     @Override

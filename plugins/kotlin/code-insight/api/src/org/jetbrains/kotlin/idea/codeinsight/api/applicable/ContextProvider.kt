@@ -33,7 +33,7 @@ interface ContextProvider<E : KtElement, C : Any> {
 }
 
 @OptIn(KaExperimentalApi::class)
-internal fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
+fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     element: E,
 ): C? = if (element.containingFile.copyOrigin == null) analyze(element) {
     prepareContext(element)

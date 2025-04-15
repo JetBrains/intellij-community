@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
@@ -406,7 +407,8 @@ public final class PyPIPackageUtil {
     PyPIPackageCache.reload(parsePyPIListFromWeb(PYPI_LIST_URL));
   }
 
-  public static @NotNull List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
+  @RequiresBackgroundThread
+  public static @NotNull List<@NotNull String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
     LOG.info("Fetching index of all packages available on " + url);
     RequestBuilder builder = HttpRequests.request(url).userAgent(getUserAgent());
 

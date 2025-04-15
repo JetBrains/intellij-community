@@ -2,14 +2,12 @@
 package com.intellij.python.terminal;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-public final class PyTerminalBundle {
+@ApiStatus.Internal
+final class PyTerminalBundle {
   private static final @NonNls String BUNDLE = "messages.PyTerminalBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(PyTerminalBundle.class, BUNDLE);
 

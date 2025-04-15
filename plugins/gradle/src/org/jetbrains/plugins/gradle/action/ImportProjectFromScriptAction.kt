@@ -3,13 +3,10 @@ package org.jetbrains.plugins.gradle.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.launchTracked
-import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -29,21 +26,12 @@ class ImportProjectFromScriptAction: ExternalSystemAction() {
     val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val externalProjectPath = getDefaultPath(virtualFile)
-    CoroutineScopeService.getCoroutineScope(project).launchTracked {
+    project.gradleCoroutineScope.launchTracked {
       linkAndSyncGradleProject(project, externalProjectPath)
     }
   }
 
   private fun getDefaultPath(file: VirtualFile): String {
     return if (file.isDirectory) file.path else file.parent.path
-  }
-
-  @Service(Service.Level.PROJECT)
-  private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
-    companion object {
-      fun getCoroutineScope(project: Project): CoroutineScope {
-        return project.service<CoroutineScopeService>().coroutineScope
-      }
-    }
   }
 }

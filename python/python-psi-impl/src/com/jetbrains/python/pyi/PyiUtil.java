@@ -112,7 +112,7 @@ public final class PyiUtil {
   }
 
   public static boolean isOverload(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    final PyKnownDecoratorUtil.KnownDecorator overload = PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD;
+    final PyKnownDecorator overload = PyKnownDecorator.TYPING_OVERLOAD;
 
     return element instanceof PyFunction &&
            PyKnownDecoratorUtil.getKnownDecorators((PyFunction)element, context).contains(overload);

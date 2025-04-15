@@ -839,6 +839,14 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Unmodifiable
   List<Crumb> getBreadcrumbsAtCaret();
 
+  /**
+   * Invokes and returns contents of parameter info popup at current caret position.
+   *
+   * @return Contents of the parameter info popup control as String text
+   */
+  @Nullable
+  String getParameterInfoAtCaret();
+
   void saveText(@NotNull VirtualFile file, @NotNull String text);
 
   /**

@@ -11,6 +11,7 @@ import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -82,6 +83,17 @@ public final class JavaErrorKinds {
       });
   public static final Simple<PsiErrorElement> SYNTAX_ERROR =
     error(PsiErrorElement.class, "syntax.error")
+      .withRange(e -> {
+        TextRange range = e.getTextRange();
+        if (range.getLength() == 0) {
+          PsiFile file = e.getContainingFile();
+          int endOffset = range.getEndOffset();
+          if (endOffset < file.getTextLength() && file.getFileDocument().getCharsSequence().charAt(endOffset) != '\n') {
+            return TextRange.from(0, 1);
+          }
+        }
+        return null;
+      })
       .withDescription(e -> message("syntax.error", e.getErrorDescription()));
   public static final Parameterized<PsiElement, JavaPreviewFeatureUtil.PreviewFeatureUsage> PREVIEW_API_USAGE =
     parameterized(PsiElement.class, JavaPreviewFeatureUtil.PreviewFeatureUsage.class, "preview.api.usage")
@@ -128,8 +140,14 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiAnnotationMemberValue, AnnotationValueErrorContext> ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE =
     parameterized(PsiAnnotationMemberValue.class, AnnotationValueErrorContext.class, 
                   "annotation.attribute.incompatible.type").withDescription((value, context) -> {
-      String text = value instanceof PsiAnnotation annotation ? requireNonNull(annotation.getNameReferenceElement()).getText() :
-                    PsiTypesUtil.removeExternalAnnotations(requireNonNull(((PsiExpression)value).getType())).getInternalCanonicalText();
+      String text;
+      if (value instanceof PsiAnnotation annotation) {
+        text = requireNonNull(annotation.getNameReferenceElement()).getText();
+      }
+      else {
+        PsiType type = ((PsiExpression)value).getType();
+        text = type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+      }
       return message("annotation.attribute.incompatible.type", context.typeText(), text);
     });
   public static final Parameterized<PsiArrayInitializerMemberValue, AnnotationValueErrorContext> ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER =
@@ -427,7 +445,7 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.cannot.be.referenced.from.static.context")
       .withDescription((psi, ctx) -> message(
         "class.cannot.be.referenced.from.static.context",
-        formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? PsiKeyword.SUPER : PsiKeyword.THIS)));
+        formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? JavaKeywords.SUPER : JavaKeywords.THIS)));
   public static final Parameterized<PsiClass, InheritTypeClashContext> CLASS_INHERITANCE_DIFFERENT_TYPE_ARGUMENTS =
     parameterized(PsiClass.class, InheritTypeClashContext.class, "class.inheritance.different.type.arguments")
       .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
@@ -985,7 +1003,7 @@ public final class JavaErrorKinds {
           return switch (specialValue) {
             case UNCONDITIONAL_PATTERN -> message("switch.label.duplicate.unconditional.pattern");
             case DEFAULT_VALUE -> message("switch.label.duplicate.default");
-            case NULL_VALUE -> message("switch.label.duplicate", PsiKeyword.NULL);
+            case NULL_VALUE -> message("switch.label.duplicate", JavaKeywords.NULL);
           };
         }
         else if (value instanceof PsiEnumConstant constant) {
@@ -1641,7 +1659,7 @@ public final class JavaErrorKinds {
   }
 
   /**
-   * Context for errors related to annotation value
+   * Context for errors related to the annotation value
    * @param method corresponding annotation method
    * @param expectedType expected value type
    * @param fromDefaultValue if true, the error is reported for the method default value, rather than for use site
@@ -1672,7 +1690,7 @@ public final class JavaErrorKinds {
 
   /**
    * A context for {@link #CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL} error kind
-   * @param psiClass a class where ambiguous call is performed
+   * @param psiClass a class where an ambiguous call is performed
    * @param candidate1 first constructor candidate in super class
    * @param candidate2 second constructor candidate in super class
    */

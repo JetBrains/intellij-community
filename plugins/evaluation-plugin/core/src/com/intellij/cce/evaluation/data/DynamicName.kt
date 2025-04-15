@@ -21,6 +21,11 @@ sealed interface DynamicName<in T> {
     override fun resolve(props: DataProps, value: FileUpdate): String? = value.filePath.substringAfterLast('/')
   }
 
+  data class Formatted<T>(val prefix: String, val name: DynamicName<T>, val suffix: String = "") : DynamicName<T> {
+    override val serialName: String = "formatted"
+    override fun resolve(props: DataProps, value: T): String? = name.resolve(props, value)?.let { "$prefix$it$suffix" }
+  }
+
   class Serializer : JsonSerializer<DynamicName<*>>, JsonDeserializer<DynamicName<*>> {
     override fun serialize(src: DynamicName<*>?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
       val serialized = context?.serialize(src)
@@ -34,6 +39,7 @@ sealed interface DynamicName<in T> {
       when (type) {
         "current_file_name" -> return context?.deserialize(json, CurrentFileName::class.java)
         "file_name" -> return context?.deserialize(json, FileName::class.java)
+        "formatted" -> return context?.deserialize(json, Formatted::class.java)
         else -> throw IllegalArgumentException("Unknown type: $type")
       }
     }

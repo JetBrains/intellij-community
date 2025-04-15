@@ -128,13 +128,18 @@ a:com.intellij.diff.actions.impl.NextDifferenceAction
 - <init>():V
 c:com.intellij.diff.actions.impl.OpenInEditorAction
 - com.intellij.ide.actions.EditSourceAction
+- com.intellij.openapi.actionSystem.ActionPromoter
 - com.intellij.openapi.project.DumbAware
-- sf:AFTER_NAVIGATE_CALLBACK:com.intellij.openapi.actionSystem.DataKey
+- sf:Companion:com.intellij.diff.actions.impl.OpenInEditorAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
-- s:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
+- sf:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
+- sf:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
+- promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.diff.actions.impl.OpenInEditorAction$Companion
+- f:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
+- f:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
 f:com.intellij.diff.actions.impl.SetEditorSettingsAction
 - com.intellij.openapi.project.DumbAwareAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -478,6 +483,7 @@ f:com.intellij.diff.impl.DiffSettingsHolder
 - f:getSettings(java.lang.String):com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - getState():com.intellij.diff.impl.DiffSettingsHolder$State
 - loadState(com.intellij.diff.impl.DiffSettingsHolder$State):V
+- noStateLoaded():V
 f:com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - sf:Companion:com.intellij.diff.impl.DiffSettingsHolder$DiffSettings$Companion
 - sf:KEY:com.intellij.openapi.util.Key
@@ -2119,8 +2125,8 @@ f:com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 - s:getSelectedRanges(java.util.List,com.intellij.openapi.editor.Editor,I):java.util.List
 - s:isInsideMarkerArea(java.awt.event.MouseEvent):Z
 - s:isRangeHovered(com.intellij.openapi.editor.Editor,I,I,I,I):Z
-- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,I):V
-- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I):V
+- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,I,Z):V
+- s:paintChangedLines(java.awt.Graphics2D,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I,Z):V
 - s:paintDefault(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.util.List,com.intellij.openapi.vcs.ex.VisibleRangeMerger$FlagsProvider,I):V
 - s:paintDefault(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.util.List,com.intellij.openapi.vcs.ex.VisibleRangeMerger$FlagsProvider,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I):V
 - s:paintRange(java.awt.Graphics,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,I,Z):V

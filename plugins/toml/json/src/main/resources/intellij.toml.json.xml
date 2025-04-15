@@ -1,6 +1,6 @@
 <idea-plugin package="org.toml.ide.json">
     <dependencies>
-        <plugin id="com.intellij.modules.json"/>
+        <module name="intellij.json.backend"/>
     </dependencies>
 
     <extensionPoints>

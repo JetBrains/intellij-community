@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -13,6 +14,11 @@ public final class Clock {
   public static long getTime() {
     if (ourTime != -1) return ourTime;
     return System.currentTimeMillis();
+  }
+
+  @ApiStatus.Internal
+  public static boolean isMocked() {
+    return ourTime != -1;
   }
 
   @TestOnly

@@ -37,6 +37,7 @@ public interface XDebuggerActions {
   @NonNls String VARIABLES_TREE_TOOLBAR_GROUP = "XDebugger.Variables.Tree.Toolbar";
   @NonNls String VARIABLES_TREE_POPUP_GROUP = "XDebugger.Variables.Tree.Popup";
   @NonNls String WATCHES_TREE_POPUP_GROUP = "XDebugger.Watches.Tree.Popup";
+  @NonNls String WATCHES_TREE_POPUP_GROUP_FRONTEND = "XDebugger.Inspect.Tree.Popup.Watches.Frontend";
   @NonNls String WATCHES_INLINE_POPUP_GROUP = "XDebugger.Watches.Inline.Popup";
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
   @NonNls String FRAMES_TREE_POPUP_GROUP = "XDebugger.Frames.Tree.Popup";

@@ -28,8 +28,8 @@ internal class MavenProjectsTreeUpdater(
 ) {
   private val updated = ConcurrentHashMap<VirtualFile, Boolean>()
   private val createdMavenProjects = ConcurrentHashMap<VirtualFile, MavenProject>()
-  private val userSettingsFile = reader.generalSettings.effectiveUserSettingsIoFile
-  private val globalSettingsFile = reader.generalSettings.effectiveGlobalSettingsIoFile
+  private val userSettingsFile = MavenSettingsCache.getInstance(tree.project).getEffectiveUserSettingsFile()
+  private val globalSettingsFile = MavenSettingsCache.getInstance(tree.project).getEffectiveGlobalSettingsFile()
 
   private fun startUpdate(mavenProjectFile: VirtualFile, forceRead: Boolean): Boolean {
     val projectPath = mavenProjectFile.path
@@ -70,7 +70,7 @@ internal class MavenProjectsTreeUpdater(
       val readerResult = tracer.spanBuilder("readPom").useWithScope {
         reader.readProjectAsync(mavenProject.file)
       }
-      val readChanges = mavenProject.updateFromReaderResult(readerResult, reader.generalSettings.effectiveRepositoryPath, true)
+      val readChanges = mavenProject.updateFromReaderResult(readerResult, MavenSettingsCache.getInstance(tree.project).getEffectiveUserLocalRepo(), true)
 
       tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 

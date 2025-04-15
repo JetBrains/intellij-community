@@ -134,7 +134,7 @@ private fun dumpCoroutines(jobTrees: List<JobTree>, out: Appendable, stripDump: 
 
 private tailrec fun Job.rootJob(): Job {
   @Suppress("DEPRECATION_ERROR")
-  val parentJob = (this as JobSupport).parentHandle?.parent
+  val parentJob = (this as? JobSupport)?.parentHandle?.parent
                   ?: return this
   return parentJob.rootJob()
 }
@@ -333,8 +333,23 @@ private fun CoroutineContext.joinElementsToString(): String =
     if (acc.isNotEmpty()) {
       acc.append(", ")
     }
-    acc.append(element.toString())
+    acc.append(element.toStringSmart())
   }.toString()
+
+/**
+ * Default implementation of [Object.toString] includes hex representation of the object's hash code
+ * This prevents our logic for deduplication, resulting in huge coroutine dumps
+ */
+private fun Any.toStringSmart(): String {
+  val baseToString = toString()
+  val hashCodeSuffix = "@" + Integer.toHexString(this.hashCode())
+  return if (baseToString.endsWith(hashCodeSuffix)) {
+    baseToString.substring(0, baseToString.length - hashCodeSuffix.length)
+  }
+  else {
+    return baseToString
+  }
+}
 
 private fun <T, R> MutableSet<T>.withElement(elem: T, body: (added: Boolean) -> R): R {
   val added = add(elem)

@@ -15,12 +15,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.update.MergingQueueUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -59,7 +57,7 @@ public final class MavenShortcutsManager implements Disposable {
     MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> doInit(project));
   }
 
-  @TestOnly
+  @VisibleForTesting
   public void doInit(@NotNull Project project) {
     if (isInitialized.getAndSet(true)) return;
 
@@ -183,7 +181,7 @@ public final class MavenShortcutsManager implements Disposable {
         }
       }
 
-      myUpdateQueue.queue(new Update(MavenShortcutsManager.this) {
+      MergingQueueUtil.queueTracked(myUpdateQueue, new Update(MavenShortcutsManager.this) {
         @Override
         public void run() {
           List<MavenProject> projectToUpdate;

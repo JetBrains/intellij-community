@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifier
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK1
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK2
@@ -105,8 +106,6 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
 
         return default.getOrLoadConfiguration(virtualFile, preloadedKtFile)
     }
-
-    private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
 
     override fun getConfiguration(file: KtFile) =
         getOrLoadConfiguration(file.alwaysVirtualFile, file)

@@ -254,6 +254,9 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
     var eachColumnX = (if (layeredPane == null) this.layeredPane!!.width else layeredPane.x + layeredPane.width) - 4
     if (pane != null && ExperimentalUI.isNewUI()) {
       eachColumnX += pane.x
+      if (pane.parent.componentCount == 1) {
+        eachColumnX += pane.parent.x
+      }
     }
     doLayout(balloons = columns[0], startX = eachColumnX + 4, bottomY = this.layeredPane!!.bounds.maxY.toInt())
   }

@@ -235,6 +235,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/KotlinClassUsedFromJava.java");
     }
 
+    @TestMetadata("KotlinEnumEntriesUsedFromJava.java")
+    public void testKotlinEnumEntriesUsedFromJava() throws Exception {
+        runTest("testData/editor/quickDoc/KotlinEnumEntriesUsedFromJava.java");
+    }
+
     @TestMetadata("KotlinPackageClassUsedFromJava.java")
     public void testKotlinPackageClassUsedFromJava() throws Exception {
         runTest("testData/editor/quickDoc/KotlinPackageClassUsedFromJava.java");

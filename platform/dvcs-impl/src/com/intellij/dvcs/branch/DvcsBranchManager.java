@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
@@ -19,7 +19,7 @@ public abstract class DvcsBranchManager<T extends Repository> {
 
   private final @NotNull DvcsBranchSettings myBranchSettings;
   private final @NotNull Map<BranchType, Collection<String>> myPredefinedFavoriteBranches = new HashMap<>();
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
 
   public static final @NotNull Topic<DvcsBranchManagerListener> DVCS_BRANCH_SETTINGS_CHANGED =
     Topic.create("Branch settings changed", DvcsBranchManagerListener.class);
@@ -54,7 +54,29 @@ public abstract class DvcsBranchManager<T extends Repository> {
     return isPredefinedAsFavorite(branchType, branchName);
   }
 
-  public @NotNull Map<T, Set<String>> getFavoriteBranches(@NotNull BranchType branchType) {
+  public @NotNull Set<@NotNull String> getFavoriteRefs(@NotNull BranchType refType, @NotNull Repository repository) {
+    Set<String> result = new HashSet<>(myPredefinedFavoriteBranches.getOrDefault(refType, Collections.emptyList()));
+
+    var favorites = myBranchSettings.getFavorites().getBranches();
+    var excludedFavorites = myBranchSettings.getExcludedFavorites().getBranches();
+
+    String repoPath = DvcsBranchUtil.getPathFor(repository);
+    for (DvcsBranchInfo info : ContainerUtil.notNullize(favorites.get(refType.getName()))) {
+      if (info.repoPath.equals(repoPath)) {
+        result.add(info.sourceName);
+      }
+    }
+
+    for (DvcsBranchInfo info : ContainerUtil.notNullize(excludedFavorites.get(refType.getName()))) {
+      if (info.repoPath.equals(repoPath)) {
+        result.remove(info.sourceName);
+      }
+    }
+
+    return result;
+  }
+
+  public @NotNull Map<@NotNull T, @NotNull Set<@NotNull String>> getFavoriteBranches(@NotNull BranchType branchType) {
     Map<T, List<String>> favorites = collectBranchesByRoot(myBranchSettings.getFavorites(), branchType);
     Map<T, List<String>> excludedFavorites = collectBranchesByRoot(myBranchSettings.getExcludedFavorites(), branchType);
     Collection<String> predefinedFavorites = myPredefinedFavoriteBranches.get(branchType);
@@ -116,7 +138,7 @@ public abstract class DvcsBranchManager<T extends Repository> {
   }
 
   public void setFavorite(@Nullable BranchType branchType,
-                          @Nullable Repository repository,
+                          @Nullable T repository,
                           @NotNull String branchName,
                           boolean shouldBeFavorite) {
     if (branchType == null) return;
@@ -133,10 +155,10 @@ public abstract class DvcsBranchManager<T extends Repository> {
         myBranchSettings.getExcludedFavorites().add(branchTypeName, repository, branchName);
       }
     }
-    notifyFavoriteSettingsChanged();
+    notifyFavoriteSettingsChanged(repository);
   }
 
-  private void notifyFavoriteSettingsChanged() {
+  protected void notifyFavoriteSettingsChanged(@Nullable T repository) {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
       myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchFavoriteSettingsChanged();
     });

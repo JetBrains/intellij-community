@@ -98,9 +98,7 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp
       if (javaValue is JavaValue) {
         javaValue.evaluationContext.managerThread.schedule(
           object : SuspendContextCommandImpl(javaValue.evaluationContext.suspendContext) {
-            override fun getPriority(): PrioritizedTask.Priority {
-              return PrioritizedTask.Priority.NORMAL
-            }
+            override val priority: PrioritizedTask.Priority get() = PrioritizedTask.Priority.NORMAL
 
             override fun contextAction(suspendContext: SuspendContextImpl) {
               var type: String? = null

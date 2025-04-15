@@ -5,13 +5,15 @@ package com.intellij.ide.startup.importSettings.transfer.backend
 
 import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
-import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.TransferSettingsModel
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeTransferSettingsProvider
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.cursor.CursorTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.testProvider.TestTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.VSMacTransferSettingsProvider
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.windsurf.WindsurfTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.ui.TransferSettingsProgressIndicatorBase
 import com.intellij.ide.startup.importSettings.ui.TransferSettingsView
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -40,6 +42,8 @@ private class TransferSettingsDemoDialog(private val project: Project) : DialogW
     TransferSettingsDataProvider(
       TestTransferSettingsProvider(),
       VSCodeTransferSettingsProvider(service<ScopeHolder>().scope),
+      CursorTransferSettingsProvider(service<ScopeHolder>().scope),
+      WindsurfTransferSettingsProvider(service<ScopeHolder>().scope),
       VSMacTransferSettingsProvider()
     ),
     false)

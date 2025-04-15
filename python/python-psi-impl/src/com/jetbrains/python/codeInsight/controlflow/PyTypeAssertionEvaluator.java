@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
@@ -22,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private final Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;
@@ -38,39 +41,48 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   public void visitPyCallExpression(@NotNull PyCallExpression node) {
     if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ASSERT_IS_INSTANCE)) {
       final PyExpression[] args = node.getArguments();
-      if (args.length == 2 && args[0] instanceof PyReferenceExpression target) {
+      if (args.length == 2) {
         final PyExpression typeElement = args[1];
 
-        pushAssertion(target, myPositive, false, context -> context.getType(typeElement), typeElement);
+        pushAssertion(args[0], myPositive, context ->
+          transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement));
       }
     }
     else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
       final PyExpression[] args = node.getArguments();
-      if (args.length == 1 && args[0] instanceof PyReferenceExpression target) {
-
-        pushAssertion(target, myPositive, false, context -> PyTypingTypeProvider.createTypingCallableType(node), null);
+      if (args.length == 1) {
+        pushAssertion(args[0], myPositive, context -> PyTypingTypeProvider.createTypingCallableType(node));
       }
     }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
       final PyExpression[] args = node.getArguments();
-      if (args.length == 2 && args[0] instanceof PyReferenceExpression target) {
+      if (args.length == 2) {
         final PyExpression typeElement = args[1];
 
-        pushAssertion(target, myPositive, true, context -> context.getType(typeElement), typeElement);
+        pushAssertion(args[0], myPositive, context ->
+          transformTypeFromAssertion(context.getType(typeElement), true, context, typeElement));
       }
+    }
+  }
+
+  private void visitExpressionInCondition(@NotNull PyExpression node) {
+    if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
+      // we could not suggest `None` because it could be a reference to an empty collection
+      // so we could push only non-`None` assertions
+      pushAssertion(node, !myPositive, context -> PyNoneType.INSTANCE);
     }
   }
 
   @Override
   public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
-    if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
-      // we could not suggest `None` because it could be a reference to an empty collection
-      // so we could push only non-`None` assertions
-      pushAssertion(node, !myPositive, false, context -> PyNoneType.INSTANCE, null);
-      return;
-    }
-
+    visitExpressionInCondition(node);
     super.visitPyReferenceExpression(node);
+  }
+
+  @Override
+  public void visitPyAssignmentExpression(@NotNull PyAssignmentExpression node) {
+    visitExpressionInCondition(node);
+    super.visitPyAssignmentExpression(node);
   }
 
   @Override
@@ -104,27 +116,21 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
 
     if (PyLiteralType.isNone(lhs)) {
-      if (rhs instanceof PyReferenceExpression referenceExpr) {
-        pushAssertion(referenceExpr, myPositive, false, context -> PyNoneType.INSTANCE, null);
-      }
+      pushAssertion(rhs, myPositive, context -> PyNoneType.INSTANCE);
       return;
     }
 
     if (PyLiteralType.isNone(rhs)) {
-      if (lhs instanceof PyReferenceExpression referenceExpr) {
-        pushAssertion(referenceExpr, myPositive, false, context -> PyNoneType.INSTANCE, null);
-      }
+      pushAssertion(lhs, myPositive, context -> PyNoneType.INSTANCE);
       return;
     }
-
-    if (lhs instanceof PyReferenceExpression referenceExpr) {
-      pushAssertion(referenceExpr, myPositive, false, context -> getLiteralType(rhs, context), null);
-    }
+    
+    pushAssertion(lhs, myPositive, context -> getLiteralType(rhs, context));
   }
 
   private void processIn(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
-    if (lhs instanceof PyReferenceExpression referenceExpr && rhs instanceof PyTupleExpression tupleExpr) {
-      pushAssertion(referenceExpr, myPositive, false, context -> {
+    if (rhs instanceof PyTupleExpression tupleExpr) {
+      pushAssertion(lhs, myPositive, (TypeEvalContext context) -> {
         PyExpression[] elements = tupleExpr.getElements();
         List<PyType> types = new ArrayList<>(elements.length);
         for (PyExpression element : elements) {
@@ -135,7 +141,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
           types.add(type);
         }
         return PyUnionType.union(types);
-      }, null);
+      });
     }
   }
 
@@ -158,6 +164,34 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     finally {
       myPositive = oldPositive;
     }
+  }
+
+  @Override
+  public void visitPyPattern(@NotNull PyPattern node) {
+    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyCaseClause.class, PyGroupPattern.class, PyAsPattern.class, PyOrPattern.class);
+    if (parent instanceof PyMatchStatement matchStatement) {
+      pushAssertion(matchStatement.getSubject(), myPositive, context -> context.getType(node));
+    }
+  }
+
+  /**
+   * Negative type assertion for when all cases fail
+   */
+  @Override
+  public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
+    assert !myPositive; // for match statement as a whole, only negative assertion can be made
+    final PyExpression subject = matchStatement.getSubject();
+    if (subject == null) return;
+    pushAssertion(subject, true, context -> {
+      PyType subjectType = context.getType(subject);
+      for (PyCaseClause cs : matchStatement.getCaseClauses()) {
+        if (cs.getPattern() == null) continue;
+        if (cs.getGuardCondition() != null) continue;
+        subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, context));
+      }
+
+      return subjectType;
+    });
   }
 
   @ApiStatus.Internal
@@ -233,6 +267,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
            PyTypeChecker.match(expected, actual, context);
   }
 
+  /**
+   * @param transformToDefinition if true the result type will be Type[T], not T itself.
+   */
   private static @Nullable PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
                                                              @Nullable PyExpression typeElement) {
     /*
@@ -245,8 +282,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       final List<PyType> members = new ArrayList<>();
       final int count = tupleType.getElementCount();
 
-      final PyTupleExpression tupleExpression = PyUtil
-        .as(PyPsiUtils.flattenParens(PyUtil.as(typeElement, PyParenthesizedExpression.class)), PyTupleExpression.class);
+      final PyTupleExpression tupleExpression = as(PyPsiUtils.flattenParens(typeElement), PyTupleExpression.class);
       if (tupleExpression != null && tupleExpression.getElements().length == count) {
         final PyExpression[] elements = tupleExpression.getElements();
         for (int i = 0; i < count; i++) {
@@ -276,54 +312,51 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     return type;
   }
 
-  /**
-   * @param transformToDefinition if true the result type will be Type[T], not T itself.
-   */
-  private void pushAssertion(@NotNull PyReferenceExpression target,
-                             boolean positive,
-                             boolean transformToDefinition,
-                             @NotNull Function<TypeEvalContext, PyType> suggestedType,
-                             @Nullable PyExpression typeElement) {
-    final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
-      @Override
-      public Ref<PyType> getType(TypeEvalContext context) {
-        return createAssertionType(context.getType(target),
-                                   transformTypeFromAssertion(suggestedType.apply(context), transformToDefinition, context, typeElement),
-                                   positive,
-                                   context);
-      }
-    };
+  private void pushAssertion(@Nullable PyExpression expr, boolean positive, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
+    expr = PyPsiUtils.flattenParens(expr);
+    if (expr instanceof PyReferenceExpression || expr instanceof PyTargetExpression) {
+      final var target = (PyQualifiedExpression)expr;
+      final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
+        @Override
+        public Ref<PyType> getType(TypeEvalContext context) {
+          return createAssertionType(context.getType(target), suggestedType.apply(context), positive, context);
+        }
+      };
 
-    myStack.push(new Assertion(target, typeCallback));
+      myStack.push(new Assertion(target, typeCallback));
+    }
+    else if (expr instanceof PyAssignmentExpression walrus) {
+      pushAssertion(walrus.getTarget(), positive, suggestedType);
+    }
   }
 
-  private static boolean isIfReferenceStatement(@NotNull PyReferenceExpression node) {
-    return node.getParent() instanceof PyIfPart;
+  private static boolean isIfReferenceStatement(@NotNull PyExpression node) {
+    return PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class) instanceof PyIfPart;
   }
 
-  private static boolean isIfReferenceConditionalStatement(@NotNull PyReferenceExpression node) {
-    final PsiElement parent = node.getParent();
-    return parent instanceof PyConditionalExpression &&
-           node == ((PyConditionalExpression)parent).getCondition();
+  private static boolean isIfReferenceConditionalStatement(@NotNull PyExpression node) {
+    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class); 
+    return parent instanceof PyConditionalExpression cond &&
+           PsiTreeUtil.isAncestor(cond.getCondition(), node, false);
   }
 
-  private static boolean isIfNotReferenceStatement(@NotNull PyReferenceExpression node) {
-    final PsiElement parent = node.getParent();
+  private static boolean isIfNotReferenceStatement(@NotNull PyExpression node) {
+    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class);
     return parent instanceof PyPrefixExpression &&
            ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
            parent.getParent() instanceof PyIfPart;
   }
 
   static class Assertion {
-    private final PyReferenceExpression element;
+    private final PyQualifiedExpression element;
     private final InstructionTypeCallback myFunction;
 
-    Assertion(PyReferenceExpression element, InstructionTypeCallback getType) {
+    Assertion(PyQualifiedExpression element, InstructionTypeCallback getType) {
       this.element = element;
       this.myFunction = getType;
     }
 
-    public PyReferenceExpression getElement() {
+    public PyQualifiedExpression getElement() {
       return element;
     }
 

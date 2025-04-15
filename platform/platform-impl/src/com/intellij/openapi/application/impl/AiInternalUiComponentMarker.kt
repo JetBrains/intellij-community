@@ -38,4 +38,8 @@ open class AiInternalUiComponentMarker {
   open fun getCustomFocusPaint(c: JComponent, r: Rectangle, defaultPaint: Paint?): Paint? = defaultPaint
   open fun getCustomButtonFillPaint(c: JComponent, r: Rectangle, defaultPaint: Paint?): Paint? = defaultPaint
   open fun getCustomButtonBorderPaint(c: JComponent, r: Rectangle, defaultPaint: Paint?): Paint? = defaultPaint
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  interface AIAction
 }

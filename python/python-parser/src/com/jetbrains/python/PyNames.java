@@ -109,6 +109,7 @@ public final @NonNls class PyNames {
   public static final String SETTER = "setter";
   public static final String DELETER = "deleter";
   public static final String GETTER = "getter";
+  public static final String CACHED_PROPERTY = "cached_property";
 
   public static final String ALL = "__all__";
   public static final String SLOTS = "__slots__";
@@ -186,6 +187,7 @@ public final @NonNls class PyNames {
   public static final String ROUND = "__round__";
   public static final String CLASS_GETITEM = "__class_getitem__";
   public static final String PREPARE = "__prepare__";
+  public static final String MATCH_ARGS = "__match_args__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -584,6 +586,17 @@ public final @NonNls class PyNames {
     FOR,
     LAMBDA,
     TRY
+  );
+
+  // As per: https://docs.python.org/3/reference/lexical_analysis.html#keywords
+  public static final Set<String> PY3_KEYWORDS = Set.of(
+    FALSE,  AWAIT,    ELSE,    IMPORT,   PASS,
+    NONE,   BREAK,    EXCEPT,  IN,       RAISE,
+    TRUE,   CLASS,    FINALLY, IS,       RETURN,
+    AND,    CONTINUE, FOR,     LAMBDA,   TRY,
+    AS,     DEF,      FROM,    NONLOCAL, WHILE,
+    ASSERT, DEL,      GLOBAL,  NOT,      WITH,
+    ASYNC,  ELIF,     IF,      OR,       YIELD
   );
 
   public static final Set<String> BUILTIN_INTERFACES = Set.of(

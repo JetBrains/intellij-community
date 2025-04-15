@@ -3,6 +3,7 @@ package com.intellij.model.psi;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -16,5 +17,6 @@ public interface PsiCompletableReference extends PsiSymbolReference {
    * The items are used to build the lookup list for basic code completion.
    * The list of visible identifiers may not be filtered by the completion prefix string, the filtering is performed later by the IDE.
    */
-  @NotNull Collection<@NotNull LookupElement> getCompletionVariants();
+  @NotNull @Unmodifiable
+  Collection<@NotNull LookupElement> getCompletionVariants();
 }

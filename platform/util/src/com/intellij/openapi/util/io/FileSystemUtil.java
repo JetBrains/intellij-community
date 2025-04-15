@@ -36,7 +36,13 @@ public final class FileSystemUtil {
       LOG.error("Incomplete Windows path: " + path);
       path += '\\';
     }
-    return getAttributes(Paths.get(path));
+    try {
+      return getAttributes(Paths.get(path));
+    }
+    catch (InvalidPathException e) {
+      LOG.debug(e);
+      return null;
+    }
   }
 
   /** Please use NIO API instead ({@link Files}, etc.) */
@@ -68,7 +74,13 @@ public final class FileSystemUtil {
   /** Please use NIO API instead ({@link Files}, etc.) */
   @ApiStatus.Obsolete
   public static @Nullable String resolveSymLink(@NotNull String path) {
-    return resolveSymLink(Paths.get(path));
+    try {
+      return resolveSymLink(Paths.get(path));
+    }
+    catch (InvalidPathException e) {
+      LOG.debug(e);
+      return null;
+    }
   }
 
   /** Please use NIO API instead ({@link Files}, etc.) */

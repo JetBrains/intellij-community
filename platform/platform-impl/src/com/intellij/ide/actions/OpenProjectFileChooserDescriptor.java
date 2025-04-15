@@ -5,7 +5,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectStorePathManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.SystemProperties;
@@ -86,7 +86,8 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean isIdeaDirectory(VirtualFile file) {
-    return ProjectCoreUtil.isKnownProjectDirectory(file);
+    ProjectStorePathManager storePathManager = ProjectStorePathManager.getInstance();
+    return storePathManager.testStoreDirectoryExistsForProjectRoot(file);
   }
 
   private static boolean hasImportProvider(VirtualFile file) {

@@ -4,6 +4,7 @@ package com.intellij.openapi.util.text;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,11 +26,11 @@ public final class LineTokenizer {
     return strings.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : ArrayUtilRt.toStringArray(strings);
   }
 
-  public static @NotNull List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators) {
+  public static @NotNull @Unmodifiable List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators) {
     return tokenizeIntoList(chars, includeSeparators, true);
   }
 
-  public static @NotNull List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
+  public static @NotNull @Unmodifiable List<String> tokenizeIntoList(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
     if (chars == null || chars.length() == 0){
       return Collections.emptyList();
     }

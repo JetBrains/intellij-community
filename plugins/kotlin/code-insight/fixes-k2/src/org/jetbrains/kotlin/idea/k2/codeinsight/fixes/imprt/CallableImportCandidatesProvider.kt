@@ -6,18 +6,13 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinOperatorCallPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
 internal class CallableImportCandidatesProvider(
-    override val positionContext: KotlinNameReferencePositionContext,
+    override val importContext: ImportContext,
     private val allowInapplicableExtensions: Boolean = false,
 ) : AbstractImportCandidatesProvider() {
 
@@ -25,9 +20,15 @@ internal class CallableImportCandidatesProvider(
         acceptsKotlinCallableAtPosition(kotlinCallable) && !kotlinCallable.isImported() && kotlinCallable.canBeImported()
 
     private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
-        when (positionContext) {
-            is KotlinInfixCallPositionContext -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
-            is KotlinOperatorCallPositionContext -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
+        when (importContext.positionType) {
+            is ImportPositionType.InfixCall -> {
+                kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && kotlinCallable.isExtensionDeclaration()
+            }
+
+            is ImportPositionType.OperatorCall -> {
+                kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD) && kotlinCallable.isExtensionDeclaration()
+            }
+
             else -> true
         }
 
@@ -35,16 +36,24 @@ internal class CallableImportCandidatesProvider(
         acceptsJavaCallableAtPosition() && !javaCallable.isImported() && javaCallable.canBeImported()
 
     private fun acceptsJavaCallableAtPosition(): Boolean =
-        when (positionContext) {
-            is KotlinInfixCallPositionContext, 
-            is KotlinOperatorCallPositionContext -> false
+        when (importContext.positionType) {
+            is ImportPositionType.InfixCall,
+            is ImportPositionType.OperatorCall -> false
             else -> true
         }
 
     private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
-        when (positionContext) {
-            is KotlinInfixCallPositionContext -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
-            is KotlinOperatorCallPositionContext -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
+        when (importContext.positionType) {
+            is ImportPositionType.InfixCall -> {
+                val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
+                functionSymbol?.isInfix == true && functionSymbol.isExtension
+            }
+
+            is ImportPositionType.OperatorCall -> {
+                val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
+                functionSymbol?.isOperator == true && functionSymbol.isExtension
+            }
+
             else -> true
         }
 
@@ -54,11 +63,10 @@ internal class CallableImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
-        val explicitReceiver = positionContext.explicitReceiver
         val fileSymbol = getFileSymbol()
 
         val candidates = sequence {
-            if (explicitReceiver == null) {
+            if (!importContext.isExplicitReceiver) {
                 yieldAll(indexProvider.getKotlinCallableSymbolsByName(name) { declaration ->
                     // filter out extensions here, because they are added later with the use of information about receiver types
                     acceptsKotlinCallable(declaration) &&  (allowInapplicableExtensions || !declaration.isExtensionDeclaration())
@@ -74,29 +82,31 @@ internal class CallableImportCandidatesProvider(
                 )
             }
 
-            val context = positionContext
             when {
                 allowInapplicableExtensions -> {
                     // extensions were already provided
                 }
-                context is KotlinSimpleNameReferencePositionContext -> {
-                    val receiverTypes = collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
+                importContext.positionType is ImportPositionType.KDocNameReference -> {
+                    // we do not try to complete extensions for KDocs for now
+                    // TODO consider combining this with allowInapplicableExtensions flag
+                }
+
+                else -> {
+                    val receiverTypes = importContext.receiverTypes()
                     yieldAll(
                         indexProvider.getExtensionCallableSymbolsByName(name, receiverTypes) { acceptsKotlinCallable(it) }
                             .map { CallableImportCandidate.create(it) }
                     )
-                    
+
                     yieldAll(
                         indexProvider.getExtensionCallableSymbolsFromSubclassObjects(name, receiverTypes)
                             .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
                     )
                 }
-
-                else -> {}
             }
         }
 
-        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, positionContext.position)
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, importContext.position)
 
         return candidates
             .distinct()

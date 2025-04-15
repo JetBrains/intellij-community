@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -90,7 +91,7 @@ public final class RedundantClassCallInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.INSTANCEOF);
+      return CommonQuickFixBundle.message("fix.replace.with.x", JavaKeywords.INSTANCEOF);
     }
 
     @Override

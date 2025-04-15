@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -110,6 +111,7 @@ object K2CreatePropertyFromUsageBuilder {
         }
 
         val receiverType = receiverExpression?.expressionType
+        if (receiverType is KaErrorType) return emptyList()
 
         val lightClass = (defaultContainerPsi as? KtClassOrObject)?.toLightClass() ?: defaultContainerPsi as? PsiClass
         val isAbstract = lightClass?.hasModifier(JvmModifier.ABSTRACT)

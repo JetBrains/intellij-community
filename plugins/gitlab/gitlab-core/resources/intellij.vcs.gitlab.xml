@@ -27,6 +27,9 @@
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
                     serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
 
+    <projectService serviceInterface="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModelFactory"
+                    serviceImplementation="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModelFactoryImpl"/>
+
     <!--suppress PluginXmlI18n - intentionally suppress the inspection to avoid translating `GitLab` technology name-->
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                          instance="org.jetbrains.plugins.gitlab.GitLabSettingsConfigurable"
@@ -59,8 +62,10 @@
                  defaultValue="true"/>
     <registryKey defaultValue="1000" description="Request polling interval in milliseconds" key="gitlab.request.polling.interval.millis"/>
     <registryKey defaultValue="5" description="Request polling attempts" key="gitlab.request.polling.attempts"/>
-    <registryKey defaultValue="62" description="Days until an entry in the viewed/not viewed state store is considered stale" key="gitlab.viewed.state.stale.timeout"/>
-    <registryKey defaultValue="0" description="The number of merge requests at the top of the list to pre-emptively load and cache" key="gitlab.merge.requests.cached.from.list"/>
+    <registryKey defaultValue="62" description="Days until an entry in the viewed/not viewed state store is considered stale"
+                 key="gitlab.viewed.state.stale.timeout"/>
+    <registryKey defaultValue="0" description="The number of merge requests at the top of the list to pre-emptively load and cache"
+                 key="gitlab.merge.requests.cached.from.list"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.statistics">

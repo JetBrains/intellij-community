@@ -91,7 +91,7 @@ public abstract class StubProcessingHelperBase {
     if (fileInfo instanceof ActualContextFileInfo) {
       Collection<CodeInsightContext> contexts = ((ActualContextFileInfo)fileInfo).getContexts();
       if (contexts.size() > 1) {
-        // todo ijpl-339 we need to process the file twice in this case. Not supported yet
+        // todo IJPL-339 we need to process the file twice in this case. Not supported yet
         LOG.error("Multiple contexts for file " + file + " in scope " + scope + ". Contexts: " + contexts);
       }
       return contexts.iterator().next();

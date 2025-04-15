@@ -5,8 +5,10 @@ import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -214,17 +217,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @NotNull Supplier<SearchScope> getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
-    DataProvider dataProvider = target instanceof DataProvider o ? o : null;
-    SearchScope scope = dataProvider != null ? UsageView.USAGE_SCOPE.getData(dataProvider) : null;
-    if (scope != null) {
-      return () -> scope;
-    }
-    DataProvider bgtProvider = dataProvider != null ? PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(dataProvider) : null;
-    return () -> {
-      SearchScope scope2 = bgtProvider != null ? UsageView.USAGE_SCOPE.getData(bgtProvider) : null;
-      if (scope2 != null) return scope2;
-      return GlobalSearchScope.everythingScope(project); // by default do not warn of falling out of scope
-    };
+    DataContext dataContext = CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink ->
+      DataSink.uiDataSnapshot(sink, target));
+    return () -> Objects.requireNonNullElseGet(
+      dataContext.getData(UsageView.USAGE_SCOPE),
+      // by default, do not warn of falling out of scope
+      () -> GlobalSearchScope.everythingScope(project));
   }
 
   @Override

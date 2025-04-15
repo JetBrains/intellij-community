@@ -164,7 +164,7 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
 
   @Override
   public PsiModifierList getModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override

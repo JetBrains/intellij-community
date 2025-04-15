@@ -1,12 +1,12 @@
 package com.intellij.cce.metric
 
-import com.intellij.cce.core.ExtractionOptions
 import com.intellij.cce.core.Language
+import com.intellij.cce.core.TokenProperties
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 interface ApiCallExtractor {
-  suspend fun extractApiCalls(code: String, project: Project, extractionOptions: ExtractionOptions): List<String>
+  suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String>
 }
 
 interface ApiCallExtractorProvider {

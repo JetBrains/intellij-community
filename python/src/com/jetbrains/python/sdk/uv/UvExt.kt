@@ -2,27 +2,30 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.pyproject.PyProjectToml
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.setAssociationToPath
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 import javax.swing.Icon
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
+
 internal val Sdk.isUv: Boolean
-  get() = sdkAdditionalData is UvSdkAdditionalData
+  get() = getOrCreateAdditionalData() is UvSdkAdditionalData
 
 internal val Sdk.uvUsePackageManagement: Boolean
   get() {
-    val data = sdkAdditionalData as? UvSdkAdditionalData ?: return false
+    val data = getOrCreateAdditionalData() as? UvSdkAdditionalData ?: return false
     return data.usePip
   }
 
@@ -32,48 +35,47 @@ internal fun suggestedSdkName(basePath: Path): @NlsSafe String {
 
 val UV_ICON: Icon = PythonIcons.UV
 
-suspend fun setupUvSdkUnderProgress(
-  moduleOrProject: ModuleOrProject,
+suspend fun setupNewUvSdkAndEnvUnderProgress(
+  project: Project,
+  workingDir: Path,
   existingSdks: List<Sdk>,
-  python: Path?,
-  existingSdkWorkingDir: Path? = null,
-  usePip: Boolean = false,
+  basePython: Path?,
 ): Result<Sdk> {
-
-  val (pyProjectToml, moduleWorkingDirectory) = resolveWorkingDirectory(moduleOrProject)
-  val init = pyProjectToml == null
-  val uvWorkingDir = existingSdkWorkingDir ?: moduleWorkingDirectory
-  val uv = createUvLowLevel(uvWorkingDir, createUvCli())
-
-  val envExecutable =
-    if (existingSdkWorkingDir == null) {
-      withBackgroundProgress(moduleOrProject.project, PyBundle.message("python.sdk.dialog.title.setting.up.uv.environment"), true) {
-        uv.initializeEnvironment(init, python)
-      }.getOrElse {
-        return Result.failure(it)
-      }
-    }
-    else {
-      python
-    } ?: throw IllegalArgumentException("Python executable is required to setup uv environment")
-
-  val sdk = createSdk(envExecutable, existingSdks, moduleWorkingDirectory.pathString, suggestedSdkName(moduleWorkingDirectory), UvSdkAdditionalData(existingSdkWorkingDir, usePip))
-  sdk.onSuccess {
-    it.setAssociationToPath(moduleWorkingDirectory.pathString)
+  return withBackgroundProgress(project, PyBundle.message("python.sdk.dialog.title.setting.up.uv.environment"), true) {
+    setupNewUvSdkAndEnv(workingDir, existingSdks, basePython)
   }
-
-  return sdk
 }
 
-private suspend fun resolveWorkingDirectory(moduleOrProject: ModuleOrProject): Pair<VirtualFile?, Path> {
-  val (file, path) = when (moduleOrProject) {
-    is ModuleOrProject.ModuleAndProject -> PyProjectToml.findModuleWorkingDirectory(moduleOrProject.module)
-    is ModuleOrProject.ProjectOnly -> Pair(null, PyProjectToml.findProjectWorkingDirectory(moduleOrProject.project))
-  }
+suspend fun setupNewUvSdkAndEnv(
+  workingDir: Path,
+  existingSdks: List<Sdk>,
+  basePython: Path?,
+): Result<Sdk> {
+  val toml = workingDir.resolve(PY_PROJECT_TOML)
+  val init = !toml.exists()
 
-  if (path == null) {
-    throw IllegalArgumentException("Path to module or working directory is required")
-  }
+  val uv = createUvLowLevel(workingDir, createUvCli())
+  val envExecutable = uv.initializeEnvironment(init, basePython)
+    .getOrElse {
+      return Result.failure(it)
+    }
 
-  return file to path
+  return setupExistingEnvAndSdk(envExecutable, null, false, workingDir, existingSdks)
+}
+
+suspend fun setupExistingEnvAndSdk(
+  envExecutable: Path,
+  envWorkingDir: Path?,
+  usePip: Boolean,
+  projectDir: Path,
+  existingSdks: List<Sdk>,
+): Result<Sdk> {
+  val sdk = createSdk(
+    envExecutable,
+    existingSdks,
+    projectDir.toString(),
+    suggestedSdkName(projectDir),
+    UvSdkAdditionalData(envWorkingDir, usePip))
+
+  return sdk
 }

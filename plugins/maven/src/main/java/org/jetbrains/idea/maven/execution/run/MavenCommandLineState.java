@@ -26,7 +26,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.terminal.TerminalExecutionConsole;
@@ -68,30 +69,16 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
 
   @Override
   public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
-    var project = myConfiguration.getProject();
-    var eelDescriptor = EelProviderUtil.getEelDescriptor(project);
-
+    Project project = myConfiguration.getProject();
+    EelDescriptor eelDescriptor = EelProviderUtil.getEelDescriptor(project);
     if (eelDescriptor instanceof LocalEelDescriptor) {
       return null;
     }
-
-    var mavenCache = MavenDistributionsCache.getInstance(project);
-    var mavenDistribution = mavenCache.getMavenDistribution(myConfiguration.getRunnerParameters().getWorkingDirPath());
-
-    var mavenHomePath = mavenDistribution.getMavenHome();
-    var effectiveMavenHome = EelNioBridgeServiceKt.asEelPath(mavenHomePath).toString();
-
-    var mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
-
-    var mavenConfig = new MavenRuntimeTargetConfiguration();
-
-    mavenConfig.setHomePath(effectiveMavenHome);
-    mavenConfig.setVersionString(mavenVersion);
-
-    var configuration = new EelTargetEnvironmentRequest.Configuration(EelProviderUtil.upgradeBlocking(eelDescriptor));
-
-    configuration.addLanguageRuntime(mavenConfig);
-
+    EelApi eel = EelProviderUtil.upgradeBlocking(eelDescriptor);
+    EelTargetEnvironmentRequest.Configuration configuration = new EelTargetEnvironmentRequest.Configuration(eel);
+    MavenRuntimeTargetResolver targetResolver = new MavenRuntimeTargetResolver(project, eel);
+    MavenRuntimeTargetConfiguration runtimeTarget = targetResolver.resolve(myConfiguration);
+    configuration.addLanguageRuntime(runtimeTarget);
     return new EelTargetEnvironmentRequest(configuration);
   }
 

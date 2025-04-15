@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,7 +161,8 @@ final class DirectoryPathMatcher {
     return StringUtil.indexOf(name, c, 0, name.length(), false) >= 0;
   }
 
-  private static @NotNull List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
+  @ApiStatus.Internal
+  static @NotNull List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
     Set<VirtualFile> roots = new HashSet<>(BaseProjectDirectories.getBaseDirectories(model.getProject()));
     for (Module module : ModuleManager.getInstance(model.getProject()).getModules()) {
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {

@@ -7,7 +7,7 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.bodyAsBytes
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 
@@ -24,10 +24,12 @@ private val httpClient: HttpClient by lazy {
   }
 }
 
-private suspend fun httpGetSuspend(url: String, authToken: String): String {
+private suspend fun httpGetSuspend(url: String, authToken: String?): ByteArray {
   val response = httpClient.get(url) {
     headers {
-      append(HttpHeaders.Authorization, "Bearer $authToken")
+      if (authToken != null) {
+        append(HttpHeaders.Authorization, "Bearer $authToken")
+      }
     }
   }
 
@@ -35,10 +37,10 @@ private suspend fun httpGetSuspend(url: String, authToken: String): String {
     error("failed to access $url. status=${response.status}")
   }
 
-  return response.bodyAsText()
+  return response.bodyAsBytes()
 }
 
-fun httpGet(url: String, authToken: String): String {
+fun httpGet(url: String, authToken: String?): ByteArray {
   //todo refac eval framework to make it work with suspend funs
   return runBlockingCancellable {
     httpGetSuspend(url, authToken)

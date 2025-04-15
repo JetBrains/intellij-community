@@ -42,6 +42,7 @@ public class MavenImportingSettingsForm {
   private ExternalSystemJdkComboBox myJdkForImporterComboBox;
   private JBLabel myImporterJdkWarning;
   private JCheckBox myAutoDetectCompilerCheckBox;
+  private JCheckBox runPluginsCompat;
 
   private final ComponentValidator myImporterJdkValidator;
   private volatile boolean myMuteJdkValidation = false;
@@ -57,6 +58,7 @@ public class MavenImportingSettingsForm {
 
     LabelTextReplacingUtil.replaceText(myPanel);
     myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
+    runPluginsCompat.setVisible(Registry.is("maven.use.plugins.m2e.compat"));
     myJdkForImporterComboBox.setHighlightInternalJdk(false);
     ActionListener validatorListener = new ActionListener() {
       @Override
@@ -105,6 +107,7 @@ public class MavenImportingSettingsForm {
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
     data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
     data.setAutoDetectCompiler(myAutoDetectCompilerCheckBox.isSelected());
+    data.setRunPluginsCompatibilityOnSyncAndBuild(runPluginsCompat.isSelected());
 
     data.setVmOptionsForImporter(myVMOptionsForImporter.getText());
     data.setJdkForImporter(myJdkForImporterComboBox.getSelectedValue());
@@ -125,6 +128,7 @@ public class MavenImportingSettingsForm {
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
     myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
     myAutoDetectCompilerCheckBox.setSelected(data.isAutoDetectCompiler());
+    runPluginsCompat.setSelected(data.isRunPluginsCompatibilityOnSyncAndBuild());
 
     myDependencyTypes.setText(data.getDependencyTypes());
 

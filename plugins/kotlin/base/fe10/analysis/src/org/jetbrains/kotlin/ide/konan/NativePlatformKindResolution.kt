@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.library.metadata.NullFlexibleTypeDeserializer
 import org.jetbrains.kotlin.library.metadata.impl.KlibMetadataModuleDescriptorFactoryImpl
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.resolve.CompilerDeserializationConfiguration
+import org.jetbrains.kotlin.resolve.KlibCompilerDeserializationConfiguration
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.storage.StorageManager
 
@@ -135,7 +135,7 @@ internal fun KotlinLibrary.createKlibPackageFragmentProvider(
         packageFragmentNames = packageFragmentNames,
         storageManager = storageManager,
         moduleDescriptor = moduleDescriptor,
-        configuration = CompilerDeserializationConfiguration(languageVersionSettings),
+        configuration = KlibCompilerDeserializationConfiguration(languageVersionSettings),
         compositePackageFragmentAddend = null,
         lookupTracker = lookupTracker
     )

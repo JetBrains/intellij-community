@@ -2,10 +2,16 @@
 package com.intellij.platform.syntax.psi
 
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
+import com.intellij.psi.DummyBlockType
 import com.intellij.psi.TokenType
 
-internal class CommonElementTypeConverter : ElementTypeConverterBase(mapOf(
-  SyntaxTokenTypes.ERROR_ELEMENT to TokenType.ERROR_ELEMENT,
-  SyntaxTokenTypes.WHITE_SPACE to TokenType.WHITE_SPACE,
-  SyntaxTokenTypes.BAD_CHARACTER to TokenType.BAD_CHARACTER,
-))
+internal class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
+  override fun getElementTypeConverter(): ElementTypeConverter = commonConverter
+
+  private val commonConverter: ElementTypeConverter = elementTypeConverterOf(
+    SyntaxTokenTypes.ERROR_ELEMENT to TokenType.ERROR_ELEMENT,
+    SyntaxTokenTypes.WHITE_SPACE to TokenType.WHITE_SPACE,
+    SyntaxTokenTypes.BAD_CHARACTER to TokenType.BAD_CHARACTER,
+    com.intellij.platform.syntax.runtime.DUMMY_BLOCK to DummyBlockType.DUMMY_BLOCK
+  )
+}

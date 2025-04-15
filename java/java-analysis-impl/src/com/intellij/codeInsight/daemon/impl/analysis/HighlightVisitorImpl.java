@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
@@ -89,6 +90,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public boolean supersedesDefaultHighlighter() {
+    return true;
+  }
+
+  @Override
   public void visit(@NotNull PsiElement element) {
     element.accept(this);
   }
@@ -118,17 +124,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return true;
   }
 
-  protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
-    prepare(holder, holder.getContextFile());
-  }
-
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
     myCollector = new JavaErrorCollector(file, error -> reportError(error, holder));
   }
 
-  private void reportError(JavaCompilationError<?, ?> error,
-                           @NotNull HighlightInfoHolder holder) {
-    if (error.kind() == SYNTAX_ERROR) return; // reported by DefaultHighlightVisitor
+  private void reportError(@NotNull JavaCompilationError<?, ?> error, @NotNull HighlightInfoHolder holder) {
+    if (error.psiForKind(SYNTAX_ERROR)
+      .filter(e -> HighlightErrorFilter.EP_NAME.findFirstSafe(e.getProject(), filter -> !filter.shouldHighlightErrorElement(e)) != null)
+      .isPresent()) {
+      return;
+    }
     JavaErrorHighlightType javaHighlightType = error.highlightType();
     HighlightInfoType type = switch (javaHighlightType) {
       case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.highlighter.JavaFileType
@@ -6,13 +6,12 @@ import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.psi.stubs.PsiFileStub
-import com.intellij.psi.tree.IStubFileElementType
+import com.intellij.psi.tree.IFileElementType
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
 class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTestCase() {
   companion object {
-    val JAVA: IStubFileElementType<out PsiFileStub<*>> = JavaParserDefinition.JAVA_FILE!!
+    val JAVA: IFileElementType = JavaParserDefinition.JAVA_FILE!!
   }
 
   private val helper = StubIndexPerFileElementTypeModificationTrackerTestHelper()

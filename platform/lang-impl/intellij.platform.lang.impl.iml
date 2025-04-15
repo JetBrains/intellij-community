@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -112,8 +112,11 @@
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
-    <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.foldings" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.syntax" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.util" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
+    <orderEntry type="module" module-name="intellij.platform.experiment" />
   </component>
 </module>

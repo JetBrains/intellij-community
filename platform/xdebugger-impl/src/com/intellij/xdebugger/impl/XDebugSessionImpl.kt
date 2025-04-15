@@ -7,6 +7,8 @@ import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.rpc.toDto
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -21,15 +23,14 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
+import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
@@ -51,15 +52,16 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
+import com.intellij.xdebugger.impl.frame.FileColorsComputer
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarnings
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
-import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
-import com.intellij.xdebugger.impl.rhizome.storeXDebugSessionInDb
 import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.models.XDebugSessionValueIdType
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -68,11 +70,8 @@ import com.intellij.xdebugger.impl.ui.forceShowNewDebuggerUi
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
-import fleet.kernel.withEntities
-import fleet.util.UID
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -89,7 +88,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @ApiStatus.Internal
 class XDebugSessionImpl @JvmOverloads constructor(
   environment: ExecutionEnvironment?,
-  debuggerManager: XDebuggerManagerImpl,
+  private val debuggerManager: XDebuggerManagerImpl,
   sessionName: @Nls String = environment?.runProfile?.getName() ?: "",
   icon: Icon? = environment?.runProfile?.getIcon(),
   showToolWindowOnSuspendOnly: Boolean = false,
@@ -97,6 +96,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 ) : XDebugSession {
   @ApiStatus.Internal
   val coroutineScope: CoroutineScope = debuggerManager.coroutineScope.childScope("XDebugSession $sessionName", EmptyCoroutineContext, true)
+  val id: XDebugSessionId = storeValueGlobally(coroutineScope, this, type = XDebugSessionValueIdType)
 
   private var myDebugProcess: XDebugProcess? = null
   private val myRegisteredBreakpoints: MutableMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?> = HashMap<XBreakpoint<*>?, CustomizedBreakpointPresentation?>()
@@ -106,18 +106,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myDebuggerManager: XDebuggerManagerImpl = debuggerManager
   private val myExecutionPointManager: XDebuggerExecutionPointManager = debuggerManager.executionPointManager
   private var myBreakpointListenerDisposable: Disposable? = null
-  private val mySuspendContext = MutableStateFlow<XSuspendContext?>(null)
 
   @get:ApiStatus.Internal
   var currentSuspendCoroutineScope: CoroutineScope? = null
     private set
-  var currentExecutionStack: XExecutionStack? = null
-    private set
   private var myAlternativeSourceHandler: XAlternativeSourceHandler? = null
   private var myIsTopFrame = false
 
-  @Volatile
-  private var myTopStackFrame: XStackFrame? = null
+  private val myTopStackFrame = MutableStateFlow<XStackFrame?>(null)
   private val myPaused = MutableStateFlow<Boolean>(false)
   private var myValueMarkers: XValueMarkers<*, *>? = null
   private val mySessionName: @Nls String = sessionName
@@ -140,9 +136,21 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val extraActions: MutableList<AnAction> = SmartList<AnAction>()
   private var myConsoleView: ConsoleView? = null
   private val myIcon: Icon? = icon
-  private val mySessionId = XDebugSessionId(UID.random())
-  private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this, mySessionId)
-  private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
+  private val myCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager()
+  private val executionStackFlow = MutableStateFlow<Ref<XExecutionStack?>>(Ref.create(null))
+  @get:ApiStatus.Internal
+  val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
+
+  var currentExecutionStack: XExecutionStack?
+    get() = executionStackFlow.value.get()
+    private set(value) {
+      if (executionStackFlow.value.get() === value) return
+      executionStackFlow.value = Ref.create(value)
+    }
+  private val suspendContextFlow = MutableStateFlow<XSuspendContext?>(null)
+  private val mySuspendContext: StateFlow<XSuspendContext?>
+    get() = suspendContextFlow
+  private val sessionInitializedDeferred = CompletableDeferred<Unit>()
 
   @get:ApiStatus.Internal
   val isSuspendedState: StateFlow<Boolean> = combine(myPaused, mySuspendContext) { paused, suspendContext ->
@@ -185,8 +193,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val tabInitDataFlow: Flow<XDebuggerSessionTabAbstractInfo?>
     get() = myTabInitDataFlow
 
+  @get:ApiStatus.Internal
+  val topFrameFlow: Flow<XStackFrame?>
+    get() = myTopStackFrame
+
   override fun getRunContentDescriptor(): RunContentDescriptor {
-    if (useFeProxy()) {
+    if (useFeProxy() && showFeWarnings()) {
       LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
     }
     val descriptor = myRunContentDescriptor
@@ -271,25 +283,51 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myPausedFlow
   }
 
+  @ApiStatus.Internal
+  fun getCurrentExecutionStackFlow(): Flow<XExecutionStack?> {
+    return executionStackFlow.map { it.get() }
+  }
 
   override fun isPaused(): Boolean {
     return myPaused.value
+  }
+
+  @ApiStatus.Internal
+  fun sessionInitializedDeferred(): Deferred<Unit> {
+    return sessionInitializedDeferred
   }
 
   override fun getCurrentStackFrame(): XStackFrame? {
     return myCurrentStackFrameManager.getCurrentStackFrame()
   }
 
+  @ApiStatus.Internal
+  fun getCurrentStackFrameFlow(): Flow<XStackFrame?> {
+    return myCurrentStackFrameManager.getCurrentStackFrameFlow().map { it.get() }
+  }
+
   override fun getSuspendContext(): XSuspendContext? {
     return mySuspendContext.value
+  }
+
+  @ApiStatus.Internal
+  fun getCurrentSuspendContextFlow(): Flow<XSuspendContext?> {
+    return mySuspendContext
   }
 
   override fun getCurrentPosition(): XSourcePosition? {
     return getFrameSourcePosition(currentStackFrame)
   }
 
+  @ApiStatus.Internal
+  fun getCurrentPositionFlow(): Flow<XSourcePosition?> {
+    return getCurrentStackFrameFlow().map {
+      getFrameSourcePosition(it)
+    }
+  }
+
   override fun getTopFramePosition(): XSourcePosition? {
-    return getFrameSourcePosition(myTopStackFrame)
+    return getFrameSourcePosition(myTopStackFrame.value)
   }
 
   fun getFrameSourcePosition(frame: XStackFrame?): XSourcePosition? {
@@ -341,6 +379,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (!myShowToolWindowOnSuspendOnly) {
       initSessionTab(contentToReuse, false)
     }
+    sessionInitializedDeferred.complete(Unit)
   }
 
   fun reset() {
@@ -374,7 +413,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   val sessionTab: XDebugSessionTab?
     get() {
-      if (useFeProxy()) {
+      if (useFeProxy() && showFeWarnings()) {
         LOG.error("Debug tab should not be used in split mode from XDebugSession")
       }
       return mySessionTab
@@ -395,21 +434,35 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
 
     if (useFeProxy()) {
+      val environmentCoroutineScope = debuggerManager.coroutineScope.childScope("ExecutionEnvironmentDto")
+      val tabClosedChannel = Channel<Unit>(capacity = 1)
       val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
-                                            contentToReuse, executionEnvironment)
+                                            contentToReuse, executionEnvironment?.toDto(environmentCoroutineScope), tabClosedChannel)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
-        myRunContentDescriptor = contentToReuse // This is a mock descriptor used in backend only
-                                 ?: object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
-                                                                  sessionName, myIcon, null) {
-                                   override fun isHiddenContent(): Boolean = true
-                                 }
+        // TODO: take contentToReuse into account
+        // This is a mock descriptor used in backend only
+        val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
+                                                           sessionName, myIcon, null) {
+          override fun isHiddenContent(): Boolean = true
+        }
+        debuggerManager.coroutineScope.launch(Dispatchers.EDT) {
+          for (tabClosedRequest in tabClosedChannel) {
+            environmentCoroutineScope.cancel()
+            Disposer.dispose(mockDescriptor)
+          }
+        }
+        myRunContentDescriptor = mockDescriptor
         myDebugProcess!!.sessionInitialized()
+      }
+      else {
+        environmentCoroutineScope.cancel()
+        tabClosedChannel.close()
       }
     }
     else {
       if (myTabInitDataFlow.value != null) return
       val proxy = XDebugSessionProxyKeeper.getInstance(myProject).getOrCreateProxy(this)
-      val tab = XDebugSessionTab.create(proxy, myIcon, this.executionEnvironment, contentToReuse,
+      val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
                                         forceNewDebuggerUi, withFramesCustomization)
       if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit(tab))) {
         tabInitialized(tab)
@@ -661,10 +714,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
       currentSuspendCoroutineScope?.cancel()
     }
     currentSuspendCoroutineScope = null
-    mySuspendContext.value = null
+    suspendContextFlow.value = null
     this.currentExecutionStack = null
     myCurrentStackFrameManager.setCurrentStackFrame(null)
-    myTopStackFrame = null
+    myTopStackFrame.value = null
     clearActiveNonLineBreakpoint()
     updateExecutionPosition()
   }
@@ -821,6 +874,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return breakpointReached(breakpoint, evaluatedLogExpression, suspendContext, true)
   }
 
+  @ApiStatus.Internal
   fun breakpointReachedNoProcessing(breakpoint: XBreakpoint<*>, suspendContext: XSuspendContext) {
     breakpointReached(breakpoint, null, suspendContext, false)
   }
@@ -934,25 +988,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     setBreakpointsDisabledTemporarily(false)
-    mySuspendContext.value = suspendContext
-    this.currentSuspendCoroutineScope = suspendContext.coroutineScope ?: provideSuspendScope(this)
-    this.currentExecutionStack = suspendContext.activeExecutionStack
-    val newCurrentStackFrame = if (this.currentExecutionStack != null) currentExecutionStack!!.getTopFrame() else null
-    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
-    myIsTopFrame = true
-    myTopStackFrame = newCurrentStackFrame
+    updateSuspendContext(suspendContext)
+
     val topFramePosition = getTopFramePosition()
-
-    val isSteppingSuspendContext = suspendContext is XSteppingSuspendContext
-
-    myPaused.value = !isSteppingSuspendContext
-
-    if (!isSteppingSuspendContext) {
-      val isAlternative = myAlternativeSourceHandler != null &&
-                          myAlternativeSourceHandler!!.isAlternativeSourceKindPreferred(suspendContext)
-      updateExecutionPosition(if (isAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN)
-    }
-
     logPositionReached(topFramePosition)
 
     val needsInitialization = myTabInitDataFlow.value == null
@@ -973,6 +1011,26 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     myDispatcher.getMulticaster().sessionPaused()
+  }
+
+  @ApiStatus.Internal
+  fun updateSuspendContext(newSuspendContext: XSuspendContext) {
+    suspendContextFlow.value = newSuspendContext
+    this.currentSuspendCoroutineScope = newSuspendContext.coroutineScope ?: provideSuspendScope(this)
+    this.currentExecutionStack = newSuspendContext.activeExecutionStack
+    val newCurrentStackFrame = currentExecutionStack?.topFrame
+    myCurrentStackFrameManager.setCurrentStackFrame(newCurrentStackFrame)
+    myIsTopFrame = true
+    myTopStackFrame.value = newCurrentStackFrame
+
+    val isSteppingSuspendContext = newSuspendContext is XSteppingSuspendContext
+
+    myPaused.value = !isSteppingSuspendContext
+
+    if (!isSteppingSuspendContext) {
+      val isAlternative = myAlternativeSourceHandler?.isAlternativeSourceKindPreferred(newSuspendContext) == true
+      updateExecutionPosition(if (isAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN)
+    }
   }
 
   override fun positionReached(suspendContext: XSuspendContext) {
@@ -1012,24 +1070,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
   }
 
-  /**
-   * Gets session ID without entity checks.
-   *
-   * This method should be used when the session existence is not important (e.g., the session is closing).
-   * Note that session entity may be already deleted.
-   * Prefer [id] where possible.
-   */
-  @get:ApiStatus.Internal
-  val idUnsafe: XDebugSessionId get() = mySessionId
-
-  @ApiStatus.Internal
-  suspend fun id(): XDebugSessionId {
-    val entity = entity.await()
-    return withEntities(entity) {
-      entity.sessionId
-    }
-  }
-
   private fun processStopped() {
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher<XDebuggerManagerListener>(XDebuggerManager.TOPIC).processStopped(myDebugProcess!!)
@@ -1048,6 +1088,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       sessionData.isBreakpointsMuted = false
     }
     myDebuggerManager.removeSession(this)
+    XDebugSessionProxyKeeper.getInstance(project).removeProxy(this)
     myDispatcher.getMulticaster().sessionStopped()
     myDispatcher.getListeners().clear()
 

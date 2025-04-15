@@ -12,9 +12,9 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
+import com.intellij.util.messages.impl.PluginListenerDescriptor
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemoteBranch
 import git4idea.remote.hosting.infoFlow
@@ -78,7 +78,7 @@ internal class GHPRDataProviderRepositoryImpl(
     val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
       override fun isDisposed() = parentDisposable.isDisposed
 
-      override fun createListener(descriptor: ListenerDescriptor) =
+      override fun createListener(descriptor: PluginListenerDescriptor) =
         throw UnsupportedOperationException()
     })
     Disposer.register(parentDisposable, messageBus)

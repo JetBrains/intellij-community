@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
+public final class PluginHostsConfigurable implements Configurable.NoScroll, Configurable, Configurable.SingleEditorConfiguration {
   private final ListTableModel<UrlInfo> myModel = new ListTableModel<>() {
     @Override
     public void addRow() {
@@ -173,7 +173,7 @@ public final class PluginHostsConfigurable implements Configurable.NoScroll, Con
       withCellComponentProvider(CellComponentProvider.forTable(myTable)).
       installOn(myTable);
 
-    return ToolbarDecorator.createDecorator(myTable).disableUpDownActions().setMinimumSize(JBUI.size(470, 220)).createPanel();
+    return ToolbarDecorator.createDecorator(myTable).disableUpDownActions().createPanel();
   }
 
   @Override
@@ -273,6 +273,11 @@ public final class PluginHostsConfigurable implements Configurable.NoScroll, Con
     for (UrlInfo item : myModel.getItems()) {
       list.add(item.name);
     }
+  }
+
+  @Override
+  public @NotNull Dimension getDialogInitialSize() {
+    return JBUI.DialogSizes.medium();
   }
 
   private static @NotNull String correctRepositoryRule(@NotNull String input) {

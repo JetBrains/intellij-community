@@ -290,7 +290,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     // Now we have to wait for the main debuggee process to finish. Otherwise, `XDebugSession` will terminate it,
     // which causes the process to finish with a non-zero exit code or the `KeyboardInterrupt` exception.
     // This issue happens frequently with multiprocess debugging.
-    getProcessHandler().waitFor();
     handleStop(); // In case of normal debug, we stop the session
   }
 
@@ -783,18 +782,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final PySourcePosition pyPosition = myPositionConverter.convertToPython(position);
       String type =
         ReadAction.compute(() -> {
-          String t = PyLineBreakpointType.ID;
+          String breakpointTypeId = PyLineBreakpointType.ID;
           final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
           if (document != null) {
             for (XBreakpointType<?, ?> breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
               if (breakpointType instanceof PyBreakpointType &&
-                  ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
-                t = breakpointType.getId();
+                  ((PyBreakpointType)breakpointType).isBreakpointTypeAllowedInDocument(getSession().getProject(), document)) {
+                breakpointTypeId = breakpointType.getId();
                 break;
               }
             }
           }
-          return t;
+          return breakpointTypeId;
         });
       myDebugger.setTempBreakpoint(type, pyPosition.getFile(), pyPosition.getLine());
 

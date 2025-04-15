@@ -31,7 +31,7 @@ interface WebSymbolDeclaredInPsi : WebSymbol, SearchTarget, RenameTarget {
 
   override fun createPointer(): Pointer<out WebSymbolDeclaredInPsi>
 
-  override fun getNavigationTargets(project: Project): Collection<PsiNavigatableWebSymbolNavigationTarget> {
+  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
     return listOf(PsiNavigatableWebSymbolNavigationTarget(this))
   }
 

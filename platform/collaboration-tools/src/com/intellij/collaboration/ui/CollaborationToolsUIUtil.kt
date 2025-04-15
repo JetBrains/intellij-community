@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.observable.properties.AbstractObservableProperty
 import com.intellij.openapi.ui.ComponentValidator
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -347,6 +349,20 @@ object CollaborationToolsUIUtil {
     component.isVisible = children.any { it.isVisible }
     for (child in children) {
       UIUtil.runWhenVisibilityChanged(child) { component.isVisible = children.any { it.isVisible } }
+    }
+  }
+
+  @ApiStatus.Internal
+  inline fun validateAndApplyAction(panel: DialogPanel, action: () -> Unit) {
+    panel.apply()
+    val errors = panel.validateAll()
+    if (errors.isEmpty()) {
+      action()
+      panel.reset()
+    }
+    else {
+      val componentWithError = errors.first().component ?: return
+      focusPanel(componentWithError)
     }
   }
 }

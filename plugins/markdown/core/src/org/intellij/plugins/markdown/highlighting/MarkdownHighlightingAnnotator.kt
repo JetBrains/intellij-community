@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -17,7 +18,9 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
-class MarkdownHighlightingAnnotator : Annotator {
+internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
+  private val syntaxHighlighter = MarkdownSyntaxHighlighter()
+
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     when (PsiUtilCore.getElementType(element)) {
       MarkdownTokenTypes.EMPH -> annotateBasedOnParent(element, holder) {
@@ -72,11 +75,16 @@ class MarkdownHighlightingAnnotator : Annotator {
   private fun PsiElement.traverseAndCreateAnnotationsForContent(holder: AnnotationHolder, textAttributesKey: TextAttributesKey) {
     val contentRanges = mutableListOf<TextRange>()
 
-    val type = elementType
-    if (type !is OuterLanguageElementType && firstChild == null) {
-      contentRanges.add(textRange)
-    }
+    accept(object : PsiRecursiveElementVisitor() {
+      override fun visitElement(element: PsiElement) {
+        val type = element.elementType
+        if (type !is OuterLanguageElementType && element.firstChild == null) {
+          contentRanges.add(element.textRange)
+        }
 
+        super.visitElement(element)
+      }
+    })
     /**
      * If an original sequence was separated by [OuterLanguageElementType]s, then there are several ranges.
      * In other cases, the result contains one element.
@@ -122,9 +130,5 @@ class MarkdownHighlightingAnnotator : Annotator {
     mergedRanges.add(currentRange)
 
     return mergedRanges
-  }
-
-  companion object {
-    private val syntaxHighlighter = MarkdownSyntaxHighlighter()
   }
 }

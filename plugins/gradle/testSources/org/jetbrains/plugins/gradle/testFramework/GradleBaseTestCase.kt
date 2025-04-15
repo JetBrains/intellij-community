@@ -34,7 +34,7 @@ abstract class GradleBaseTestCase {
   val gradleJvm: String get() = gradleJvmFixture.gradleJvm
   val gradleJvmInfo: JdkVersionInfo get() = gradleJvmFixture.gradleJvmInfo
 
-  private val gradleFixture by gradleFixture(testPathFixture)
+  private val gradleFixture by gradleFixture()
 
   @BeforeEach
   fun setUpGradleBaseTestCase() {
@@ -45,15 +45,15 @@ abstract class GradleBaseTestCase {
   }
 
   suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project {
-    return gradleFixture.openProject(relativePath, numProjectSyncs)
+    return gradleFixture.openProject(testPath.resolve(relativePath), numProjectSyncs)
   }
 
   suspend fun linkProject(project: Project, relativePath: String) {
-    gradleFixture.linkProject(project, relativePath)
+    gradleFixture.linkProject(project, testPath.resolve(relativePath))
   }
 
   suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit = {}) {
-    gradleFixture.reloadProject(project, relativePath, configure)
+    gradleFixture.reloadProject(project, testPath.resolve(relativePath), configure)
   }
 
   suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project {

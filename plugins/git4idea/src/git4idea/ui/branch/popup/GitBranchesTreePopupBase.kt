@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
 import com.intellij.collaboration.async.cancelledWith
@@ -8,7 +8,12 @@ import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
@@ -19,10 +24,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.*
+import com.intellij.ui.ActiveComponent
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.SmartExpander
+import com.intellij.ui.TreeActions
+import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -36,6 +51,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -48,11 +64,14 @@ import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.*
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitTagHolder
+import git4idea.repo.GitTagLoaderListener
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer.Companion.getText
 import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirst
@@ -69,12 +88,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Cursor
+import java.awt.Dimension
 import java.awt.Point
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import java.util.function.Function
 import java.util.function.Supplier
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.ActionMap
+import javax.swing.InputMap
+import javax.swing.JComponent
+import javax.swing.JTree
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreeModel
@@ -84,7 +115,7 @@ import kotlin.math.min
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
-abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
+internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   project: Project,
   step: T,
   parent: JBPopup? = null,
@@ -115,10 +146,10 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   init {
     setParentValue(parentValue)
     minimumSize = if (isNewUI) JBDimension(375, 300) else JBDimension(300, 200)
-    this.dimensionServiceKey = if (isChild()) null else dimensionServiceKey
-    userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
+    this.dimensionServiceKey = if (isNestedPopup()) null else dimensionServiceKey
+    userResized = !isNestedPopup() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installShortcutActions(step.treeModel)
-    if (!isChild()) {
+    if (!isNestedPopup()) {
       setSpeedSearchAlwaysShown()
       if (!isNewUI) installTitleToolbar()
       installRepoListener()
@@ -129,10 +160,10 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
         .initBranchSyncPolicyIfNotInitialized()
     }
     installBranchSettingsListener()
-    setDataProvider(EdtNoGetDataProvider { sink ->
+    setUiDataProvider { sink ->
       sink[POPUP_KEY] = this@GitBranchesTreePopupBase
       sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = treeStep.repositories
-    })
+    }
 
     GitDisposable.getInstance(project).coroutineScope
       .childScope("Git Branches Tree Popup")
@@ -149,7 +180,8 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
 
   protected abstract fun getTreeEmptyText(searchPattern: String?): @Nls String
 
-  protected abstract fun createRenderer(treeStep: T): GitBranchesTreeRenderer
+  @VisibleForTesting
+  internal abstract fun createRenderer(): GitBranchesTreeRenderer
 
   protected open fun createNextStepPopup(nextStep: PopupStep<*>?, parentValue: Any): WizardPopup =
     createPopup(this, nextStep, parentValue)
@@ -182,6 +214,19 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     val searchBorder = mySpeedSearchPatternField.border
     mySpeedSearchPatternField.border = null
 
+    val topPanel = BorderLayoutPanel().apply {
+      val dragArea = simplePanel().apply {
+        preferredSize = Dimension(0, 8)
+        background = JBUI.CurrentTheme.Popup.BACKGROUND
+        isOpaque = true
+      }
+      addToCenter(dragArea)
+      background = JBUI.CurrentTheme.Popup.BACKGROUND
+      border = JBUI.Borders.empty(2, 0)
+
+      WindowMoveListener(this).installTo(this)
+    }
+
     val panel = BorderLayoutPanel()
       .addToCenter(mySpeedSearchPatternField)
       .apply {
@@ -192,12 +237,24 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
         background = JBUI.CurrentTheme.Popup.BACKGROUND
       }
 
-    return panel
+    val headerComponent = BorderLayoutPanel()
+      .addToTop(topPanel)
+      .addToCenter(panel)
+      .apply {
+        background = JBUI.CurrentTheme.Popup.BACKGROUND
+      }
+
+    return headerComponent
   }
 
   protected open fun getOldUiHeaderComponent(c: JComponent?): JComponent? = c
 
   override fun createContent(): JComponent {
+    return installTree()
+  }
+
+  @VisibleForTesting
+  internal fun installTree(): Tree {
     tree = BranchesTree(treeStep.treeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
@@ -212,7 +269,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     return tree
   }
 
-  protected fun isChild() = parent != null
+  protected fun isNestedPopup() = parent != null
 
   private fun applySearchPattern(pattern: String? = speedSearch.enteredPrefix.nullize(true)) {
     treeStep.updateTreeModelIfNeeded(tree, pattern)
@@ -245,8 +302,8 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
         }
 
         val nodeToExpand = when {
-          node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
-          node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
+          node is GitBranch && isNestedPopup() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
+          node is GitBranch && !isNestedPopup() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
           node is GitBranch && treeStep.affectedRepositories.any { node in it.recentCheckoutBranches } -> node
           node is RefUnderRepository && node.repository.currentBranch == node.ref -> node
           node is RefTypeUnderRepository -> node
@@ -373,7 +430,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     override fun actionPerformed(e: ActionEvent?) {
       if (closePopup) {
         cancel()
-        if (isChild()) {
+        if (isNestedPopup()) {
           parent.cancel()
         }
       }
@@ -394,7 +451,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_BACKGROUND, Supplier { JBUI.CurrentTheme.Tree.background(true, true) })
     ClientProperty.put(this, RenderingUtil.CUSTOM_SELECTION_FOREGROUND, Supplier { JBUI.CurrentTheme.Tree.foreground(true, true) })
 
-    val renderer = createRenderer(treeStep)
+    val renderer = createRenderer()
 
     ClientProperty.put(this, Control.CUSTOM_CONTROL, Function { renderer.getLeftTreeIconRenderer(it) })
 
@@ -436,7 +493,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     }
 
     overrideBuiltInAction(TreeActions.Left.ID) {
-      if (isChild()) {
+      if (isNestedPopup()) {
         cancel()
         true
       }
@@ -445,9 +502,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
 
     overrideBuiltInAction(TreeActions.Right.ID) {
       val path = selectionPath
-      if (path != null && (path.lastPathComponent is GitRepository
-                           || path.lastPathComponent is TopLevelRepository
-                           || model.getChildCount(path.lastPathComponent) == 0)) {
+      if (path != null && (path.lastPathComponent is RepositoryNode || model.getChildCount(path.lastPathComponent) == 0)) {
         handleSelect(false, null)
         true
       }
@@ -520,7 +575,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   final override fun afterShow() {
     selectPreferred()
     traverseNodesAndExpand()
-    if (!isChild()) {
+    if (!isNestedPopup()) {
       treeStateHolder.applyStateTo(tree)
     }
     if (treeStep.isSpeedSearchEnabled) {
@@ -711,7 +766,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
         null -> ""
         is ItemPresentation -> value.presentableText.orEmpty()
         is GitBranch -> value.name
-        else -> getText(value, treeStep.treeModel, treeStep.affectedRepositories) ?: ""
+        else -> treeStep.getNodeText(value) ?: ""
       }
     }
   }

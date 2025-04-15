@@ -5,8 +5,14 @@ java_import(
     jars = ["kotlin-compiler.jar"],
     srcjar = "@kotlin-compiler-sources//file",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        "@lib//:jetbrains-annotations",
-        "@lib//:kotlinx-coroutines-core"
-    ],
 )
+
+
+# cd ~/projects/kotlin
+
+# (do not compress! do not use release option)
+# ./gradlew :dist
+
+# cd ~/projects/kotlin/dist/kotlinc/lib
+# do not use --max - "Frame requires too much memory for decodin"
+# tar -cf - kotlin-compiler.jar | zstd -19 -f -o kotlin-compiler.tar.zst

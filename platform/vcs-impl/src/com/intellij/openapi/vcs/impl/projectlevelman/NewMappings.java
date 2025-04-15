@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.filename.UniqueNameBuilder;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -127,7 +127,7 @@ public final class NewMappings implements Disposable {
   private void updateActiveVcses(boolean forceFireEvent) {
     if (!myActivated) return;
     if (myProject.isDisposed()) return;
-    if (!TrustedProjects.isTrusted(myProject)) return;
+    if (!TrustedProjects.isProjectTrusted(myProject)) return;
 
     List<VcsDirectoryMapping> mappings = myMappings;
     Set<AbstractVcs> newVcses = ContainerUtil.map2SetNotNull(myMappings, this::getMappingsVcs);
@@ -395,7 +395,7 @@ public final class NewMappings implements Disposable {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
-    if (!TrustedProjects.isTrusted(myProject)) {
+    if (!TrustedProjects.isProjectTrusted(myProject)) {
       return new Mappings(Collections.emptyList(), pointerDisposable);
     }
 

@@ -5,7 +5,7 @@
   <version>1.0.0</version>
 
   <!-- Public plugin name should be written in Title Case.
-       Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+       Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
   <name>${context.getProperty("pluginTitle")}</name>
   <category>UI</category>
 
@@ -15,7 +15,7 @@
   <idea-version since-build="${context.getBomProperty("intellij.since.build")}"/>
 
   <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-       Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+       Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
   <description><![CDATA[
     Enter short description for your theme here.<br>
     <em>most HTML tags may be used</em>

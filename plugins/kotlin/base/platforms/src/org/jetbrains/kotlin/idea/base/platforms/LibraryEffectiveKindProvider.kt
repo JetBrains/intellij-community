@@ -29,7 +29,6 @@ import com.intellij.util.io.IOUtil
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider.LibraryKindScanner
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
@@ -41,8 +40,11 @@ private enum class KnownLibraryKindForIndex {
     COMMON, JS, UNKNOWN
 }
 
-@Service(Service.Level.PROJECT)
-class LibraryEffectiveKindProvider(private val project: Project) {
+interface LibraryEffectiveKindProvider {
+    fun getEffectiveKind(library: Library): PersistentLibraryKind<*>?
+}
+
+class LibraryEffectiveKindProviderImpl(private val project: Project): LibraryEffectiveKindProvider {
     private fun findKind(classRoots: Array<VirtualFile>): PersistentLibraryKind<*>? {
         val virtualFile = classRoots.firstOrNull() ?: return null
         virtualFile.putUserData(CLASS_ROOTS_KEY, classRoots)
@@ -55,7 +57,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
         }
     }
 
-    fun getEffectiveKind(library: Library): PersistentLibraryKind<*>? {
+    override fun getEffectiveKind(library: Library): PersistentLibraryKind<*>? {
         require(library is LibraryEx)
 
         if (library.isDisposed) {
@@ -221,7 +223,7 @@ private class KotlinLibraryKindGistProvider {
         val classRootLibraryKinds = classRoots.asSequence().map { classRoot ->
             classRoot.getUserData(LIBRARY_KIND_GUESS_FROM_CONTENT_KEY)?.let { return@map it }
             // Library hasn't been scanned yet - run the scanner manually
-            LibraryKindScanner.runScannerOutsideScanningSession(classRoot)
+            LibraryEffectiveKindProviderImpl.LibraryKindScanner.runScannerOutsideScanningSession(classRoot)
             classRoot.getUserData(LIBRARY_KIND_GUESS_FROM_CONTENT_KEY)
         }
 

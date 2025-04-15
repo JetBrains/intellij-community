@@ -45,8 +45,9 @@ jvm_library(
   plugins = ["@lib//:compose-plugin"]
 )
 
-jvm_test(
-  name = "ideLafBridge_test",
+jvm_library(
+  name = "ideLafBridge_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":ideLafBridge"],
@@ -66,29 +67,16 @@ jvm_test(
     "@lib//:jna",
     "//libraries/skiko",
     "//platform/core-ui",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test-junit4",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-    "@lib//:platform-jewel-ide_laf_bridge-org-hamcrest-hamcrest-core",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test-desktop",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-runtime-runtime",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-text",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-unit",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-annotations",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-desktop-desktop",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-desktop-desktop-jvm",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-runtime-runtime2",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui2",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-tooling-preview",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-    "@lib//:platform-jewel-ide_laf_bridge-org-jetbrains-compose-runtime-runtime3",
-    "//libraries/junit4",
     "//libraries/compose-foundation-desktop",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/compose-foundation-desktop-junit",
   ],
   runtime_deps = [":ideLafBridge_resources"],
   plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "ideLafBridge_test",
+  runtime_deps = [":ideLafBridge_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.ideLafBridge` end

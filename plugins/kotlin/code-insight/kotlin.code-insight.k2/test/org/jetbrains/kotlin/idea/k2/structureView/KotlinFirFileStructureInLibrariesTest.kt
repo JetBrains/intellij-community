@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.structureView
 
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
@@ -33,8 +34,29 @@ class KotlinFirFileStructureInLibrariesTest: KotlinFileStructureTestBase() {
         get() = IDEA_TEST_DATA_DIR.resolve("structureView/onLibrary")
 
     fun testPairOutput() {
-        val libraryElement = myFixture.findClass("kotlin.Pair").navigationElement
-        myFixture.openFileInEditor(libraryElement.containingFile.virtualFile)
+        doTestForClass("kotlin.Pair")
+    }
+
+    fun testAbstractListOutput() {
+        doTestForClass("kotlin.collections.AbstractList")
+    }
+
+    fun testSimpleDataClassOutput() {
+        doTest {
+            myFixture.configureByText("SimpleDataClass.kt", "data class SimpleDataClass(val key: Int, val value: String)")
+        }
+    }
+
+    private fun doTestForClass(className: String) {
+        doTest {
+            val libraryElement = myFixture.findClass(className).navigationElement
+            libraryElement.containingFile
+        }
+    }
+
+    private fun doTest(configure: () -> PsiFile) {
+        val psiFile = configure()
+        myFixture.openFileInEditor(psiFile.virtualFile)
         popupFixture.update()
         checkResult()
     }

@@ -5,8 +5,8 @@ package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -338,7 +338,7 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? = loadComponentTimeMs.addMeasuredTime {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (ProjectUtil.isRemotePath(FileUtilRt.toSystemDependentName(filePath)) && !project.isTrusted()) {
+    if (ProjectUtil.isRemotePath(FileUtilRt.toSystemDependentName(filePath)) && !TrustedProjects.isProjectTrusted(project)) {
       throw IOException(ConfigurationStoreBundle.message("error.message.details.configuration.files.from.remote.locations.in.safe.mode"))
     }
     if (componentName == "") {

@@ -72,13 +72,13 @@ public abstract class SyntheticLibrary {
     return myComparisonId;
   }
 
-  public abstract @NotNull Collection<VirtualFile> getSourceRoots();
+  public abstract @NotNull @Unmodifiable Collection<VirtualFile> getSourceRoots();
 
-  public @NotNull Collection<VirtualFile> getBinaryRoots() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getBinaryRoots() {
     return Collections.emptyList();
   }
 
-  public @NotNull Set<VirtualFile> getExcludedRoots() {
+  public @NotNull @Unmodifiable Set<VirtualFile> getExcludedRoots() {
     return Collections.emptySet();
   }
 
@@ -218,7 +218,7 @@ public abstract class SyntheticLibrary {
     return contains(file, true, true);
   }
 
-  private static @NotNull Set<? extends VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
+  private static @NotNull @Unmodifiable Set<? extends VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
     return collection instanceof Set ? (Set<? extends VirtualFile>)collection : new HashSet<>(collection);
   }
 

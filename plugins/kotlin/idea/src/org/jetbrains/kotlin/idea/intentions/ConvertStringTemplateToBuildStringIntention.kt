@@ -10,13 +10,14 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertStringTemplateToBuildStringCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
 class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
     KotlinBundle.lazyMessage("convert.string.template.to.build.string"),
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression, caretOffset: Int): Boolean {
-        return !element.text.startsWith("\"\"\"") && !element.isInsideAnnotationEntryArgumentList()
+        return element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList() && element.interpolationPrefix == null
     }
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {

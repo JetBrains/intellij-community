@@ -80,6 +80,7 @@ class MavenRepositoriesProjectResolverTest {
     myRepoList.add(mavenRepo1)
 
     myResolver.populateProjectExtraModels(myProject, myProjectNode)
+    myResolver.resolveFinished(myProjectNode)
 
     val mavenRepo2 = MyMavenRepoModel("name1", "http://some.other.host")
     myRepoList.apply {
@@ -90,12 +91,13 @@ class MavenRepositoriesProjectResolverTest {
     }
 
     myResolver.populateModuleExtraModels(myModule, myModuleNode)
+    myResolver.resolveFinished(myProjectNode)
 
     assertProjectContainsExactly(mavenRepo1, mavenRepo2)
   }
 
-  private fun assertProjectContainsExactly(vararg mavenRepoModels: MavenRepositoryModel) {
-    assertEquals(myProjectNode.mavenRepositories(), mavenRepoModels.toMavenRepoData())
+  private fun assertProjectContainsExactly(vararg expectedMavenRepoModels: MavenRepositoryModel) {
+    assertEquals(expectedMavenRepoModels.toMavenRepoData(), myProjectNode.mavenRepositories())
   }
 
   private fun DataNode<*>.mavenRepositories(): Collection<MavenRepositoryData> =

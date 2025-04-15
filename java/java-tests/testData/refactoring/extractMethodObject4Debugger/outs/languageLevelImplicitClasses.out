@@ -1,0 +1,13 @@
+call text: BufferedReader result = new Test(reader).invoke();
+class: 
+public class GeneratedEvaluationClass {
+    private BufferedReader reader;
+
+    public GeneratedEvaluationClass(BufferedReader reader) {
+        this.reader = reader;
+    }
+
+    public BufferedReader invoke() {
+        return reader;
+    }
+}

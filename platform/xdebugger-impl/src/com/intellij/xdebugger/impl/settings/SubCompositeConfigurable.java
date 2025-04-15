@@ -17,7 +17,7 @@ import java.util.List;
 
 abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent, SearchableConfigurable.Merged {
   protected DataViewsConfigurableUi root;
-  protected Configurable[] children;
+  protected @NotNull Configurable[] children;
   protected JComponent rootComponent;
 
   @Override

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import java.io.IOException
 import java.nio.file.Files
 
@@ -29,6 +30,8 @@ internal class SaveImageAction : DumbAwareAction() {
     val wrapper = chooser.save(project.basePath?.let { VirtualFileManager.getInstance().findFileByUrl(it) }, IMAGE_DEFAULT_NAME)
 
     if (wrapper == null) return
+    val targetFile = wrapper.file
+    val selectedFormat = targetFile.extension.lowercase()
 
     try {
       Files.write(wrapper.file.toPath(), virtualFile.contentsToByteArray())
@@ -36,6 +39,7 @@ internal class SaveImageAction : DumbAwareAction() {
     catch (e: IOException) {
       logger.warn("Failed to save image", e)
     }
+    ScientificImageActionsCollector.logSaveAsImageInvoked(this, selectedFormat)
   }
 
   override fun update(e: AnActionEvent) {

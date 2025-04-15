@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
@@ -39,8 +38,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
-import git4idea.checkout.GitCheckoutProvider
-import git4idea.commands.Git
+import git4idea.checkout.GitCloneUtils
 import git4idea.remote.GitRememberedInputs
 import git4idea.ui.GitShallowCloneComponentFactory
 import git4idea.ui.GitShallowCloneViewModel
@@ -61,10 +59,8 @@ import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
-import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 import java.awt.event.ActionEvent
-import java.nio.file.Paths
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JSeparator
@@ -277,43 +273,10 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     } ?: emptyList()
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-    val parent = Paths.get(directoryField.text).toAbsolutePath().parent
-    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
-    if (destinationValidation != null) {
-      LOG.error(CollaborationToolsBundle.message("clone.dialog.error.unable.to.create.destination.directory"),
-                destinationValidation.message)
-      GithubNotifications.showError(project,
-                                    GithubNotificationIdsHolder.CLONE_UNABLE_TO_CREATE_DESTINATION_DIR,
-                                    CollaborationToolsBundle.message("clone.dialog.clone.failed"),
-                                    CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory"))
-      return
-    }
-
-    val lfs = LocalFileSystem.getInstance()
-    var destinationParent = lfs.findFileByIoFile(parent.toFile())
-    if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-    }
-    if (destinationParent == null) {
-      LOG.error(CollaborationToolsBundle.message("clone.dialog.error.destination.not.exist"))
-      GithubNotifications.showError(project,
-                                    GithubNotificationIdsHolder.CLONE_UNABLE_TO_FIND_DESTINATION,
-                                    CollaborationToolsBundle.message("clone.dialog.clone.failed"),
-                                    CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory"))
-      return
-    }
-    val directoryName = Paths.get(directoryField.text).fileName.toString()
-    val parentDirectory = parent.toAbsolutePath().toString()
-
-    GitCheckoutProvider.clone(
-      project,
-      Git.getInstance(),
-      checkoutListener,
-      destinationParent,
-      selectedUrl,
-      directoryName,
-      parentDirectory,
-      shallowCloneModel.getShallowCloneOptions(),
+    val selectedUrl = selectedUrl ?: error("Clone button is enabled when repository is not selected")
+    GitCloneUtils.clone(project, selectedUrl, directoryField.text, shallowCloneModel.getShallowCloneOptions(), checkoutListener,
+                        GithubNotificationIdsHolder.CLONE_UNABLE_TO_CREATE_DESTINATION_DIR,
+                        GithubNotificationIdsHolder.CLONE_UNABLE_TO_FIND_DESTINATION
     )
   }
 

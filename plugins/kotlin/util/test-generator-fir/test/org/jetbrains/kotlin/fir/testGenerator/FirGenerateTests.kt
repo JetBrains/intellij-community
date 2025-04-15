@@ -36,10 +36,7 @@ import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.kmp.AbstractK2KmpLightFixtureHighlightingTest
-import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoDeclarationTest
-import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoRelatedSymbolMultiModuleTest
-import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTest
-import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTest
+import org.jetbrains.kotlin.idea.fir.navigation.*
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
@@ -249,6 +246,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     testGroup("fir/tests", testDataPath = "../../idea/tests/testData", category = NAVIGATION) {
         testClass<AbstractFirGotoTypeDeclarationTest> {
             model("navigation/gotoTypeDeclaration", pattern = TEST)
+        }
+
+        testClass<AbstractFirMoveToNextMethodTest> {
+            model("navigation/moveToNextMethod", pattern = TEST, testMethodName = "doTest")
         }
 
         testClass<AbstractFirGotoTest> {

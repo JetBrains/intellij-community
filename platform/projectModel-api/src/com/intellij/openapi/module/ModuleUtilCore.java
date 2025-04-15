@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -97,7 +98,7 @@ public class ModuleUtilCore {
    *         empty list for project files outside module content roots or library files
    */
   @ApiStatus.Internal
-  public static @NotNull Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @NotNull @Unmodifiable Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return Collections.emptySet();
     }

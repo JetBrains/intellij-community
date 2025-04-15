@@ -4,6 +4,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,7 +93,7 @@ public class OrderRootType {
     return ourPersistentOrderRootTypes;
   }
 
-  public static @NotNull List<PersistentOrderRootType> getSortedRootTypes() {
+  public static @NotNull @Unmodifiable List<PersistentOrderRootType> getSortedRootTypes() {
     List<PersistentOrderRootType> allTypes = new ArrayList<>();
     Collections.addAll(allTypes, getAllPersistentTypes());
     allTypes.sort((o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));

@@ -537,10 +537,14 @@
 
     <group id="NewGroup" popup="true" searchable="false">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction" icon="AllIcons.FileTypes.Text">
+        <!--suppress PluginXmlCapitalization -->
         <override-text place="NewElementInProjectViewPopupEmptyTextLink" />
+        <override-text place="GoToAction"/>
       </action>
       <reference ref="NewScratchFile"/>
-      <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
+      <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction">
+        <override-text place="GoToAction"/>
+      </action>
       <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
       <group id="NewWebDevelopment" class="com.intellij.ide.actions.NewWebDevelopmentGroup"/>
       <group id="NewMicroservices" class="com.intellij.ide.actions.NewMicroservicesGroup"/>
@@ -857,7 +861,7 @@
     <group id="TreeNodeExclusion">
       <action id="UsageView.Include" class="com.intellij.ide.actions.exclusion.IncludeTreeNodeAction"/>
       <action id="UsageView.Exclude" class="com.intellij.ide.actions.exclusion.ExcludeTreeNodeAction" use-shortcut-of="$Delete"/>
-    </group>>
+    </group>
 
     <group id="UsageView.Popup">
       <action id="UsageView.Rerun" class="com.intellij.usages.actions.RerunSearchAction" icon="AllIcons.Actions.Refresh" use-shortcut-of="Rerun"/>

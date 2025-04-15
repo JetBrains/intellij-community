@@ -1,23 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public abstract class XBreakpointPropertiesSubPanel {
   protected Project myProject;
-  protected XBreakpointManager myBreakpointManager;
-  protected XBreakpointBase myBreakpoint;
-  protected XBreakpointType myBreakpointType;
+  protected XBreakpointProxy myBreakpoint;
+  protected XBreakpointTypeProxy myBreakpointType;
 
-  public void init(Project project, final XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint) {
+  public void init(Project project, @NotNull XBreakpointProxy breakpoint) {
     myProject = project;
-    myBreakpointManager = breakpointManager;
     myBreakpoint = breakpoint;
     myBreakpointType = breakpoint.getType();
   }

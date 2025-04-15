@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -50,15 +49,11 @@ public final class KillRingSaveAction extends TextComponentEditorAction {
       }
       KillRingUtil.copyToKillRing(editor, start, end, false);
       if (myRemove) {
-        DocumentRunnable runnable = new DocumentRunnable(editor.getDocument(), editor.getProject()) {
-          @Override
-          public void run() {
-            editor.getDocument().deleteString(start, end);
-          }
-        };
+        Runnable runnable = () -> editor.getDocument().deleteString(start, end);
         if (editor instanceof TextComponentEditor) {
           runnable.run();
-        } else {
+        }
+        else {
           ApplicationManager.getApplication().runWriteAction(runnable);
         }
       }

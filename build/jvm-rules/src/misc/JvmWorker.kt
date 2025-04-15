@@ -6,13 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.W_OVERWRITE
-import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
-import org.jetbrains.intellij.build.io.ZipIndexWriter
-import org.jetbrains.intellij.build.io.file
+import org.jetbrains.intellij.build.io.zipWriter
 import java.io.File
 import java.io.Writer
-import java.nio.channels.FileChannel
 import java.nio.file.Path
 
 object JvmWorker : WorkRequestExecutor<WorkRequest> {
@@ -60,21 +56,6 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
         return 0
       }
 
-      "jdeps" -> {
-        val inputs = request.inputPaths.asSequence()
-          .filter { it.endsWith(".jdeps") }
-          .map { baseDir.resolve(it) }
-        //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), inputs.joinToString("\n") { it.toString() })
-        mergeJdeps(
-          consoleOutput = writer,
-          label = command[3],
-          output = Path.of(output),
-          reportUnusedDeps = command[4],
-          inputs = inputs,
-        )
-        return 0
-      }
-
       else -> {
         writer.appendLine("Command is not supported: $taskKind (command=$command)")
         return 1
@@ -91,11 +72,11 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
   for (input in inputs) {
     val p = input
     if (!p.startsWith(stripPrefixWithSlash)) {
-      // input can contain jdeps/our jar in the end
+      // input can contain our jar in the end
       continue
     }
 
-    files.add(p.substring(stripPrefixWithSlash.length))
+    files.add(p.substring(stripPrefixWithSlash.length).replace(File.separatorChar, '/'))
   }
 
   files.sort()
@@ -104,17 +85,12 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
   //Files.writeString(Path.of("/tmp/f2.txt"), stripPrefixWithSlash + "\n" + files.joinToString("\n") { it.toString() })
 
   withContext(Dispatchers.IO) {
-    val packageIndexBuilder = PackageIndexBuilder()
-    ZipArchiveOutputStream(
-      channel = FileChannel.open(outJar, W_OVERWRITE),
-      zipIndexWriter = ZipIndexWriter(packageIndexBuilder.indexWriter)
-    ).use { stream ->
+    val packageIndexBuilder = PackageIndexBuilder(AddDirEntriesMode.RESOURCE_ONLY)
+    zipWriter(targetFile = outJar, packageIndexBuilder = packageIndexBuilder, overwrite = true).use { stream ->
       for (path in files) {
-        val name = path.replace(File.separatorChar, '/')
-        packageIndexBuilder.addFile(name = name, addClassDir = false)
-        stream.file(nameString = name, file = root.resolve(path))
+        packageIndexBuilder.addFile(name = path)
+        stream.fileWithoutCrc(path = path.toByteArray(), file = root.resolve(path))
       }
-      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
     }
   }
 }

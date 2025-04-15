@@ -7,6 +7,7 @@ import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -350,7 +351,8 @@ final class ClassChecker {
       if (nameIdentifier == null) return;
       if (psiClass.isEnum()) return;
 
-      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(psiClass).findAll();
+      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.searchAllSealedInheritors(
+        psiClass, GlobalSearchScope.allScope(myVisitor.project()).union(GlobalSearchScope.fileScope(myVisitor.file()))).findAll();
       if (inheritors.isEmpty()) {
         myVisitor.report(JavaErrorKinds.CLASS_SEALED_NO_INHERITORS.create(psiClass));
         return;
@@ -762,7 +764,7 @@ final class ClassChecker {
   void checkEnumSuperConstructorCall(@NotNull PsiMethodCallExpression expr) {
     PsiReferenceExpression methodExpression = expr.getMethodExpression();
     PsiElement refNameElement = methodExpression.getReferenceNameElement();
-    if (refNameElement != null && PsiKeyword.SUPER.equals(refNameElement.getText())) {
+    if (refNameElement != null && JavaKeywords.SUPER.equals(refNameElement.getText())) {
       PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(expr);
       if (constructor instanceof PsiMethod) {
         PsiClass aClass = constructor.getContainingClass();

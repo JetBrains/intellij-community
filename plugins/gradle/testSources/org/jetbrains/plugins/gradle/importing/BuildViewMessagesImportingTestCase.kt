@@ -68,8 +68,12 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     buildViewTestFixture.assertSyncViewSelectedNode(nodeText, consoleText)
   }
 
-  protected fun assertSyncViewSelectedNode(nodeText: String, assertSelected: Boolean, consoleTextChecker: (String?) -> Unit) {
-    buildViewTestFixture.assertSyncViewSelectedNode(nodeText, assertSelected, consoleTextChecker)
+  protected fun assertSyncViewNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
+    buildViewTestFixture.assertSyncViewNode(nodeText, consoleTextChecker)
+  }
+
+  protected fun assertSyncViewSelectedNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
+    buildViewTestFixture.assertSyncViewSelectedNode(nodeText, consoleTextChecker)
   }
 
   protected fun assertSyncViewRerunActions() {

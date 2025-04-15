@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
@@ -21,7 +22,6 @@ import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.java.JavaConverter.convertPsiElement
 import org.jetbrains.uast.java.declarations.JavaLazyParentUIdentifier
 import org.jetbrains.uast.java.expressions.*
-import org.jetbrains.uast.java.expressions.JavaUModuleReferenceExpression
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
@@ -387,7 +387,7 @@ internal object JavaConverter {
       }
 
       override fun visitKeyword(keyword: PsiKeyword) {
-        result = if (keyword.text == PsiKeyword.SUPER || keyword.text == PsiKeyword.THIS) requiredType.el<UIdentifier, PsiElement>(keyword, givenParent, ::JavaLazyParentUIdentifier) else null
+        result = if (keyword.text == JavaKeywords.SUPER || keyword.text == JavaKeywords.THIS) requiredType.el<UIdentifier, PsiElement>(keyword, givenParent, ::JavaLazyParentUIdentifier) else null
       }
 
       override fun visitModuleReferenceElement(refElement: PsiJavaModuleReferenceElement) {

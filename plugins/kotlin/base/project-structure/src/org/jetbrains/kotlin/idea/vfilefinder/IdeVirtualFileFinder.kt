@@ -42,7 +42,7 @@ class IdeVirtualFileFinder(private val scope: GlobalSearchScope, private val pro
 
     init {
         if (scope != GlobalSearchScope.EMPTY_SCOPE && scope.project == null) {
-            LOG.warn("Scope with null project $scope")
+            LOG.info("Scope with null project $scope")
         }
     }
 

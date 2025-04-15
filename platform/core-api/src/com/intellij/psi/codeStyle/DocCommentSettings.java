@@ -45,6 +45,8 @@ public interface DocCommentSettings {
    */
   boolean isRemoveEmptyTags();
 
+  default void setRemoveEmptyLines(boolean removeEmptyLines) {}
+
   /**
    * Force or disable empty tags removal.
    * @param removeEmptyTags True if all empty tags must be removed, false if all of them must be preserved.

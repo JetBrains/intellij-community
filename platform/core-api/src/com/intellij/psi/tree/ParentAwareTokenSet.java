@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import org.jetbrains.annotations.Contract;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * Analogue {@link TokenSet}.
@@ -35,8 +35,8 @@ public final class ParentAwareTokenSet {
     return new ParentAwareTokenSet(set);
   }
 
-  public static @NotNull ParentAwareTokenSet create(@NotNull Set<IElementType> set) {
-    return new ParentAwareTokenSet(TokenSet.create(set.toArray(IElementType.EMPTY_ARRAY)));
+  public static @NotNull ParentAwareTokenSet create(@NotNull Collection<IElementType> collection) {
+    return new ParentAwareTokenSet(TokenSet.create(collection.toArray(IElementType.EMPTY_ARRAY)));
   }
 
   public static @NotNull ParentAwareTokenSet orSet(ParentAwareTokenSet... sets) {

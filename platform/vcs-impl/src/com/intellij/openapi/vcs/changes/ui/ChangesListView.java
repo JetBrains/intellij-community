@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.FileSelectInContext;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.JBIterable;
@@ -38,6 +39,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserResolvedConflictsNodeKt.RESOLVED_CONFLICTS_NODE_TAG;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public abstract class ChangesListView extends ChangesTree implements DnDAware {
@@ -62,7 +64,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
   private boolean myBusy = false;
 
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
-    super(project, showCheckboxes, true);
+    super(project, showCheckboxes, true, true, true);
     // setDragEnabled throws an exception in headless mode which leads to a memory leak
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       setDragEnabled(true);
@@ -93,6 +95,36 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     if (subtreeRootObject instanceof LocalChangeList localChangeList) return !localChangeList.getChanges().isEmpty();
     if (subtreeRootObject == UNVERSIONED_FILES_TAG && subtreeRoot.getChildCount() > 0) return true;
     return false;
+  }
+
+  @Override
+  protected boolean isInclusionEnabled(@NotNull ChangesBrowserNode<?> node) {
+    if (MergeConflictManager.isForceIncludeResolvedConflicts()) {
+      if (isUnderResolvedConflicts(node)) return false;
+    }
+
+    return super.isInclusionEnabled(node);
+  }
+
+  @Override
+  protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
+    if (isUnderResolvedConflicts(node)) return true;
+
+    return super.isIncludable(node);
+  }
+
+  private static boolean isUnderResolvedConflicts(@NotNull ChangesBrowserNode<?> node) {
+    ChangesBrowserNode<?> curNode = node;
+
+    while (curNode != null && !(node.getUserObject() instanceof LocalChangeList)
+           && curNode.getUserObject() != RESOLVED_CONFLICTS_NODE_TAG) {
+      curNode = curNode.getParent();
+      if (curNode != null && curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG) return true;
+    }
+
+    if (curNode == null) return false;
+
+    return curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG;
   }
 
   private static @Nullable ChangesBrowserNode<?> getSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
@@ -155,6 +187,9 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       VirtualFile file = VcsTreeModelData.mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
       return new FileSelectInContext(myProject, file, null);
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+      return VcsTreeModelData.findSelectedVirtualFile(this);
     });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return VcsTreeModelData.mapToVirtualFile(treeSelection)

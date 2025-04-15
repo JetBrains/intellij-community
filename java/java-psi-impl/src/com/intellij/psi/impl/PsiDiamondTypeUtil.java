@@ -200,44 +200,49 @@ public final class PsiDiamondTypeUtil {
           }
         }
       }
-      final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
-      if (context instanceof PsiMethodReferenceExpression) {
-        PsiMethodReferenceExpression methodRefCopy = PsiTreeUtil.getParentOfType(copy, PsiMethodReferenceExpression.class, false);
-        if (methodRefCopy != null && !isInferenceEquivalent(typeArguments, typeParameters, method, methodRefCopy)) {
-          return false;
-        }
-      }
-      else if (exprCopy != null) {
-        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(exprCopy.getProject());
-        if (constructorRef) {
-          if (!(exprCopy instanceof PsiNewExpression) ||
-              !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
+      JavaPsiFacadeEx javaPsiFacadeEx = (JavaPsiFacadeEx)JavaPsiFacade.getInstance(context.getProject());
+      @Nullable PsiMethod finalMethod = method;
+      return javaPsiFacadeEx.withTemporaryScopeCaches(()->{
+        final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
+        if (context instanceof PsiMethodReferenceExpression) {
+          PsiMethodReferenceExpression methodRefCopy = PsiTreeUtil.getParentOfType(copy, PsiMethodReferenceExpression.class, false);
+          if (methodRefCopy != null && !isInferenceEquivalent(typeArguments, typeParameters, finalMethod, methodRefCopy)) {
             return false;
           }
         }
-        else {
-          LOG.assertTrue(method != null);
-          if (!isInferenceEquivalent(typeArguments, elementFactory, exprCopy, method, typeParameters)) {
-            return false;
+        else if (exprCopy != null) {
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(exprCopy.getProject());
+          if (constructorRef) {
+            if (!(exprCopy instanceof PsiNewExpression) ||
+                !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
+              return false;
+            }
+          }
+          else {
+            LOG.assertTrue(finalMethod != null);
+            if (!isInferenceEquivalent(typeArguments, elementFactory, exprCopy, finalMethod, typeParameters)) {
+              return false;
+            }
           }
         }
-      }
 
-      if (typeByParent != null) {
+        if (typeByParent != null) {
+          return true;
+        }
+
+        PsiCallExpression newParentCall = exprCopy != null ? PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class) : null;
+        PsiCallExpression oldParentCall = PsiTreeUtil.getParentOfType(context, PsiCallExpression.class);
+        if (newParentCall != null && oldParentCall != null) {
+          JavaResolveResult newResult = newParentCall.resolveMethodGenerics();
+          JavaResolveResult oldResult = oldParentCall.resolveMethodGenerics();
+          if (newResult.getElement() == null ||
+              !newResult.getElement().isEquivalentTo(oldResult.getElement()) ||
+              !new RecaptureTypeMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor())) {
+            return false;
+          }
+        }
         return true;
-      }
-
-      PsiCallExpression newParentCall = exprCopy != null ? PsiTreeUtil.getParentOfType(exprCopy, PsiCallExpression.class) : null;
-      PsiCallExpression oldParentCall = PsiTreeUtil.getParentOfType(context, PsiCallExpression.class);
-      if (newParentCall != null && oldParentCall != null) {
-        JavaResolveResult newResult = newParentCall.resolveMethodGenerics();
-        JavaResolveResult oldResult = oldParentCall.resolveMethodGenerics();
-        if (newResult.getElement() == null ||
-            !newResult.getElement().isEquivalentTo(oldResult.getElement()) ||
-            !new RecaptureTypeMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor())) {
-          return false;
-        }
-      }
+      });
     }
     catch (IncorrectOperationException e) {
       LOG.info(e);
@@ -248,7 +253,6 @@ public final class PsiDiamondTypeUtil {
         RecaptureTypeMapper.clean(encoded);
       }
     }
-    return true;
   }
 
   private static boolean isInferenceEquivalent(PsiType[] typeArguments,

@@ -54,6 +54,8 @@ public final class FilePathMapping<T> {
   }
 
   public @Nullable T getMappingFor(@NotNull String filePath) {
+    if (myPathHashSet.isEmpty()) return null;
+
     String path = UriUtil.trimTrailingSlashes(filePath);
 
     int index = 0;

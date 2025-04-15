@@ -142,55 +142,15 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     versionComboBox.showingScope("...") {
       model.myProjectPathFlows.projectPathWithDefault.collect {
         if (!locationModified) {
-
           val suggestedVirtualEnvPath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(it.toString())) // todo nullability issue
           model.state.venvPath.set(suggestedVirtualEnvPath)
         }
       }
     }
-    // todo venv path suggestion from controller
-    //model.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    //  presenter.projectWithContextFlow.collectLatest { (projectPath, projectLocationContext) ->
-    //    withContext(presenter.uiContext) {
-    //      if (!locationModified) {
-    //        val suggestedVirtualEnvPath = runCatching {
-    //          suggestVirtualEnvPath(projectPath, projectLocationContext)
-    //        }.getOrLogException(LOG)
-    //        location.set(suggestedVirtualEnvPath.orEmpty())
-    //      }
-    //    }
-    //  }
-    //}
   }
 
   override fun onShown() {
-    val modalityState = ModalityState.current().asContextElement()
-    model.scope.launch(Dispatchers.EDT + modalityState) {
-      // TODO: Check venv set
-      //
-      //val suggestedVirtualEnvPath = model.suggestVenvPath()!! // todo nullability issue
-      //model.state.venvPath.set(suggestedVirtualEnvPath)
-
-      //val projectBasePath = state.projectPath.get()
-
-      //val basePath = if (model is PythonLocalAddInterpreterModel)
-      //  withContext(Dispatchers.IO) {
-      //    FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-      //  }
-      //else {
-      //  ""
-      //  // todo fix for wsl and targets
-      //  //val suggestedVirtualEnvName = PathUtil.getFileName(projectBasePath)
-      //  //val userHome = presenter.projectLocationContext.fetchUserHomeDirectory()
-      //  //userHome?.resolve(DEFAULT_VIRTUALENVS_DIR)?.resolve(suggestedVirtualEnvName)?.toString().orEmpty()
-      //}
-      //
-      //model.state.venvPath.set(basePath)
-    }
-
     versionComboBox.setItems(model.baseInterpreters)
-
-
   }
 
   private fun suggestVenvName(currentName: String): String {

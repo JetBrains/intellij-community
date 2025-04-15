@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
+import com.intellij.openapi.application.UI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
@@ -79,7 +80,7 @@ object ReviewListUtil {
 
       list.model.addListDataListener(object : ListDataListener {
         override fun intervalAdded(e: ListDataEvent) {
-          cs.launch(Dispatchers.Main) {
+          cs.launch(Dispatchers.UI) {
             // yield to let list resize itself
             yield()
             checkScroll()

@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.NewUiValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -104,7 +103,7 @@ public final class ModCommandActionWrapper implements IntentionAction, PriorityA
 
   @Override
   public Icon getIcon(int flags) {
-    return NewUiValue.isEnabled() || myPresentation == null ? null : myPresentation.icon();
+    return myPresentation == null ? null : myPresentation.icon();
   }
 
   @Override

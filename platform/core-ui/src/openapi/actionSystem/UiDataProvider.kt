@@ -53,14 +53,20 @@ fun interface UiDataProvider {
 }
 
 /**
+ * A data map representation.
+ */
+@ApiStatus.NonExtendable
+interface DataMap {
+
+  operator fun <T : Any> get(key: DataKey<T>): T?
+}
+
+/**
  * A data snapshot representation.
  * [UiDataRule] operates on it.
  */
 @ApiStatus.NonExtendable
-interface DataSnapshot {
-
-  operator fun <T : Any> get(key: DataKey<T>): T?
-}
+interface DataSnapshot: DataMap
 
 /**
  * A non-EDT version of [UiDataProvider].
@@ -152,7 +158,14 @@ interface DataSink {
   /**
    * Put the [PlatformCoreDataKeys.BGT_DATA_PROVIDER] lambda in the sink
    */
-  fun <T : Any> lazy(key: DataKey<T>, data: () -> T?)
+  fun <T : Any> lazy(key: DataKey<T>, data: () -> T?) {
+    lazyValue(key) { data() }
+  }
+
+  /**
+   * Put the [PlatformCoreDataKeys.BGT_DATA_PROVIDER] lambda in the sink
+   */
+  fun <T : Any> lazyValue(key: DataKey<T>, data: (provider: DataMap) -> T?)
 
   /**
    * Put the [com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL] value in the sink
@@ -220,3 +233,6 @@ interface DataSink {
     }
   }
 }
+
+@Suppress("NOTHING_TO_INLINE")
+inline operator fun <T> DataContext.get(key: DataKey<T>): T? = this.getData(key)

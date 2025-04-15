@@ -19,12 +19,11 @@ import org.jetbrains.kotlin.psi.*
 
 class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.KOTLIN
-  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
+  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor =
     when (mode) {
-      CompletionGolfMode.ALL -> return AllVisitor(featureName)
-      CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
+      CompletionGolfMode.ALL -> AllVisitor(featureName)
+      CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
     }
-  }
 
   class AllVisitor(override val feature: String) : LineCompletionAllEvaluationVisitor, KtTreeVisitorVoid() {
     override val language: Language = Language.KOTLIN

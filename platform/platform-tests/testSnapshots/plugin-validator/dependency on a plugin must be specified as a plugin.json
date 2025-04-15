@@ -10,5 +10,4 @@ Proposed fix:
 Change dependency element to:
 
 <plugin id="dependent"/>
-
 -----------------------------------

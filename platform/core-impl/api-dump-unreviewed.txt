@@ -280,11 +280,13 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - getParent():com.intellij.psi.PsiElement
 - pf:getParentByStub():com.intellij.psi.PsiElement
 - getProject():com.intellij.openapi.project.Project
-- getRequiredStubOrPsiChild(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.PsiElement
+- f:getRequiredStubOrPsiChild(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.PsiElement
 - getStub():com.intellij.psi.stubs.StubElement
 - getStubOrPsiChild(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.PsiElement
-- getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
-- getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
+- f:getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
+- f:getStubOrPsiChildren(com.intellij.psi.stubs.IStubElementType,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
+- f:getStubOrPsiChildren(com.intellij.psi.tree.IElementType,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
+- f:getStubOrPsiChildren(com.intellij.psi.tree.IElementType,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.tree.TokenSet,com.intellij.util.ArrayFactory):com.intellij.psi.PsiElement[]
 - getStubOrPsiChildren(com.intellij.psi.tree.TokenSet,com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
 - p:getStubOrPsiParentOfType(java.lang.Class):com.intellij.psi.PsiElement
@@ -415,8 +417,6 @@ c:com.intellij.ide.highlighter.custom.tokens.WhitespaceParser
 - com.intellij.ide.highlighter.custom.tokens.TokenParser
 - <init>():V
 - hasToken(I):Z
-f:com.intellij.ide.plugins.IdeaPluginDescriptorImplKt
-- sf:toPluginIdSet(java.lang.Iterable):java.util.Set
 f:com.intellij.ide.plugins.PluginLoadingError
 - sf:Companion:com.intellij.ide.plugins.PluginLoadingError$Companion
 - f:disabledDependency:com.intellij.openapi.extensions.PluginId
@@ -490,8 +490,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:toPluginIds(java.util.Collection):java.util.Set
 - f:writePluginIdsToFile(java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[]):V
 - bs:writePluginIdsToFile$default(com.intellij.ide.plugins.PluginManagerCore,java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[],I,java.lang.Object):V
-f:com.intellij.ide.plugins.XmlReader
-- sf:isKotlinPlugin(com.intellij.openapi.extensions.PluginId):Z
 a:com.intellij.indentation.AbstractIndentParser
 - com.intellij.lang.PsiParser
 - p:myBuilder:com.intellij.indentation.IndentPsiBuilder
@@ -963,14 +961,14 @@ c:com.intellij.mock.MockApplication
 - s:setUp(com.intellij.openapi.Disposable):com.intellij.mock.MockApplication
 - tryRunReadAction(java.lang.Runnable):Z
 c:com.intellij.mock.MockComponentManager
-- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.openapi.Disposable
 - com.intellij.openapi.components.ComponentManager
+- com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.util.messages.MessageBusOwner
 - addComponent(java.lang.Class,java.lang.Object):V
 - createError(java.lang.String,com.intellij.openapi.extensions.PluginId):java.lang.RuntimeException
 - createError(java.lang.String,java.lang.Throwable,com.intellij.openapi.extensions.PluginId,java.util.Map):java.lang.RuntimeException
 - createError(java.lang.Throwable,com.intellij.openapi.extensions.PluginId):java.lang.RuntimeException
-- createListener(com.intellij.util.messages.ListenerDescriptor):java.lang.Object
 - dispose():V
 - getActivityCategory(Z):com.intellij.diagnostic.ActivityCategory
 - getComponent(java.lang.Class):java.lang.Object
@@ -992,6 +990,7 @@ c:com.intellij.mock.MockComponentManager
 - registerService(java.lang.Class,java.lang.Class):V
 - registerService(java.lang.Class,java.lang.Object):V
 - registerService(java.lang.Class,java.lang.Object,com.intellij.openapi.Disposable):V
+- unregisterService(java.lang.Class):V
 c:com.intellij.mock.MockFileDocumentManagerImpl
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - <init>(com.intellij.openapi.util.Key,com.intellij.util.Function):V
@@ -1032,7 +1031,6 @@ c:com.intellij.mock.MockProject
 - com.intellij.openapi.project.Project
 - dispose():V
 - f:getActivityCategory(Z):com.intellij.diagnostic.ActivityCategory
-- getActualComponentManager():com.intellij.openapi.components.ComponentManager
 - getBaseDir():com.intellij.openapi.vfs.VirtualFile
 - getBasePath():java.lang.String
 - getComponentInstancesOfType(java.lang.Class):java.util.List
@@ -1977,10 +1975,6 @@ c:com.intellij.psi.DummyHolderViewProvider
 - setDummyHolder(com.intellij.psi.impl.source.DummyHolder):V
 com.intellij.psi.ExternalChangeAction
 - java.lang.Runnable
-a:com.intellij.psi.ExternalChangeAction$ExternalDocumentChange
-- com.intellij.openapi.editor.DocumentRunnable
-- com.intellij.psi.ExternalChangeAction
-- p:<init>(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):V
 f:com.intellij.psi.FileTypeFileViewProviders
 - com.intellij.openapi.fileTypes.FileTypeExtension
 - sf:INSTANCE:com.intellij.psi.FileTypeFileViewProviders

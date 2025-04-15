@@ -2,12 +2,19 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 public class ZoomingDelegate {
@@ -96,7 +103,7 @@ public class ZoomingDelegate {
       if (bounds.width <= 0 || bounds.height <= 0) return;
 
       BufferedImage image =
-        ImageUtil.createImage(myViewportComponent.getGraphics(), bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+        ImageUtil.createImage(GraphicsUtil.safelyGetGraphics(myViewportComponent), bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
 
       Graphics graphics = image.getGraphics();
       graphics.setClip(0, 0, bounds.width, bounds.height);

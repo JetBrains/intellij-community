@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.remoting
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -15,9 +15,17 @@ enum class ActionRemoteBehavior {
   FrontendOnly,
 
   /**
-   * The action tries to perform on a thin client first and if it's not available it goes to a backend
+   * The action is updated on the frontend and backend, choosing the available presentation,
+   * but the action will always be performed on the frontend.
    */
   FrontendThenBackend,
+
+  /**
+   * The action updates on both backend and frontend,
+   * if a frontend action is available, its presentation will be taken, and the action will be performed on the frontend.
+   * Otherwise, backend's presentation will be used, and the action will be performed on the frontend
+   */
+  FrontendOtherwiseBackend,
 
   /**
    * The action delegates to a backend
@@ -57,6 +65,10 @@ interface ActionRemoteBehaviorSpecification {
 
   interface FrontendThenBackend : ActionRemoteBehaviorSpecification {
     override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
+  }
+
+  interface FrontendOtherwiseBackend : ActionRemoteBehaviorSpecification {
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendOtherwiseBackend
   }
 
   interface BackendOnly : ActionRemoteBehaviorSpecification {

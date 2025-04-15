@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
@@ -6,10 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
@@ -18,7 +16,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private final GeneralCommandLine myCommandLine = new GeneralCommandLine();
 
   LocalBuildCommandLineBuilder(String vmExecutablePath) {
-    myCommandLine.setExePath(vmExecutablePath);
+    myCommandLine.withExePath(vmExecutablePath);
   }
 
   @Override
@@ -31,19 +29,19 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myCommandLine.addParameter(prefix + path);
   }
 
-
   @Override
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public void addClasspathParameter(List<String> classpathInHost, List<String> classpathInTarget) {
     StringBuilder builder = new StringBuilder();
     for (String file : classpathInHost) {
       if (!builder.isEmpty()) {
-        builder.append(File.pathSeparator);
+        builder.append(java.io.File.pathSeparator);
       }
       builder.append(FileUtil.toCanonicalPath(file));
     }
     for (String s : classpathInTarget) {
       if (!builder.isEmpty()) {
-        builder.append(File.pathSeparator);
+        builder.append(java.io.File.pathSeparator);
       }
       builder.append(getHostWorkingDirectory().resolve(s));
     }
@@ -52,7 +50,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public @NotNull String getWorkingDirectory() {
-    return FileUtilRt.toSystemIndependentName(getHostWorkingDirectory().toString());
+    return FileUtil.toSystemIndependentName(getHostWorkingDirectory().toString());
   }
 
   @Override
@@ -69,35 +67,41 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public void setCharset(Charset charset) {
-    myCommandLine.setCharset(charset);
+    myCommandLine.withCharset(charset);
   }
 
   @Override
   public GeneralCommandLine buildCommandLine() {
-    myCommandLine.setWorkDirectory(getHostWorkingDirectory().toFile());
-    return myCommandLine;
+    return myCommandLine.withWorkingDirectory(getHostWorkingDirectory());
   }
 
   @Override
   public void setUnixProcessPriority(int priority) {
     if (!SystemInfo.isUnix) {
-      throw new IllegalArgumentException("setUnixProcessPriority must be used only on Unix operating systems");
+      throw new IllegalArgumentException("'setUnixProcessPriority' must be used only on Unix operating systems");
     }
 
     setUnixProcessPriority(myCommandLine, priority);
   }
 
-  public static @NotNull Path getLocalBuildSystemDirectory() {
+  @Override
+  public void setStartNewSession() {
+    if (!SystemInfo.isLinux) {
+      throw new IllegalArgumentException("'setNewProcessGroup' must be used only on Linux");
+    }
+
+    myCommandLine.withWrappingCommand("setsid", "-w");
+  }
+
+  static @NotNull Path getLocalBuildSystemDirectory() {
     return PathManagerEx.getAppSystemDir().resolve(BuildManager.SYSTEM_ROOT);
   }
 
   static void setUnixProcessPriority(GeneralCommandLine commandLine, int priority) {
-    if (priority < -20 || priority > 19) {
-      throw new IllegalArgumentException("priority must be greater or equal to -20 and less than 20: " + priority);
+    if (priority < 0 || priority > 19) {
+      throw new IllegalArgumentException("priority must be in the [0..19] range: " + priority);
     }
 
-    String executablePath = commandLine.getExePath();
-    commandLine.setExePath("nice");
-    commandLine.getParametersList().prependAll("-n", Integer.toString(priority), executablePath);
+    commandLine.withWrappingCommand("nice", "-n", Integer.toString(priority));
   }
 }

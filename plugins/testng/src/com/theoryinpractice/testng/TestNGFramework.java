@@ -2,7 +2,7 @@
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -131,7 +131,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
                                           TestngBundle.message("testng.create.new.method.dialog.title"),
                                           Messages.getWarningIcon());
       if (exit == Messages.YES) {
-        new AddAnnotationFix(BeforeMethod.class.getName(), inClass).invoke(inClass.getProject(), null, inClass.getContainingFile());
+        AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(BeforeMethod.class.getName(), PsiNameValuePair.EMPTY_ARRAY, inClass.getModifierList());
         return inClass;
       }
       else if (exit == Messages.NO) {

@@ -50,8 +50,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
-import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL;
-import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
@@ -129,9 +129,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     TYPE_VAR_TUPLE, TYPE_VAR_TUPLE_EXT
   );
 
-  public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager";
-  public static final String ASYNC_CONTEXT_MANAGER = "contextlib.AbstractAsyncContextManager";
-
   public static final Set<String> TYPE_DICT_QUALIFIERS = Set.of(REQUIRED, REQUIRED_EXT, NOT_REQUIRED, NOT_REQUIRED_EXT, READONLY, READONLY_EXT);
 
   public static final String UNPACK = "typing.Unpack";
@@ -189,7 +186,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
    * some synthetic values.
    */
   public static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
-    .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
+    .add(PyKnownDecorator.TYPING_OVERLOAD.getQualifiedName().toString())
     .add(ANY)
     .add(TYPE_VAR)
     .add(TYPE_VAR_EXT)
@@ -203,7 +200,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(TUPLE)
     .add(CALLABLE)
     .add(TYPE)
-    .add("typing.no_type_check")
+    .add(PyKnownDecorator.TYPING_NO_TYPE_CHECK.getQualifiedName().toString())
+    .add(PyKnownDecorator.TYPING_NO_TYPE_CHECK_EXT.getQualifiedName().toString())
     .add(UNION)
     .add(OPTIONAL)
     .add(LIST)
@@ -217,7 +215,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(COUNTER)
     .add(DEQUE)
     .add(CHAIN_MAP)
-    .add(NO_RETURN)
+    .add(NO_RETURN, NO_RETURN_EXT)
+    .add(NEVER, NEVER_EXT)
     .add(FINAL, FINAL_EXT)
     .add(LITERAL, LITERAL_EXT)
     .add(TYPED_DICT, TYPED_DICT_EXT)
@@ -227,6 +226,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(NOT_REQUIRED, NOT_REQUIRED_EXT)
     .add(READONLY, READONLY_EXT)
     .add(SELF, SELF_EXT)
+    .add(LITERALSTRING, LITERALSTRING_EXT)
     .build();
 
   // Type hints in PSI stubs, type comments and "escaped" string annotations are represented as PyExpressionCodeFragments
@@ -1466,13 +1466,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @Nullable Pair<List<PyType>, PyParamSpecType> getConcatenateParametersTypes(@NotNull PySubscriptionExpression subscriptionExpression,
                                                                                              @NotNull TypeEvalContext context) {
     final var tuple = subscriptionExpression.getIndexExpression();
-    if (!(tuple instanceof PyTupleExpression)) return null;
-    final var result = ContainerUtil.mapNotNull(((PyTupleExpression)tuple).getElements(),
+    if (!(tuple instanceof PyTupleExpression tupleExpression)) return null;
+    final var result = ContainerUtil.map(tupleExpression.getElements(),
                                                 it -> Ref.deref(getType(it, context)));
     if (result.size() < 2) return null;
     PyType lastParameter = result.get(result.size() - 1);
-    if (!(lastParameter instanceof PyParamSpecType)) return null;
-    return new Pair<>(result.subList(0, result.size() - 1), (PyParamSpecType)lastParameter);
+    if (!(lastParameter instanceof PyParamSpecType paramSpecType)) return null;
+    return new Pair<>(result.subList(0, result.size() - 1), paramSpecType);
   }
 
   private static @Nullable PyTypeParameterType getTypeParameterTypeFromDeclaration(@NotNull PsiElement element, @NotNull Context context) {
@@ -2051,6 +2051,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (classType == null) return null;
 
       final String qName = classType.getClassQName();
+      if (qName == null) return null;
       if (!SYNC_TYPES.contains(qName) && !ASYNC_TYPES.contains(qName)) return null;
       
       PyType yieldType = null;

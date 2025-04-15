@@ -327,7 +327,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static int myThreadDumpsCount = 0;
 
   @ApiStatus.Internal
-  public static void addDumpItems(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+  public static ThreadDumpPanel createThreadDumpPanel(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
     final ConsoleView consoleView = consoleBuilder.getConsole();
@@ -349,6 +349,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (!dumpItems.isEmpty()) {
       panel.selectStackFrame(0);
     }
+    return panel;
+  }
+
+  @ApiStatus.Internal
+  public static void addDumpItems(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+    createThreadDumpPanel(project, dumpItems, ui, searchScope);
   }
 
   public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {

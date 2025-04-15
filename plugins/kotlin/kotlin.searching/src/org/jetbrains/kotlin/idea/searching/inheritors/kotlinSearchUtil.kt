@@ -12,6 +12,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.mappingNotNull
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -66,6 +68,13 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
             }
             when (currentMethod) {
                 is KtCallableDeclaration -> {
+                    val isFinal = runReadAction {
+                        analyze(currentMethod) {
+                            val symbol = currentMethod.symbol
+                            ((symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol).modality == KaSymbolModality.FINAL
+                        }
+                    }
+                    if (isFinal) continue
                     DirectKotlinOverridingCallableSearch.search(currentMethod, searchScope).asIterable().forEach {
                         queue.offer(it)
                     }
@@ -124,6 +133,12 @@ fun KtClass.findAllInheritors(searchScope: SearchScope = useScope): Sequence<Psi
             }
             when (currentClass) {
                 is KtClass -> {
+                    val isFinal = runReadAction {
+                        !currentClass.isEnum() && analyze(currentClass) { // allow searching for enum constants in enum but don't bother about other final classes
+                            currentClass.symbol.modality == KaSymbolModality.FINAL
+                        }
+                    }
+                    if (isFinal) continue
                     DirectKotlinClassInheritorsSearch.search(currentClass, searchScope).asIterable().forEach {
                         queue.offer(it)
                     }

@@ -202,12 +202,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         }
 
                         is KaCompoundVariableAccessCall -> {
-                            val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol
-                            if (variableSymbol is KaSyntheticJavaPropertySymbol) {
-                                add(variableSymbol.getter)
-                                addIfNotNull(variableSymbol.setter)
-                            } else {
-                                add(variableSymbol)
+                            when (val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol) {
+                                is KaSyntheticJavaPropertySymbol -> {
+                                    add(variableSymbol.javaGetterSymbol)
+                                    addIfNotNull(variableSymbol.javaSetterSymbol)
+                                }
+                                is KaPropertySymbol -> {
+                                    addIfNotNull(variableSymbol.getter)
+                                    addIfNotNull(variableSymbol.setter)
+                                }
+                                else ->
+                                    add(variableSymbol)
                             }
                             add(candidate.compoundOperation.operationPartiallyAppliedSymbol.symbol)
                         }
@@ -229,7 +234,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 val psi = analyzeForUast(ktExpression) {
                     val candidate = candidatePointer.restoreSymbol() ?: return@forEach
                     when (candidate) {
-                        is KaVariableSymbol -> psiForUast(candidate)
+                        is KaVariableSymbol -> psiForUast(candidate, ktExpression)
                         is KaFunctionSymbol -> toPsiMethod(candidate, ktExpression)
                     }
                 }
@@ -455,7 +460,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         resolvedTargetSymbol.owningProperty.psi
                     }
                     else -> {
-                        psiForUast(resolvedTargetSymbol)
+                        psiForUast(resolvedTargetSymbol, ktExpression)
                     }
                 }
 

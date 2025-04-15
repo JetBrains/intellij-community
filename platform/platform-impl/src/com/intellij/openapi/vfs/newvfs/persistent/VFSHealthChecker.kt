@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.openapi.vfs.newvfs.persistent
@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEAL
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.MAX_CHILDREN_TO_LOG
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.WRAP_HEALTH_CHECK_IN_READ_ACTION
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.SystemProperties.getIntProperty
@@ -53,11 +52,7 @@ private object VFSHealthCheckerConstants {
                                                    !ApplicationManager.getApplication().isUnitTestMode)
 
   val HEALTH_CHECKING_PERIOD_MS = getIntProperty("vfs.health-check.checking-period-ms",
-                                                 if (ApplicationManager.getApplication().isEAP)
-                                                   1.hours.inWholeMilliseconds.toInt()
-                                                 else
-                                                   12.hours.inWholeMilliseconds.toInt()
-  )
+                                                 12.hours.inWholeMilliseconds.toInt())
 
   /** 10min in most cases enough for the initial storm of requests to VFS (scanning/indexing/etc)
    *  to finish, so VFS _likely_ +/- settles down after that. */
@@ -150,13 +145,7 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
       return
     }
     val checker = VFSHealthChecker(fsRecordsImpl, LOG)
-    val checkHealthReport = try {
-      checker.checkHealth(CHECK_ORPHAN_RECORDS)
-    }
-    catch (_: AlreadyDisposedException) {
-      return //VFS is already closed
-      //TODO RC: do we need it to catch it now, as ADE extends PCE?
-    }
+    val checkHealthReport = checker.checkHealth(CHECK_ORPHAN_RECORDS)
 
     VfsUsageCollector.logVfsHealthCheck(
       fsRecordsImpl.creationTimestamp,
@@ -192,6 +181,9 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
     //MAYBE RC: create VFS_BROKEN_MARKER?
   }
 }
+
+/** How many records to process in one ReadAction */
+private const val RECORD_CHUNK_SIZE = 32
 
 /**
  * Performs VFS self-consistency checks.
@@ -232,141 +224,145 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val fileRecords = connection.records()
     val namesEnumerator = connection.names()
     val contentsStorage = connection.contents()
+    val attributes = connection.attributes()
 
     val maxAllocatedID = fileRecords.maxAllocatedID()
 
-    val report = VFSHealthCheckReport.FileRecordsReport()
     val allRoots = IntOpenHashSet(impl.listRoots())
+    val invalidFlagsMask = PersistentFS.Flags.getAllValidFlags().inv()
+    val fileIdsChunks = (FSRecords.MIN_REGULAR_FILE_ID..maxAllocatedID).chunked(RECORD_CHUNK_SIZE)
+    val report = VFSHealthCheckReport.FileRecordsReport()
     return report.apply {
-      val invalidFlagsMask = PersistentFS.Flags.getAllValidFlags().inv()
-      for (fileId in FSRecords.MIN_REGULAR_FILE_ID..maxAllocatedID) {
-        val checkSingleFileTask = task@{
-          try {
-            val nameId = fileRecords.getNameId(fileId)
-            val parentId = fileRecords.getParent(fileId)
-            val flags = fileRecords.getFlags(fileId)
-            val attributeRecordId = fileRecords.getAttributeRecordId(fileId)
-            val contentId = fileRecords.getContentRecordId(fileId)
-            val length = fileRecords.getLength(fileId)
-            val timestamp = fileRecords.getTimestamp(fileId)
-
-            fileRecordsChecked = fileId
-
-            if (flags and invalidFlagsMask != 0) {
-              generalErrors++.alsoLogThrottled("file[#$fileId]: invalid flags: ${Integer.toBinaryString(flags)}")
-            }
-
-            if (PersistentFSRecordAccessor.hasDeletedFlag(flags)) {
-              fileRecordsDeleted++
-              return@task
-            }
-
-            //if (length < 0) { //RC: length is regularly -1
-            //  LOG.warn("file[#" + fileId + "]: length(=" + length + ") is negative -> suspicious");
-            //}
-
-            if (nameId == DataEnumeratorEx.NULL_ID) {
-              nullNameIds++.alsoLogThrottled("file[#$fileId]: nameId is not set (NULL_ID) -> file record is incorrect (broken?)")
-            }
-            val fileName = namesEnumerator.valueOf(nameId)
-            if (fileName == null) {
-              unresolvableNameIds++.alsoLogThrottled(
-                "file[#$fileId]: name[#$nameId] does not exist (null)! -> names enumerator is inconsistent (broken?)"
-              )
-            }
-
-            var attributesAreResolvable: Boolean
+      for(fileIdsChunk in fileIdsChunks){
+        val checkChunkFilesTask = task@{
+          for (fileId in fileIdsChunk) {
             try {
-              connection.attributes().checkAttributeRecordSanity(fileId, attributeRecordId)
-              attributesAreResolvable = true
-            }
-            catch (t: Throwable) {
-              unresolvableAttributesIds++.alsoLogThrottled(
-                "file[#$fileId]{$fileName}: attribute[#$attributeRecordId] can't be read", t
-              )
-              attributesAreResolvable = false
-            }
+              val nameId = fileRecords.getNameId(fileId)
+              val parentId = fileRecords.getParent(fileId)
+              val flags = fileRecords.getFlags(fileId)
+              val attributeRecordId = fileRecords.getAttributeRecordId(fileId)
+              val contentId = fileRecords.getContentRecordId(fileId)
+              val length = fileRecords.getLength(fileId)
+              val timestamp = fileRecords.getTimestamp(fileId)
 
+              fileRecordsChecked = fileId
 
-            if (contentId != DataEnumeratorEx.NULL_ID) {
-              notNullContentIds++
+              if (flags and invalidFlagsMask != 0) {
+                generalErrors++.alsoLogThrottled("file[#$fileId]: invalid flags: ${Integer.toBinaryString(flags)}")
+              }
+
+              if (PersistentFSRecordAccessor.hasDeletedFlag(flags)) {
+                fileRecordsDeleted++
+                return@task
+              }
+
+              //if (length < 0) { //RC: length is regularly -1
+              //  LOG.warn("file[#" + fileId + "]: length(=" + length + ") is negative -> suspicious");
+              //}
+
+              if (nameId == DataEnumeratorEx.NULL_ID) {
+                nullNameIds++.alsoLogThrottled("file[#$fileId]: nameId is not set (NULL_ID) -> file record is incorrect (broken?)")
+              }
+              val fileName = namesEnumerator.valueOf(nameId)
+              if (fileName == null) {
+                unresolvableNameIds++.alsoLogThrottled(
+                  "file[#$fileId]: name[#$nameId] does not exist (null)! -> names enumerator is inconsistent (broken?)"
+                )
+              }
+
+              var attributesAreResolvable: Boolean
               try {
-                contentsStorage.checkRecord(contentId, false)
+                attributes.checkAttributeRecordSanity(fileId, attributeRecordId)
+                attributesAreResolvable = true
               }
-              catch (e: Throwable) {
-                unresolvableContentIds++.alsoLogThrottled(
-                  "file[#$fileId]{$fileName}: content[#$contentId] can't be read, or inconsistent", e
+              catch (t: Throwable) {
+                unresolvableAttributesIds++.alsoLogThrottled(
+                  "file[#$fileId]{$fileName}: attribute[#$attributeRecordId] can't be read", t
                 )
-              }
-            } //else: it is ok, contentId _could_ be NULL_ID
-
-            if (parentId == FSRecords.NULL_FILE_ID) {
-              if (!allRoots.contains(fileId)) {
-                nullParents++.alsoLogThrottled(
-                  "file[#$fileId]{$fileName}: not in ROOTS, but parentId is not set (NULL_ID) -> non-ROOTS must have parents"
-                )
-              }
-            }
-            else {
-              val parentFlags = fileRecords.getFlags(parentId)
-              val parentIsDirectory = BitUtil.isSet(parentFlags, IS_DIRECTORY)
-              if (!parentIsDirectory) {
-                inconsistentParentChildRelationships++.alsoLogThrottled(
-                  "file[#$fileId]{$fileName}: parent[#$parentId] is !directory (flags: ${Integer.toBinaryString(parentFlags)})"
-                )
+                attributesAreResolvable = false
               }
 
-              if (attributesAreResolvable) { //'children' are part of 'file attributes'
-                if (checkForOrphanRecords) {
-                  checkRecordIsOrphan(fileRecords, fileId, parentId, parentFlags, fileName)
+
+              if (contentId != DataEnumeratorEx.NULL_ID) {
+                notNullContentIds++
+                try {
+                  contentsStorage.checkRecord(contentId, false)
+                }
+                catch (e: Throwable) {
+                  unresolvableContentIds++.alsoLogThrottled(
+                    "file[#$fileId]{$fileName}: content[#$contentId] can't be read, or inconsistent", e
+                  )
+                }
+              } //else: it is ok, contentId _could_ be NULL_ID
+
+              if (parentId == FSRecords.NULL_FILE_ID) {
+                if (!allRoots.contains(fileId)) {
+                  nullParents++.alsoLogThrottled(
+                    "file[#$fileId]{$fileName}: not in ROOTS, but parentId is not set (NULL_ID) -> non-ROOTS must have parents"
+                  )
                 }
               }
-            }
+              else {
+                val parentFlags = fileRecords.getFlags(parentId)
+                val parentIsDirectory = BitUtil.isSet(parentFlags, IS_DIRECTORY)
+                if (!parentIsDirectory) {
+                  inconsistentParentChildRelationships++.alsoLogThrottled(
+                    "file[#$fileId]{$fileName}: parent[#$parentId] is !directory (flags: ${Integer.toBinaryString(parentFlags)})"
+                  )
+                }
 
-            if (attributesAreResolvable) { //'children' are part of 'file attributes'
-              val isDirectory = BitUtil.isSet(flags, IS_DIRECTORY)
-
-              val children = try {
-                impl.listIds(fileId)
-              }
-              catch (e: Throwable) {
-                //'childId is out of allocated range' now also falls here: 'cos .listIds() checks childId, and
-                // throws CorruptedException in such cases
-                generalErrors++.alsoLogThrottled("file[#$fileId]{$fileName}: error accessing children", e)
-                IntArray(0)
-              }
-
-              if (isDirectory) {
-                for (i in children.indices) {
-                  childrenChecked++
-                  val childId = children[i]
-                  val childParentId = fileRecords.getParent(childId)
-                  if (fileId != childParentId) {
-                    inconsistentParentChildRelationships++.alsoLogThrottled(
-                      "file[#$fileId]{$fileName}: children[$i][#$childId].parent[=#$childParentId] != this " +
-                      "-> parent-child relationship is inconsistent (records are broken?)"
-                    )
+                if (attributesAreResolvable) { //'children' are part of 'file attributes'
+                  if (checkForOrphanRecords) {
+                    checkRecordIsOrphan(fileRecords, fileId, parentId, parentFlags, fileName)
                   }
                 }
               }
-              else if (children.isNotEmpty()) {
-                //MAYBE RC: dedicated counter for that kind of errors?
-                inconsistentParentChildRelationships++.alsoLogThrottled(
-                  "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
-                )
+
+              if (attributesAreResolvable) { //'children' are part of 'file attributes'
+                val isDirectory = BitUtil.isSet(flags, IS_DIRECTORY)
+
+                val children = try {
+                  impl.listIds(fileId)
+                }
+                catch (e: Throwable) {
+                  //'childId is out of allocated range' now also falls here: 'cos .listIds() checks childId, and
+                  // throws CorruptedException in such cases
+                  generalErrors++.alsoLogThrottled("file[#$fileId]{$fileName}: error accessing children", e)
+                  IntArray(0)
+                }
+
+                if (isDirectory) {
+                  for (i in children.indices) {
+                    childrenChecked++
+                    val childId = children[i]
+                    val childParentId = fileRecords.getParent(childId)
+                    if (fileId != childParentId) {
+                      inconsistentParentChildRelationships++.alsoLogThrottled(
+                        "file[#$fileId]{$fileName}: children[$i][#$childId].parent[=#$childParentId] != this " +
+                        "-> parent-child relationship is inconsistent (records are broken?)"
+                      )
+                    }
+                  }
+                }
+                else if (children.isNotEmpty()) {
+                  //MAYBE RC: dedicated counter for that kind of errors?
+                  inconsistentParentChildRelationships++.alsoLogThrottled(
+                    "file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})"
+                  )
+                }
               }
             }
-          }
-          catch (t: Throwable) {
-            generalErrors++.alsoLogThrottled("file[#$fileId]: unhandled exception while checking", t)
+            catch (t: Throwable) {
+              generalErrors++.alsoLogThrottled("file[#$fileId]: unhandled exception while checking", t)
+            }
           }
         }
 
         if (WRAP_HEALTH_CHECK_IN_READ_ACTION) {
-          readAction(checkSingleFileTask)
+          readAction(checkChunkFilesTask)
         }
         else {
-          checkSingleFileTask()
+          checkChunkFilesTask()
         }
       }
     }
@@ -413,7 +409,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     return report.apply {
       try {
         readAction {
-          val rootIds = impl.treeAccessor().listRoots()
+          val rootIds = impl.listRoots()
           val records = impl.connection().records()
           val maxAllocatedID = records.maxAllocatedID()
           rootsCount = rootIds.size
@@ -666,7 +662,7 @@ fun main(args: Array<String>) {
     throw error
   }
   println("VFS roots:")
-  records.forEachRoot { rootUrl, rootId ->
+  records.forEachRoot { rootUrl: String, rootId: Int ->
     println("\troot[$rootId]: url: '$rootUrl")
   }
 

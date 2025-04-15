@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.util.containers.ContainerUtil.*;
 
@@ -108,6 +109,12 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
       boolean enabled = !disabled;
       e.getPresentation().setEnabledAndVisible(isForceEnableAll || enabled);
+
+      var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+      boolean hasNotFreeInFreeMode = exists(pluginIds, pluginId -> pluginRequiresUltimatePluginButItsDisabled(pluginId, idMap));
+      if(hasNotFreeInFreeMode) {
+        e.getPresentation().setEnabled(false);
+      }
 
       boolean isForceDisableAll = myAction == PluginEnableDisableAction.DISABLE_GLOBALLY && allEnabled;
       setShortcutSet(SHORTCUT_SET, myShowShortcut && (isForceEnableAll || isForceDisableAll));

@@ -3,6 +3,7 @@ package com.intellij.webSymbols.declarations
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import com.intellij.webSymbols.WebSymbol
 
 interface WebSymbolDeclarationProvider {
   /**
@@ -12,8 +13,17 @@ interface WebSymbolDeclarationProvider {
    */
   fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration>
 
+  fun getEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: WebSymbol): Collection<WebSymbolDeclaration> =
+    getDeclarations(element, offsetInElement)
+      .filter { it.symbol.isEquivalentTo(target) }
+
   companion object {
     private val EP_NAME = ExtensionPointName<WebSymbolDeclarationProvider>("com.intellij.webSymbols.declarationProvider")
+
+    @JvmStatic
+    fun getAllEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: WebSymbol): Collection<WebSymbolDeclaration> {
+      return EP_NAME.extensionList.flatMap { it.getEquivalentDeclarations(element, offsetInElement, target) }
+    }
 
     @JvmStatic
     fun getAllDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration> {

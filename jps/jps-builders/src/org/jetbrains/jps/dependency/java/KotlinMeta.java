@@ -176,6 +176,10 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container instanceof KmClass? Attributes.getModality((KmClass)container) : null;
   }
 
+  public boolean isTopLevelDeclarationContainer() {
+    return getDeclarationContainer() instanceof KmPackage;
+  }
+
   public @Nullable KmDeclarationContainer getDeclarationContainer() {
     KotlinClassMetadata clsMeta = getClassMetadata();
     if (clsMeta instanceof KotlinClassMetadata.Class) {

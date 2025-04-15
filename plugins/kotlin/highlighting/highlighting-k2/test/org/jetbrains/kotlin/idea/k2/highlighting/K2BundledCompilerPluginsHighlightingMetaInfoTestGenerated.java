@@ -55,6 +55,11 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/composeAgainstOldBinaries.kt");
     }
 
+    @TestMetadata("dataframe.kt")
+    public void testDataframe() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/dataframe.kt");
+    }
+
     @TestMetadata("lombok.kt")
     public void testLombok() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/lombok.kt");

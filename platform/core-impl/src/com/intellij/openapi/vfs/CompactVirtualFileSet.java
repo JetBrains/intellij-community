@@ -7,10 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.containers.IdBitSet;
 import com.intellij.util.indexing.containers.IntIdsIterator;
 import it.unimi.dsi.fastutil.ints.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -225,7 +222,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   }
 
   @Override
-  public @NotNull Set<VirtualFile> freezed() {
+  public @NotNull @Unmodifiable Set<VirtualFile> freezed() {
     freeze();
     return this;
   }

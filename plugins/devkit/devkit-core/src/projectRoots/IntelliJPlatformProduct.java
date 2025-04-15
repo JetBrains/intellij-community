@@ -36,7 +36,8 @@ public enum IntelliJPlatformProduct {
   FLEET_BACKEND("FLIJ", "Fleet Backend", PlatformUtils.FLEET_PREFIX, "com.jetbrains.intellij.fleetBackend:fleetBackend", null),
   AQUA("QA", "Aqua", PlatformUtils.AQUA_PREFIX, null, "aqua:aqua"),
   RUSTROVER("RR", "RustRover", PlatformUtils.RUSTROVER_PREFIX, "com.jetbrains.intellij.rustrover:RustRover", "rustrover:RustRover"),
-  WRITERSIDE("WRS", "Writerside", PlatformUtils.WRITERSIDE_PREFIX, "com.jetbrains.intellij.idea:writerside", "writerside:writerside");
+  WRITERSIDE("WRS", "Writerside", PlatformUtils.WRITERSIDE_PREFIX, "com.jetbrains.intellij.idea:writerside", "writerside:writerside"),
+  GIT_CLIENT("GIG", "GitClient", PlatformUtils.GITCLIENT_PREFIX, null, null);
 
   private final String myProductCode;
   private final String myName;

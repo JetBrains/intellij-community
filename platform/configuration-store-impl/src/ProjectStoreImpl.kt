@@ -55,8 +55,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     assert(!project.isDefault)
   }
 
-  override val serviceContainer: ComponentManagerImpl
-    get() = project as ComponentManagerImpl
+  override val serviceContainer: ComponentManagerEx
+    get() = project as ComponentManagerEx
 
   internal fun getNameFile(): Path {
     for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
@@ -126,7 +126,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
     }
     else {
-      val dotIdea = ProjectCoreUtil.getProjectStoreDirectory(file)
+      val dotIdea = ProjectStorePathManager.getInstance().getStoreDirectoryPath(file)
       this.dotIdea = dotIdea
 
       // PROJECT_CONFIG_DIR must be the first macro

@@ -21,6 +21,7 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.ConcurrentFactoryMap
@@ -64,7 +65,7 @@ internal class ModifiableModuleModelBridgeImpl(
                                                    entitySource = NonPersistentEntitySource
     )
 
-    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
+    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff) {}
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     modulesToAdd.put(moduleName, module)
     currentModuleSet.add(module)
@@ -122,9 +123,9 @@ internal class ModifiableModuleModelBridgeImpl(
                                                             versionedStorage = entityStorageOnDiff,
                                                             diff = diff,
                                                             isNew = isNew,
-                                                            precomputedExtensionModel = null,
-                                                            plugins = plugins,
-                                                            corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
+                                                            precomputedExtensionModel = precomputeModuleLevelExtensionModel(),
+                                                            plugins = plugins
+    )
     diff.mutableModuleMap.addMapping(moduleEntity, moduleInstance)
     modulesToAdd[moduleEntity.name] = moduleInstance
     currentModuleSet.add(moduleInstance)

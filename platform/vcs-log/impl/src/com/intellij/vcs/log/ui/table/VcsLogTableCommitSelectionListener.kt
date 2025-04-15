@@ -4,10 +4,12 @@ package com.intellij.vcs.log.ui.table
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Condition
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
-internal abstract class VcsLogTableCommitSelectionListener(
+@ApiStatus.Internal
+abstract class VcsLogTableCommitSelectionListener(
   private val graphTable: VcsLogGraphTable,
 ) : ListSelectionListener {
   private var lastEvent: ListSelectionEvent? = null
@@ -25,5 +27,5 @@ internal abstract class VcsLogTableCommitSelectionListener(
 
   protected abstract fun handleSelection(commitIds: List<VcsLogCommitStorageIndex>)
 
-  protected open fun onHandlingScheduled() = Unit
+  protected open fun onHandlingScheduled(): Unit = Unit
 }

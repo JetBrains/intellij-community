@@ -365,6 +365,11 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   @TargetVersions("4.7+")
   public void testResourceFoldersWithIdeaPluginInNonJavaProject() throws Exception {
     createProjectSubDirs("python/src", "python/test", "python/resources");
+
+    String testRoots = isGradleAtLeast("7.4")
+                       ? "testSources.from(file('python/test'))"
+                       : "testSourceDirs += file('python/test')";
+
     importProject(script(it -> it
       .withIdeaPlugin()
       .addPostfix(
@@ -373,10 +378,10 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
             module {
               sourceDirs += file('python/src')
               resourceDirs += file('python/resources')
-              testSourceDirs += file('python/test')
+              %s
             }
           }
-          """
+          """.formatted(testRoots)
       )
     ));
 
@@ -400,6 +405,17 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
                          "src/test/src2",
                          "src/test/resources",
                          "src/test/resources2");
+
+    String testRoots = isGradleAtLeast("7.4")
+                       ? """
+                            testSources.from(file('src/test/src2'))
+                            testResources.from(file('src/test/resources2'))
+                         """
+                       : """
+                            testSourceDirs += file('src/test/src2')
+                            testResourceDirs += file('src/test/resources2')
+                         """;
+
     importProject(
       """
         apply plugin: 'java'
@@ -408,10 +424,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
           module {
             sourceDirs += file('src/main/src2')
             resourceDirs += file('src/main/resources2')
-            testSourceDirs += file('src/test/src2')
-            testResourceDirs += file('src/test/resources2')
+            %s
           }
-        }"""
+        }""".formatted(testRoots)
     );
 
     assertModules("project", "project.main", "project.test");
@@ -461,6 +476,21 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
                          "src/test/resources2",
                          "src/customSourceSet/java",
                          "src/customSourceSet/resources");
+
+    String roots = isGradleAtLeast("7.4")
+                   ? """
+                       testSources.from(file('src/test/src2'))
+                       testResources.from(file('src/test/resources2'))
+                       testSources.from(project.sourceSets.customSourceSet.java.srcDirs)
+                       testResources.from(project.sourceSets.customSourceSet.resources.srcDirs)
+                     """
+                   : """
+                       testSourceDirs += file('src/test/src2')
+                       testResourceDirs += file('src/test/resources2')
+                       testSourceDirs += project.sourceSets.customSourceSet.java.srcDirs
+                       testResourceDirs += project.sourceSets.customSourceSet.resources.srcDirs
+                     """;
+
     importProject(
       """
         apply plugin: 'java'
@@ -470,12 +500,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         }
         idea {
           module {
-            testSourceDirs += file('src/test/src2')
-            testResourceDirs += file('src/test/resources2')
-            testSourceDirs += project.sourceSets.customSourceSet.java.srcDirs
-            testResourceDirs += project.sourceSets.customSourceSet.resources.srcDirs
+          %s
           }
-        }"""
+        }""".formatted(roots)
     );
 
     Runnable check = () -> {

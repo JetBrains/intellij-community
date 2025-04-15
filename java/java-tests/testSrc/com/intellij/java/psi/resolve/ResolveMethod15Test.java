@@ -365,7 +365,7 @@ public class ResolveMethod15Test extends LightResolveTestCase {
     assertThat(parent, instanceOf(PsiMethodCallExpression.class));
     final PsiMethodCallExpression expression = (PsiMethodCallExpression)parent;
     assertNull(expression.resolveMethod());
-    final JavaResolveResult[] results = expression.getMethodExpression().multiResolve(false);
+    final JavaResolveResult[] results = expression.multiResolve(false);
     assertEquals(2, results.length);
   }
 

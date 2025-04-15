@@ -18,7 +18,6 @@ internal fun stringTo128BitHash(string: String): LongArray {
 object LongPairKeyDataType : DataType<LongArray> {
   override fun isMemoryEstimationAllowed(): Boolean = true
 
-  // don't care about non-ASCII strings for memory estimation
   override fun getMemory(obj: LongArray): Int = 2 * Long.SIZE_BYTES
 
   override fun createStorage(size: Int): Array<LongArray?> = arrayOfNulls(size)

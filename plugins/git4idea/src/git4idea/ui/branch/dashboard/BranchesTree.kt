@@ -42,10 +42,10 @@ import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
-import git4idea.ui.branch.tree.createIncomingLabel
-import git4idea.ui.branch.tree.createOutgoingLabel
-import git4idea.ui.branch.tree.updateIncomingCommitLabel
-import git4idea.ui.branch.tree.updateOutgoingCommitLabel
+import git4idea.ui.branch.popup.createIncomingLabel
+import git4idea.ui.branch.popup.createOutgoingLabel
+import git4idea.ui.branch.popup.updateIncomingCommitLabel
+import git4idea.ui.branch.popup.updateOutgoingCommitLabel
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Graphics

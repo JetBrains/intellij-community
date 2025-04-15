@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public final class PostfixPrefixIntention extends MCIntention {
+public final class PostfixPrefixIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {

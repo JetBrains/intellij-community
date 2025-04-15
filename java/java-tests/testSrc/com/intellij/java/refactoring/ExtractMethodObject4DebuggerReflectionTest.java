@@ -2,12 +2,15 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +18,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Vitaliy.Bibaev
  */
 public class ExtractMethodObject4DebuggerReflectionTest extends LightRefactoringTestCase {
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk21();
+  }
+
   public void testAccessField() throws PrepareFailedException {
     doTest("System.out.println(instance.field)");
   }
@@ -51,15 +60,33 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightRefactoring
     doTest("new Inner()");
   }
 
+  public void testLanguageLevelImplicitClasses() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      String testName = getTestName(false);
+      String pathToSource = "/" + testName + ".java";
+      try {
+        doTest("reader", pathToSource);
+      }
+      catch (PrepareFailedException e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/extractMethodObject4Debugger";
   }
 
-  private void doTest(String evaluatedText) throws PrepareFailedException {
+  private void doTest(@NotNull String evaluatedText) throws PrepareFailedException {
+    String path = "/WithReflectionAccess.java";
+    doTest(evaluatedText, path);
+  }
+
+  private void doTest(@NotNull String evaluatedText, @NotNull String pathToSource) throws PrepareFailedException {
     String testName = getTestName(true);
-    configureByFile("/WithReflectionAccess.java");
+    configureByFile(pathToSource);
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiElement context = getFile().findElementAt(offset);
     final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());

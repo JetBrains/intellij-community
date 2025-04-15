@@ -2,6 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginXmlConst
+import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
@@ -56,24 +62,27 @@ class PluginBuilder private constructor() {
     private set
 
   private var implementationDetail = false
+  private var separateJar = false
   private var name: String? = null
   private var description: String? = null
   private var packagePrefix: String? = null
   private val dependsTags = mutableListOf<DependsTag>()
   private var applicationListeners: String? = null
+  private var resourceBundleBaseName: String? = null
   private var actions: String? = null
   private val extensions = mutableListOf<ExtensionBlock>()
   private var extensionPoints: String? = null
   private var untilBuild: String? = null
+  private var sinceBuild: String? = null
   private var version: String? = null
   private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
-  private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
-  private val pluginDependencies = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
-  private val incompatibleWith = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
+  private val dependencies = mutableListOf<ModuleDependencies.ModuleReference>()
+  private val pluginDependencies = mutableListOf<ModuleDependencies.PluginReference>()
+  private val incompatibleWith = mutableListOf<ModuleDependencies.PluginReference>()
 
-  private data class SubDescriptor(val filename: String, val builder: PluginBuilder, val separateJar: Boolean)
+  private data class SubDescriptor(val filename: String, val builder: PluginBuilder)
   private val subDescriptors = ArrayList<SubDescriptor>()
 
   fun dependsIntellijModulesLang(): PluginBuilder {
@@ -106,6 +115,11 @@ class PluginBuilder private constructor() {
     return this
   }
 
+  fun separateJar(value: Boolean): PluginBuilder {
+    separateJar = value
+    return this
+  }
+
   fun depends(pluginId: String, configFile: String? = null): PluginBuilder {
     dependsTags.add(DependsTag(pluginId, configFile))
     return this
@@ -113,18 +127,15 @@ class PluginBuilder private constructor() {
 
   fun depends(pluginId: String, subDescriptor: PluginBuilder, filename: String? = null): PluginBuilder {
     val fileName = filename ?: "dep_${pluginIdCounter.incrementAndGet()}.xml"
-    subDescriptors.add(SubDescriptor(PluginManagerCore.META_INF + fileName, subDescriptor, separateJar = false))
+    subDescriptors.add(SubDescriptor(PluginManagerCore.META_INF + fileName, subDescriptor))
     depends(pluginId, fileName)
     return this
   }
 
   fun module(moduleName: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
-             separateJar: Boolean = false, moduleFile: String = "$moduleName.xml"): PluginBuilder {
-    subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor, separateJar))
+             moduleFile: String = "$moduleName.xml"): PluginBuilder {
+    subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
     content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
-
-    // remove default dependency on lang
-    moduleDescriptor.noDepends()
     return this
   }
 
@@ -134,27 +145,32 @@ class PluginBuilder private constructor() {
   }
 
   fun dependency(moduleName: String): PluginBuilder {
-    dependencies.add(ModuleDependenciesDescriptor.ModuleReference(moduleName))
+    dependencies.add(ModuleDependencies.ModuleReference(moduleName))
     return this
   }
 
   fun pluginDependency(pluginId: String): PluginBuilder {
-    pluginDependencies.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
+    pluginDependencies.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
   fun incompatibleWith(pluginId: String): PluginBuilder {
-    incompatibleWith.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(pluginId)))
+    incompatibleWith.add(ModuleDependencies.PluginReference(PluginId.getId(pluginId)))
     return this
   }
 
-  fun noDepends(): PluginBuilder {
-    dependsTags.clear()
+  fun resourceBundle(resourceBundle: String?): PluginBuilder {
+    resourceBundleBaseName = resourceBundle
     return this
   }
 
   fun untilBuild(buildNumber: String): PluginBuilder {
     untilBuild = buildNumber
+    return this
+  }
+
+  fun sinceBuild(buildNumber: String): PluginBuilder {
+    sinceBuild = buildNumber
     return this
   }
 
@@ -192,10 +208,13 @@ class PluginBuilder private constructor() {
     return buildString {
       append("<idea-plugin")
       if (implementationDetail) {
-        append(""" $IMPLEMENTATION_DETAIL_ATTRIBUTE="true"""")
+        append(""" ${PluginXmlConst.PLUGIN_IMPLEMENTATION_DETAIL_ATTR}="true"""")
       }
       packagePrefix?.let {
-        append(""" $PACKAGE_ATTRIBUTE="$it"""")
+        append(""" ${PluginXmlConst.PLUGIN_PACKAGE_ATTR}="$it"""")
+      }
+      if (separateJar) {
+        append(""" separate-jar="true"""") // todo change to const from xml reader
       }
       append(">")
       if (requireId) {
@@ -213,14 +232,23 @@ class PluginBuilder private constructor() {
         }
       }
       version?.let { append("<version>$it</version>") }
-      if (untilBuild != null) {
+
+      if (sinceBuild != null && untilBuild != null) {
+        append("""<idea-version since-build="${sinceBuild}" until-build="${untilBuild}"/>""")
+      }
+      else if (sinceBuild != null) {
+        append("""<idea-version since-build="${sinceBuild}"/>""")
+      }
+      else if (untilBuild != null) {
         append("""<idea-version until-build="${untilBuild}"/>""")
       }
+
       for (extensionBlock in extensions) {
         append("""<extensions defaultExtensionNs="${extensionBlock.ns}">${extensionBlock.text}</extensions>""")
       }
       extensionPoints?.let { append("<extensionPoints>$it</extensionPoints>") }
       applicationListeners?.let { append("<applicationListeners>$it</applicationListeners>") }
+      resourceBundleBaseName?.let { append("""<resource-bundle>$it</resource-bundle>""") }
       actions?.let { append("<actions>$it</actions>") }
 
       if (content.isNotEmpty()) {
@@ -265,12 +293,12 @@ class PluginBuilder private constructor() {
 
   fun build(path: Path): PluginBuilder {
     val allDescriptors = collectAllSubDescriptors(subDescriptors).toList()
-    if (allDescriptors.any { it.separateJar }) {
+    if (allDescriptors.any { it.builder.separateJar }) {
       val modulesDir = path.resolve("lib/modules")
       modulesDir.createDirectories()
       buildJar(path.resolve("lib/$id.jar"))
-      for ((fileName, subDescriptor, separateJar) in allDescriptors) {
-        if (separateJar) {
+      for ((fileName, subDescriptor) in allDescriptors) {
+        if (subDescriptor.separateJar) {
           val jarPath = modulesDir.resolve("${fileName.removeSuffix(".xml")}.jar")
           subDescriptor.buildJarToStream(Files.newOutputStream(jarPath), mainDescriptorRelativePath = fileName)
         }
@@ -297,8 +325,8 @@ class PluginBuilder private constructor() {
   private fun buildJarToStream(outputStream: OutputStream, mainDescriptorRelativePath: String) {
     Compressor.Zip(outputStream).use {
       it.addFile(mainDescriptorRelativePath, text(requireId = mainDescriptorRelativePath == PluginManagerCore.PLUGIN_XML_PATH).toByteArray())
-      for ((fileName, subDescriptor, separateJar) in subDescriptors) {
-        if (!separateJar) {
+      for ((fileName, subDescriptor) in subDescriptors) {
+        if (!subDescriptor.separateJar) {
           it.addFile(fileName, subDescriptor.text(requireId = false).toByteArray())
         }
       }
@@ -326,18 +354,17 @@ class PluginBuilder private constructor() {
 }
 
 @TestOnly
-fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor = readModuleDescriptor(
-  input,
-  object : ReadModuleContext {
+fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuilder {
+  return PluginDescriptorFromXmlStreamConsumer(readContext = object : ReadModuleContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-  },
-  PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-  object : DataLoader {
+    override val elementOsFilter: (OS) -> Boolean
+      get() = { it.convert().isSuitableForOs() }
+  }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER.toXIncludeLoader(object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""
-  },
-  includeBase = null,
-  readInto = null,
-  locationSource = null,
-)
+  })).let {
+    it.consume(input, null)
+    it.getBuilder()
+  }
+}

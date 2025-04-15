@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor

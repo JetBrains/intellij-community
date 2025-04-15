@@ -40,6 +40,7 @@ java_library(
     "@lib//:kotlinc-android-extensions-compiler-plugin",
     "@lib//:kotlinc-parcelize-compiler-plugin",
     "@lib//:kotlinc-lombok-compiler-plugin",
+    "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
   ]
 )
 ### auto-generated section `build kotlin.util.compiler-dependencies` end

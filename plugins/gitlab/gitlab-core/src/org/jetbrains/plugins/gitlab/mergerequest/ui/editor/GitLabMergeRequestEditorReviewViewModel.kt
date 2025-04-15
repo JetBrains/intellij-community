@@ -29,13 +29,12 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.remote.hosting.localCommitsSyncStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -43,15 +42,17 @@ import java.util.*
 
 private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 
-internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
+@ApiStatus.Internal
+class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
   private val projectMapping: GitLabProjectMapping,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
-  private val projectVm: GitLabToolWindowProjectViewModel,
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  private val openMergeRequestDetails: (String, GitLabStatistics.ToolWindowOpenTabActionPlace, Boolean) -> Unit,
+  private val openMergeRequestDiff: (String, Boolean) -> Unit,
 ) : GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Editor Review VM"),
   currentUser, mergeRequest
@@ -111,8 +112,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
    * Show merge request details in a standard view
    */
   fun showMergeRequest(place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
-    projectVm.showTab(GitLabReviewTab.ReviewSelected(mergeRequestIid), place)
-    projectVm.twVm.activate()
+    openMergeRequestDetails(mergeRequestIid, place, true)
   }
 
   override fun updateBranch() {
@@ -192,7 +192,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
         vm.showDiffRequests.collect { line ->
           diffRequestsMulticaster.multicaster.onChangesSelectionChanged(change, line?.let { DiffLineLocation(Side.RIGHT, it) })
           withContext(Dispatchers.Main) {
-            projectVm.filesController.openDiff(mergeRequestIid, true)
+            openMergeRequestDiff(mergeRequestIid, true)
           }
         }
       }

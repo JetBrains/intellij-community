@@ -11,7 +11,7 @@ import com.sun.jdi.ReferenceType
 internal fun findClassOrNull(evaluationContext: EvaluationContext, fqn: String): ReferenceType? {
   val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return null
   return try {
-    debugProcess.findLoadedClass(evaluationContext, fqn, evaluationContext.classLoader)
+    debugProcess.findLoadedClass(evaluationContext.suspendContext, fqn, evaluationContext.classLoader)
   }
   catch (_: EvaluateException) {
     null

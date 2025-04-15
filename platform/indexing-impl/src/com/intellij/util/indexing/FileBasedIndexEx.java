@@ -94,9 +94,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope, @Nullable Project project);
 
   @ApiStatus.Internal
-  public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
-
-  @ApiStatus.Internal
   public abstract @NotNull <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
 
   public void resetHints() { }
@@ -565,7 +562,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
     }
-    return IndexableFilesIndex.getInstance(project).getIndexingIterators();
+    if (Registry.is("use.workspace.file.index.to.generate.iterators")) {
+      return IndexingIteratorsProvider.getInstance(project).getIndexingIterators();
+    }
+    else {
+      return IndexableFilesIndex.getInstance(project).getIndexingIterators();
+    }
   }
 
   private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,

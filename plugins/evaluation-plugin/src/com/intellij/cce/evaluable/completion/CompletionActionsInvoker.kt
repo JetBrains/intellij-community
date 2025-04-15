@@ -10,11 +10,12 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import java.util.*
 
-class CompletionActionsInvoker(project: Project,
-                               language: Language,
-                               private val strategy: CompletionStrategy) : BaseCompletionActionsInvoker(project, language) {
+class CompletionActionsInvoker(
+  project: Project,
+  language: Language,
+  private val strategy: CompletionStrategy,
+) : BaseCompletionActionsInvoker(project, language) {
   private val commonInvoker: ActionsInvoker = CommonActionsInvoker(project)
 
   private val completionType = when (strategy.completionType) {
@@ -28,19 +29,19 @@ class CompletionActionsInvoker(project: Project,
     is CompletionPrefix.SimplePrefix -> SimplePrefixCreator((strategy.prefix as CompletionPrefix.SimplePrefix).n)
   }
 
-  private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup): Session {
+  private fun createSession(position: Int, expectedText: String, nodeProperties: TokenProperties, lookup: Lookup, sessionId: String): Session {
     val sessionUuid = lookup.features?.common?.context?.get(CCE_SESSION_UID_FEATURE_NAME)
-                      ?: UUID.randomUUID().toString()
+                      ?: sessionId
     val session = Session(position, expectedText, expectedText.length, nodeProperties, sessionUuid)
     session.addLookup(lookup)
     return session
   }
 
-  override fun comparator(generated: String, expected: String, ): Boolean {
+  override fun comparator(generated: String, expected: String): Boolean {
     return expected == generated
   }
 
-  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session = readActionInSmartMode(project) {
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session = readActionInSmartMode(project) {
     val editor = getEditorSafe(project)
     LOG.info("Call completion. Type: $completionType. ${positionToString(editor)}")
     val prefix = prefixCreator.getPrefix(expectedText)
@@ -50,32 +51,41 @@ class CompletionActionsInvoker(project: Project,
 
     val start = System.currentTimeMillis()
     val isNew = LookupManager.getActiveLookup(editor) == null
-    val activeLookup = invokeCompletion(expectedText, prefix, completionType, editor)
+    val activeLookup = invokeCompletion(expectedText, prefix, completionType, editor) as? LookupImpl
     val latency = System.currentTimeMillis() - start
     if (activeLookup == null) {
       commonInvoker.printText(expectedText.substring(prefix.length))
-      return@readActionInSmartMode createSession(offset, expectedText, properties,
-                                                 Lookup.fromExpectedText(expectedText, prefix, emptyList(), latency,
-                                                                         isNew = isNew,
-                                                                         startOffset = prefix.length,
-                                                                         comparator = this::comparator))
+      val lookup = Lookup.fromExpectedText(
+        expectedText, prefix, emptyList(), latency,
+        isNew = isNew,
+        startOffset = prefix.length,
+        comparator = this::comparator
+      )
+      return@readActionInSmartMode createSession(offset, expectedText, properties, lookup, sessionId)
     }
 
-    val lookup = activeLookup as LookupImpl
-    val features = MLCompletionFeaturesUtil.getCommonFeatures(lookup)
+    val features = MLCompletionFeaturesUtil.getCommonFeatures(activeLookup)
     val resultFeatures = Features(
       CommonFeatures(features.context, features.user, features.session),
-      lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
+      activeLookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(activeLookup, it).features }
     )
-    val suggestions = lookup.items.map { it.asSuggestion() }
+    val suggestions = activeLookup.items.map { it.asSuggestion() }
 
     val success = finishSession(expectedText, prefix, editor)
     if (!success) {
       commonInvoker.printText(expectedText.substring(prefix.length))
     }
-    return@readActionInSmartMode createSession(offset, expectedText, properties,
-                                               Lookup.fromExpectedText(expectedText, prefix, suggestions, latency, resultFeatures,
-                                                                       isNew, prefix.length, this::comparator))
+    val lookup = Lookup.fromExpectedText(
+      expectedText = expectedText,
+      prefix = prefix,
+      suggestions = suggestions,
+      latency = latency,
+      features = resultFeatures,
+      isNew = isNew,
+      startOffset = prefix.length,
+      comparator = this::comparator
+    )
+    return@readActionInSmartMode createSession(offset, expectedText, properties, lookup, sessionId)
   }
 
   private fun finishSession(expectedText: String, prefix: String, editor: Editor): Boolean {
@@ -92,7 +102,7 @@ class CompletionActionsInvoker(project: Project,
   }
 
   companion object {
-    const val CCE_SESSION_UID = "sessionUid"
-    const val CCE_SESSION_UID_FEATURE_NAME = "ml_ctx_cce_$CCE_SESSION_UID"
+    internal const val CCE_SESSION_UID = "sessionUid"
+    private const val CCE_SESSION_UID_FEATURE_NAME = "ml_ctx_cce_$CCE_SESSION_UID"
   }
 }

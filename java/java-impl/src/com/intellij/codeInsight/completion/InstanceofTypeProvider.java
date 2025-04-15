@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
@@ -17,7 +18,7 @@ import java.util.Set;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 final class InstanceofTypeProvider {
-  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(PsiKeyword.INSTANCEOF);
+  static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(JavaKeywords.INSTANCEOF);
 
   static void addCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();

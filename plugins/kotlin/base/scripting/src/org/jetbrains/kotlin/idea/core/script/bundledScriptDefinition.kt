@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
@@ -37,18 +38,19 @@ private fun Project.javaHomePath(): File? {
 
 val Project.defaultDefinition: ScriptDefinition
     get() {
+        val project = this
         val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(
             KotlinType(ScriptTemplateWithArgs::class),
             defaultJvmScriptingHostConfiguration,
             compilation = {
-                javaHomePath()?.let {
+                project.javaHomePath()?.let {
                     jvm.jdkHome(it)
                 }
                 dependencies(JvmDependency(scriptClassPath))
                 displayName("Default Kotlin Script")
                 hostConfiguration(defaultJvmScriptingHostConfiguration)
                 ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
-                ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply{
+                ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
                     id = "default-kts"
                     title = ".kts"
                 })

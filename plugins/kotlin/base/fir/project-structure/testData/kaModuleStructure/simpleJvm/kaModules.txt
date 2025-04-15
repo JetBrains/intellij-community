@@ -4,7 +4,7 @@ KaLibraryModule:
   libraryName: L1
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of L1)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -16,7 +16,7 @@ KaLibraryModule:
   libraryName: L2
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of L2)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -28,7 +28,7 @@ KaLibraryModule:
   libraryName: L3
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of L3)
   friendDependencies:
     <empty>
   dependsOnDependencies:

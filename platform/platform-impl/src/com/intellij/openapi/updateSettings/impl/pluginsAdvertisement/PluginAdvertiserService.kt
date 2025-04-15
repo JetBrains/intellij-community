@@ -76,7 +76,7 @@ sealed interface PluginAdvertiserService {
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     val pyCharmProfessional: SuggestedIde = SuggestedIde(
-      name = "PyCharm Professional",
+      name = "PyCharm",
       productCode = "PY",
       defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
       platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}",
@@ -117,6 +117,12 @@ sealed interface PluginAdvertiserService {
 
     internal const val EXECUTABLE_DEPENDENCY_KIND: String = "executable"
     internal const val DEPENDENCY_SUPPORT_TYPE: String = "dependencySupport"
+
+    val reservedIdeExtensions : Set<String> = setOf(
+      "*.c", "*.cs", "*.cpp", "*.css", "*.js",
+      "*.groovy", "*.kt", "*.php", "*.rs",
+      "*.ruby", "*.scala", "*.sql", "*.ts", "*.java"
+    )
   }
 
   suspend fun run(

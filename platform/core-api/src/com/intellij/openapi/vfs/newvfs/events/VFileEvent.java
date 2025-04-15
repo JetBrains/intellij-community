@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.SavingRequestor;
@@ -35,8 +35,8 @@ public abstract class VFileEvent {
   }
 
   /**
-   * Returns the file path (in system independent format) affected by this event.<br/><br/>
-   *
+   * Returns the file path (in system-independent format) affected by this event.
+   * <p>
    * Note that the path might be cached, thus can become out-of-date if requested later,
    * asynchronously from the event dispatching procedure
    * (e.g. {@code event.getPath()} can become not equal to {@code event.getFile().getPath()}).

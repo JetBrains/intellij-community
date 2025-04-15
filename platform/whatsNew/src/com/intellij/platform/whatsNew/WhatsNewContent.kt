@@ -43,6 +43,10 @@ internal abstract class WhatsNewContent {
         ExternalProductResourceUrls.getInstance().whatIsNewPageUrl?.toDecodedForm()?.let { WhatsNewUrlContent(it) }
       }
     }
+
+    suspend fun hasWhatsNewContent() = WhatsNewInVisionContentProvider.getInstance().isAvailable()
+                                       || ExternalProductResourceUrls.getInstance().whatIsNewPageUrl != null
+
   }
 
   // Year and release have to be strings, because this is the ApplicationInfo.xml format.

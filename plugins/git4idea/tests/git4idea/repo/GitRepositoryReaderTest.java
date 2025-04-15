@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -18,6 +17,7 @@ import git4idea.GitReference;
 import git4idea.GitTag;
 import git4idea.config.GitVcsSettings;
 import git4idea.test.GitPlatformTest;
+import git4idea.test.TestDataUtil;
 import junit.framework.TestCase;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +49,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() {
-    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    File dataDir = new File(new File(pluginRoot, "testData"), "repo");
+    File dataDir = TestDataUtil.getBasePath().resolve("repo").toFile();
     File[] testCases = dataDir.listFiles(FileFilters.DIRECTORIES);
     return ContainerUtil.map(testCases, file -> new Object[]{file.getName(), file});
   }

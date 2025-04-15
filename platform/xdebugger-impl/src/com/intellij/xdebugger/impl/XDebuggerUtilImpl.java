@@ -525,6 +525,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     removeBreakpointsWithConfirmation(project, breakpoints);
   }
 
+  /**
+   * @see CoroutineUtilsKt#performDebuggerActionAsync
+   */
   public static void performDebuggerAction(@NotNull AnActionEvent e, @NotNull Runnable action) {
     action.run();
     reshowInlayRunToCursor(e);

@@ -14,4 +14,16 @@ class ProjectStructureUI(data: ComponentData) : DialogUiComponent(data) {
       .waitOneText("SDKs")
       .click()
   }
+
+  fun openModuleSettings() {
+    x("//div[@class='JBList']")
+      .waitOneText("Modules")
+      .click()
+  }
+
+  fun openLibrarySettings() {
+    x("//div[@class='JBList']")
+      .waitOneText("Libraries")
+      .click()
+  }
 }

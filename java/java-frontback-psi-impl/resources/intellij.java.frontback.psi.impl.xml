@@ -3,5 +3,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlValidity -->
     <projectCustomDataSynchronizer implementation="com.intellij.java.frontback.psi.impl.JavaLangLevelProjectCustomDataSynchronizer"/>
+
+    <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
+    <fileType extensions="class" name="CLASS" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaClassFileType"/>
   </extensions>
 </idea-plugin>

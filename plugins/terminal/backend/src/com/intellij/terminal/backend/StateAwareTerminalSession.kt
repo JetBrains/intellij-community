@@ -60,6 +60,9 @@ internal class StateAwareTerminalSession(private val delegate: TerminalSession) 
     return flowOf(initialStateEventFlow, modelsAwareFlow).flattenConcat()
   }
 
+  override val isClosed: Boolean
+    get() = delegate.isClosed
+
   private fun doHandleEvents(events: List<TerminalOutputEvent>) {
     for (event in events) {
       try {

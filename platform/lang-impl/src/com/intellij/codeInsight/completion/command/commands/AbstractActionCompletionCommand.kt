@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
-import com.intellij.codeInsight.completion.command.getDataContext
-import com.intellij.codeInsight.completion.command.getTargetContext
+import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -17,53 +16,82 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+
 /**
- * Represents an abstract action completion command that triggers a specific IDE action
- * identified by its `actionId`. This class allows integration of IntelliJ Platform actions
- * as part of code completion features, ensuring that the action is applicable and
- * executable within a given code editor context.
+ * Provides completion commands that execute IDE actions identified by their action IDs.
+ * This provider creates commands that integrate with IntelliJ Platform's action system,
+ * allowing actions to be triggered through code completion features.
+ *
+ * @property actionId The unique identifier of the IDE action to be executed
+ * @property name The display name of the command
+ * @property i18nName The internationalized name of the command
+ * @property icon Optional icon to be displayed with the command
+ * @property priority Optional priority value affecting command ordering
+ * @property previewText Optional preview text shown when the command is selected
  */
-abstract class AbstractActionCompletionCommand(
-  @Language("devkit-action-id") var actionId: String,
-  override val name: String,
-  override val i18nName: @Nls String,
-  override val icon: Icon?,
-  override val priority: Int? = null,
-) : ApplicableCompletionCommand(), DumbAware {
-  private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
+open class ActionCommandProvider(
+  @field:Language("devkit-action-id") var actionId: String,
+  val name: String,
+  val i18nName: @Nls String,
+  val icon: Icon? = null,
+  val priority: Int? = null,
+  val previewText: @Nls String?,
+  val synonyms: List<String> = emptyList()
+) : CommandProvider, DumbAware {
 
-  override val additionalInfo: String?
-    get() {
-      val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(actionId)
-      if (shortcutText.isNotEmpty()) {
-        return shortcutText
-      }
-      return null
-    }
+  /**
+   * Creates and returns a list of completion commands based on the provided context.
+   * The method checks if the action is applicable in the current context and creates
+   * the appropriate command if conditions are met.
+   *
+   * @param context The context containing information about the completion environment
+   * @return A list of completion commands, empty if the action is not applicable
+   */
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
+    if (!isApplicable(context.offset, context.psiFile, context.editor)) return emptyList()
+    val element = createCommand(context) ?: return emptyList()
+    return listOf(element)
+  }
 
-  override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
-    val action = action ?: return false
-    if (editor == null) return false
-    if (!DumbService.Companion.getInstance(psiFile.project).isUsableInCurrentContext(action)) return false
+  
+  /**
+   * Creates a new action completion command based on the provided context.
+   * This method instantiates an [ActionCompletionCommand] with the provider's configuration
+   * including action ID, name, icon, and preview settings.
+   *
+   * @param context The context containing information about the completion environment
+   * @return A new [ActionCompletionCommand] instance, or null if the command cannot be created
+   */
+  protected open fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? =
+    ActionCompletionCommand(actionId = actionId,
+                            name = name,
+                            i18nName = i18nName,
+                            icon = icon,
+                            priority = priority,
+                            previewText = previewText,
+                            synonyms = synonyms)
+
+  /**
+   * Checks whether the action associated with this provider is applicable in the current context.
+   *
+   * @param offset The caret offset in the editor
+   * @param psiFile The PSI file being edited
+   * @param editor The current editor instance, may be null
+   * @return true if the action can be applied in the current context, false otherwise
+   */
+  protected open fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
+    val action: AnAction? = ActionManager.getInstance().getAction(actionId)
+    if (action == null || editor == null) return false
+    if (!DumbService.getInstance(psiFile.project).isUsableInCurrentContext(action)) return false
     val context = getTargetContext(offset, editor)
     val dataContext = getDataContext(psiFile, editor, context)
     val presentation: Presentation = action.templatePresentation.clone()
-    val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ActionUiKind.Companion.NONE, null)
+    val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
+                                          ActionUiKind.NONE, null)
     if (ActionUtil.performDumbAwareUpdate(action, event, false)) {
       return false
     }
     return event.presentation.isEnabled && event.presentation.isVisible
-  }
-
-  override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    val action = action ?: return
-    if (editor == null) return
-    val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
-    val presentation: Presentation = action.templatePresentation.clone()
-    val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ActionUiKind.Companion.NONE, null)
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-    }
   }
 
   /**
@@ -83,5 +111,50 @@ abstract class AbstractActionCompletionCommand(
       if (ch == '\n') return true
     }
     return true
+  }
+}
+
+/**
+ * Represents an action completion command that triggers a specific IDE action
+ * identified by its `actionId`. This class allows integration of IntelliJ Platform actions
+ * as part of code completion features, ensuring that the action is applicable and
+ * executable within a given code editor context.
+ */
+open class ActionCompletionCommand(
+  @field:Language("devkit-action-id") var actionId: String,
+  override val name: String,
+  override val i18nName: @Nls String,
+  private val previewText: @Nls String?,
+  override val icon: Icon? = null,
+  override val priority: Int? = null,
+  override val highlightInfo: HighlightInfoLookup? = null,
+  override val synonyms: List<String> = emptyList()
+) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
+  private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
+
+  override val additionalInfo: String?
+    get() {
+      val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(actionId)
+      if (shortcutText.isNotEmpty()) {
+        return shortcutText
+      }
+      return null
+    }
+
+  override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
+    val action = action ?: return
+    if (editor == null) return
+    val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
+    val presentation: Presentation = action.templatePresentation.clone()
+    val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
+                                          ActionUiKind.NONE, null)
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+    }
+  }
+
+  override fun getPreview(): IntentionPreviewInfo? {
+    if (previewText == null) return null
+    return IntentionPreviewInfo.Html(previewText)
   }
 }

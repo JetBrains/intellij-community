@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie">
+<idea-plugin package="com.intellij.grazie" allow-bundled-update="true">
   <id>tanvd.grazi</id>
   <name>Grazie Lite</name>
   <vendor>JetBrains</vendor>

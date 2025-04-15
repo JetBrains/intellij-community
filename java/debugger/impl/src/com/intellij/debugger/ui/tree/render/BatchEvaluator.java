@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,10 +100,14 @@ public final class BatchEvaluator {
         helperMethodName = "evaluate" + values.size();
       }
 
-      String value = DebuggerUtils.getInstance().processCollectibleValue(
-        () -> DebuggerUtilsImpl.invokeHelperMethod((EvaluationContextImpl)evaluationContext, BatchEvaluatorServer.class, helperMethodName, args, false),
-        result -> result instanceof StringReference ? ((StringReference)result).value() : null,
-        evaluationContext);
+      EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
+      String value = XEvaluationOrigin.computeWithOrigin(evaluationContextImpl, XEvaluationOrigin.RENDERER, () ->
+        DebuggerUtils.getInstance().processCollectibleValue(
+          () -> DebuggerUtilsImpl.invokeHelperMethod(evaluationContextImpl, BatchEvaluatorServer.class,
+                                                     helperMethodName, args, false),
+          result -> result instanceof StringReference ? ((StringReference)result).value() : null,
+          evaluationContext));
+
       if (argArray != null) {
         DebuggerUtilsEx.enableCollection(argArray);
       }

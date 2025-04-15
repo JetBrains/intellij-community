@@ -20,9 +20,11 @@ import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel.RootColor
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation
 import com.intellij.vcs.log.util.VcsLogUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class VcsLogCommitSelectionListenerForDetails(
+@ApiStatus.Internal
+class VcsLogCommitSelectionListenerForDetails(
   private val logData: VcsLogData,
   private val colorManager: VcsLogColorManager,
   private val detailsPanel: CommitDetailsListPanel,

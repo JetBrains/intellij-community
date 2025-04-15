@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
@@ -37,8 +38,8 @@ public final class BasicExpressionCompletionContributor {
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
     if (JavaKeywordCompletion.isAfterTypeDot(element)) {
-      addKeyword(result, element, PsiKeyword.CLASS);
-      addKeyword(result, element, PsiKeyword.THIS);
+      addKeyword(result, element, JavaKeywords.CLASS);
+      addKeyword(result, element, JavaKeywords.THIS);
 
     }
 
@@ -61,8 +62,8 @@ public final class BasicExpressionCompletionContributor {
           }
         }
 
-        addKeyword(result, position, PsiKeyword.TRUE);
-        addKeyword(result, position, PsiKeyword.FALSE);
+        addKeyword(result, position, JavaKeywords.TRUE);
+        addKeyword(result, position, JavaKeywords.FALSE);
 
         if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
           for (PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {

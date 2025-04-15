@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
@@ -37,8 +37,8 @@ public interface InvertedIndex<Key, Value, Input> {
    * <b>NOTE</b>: processor could be invoked <b>more than once</b> e.g. if an actual storage is sharded -- so the processor
    * code must be ready to aggregate results of >1 container passed in.
    *
-   * @return true if all data was processed, false if stopped prematurely because processor returns false at some
-   * point
+   * @return true if all data was processed, false if stopped prematurely (because processor returns false at some
+   * point)
    */
   <E extends Exception> boolean withData(@NotNull Key key,
                                          @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E;

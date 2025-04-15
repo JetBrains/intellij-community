@@ -8,6 +8,8 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
@@ -25,7 +27,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
 import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
@@ -42,6 +43,10 @@ class LinuxDistributionBuilder(
   init {
     val iconPng = (if (context.applicationInfo.isEAP) customizer.iconPngPathForEAP else null) ?: customizer.iconPngPath
     iconPngPath = if (iconPng.isNullOrEmpty()) null else Path.of(iconPng)
+  }
+
+  companion object {
+    private val BuildSnapSemaphore = Semaphore(Integer.getInteger("intellij.build.unix.snaps.concurrency", 1))
   }
 
   override val targetOs: OsFamily
@@ -203,7 +208,7 @@ class LinuxDistributionBuilder(
     return "${snapName}_${snapVersion}_${getSnapArchName(arch)}.snap"
   }
 
-  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
+  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) = BuildSnapSemaphore.withPermit {
     if (!context.options.buildUnixSnaps) {
       Span.current().addEvent("Linux .snap package build is disabled")
       return
@@ -299,16 +304,8 @@ class LinuxDistributionBuilder(
         )
         val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
-        checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch)
+        checkExecutablePermissions(snapArtifactPath, root = "", includeRuntime = true, arch)
       }
-  }
-
-  private suspend fun unSquashSnap(snap: Path): Path {
-    val unSquashed = context.paths.tempDir.resolve("unSquashed-${snap.nameWithoutExtension}")
-    NioFiles.deleteRecursively(unSquashed)
-    Files.createDirectories(unSquashed)
-    runProcess(listOf("unsquashfs", "$snap"), workingDir = unSquashed, inheritOut = true)
-    return unSquashed.resolve("squashfs-root")
   }
 
   override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {

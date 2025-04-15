@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -175,7 +175,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     Set<SmartPsiElementPointer<?>> duplicates = ContainerUtil.newConcurrentSet();
     final Map<Configuration, Matcher> compiledPatterns = checkOutCompiledPatterns(configurations, project, holder, duplicates);
     session.putUserData(COMPILED_PATTERNS, compiledPatterns);
-    return new SSBasedVisitor(compiledPatterns, holder, duplicates);
+    return new SSBasedVisitor(compiledPatterns);
   }
 
   public static void register(@NotNull Configuration configuration) {
@@ -320,7 +320,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   private final class InspectionResultSink extends DefaultMatchResultSink {
     private final Configuration myConfiguration;
-    private final ProblemsHolder myHolder;
+    private ProblemsHolder myHolder;
 
     private final Set<? super SmartPsiElementPointer<?>> duplicates;
 
@@ -358,6 +358,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     public void matchingFinished() {
       duplicates.clear();
+      myHolder = null; // to avoid leaking holder with InspectionProblemHolder retaining LocalInspectionPass
     }
   }
 
@@ -439,14 +440,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     private final Map<Configuration, Matcher> myCompiledOptions;
 
-    private final @NotNull ProblemsHolder myHolder;
-    private final Set<? super SmartPsiElementPointer<?>> myDuplicates;
-
-    SSBasedVisitor(Map<Configuration, Matcher> compiledOptions, @NotNull ProblemsHolder holder,
-                   @NotNull Set<? super SmartPsiElementPointer<?>> duplicates) {
+    SSBasedVisitor(Map<Configuration, Matcher> compiledOptions) {
       myCompiledOptions = compiledOptions;
-      myHolder = holder;
-      myDuplicates = duplicates;
     }
 
     @Override

@@ -23,7 +23,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -32,8 +32,8 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
 
   @OptIn(ExperimentalCoroutinesApi::class)
   internal val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> by lazy {
-    val toolWindowVm = project.service<GitLabToolWindowViewModel>()
-    toolWindowVm.projectVm.flatMapLatest {
+    val toolWindowVm = project.service<GitLabProjectViewModel>()
+    toolWindowVm.connectedProjectVm.flatMapLatest {
       it?.currentMergeRequestReviewVm ?: flowOf(null)
     }.onStart {
       toolWindowVm.loginIfPossible()

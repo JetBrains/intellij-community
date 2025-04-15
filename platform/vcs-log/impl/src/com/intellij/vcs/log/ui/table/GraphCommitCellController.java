@@ -55,7 +55,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   @Override
   public @Nullable Cursor performMouseClick(int row, @NotNull MouseEvent e) {
-    PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE));
+    PrintElement printElement = findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE, row));
     if (printElement != null) {
       return performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
     }
@@ -64,7 +64,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   @Override
   public @NotNull MouseMoveResult performMouseMove(int row, @NotNull MouseEvent e) {
-    Point pointInCell = myTable.getPointInCell(e.getPoint(), Commit.INSTANCE);
+    Point pointInCell = myTable.getPointInCell(e.getPoint(), Commit.INSTANCE, row);
     PrintElement printElement = findPrintElement(row, pointInCell);
     Cursor cursor = performGraphAction(printElement, e, GraphAction.Type.MOUSE_OVER);
     // if printElement is null, still need to unselect whatever was selected in a graph
@@ -81,7 +81,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
   @Override
   public boolean shouldSelectCell(int row, @NotNull MouseEvent e) {
-    return findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE)) == null;
+    return findPrintElement(row, myTable.getPointInCell(e.getPoint(), Commit.INSTANCE, row)) == null;
   }
 
   private @Nullable PrintElement findPrintElement(int row, @NotNull Point pointInCell) {

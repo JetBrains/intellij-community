@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
-  private CommonCodeStyleSettings getJavaSettings() {
+  private CommonCodeStyleSettings getCommonSettings() {
     return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
   }
 
@@ -434,20 +434,20 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testMethodParametersAlignmentAfterMethodNameChange() {
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, "test123asd", null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
   public void testMethodParametersAlignmentAfterMethodVisibilityChange() {
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(PsiModifier.PROTECTED, null, null, new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
   public void testMethodParametersAlignmentAfterMethodReturnTypeChange() {
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
@@ -654,6 +654,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testPreserveEmptyTrailingLeadingLinesJavadoc() {
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
   public void testMultilineJavadocWithoutFormatting() { // IDEA-281568
     JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
@@ -847,8 +855,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testMethodParametersAlignmentAfterMethodReturnTypeChangeMarkdown() {
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getCommonSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
   }
 
@@ -900,6 +908,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
       ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
     }, false);
+  }
+
+  public void testPreserveEmptyTrailingLeadingLinesJavadocMarkdown() {
+      doTest(null, null, null, method -> new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+        ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+        ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+      }, false);
   }
 
   public void testNoGapsInParameterTagsMarkdown() { // IDEA-139879

@@ -31,6 +31,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
+    "//platform/jewel/markdown/core:jewel-markdown-core",
     "//libraries/skiko",
     "//libraries/compose-foundation-desktop",
   ],

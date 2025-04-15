@@ -2,20 +2,20 @@
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class VirtualFileRule implements GetDataRule {
-  @Override
-  public Object getData(final @NotNull DataProvider dataProvider) {
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.*;
+
+final class VirtualFileRule {
+  static @Nullable VirtualFile getData(@NotNull DataMap dataProvider) {
     // Try to detect multi-selection.
-    PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
+    PsiElement[] psiElements = dataProvider.get(PSI_ELEMENT_ARRAY);
     if (psiElements != null) {
       for (PsiElement elem : psiElements) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(elem);
@@ -23,16 +23,16 @@ public final class VirtualFileRule implements GetDataRule {
       }
     }
 
-    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
+    VirtualFile[] virtualFiles = dataProvider.get(VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length == 1) {
       return virtualFiles[0];
     }
 
-    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataProvider);
+    PsiFile psiFile = dataProvider.get(PSI_FILE);
     if (psiFile != null) {
       return psiFile.getVirtualFile();
     }
-    PsiElement elem = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
+    PsiElement elem = dataProvider.get(PSI_ELEMENT);
     if (elem == null) {
       return null;
     }

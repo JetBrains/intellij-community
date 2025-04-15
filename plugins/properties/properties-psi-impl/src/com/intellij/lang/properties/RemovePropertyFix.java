@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class RemovePropertyFix extends PsiUpdateModCommandAction<Property> {
-  RemovePropertyFix(final @NotNull Property origProperty) {
+  public RemovePropertyFix(final @NotNull Property origProperty) {
     super(origProperty);
   }
 

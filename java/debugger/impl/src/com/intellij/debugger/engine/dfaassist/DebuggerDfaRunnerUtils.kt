@@ -6,11 +6,10 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Larva
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Pupa
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
@@ -160,32 +159,31 @@ suspend fun createDfaRunner(
 
 internal fun scheduleDfaUpdate(assist: DfaAssist, newContext: DebuggerContextImpl, element: PsiElement) {
   val pointer = SmartPointerManager.createPointer<PsiElement?>(element)
-  newContext.getManagerThread()!!.schedule(object : SuspendContextCommandImpl(newContext.suspendContext) {
-    override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) {
-      val proxy = suspendContext.getFrameProxy()
-      if (proxy == null) {
-        assist.cleanUp()
-        return
-      }
-      val runnerPupa = makePupa(proxy, pointer)
-      if (runnerPupa == null) {
-        assist.cleanUp()
-        return
-      }
-      val project = suspendContext.debugProcess.project
-      val hintsJob = suspendContext.coroutineScope.async {
-        constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
-          runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
-        }
-      }
-      assist.cancelComputation()
-      assist.setComputation(hintsJob)
-      val hints = hintsJob.await()
-      withContext(Dispatchers.EDT) {
-        assist.displayInlaysInternal(hints)
+  val suspendContext = newContext.suspendContext ?: return
+  executeOnDMT(suspendContext) {
+    val proxy = suspendContext.getFrameProxy()
+    if (proxy == null) {
+      assist.cleanUp()
+      return@executeOnDMT
+    }
+    val runnerPupa = makePupa(proxy, pointer)
+    if (runnerPupa == null) {
+      assist.cleanUp()
+      return@executeOnDMT
+    }
+    val project = suspendContext.debugProcess.project
+    val hintsJob = suspendContext.coroutineScope.async {
+      constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+        runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
       }
     }
-  })
+    assist.cancelComputation()
+    assist.setComputation(hintsJob)
+    val hints = hintsJob.await()
+    withContext(Dispatchers.EDT) {
+      assist.displayInlaysInternal(hints)
+    }
+  }
 }
 
 private data class LarvaData(

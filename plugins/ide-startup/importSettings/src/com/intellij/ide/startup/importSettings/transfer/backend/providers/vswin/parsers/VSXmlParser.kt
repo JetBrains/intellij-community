@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.parsers
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers
 
 import com.intellij.ide.startup.importSettings.db.KnownKeymaps
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
@@ -7,30 +7,29 @@ import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.providers.vswin.parsers.data.FontsAndColorsParsedData
 import com.intellij.ide.startup.importSettings.providers.vswin.parsers.data.VSParsedData
 import com.intellij.ide.startup.importSettings.providers.vswin.parsers.data.VSParsedDataCreator
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.data.KeyBindingsParsedData
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
 import com.intellij.openapi.diagnostic.logger
-import org.jdom.Document
+import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element
-import org.jdom.input.SAXBuilder
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
 
 class VSXmlParserException(message: String) : Exception(message)
 
-class VSXmlParser(settingsFile: File, private val hive: VSHive? = null) {
+class VSXmlParser(settingsFile: Path, private val hive: VSHive? = null) {
   companion object {
-    const val applicationIdentity: String = "ApplicationIdentity"
-    const val toolsOptions: String = "ToolsOptions"
-    const val category: String = "Category"
-    const val envGroup: String = "Environment_Group"
-    const val nameAttr: String = "name"
-    const val versionAttr: String = "version"
+    const val APPLICATION_IDENTITY: String = "ApplicationIdentity"
+    const val TOOLS_OPTIONS: String = "ToolsOptions"
+    const val CATEGORY: String = "Category"
+    const val ENVIRONMENT_GROUP: String = "Environment_Group"
+    const val NAME_ATTRIBUTE: String = "name"
+    const val VERSION_ATTRIBUTE: String = "version"
 
     private val logger = logger<VSXmlParser>()
   }
-
-  private val document: Document
 
   val allSettings: Settings = Settings(
     keymap = KnownKeymaps.VisualStudio2022
@@ -42,14 +41,13 @@ class VSXmlParser(settingsFile: File, private val hive: VSHive? = null) {
     if (hive != null) {
       logger.info("Parsing $hive")
     }
-    document = SAXBuilder().build(settingsFile)
+    val rootElement = JDOMUtil.load(settingsFile)
 
-    logger.info("Parsing file ${settingsFile.absolutePath}")
-    val verStr = document.rootElement.getChild(applicationIdentity)?.getAttribute(versionAttr)?.value
+    logger.info("Parsing file ${settingsFile.absolutePathString()}")
+    val verStr = rootElement.getChild(APPLICATION_IDENTITY)?.getAttribute(VERSION_ATTRIBUTE)?.value
                  ?: throw VSXmlParserException("Can't find version")
     ver = Version2.parse(verStr)
-          ?: throw VSXmlParserException("Can't parse version")
-    categoryDigger(ver, document.rootElement)
+    categoryDigger(ver, rootElement)
   }
 
   fun toSettings(): Settings {
@@ -58,15 +56,15 @@ class VSXmlParser(settingsFile: File, private val hive: VSHive? = null) {
 
   private fun categoryDigger(version: Version2, rtElement: Element) {
     for (el in rtElement.children) {
-      if (el.name == applicationIdentity) continue
-      if (el.name == toolsOptions || (el.name == category && el.getAttribute(nameAttr)?.value == envGroup)) {
+      if (el.name == APPLICATION_IDENTITY) continue
+      if (el.name == TOOLS_OPTIONS || (el.name == CATEGORY && el.getAttribute(NAME_ATTRIBUTE)?.value == ENVIRONMENT_GROUP)) {
         categoryDigger(version, el)
         continue
       }
 
       val disp = parserDispatcher(version, el, hive)?.let { it() }
       if (disp != null) {
-        val name = el?.getAttribute(nameAttr)?.value
+        val name = el?.getAttribute(NAME_ATTRIBUTE)?.value
         if (name == null) {
           logger.info("This should not happen. For some reason there is no name attribute")
           continue
@@ -89,7 +87,7 @@ class VSXmlParser(settingsFile: File, private val hive: VSHive? = null) {
 
   private fun parserDispatcher(version: Version2, el: Element, hive: VSHive?): (() -> VSParsedData?)? {
     //.debug("Processing $value")
-    return when (el.getAttribute(nameAttr)?.value) {
+    return when (el.getAttribute(NAME_ATTRIBUTE)?.value) {
       FontsAndColorsParsedData.key -> {
         { VSParsedDataCreator.fontsAndColors(version, el) }
       }

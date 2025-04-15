@@ -4,6 +4,12 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesCollector
 import com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesScopeAnalyzer.ScopeType
+import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFactorsComponent
+import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFeatures
+import com.intellij.codeInsight.inline.completion.logs.statistics.CompletionFinishTypeFeatures
+import com.intellij.codeInsight.inline.completion.logs.statistics.PrefixLengthFeatures
+import com.intellij.codeInsight.inline.completion.logs.statistics.TimeBetweenTypingFeatures
+import kotlin.time.Duration
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -14,6 +20,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlin.math.abs
 
 internal object InlineCompletionContextLogs {
   @RequiresReadLock
@@ -24,7 +31,43 @@ internal object InlineCompletionContextLogs {
     val featureCollectorBased = InlineCompletionFeaturesCollector.get(request.file.language)?.let {
       captureFeatureCollectorBased(request.file, request.startOffset, it, element)
     }
-    return simple + typingFeatures + featureCollectorBased.orEmpty()
+    val userFeatures = captureUserStatisticsFactors()
+    return simple + typingFeatures + featureCollectorBased.orEmpty() + userFeatures
+  }
+
+  private fun captureUserStatisticsFactors(): List<EventPair<*>> = buildList {
+    with(AcceptanceRateFeatures()) {
+      for (duration in AcceptanceRateFactorsComponent.DECAY_DURATIONS) {
+        val (selectionField, showupField, acceptanceField) = Logs.DECAYING_FEATURES[duration] ?: continue
+        if(abs(showUpCountDecayedBy(duration)) > 1e-9) {
+          add(showupField with showUpCountDecayedBy(duration))
+          if(abs(selectionCountDecayedBy(duration)) > 1e-9) {
+            add(selectionField with selectionCountDecayedBy(duration))
+            add(acceptanceField with smoothedAcceptanceRate(duration))
+          }
+        }
+      }
+      add(Logs.PREV_SELECTED with prevSelected)
+      add(Logs.TIME_SINCE_LAST_SHOWUP with timeSinceLastShowup)
+      add(Logs.TIME_SINCE_LAST_SELECTION with timeSinceLastSelection)
+    }
+
+    with(CompletionFinishTypeFeatures()) {
+      if (hasCompletionStatistics()) {
+        add(Logs.SELECTED_RATIO with getSelectedRatio())
+        add(Logs.INVALIDATED_RATIO with getInvalidatedRatio())
+        add(Logs.EXPLICIT_CANCEL_RATIO with getExplicitCancelRatio())
+      }
+    }
+
+    with(PrefixLengthFeatures()) {
+      getMostFrequentPrefixLength()?.let{add(Logs.MOST_FREQUENT_PREFIX_LENGTH with it)}
+      getAveragePrefixLength()?.let{add(Logs.AVERAGE_PREFIX_LENGTH with it)}
+    }
+
+    with(TimeBetweenTypingFeatures()) {
+      getAverageTypingSpeed()?.let{add(Logs.AVERAGE_TIME_BETWEEN_TYPING with it)}
+    }
   }
 
   private fun captureSimple(psiFile: PsiFile, editor: Editor, offset: Int, element: PsiElement?): List<EventPair<*>> {
@@ -230,6 +273,7 @@ internal object InlineCompletionContextLogs {
   }
 
   private object Logs : PhasedLogs(InlineCompletionLogsContainer.Phase.INLINE_API_STARTING) {
+    private fun Duration.toDescription(): String = toString().replace(" ", "")
     val ELEMENT_PREFIX_LENGTH = register(EventFields.Int("element_prefix_length"))
     val LINE_NUMBER = register(EventFields.Int("line_number"))
     val COLUMN_NUMBER = register(EventFields.Int("column_number"))
@@ -288,6 +332,29 @@ internal object InlineCompletionContextLogs {
     val TYPING_SPEEDS = TypingSpeedTracker.getEventFields().map {
       register(it)
     }
+
+    val PREV_SELECTED = register(EventFields.Boolean("prev_selected", "Indicates whether the previous inline completion was selected or not"))
+    val TIME_SINCE_LAST_SELECTION = register(EventFields.Long("time_since_last_selection", "Time (in ms) elapsed since the last completion selection event"))
+    val TIME_SINCE_LAST_SHOWUP = register(EventFields.Long("time_since_last_showup", "Time (in ms) elapsed since the last completion show-up event"))
+    val SELECTED_RATIO = register(EventFields.Double("selected_ratio", "Ratio of completions selected by the user relative to the total number of completions (statistics are given for the last 10 days)"))
+    val INVALIDATED_RATIO = register(EventFields.Double("invalidated_ratio", "Ratio of completions that were invalidated relative to the total number of completions (statistics are given for the last 10 days)"))
+    val EXPLICIT_CANCEL_RATIO = register(EventFields.Double("explicit_cancel_ratio", "Ratio of completions explicitly canceled by the user relative to the total number of completions (statistics are given for the last 10 days)"))
+
+    val DECAYING_FEATURES: Map<Duration, List<EventField<Double>>> = AcceptanceRateFactorsComponent.DECAY_DURATIONS.associateWith { duration ->
+      listOf(
+        register(EventFields.Double("selection_decayed_by_${duration.toDescription()}",
+                                    "Selection count with exponential decay applied over a period of ${duration.toDescription()}")),
+        register(EventFields.Double("showup_decayed_by_${duration.toDescription()}",
+                                    "Show-up count with exponential decay applied over a period of ${duration.toDescription()}")),
+        register(EventFields.Double("acceptance_rate_smoothed_by_${duration.toDescription()}",
+                                    "Smoothed acceptance rate (ratio of selections to show-ups) with exponential smoothing over ${duration.toDescription()}"))
+      )
+    }
+
+    val AVERAGE_PREFIX_LENGTH = register(EventFields.Double("average_prefix_length", "Average prefix length for completions that resulted in selection"))
+    val MOST_FREQUENT_PREFIX_LENGTH = register(EventFields.Int("most_frequent_prefix_length", "Most frequently observed prefix length among completions that resulted in selection"))
+    val AVERAGE_TIME_BETWEEN_TYPING = register(EventFields.Double("average_time_between_typing", "Average time (in ms) between typing events"))
+
 
     private fun <T> scopeFeatures(createFeatureDeclaration: (String) -> EventField<T>): List<EventField<T>> {
       return listOf(

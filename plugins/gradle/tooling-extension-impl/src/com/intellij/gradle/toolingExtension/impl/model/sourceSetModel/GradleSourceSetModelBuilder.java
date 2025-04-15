@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -41,8 +42,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
-
-import static com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil.collectionToString;
 
 @ApiStatus.Internal
 public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
@@ -493,7 +492,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       externalSourceSet.setJavaToolchainHome(getJavaToolchainHome(project, javaCompile));
       externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
       externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
-      externalSourceSet.setCompilerArguments(collectionToString(javaCompile.getOptions().getAllCompilerArgs()));
+      externalSourceSet.setCompilerArguments(GradleCollections.mapToString(javaCompile.getOptions().getAllCompilerArgs()));
     }
     if (externalSourceSet.getSourceCompatibility() == null) {
       externalSourceSet.setSourceCompatibility(sourceSetResolutionContext.projectSourceCompatibility);

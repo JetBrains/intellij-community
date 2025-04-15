@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.tree;
 
@@ -16,7 +16,8 @@ import java.io.IOException;
 
 /**
  * OBSOLESCENCE NOTE:
- * Use {@link com.intellij.psi.stubs.LanguageStubDefinition}, {@link com.intellij.psi.stubs.StubElementFactory}, {@link com.intellij.psi.stubs.LightStubElementFactory} instead
+ * <p>
+ * Use {@link IFileElementType} and extract the corresponding parts to {@link LanguageStubDefinition}, {@link StubElementFactory}, {@link LightStubElementFactory}.
  */
 @ApiStatus.Obsolete
 public class IStubFileElementType<T extends PsiFileStub> extends StubFileElementType<T> {

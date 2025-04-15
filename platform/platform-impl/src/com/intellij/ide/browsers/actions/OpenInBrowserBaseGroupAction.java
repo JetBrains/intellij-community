@@ -6,7 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserXmlService;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
@@ -42,7 +42,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabledAndVisible(project != null && TrustedProjects.isTrusted(project));
+    e.getPresentation().setEnabledAndVisible(project != null && TrustedProjects.isProjectTrusted(project));
   }
 
   @Override

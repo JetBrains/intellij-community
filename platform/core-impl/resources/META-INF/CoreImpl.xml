@@ -89,7 +89,7 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileSetFactory"
                         serviceImplementation="com.intellij.openapi.vfs.CompactVirtualFileSetFactory"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.StubElementRegistryService"
-                        serviceImplementation="com.intellij.psi.stubs.CoreStubElementRegistryServiceImpl"/>
+                        serviceImplementation="com.intellij.psi.stubs.StubElementRegistryServiceImpl"/>
     <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
     <projectService serviceInterface="com.intellij.psi.PsiParserFacade"
                     serviceImplementation="com.intellij.psi.impl.PsiParserFacadeImpl"/>

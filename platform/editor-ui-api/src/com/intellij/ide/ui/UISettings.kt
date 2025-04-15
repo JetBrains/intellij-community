@@ -546,6 +546,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showBreakpointsOverLineNumbers = value
     }
 
+  @get:Internal
+  @set:Internal
+  var showProgressesInEditor: Boolean
+    get() = state.showProgressesInEditor && notRoamableOptions.xNextStripe
+    set(value) {
+      state.showProgressesInEditor = value
+    }
+
   var currentIdeScale: Float
     get() = if (presentationMode) presentationModeIdeScale else ideScale
     set(scale) {

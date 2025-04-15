@@ -294,11 +294,18 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         if (isAnalyzeOff(host.project)) return null
 
         val searchScope = LocalSearchScope(arrayOf(ktProperty.containingFile), "", true)
-        return ReferencesSearch.search(ktProperty, searchScope).asIterable().asSequence().mapNotNull { psiReference ->
+        val targetProperty = getTargetProperty(ktProperty)
+        return ReferencesSearch.search(targetProperty, searchScope).asIterable().asSequence().mapNotNull { psiReference ->
             val element = psiReference.element as? KtElement ?: return@mapNotNull null
             findInjectionInfo(element, false)
         }.firstOrNull()
     }
+
+    /**
+     * Returns property which can be found in its containing file.
+     * For K2 and non-physical copy, one needs to go to the original property to find something
+     */
+    protected open fun getTargetProperty(ktProperty: KtProperty): KtProperty = ktProperty
 
     private tailrec fun injectWithCall(host: KtElement): InjectionInfo? {
         val argument = getArgument(host) ?: return null

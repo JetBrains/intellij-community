@@ -68,7 +68,8 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     val b = addModule("b", withTests = true)
     val dependency = b.dependenciesList.addModuleDependency(aTests)
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
-    buildAndCheck { 
+    buildAndCheck {
+      descriptor("a.test", resourceDirName = null)
       testDescriptor("a.test.tests", resourceDirName = "a.test")
       descriptor("b")
       testDescriptor("b.tests", "b", "a.test.tests")

@@ -3,8 +3,7 @@
   <module value="com.intellij.modules.kotlin.k2"/>
 
   <dependencies>
-    <plugin id="com.intellij.modules.platform"/>
-    <plugin id="com.intellij.modules.java"/>
+    <plugin id="com.intellij.java"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
@@ -32,6 +31,7 @@
   <xi:include href="native-k2.xml"/>
   <xi:include href="facets-base.xml"/>
   <xi:include href="jvm.xml"/>
+  <xi:include href="searching-k2.xml"/>
 
   <xi:include href="extensions.xml"/>
 
@@ -104,7 +104,7 @@
 
     <registryKey key="kotlin.k2.show.fir.statusbar.icon"
                  description="Show K2 mode tree icon in the status bar"
-                 defaultValue="true"
+                 defaultValue="false"
                  restartRequired="false"/>
 
     <!-- shared completion -->
@@ -115,6 +115,15 @@
                             id="KotlinCompletionContributor"
                             order="first"
                             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
+
+    <completion.contributor language="kotlin"
+                            order="first, after KotlinDumbCompletionContributor"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
+
+    <registryKey key="kotlin.k2.chain.completion.enabled"
+                 description="Allow chained completion items in Kotlin"
+                 defaultValue="false"
+                 restartRequired="true"/>
 
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
              id="kotlin.preferKotlinx"
@@ -169,11 +178,6 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
-
-    <targetElementEvaluator language="kotlin"
-                            implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
-    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
-    <usageTargetProvider implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinUsageTargetProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
                     serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFirImpl"/>

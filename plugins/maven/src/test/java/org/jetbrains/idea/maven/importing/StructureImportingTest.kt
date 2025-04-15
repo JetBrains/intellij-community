@@ -68,7 +68,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <modules>
                          <module>m1</module>
                          <module>m2</module>
-                         <module>m3</module>
                        </modules>
                        """.trimIndent())
 
@@ -464,6 +463,8 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModulePathsAsProperties() = runBlocking {
+    // Maven 4 doesn't allow module paths as properties
+    assumeMaven3()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

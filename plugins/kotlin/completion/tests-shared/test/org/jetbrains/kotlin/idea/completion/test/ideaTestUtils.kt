@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import java.io.File
@@ -31,7 +31,7 @@ fun CodeInsightTestFixture.configureByFilesWithSuffixes(mainFile: File, testData
 inline fun <reified T : Any> Any?.assertInstanceOf() = UsefulTestCase.assertInstanceOf(this, T::class.java)
 
 inline fun <reified T : Any, R> ComponentManager.withComponentRegistered(instance: T, body: () -> R): R {
-    val picoContainer = this as ComponentManagerImpl
+    val picoContainer = getComponentManagerImpl()
     val key = T::class.java
     try {
         picoContainer.unregisterComponent(key)

@@ -36,16 +36,6 @@ internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: 
     return
   }
 
-  // Kotlin Multiplatform Mobile plugin is excluded since:
-  // * is compatible with Android Studio only;
-  // * has release cycle of its
-  // * shadows IntelliJ utility modules included via Kotlin Compiler;
-  // * breaks searchable options index and jar order generation steps.
-  plugins.removeIf { it.mainModule == "kotlin-ultimate.kmm-plugin" }
-  if (plugins.isEmpty()) {
-    return
-  }
-
   val toInclude = context.options.nonBundledPluginDirectoriesToInclude
   if (toInclude.isEmpty()) {
     return

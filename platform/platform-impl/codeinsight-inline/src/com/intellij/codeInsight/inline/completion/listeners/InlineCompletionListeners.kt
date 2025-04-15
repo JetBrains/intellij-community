@@ -93,7 +93,8 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
 
 internal class InlineCompletionFocusListener : FocusChangeListener {
   override fun focusGained(editor: Editor) {
-    // Let the file load before we invoke this event
+    return // IJPL-179647: slow ops because we load a PSI-file on EDT before it's loaded by the platform
+
     application.invokeLater {
       if (editor.caretModel.caretCount != 1 || editor.caretModel.currentCaret.hasSelection()) {
         return@invokeLater

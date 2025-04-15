@@ -155,7 +155,7 @@ class CodeInsightContextManagerImpl(
   private fun findFirstContext(file: VirtualFile?): CodeInsightContext {
     if (file == null) return defaultContext()
 
-    // todo ijpl-339 implement a better way to select the current context
+    // todo IJPL-339 implement a better way to select the current context
     val firstContext = getContextSequence(file).first()
     return firstContext
   }

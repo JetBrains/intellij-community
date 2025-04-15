@@ -3,14 +3,19 @@ package com.intellij.xdebugger.impl.ui.tree.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.rpc.XDebuggerNavigationApi
+import com.intellij.xdebugger.impl.rpc.withId
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
-private class XJumpToTypeSourceAction : XJumpToSourceActionBase() {
-  override suspend fun navigateToSource(project: Project, value: XValue): Boolean {
-    return navigateByNavigatable(project) { navigatable ->
-      value.computeTypeSourcePosition(navigatable)
+private class XJumpToTypeSourceAction : XJumpToSourceActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  override suspend fun navigateToSource(project: Project, value: XValue, session: XDebugSessionProxy?): Boolean {
+    if (session == null) return false
+    return withId(value, session) { xValueId ->
+      XDebuggerNavigationApi.getInstance().navigateToXValueType(xValueId).await()
     }
   }
 

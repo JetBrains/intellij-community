@@ -8,6 +8,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleComponentManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
@@ -29,6 +30,8 @@ import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
@@ -49,7 +52,7 @@ import kotlin.coroutines.coroutineContext
 private val LOG = logger<ModuleManagerComponentBridge>()
 
 @ApiStatus.Internal
-class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
+open class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
   private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
@@ -100,6 +103,12 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
     // Theoretically, the module initialization can be parallelized using fork-join approach, see IJPL-149482
     //   This approach is used in ModuleManagerBridgeImpl.loadModules
     // However, simple use of Dispatchers.Default while being inside write action, may cause threading issues, see IDEA-355596
+    val precomputedModel = if (moduleChanges.isNotEmpty()) {
+      precomputeModuleLevelExtensionModel()
+    }
+    else {
+      null
+    }
     for (change in moduleChanges) {
       if (change !is EntityChange.Added<ModuleEntity>) {
         continue
@@ -115,9 +124,8 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
         versionedStorage = entityStore,
         diff = builder,
         isNew = true,
-        precomputedExtensionModel = null,
+        precomputedExtensionModel = precomputedModel!!,
         plugins = plugins,
-        corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID },
       )
       LOG.debug { "Creating components ${change.newEntity.name}" }
       bridge.callCreateComponents()
@@ -143,7 +151,7 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
   }
 
   override fun registerNonPersistentModuleStore(module: ModuleBridge) {
-    (module as ModuleBridgeImpl).registerService(
+    (module as ModuleBridgeImpl).getModuleComponentManager().registerService(
       serviceInterface = IComponentStore::class.java,
       implementation = NonPersistentModuleStore::class.java,
       pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
@@ -185,7 +193,9 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
+    init: (ModuleBridge) -> Unit,
   ): ModuleBridge {
+    val componentManager = ModuleComponentManager(project.getComponentManagerImpl())
     return ModuleBridgeImpl(
       moduleEntityId = symbolicId,
       name = name,
@@ -193,7 +203,11 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
       virtualFileUrl = virtualFileUrl,
       entityStorage = entityStorage,
       diff = diff,
-    )
+      componentManager = componentManager,
+    ).also {
+      componentManager.initForModule(it)
+      init(it)
+    }
   }
 }
 

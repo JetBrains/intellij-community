@@ -75,13 +75,14 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
 ): Cell<ProjectWizardJdkComboBox> {
-  return projectWizardJdkComboBox(row, sdkProperty, sdkDownloadTaskProperty, null)
+  return projectWizardJdkComboBox(row, sdkProperty, sdkDownloadTaskProperty, null, null)
 }
 
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
   jdkPredicate: ProjectWizardJdkPredicate?,
 ): Cell<ProjectWizardJdkComboBox> {
   return projectWizardJdkComboBox(
@@ -89,6 +90,7 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
     requireNotNull(baseData) {
       "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
     }.pathProperty,
+    intentProperty,
     { sdk -> context.projectJdk = sdk },
     context.disposable,
     context.projectJdk,
@@ -101,6 +103,7 @@ fun projectWizardJdkComboBox(
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   locationProperty: GraphProperty<String>,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
   setProjectJdk: (Sdk?) -> Unit,
   disposable: Disposable,
   projectJdk: Sdk? = null,
@@ -154,7 +157,7 @@ fun projectWizardJdkComboBox(
       null
     }
     .onChanged {
-      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
+      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, intentProperty, selectedJdkProperty)
     }
     .onApply {
       val selected = combo.selectedItem
@@ -181,7 +184,7 @@ fun projectWizardJdkComboBox(
       }
     }
     .apply {
-      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
+      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, intentProperty, selectedJdkProperty)
     }
 }
 
@@ -215,10 +218,12 @@ private fun updateGraphProperties(
   combo: ProjectWizardJdkComboBox,
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  intentProperty: GraphProperty<ProjectWizardJdkIntent?>?,
   selectedJdkProperty: String,
 ) {
   val stateComponent = PropertiesComponent.getInstance()
-  val (sdk, downloadTask) = when (val intent = combo.selectedItem) {
+  val intent = combo.selectedItem
+  val (sdk, downloadTask) = when (intent) {
     is ExistingJdk -> {
       stateComponent.setValue(selectedJdkProperty, intent.jdk.name)
       (intent.jdk to null)
@@ -228,6 +233,7 @@ private fun updateGraphProperties(
   }
   sdkProperty.set(sdk)
   sdkDownloadTaskProperty.set(downloadTask)
+  intentProperty?.set(intent as? ProjectWizardJdkIntent)
 }
 
 @Service(Service.Level.APP)

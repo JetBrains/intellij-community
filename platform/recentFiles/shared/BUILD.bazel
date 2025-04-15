@@ -26,6 +26,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":recentFiles_resources"]
 )

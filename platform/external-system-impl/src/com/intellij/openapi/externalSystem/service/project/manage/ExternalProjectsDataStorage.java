@@ -40,6 +40,7 @@ import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -318,7 +319,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
 
   @NotNull
   @ApiStatus.Internal
-  public Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
+  public @Unmodifiable Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
     return ContainerUtil.mapNotNull(myExternalRootProjects.values(),
                                     info -> projectSystemId.equals(info.getProjectSystemId()) ? info : null);
   }

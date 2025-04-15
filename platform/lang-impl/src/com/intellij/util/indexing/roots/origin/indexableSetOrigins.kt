@@ -27,8 +27,7 @@ internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: Sy
                                                override val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryOrigin
 
 @Internal
-internal data class SdkOriginImpl(override val sdk: Sdk,
-                                  override val rootsToIndex: Collection<VirtualFile>) : SdkOrigin {
+internal data class SdkOriginImpl(override val rootsToIndex: Collection<VirtualFile>) : SdkOrigin {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

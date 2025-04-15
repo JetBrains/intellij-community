@@ -11,8 +11,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
@@ -45,9 +43,9 @@ internal enum class ApiSourceArchive(
  * Some IDEs, like IntelliJ IDEA Ultimate or PhpStorm, don't provide sources for artifacts published to IntelliJ Repository.
  * To handle such a case, IntelliJ IDEA Community sources are attached.
  */
-internal class IntelliJPlatformAttachSourcesProvider(private val cs: CoroutineScope) : AttachSourcesProvider {
+internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
-  override fun getActions(orderEntries: MutableList<out LibraryOrderEntry>, psiFile: PsiFile) =
+  override fun getActions(orderEntries: List<LibraryOrderEntry>, psiFile: PsiFile) =
     orderEntries
       .mapNotNull { it.library?.getMavenCoordinates() }
       .firstNotNullOfOrNull { coordinates -> createAction(coordinates, psiFile) }
@@ -78,7 +76,7 @@ internal class IntelliJPlatformAttachSourcesProvider(private val cs: CoroutineSc
   /**
    * Resolve and attach IntelliJ Platform sources to the currently handled dependency in a requested version.
    *
-   * Requests PyCharm Community sources if PyCharm Community or PyCharm Professional.
+   * Requests PyCharm Community sources if PyCharm Community or PyCharm.
    * Requests IntelliJ IDEA Ultimate sources if IntelliJ IDEA Ultimate 2024.2+.
    * In all other cases, requests IntelliJ IDEA Community sources.
    *
@@ -189,20 +187,17 @@ internal class IntelliJPlatformAttachSourcesProvider(private val cs: CoroutineSc
         val project = psiFile.project
         val sourceArtifactNotation = "$productCoordinates:$version:sources"
 
-        cs.launch {
-          GradleArtifactDownloader
-            .downloadArtifact(project, name, sourceArtifactNotation, externalProjectPath)
-            .whenComplete { path, error ->
-              if (error != null) {
-                executionResult.setRejected()
-              }
-              else {
-                attachSources(path, orderEntries) {
-                  executionResult.setDone()
-                }
+        GradleArtifactDownloader.downloadArtifact(project, name, sourceArtifactNotation, externalProjectPath)
+          .whenComplete { path, error ->
+            if (error != null) {
+              executionResult.setRejected()
+            }
+            else {
+              attachSources(path, orderEntries) {
+                executionResult.setDone()
               }
             }
-        }
+          }
 
         return executionResult
       }
@@ -268,7 +263,7 @@ internal class IntelliJPlatformAttachSourcesProvider(private val cs: CoroutineSc
 
   private fun resolveProductCoordinates(product: IntelliJPlatformProduct, majorVersion: Int) =
     when (product) {
-      // For PyCharm Community and PyCharm Professional, we use PC sources.
+      // For PyCharm Community and PyCharm, we use PC sources.
       IntelliJPlatformProduct.PYCHARM, IntelliJPlatformProduct.PYCHARM_PC -> IntelliJPlatformProduct.PYCHARM_PC
 
       // IntelliJ IDEA Ultimate has sources published since 242; otherwise we use IC.

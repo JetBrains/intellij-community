@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
@@ -6,11 +6,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,8 +35,8 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   private JCheckBox myLogStack;
   private @Nullable XDebuggerExpressionComboBox myLogExpressionComboBox;
 
-  public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
-    init(project, breakpointManager, breakpoint);
+  public void init(Project project, @NotNull XBreakpointProxy breakpoint, @Nullable XDebuggerEditorsProvider debuggerEditorsProvider) {
+    init(project, breakpoint);
     if (debuggerEditorsProvider != null) {
       ActionListener listener = new ActionListener() {
         @Override
@@ -58,10 +56,10 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     else {
       myExpressionPanel.getParent().remove(myExpressionPanel);
     }
-    boolean isLineBreakpoint = breakpoint instanceof XLineBreakpoint;
+    boolean isLineBreakpoint = breakpoint.getType().isLineBreakpoint();
     myTemporaryCheckBox.setVisible(isLineBreakpoint);
     if (isLineBreakpoint) {
-      myTemporaryCheckBox.addActionListener(e -> ((XLineBreakpoint<?>)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected()));
+      myTemporaryCheckBox.addActionListener(e -> myBreakpoint.setTemporary(myTemporaryCheckBox.isSelected()));
     }
   }
 
@@ -74,7 +72,7 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   @Override
   public boolean lightVariant(boolean showAllOptions) {
     if (!showAllOptions && !myBreakpoint.isLogMessage() && !myBreakpoint.isLogStack() && myBreakpoint.getLogExpression() == null &&
-        (!(myBreakpoint instanceof XLineBreakpoint) || !((XLineBreakpoint<?>)myBreakpoint).isTemporary()) ) {
+        (!myBreakpoint.getType().isLineBreakpoint() || !myBreakpoint.isTemporary())) {
       myMainPanel.setVisible(false);
       return true;
     } else {
@@ -94,8 +92,8 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     myLogMessageCheckBox.setSelected(myBreakpoint.isLogMessage());
     myLogStack.setSelected(myBreakpoint.isLogStack());
 
-    if (myBreakpoint instanceof XLineBreakpoint) {
-      myTemporaryCheckBox.setSelected(((XLineBreakpoint<?>)myBreakpoint).isTemporary());
+    if (myBreakpoint.getType().isLineBreakpoint()) {
+      myTemporaryCheckBox.setSelected(myBreakpoint.isTemporary());
     }
 
     if (myLogExpressionComboBox != null) {
@@ -111,8 +109,8 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     myBreakpoint.setLogMessage(myLogMessageCheckBox.isSelected());
     myBreakpoint.setLogStack(myLogStack.isSelected());
 
-    if (myBreakpoint instanceof XLineBreakpoint) {
-      ((XLineBreakpoint<?>)myBreakpoint).setTemporary(myTemporaryCheckBox.isSelected());
+    if (myBreakpoint.getType().isLineBreakpoint()) {
+      myBreakpoint.setTemporary(myTemporaryCheckBox.isSelected());
     }
 
     if (myLogExpressionComboBox != null) {

@@ -7,6 +7,7 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -14,7 +15,6 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.settings.*
 import com.intellij.platform.settings.local.SettingsControllerMediator
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -496,8 +496,8 @@ private class ControllerBackedTestComponentStore(
   testAppConfigPath: Path,
   controller: SettingsController,
 ) : ComponentStoreWithExtraComponents() {
-  override val serviceContainer: ComponentManagerImpl
-    get() = ApplicationManager.getApplication() as ComponentManagerImpl
+  override val serviceContainer: ComponentManagerEx
+    get() = ApplicationManager.getApplication() as ComponentManagerEx
 
   override val storageManager = ApplicationStateStorageManager(pathMacroManager = null, controller = controller)
   override val isStoreInitialized: Boolean = true

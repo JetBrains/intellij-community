@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchPar
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallKotlinConstructorUsagesTask
+import org.jetbrains.kotlin.idea.util.application.isHeadlessEnvironment
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -234,7 +235,8 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (forceDisableComponentAndDestructionSearch) return true
 
-            if (org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog.getDisableComponentAndDestructionSearch(project)) return true
+            if (isHeadlessEnvironment() && !isUnitTestMode()) return true
+            if (KotlinFindPropertyUsagesDialog.getDisableComponentAndDestructionSearch(project)) return true
 
             return if (getUserData(FIND_USAGES_ONES_FOR_DATA_CLASS_KEY) == true) {
                 if (resetSingleFind) {

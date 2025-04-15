@@ -29,7 +29,8 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
-import com.intellij.util.getErrorsAsString
+import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.util.lang.CompoundRuntimeException
 import io.github.classgraph.*
 import java.awt.Component
 import java.lang.reflect.Constructor
@@ -39,7 +40,7 @@ private class CreateAllServicesAndExtensionsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val errors = createAllServicesAndExtensions2()
     if (errors.isNotEmpty()) {
-      logger<ComponentManagerImpl>().error(getErrorsAsString(errors).toString())
+      logger<ComponentManagerImpl>().error(CompoundRuntimeException(errors))
     }
     // some errors are not thrown but logged
     val message = (if (errors.isEmpty()) "No errors" else "${errors.size} errors were logged") + ". Check also that no logged errors."
@@ -121,17 +122,17 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
         checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
       }
 
-      val application = ApplicationManager.getApplication() as ComponentManagerImpl
+      val application = ApplicationManager.getApplication().getComponentManagerImpl()
       reporter.indeterminateStep {
         checkContainer2(application, "app", taskExecutor)
       }
 
-      val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+      val project = ProjectUtil.getOpenProjects().firstOrNull()?.getComponentManagerImpl()
       if (project != null) {
         reporter.indeterminateStep {
           checkContainer2(project, "project", taskExecutor)
         }
-        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull()?.getComponentManagerImpl()
         if (module != null) {
           reporter.indeterminateStep {
             checkContainer2(module, "module", taskExecutor)

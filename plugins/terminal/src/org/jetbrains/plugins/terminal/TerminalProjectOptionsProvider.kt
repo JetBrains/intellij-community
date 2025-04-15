@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.wsl.WslPath
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.io.File
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
@@ -77,8 +78,8 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     get() {
       val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
       val shellPath = when {
-        isProjectLevelShellPath(workingDirectoryLazy::value) && project.isTrusted() -> state.shellPath
-        else -> TerminalOptionsProvider.instance.shellPath
+        isProjectLevelShellPath(workingDirectoryLazy::value) && TrustedProjects.isProjectTrusted(project) -> state.shellPath
+        else -> TerminalLocalOptions.getInstance().shellPath
       }
       if (shellPath.isNullOrBlank()) {
         return findDefaultShellPath(workingDirectoryLazy::value)
@@ -92,7 +93,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         state.shellPath = valueToStore
       }
       else {
-        TerminalOptionsProvider.instance.shellPath = valueToStore
+        TerminalLocalOptions.getInstance().shellPath = valueToStore
       }
     }
 

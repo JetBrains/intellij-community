@@ -794,20 +794,17 @@ c:com.intellij.vcs.log.ui.VcsLogUiImpl
 - com.intellij.vcs.log.ui.MainVcsLogUi
 - <init>(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.VcsLogColorManager,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.visible.VisiblePackRefresher,com.intellij.vcs.log.VcsLogFilterCollection):V
 - <init>(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.VcsLogColorManager,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.visible.VisiblePackRefresher,com.intellij.vcs.log.VcsLogFilterCollection,Z):V
-- p:applyFiltersAndUpdateUi(com.intellij.vcs.log.VcsLogFilterCollection):V
 - p:createFilterUi(java.util.function.Consumer,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.openapi.Disposable):com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 - p:createMainFrame(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx,Z):com.intellij.vcs.log.ui.frame.MainFrame
 - getChangesBrowser():com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - getFilterUi():com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 - getMainComponent():javax.swing.JComponent
 - p:getMainFrame():com.intellij.vcs.log.ui.frame.MainFrame
-- getProperties():com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - getTable():com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getToolbar():javax.swing.JComponent
 - p:handleCommitNotFound(java.lang.Object,Z,java.util.function.BiFunction):V
-- isHighlighterEnabled(java.lang.String):Z
-- p:onVisiblePackUpdated(Z):V
 - selectFilePath(com.intellij.openapi.vcs.FilePath,Z):V
+- p:updateDataPack(Z):V
 a:com.intellij.vcs.log.ui.actions.TwoStepCompletionProvider
 - com.intellij.util.textCompletion.ValuesCompletionProvider
 - <init>(com.intellij.util.textCompletion.TextCompletionValueDescriptor):V
@@ -1100,26 +1097,26 @@ c:com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener
 - com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener
 - <init>():V
 - p:tryGetTag(java.awt.event.MouseEvent,javax.swing.JTable,I,I,javax.swing.table.TableCellRenderer):java.lang.Object
-f:com.intellij.vcs.log.ui.table.GraphTableModel
+Fc:com.intellij.vcs.log.ui.table.GraphTableModel
 - javax.swing.table.AbstractTableModel
 - com.intellij.vcs.log.ui.table.VcsLogCommitListModel
 - f:createSelection(I[]):com.intellij.vcs.log.VcsLogCommitSelection
-- f:fromGraphToTableRow(I):I
-- getColumnCount():I
-- getColumnName(I):java.lang.String
+- fromGraphToTableRow(I):I
+- f:getColumnCount():I
+- f:getColumnName(I):java.lang.String
 - f:getCommitMetadata(I):com.intellij.vcs.log.VcsCommitMetadata
 - f:getCommitMetadata(I,Z):com.intellij.vcs.log.VcsCommitMetadata
 - bs:getCommitMetadata$default(com.intellij.vcs.log.ui.table.GraphTableModel,I,Z,I,java.lang.Object):com.intellij.vcs.log.VcsCommitMetadata
-- getDataProvider():com.intellij.vcs.log.VcsLogDataProvider
-- getId(I):java.lang.Integer
+- f:getDataProvider():com.intellij.vcs.log.VcsLogDataProvider
+- f:getId(I):java.lang.Integer
 - f:getLogData():com.intellij.vcs.log.data.VcsLogData
-- f:getPrintElements(I):java.util.Collection
+- getPrintElements(I):java.util.Collection
 - f:getRefsAtRow(I):java.util.List
 - f:getRootAtRow(I):com.intellij.openapi.vfs.VirtualFile
 - getRowCount():I
 - f:getRowType(I):com.intellij.vcs.log.graph.RowType
-- getValueAt(I,I):java.lang.Object
-- f:getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
+- f:getValueAt(I,I):java.lang.Object
+- getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
 - f:getVisiblePack():com.intellij.vcs.log.visible.VisiblePack
 - f:setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 com.intellij.vcs.log.ui.table.VcsLogCellController
@@ -1188,7 +1185,6 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getRootColumn():javax.swing.table.TableColumn
 - getRowHeight():I
 - getSelection():com.intellij.vcs.log.VcsLogCommitSelection
-- s:getSelectionBackground(Z):java.awt.Color
 - s:getSelectionForeground(Z):java.awt.Color
 - s:getTableBackground():java.awt.Color
 - getTableColumn(com.intellij.vcs.log.ui.table.column.VcsLogColumn):javax.swing.table.TableColumn

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard.generators
 
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
@@ -10,6 +11,10 @@ interface IntelliJNewProjectWizardData {
   val sdkProperty: ObservableMutableProperty<Sdk?>
 
   var sdk: Sdk?
+
+  val jdkIntentProperty: ObservableMutableProperty<ProjectWizardJdkIntent?>
+
+  var jdkIntent: ProjectWizardJdkIntent?
 
   val sdkDownloadTaskProperty: ObservableMutableProperty<SdkDownloadTask?>
 

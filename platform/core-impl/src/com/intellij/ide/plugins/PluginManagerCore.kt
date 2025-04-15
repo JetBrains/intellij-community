@@ -154,7 +154,6 @@ object PluginManagerCore {
   @Internal
   fun getAndClearPluginLoadingErrors(): List<Supplier<HtmlChunk>> {
     synchronized(pluginErrors) {
-      @Suppress("UsePropertyAccessSyntax")
       if (pluginErrors.isEmpty()) {
         return emptyList()
       }
@@ -490,7 +489,7 @@ object PluginManagerCore {
     if (explicitlyEnabled == null && shouldLoadPlugins) {
       for (essentialId in essentialPlugins) {
         val essentialPlugin = idMap[essentialId] ?: continue
-        for (incompatibleId in essentialPlugin.incompatibilities) {
+        for (incompatibleId in essentialPlugin.incompatiblePlugins) {
           val incompatiblePlugin = idMap[incompatibleId] ?: continue
           if (incompatiblePlugin.isEnabled) {
             incompatiblePlugin.isEnabled = false
@@ -694,16 +693,10 @@ object PluginManagerCore {
     */
   private fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
-
-    val aliens = ArrayList<IdeaPluginDescriptorImpl>()
-    for (id in readThirdPartyPluginIdsOnce()) {
-      aliens.add(idMap[id] ?: continue)
-    }
-    @Suppress("UsePropertyAccessSyntax")
+    val aliens = readThirdPartyPluginIdsOnce().mapNotNull { idMap[it] }
     if (!aliens.isEmpty()) {
       checkThirdPartyPluginsPrivacyConsent(aliens)
     }
-
     activity?.end()
   }
 
@@ -981,12 +974,12 @@ object PluginManagerCore {
   @Internal
   fun getNonOptionalDependenciesIds(descriptor: IdeaPluginDescriptorImpl): Set<PluginId> {
     val dependencies = LinkedHashSet<PluginId>()
-    for (dependency in descriptor.pluginDependencies) {
+    for (dependency in descriptor.dependencies) {
       if (!dependency.isOptional) {
         dependencies.add(dependency.pluginId)
       }
     }
-    for (plugin in descriptor.dependencies.plugins) {
+    for (plugin in descriptor.moduleDependencies.plugins) {
       dependencies.add(plugin.id)
     }
     return dependencies

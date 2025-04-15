@@ -25,7 +25,7 @@ public final class OSProcessUtil {
   public static boolean killProcessTree(@NotNull Process process) {
     if (SystemInfo.isWindows) {
       try {
-        Integer pid = ProcessService.getInstance().winPtyChildProcessId(process);
+        Integer pid = LocalProcessService.getInstance().winPtyChildProcessId(process);
         if (pid != null) {
           if (pid == -1) return true;
           boolean res = WinProcessManager.kill(pid, true);
@@ -40,7 +40,7 @@ public final class OSProcessUtil {
             logSkippedActionWithTerminatedProcess(process, "killProcessTree", null);
             return true;
           }
-          ProcessService.getInstance().killWinProcessRecursively(process);
+          LocalProcessService.getInstance().killWinProcessRecursively(process);
           return true;
         }
       }
@@ -63,7 +63,7 @@ public final class OSProcessUtil {
       try {
         if (!Registry.is("disable.winp", false)) {
           try {
-            ProcessService.getInstance().killWinProcess(pid);
+            LocalProcessService.getInstance().killWinProcess(pid);
             return;
           }
           catch (Throwable e) {
@@ -115,8 +115,7 @@ public final class OSProcessUtil {
         try {
           // there is no need to check return value: `sendCtrlC` either returns
           // true or throws exception.
-          //noinspection ResultOfMethodCallIgnored
-          ProcessService.getInstance().sendWinProcessCtrlC(pid, processOutputStream);
+          LocalProcessService.getInstance().sendWinProcessCtrlC(pid, processOutputStream);
         }
         catch (Exception e) {
           throw new UnsupportedOperationException("Failed to terminate process", e);

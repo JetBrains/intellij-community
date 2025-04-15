@@ -6,7 +6,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.assertions.Assertions
 import com.jetbrains.env.PyEnvTestCase
-import com.jetbrains.env.debug.PyDebuggerTask
+import com.jetbrains.env.debug.tasks.PyDebuggerTask
 import com.jetbrains.python.debugger.PyDebugRunner
 import org.junit.Rule
 import org.junit.Test

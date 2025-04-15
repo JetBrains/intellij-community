@@ -15,8 +15,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
+import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.buildDistributions
@@ -36,17 +42,18 @@ fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Pat
     cleanOutDir = false,
     useCompiledClassesFromProjectOutput = true,
     jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
-    compressZipFiles = false,
+    buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
   )
-  customizeBuildOptionsForTest(options, outDir, skipDependencySetup, testInfo)
+  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, testInfo = testInfo)
   return options
 }
 
-fun createTestBuildOutDir(productProperties: ProductProperties): Path =
-  Files.createTempDirectory("test-build-${productProperties.baseFileName}")
+fun createTestBuildOutDir(productProperties: ProductProperties): Path {
+  return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
+}
 
 private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties, homeDir, testInfo = testInfo)
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo)
   customizer(options)
   return options
 }
@@ -82,7 +89,7 @@ suspend inline fun createBuildContext(
 ): BuildContext {
   val options = createBuildOptionsForTest(productProperties, homeDir)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(homeDir, productProperties, proprietaryBuildTools = buildTools, options = options)
+  return BuildContextImpl.createContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
 }
 
 fun runTestBuild(
@@ -92,7 +99,14 @@ fun runTestBuild(
   testInfo: TestInfo,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
-  runTestBuild(homePath, productProperties, testInfo, buildTools, isReproducibilityTestAllowed = true, buildOptionsCustomizer = buildOptionsCustomizer)
+  runTestBuild(
+    homeDir = homePath,
+    productProperties = productProperties,
+    testInfo = testInfo,
+    buildTools = buildTools,
+    isReproducibilityTestAllowed = true,
+    buildOptionsCustomizer = buildOptionsCustomizer,
+  )
 }
 
 fun runTestBuild(
@@ -101,6 +115,7 @@ fun runTestBuild(
   testInfo: TestInfo,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   isReproducibilityTestAllowed: Boolean = true,
+  checkIntegrityOfEmbeddedFrontend: Boolean = true,
   build: suspend (BuildContext) -> Unit = { buildDistributions(context = it) },
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
@@ -121,11 +136,12 @@ fun runTestBuild(
           ),
           traceSpanName = "${testInfo.spanName}#${iterationNumber}",
           writeTelemetry = false,
+          checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
           build = { context ->
             build(context)
             onSuccess(context)
             reproducibilityTest.iterationFinished(iterationNumber, context)
-          }
+          },
         )
       }
     }
@@ -133,18 +149,19 @@ fun runTestBuild(
   else {
     doRunTestBuild(
       context = BuildContextImpl.createContext(
-        homeDir,
-        productProperties,
+        projectHome = homeDir,
+        productProperties = productProperties,
         setupTracer = false,
-        buildTools,
-        createBuildOptionsForTest(productProperties, homeDir, testInfo, buildOptionsCustomizer),
+        proprietaryBuildTools = buildTools,
+        options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, customizer = buildOptionsCustomizer),
       ),
       writeTelemetry = true,
+      checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
       traceSpanName = testInfo.spanName,
       build = { context ->
         build(context)
         onSuccess(context)
-      }
+      },
     )
   }
 }
@@ -155,12 +172,14 @@ suspend fun runTestBuild(
   context: suspend () -> BuildContext,
   build: suspend (BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  doRunTestBuild(context(), testInfo.spanName, writeTelemetry = true, build)
+  doRunTestBuild(context = context(), traceSpanName = testInfo.spanName, writeTelemetry = true, checkIntegrityOfEmbeddedFrontend = true, build = build)
 }
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String, writeTelemetry: Boolean, build: suspend (context: BuildContext) -> Unit) {
+private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String, writeTelemetry: Boolean,
+                                   checkIntegrityOfEmbeddedFrontend: Boolean,
+                                   build: suspend (context: BuildContext) -> Unit) {
   var outDir: Path? = null
   var traceFile: Path? = null
   var error: Throwable? = null
@@ -176,12 +195,14 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
       }
       try {
         build(context)
-        val frontendRootModule = context.productProperties.embeddedFrontendRootModule
-        if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
-          val softly = SoftAssertions()
-          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
-          checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
-          softly.assertAll()
+        if (checkIntegrityOfEmbeddedFrontend) {
+          val frontendRootModule = context.productProperties.embeddedFrontendRootModule
+          if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
+            val softly = SoftAssertions()
+            RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
+            checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
+            softly.assertAll()
+          }
         }
       }
       catch (e: CancellationException) {

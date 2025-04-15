@@ -623,6 +623,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-80195
+  public void testMultiValueEnum() {
+    doMultiFileTest();
+  }
+
   // PY-42418
   public void testParametrizedBuiltinCollectionsAndTheirTypingAliasesAreEquivalent() {
     doTest();
@@ -1911,21 +1916,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  // PY-53105
+  // PY-53105, PY-76865
   public void testVariadicGenericStarArgsOfVariadicGeneric() {
     doTestByText("""
                    from typing import Tuple, TypeVarTuple
 
                    Ts = TypeVarTuple('Ts')
 
-
                    def foo(*args: Tuple[*Ts]): ...
-
 
                    foo((0,), (1,))
                    foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[int, int]' instead">(1, 2)</warning>)
-                   # *tuple[int | str] is inferred for *Ts
-                   foo((0,), ('1',))
+                   # Should fail according to https://typing.python.org/en/latest/spec/generics.html#type-variable-tuple-equality
+                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[str]' instead">('1',)</warning>)
                    """);
   }
 
@@ -2659,6 +2662,56 @@ def foo(param: str | int) -> TypeGuard[str]:
                    def expects_list(l: list[int]): ...
                    
                    expects_list(v)
+                   """);
+  }
+
+  public void testExplicitlyParameterizedGenericConstructorCall() {
+    doTestByText("""
+                   class A[T]:
+                       def __init__(self, v: T) -> None: ...
+
+                   A[int](<warning descr="Expected type 'int' (matched generic type 'T'), got 'str' instead">""</warning>)
+                   """);
+  }
+
+  public void testGenericInstanceAttribute() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Node[T]:
+                       x: T
+
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning> = 1
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+
+                   p = Node[int]()
+                   type(p).<warning descr="Access to generic instance variables via class is ambiguous">x</warning>
+                   i: int = p.x
+                   j: int = Node[int]().x
+                   p.x = 1
+                   
+                   class A:
+                       attr1: list[int]
+                       attr2: list[Self]
+                       attr3: Self
+                   
+                   A.attr1
+                   A.attr2
+                   A.attr3
+                   """);
+  }
+
+  public void testGenericInstanceAttribute2() {
+    doTestByText("""
+                   class Node[T]:
+                       m: map[str, list[T]]
+                   
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">m</warning> = {}
+                   Node[int].<warning descr="Access to generic instance variables via class is ambiguous">m</warning>
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">m</warning> # TODO = {}
+                   Node.<warning descr="Access to generic instance variables via class is ambiguous">m</warning>
                    """);
   }
 }

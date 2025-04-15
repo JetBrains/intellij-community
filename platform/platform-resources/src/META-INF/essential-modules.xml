@@ -32,11 +32,17 @@
     <module name="intellij.platform.bookmarks.frontend"/>
 
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.monolith"/>
 
     <module name="intellij.platform.inline.completion"/>
 
     <module name="intellij.platform.recentFiles"/>
     <module name="intellij.platform.recentFiles.frontend"/>
     <module name="intellij.platform.recentFiles.backend"/>
+
+    <module name="intellij.platform.execution.impl.frontend"/>
+    <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.eel.impl" />
+    <module name="intellij.platform.ide.impl.wsl" />
   </content>
 </idea-plugin>

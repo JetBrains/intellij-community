@@ -12,6 +12,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -168,7 +169,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   }
 
   @Override
-  protected @NotNull Collection<CodeStyleSettings> enumSettings() {
+  protected @NotNull @Unmodifiable Collection<CodeStyleSettings> enumSettings() {
     return Collections.unmodifiableCollection(mySettingsMap.values());
   }
 

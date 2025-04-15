@@ -16,11 +16,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
-internal class GHPRCreateChangesViewModel(
+@ApiStatus.Internal
+class GHPRCreateChangesViewModel internal constructor(
   private val project: Project,
   private val settings: GithubPullRequestsProjectUISettings,
   parentCs: CoroutineScope,

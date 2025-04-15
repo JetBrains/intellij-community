@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
@@ -28,6 +28,7 @@
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" packagePrefix="org.jetbrains.yaml" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="org.jetbrains.yaml" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="org.jetbrains.yaml" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -40,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />

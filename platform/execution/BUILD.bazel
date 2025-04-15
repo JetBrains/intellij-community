@@ -28,6 +28,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/analysis-api:analysis",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":execution_resources"]
 )

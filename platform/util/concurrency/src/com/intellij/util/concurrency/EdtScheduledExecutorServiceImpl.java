@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -56,7 +57,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   }
 
   @Override
-  public @NotNull List<Runnable> shutdownNow() {
+  public @NotNull @Unmodifiable List<Runnable> shutdownNow() {
     return AppScheduledExecutorService.notAllowedMethodCall();
   }
 

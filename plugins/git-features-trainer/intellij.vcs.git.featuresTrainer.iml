@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.vcs.git" />
+    <orderEntry type="module" module-name="intellij.vcs.git.shared" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
   </component>

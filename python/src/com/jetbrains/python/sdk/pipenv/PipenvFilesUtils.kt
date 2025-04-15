@@ -181,7 +181,7 @@ private suspend fun getPipFileLockRequirements(virtualFile: VirtualFile, package
       .filterNot { (_, pkg) -> pkg.editable ?: false }
       // TODO: Support requirements markers (PEP 496), currently any packages with markers are ignored due to PY-30803
       .filter { (_, pkg) -> pkg.markers == null }
-      .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}") }.asSequence()
+      .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}") }
       .toList()
 
   val pipFileLock = parsePipFileLock(virtualFile).getOrNull() ?: return null

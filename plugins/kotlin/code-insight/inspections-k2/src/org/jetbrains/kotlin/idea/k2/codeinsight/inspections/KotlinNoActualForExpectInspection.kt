@@ -163,7 +163,7 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
                 // We only care about the name of the target, not the common submodule of the MPP module
                 val missingModulesWithActuals = missingActuals.joinToString { it.name.substringAfterLast('.') }
 
-                val fixes = if (!actualDeclarations.isEmpty()) {
+                val fixes = if (actualDeclarations.isNotEmpty()) {
                     arrayOf(CreateActualForExpectLocalQuickFix(actualDeclarations))
                 } else {
                     emptyArray()

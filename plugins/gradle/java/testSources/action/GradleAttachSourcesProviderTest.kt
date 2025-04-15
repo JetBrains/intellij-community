@@ -18,12 +18,13 @@ import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeIntern
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.internal.daemon.DaemonState
@@ -35,7 +36,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.nio.file.Path
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.io.path.deleteIfExists
@@ -60,7 +61,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   @Test
   @TargetVersions("6.0+", "!8.12") // The Gradle Daemon below version 6.0 is unstable and causes test fluctuations
-  fun `test daemon reused for source downloading`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test daemon reused for source downloading`(): Unit = runBlocking {
     // a custom Gradle User Home is required to isolate execution of the test from different tests running at the same time
     overrideGradleUserHome("test-daemon-reused-for-source-downloading")
 
@@ -101,7 +102,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  fun `test download sources dynamic task`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources dynamic task`(): Unit = runBlocking {
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
@@ -114,7 +115,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  fun `test sources available in gradle cache after task execution`(): Unit = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test sources available in gradle cache after task execution`(): Unit = runBlocking {
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
@@ -129,7 +130,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   @Test
   @TargetVersions("6.5+")
-  fun `test download sources with configuration cache`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources with configuration cache`(): Unit = runBlocking {
     createProjectSubFile("gradle.properties", "org.gradle.configuration-cache=true\n org.gradle.unsafe.configuration-cache=true")
     importProject {
       withJavaPlugin()
@@ -146,7 +147,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
   @Test
   @TargetVersions("5.6+")
-  fun `test download sources with configure on demand`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources with configure on demand`(): Unit = runBlocking {
     createProjectSubFile("gradle.properties", "org.gradle.configureondemand=true")
     importProject {
       withJavaPlugin()
@@ -160,7 +161,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  fun `test download sources from gradle sub module repository`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
+  fun `test download sources from gradle sub module repository`(): Unit = runBlocking {
     createSettingsFile("include 'projectA', 'projectB' ")
     createBuildFile("projectA") {
       withJavaPlugin()
@@ -252,7 +253,9 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
           }
         })
       action.invoke()
-      deferred.await()
+      withTimeout(DEFAULT_SYNC_TIMEOUT) {
+        deferred.await()
+      }
     }
   }
 

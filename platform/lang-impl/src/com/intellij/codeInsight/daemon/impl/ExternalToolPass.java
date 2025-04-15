@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -154,9 +156,25 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
       public void setRejected() {
         try {
           super.setRejected();
-          if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
-            doFinish();
+          // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+          if (myProject.isDisposed()) {
+            return;
           }
+          // We need to remove obsolete data from markup model.
+          //
+          // The update may be canceled not only at the moment of `queue`,
+          // but also when it gets restarted in the context of SingleAlarm
+          // So we need to recreate the context similar to `Update.run`
+          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+            // All updates are running in the non-cancellable section, so here we are repeating the inner logic of MergingUpdateQueue here
+            Cancellation.executeInNonCancelableSection(() -> {
+              // Highlighting requires read access
+              ReadAction.run(() -> {
+                doFinish();
+              });
+            });
+          }, indicator);
         }
         finally {
           externalUpdateTaskCompleted = true;

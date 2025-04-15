@@ -1,6 +1,8 @@
 package com.intellij.notebooks.visualization.outputs.impl
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.notebooks.visualization.outputs.NotebookLazyOutputComponent
+import com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseSingleInCellAction
 import com.intellij.notebooks.visualization.r.inlays.ResizeController
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -26,17 +28,27 @@ open class CollapsingComponent(
   internal val resizable: Boolean,
   private val collapsedTextSupplier: () -> @NlsSafe String,
 ) : JPanel(null) {
-  private var customHeight: Int = -1
+  var initialSize: Dimension? = null
+  var customSize: Dimension? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        revalidate()
+      }
+    }
+
+  var maximized: Boolean = false
+
+  fun calculateInnerSize(): Dimension = size.let { Dimension(it.width - insets.run { left + right }, it.height - insets.run { top + bottom }) }
+
+  val hasBeenManuallyResized: Boolean
+    get() = customSize != null
 
   private val resizeController by lazy {
     ResizeController(this, editor) { _, dy ->
-      if (customHeight < 0) {
-        customHeight = height - insets.run { top + bottom }
+      customSize = (customSize ?: calculateInnerSize()).let {
+        Dimension(it.width, max(it.height + dy, editor.lineHeight))
       }
-      customHeight += dy
-      customHeight = max(customHeight, editor.lineHeight) // We will not allow resizing component below editor line height, because it impossible to resize it back.
-      setSize(width, customHeight)
-      mainComponent.revalidate()
     }.apply {
       resizeStateDispatcher.addListener { state ->
         (border as? CollapsingComponentBorder)?.resized = state != ResizeController.ResizeState.NONE
@@ -77,8 +89,6 @@ open class CollapsingComponent(
       }
     }
 
-  val hasBeenManuallyResized: Boolean get() = customHeight != -1
-
   init {
     add(child)
     border = if (resizable) CollapsingComponentBorder(editor) else null
@@ -92,33 +102,30 @@ open class CollapsingComponent(
   }
 
   fun resetCustomHeight() {
-    customHeight = -1
-    if (mainComponent.isValid) {
-      mainComponent.revalidate()
-    }
+    revalidate()
   }
 
   override fun getPreferredSize(): Dimension {
     val result = when {
       !isSeen -> stubComponent.value.preferredSize
-      customHeight >= 0 -> mainComponent.preferredSize.apply { height = customHeight }
+      maximized -> mainComponent.preferredSize
+      customSize != null -> customSize!!
+      shouldUseInitialSize() -> initialSize ?: mainComponent.preferredSize
       else -> mainComponent.preferredSize
     }
-    result.height += insets.run { top + bottom }
-    return result
+    return result.let { Dimension(it.width + insets.run { left + right }, it.height + insets.run { top + bottom }) }
   }
 
+  private fun shouldUseInitialSize(): Boolean = (mainComponent as? NotebookLazyOutputComponent)?.ready == false
+
+
   override fun doLayout() {
-    val (borderWidth, borderHeight) = insets.run { left + right to top + bottom }
+    val size = calculateInnerSize()
     when {
       !isSeen ->
-        stubComponent.value.setBounds(0, 0, width - borderWidth, height - borderHeight)
-
-      customHeight >= 0 ->
-        mainComponent.setBounds(0, 0, width - borderWidth, customHeight - borderHeight)
-
+        stubComponent.value.setBounds(0, 0, size.width, size.height)
       else ->
-        mainComponent.setBounds(0, 0, width - borderWidth, height - borderHeight)
+        mainComponent.setBounds(0, 0, size.width, size.height)
     }
   }
 

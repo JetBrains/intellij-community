@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.application
-import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
@@ -86,7 +85,7 @@ class CwmMessageBusTest : LightPlatformTestCase() {
   }
 
   private class MyMockMessageBusOwner : MessageBusOwner {
-    override fun createListener(descriptor: ListenerDescriptor): Any = throw NotImplementedError()
+    override fun createListener(descriptor: PluginListenerDescriptor): Any = throw NotImplementedError()
     override fun isDisposed(): Boolean = false
   }
 }

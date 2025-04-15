@@ -2,52 +2,28 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.PsiRecordHeader;
-import com.intellij.psi.impl.java.stubs.impl.PsiRecordHeaderStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiRecordHeaderImpl;
 import com.intellij.psi.impl.source.tree.java.RecordHeaderElement;
-import com.intellij.psi.stubs.EmptyStubSerializer;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHeaderStub, PsiRecordHeader>
-  implements EmptyStubSerializer<PsiRecordHeaderStub> {
+import java.util.Collections;
+import java.util.Set;
+
+public class JavaRecordHeaderElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaRecordHeaderElementType() {
-    super("RECORD_HEADER", BasicJavaElementType.BASIC_RECORD_HEADER);
+    super("RECORD_HEADER");
+  }
+
+  @Override
+  public @NotNull Set<IElementType> getParents() {
+    return Collections.singleton(BasicJavaElementType.BASIC_RECORD_HEADER);
   }
 
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new RecordHeaderElement();
-  }
-
-  @Override
-  public @NotNull PsiRecordHeaderStub instantiate(StubElement parentStub) {
-    return new PsiRecordHeaderStubImpl(parentStub);
-  }
-
-  @Override
-  public void indexStub(@NotNull PsiRecordHeaderStub stub, @NotNull IndexSink sink) {
-
-  }
-
-  @Override
-  public PsiRecordHeader createPsi(@NotNull PsiRecordHeaderStub stub) {
-    return getPsiFactory(stub).createRecordHeader(stub);
-  }
-
-
-  @Override
-  public PsiRecordHeader createPsi(@NotNull ASTNode node) {
-    return new PsiRecordHeaderImpl(node);
-  }
-
-  @Override
-  public @NotNull PsiRecordHeaderStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
-    return new PsiRecordHeaderStubImpl(parentStub);
   }
 }

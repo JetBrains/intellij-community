@@ -229,6 +229,11 @@ public class FrontBackElementTypeTest extends AbstractBasicJavaParsingTestCase {
       if (path.toString().endsWith("BasicJavaParserUtil.java")) {
         continue;
       }
+
+      // exclude, contains refs to `BasicJavaElementTypeConverter` which is mixed up with `BasicJavaElementType`
+      if (path.toString().endsWith("JavaBinaryOperations.kt")) {
+        continue;
+      }
       String content = FileUtil.loadFile(path.toFile());
       int start = 0;
       int find = content.indexOf(target, start);

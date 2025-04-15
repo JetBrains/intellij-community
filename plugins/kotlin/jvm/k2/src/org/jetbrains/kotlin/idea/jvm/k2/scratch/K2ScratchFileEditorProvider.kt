@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinScratch
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorProvider
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorWithPreview
 
-private class K2ScratchFileEditorProvider : KtScratchFileEditorProvider() {
+internal class K2ScratchFileEditorProvider : KtScratchFileEditorProvider() {
     override fun accept(project: Project, file: VirtualFile): Boolean = file.isValid && file.isKotlinScratch
 
     override suspend fun createFileEditor(

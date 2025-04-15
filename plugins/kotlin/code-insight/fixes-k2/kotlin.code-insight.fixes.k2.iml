@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="2.0" />
-            <stringArg name="languageVersion" arg="2.0" />
+            <stringArg name="apiVersion" arg="2.1" />
+            <stringArg name="languageVersion" arg="2.1" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -58,5 +58,7 @@
     <orderEntry type="module" module-name="kotlin.refactorings.k2" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.kdoc" />
+    <orderEntry type="module" module-name="kotlin.code-insight.k2" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
 </module>

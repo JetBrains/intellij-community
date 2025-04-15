@@ -1334,7 +1334,7 @@
         </option>
         <option name="BLOCK_TERMINAL_WHITE">
           <value>
-            <option name="FOREGROUND" value="DCDEE3" />
+            <option name="FOREGROUND" value="BEC0C5" />
             <option name="BACKGROUND" value="DCDEE3" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
@@ -1414,7 +1414,7 @@
         </option>
         <option name="BLOCK_TERMINAL_WHITE_BRIGHT">
           <value>
-            <option name="FOREGROUND" value="FFFFFF" />
+            <option name="FOREGROUND" value="D2D4D9" />
             <option name="BACKGROUND" value="FFFFFF" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />

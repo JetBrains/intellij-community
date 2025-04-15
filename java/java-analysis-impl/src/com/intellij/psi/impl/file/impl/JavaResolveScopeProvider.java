@@ -58,7 +58,7 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
           context != CodeInsightContexts.anyContext() &&
           context != CodeInsightContexts.defaultContext()
       ) {
-        module = context instanceof ModuleContext ? ((ModuleContext)context).getModule() : null; //todo ijpl-339
+        module = context instanceof ModuleContext ? ((ModuleContext)context).getModule() : null; //todo IJPL-339
       }
       else {
         module = index.getModuleForFile(file);

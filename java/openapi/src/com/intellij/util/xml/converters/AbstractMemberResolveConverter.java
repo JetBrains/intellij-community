@@ -14,6 +14,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,7 +70,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   @Override
-  public @NotNull Collection<? extends PsiMember> getVariants(final @NotNull ConvertContext context) {
+  public @NotNull @Unmodifiable Collection<? extends PsiMember> getVariants(final @NotNull ConvertContext context) {
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return Collections.emptyList();
 

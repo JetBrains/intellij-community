@@ -6,7 +6,8 @@ import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.diff.Difference
-import org.jetbrains.jps.dependency.impl.RW
+import org.jetbrains.jps.dependency.readList
+import org.jetbrains.jps.dependency.writeCollection
 
 import java.lang.annotation.RetentionPolicy
 
@@ -15,7 +16,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   val superFqName: String
   val interfaces: Collection<String>
   val fields: Collection<JvmField>
-  val methods: Collection<JvmMethod>
+  private val methods: Collection<JvmMethod>
   val annotationTargets: Collection<ElemType>
 
   companion object {
@@ -30,67 +31,65 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
   private val retentionPolicy: RetentionPolicy?
 
-  @Suppress("unused")
   constructor(
     flags: JVMFlags,
     signature: String?,
     fqName: String,
-    outFilePath: String,
+    outFilePathHash: Long,
     superFqName: String?,
     outerFqName: String?,
-    interfaces: Iterable<String>,
-    fields: Iterable<JvmField>?,
-    methods: Iterable<JvmMethod>?,
+    interfaces: Collection<String>,
+    fields: Collection<JvmField>,
+    methods: Collection<JvmMethod>,
     annotations: Iterable<ElementAnnotation>,
-    annotationTargets: Iterable<ElemType>?,
+    annotationTargets: Collection<ElemType>,
     retentionPolicy: RetentionPolicy?,
-    usages: Iterable<Usage>,
-    metadata: Iterable<JvmMetadata<*, *>>
+    usages: Collection<Usage>,
+    metadata: Collection<JvmMetadata<*, *>>
   ) : super(
     flags = flags,
     signature = signature,
     name = fqName,
-    outFilePath = outFilePath,
+    outFilePathHash = outFilePathHash,
     annotations = annotations,
     usages = usages,
     metadata = metadata,
   ) {
     this.superFqName = if (superFqName == null || OBJECT_CLASS_NAME == superFqName) "" else superFqName
     this.outerFqName = outerFqName ?: ""
-    this.interfaces = interfaces as Collection<String>
-    this.fields = fields as Collection<JvmField>
-    this.methods = methods as Collection<JvmMethod>
-    this.annotationTargets = annotationTargets as Collection<ElemType>
+    this.interfaces = interfaces
+    this.fields = fields
+    this.methods = methods
+    this.annotationTargets = annotationTargets
     this.retentionPolicy = retentionPolicy
   }
 
   @Suppress("unused")
-  constructor(`in`: GraphDataInput) : super(`in`) {
-    this.outerFqName = `in`.readUTF()
-    this.superFqName = `in`.readUTF()
-    this.interfaces = RW.readList(`in`) { `in`.readUTF() }
-    this.fields = RW.readList(`in`) { JvmField(`in`) }
-    this.methods = RW.readList(`in`) { JvmMethod(`in`) }
-    this.annotationTargets = RW.readList(`in`) { ElemType.fromOrdinal(`in`.readInt()) }
+  constructor(input: GraphDataInput) : super(input) {
+    outerFqName = input.readUTF()
+    superFqName = input.readUTF()
+    interfaces = input.readList { readUTF() }
+    fields = input.readList { JvmField(this) }
+    methods = input.readList { JvmMethod(input) }
+    annotationTargets = input.readList { ElemType.fromOrdinal(readUnsignedByte()) }
 
-    val policyOrdinal = `in`.readInt()
-    this.retentionPolicy = if (policyOrdinal >= 0) {
-      RetentionPolicy.entries.firstOrNull { it.ordinal == policyOrdinal }
-    }
-    else {
-      null
-    }
+    val policyOrdinal = input.readByte().toInt()
+    retentionPolicy = if (policyOrdinal == -1) null else RetentionPolicy.entries.getOrNull(policyOrdinal)
   }
+
+  @Suppress("unused")
+  fun getMethods(): Iterable<JvmMethod> = methods
 
   override fun write(out: GraphDataOutput) {
     super.write(out)
+
     out.writeUTF(outerFqName)
     out.writeUTF(superFqName)
-    RW.writeCollection(out, interfaces) { out.writeUTF(it) }
-    RW.writeCollection(out, fields) { it.write(out) }
-    RW.writeCollection(out, methods) { it.write(out) }
-    RW.writeCollection(out, annotationTargets) { out.writeInt(it.ordinal) }
-    out.writeInt(retentionPolicy?.ordinal ?: -1)
+    out.writeCollection(interfaces) { writeUTF(it) }
+    out.writeCollection(fields) { it.write(this) }
+    out.writeCollection(methods) { it.write(this) }
+    out.writeCollection(annotationTargets) { writeByte(it.ordinal) }
+    out.writeByte(retentionPolicy?.ordinal ?: -1)
   }
 
   @Suppress("unused")
@@ -120,7 +119,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   fun isLocal(): Boolean = flags.isLocal
 
   @Suppress("unused")
-  fun isInnerClass(): Boolean = outerFqName != null && !outerFqName.isBlank()
+  fun isInnerClass(): Boolean = !outerFqName.isNullOrEmpty()
 
   @Suppress("unused")
   fun getSuperTypes(): Iterable<String> {
@@ -132,24 +131,45 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
     }
   }
 
+  fun superTypes(): Sequence<String> {
+    if (superFqName.isEmpty() || OBJECT_CLASS_NAME == superFqName) {
+      return interfaces.asSequence()
+    }
+    else {
+      return (sequenceOf(superFqName) + interfaces)
+    }
+  }
+
   @Suppress("unused")
   fun getRetentionPolicy(): RetentionPolicy? = retentionPolicy
 
-  override fun difference(past: JvmClass): Diff = Diff(past)
+  override fun difference(past: JvmClass): Diff {
+    check(this !== past) {
+      "Diff must not be called for identical class"
+    }
+    return Diff(
+      past = past,
+      interfacesDiff = lazy(LazyThreadSafetyMode.NONE) { diff(past.interfaces, interfaces) },
+      methodsDiff = lazy(LazyThreadSafetyMode.NONE) { deepDiff(past.methods, methods) },
+      fieldsDiff = lazy(LazyThreadSafetyMode.NONE) { deepDiff(past.fields, fields) },
+      annotationTargetsDiff = lazy(LazyThreadSafetyMode.NONE) { diff(past.annotationTargets, annotationTargets) }
+    )
+  }
 
-  inner class Diff(past: JvmClass) : JVMClassNode<JvmClass, Diff>.Diff(past) {
-    private val interfacesDiff by lazy(LazyThreadSafetyMode.NONE) { diff(myPast.interfaces, interfaces) }
-    private val methodsDiff by lazy(LazyThreadSafetyMode.NONE) { Difference.deepDiff(myPast.methods, methods) }
-    private val fieldsDiff by lazy(LazyThreadSafetyMode.NONE) { Difference.deepDiff(myPast.fields, fields) }
-    private val annotationTargetsDiff by lazy(LazyThreadSafetyMode.NONE) { diff(myPast.annotationTargets, annotationTargets) }
-
+  inner class Diff internal constructor(
+    past: JvmClass,
+    private val interfacesDiff: Lazy<Difference.Specifier<String, Difference>>,
+    private val methodsDiff: Lazy<Difference.Specifier<JvmMethod, JvmMethod.Diff>>,
+    private val fieldsDiff: Lazy<Difference.Specifier<JvmField, JvmField.Diff>>,
+    private val annotationTargetsDiff: Lazy<Difference.Specifier<ElemType, Difference>>,
+  ) : JVMClassNode<JvmClass, Diff>.Diff(past) {
     override fun unchanged(): Boolean {
       return super.unchanged() &&
         !superClassChanged() &&
         !outerClassChanged() &&
-        interfacesDiff.unchanged() &&
-        methodsDiff.unchanged() &&
-        fieldsDiff.unchanged() &&
+        interfacesDiff.value.unchanged() &&
+        methodsDiff.value.unchanged() &&
+        fieldsDiff.value.unchanged() &&
         !retentionPolicyChanged() &&
         annotationTargets().unchanged()
     }
@@ -170,26 +190,26 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
     fun outerClassChanged(): Boolean = myPast.outerFqName != outerFqName
 
-    fun interfaces(): Difference.Specifier<String, *> = interfacesDiff
+    fun interfaces(): Difference.Specifier<String, *> = interfacesDiff.value
 
     @Suppress("unused")
-    fun methods(): Difference.Specifier<JvmMethod?, JvmMethod.Diff?> = methodsDiff
+    fun methods(): Difference.Specifier<JvmMethod, JvmMethod.Diff> = methodsDiff.value
 
     @Suppress("unused")
-    fun fields(): Difference.Specifier<JvmField?, JvmField.Diff> = fieldsDiff
+    fun fields(): Difference.Specifier<JvmField, JvmField.Diff> = fieldsDiff.value
 
     fun retentionPolicyChanged(): Boolean = myPast.retentionPolicy != retentionPolicy
 
-    fun annotationTargets(): Difference.Specifier<ElemType, *> = annotationTargetsDiff
+    fun annotationTargets(): Difference.Specifier<ElemType, *> = annotationTargetsDiff.value
 
     @Suppress("unused")
     fun targetAttributeCategoryMightChange(): Boolean {
-      val targetsDiff = annotationTargets()
-      if (!targetsDiff.unchanged()) {
-        for (elemType in arrayOf(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
-          if (targetsDiff.added().contains(elemType) ||
-            targetsDiff.removed().contains(elemType) ||
-            myPast.annotationTargets.contains(elemType)) {
+      val targetsDiff = annotationTargetsDiff
+      if (!targetsDiff.value.unchanged()) {
+        for (elementType in arrayOf(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
+          if (targetsDiff.value.added().contains(elementType) ||
+            targetsDiff.value.removed().contains(elementType) ||
+            myPast.annotationTargets.contains(elementType)) {
             return true
           }
         }

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.*;
  *
  * <p>To get the list of all open projects, use {@code ProjectManager.getInstance().getOpenProjects()}.
  */
+@ApiStatus.NonExtendable
 public interface Project extends ComponentManager, AreaInstance {
   String DIRECTORY_STORE_FOLDER = ".idea";
 
@@ -116,10 +117,5 @@ public interface Project extends ComponentManager, AreaInstance {
 
   default boolean isDefault() {
     return false;
-  }
-
-  @ApiStatus.Internal
-  default ComponentManager getActualComponentManager() {
-    return this;
   }
 }

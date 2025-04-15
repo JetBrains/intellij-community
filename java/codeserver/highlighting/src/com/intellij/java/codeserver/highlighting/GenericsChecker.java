@@ -99,7 +99,7 @@ final class GenericsChecker {
     if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
       return;
     }
-    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(parameter, new JavaIncompatibleTypeErrorContext(itemType, parameterType)));
+    myVisitor.reportIncompatibleType(itemType, parameterType, parameter);
   }
 
   void checkDiamondTypeNotAllowed(@NotNull PsiNewExpression expression) {

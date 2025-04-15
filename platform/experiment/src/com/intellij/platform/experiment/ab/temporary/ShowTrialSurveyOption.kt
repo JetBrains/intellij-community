@@ -20,11 +20,11 @@ class ShowTrialSurveyOption : ABExperimentOption {
   override fun checkIdeIsSuitable(): Boolean = PlatformUtils.isIdeaUltimate()
 
   /**
-   * Experiment should be available only in 2024.3.3
+   * Experiment should be available only in 2024.3.5
    */
   override fun checkIdeVersionIsSuitable(): Boolean {
     val appInfo = ApplicationInfo.getInstance()
-    return appInfo.majorVersion == "2024" && appInfo.minorVersion.startsWith("3.3")
+    return appInfo.majorVersion == "2024" && appInfo.minorVersion.startsWith("3.5")
   }
 
   @Suppress("CompanionObjectInExtension")

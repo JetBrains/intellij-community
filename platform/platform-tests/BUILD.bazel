@@ -139,6 +139,7 @@ jvm_library(
     "//platform/platform-impl/bootstrap/eel:ide-bootstrap-eel",
     "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure",
     "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure_test_lib",
+    "//platform/plugins/parser/impl:plugins-parser-impl",
   ],
   runtime_deps = [
     ":tests_test_resources",

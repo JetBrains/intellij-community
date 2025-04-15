@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.add.v1.loadLocalPythonCondaPath
 import com.jetbrains.python.sdk.add.v1.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.*
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -45,6 +46,9 @@ internal val condaSupportedLanguages: List<LanguageLevel>
   get() = LanguageLevel.SUPPORTED_LEVELS
     .asReversed()
     .filter { it < LanguageLevel.PYTHON313 }
+
+val condaLatestSupportedLanguage: LanguageLevel @ApiStatus.Internal get() =
+  condaSupportedLanguages.maxWith(LanguageLevel.VERSION_COMPARATOR)
 
 /**
  * See [com.jetbrains.env.conda.PyCondaSdkTest]
@@ -252,3 +256,5 @@ internal class IntrospectableCommandExecutor(private val introspectable: Languag
 
   override fun execute(command: List<String>): CompletableFuture<ProcessOutput> = introspectable.promiseExecuteScript(command)
 }
+
+internal fun Sdk.isConda(): Boolean = getOrCreateAdditionalData().flavorAndData.data is PyCondaFlavorData

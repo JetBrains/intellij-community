@@ -2,7 +2,7 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInsight.intention.AddAnnotationFix
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.uast.UastVisitorAdapter
@@ -60,10 +60,10 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
       }
     }
 
-    private fun createAnnotationFix(node: UDeclaration): AddAnnotationFix? {
+    private fun createAnnotationFix(node: UDeclaration): LocalQuickFix? {
       //This quick fix works only for Java.
       val modifierListOwner = node.sourcePsi as? PsiModifierListOwner ?: return null
-      return AddAnnotationFix(DEPRECATED_ANNOTATION_NAME, modifierListOwner)
+      return LocalQuickFix.from(AddAnnotationModCommandAction(DEPRECATED_ANNOTATION_NAME, modifierListOwner))
     }
 
     private fun hasDeprecatedAnnotation(node: UAnnotated) =

@@ -6,10 +6,8 @@ import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.coroutines.runSuspend
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.util.coroutines.internal.runSuspend
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
@@ -215,20 +213,16 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  override fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
-    return runWriteIntentReadAction(computation, true)
+  override fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T {
+    return doRunWriteIntentReadAction(computation)
   }
 
-  override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
-    return runWriteIntentReadAction(computation, false)
+  override fun <T> runWriteIntentReadAction(computation: () -> T): T {
+    handleLockAccess("write-intent lock")
+    return doRunWriteIntentReadAction(computation)
   }
 
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>, isPreventive: Boolean): T {
-    if (!isPreventive) {
-      handleLockAccess("write-intent lock")
-    }
-
+  private fun <T> doRunWriteIntentReadAction(computation: () -> T): T {
     val listener = myWriteIntentActionListener
     fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
     val currentReadState = myTopmostReadAction.get()
@@ -272,7 +266,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     try {
       fireWriteIntentActionStarted(listener, computation.javaClass)
-      return runWithTemporaryThreadLocal(ts) { computation.compute() }
+      return runWithTemporaryThreadLocal(ts) { computation() }
     }
     finally {
       fireWriteIntentActionFinished(listener, computation.javaClass)
@@ -315,23 +309,16 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  override fun runIntendedWriteActionOnCurrentThread(action: Runnable) {
-    runWriteIntentReadAction<Unit, Throwable> {
-      action.run()
-    }
-  }
-
-  // @Throws(E::class)
-  override fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T {
+  override fun <T> runUnlockingIntendedWrite(action: () -> T): T {
     if (isLockStoredInContext) {
-      return action.compute()
+      return action()
     }
 
     val ts = getThreadState()
     if (!ts.hasWriteIntent) {
       try {
         ts.writeIntentReleased = true
-        return action.compute()
+        return action()
       }
       finally {
         ts.writeIntentReleased = false
@@ -341,7 +328,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     ts.writeIntentReleased = true
     ts.release()
     try {
-      return action.compute()
+      return action()
     }
     finally {
       ts.writeIntentReleased = false
@@ -362,12 +349,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       error("ReadActionListener is not registered")
     myReadActionListener = null
   }
-
-  override fun runReadAction(action: Runnable) = runReadAction<Unit, Throwable>(action.javaClass) { action.run() }
-
-  override fun <T> runReadAction(computation: Computable<T>): T  = runReadAction<T, Throwable>(computation.javaClass) { computation.compute() }
-
-  override fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T = runReadAction(computation.javaClass, computation)
 
   private fun acquireReadPermit(lock: RWMutexIdea): Permit {
     var permit = tryGetReadPermit(lock)
@@ -412,7 +393,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun <T, E : Throwable?> runReadAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
+  override fun <T> runReadAction(clazz: Class<*>, action: () -> T): T {
     handleLockAccess("read lock")
 
     val listener = myReadActionListener
@@ -453,7 +434,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     try {
       fireReadActionStarted(listener, clazz)
-      val rv = runWithTemporaryThreadLocal(ts) { block.compute() }
+      val rv = runWithTemporaryThreadLocal(ts) { action() }
       return rv
     }
     finally {
@@ -790,6 +771,17 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   override fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String) {
     val currentValue = myLockingProhibited.get()
     myLockingProhibited.set(failSoftly to advice)
+    try {
+      action.run()
+    }
+    finally {
+      myLockingProhibited.set(currentValue)
+    }
+  }
+
+  override fun allowTakingLocksInsideAndRun(action: Runnable) {
+    val currentValue = myLockingProhibited.get()
+    myLockingProhibited.set(null)
     try {
       action.run()
     }

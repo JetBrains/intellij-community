@@ -67,7 +67,9 @@ interface CommandCompletionFactory : PossiblyDumbAware {
 }
 
 fun commandCompletionEnabled(): Boolean =
-  Registry.`is`("ide.completion.command.enabled") ||
-  (ApplicationManager.getApplication().isInternal && Registry.`is`("ide.completion.command.internal.enabled"))
+  Registry.`is`("ide.completion.command.force.enabled") ||
+  (ApplicationManager.getApplication().isInternal &&
+   !ApplicationManager.getApplication().isUnitTestMode &&
+   Registry.`is`("ide.completion.command.enabled"))
 
 private val EP_NAME = LanguageExtension<CommandProvider>("com.intellij.codeInsight.completion.command.provider")

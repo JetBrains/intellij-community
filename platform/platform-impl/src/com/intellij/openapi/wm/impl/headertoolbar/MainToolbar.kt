@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
@@ -45,8 +46,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
 import com.jetbrains.WindowDecorations
-import fleet.multiplatform.shims.ConcurrentHashMap
-import fleet.multiplatform.shims.ConcurrentHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -56,6 +55,7 @@ import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -109,8 +109,8 @@ class MainToolbar(
   private val isFullScreen: () -> Boolean,
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
-  private val widthCalculationListeners = ConcurrentHashSet<ToolbarWidthCalculationListener>()
-  private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
+  private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
+  private val cachedWidths by lazy { ConcurrentHashMap<String?, Int>() }
 
   init {
     this.background = background
@@ -153,6 +153,7 @@ class MainToolbar(
         }
       }
     }
+    repaintWhenProjectGradientOffsetChanged(this)
   }
 
   fun calculatePreferredWidth(): Int {
@@ -338,7 +339,6 @@ class MainToolbar(
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
-      widthCalculationListeners.clear()
     }
   }
 

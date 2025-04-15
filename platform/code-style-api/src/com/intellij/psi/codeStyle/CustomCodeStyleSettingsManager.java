@@ -7,6 +7,7 @@ import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -149,6 +150,7 @@ class CustomCodeStyleSettingsManager {
       .forEach(CustomCodeStyleSettings::afterLoaded);
   }
 
+  @Unmodifiable
   Collection<CustomCodeStyleSettings> getAllSettings() {
     synchronized (myCustomSettings) {
       return Collections.unmodifiableCollection(myCustomSettings.values());

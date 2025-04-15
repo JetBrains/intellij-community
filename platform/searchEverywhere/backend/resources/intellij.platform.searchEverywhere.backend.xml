@@ -6,10 +6,13 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.platform.searchEverywhere.backend.impl.SeRemoteApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.searchEverywhere.backend.impl.SeRemoteApiProvider"/>
 
     <platform.entityTypes implementation="com.intellij.platform.searchEverywhere.backend.impl.SeBackendEntityTypeProvider"/>
-    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.mocks.SeItemsProviderFactoryMockBackend"/>
+
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.files.SeFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.classes.SeClassesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.symbols.SeSymbolsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.text.SeTextItemsProviderFactory"/>
   </extensions>
 </idea-plugin>

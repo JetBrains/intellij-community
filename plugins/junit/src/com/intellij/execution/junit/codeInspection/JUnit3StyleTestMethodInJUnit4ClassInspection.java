@@ -3,7 +3,7 @@ package com.intellij.execution.junit.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.psi.*;
@@ -27,7 +27,7 @@ public final class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInsp
 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
-    return new AddAnnotationPsiFix("org.junit.Test", (PsiMethod)infos[0]);
+    return LocalQuickFix.from(new AddAnnotationModCommandAction("org.junit.Test", (PsiMethod)infos[0]));
   }
 
   @Override

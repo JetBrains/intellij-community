@@ -36,7 +36,6 @@ import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.v1.createDetectedSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
@@ -240,16 +239,6 @@ fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.Dia
   }
 }
 
-@Deprecated("It doesn't persist changes", ReplaceWith("setAssociationToModule"))
-fun Sdk.associateWithModule(module: Module?, newProjectPath: String?) {
-  getOrCreateAdditionalData().apply {
-    when {
-      newProjectPath != null -> associateWithModulePath(newProjectPath)
-      module != null -> associateWithModule(module)
-    }
-  }
-}
-
 fun Sdk.setAssociationToModule(module: Module) {
   setAssociationToPath(module.basePath)
 }
@@ -449,9 +438,6 @@ private val Sdk.sitePackagesDirectory: VirtualFile?
   get() = PythonSdkUtil.getSitePackagesDirectory(this)
 
 val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = getOrCreateAdditionalData().flavor
-
-val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
-  get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
 
 fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   val moduleDir = module?.baseDir

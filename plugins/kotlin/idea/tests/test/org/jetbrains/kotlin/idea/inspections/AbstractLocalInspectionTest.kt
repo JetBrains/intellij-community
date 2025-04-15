@@ -23,7 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQu
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.write
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.currentJavaVersion
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -109,7 +109,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         withCustomCompilerOptions(fileText, project, module) {
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.toInt()
-            if (minJavaVersion != null && !JavaVersion.current().isAtLeast(minJavaVersion)) {
+            if (minJavaVersion != null && !currentJavaVersion().isAtLeast(minJavaVersion)) {
                 return@withCustomCompilerOptions
             }
 

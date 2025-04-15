@@ -142,7 +142,7 @@ public final class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocal
         return null;
       }
 
-      private List<ReturnItem> extractValues(PsiDocComment comment) {
+      private static List<ReturnItem> extractValues(PsiDocComment comment) {
         List<ReturnItem> ranges = new ArrayList<>();
         for (PsiElement child : comment.getChildren()) {
           if (child instanceof PsiDocTag && ((PsiDocTag)child).getName().equals("return")) {
@@ -151,7 +151,7 @@ public final class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocal
             processLine(RETURN_LINE_START_TYPE, child, Kind.MAYBE_TYPE, ranges);
             processLine(RETURN_LINE_START_TYPE_SINGULAR, child, Kind.MAYBE_TYPE_SINGULAR, ranges);
           }
-          else if (child instanceof PsiDocToken && ((PsiDocToken)child).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+          else if (PsiDocToken.isDocToken(child, JavaDocTokenType.DOC_COMMENT_DATA)) {
             processLine(DESCRIPTION, child, Kind.LIKELY_VALUE, ranges);
           }
         }

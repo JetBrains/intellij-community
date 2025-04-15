@@ -42,7 +42,10 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.FontUtil;
+import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -65,8 +68,8 @@ import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -99,19 +102,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @Override
   public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      NotificationsToolWindowFactory.Companion.expire(notification);
+      ApplicationNotificationsModel.remove(notification);
     });
-  }
-
-  public void expireAll() {
-    NotificationsToolWindowFactory.Companion.expireAll();
   }
 
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project) {
     List<T> result = new ArrayList<>();
     if (project == null || !project.isDefault() && !project.isDisposed()) {
-      for (Notification notification : ActionCenter.getNotifications(project)) {
+      for (Notification notification : ApplicationNotificationsModel.getNotifications(project)) {
         if (klass.isInstance(notification)) {
           @SuppressWarnings("unchecked") T t = (T)notification;
           result.add(t);
@@ -1080,7 +1079,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     @SuppressWarnings("removal") String shortTitle = NotificationParentGroup.getShortTitle(layoutData.groupId);
     String title = shortTitle != null ? IdeBundle.message("notification.manager.merge.n.more.from", layoutData.mergeData.count, shortTitle)
                                       : IdeBundle.message("notification.manager.merge.n.more", layoutData.mergeData.count);
-    LinkListener<BalloonLayoutData> listener = (link, _layoutData) -> ActionCenter.showNotification(_layoutData.project);
+    LinkListener<BalloonLayoutData> listener = (link, _layoutData) -> ActionCenter.showLog(_layoutData.project);
     LinkLabel<BalloonLayoutData> action = new LinkLabel<>(title, null, listener, layoutData) {
       @Override
       protected boolean isInClickableArea(Point pt) {

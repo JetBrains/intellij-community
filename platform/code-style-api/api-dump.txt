@@ -492,6 +492,7 @@ c:com.intellij.psi.codeStyle.CodeStyleSettings
 - clone():com.intellij.psi.codeStyle.CodeStyleSettings
 - copyFrom(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - equals(java.lang.Object):Z
+- s:generateConfigurableIdByLanguage(com.intellij.lang.Language):java.lang.String
 - getClassCountToUseImportOnDemand():I
 - getCommonSettings(com.intellij.lang.Language):com.intellij.psi.codeStyle.CommonCodeStyleSettings
 - getCommonSettings(java.lang.String):com.intellij.psi.codeStyle.CommonCodeStyleSettings

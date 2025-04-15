@@ -37,7 +37,7 @@ public final class ExceptionUtil {
   /**
    * If there are matching throwables both in causes of the {@code error} and in suppressed throwables, causes are guaranteed to be first.
    */
-  public static @Unmodifiable <T> List<T> findCauseAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
+  public static @Unmodifiable @NotNull <T> List<T> findCauseAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
     return causeAndSuppressed(error, klass).collect(Collectors.toList());
   }
 
@@ -89,11 +89,11 @@ public final class ExceptionUtil {
     return ExceptionUtilRt.getThrowableText(aThrowable, stackFrameSkipPattern);
   }
 
-  public static @NlsSafe @NotNull String getUserStackTrace(@NotNull Throwable aThrowable, Logger logger) {
-    String result = getThrowableText(aThrowable, "com.intellij.");
-    if (!result.contains("\n\tat") && aThrowable.getStackTrace().length > 0) {
+  public static @NlsSafe @NotNull String getUserStackTrace(@NotNull Throwable throwable, @NotNull Logger logger) {
+    String result = getThrowableText(throwable, "com.intellij.");
+    if (!result.contains("\n\tat") && throwable.getStackTrace().length > 0) {
       // no 3rd party stack frames found, log as error
-      logger.error(aThrowable);
+      logger.error(throwable);
     }
     else {
       return result.trim() + " (no stack trace)";
@@ -219,7 +219,7 @@ public final class ExceptionUtil {
   @SafeVarargs
   @ApiStatus.Internal
   public static <E extends Exception>
-  void runAllAndRethrowAllExceptions(@NotNull Function<List<? extends Throwable>, E> exceptionsCombiner,
+  void runAllAndRethrowAllExceptions(@NotNull Function<? super List<? extends Throwable>, E> exceptionsCombiner,
                                      ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
     List<Throwable> exceptions = null;
     for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {

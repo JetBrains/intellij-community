@@ -16,7 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.lang.java.parser.BasicExpressionParser;
+import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -605,7 +605,7 @@ public final class ExpectedTypeUtils {
     }
 
     private static boolean isShiftOperation(@NotNull IElementType sign) {
-      return BasicExpressionParser.SHIFT_OPS.contains(sign);
+      return JavaBinaryOperations.SHIFT_OPS.contains(sign);
     }
 
     private static boolean isOperatorAssignmentOperation(@NotNull IElementType sign) {

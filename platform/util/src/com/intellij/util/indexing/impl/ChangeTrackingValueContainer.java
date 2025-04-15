@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl;
 
@@ -7,13 +7,12 @@ import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.IntConsumer;
 
 /**
  * Container balances between keeping the changes as changes, and merging (applying) them.
@@ -25,67 +24,9 @@ import java.util.function.IntConsumer;
  */
 @Internal
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value> {
-
-  protected static class ThreadSafeIntSet {
-    private final IntOpenHashSet delegate = new IntOpenHashSet(1);
-    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-
-    private <T> T withWriteLock(Computable<T> block) {
-      rwLock.writeLock().lock();
-      try {
-        return block.compute();
-      }
-      finally {
-        rwLock.writeLock().unlock();
-      }
-    }
-
-    private <T> T withReadLock(Computable<T> block) {
-      rwLock.readLock().lock();
-      try {
-        return block.compute();
-      }
-      finally {
-        rwLock.readLock().unlock();
-      }
-    }
-
-    boolean add(int id) {
-      return withWriteLock(() -> delegate.add(id));
-    }
-
-    void forEach(IntConsumer intConsumer) {
-      withReadLock(() -> {
-        delegate.forEach(intConsumer);
-        return null;
-      });
-    }
-
-    boolean isEmpty() {
-      return withReadLock(() -> delegate.isEmpty());
-    }
-
-    int[] toIntArray() {
-      return withReadLock(() -> delegate.toIntArray());
-    }
-
-    public void remove(int id) {
-      withWriteLock(() -> {
-        delegate.remove(id);
-        return null;
-      });
-    }
-  }
-
   // there is no volatile as we modify under write lock and read under read lock
-  // TODO RC: myInvalidated can be updated under read lock (through FileBasedIndexImpl.ensureUpToDate),
-  //          which technically means that we modify set under read lock.
-  //          We have a lot of reports that IDE freezes in IntOpenHashSet.add, and it seems that we indeed never exit that method.
-  //          Inside IntOpenHashSet.add there is a while loop. If it never exits, then we either have a problem with internal
-  //          structure consistency, or we have a bug in IntOpenHashSet implementation. Former is more realistic, let's check
-  //          if this is true by making myInvalidated thread-safe.
   protected ValueContainerImpl<Value> myAdded;
-  protected ThreadSafeIntSet myInvalidated;
+  protected IntSet myInvalidated;
 
 
   //TODO RC: volatile field(s) here seems suspicious/ambiguous to me.
@@ -95,8 +36,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   //         So it seems like even though the class is not thread-safe, but it is nevertheless used in multithreaded
   //         context, and the volatile is sort of 'poor-man way to make multithreading bugs less visible'. Which is
   //         obviously incorrect.
+  //         (Example of usage: calls of dropMergedData() from TransientChangesIndexStorage)
   /**
-   * Cached snapshot of merged (stored + modified) data. should be accessed only read-only outside updatable container.
+   * Cached snapshot of merged (stored + modified) data. Should be accessed only read-only outside updatable container.
    * This object is always created by {@link #myInitializer}, hence if initializer is null -- it must also be null
    */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
@@ -147,7 +89,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   private boolean addToRemoved(int inputId) {
     if (myInvalidated == null) {
-      myInvalidated = new ThreadSafeIntSet();
+      myInvalidated = new IntOpenHashSet(1);
     }
     return myInvalidated.add(inputId);
   }
@@ -255,9 +197,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   public void saveDiffTo(@NotNull DataOutput out,
                          @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    ThreadSafeIntSet set = myInvalidated;
+    IntSet set = myInvalidated;
     if (set != null && !set.isEmpty()) {
-      for (int inputId : set.toIntArray()) {
+      for (int inputId : myInvalidated.toIntArray()) {
         DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
       }
     }

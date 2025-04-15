@@ -9,7 +9,9 @@ import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
@@ -32,6 +34,16 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
 
   @Override
   public @NotNull IStubFileElementType<?> getType() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public IElementType getElementType() {
+    return JavaParserDefinition.JAVA_FILE;
+  }
+
+  @Override
+  public @NotNull IElementType getFileElementType() {
     return JavaParserDefinition.JAVA_FILE;
   }
 
@@ -42,7 +54,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
 
   @Override
   public PsiJavaModule getModule() {
-    StubElement<PsiJavaModule> moduleStub = findChildStubByType(JavaStubElementTypes.MODULE);
+    @SuppressWarnings("SSBasedInspection") StubElement<PsiJavaModule> moduleStub = ObjectUtils.tryCast(findChildStubByElementType(JavaStubElementTypes.MODULE), StubElement.class);
     return moduleStub != null ? moduleStub.getPsi() : null;
   }
 

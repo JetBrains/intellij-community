@@ -17,12 +17,10 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -325,12 +323,12 @@ public final class Annotation implements Segment {
    * @return the list of quick fixes, or null if none have been registered.
    */
 
-  public @Nullable List<QuickFixInfo> getQuickFixes() {
-    return myQuickFixes;
+  public @Nullable @Unmodifiable List<QuickFixInfo> getQuickFixes() {
+    return myQuickFixes==null?null:Collections.unmodifiableList(myQuickFixes);
   }
 
-  public @Nullable List<QuickFixInfo> getBatchFixes() {
-    return myBatchFixes;
+  public @Nullable @Unmodifiable List<QuickFixInfo> getBatchFixes() {
+    return myBatchFixes==null?null:Collections.unmodifiableList(myBatchFixes);
   }
 
   /**
@@ -476,11 +474,11 @@ public final class Annotation implements Segment {
   }
 
   @ApiStatus.Internal
-  public @NotNull List<@NotNull Consumer<? super QuickFixActionRegistrar>> getLazyQuickFixes() {
+  public @NotNull @Unmodifiable List<@NotNull Consumer<? super QuickFixActionRegistrar>> getLazyQuickFixes() {
     return myLazyQuickFixes;
   }
   @ApiStatus.Internal
-  public void registerLazyQuickFixes(@NotNull List<@NotNull Consumer<? super QuickFixActionRegistrar>> lazyQuickFixes) {
+  public void registerLazyQuickFixes(@NotNull @Unmodifiable List<@NotNull Consumer<? super QuickFixActionRegistrar>> lazyQuickFixes) {
     myLazyQuickFixes = lazyQuickFixes;
   }
 }

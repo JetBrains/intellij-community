@@ -9,13 +9,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public final class FileTypeCopyrightConfigurableFactory {
 
   private FileTypeCopyrightConfigurableFactory() {
   }
 
-  public static Configurable createFileTypeConfigurable(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
+  public static @NotNull Configurable createFileTypeConfigurable(Project project, FileType fileType, TemplateCommentPanel parentPanel) {
     if (fileType.equals(StdFileTypes.JAVA)) {
       return new TemplateCommentPanel(fileType, parentPanel, project,
                                       CopyrightBundle.message("radio.location.in.file.before.package"),

@@ -12,7 +12,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.java.i18n" />
-    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
+    <orderEntry type="module" module-name="intellij.properties.backend.psi" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
   </component>

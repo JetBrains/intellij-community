@@ -7,7 +7,7 @@ import javax.accessibility.AccessibleContext
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class AccessibleNameAndDescriptionNotEqualInspection : UiInspectorAccessibilityInspection {
-  override val propertyName: String = "AccessibleName and AccessibleDescription"
+  override val propertyName: String = "AccessibleDescription"
   override val severity: Severity = Severity.WARNING
 
   override fun passesInspection(context: AccessibleContext): Boolean {

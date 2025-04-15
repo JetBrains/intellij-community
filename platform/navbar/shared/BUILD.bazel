@@ -19,6 +19,7 @@ jvm_library(
     "//platform/util",
     "//platform/ide-core-impl",
     "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
   ],
   exports = ["@lib//:kotlin-stdlib"],
   runtime_deps = [":navbar_resources"]

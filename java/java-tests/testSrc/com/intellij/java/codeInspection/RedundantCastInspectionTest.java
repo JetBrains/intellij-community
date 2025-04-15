@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -71,6 +71,7 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testInConditionalPreserveResolve() { doTest(); }
   public void testArrayAccess() { doTest(); }
   public void testSwitchUnboxing() { doTest(); }
+  public void testVararg() { doTest(); }
 
   public void testPackagePrivate() {
     myFixture.addClass("package a; public class A {void foo() {}}");

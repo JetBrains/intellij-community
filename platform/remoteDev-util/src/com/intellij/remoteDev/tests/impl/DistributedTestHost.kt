@@ -16,7 +16,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspend
@@ -25,7 +24,6 @@ import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.util.coroutines.limitedParallelism
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
@@ -59,6 +57,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
+@Suppress("NonDefaultConstructor")
 @TestOnly
 @ApiStatus.Internal
 open class DistributedTestHost(coroutineScope: CoroutineScope) {
@@ -69,6 +68,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     fun getDistributedTestPort(): Int? =
       System.getProperty(DistributedTestsAgentConstants.protocolPortPropertyName)?.toIntOrNull()
+
+    val sourcesRootFolder: File by lazy {
+      System.getProperty(DistributedTestsAgentConstants.sourcePathProperty, PathManager.getHomePath()).let(::File)
+    }
 
     /**
      * ID of the plugin which contains test code.
@@ -156,16 +159,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
           // Create test class
-          val testPlugin = PluginManagerCore.getPlugin(PluginId.getId(TEST_PLUGIN_ID))
-          val classLoader = if (testPlugin != null) {
-            LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
-            testPlugin.pluginClassLoader
-          }
-          else {
-            LOG.info("Test class will be loaded by the core classloader.")
-            javaClass.classLoader
-          }
-          val testClass = Class.forName(session.testClassName, true, classLoader)
+          val testPluginId = System.getProperty("distributed.test.module", TEST_PLUGIN_ID)
+          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(testPluginId)
+                           ?: error("Test plugin '$testPluginId' is not found")
+
+          LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
+
+          val testClass = Class.forName(session.testClassName, true, testPlugin.pluginClassLoader)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
 
           // Tell test we are running it inside an agent
@@ -303,7 +303,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           leaveAllModals(throwErrorIfModal)
         }
 
-        session.closeProjectIfOpened.setSuspend(sessionBgtDispatcher) { _, _ ->
+        session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
           try {
             leaveAllModals(throwErrorIfModal = true)
 
@@ -315,7 +315,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
           }
           catch (ce: CancellationException) {
-            LOG.info("closeProjectIfOpened was cancelled", ce)
+            LOG.info("closeAllOpenedProjects was cancelled", ce)
             throw ce
           }
 

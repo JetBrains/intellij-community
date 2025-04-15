@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -150,8 +150,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
       if (element == null) {
         continue;
       }
-      if ((!(element instanceof PsiDocToken) || !JavaDocTokenType.DOC_COMMENT_START.equals(((PsiDocToken)element).getTokenType())) &&
-          comment.getTextRange().contains(element.getTextRange())) {
+      if (!PsiDocToken.isDocToken(element, JavaDocTokenType.DOC_COMMENT_START) && comment.getTextRange().contains(element.getTextRange())) {
         // Unnecessary element like '@return' at the void method's javadoc.
         for (PsiElement e = element; e != null; e = e.getParent()) {
           if (e instanceof PsiDocTag) {

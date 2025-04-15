@@ -307,7 +307,7 @@ public abstract class SdkType implements SdkTypeId {
     return EP_NAME.getExtensions();
   }
 
-  public static @NotNull List<SdkType> getAllTypeList() {
+  public static @NotNull @Unmodifiable List<SdkType> getAllTypeList() {
     return EP_NAME.getExtensionList();
   }
 

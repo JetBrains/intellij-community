@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.starter" />
     <orderEntry type="module" module-name="intellij.tasks.jira" />
     <orderEntry type="module" module-name="intellij.settingsRepository" />
-    <orderEntry type="module" module-name="intellij.properties" />
+    <orderEntry type="module" module-name="intellij.properties.backend" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.markdown.plugin.main" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />

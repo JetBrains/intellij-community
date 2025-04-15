@@ -2,16 +2,21 @@
 package org.jetbrains.kotlin.gradle.scripting.k2
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
-import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
+import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -89,7 +94,13 @@ class ProjectGradleSettingsListener(
             }
         }.toSet()
 
-        GradleScriptDefinitionsHolder.Companion.getInstance(project).updateDefinitions(definitions)
-        project.scriptConfigurationsSourceOfType<GradleScriptConfigurationsSource>()?.updateDependenciesAndCreateModules(gradleScripts)
+        GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
+        GradleScriptRefinedConfigurationProvider.getInstance(project).updateConfigurations(gradleScripts)
+
+        val ktFiles = gradleScripts.mapNotNull {
+            readAction { PsiManager.getInstance(project).findFile(it.virtualFile) as? KtFile }
+        }.toTypedArray()
+
+        DefaultScriptResolutionStrategy.getInstance(project).execute(*ktFiles).join()
     }
 }

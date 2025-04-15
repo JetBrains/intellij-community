@@ -5,12 +5,13 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcome
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -18,8 +19,10 @@ class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV
 
   override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Unit, PyError> {
     if (!generateWelcomeScript) return Result.success(Unit)
+
+    val sourceRoot = module.rootManager.sourceRoots.firstOrNull() ?: baseDir
     val file = edtWriteAction {
-      PyWelcome.prepareFile(module.project, baseDir)
+      PyWelcome.prepareFile(module.project, sourceRoot)
     }
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {

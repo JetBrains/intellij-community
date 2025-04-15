@@ -6,7 +6,6 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
@@ -14,8 +13,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
@@ -94,12 +93,7 @@ class KotlinFirStructureViewElement(
         }
 
         return children.map {
-            val originalElement = try {
-                it.originalElement
-            } catch (_: IndexNotReadyException) {
-                it
-            }
-            KotlinFirStructureViewElement(originalElement as KtElement, it, isInherited = false)
+            KotlinFirStructureViewElement(it, it, isInherited = false)
         }
     }
 

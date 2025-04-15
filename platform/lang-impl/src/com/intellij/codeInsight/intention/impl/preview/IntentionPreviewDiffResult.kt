@@ -93,7 +93,7 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
         }
 
         var wordFragments: List<Fragment> = listOf()
-        if (fragment.endLine2 - fragment.startLine2 == 1 && fragment.endLine1 - fragment.startLine1 == 1) {
+        if (fragment.endLine2 - fragment.startLine2 == 1 && fragment.endLine1 - fragment.startLine1 == 1 || oldText.contains(newText)) {
           val comparisonManager = ComparisonManager.getInstance()
           val words = comparisonManager.compareWords(oldText, newText, ComparisonPolicy.IGNORE_WHITESPACES,
                                                      DumbProgressIndicator.INSTANCE)

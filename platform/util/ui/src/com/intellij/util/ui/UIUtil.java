@@ -28,6 +28,7 @@ import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 import sun.font.FontUtilities;
+import sun.swing.SwingUtilities2;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -38,6 +39,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
@@ -69,7 +71,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
@@ -415,6 +416,20 @@ public final class UIUtil {
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
   }
 
+  public static int computeStringWidth(@NotNull JComponent c, @Nullable String string) {
+    Font font = c.getFont();
+    if (font == null) font = getLabelFont();
+    return computeStringWidth(c, c.getFontMetrics(font), string);
+  }
+
+  /**
+   * Helper method that hides dependency on Swing.
+   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations..
+   */
+  public static int computeStringWidth(@NotNull JComponent c, @NotNull FontMetrics fontMetrics, @Nullable String string) {
+    return SwingUtilities2.stringWidth(c, fontMetrics, string);
+  }
+
   public static void drawLabelDottedRectangle(final @NotNull JLabel label, final @NotNull Graphics g) {
     drawLabelDottedRectangle(label, g, null);
   }
@@ -549,12 +564,12 @@ public final class UIUtil {
 
   /**
    * Computes the minimum size the component must have to keep the given number of characters
-   *
+   * <p>
    * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4)}.
    *
-   * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
-   * @param text              the currently set text
-   * @param fontMetrics       the current font metrics
+   * @param preferredSize the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text          the currently set text
+   * @param fontMetrics   the current font metrics
    * @return the minimum size the component has to have to keep the given number of characters
    */
   public static int computeTextComponentMinimumSize(
@@ -568,18 +583,19 @@ public final class UIUtil {
   /**
    * Computes the minimum size the component must have to keep the given number of characters
    * <p>
-   *   Intended to be used for simple {@code JLabel}-like text components.
-   *   Often they provide the preferred size, but not the minimum size.
-   *   This function can be used to roughly compute the minimum size based on the preferred one.
-   *   The returned size will be reduced by the difference between the full text width and
-   *   the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
-   *   that's usually added by such components when the text doesn't fit.
+   * Intended to be used for simple {@code JLabel}-like text components.
+   * Often they provide the preferred size, but not the minimum size.
+   * This function can be used to roughly compute the minimum size based on the preferred one.
+   * The returned size will be reduced by the difference between the full text width and
+   * the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
+   * that's usually added by such components when the text doesn't fit.
    * </p>
    * <p>
-   *   Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
-   *   Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
-   *   it's hard to make strict guarantees here.
+   * Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
+   * Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
+   * it's hard to make strict guarantees here.
    * </p>
+   *
    * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
    * @param text              the currently set text
    * @param fontMetrics       the current font metrics
@@ -2582,7 +2598,7 @@ public final class UIUtil {
       if (!builder.isEmpty()) {
         builder.append(' ');
       }
-      builder.append(StringUtil.removeHtmlTags(candidate).trim());
+      builder.append(StringUtil.removeHtmlTags(candidate, true).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();

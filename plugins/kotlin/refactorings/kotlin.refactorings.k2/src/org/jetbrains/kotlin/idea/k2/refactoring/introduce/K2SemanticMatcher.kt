@@ -222,6 +222,9 @@ object K2SemanticMatcher {
                     if (patternSymbol is KaCallableSymbol && targetSymbol is KaCallableSymbol) {
                         if (!targetSymbol.returnType.isSubtypeOf(patternSymbol.returnType)) return false
                     }
+                    if (patternSymbol is KaReceiverParameterSymbol && targetSymbol is KaReceiverParameterSymbol) {
+                        return true
+                    }
                     val expression =
                         KtPsiFactory(patternElement.project).createExpression((targetSymbol as KaNamedSymbol).name.asString())
                     val oldElement = parameterSubstitution.put(patternElement, expression)

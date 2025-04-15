@@ -3,14 +3,14 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
 
 internal class GenOneTerminalOptionHidingActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (TerminalUtil.getGenOneTerminalVisibilityValue() == null) {
-      val isGenOneTerminalEnabled = Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY, false)
+      val isGenOneTerminalEnabled = TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.NEW_TERMINAL
       // Hide the New Terminal (Gen1) option if it is disabled on the first startup after the introduction of this change.
       TerminalUtil.setGenOneTerminalVisibilityValue(isGenOneTerminalEnabled)
     }

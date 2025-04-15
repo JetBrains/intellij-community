@@ -197,6 +197,10 @@ public final class MixedResultsSearcher implements SESearcher {
             }
           }
           catch (ProcessCanceledException ignore) {}
+          catch (Throwable e) {
+            LOG.warn("Contributor " + myContributor.getSearchProviderId() +" threw an exception during search:", e);
+            break;
+          }
           repeat = !myIndicator.isCanceled() && wrapperIndicator.isCanceled();
         }
         while (repeat);

@@ -6,6 +6,7 @@ package com.intellij.ide.ui.laf
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UITheme
+import com.intellij.idea.AppMode
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
@@ -287,8 +288,13 @@ fun setEarlyUiLaF() {
 @Internal
 fun createBaseLaF(): LookAndFeel {
   if (SystemInfoRt.isMac) {
-    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.apple.laf.AquaLookAndFeel")
-    return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
+    if (AppMode.isRemoteDevHost()) {
+      return IdeaLaf(customFontDefaults = null)
+    }
+    else {
+      val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.apple.laf.AquaLookAndFeel")
+      return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
+    }
   }
   else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
     return IdeaLaf(customFontDefaults = null)

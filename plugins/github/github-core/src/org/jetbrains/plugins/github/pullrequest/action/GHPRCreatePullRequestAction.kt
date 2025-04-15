@@ -13,8 +13,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
 internal class GHPRCreatePullRequestAction : DumbAwareAction() {
@@ -24,16 +23,16 @@ internal class GHPRCreatePullRequestAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     with(e) {
-      val vm = project?.service<GHPRToolWindowViewModel>()
-      val twAvailable = project != null && vm != null && vm.isAvailable.value
-      val twInitialized = project != null && vm != null && vm.projectVm.value != null
+      val vm = project?.service<GHPRProjectViewModel>()
+      val vmAvailable = project != null && vm != null && vm.isAvailable.value
+      val vmProjectConnected = project != null && vm != null && vm.connectedProjectVm.value != null
 
       if (place == ActionPlaces.TOOLWINDOW_TITLE) {
-        presentation.isEnabledAndVisible = twInitialized
+        presentation.isEnabledAndVisible = vmProjectConnected
         presentation.icon = AllIcons.General.Add
       }
       else {
-        presentation.isEnabledAndVisible = twAvailable
+        presentation.isEnabledAndVisible = vmAvailable
         presentation.icon = AllIcons.Vcs.Vendors.Github
       }
     }
@@ -50,7 +49,7 @@ internal class GHOpenPullRequestExistingTabNotificationAction(
   private val existingPrOrNull: GHPRIdentifier,
 ) : NotificationAction(GithubBundle.message("pull.request.notification.open.action")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    val twVm = project.service<GHPRToolWindowViewModel>()
+    val twVm = project.service<GHPRProjectViewModel>()
     val selectorVm = twVm.selectorVm
     selectorVm.selectRepoAndAccount(projectMapping, account)
     selectorVm.submitSelection()
@@ -59,8 +58,8 @@ internal class GHOpenPullRequestExistingTabNotificationAction(
 }
 
 private fun openExistingTab(event: AnActionEvent, prId: GHPRIdentifier) {
-  event.project!!.service<GHPRToolWindowViewModel>().activateAndAwaitProject {
-    selectTab(GHPRToolWindowTab.PullRequest(prId))
+  event.project!!.service<GHPRProjectViewModel>().activateAndAwaitProject {
+    viewPullRequest(prId)
   }
 }
 
@@ -72,8 +71,8 @@ internal class GHPRCreatePullRequestNotificationAction(
   private val account: GithubAccount,
 ) : NotificationAction(GithubBundle.message("pull.request.notification.create.action")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    val twVm = project.service<GHPRToolWindowViewModel>()
-    val selectorVm = twVm.selectorVm
+    val vm = project.service<GHPRProjectViewModel>()
+    val selectorVm = vm.selectorVm
     selectorVm.selectRepoAndAccount(projectMapping, account)
     selectorVm.submitSelection()
 
@@ -82,7 +81,7 @@ internal class GHPRCreatePullRequestNotificationAction(
 }
 
 private fun tryToCreatePullRequest(e: AnActionEvent) {
-  return e.project!!.service<GHPRToolWindowViewModel>().activateAndAwaitProject {
+  return e.project!!.service<GHPRProjectViewModel>().activateAndAwaitProject {
     createPullRequest()
   }
 }

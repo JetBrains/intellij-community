@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.execution.ui
@@ -10,9 +10,10 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
@@ -229,6 +230,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       // here we have selected content
       return getRunContentDescriptorByContent(selectedContent)
     }
+
     return null
   }
 
@@ -243,6 +245,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun showRunContent(executor: Executor, descriptor: RunContentDescriptor, executionId: Long) {
+
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -277,8 +280,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val toolWindow = getToolWindowManager().getToolWindow(toolWindowId)
     val processHandler = descriptor.processHandler
     if (processHandler != null) {
-      val processAdapter = object : ProcessAdapter() {
+      val processAdapter = object : ProcessListener {
         override fun startNotified(event: ProcessEvent) {
+          val pid = getPid(processHandler)
           UIUtil.invokeLaterIfNeeded {
             content.icon = getLiveIndicator(descriptor.icon)
             var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
@@ -286,6 +290,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
               toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
             }
             toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
+            if (pid != null) {
+              content.description = ExecutionBundle.message("process.id.tooltip", pid)
+            }
           }
           descriptor.iconProperty.afterChange(descriptor) {
             UIUtil.invokeLaterIfNeeded {
@@ -302,6 +309,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
             // Since it's a terminated state, it's okay to stick with the last available one
             val icon = descriptor.icon
             content.icon = if (icon == null) executor.disabledIcon else IconLoader.getTransparentIcon(icon)
+            content.description = null
           }
         }
       }
@@ -474,6 +482,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   override fun selectRunContent(descriptor: RunContentDescriptor) {
+
     processToolWindowContentManagers { _, contentManager ->
       val content = getRunContentByDescriptor(contentManager, descriptor) ?: return@processToolWindowContentManagers
       contentManager.setSelectedContent(content)
@@ -502,6 +511,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getDescriptorBy(handler: ProcessHandler, runnerInfo: Executor): RunContentDescriptor? {
+
     fun find(manager: ContentManager?): RunContentDescriptor? {
       if (manager == null) return null
       val contents = manager.contentsRecursively
@@ -597,6 +607,15 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
       return askUserAndWait(processHandler, sessionName, task)
     }
+  }
+}
+
+private fun getPid(processHandler: ProcessHandler): Long? {
+  try {
+    return (processHandler as? BaseProcessHandler<*>)?.process?.pid()
+  }
+  catch (_: UnsupportedOperationException) {
+    return null
   }
 }
 

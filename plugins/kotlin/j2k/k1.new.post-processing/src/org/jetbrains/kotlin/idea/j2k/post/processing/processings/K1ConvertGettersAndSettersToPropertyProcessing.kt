@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTargetInCommand
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -826,7 +826,7 @@ private class ClassConverter(
             for (accessorEntry in accessor.annotationEntries) {
                 val propertyEntry = property.addAnnotationEntry(accessorEntry)
                 val target = if (accessor.isGetter) PROPERTY_GETTER else PROPERTY_SETTER
-                propertyEntry.addUseSiteTarget(target, property.project)
+                propertyEntry.addUseSiteTargetInCommand(target, property.project)
             }
             accessor.annotationEntries.forEach { it.delete() }
         }

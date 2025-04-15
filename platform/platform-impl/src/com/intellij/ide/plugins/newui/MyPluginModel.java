@@ -392,6 +392,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       return;
     }
 
+    var customization = PluginInstallationCustomization.findPluginInstallationCustomization(descriptor.getPluginId());
+    if (customization != null) {
+      customization.beforeInstallOrUpdate(isUpdate);
+    }
+
     if (myInstallSource != null) {
       String pluginId = descriptor.getPluginId().getIdString();
       myInstallSource.logInstallPlugins(Collections.singletonList(pluginId));
@@ -986,7 +991,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       IdeaPluginDescriptor result = ContainerUtil.find(view, d -> pluginId.equals(d.getPluginId()));
       if (result == null && PluginManagerCore.isModuleDependency(pluginId)) {
         result = ContainerUtil.find(view, d -> {
-          return d instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)d).pluginAliases.contains(pluginId);
+          return d instanceof IdeaPluginDescriptorEx && ((IdeaPluginDescriptorEx)d).getPluginAliases().contains(pluginId);
         });
         if (result != null) {
           setEnabled(pluginId, PluginEnabledState.ENABLED); // todo

@@ -2,7 +2,7 @@ import ctypes
 import os
 from _pydev_bundle import pydev_log, pydev_monkey
 from _pydevd_bundle.pydevd_constants import get_frame, IS_PY2, IS_PY37_OR_GREATER, IS_CPYTHON, IS_WINDOWS, IS_LINUX, IS_MACOS, \
-    IS_64BIT_PROCESS, IS_AARCH64, IS_PYCHARM_ATTACH
+    IS_64BIT_PROCESS, IS_AARCH64, IS_PYCHARM_ATTACH, IS_PY312_OR_GREATER
 from _pydev_imps._pydev_saved_modules import thread, threading
 
 try:
@@ -50,7 +50,7 @@ def _get_stack_str(frame):
     return msg
 
 def _internal_set_trace(tracing_func):
-    if TracingFunctionHolder._warn and sys.gettrace() != tracing_func:
+    if TracingFunctionHolder._warn and (sys.gettrace() != tracing_func or IS_PY312_OR_GREATER):
         frame = get_frame()
         if frame is not None and frame.f_back is not None:
             filename = frame.f_back.f_code.co_filename.lower()

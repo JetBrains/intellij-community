@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.NodeSortOrder;
@@ -123,7 +123,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
             }
           }
           else {
-            // todo ijpl-339 implement this logic carefully, add support for internal module, support more nodes
+            // todo IJPL-339 implement this logic carefully, add support for internal module, support more nodes
             if (shouldShowModuleName()) {
               data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
               String moduleNames = "[" + StringUtil.join(modules, module -> module.getName(), ", ") + "]";

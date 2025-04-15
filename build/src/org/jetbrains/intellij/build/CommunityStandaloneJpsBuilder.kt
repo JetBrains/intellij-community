@@ -21,8 +21,10 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
 
   layout.withModules(sequenceOf(
     "intellij.platform.util",
+    "intellij.platform.util.multiplatform",
     "intellij.platform.util.classLoader",
     "intellij.platform.util.base",
+    "intellij.platform.util.base.multiplatform",
     "intellij.platform.util.xmlDom",
     "intellij.platform.util.jdom",
     "intellij.platform.tracing.rt",
@@ -63,7 +65,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
 
 
   layout.withModule("intellij.maven.jps", "maven-jps.jar")
-  layout.withModule("intellij.java.compiler.charts.jps", "java-compiler-charts-jps.jar")
   layout.withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
   layout.withModule("intellij.gradle.jps", "gradle-jps.jar")
 

@@ -4,50 +4,51 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
-import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.facet.FacetManagerFactory
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.impl.DeprecatedModuleOptionManager
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 
 @Suppress("OVERRIDE_DEPRECATION")
-internal class ModuleBridgeImpl(
+@ApiStatus.Internal
+class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
-  override var diff: MutableEntityStorage?
-) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
-  init {
-    // This is a temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
-    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-    val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
-                               ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
-    registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
-  }
+  override var diff: MutableEntityStorage?,
+  componentManager: ComponentManager,
+) : ModuleImpl(
+  name = name,
+  project = project,
+  virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge,
+  componentManager = componentManager
+), ModuleBridge {
 
   //override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
   //  val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
@@ -87,10 +88,12 @@ internal class ModuleBridgeImpl(
 
       val classLoader = javaClass.classLoader
       val moduleStoreImpl = classLoader.loadClass("com.intellij.configurationStore.ModuleStoreImpl")
-      registerService(serviceInterface = IComponentStore::class.java,
-                      implementation = moduleStoreImpl,
-                      pluginDescriptor = corePluginDescriptor,
-                      override = true)
+      getModuleComponentManager().registerService(
+        serviceInterface = IComponentStore::class.java,
+        implementation = moduleStoreImpl,
+        pluginDescriptor = corePluginDescriptor,
+        override = true
+      )
     }
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
     val imlPath = newModuleFileUrl.toPath()
@@ -99,45 +102,33 @@ internal class ModuleBridgeImpl(
     (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
   }
 
-  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                  app: Application?,
-                                  precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
-    registerComponents(corePlugin = modules.find { it.pluginId == PluginManagerCore.CORE_ID },
-                       modules = modules,
-                       precomputedExtensionModel = precomputedExtensionModel,
-                       app = app,
-                       listenerCallbacks = listenerCallbacks)
-  }
-
   override fun callCreateComponents() {
     @Suppress("DEPRECATION")
-    createComponents()
+    getModuleComponentManager().createComponents()
   }
 
   override suspend fun callCreateComponentsNonBlocking() {
-    createComponentsNonBlocking()
+    getModuleComponentManager().createComponentsNonBlocking()
+    // We want to initialize FacetManager early to avoid initializing it on EDT in ModuleManagerBridgeImpl.loadModules
+    project.serviceAsync<FacetManagerFactory>().getFacetManager(this)
   }
 
   override fun initFacets() = facetsInitializationTimeMs.addMeasuredTime {
     FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
   }
 
-  override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
-                                  modules: List<IdeaPluginDescriptorImpl>,
-                                  precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  app: Application?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(
+  override fun registerComponents(
+    modules: List<IdeaPluginDescriptorImpl>,
+    app: Application?,
+    precomputedExtensionModel: PrecomputedExtensionModel?,
+    listenerCallbacks: MutableList<in Runnable>?,
+  ) {
+    getModuleComponentManager().registerComponents(
       modules = modules,
       app = app,
       precomputedExtensionModel = precomputedExtensionModel,
       listenerCallbacks = listenerCallbacks,
     )
-    if (corePlugin == null) {
-      return
-    }
-    unregisterComponent(DeprecatedModuleOptionManager::class.java)
   }
 
   override fun getOptionValue(key: String): String? {

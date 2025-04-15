@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
+import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.impl.fastutil.ints.IntList
 import com.intellij.platform.syntax.impl.fastutil.ints.lastIndexOf
-import com.intellij.platform.syntax.util.Logger
+import fleet.util.multiplatform.linkToActual
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.min
 
 internal class MarkerProduction(
   private val myPool: MarkerPool,
@@ -151,11 +151,11 @@ internal class MarkerProduction(
           val debugAllocThis = myOptionalData.getAllocationTrace(doneMarker)
           val currentTrace = Throwable()
           if (debugAllocThis != null) {
-            makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace(System.err)
+            makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace()
           }
           val debugAllocOther = myOptionalData.getAllocationTrace(otherMarker)
           if (debugAllocOther != null) {
-            makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace(System.err)
+            makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace()
           }
           logger.error("Another not done marker added after this one. Must be done before this.")
         }
@@ -179,22 +179,8 @@ internal class MarkerProduction(
 
 private const val LINEAR_SEARCH_LIMIT = 20
 
-private fun makeStackTraceRelative(th: Throwable, relativeTo: Throwable): Throwable {
-  val trace = th.stackTrace
-  val rootTrace = relativeTo.stackTrace
-  var i = 0
-  val len = min(trace.size, rootTrace.size)
-  while (i < len) {
-    if (trace[trace.size - i - 1] == rootTrace[rootTrace.size - i - 1]) {
-      i++
-      continue
-    }
-    val newDepth = trace.size - i
-    th.setStackTrace(trace.copyOf<StackTraceElement?>(newDepth))
-    break
-  }
-  return th
-}
+@Suppress("unused")
+internal fun makeStackTraceRelative(th: Throwable, relativeTo: Throwable): Throwable = linkToActual()
 
 /**
  * Performs binary search on the range [fromIndex, toIndex)

@@ -41,6 +41,6 @@ public class PsiRecordHeaderImpl extends JavaStubPsiElement<PsiRecordHeaderStub>
 
   @Override
   public PsiRecordComponent @NotNull [] getRecordComponents() {
-    return getStubOrPsiChildren(JavaStubElementTypes.RECORD_COMPONENT, PsiRecordComponent.EMPTY_ARRAY);
+    return getStubOrPsiChildren(JavaStubElementTypes.RECORD_COMPONENT, PsiRecordComponent.ARRAY_FACTORY);
   }
 }

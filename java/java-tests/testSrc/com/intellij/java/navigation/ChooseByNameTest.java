@@ -3,6 +3,7 @@ package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.ide.actions.searcheverywhere.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.mock.MockProgressIndicator;
@@ -15,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.*;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -31,6 +33,10 @@ import java.util.*;
 
 @SuppressWarnings("NewClassNamingConvention")
 public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
+
+  private static final RegistryValue fuzzySearchRegistryValue = Registry.get("search.everywhere.fuzzy.file.search.enabled");
+  private static final boolean initialFuzzySearchRegistryValue = fuzzySearchRegistryValue.asBoolean();
+
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ChooseByNameTest.class);
@@ -225,7 +231,13 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     List<PsiFile> objects = gotoFile("Object.java", true);
     assertNotEmpty(objects);
     assertTrue((objects.get(0)).getVirtualFile().getPath().contains("mockJDK"));
+
+    // Fuzzy search finds some results for the query `mockJDK/Object.java`, so let's ensure the test runs with fuzzy search disabled.
+    fuzzySearchRegistryValue.setValue(false);
+
     assertEmpty(gotoFile("mockJDK/Object.java", true));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
   }
 
   public void test_goto_file_can_go_to_dir() {
@@ -236,6 +248,8 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiDirectory fooDir = fooIndex.getContainingDirectory();
     PsiDirectory barDir = barIndex.getContainingDirectory();
+
+    fuzzySearchRegistryValue.setValue(false);
 
     assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir));
     assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir));
@@ -252,16 +266,69 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(calcContributorElements(contributor, "\\bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
+  }
+
+  public void test_goto_file_can_go_to_dir_with_fuzzy() {
+    PsiFile fooIndex = addEmptyFile("foo/index.html");
+    PsiFile barIndex = addEmptyFile("bar.txt/bar.txt");
+
+    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), fooIndex);
+
+    PsiDirectory fooDir = fooIndex.getContainingDirectory();
+    PsiDirectory barDir = barIndex.getContainingDirectory();
+
+    // With fuzzy search enabled, the search also shows files inside the directory.
+    fuzzySearchRegistryValue.setValue(true);
+
+    assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "/foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "\\foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "/index.html"), List.of(fooIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "\\index.html"), List.of(fooIndex));
+    assertEmpty(calcContributorElements(contributor, "index.html/"));
+    assertEmpty(calcContributorElements(contributor, "index.html\\"));
+    assertOrderedEquals(calcContributorElements(contributor, "bar.txt/"), List.of(barDir, barIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "bar.txt\\"), List.of(barDir, barIndex));
+    assertOrderedEquals(calcContributorElements(contributor, "/bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(calcContributorElements(contributor, "\\bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
   }
 
   public void test_prefer_files_to_directories_even_if_longer() {
     PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
     PsiDirectory fooDir = addEmptyFile("foo/barFile.txt").getContainingDirectory();
 
+    fuzzySearchRegistryValue.setValue(false);
+
     SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
     List<?> popupElements = calcContributorElements(contributor, "foo");
 
     assertOrderedEquals(popupElements, List.of(fooFile, fooDir));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
+  }
+
+  public void test_prefer_files_to_directories_even_if_longer_with_fuzzy() {
+    PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
+    PsiFile barFile = addEmptyFile("foo/barFile.txt");
+    PsiDirectory fooDir = barFile.getContainingDirectory();
+
+    // With fuzzy search enabled, the search also shows files inside the directory.
+    fuzzySearchRegistryValue.setValue(true);
+
+    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
+    List<?> popupElements = calcContributorElements(contributor, "foo");
+
+    assertOrderedEquals(popupElements, List.of(fooFile, fooDir, barFile));
+
+    fuzzySearchRegistryValue.setValue(initialFuzzySearchRegistryValue);
   }
 
   public void test_find_method_by_qualified_name() {
@@ -558,7 +625,8 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(gotoSymbol("Request.start"), List.of(m1, m2));
     if (DumbService.getInstance(myFixture.getProject()).isDumb()) {
       assertOrderedEquals(gotoSymbol("start"), List.of(m1, m2)); // can't remove overrides in dumb mode
-    } else {
+    }
+    else {
       assertOrderedEquals(gotoSymbol("start"), List.of(m1));
     }
   }

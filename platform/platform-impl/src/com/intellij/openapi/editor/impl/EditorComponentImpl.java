@@ -422,8 +422,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       final @NotNull var primaryCaret = caretModel.getPrimaryCaret();
 
       myLastKnownPrimaryCaret = new WeakReference<>(primaryCaret);
-      myPrimaryCaretLastKnownDot = primaryCaret.getOffset();
-      myPrimaryCaretLastKnownMark = primaryCaret.getLeadSelectionOffset();
+      ReadAction.run(() -> {
+        myPrimaryCaretLastKnownDot = primaryCaret.getOffset();
+        myPrimaryCaretLastKnownMark = primaryCaret.getLeadSelectionOffset();
+      });
 
       caretModel.addCaretActionListener(this, editor.getDisposable());
       caretModel.addCaretListener(this, editor.getDisposable());

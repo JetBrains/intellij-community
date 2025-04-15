@@ -640,6 +640,12 @@ public class Py3TypeTest extends PyTestCase {
                  if (v == abc):
                      expr = v
              """);
+    doTest("Literal[\"abba\"]",
+           """
+             from typing import Literal
+             if ((v := input()) == "abba"):
+                 expr = v
+             """);
   }
 
   public void testLiteralTypeNarrowingIn() {
@@ -686,6 +692,12 @@ public class Py3TypeTest extends PyTestCase {
              def f(v: object):
                  if v in (-1, None):
                      expr = v
+             """);
+    doTest("Literal[\"abba\"]",
+           """
+             from typing import Literal
+             if (a := input()) in ("abba", False):
+                 expr = a
              """);
   }
 

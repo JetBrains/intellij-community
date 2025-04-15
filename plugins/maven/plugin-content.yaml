@@ -3,9 +3,65 @@
   - name: intellij.maven.artifactResolver.m31
   - name: intellij.maven.artifactResolver.common
 - name: lib/intellij.maven.server.indexer/lib/apache.maven.archetype.catalog-no-trans-321.jar
+  library: apache.maven.archetype.catalog-no-trans:321
+  module: intellij.maven.server.indexer
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3/archetype-catalog-3.jar
 - name: lib/intellij.maven.server.indexer/lib/apache.maven.archetype.common-no-trans-3.2.1.jar
+  library: apache.maven.archetype.common-no-trans:3.2.1
+  module: intellij.maven.server.indexer
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/3/archetype-common-3.jar
 - name: lib/intellij.maven.server.indexer/lib/apache.maven.core-3.8.3.jar
+  library: apache.maven.core:3.8.3
+  module: intellij.maven.server.indexer
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-core/3/maven-core-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-model/3/maven-model-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-settings/3/maven-settings-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/3/maven-settings-builder-3.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-sec-dispatcher/2/plexus-sec-dispatcher-2.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-cipher/2/plexus-cipher-2.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3/maven-builder-support-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3/maven-repository-metadata-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3/maven-artifact-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/3/maven-plugin-api-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3/maven-model-builder-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3/maven-resolver-provider-3.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/1/maven-resolver-impl-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1/maven-resolver-api-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/1/maven-resolver-spi-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1/maven-resolver-util-1.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/shared/maven-shared-utils/3/maven-shared-utils-3.jar
+  - name: $MAVEN_REPOSITORY$/commons-io/commons-io/2/commons-io-2.jar
+  - name: $MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.plexus/0/org.eclipse.sisu.plexus-0.jar
+  - name: $MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1/javax.annotation-api-1.jar
+  - name: $MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0/org.eclipse.sisu.inject-0.jar
+  - name: $MAVEN_REPOSITORY$/com/google/inject/guice/4/guice-4.jar
+  - name: $MAVEN_REPOSITORY$/aopalliance/aopalliance/1/aopalliance-1.jar
+  - name: $MAVEN_REPOSITORY$/com/google/guava/guava/25/guava-25.jar
+  - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
+  - name: $MAVEN_REPOSITORY$/org/checkerframework/checker-compat-qual/2/checker-compat-qual-2.jar
+  - name: $MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2/error_prone_annotations-2.jar
+  - name: $MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/1/j2objc-annotations-1.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/mojo/animal-sniffer-annotations/1/animal-sniffer-annotations-1.jar
+  - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3/plexus-utils-3.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2/plexus-classworlds-2.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1/plexus-interpolation-1.jar
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/2/plexus-component-annotations-2.jar
+  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3/commons-lang3-3.jar
+  - name: $MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1/slf4j-api-1.jar
 - name: lib/intellij.maven.server.indexer/lib/apache.maven.wagon.provider.api-3.5.2.jar
+  library: apache.maven.wagon.provider.api:3.5.2
+  module: intellij.maven.server.indexer
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/maven/wagon/wagon-provider-api/3/wagon-provider-api-3.jar
+- name: lib/jetbrains.idea.maven.indexer.api.rt.jar
+  library: jetbrains.idea.maven.indexer.api.rt
+  module: intellij.maven
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023/maven-indexer-api-rt-2023.jar
 - name: lib/maven-event-listener.jar
   modules:
   - name: intellij.maven.server.eventListener
@@ -18,16 +74,14 @@
 - name: lib/maven-server-telemetry.jar
   modules:
   - name: intellij.maven.server.telemetry
+- name: lib/maven-server.jar
+  modules:
+  - name: intellij.maven.server
 - name: lib/maven.jar
   modules:
   - name: intellij.idea.community.build.dependencies
   - name: intellij.maven.errorProne.compiler
   - name: intellij.maven
-    libraries:
-      plexus-archiver:
-      - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar
-      jetbrains.idea.maven.indexer.api.rt:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023/maven-indexer-api-rt-2023.jar
 - name: lib/maven3-server-common.jar
   modules:
   - name: intellij.maven.server.m3.common
@@ -40,3 +94,8 @@
 - name: lib/maven40-server.jar
   modules:
   - name: intellij.maven.server.m40
+- name: lib/plexus-archiver.jar
+  library: plexus-archiver
+  module: intellij.maven
+  files:
+  - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar

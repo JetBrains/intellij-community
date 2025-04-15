@@ -2,6 +2,7 @@ package com.intellij.database.extensions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,10 @@ import java.util.function.Predicate;
 public class ExtensionsService {
   public static ExtensionsService getInstance() {
     return ApplicationManager.getApplication().getService(ExtensionsService.class);
+  }
+
+  public @NotNull Job unpackPluginResources(PluginId id) {
+    return null;
   }
 
   public @NotNull Predicate<Path> extensionsRootTypeRegularFileFilter() {

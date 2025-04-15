@@ -2,6 +2,7 @@
 package com.intellij.webSymbols.references
 
 import com.intellij.model.psi.PsiExternalReferenceHost
+import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
@@ -15,7 +16,7 @@ interface PsiWebSymbolReferenceProvider<T : PsiExternalReferenceHost> {
 
   fun getReferencedSymbolNameOffset(psiElement: T): Int = 0
 
-  fun getOffsetsToReferencedSymbols(psiElement: T): Map<Int, WebSymbol> =
+  fun getOffsetsToReferencedSymbols(psiElement: T, hints: PsiSymbolReferenceHints): Map<Int, WebSymbol> =
     getReferencedSymbol(psiElement)
       ?.let { mapOf(getReferencedSymbolNameOffset(psiElement) to it) }
     ?: emptyMap()

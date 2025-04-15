@@ -10,7 +10,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     private const val FUTURE_GRADLE_VERSION = "100.0"
     private const val LATEST_SUPPORTED_JAVA_VERSION = 23
     private const val FUTURE_JAVA_VERSION = 100
-    private const val BUNDLED_GRADLE_VERSION = "8.13"
+    private const val BUNDLED_GRADLE_VERSION = "8.14-rc-1"
     private const val LATEST_GRADLE_VERSION = "8.13"
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,6 +33,8 @@ public final class SlowOperations {
   private static final class Holder {
     private static final Logger LOG = Logger.getInstance(SlowOperations.class);
   }
+
+  private static final Set<String> ourKnownIssues = ContainerUtil.newConcurrentSet();
 
   private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
   private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
@@ -103,14 +106,16 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
-    String error = !EDT.isCurrentThreadEdt() ||
-                   isAlwaysAllowed() ||
-                   isSlowOperationAllowed() ? null : ERROR_EDT;
-    if (error == null || isAlreadyReported()) return;
+    if (!EDT.isCurrentThreadEdt()) {
+      return;
+    }
+    if (isAlwaysAllowed() || isSlowOperationAllowed()) {
+      return;
+    }
     if (isInSection(FORCE_THROW) && !Cancellation.isInNonCancelableSection()) {
       throw new SlowOperationCanceledException();
     }
-    Holder.LOG.error(error);
+    logError(ERROR_EDT);
   }
 
   /**
@@ -120,16 +125,26 @@ public final class SlowOperations {
    * @see #assertSlowOperationsAreAllowed()
    */
   public static void assertNonCancelableSlowOperationsAreAllowed() {
-    String error = isAlwaysAllowed() ? null :
-                   EDT.isCurrentThreadEdt() ? (isSlowOperationAllowed() ? null : ERROR_EDT) :
-                   (ApplicationManager.getApplication().isReadAccessAllowed() ? ERROR_RA : null);
-    if (error == null || isAlreadyReported()) return;
-    Holder.LOG.error(error);
+    if (isAlwaysAllowed()) {
+      return;
+    }
+    if (EDT.isCurrentThreadEdt()) {
+      if (isSlowOperationAllowed()) {
+        return;
+      }
+      logError(ERROR_EDT);
+    }
+    else if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      logError(ERROR_RA);
+    }
   }
 
   private static boolean isSlowOperationAllowed() {
     boolean forceAssert = isInSection(FORCE_ASSERT);
-    if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
+    if (forceAssert) {
+      return false;
+    }
+    if (!Registry.is("ide.slow.operations.assertion", true)) {
       return true;
     }
     Application application = ApplicationManager.getApplication();
@@ -148,6 +163,12 @@ public final class SlowOperations {
       }
     }
     return false;
+  }
+
+  private static void logError(@NotNull String message) {
+    if (!isAlreadyReported()) {
+      Holder.LOG.error(message);
+    }
   }
 
   private static boolean isAlreadyReported() {
@@ -219,7 +240,18 @@ public final class SlowOperations {
   /** @noinspection unused */
   @ApiStatus.Internal
   public static @NotNull AccessToken knownIssue(@NotNull String ytIssueId) {
+    if (EDT.isCurrentThreadEdt()) {
+      ourKnownIssues.add(ytIssueId);
+    }
+
     return startSection(KNOWN_ISSUE);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Set<String> reportKnownIssues() {
+    Set<String> result = new HashSet<>(ourKnownIssues);
+    ourKnownIssues.clear();
+    return result;
   }
 
   @ApiStatus.Internal

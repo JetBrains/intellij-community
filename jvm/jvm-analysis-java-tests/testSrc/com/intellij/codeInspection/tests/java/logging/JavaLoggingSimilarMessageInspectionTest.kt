@@ -1,9 +1,15 @@
 package com.intellij.codeInspection.tests.java.logging
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.java.JavaBundle
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingSimilarMessageInspectionTestBase
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 
 class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionTestBase() {
 
@@ -649,6 +655,35 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
         }
      }
     """.trimIndent())
+  }
+
+  fun `test virtual file is null`() {
+    val psiFile = myFixture.configureByText("${generateFileName()}${JvmLanguage.JAVA.ext}", """
+       import org.apache.logging.log4j.*;
+       class Logging {
+          private static final Logger LOG = LogManager.getLogger();
+          
+          private static void request1(String i) {
+              String msg = "log messages: "  + i;
+              <weak_warning descr="Similar log messages">L<caret>OG.info(msg)</weak_warning>;
+          }
+      
+          private static void request2(int i) {
+              String msg = "log messages: " + i;
+              <weak_warning descr="Similar log messages">LOG.info(msg)</weak_warning>;
+          }
+       }
+      """.trimIndent())
+    val similarMessageInspection = inspection
+    val copy = psiFile.copy()
+    val copyFile = copy as PsiFile
+    assertNull(copyFile.virtualFile)
+    val textRange = TextRange(0, copyFile.fileDocument.charsSequence.length)
+    val visitor = similarMessageInspection.buildVisitor(
+      holder = ProblemsHolder(InspectionManager.getInstance(project), copyFile, true),
+      isOnTheFly = true,
+      session = LocalInspectionToolSession(copyFile, textRange, textRange, null))
+    assertFalse(visitor == PsiElementVisitor.EMPTY_VISITOR)
   }
 }
 

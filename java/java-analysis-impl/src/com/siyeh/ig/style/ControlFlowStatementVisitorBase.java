@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,7 +17,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     super.visitForeachStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
-      registerLoopStatementErrors(statement, body, PsiKeyword.FOR);
+      registerLoopStatementErrors(statement, body, JavaKeywords.FOR);
     }
   }
 
@@ -25,7 +26,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     super.visitForStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
-      registerLoopStatementErrors(statement, body, PsiKeyword.FOR);
+      registerLoopStatementErrors(statement, body, JavaKeywords.FOR);
     }
   }
 
@@ -35,7 +36,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     super.visitWhileStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
-      registerLoopStatementErrors(statement, body, PsiKeyword.WHILE);
+      registerLoopStatementErrors(statement, body, JavaKeywords.WHILE);
     }
   }
 
@@ -44,7 +45,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     super.visitDoWhileStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
-      registerLoopStatementErrors(statement, body, PsiKeyword.DO);
+      registerLoopStatementErrors(statement, body, JavaKeywords.DO);
     }
   }
 
@@ -53,11 +54,11 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     super.visitIfStatement(statement);
     final PsiStatement thenBranch = statement.getThenBranch();
     if (isApplicable(thenBranch)) {
-      registerControlFlowStatementErrors(statement.getFirstChild(), thenBranch.getLastChild(), thenBranch, PsiKeyword.IF);
+      registerControlFlowStatementErrors(statement.getFirstChild(), thenBranch.getLastChild(), thenBranch, JavaKeywords.IF);
     }
     final PsiStatement elseBranch = statement.getElseBranch();
     if (isApplicable(elseBranch)) {
-      registerControlFlowStatementErrors(statement.getElseElement(), elseBranch.getLastChild(), elseBranch, PsiKeyword.ELSE);
+      registerControlFlowStatementErrors(statement.getElseElement(), elseBranch.getLastChild(), elseBranch, JavaKeywords.ELSE);
     }
   }
 

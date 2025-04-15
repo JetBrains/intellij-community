@@ -15,6 +15,7 @@ import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.Side
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.component1
@@ -168,7 +169,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
   rendererFactory: RendererFactory<I, JComponent>,
 ): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val viewer = this
-  withContext(Dispatchers.Main + CoroutineName("Code review diff UI")) {
+  withContext(Dispatchers.EDT + CoroutineName("Code review diff UI")) {
     supervisorScope {
       var prevJob: Job? = null
       viewerReadyFlow().collect {
@@ -269,7 +270,7 @@ internal fun <V : DiffViewerBase> V.viewerReadyFlow(): Flow<Boolean> {
     awaitClose {
       removeListener(listener)
     }
-  }.withInitial(isViewerGood()).flowOn(Dispatchers.Main).distinctUntilChanged()
+  }.withInitial(isViewerGood()).flowOn(Dispatchers.EDT).distinctUntilChanged()
 }
 
 interface DiffMapped {

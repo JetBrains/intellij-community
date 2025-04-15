@@ -40,6 +40,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDeclarations() { doTest(); }
   public void testErrorRecovery() { doTest(); }
   public void testWrongTargetTypeUse() { doTest(); }
+  public void testIncomplete() { doTest(); }
 
   private void doTest() { doTest(getTestName(true) + ".java"); }
   private void doTest(String name) { doTest(BASE_PATH + "/" + name, false, false); }

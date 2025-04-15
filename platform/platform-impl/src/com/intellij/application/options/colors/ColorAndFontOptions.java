@@ -58,8 +58,8 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -485,7 +485,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   @Override
-  public Configurable @NotNull [] buildConfigurables() {
+  public @NotNull Configurable @NotNull [] buildConfigurables() {
     myDisposeCompleted = false;
     initAll();
 

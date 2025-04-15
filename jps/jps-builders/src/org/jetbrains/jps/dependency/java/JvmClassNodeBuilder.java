@@ -419,8 +419,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final Ref<Boolean> myAnonymousClassFlag = Ref.create(false);
   private final Ref<Boolean> mySealedClassFlag = Ref.create(false);
 
-  private final Set<JvmMethod> myMethods = new HashSet<>();
-  private final Set<JvmField> myFields = new HashSet<>();
+  private final List<JvmMethod> myMethods = new ArrayList<>();
+  private final List<JvmField> myFields = new ArrayList<>();
   private final Set<Usage> myUsages = new HashSet<>();
   private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
   private RetentionPolicy myRetentionPolicy = null;
@@ -524,8 +524,9 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
     }
 
-    var fields = myIsLibraryMode? Iterators.filter(myFields, f -> !f.isPrivate()) : myFields;
-    var methods = myIsLibraryMode? Iterators.filter(myMethods, m -> !m.isPrivate()) : myMethods;
+    Iterators.BooleanFunction<? super Proto> visibilityFilter = proto -> proto.isPublic() || proto.isProtected();
+    var fields = myIsLibraryMode? Iterators.filter(myFields, visibilityFilter) : myFields;
+    var methods = myIsLibraryMode? Iterators.filter(myMethods, visibilityFilter) : myMethods;
     var usages = myIsLibraryMode? Set.<Usage>of() : myUsages;
     return new JvmClass(
       flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, fields, methods, myAnnotations, myTargets, myRetentionPolicy, usages, myMetadata

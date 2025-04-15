@@ -32,6 +32,7 @@ jvm_library(
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/built-in-server-api:builtInServer",
     "//platform/core-ui",

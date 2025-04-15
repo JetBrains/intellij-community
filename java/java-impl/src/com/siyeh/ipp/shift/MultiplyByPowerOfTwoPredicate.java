@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,47 +35,31 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate {
     }
   }
 
-  private static boolean assignmentExpressionIsMultiplyByPowerOfTwo(
-    PsiAssignmentExpression expression) {
+  private static boolean assignmentExpressionIsMultiplyByPowerOfTwo(PsiAssignmentExpression expression) {
     final IElementType tokenType = expression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.ASTERISKEQ) &&
-        !tokenType.equals(JavaTokenType.DIVEQ)) {
+    if (!tokenType.equals(JavaTokenType.ASTERISKEQ) && !tokenType.equals(JavaTokenType.DIVEQ)) {
       return false;
     }
     final PsiExpression lhs = expression.getLExpression();
     final PsiType lhsType = lhs.getType();
-    if (lhsType == null) {
-      return false;
-    }
-    if (!ShiftUtils.isIntegral(lhsType)) {
+    if (lhsType == null || !ShiftUtils.isIntegral(lhsType)) {
       return false;
     }
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
-    if (rhs == null) {
-      return false;
-    }
-    return ShiftUtils.isPowerOfTwo(rhs);
+    return rhs != null && ShiftUtils.isPowerOfTwo(rhs);
   }
 
-  private static boolean binaryExpressionIsMultiplyByPowerOfTwo(
-    PsiBinaryExpression expression) {
+  private static boolean binaryExpressionIsMultiplyByPowerOfTwo(PsiBinaryExpression expression) {
     final IElementType tokenType = expression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.ASTERISK) &&
-        !tokenType.equals(JavaTokenType.DIV)) {
+    if (!tokenType.equals(JavaTokenType.ASTERISK) && !tokenType.equals(JavaTokenType.DIV)) {
       return false;
     }
     final PsiExpression lhs = expression.getLOperand();
     final PsiType lhsType = lhs.getType();
-    if (lhsType == null) {
-      return false;
-    }
-    if (!ShiftUtils.isIntegral(lhsType)) {
+    if (lhsType == null || !ShiftUtils.isIntegral(lhsType)) {
       return false;
     }
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
-    if (rhs == null) {
-      return false;
-    }
-    return ShiftUtils.isPowerOfTwo(rhs);
+    return rhs != null && ShiftUtils.isPowerOfTwo(rhs);
   }
 }

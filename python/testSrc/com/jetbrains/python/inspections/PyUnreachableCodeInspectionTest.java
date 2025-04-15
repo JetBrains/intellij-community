@@ -24,6 +24,29 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
+  
+  // PY-79986
+  public void testForInsideFinally() {
+    doTestByText("""
+def bar():
+    try:
+        return
+    finally:
+        for i in range(10):
+            print("reachable")
+                   """);
+  }
+
+  // TODO: Test pattern matching more when we have Never type
+  // PY-79770
+  public void testBasicPatternMatching() {
+    doTestByText("""
+def foo(param: int) -> int:
+    match param:
+        case _:
+            return 41
+                   """);
+  }
 
   // PY-51564
   public void testWithNotContext() {
@@ -62,13 +85,23 @@ class A(TestCase):
   public void testWith() {
     doTestByText(
       """
+from typing import Literal
+
 class Suppress:
     def __enter__(self): ...
     def __exit__(self, exc_type, exc_value, traceback) -> bool: ...
 
+class Suppress2:
+    def __enter__(self): ...
+    def __exit__(self, exc_type, exc_value, traceback) -> Literal[True]: ...
+
 class NoSuppress:
     def __enter__(self): ...
     def __exit__(self, exc_type, exc_value, traceback) -> bool | None: ...
+
+class NoSuppress2:
+    def __enter__(self): ...
+    def __exit__(self, exc_type, exc_value, traceback) -> Literal[False]: ...
 
 def sup(b):
     with Suppress():
@@ -82,6 +115,18 @@ def sup(b):
         assert False
     print("reachable")
 
+def sup2(b):
+    with Suppress2():
+        a = 42
+        raise ValueError("Something went wrong")
+    print("reachable")
+    
+    with Suppress2():
+        assert b
+        a = 42
+        assert False
+    print("reachable")
+
 def nosup(b):
     with NoSuppress():
         a = 42
@@ -89,6 +134,18 @@ def nosup(b):
     <warning descr="This code is unreachable">print("unreachable")</warning>
     
     with NoSuppress():
+        assert b
+        a = 42
+        assert False
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+
+def nosup2(b):
+    with NoSuppress2():
+        a = 42
+        raise ValueError("Something went wrong")
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    
+    with NoSuppress2():
         assert b
         a = 42
         assert False

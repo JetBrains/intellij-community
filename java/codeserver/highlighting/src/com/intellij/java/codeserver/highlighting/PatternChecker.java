@@ -100,7 +100,7 @@ final class PatternChecker {
                                              @NotNull PsiType itemType) {
     if (!TypeConversionUtil.areTypesConvertible(itemType, patternType) &&
         (!myVisitor.isIncompleteModel() || !IncompleteModelUtil.isPotentiallyConvertible(patternType, itemType, pattern))) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(pattern, new JavaIncompatibleTypeErrorContext(itemType, patternType)));
+      myVisitor.reportIncompatibleType(itemType, patternType, pattern);
       return;
     }
     checkUncheckedPatternConversion(pattern);
@@ -154,8 +154,7 @@ final class PatternChecker {
                IncompleteModelUtil.hasUnresolvedComponent(deconstructionComponentType))) {
             continue;
           }
-          myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-            deconstructionComponent, new JavaIncompatibleTypeErrorContext(substitutedRecordComponentType, deconstructionComponentType)));
+          myVisitor.reportIncompatibleType(substitutedRecordComponentType, deconstructionComponentType, deconstructionComponent);
         }
       }
       else {

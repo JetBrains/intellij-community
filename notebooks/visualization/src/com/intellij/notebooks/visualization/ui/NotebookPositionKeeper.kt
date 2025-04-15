@@ -31,6 +31,8 @@ class NotebookPositionKeeper(val editor: EditorImpl) {
     val (topLeftCornerOffset, viewportShift) = position
     val scrollingModel = editor.scrollingModel
     val newY = editor.offsetToXY(topLeftCornerOffset).y - viewportShift
+    if (editor.scrollingModel.visibleArea.y == newY)
+      return
     scrollingModel.withoutAnimation {
       scrollVertically(newY)
     }

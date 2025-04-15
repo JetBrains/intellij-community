@@ -9,11 +9,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +31,8 @@ class PhysicalAndLogicalStructureViewBuilder(
       if (physicalBuilder !is TreeBasedStructureViewBuilder) return physicalBuilder
       if (ApplicationManager.getApplication().isUnitTestMode()
           || !Registry.`is`("logical.structure.enabled", true)
-          || AppMode.isRemoteDevHost()) {
+          || (AppMode.isRemoteDevHost() && !Registry.`is`("remoteDev.toolwindow.structure.lux.enabled", false))
+          || application.currentSession.isGuest) {
         return physicalBuilder
       }
       return PhysicalAndLogicalStructureViewBuilder(physicalBuilder, psiFile)

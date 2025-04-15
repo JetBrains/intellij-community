@@ -1,5 +1,5 @@
 // "Change parameter 'transform' type of function 'map' to 'String'" "false"
-// K2_AFTER_ERROR: Argument type mismatch: actual type is 'String', but 'Function1<Int, R (of fun <T, R> Iterable<T>.map)>' was expected.
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'String', but 'Function1<Int, uninferred R (of fun <T, R> Iterable<T>.map)>' was expected.
 // K2_AFTER_ERROR: Cannot infer type for this parameter. Specify it explicitly.
 // ERROR: Type mismatch: inferred type is String but (TypeVariable(T)) -> TypeVariable(R) was expected
 // WITH_STDLIB

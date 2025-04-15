@@ -1,16 +1,16 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "build-zip",
-  module_name = "intellij.idea.community.build.zip",
+  name = "zip",
   kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
   visibility = ["//visibility:public"],
   srcs = glob(["src/*.kt"]),
   deps = [
-    "@lib//:kotlin-stdlib",
-    "@lib//:netty-buffer",
-    "@lib//:fastutil-min",
-    "@lib//:hash4j",
+    "//:kotlin-stdlib",
+    "//:netty-buffer",
+    "//:netty-common",
+    "//:intellij-deps-fastutil",
+    "//:hash4j",
   ]
 )
 

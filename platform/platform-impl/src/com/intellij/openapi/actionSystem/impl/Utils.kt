@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
@@ -160,13 +161,13 @@ object Utils {
   @JvmStatic
   fun createAsyncDataContext(component: Component?): DataContext {
     if (component == null) return DataContext.EMPTY_CONTEXT
-    return PreCachedDataContext(component)
+    return PreCachedDataContext(component, false)
   }
 
   @JvmStatic
   fun createAsyncDataContext(dataContext: DataContext, provider: Any?): DataContext {
     return when (val asyncContext = createAsyncDataContextImpl(dataContext)) {
-      DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
+      DataContext.EMPTY_CONTEXT -> PreCachedDataContext()
         .prependProvider(provider)
       is PreCachedDataContext -> asyncContext
         .prependProvider(provider)
@@ -1053,6 +1054,12 @@ object Utils {
         updater.presentation(it)
       }
     }
+  }
+
+  @TestOnly
+  fun forceUseCachesAndCreateAsyncDataContextInTestsOnly(component: Component): DataContext {
+    assert(ApplicationManager.getApplication().isUnitTestMode()) { "isUnitTestMode must be true"}
+    return PreCachedDataContext(component, true)
   }
 }
 

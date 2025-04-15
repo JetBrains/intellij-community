@@ -53,7 +53,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
       @Override
       public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
         PsiFile psiFile = ReadAction.compute(() -> {
-          // todo ijpl-339 figure out which psi file to pass here or get rid of psi file at all
+          // todo IJPL-339 figure out which psi file to pass here or get rid of psi file at all
           return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContexts.anyContext());
         });
         fireDocumentCreated(document, psiFile);
@@ -162,7 +162,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
       }
     }
     return false;
-    // todo ijpl-339 is it correct?
+    // todo IJPL-339 is it correct?
   }
 
   @Override
@@ -172,7 +172,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
     List<FileViewProvider> viewProviders;
     if (doc instanceof DocumentWindow) {
-      // todo ijpl-339 implement it
+      // todo IJPL-339 implement it
       Document topDoc = ((DocumentWindow)doc).getDelegate();
       List<FileViewProvider> topViewProviders = getCachedViewProviders(topDoc);
       if (ContainerUtil.exists(topViewProviders, topViewProvider -> InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider))) { // todo is it correct?
@@ -186,7 +186,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
       viewProviders = getCachedViewProviders(doc);
     }
 
-    // todo ijpl-339 is it correct?
+    // todo IJPL-339 is it correct?
     for (FileViewProvider viewProvider : viewProviders) {
       component.doPostponedFormatting(viewProvider);
     }

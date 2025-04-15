@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.platform.workspace.storage.EntityPointer;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +51,8 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
         private int visitedCount = 0;
 
         @Override
-        public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
+        public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet,
+                                      @NotNull EntityPointer<? extends @NotNull WorkspaceEntity> entityPointer) {
           visitedCount++;
           if (visitedCount % 100 == 0) {
             ProgressManager.checkCanceled();
@@ -83,7 +86,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   private boolean hasRecursiveRootFromModuleContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
-    if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+    if (!fileSet.getRecursive()) {
       return false;
     }
     return isInContent(fileSet);

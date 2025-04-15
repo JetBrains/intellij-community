@@ -46,11 +46,15 @@ abstract class JupyterAbstractAboveCellToolbar(
     try {
       g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ALPHA)
       g2.color = this.background
-      g2.fillRoundRect(0, 0, width, height, getArcSize(), getArcSize())
+      fillRect(g2)
     }
     finally {
       g2.dispose()
     }
+  }
+
+  protected open fun fillRect(g2: Graphics2D) {
+    g2.fillRoundRect(0, 0, width, height, getArcSize(), getArcSize())
   }
 
   override fun updateUI() {
@@ -82,7 +86,7 @@ abstract class JupyterAbstractAboveCellToolbar(
   protected open fun getVerticalPadding(): Int = getHorizontalPadding()
 
   companion object {
-    private const val ALPHA = 1.0f
-    private val TOOLBAR_BORDER_THICKNESS = JBUI.scale(1)
+    const val ALPHA: Float = 1.0f
+    val TOOLBAR_BORDER_THICKNESS: Int = JBUI.scale(1)
   }
 }
