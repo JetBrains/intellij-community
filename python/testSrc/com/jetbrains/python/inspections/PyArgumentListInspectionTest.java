@@ -416,11 +416,31 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
 
   // PY-17877
   public void testMetaclassHavingDunderCall() {
+    // TODO Metaclass's `__call__` has to be validated as well as `__init__` / `__new__`
+    //runWithLanguageLevel(
+    //  LanguageLevel.getLatest(),
+    //  () -> doTestByText("""
+    //                       class MetaFoo(type):
+    //                         def __call__(cls, p3, p4):
+    //                           print(f'MetaFoo.__call__: {cls}, {p3}, {p4}')
+    //
+    //                       class Foo(metaclass=MetaFoo):
+    //                         pass
+    //
+    //                       class SubFoo(Foo):
+    //                         def __new__(self, p1, p2):
+    //                           # This never gets called
+    //                           print(f'SubFoo.__new__: {p1}, {p2}')
+    //
+    //                       sub = SubFoo(1<warning descr="Parameter 'p4' unfilled">)</warning>
+    //                       foo = Foo(3<warning descr="Parameter 'p4' unfilled">)</warning>""")
+    //);
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("""
                            class MetaFoo(type):
                              def __call__(cls, p3, p4):
+                               # type: (...) -> object
                                print(f'MetaFoo.__call__: {cls}, {p3}, {p4}')
 
                            class Foo(metaclass=MetaFoo):

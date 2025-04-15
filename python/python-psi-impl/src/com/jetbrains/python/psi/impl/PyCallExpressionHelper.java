@@ -923,16 +923,46 @@ public final class PyCallExpressionHelper {
   }
 
   private static @NotNull List<? extends RatedResolveResult> resolveConstructors(@NotNull PyClassType type,
-                                                                                 @Nullable PyExpression location,
+                                                                                 @Nullable PyCallSiteExpression callSite,
                                                                                  @NotNull PyResolveContext resolveContext) {
-    final var metaclassDunderCall = resolveMetaclassDunderCall(type, location, resolveContext);
-    if (!metaclassDunderCall.isEmpty()) {
+    // When evaluating a constructor call, a type checker should first check if the class has a custom metaclass (a
+    // subclass of type) that defines a __call__ method. If so, it should evaluate the call of this method using the
+    // supplied arguments. If the metaclass is type, this step can be skipped.
+    //
+    // If the evaluated return type of the __call__ method indicates something other than an instance of the class
+    // being constructed, a type checker should assume that the metaclass __call__ method is overriding
+    // type.__call__ in some special manner, and it should not attempt to evaluate the __new__ or __init__
+    // methods on the class.
+    final var metaclassDunderCall = resolveMetaclassDunderCall(type, callSite, resolveContext);
+    final var context = resolveContext.getTypeEvalContext();
+    boolean skipNewAndInitEvaluation = StreamEx.of(metaclassDunderCall)
+      .map(RatedResolveResult::getElement)
+      .select(PyTypedElement.class)
+      .map(context::getType)
+      .select(PyCallableType.class)
+      .anyMatch(callableType -> {
+        if (isReturnTypeAnnotated(callableType, context)) {
+          PyType callType = callSite != null ? callableType.getCallType(context, callSite) : callableType.getReturnType(context);
+          return !(callType instanceof PyClassType classType && classType.getPyClass() == type.getPyClass());
+        }
+        return false;
+      });
+
+    if (skipNewAndInitEvaluation) {
       return metaclassDunderCall;
     }
 
-    final var context = resolveContext.getTypeEvalContext();
     final var initAndNew = type.getPyClass().multiFindInitOrNew(true, context);
     return ContainerUtil.map(preferInitOverNew(initAndNew), e -> new RatedResolveResult(PyReferenceImpl.getRate(e, context), e));
+  }
+
+  private static boolean isReturnTypeAnnotated(@NotNull PyCallableType callableType, @NotNull TypeEvalContext context) {
+    PyCallable callable = callableType.getCallable();
+    if (callable instanceof PyFunction function) {
+      PyExpression returnTypeAnnotation = PyTypingTypeProvider.getReturnTypeAnnotation(function, context);
+      return returnTypeAnnotation != null;
+    }
+    return false;
   }
 
   private static @NotNull Collection<? extends PyFunction> preferInitOverNew(@NotNull List<PyFunction> initAndNew) {
@@ -941,7 +971,7 @@ public final class PyCallExpressionHelper {
   }
 
   private static @NotNull List<? extends RatedResolveResult> resolveMetaclassDunderCall(@NotNull PyClassType type,
-                                                                                        @Nullable PyExpression location,
+                                                                                        @Nullable PyCallSiteExpression callSite,
                                                                                         @NotNull PyResolveContext resolveContext) {
     final var context = resolveContext.getTypeEvalContext();
 
@@ -951,7 +981,7 @@ public final class PyCallExpressionHelper {
     final PyClassType typeType = PyBuiltinCache.getInstance(type.getPyClass()).getTypeType();
     if (metaClassType == typeType) return Collections.emptyList();
 
-    final var results = resolveDunderCall(metaClassType, location, resolveContext);
+    final var results = resolveDunderCall(metaClassType, callSite, resolveContext);
     if (results.isEmpty()) return Collections.emptyList();
 
     final Set<PsiElement> typeDunderCall =
@@ -959,13 +989,7 @@ public final class PyCallExpressionHelper {
       ? Collections.emptySet()
       : ContainerUtil.map2SetNotNull(resolveDunderCall(typeType, null, resolveContext), RatedResolveResult::getElement);
 
-    return ContainerUtil.filter(
-      results,
-      it -> {
-        final var element = it.getElement();
-        return !typeDunderCall.contains(element) && !ParamHelper.isSelfArgsKwargsCallable(element, context);
-      }
-    );
+    return ContainerUtil.filter(results, it -> !typeDunderCall.contains(it.getElement()));
   }
 
   private static @NotNull List<? extends RatedResolveResult> resolveDunderCall(@NotNull PyClassLikeType type,
