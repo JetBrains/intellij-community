@@ -1049,7 +1049,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myVersion2!!.isVisible = isVersion
     }
 
-    tagPanel!!.setTags(PluginManagerConfigurable.getTags(plugin))
+    tagPanel!!.setTags(getTags(plugin))
 
     if (isMarketplace) {
       showMarketplaceData(plugin)

@@ -1257,7 +1257,7 @@ public final class PluginManagerConfigurable
             }
             if (!parser.tags.isEmpty()) {
               for (Iterator<IdeaPluginDescriptor> I = descriptors.iterator(); I.hasNext(); ) {
-                if (!ContainerUtil.intersects(getTags(I.next()), parser.tags)) {
+                if (!ContainerUtil.intersects(PluginUtilsKt.getTags(I.next()), parser.tags)) {
                   I.remove();
                 }
               }
@@ -1593,55 +1593,6 @@ public final class PluginManagerConfigurable
     };
 
     DataManager.registerDataProvider(component, dataId -> PlatformDataKeys.COPY_PROVIDER.is(dataId) ? copyProvider : null);
-  }
-
-  public static @NotNull List<String> getTags(@NotNull IdeaPluginDescriptor plugin) {
-    List<String> tags = null;
-    String productCode = plugin.getProductCode();
-
-    if (plugin instanceof PluginNode) {
-      tags = ((PluginNode)plugin).getTags();
-
-      if (productCode != null) {
-        if (LicensePanel.isEA2Product(productCode)) {
-          if (tags != null && tags.contains(Tags.Paid.name())) {
-            tags = new ArrayList<>(tags);
-            tags.remove(Tags.Paid.name());
-          }
-        }
-        else if (tags == null) {
-          return List.of(Tags.Paid.name());
-        }
-      }
-    }
-    else if (productCode != null && !plugin.isBundled() && !LicensePanel.isEA2Product(productCode)) {
-      LicensingFacade instance = LicensingFacade.getInstance();
-      if (instance != null) {
-        String stamp = instance.getConfirmationStamp(productCode);
-        if (stamp != null) {
-          return List.of(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
-        }
-      }
-      return plugin.isLicenseOptional() ? List.of(Tags.Freemium.name()) : List.of(Tags.Paid.name());
-    }
-    if (ContainerUtil.isEmpty(tags)) {
-      return List.of();
-    }
-
-    if (tags.size() > 1) {
-      tags = new ArrayList<>(tags);
-      if (tags.remove(Tags.EAP.name())) {
-        tags.add(0, Tags.EAP.name());
-      }
-      if (tags.remove(Tags.Paid.name())) {
-        tags.add(0, Tags.Paid.name());
-      }
-      if (tags.remove(Tags.Freemium.name())) {
-        tags.add(0, Tags.Freemium.name());
-      }
-    }
-
-    return tags;
   }
 
   public static <T extends Component> @NotNull T setTinyFont(@NotNull T component) {

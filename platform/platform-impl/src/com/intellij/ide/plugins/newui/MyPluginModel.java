@@ -880,7 +880,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       myTags = new TreeSet<>(String::compareToIgnoreCase);
 
       for (IdeaPluginDescriptor descriptor : getInstalledDescriptors()) {
-        myTags.addAll(PluginManagerConfigurable.getTags(descriptor));
+        myTags.addAll(PluginUtilsKt.getTags(descriptor));
       }
     }
     return Collections.unmodifiableSortedSet(myTags);

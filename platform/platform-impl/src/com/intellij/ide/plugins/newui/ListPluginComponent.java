@@ -433,7 +433,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void createTag() {
-    List<String> tags = PluginManagerConfigurable.getTags(myPlugin.getDescriptor());
+    List<String> tags = PluginUtilsKt.getTags(myPlugin.getDescriptor());
     if (!tags.isEmpty()) {
       TagComponent tagComponent = createTagComponent(tags.get(0));
       myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent));
