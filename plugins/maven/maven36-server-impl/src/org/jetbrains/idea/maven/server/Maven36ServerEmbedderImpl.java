@@ -56,7 +56,15 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
         DependencyCollector dependencyCollector;
         if (VersionComparatorUtil.compare(getMavenVersion(), "3.9.0") >= 0) {
           // depth-first dependency collector, available since maven 3.9.0
-          dependencyCollector = getComponentIfExists(DependencyCollector.class, "df");
+          if (System.getProperty("aether.dependencyCollector.impl") != null) {
+            // honor user-specified dependency collector, if it exists
+            dependencyCollector = getComponentIfExists(DependencyCollector.class, System.getProperty("aether.dependencyCollector.impl"));
+            if (dependencyCollector == null) {
+              dependencyCollector = getComponentIfExists(DependencyCollector.class, "df");
+            }
+          } else {
+            dependencyCollector = getComponentIfExists(DependencyCollector.class, "df");
+          }
         }
         else {
           // default dependency collector, maven 3.8
