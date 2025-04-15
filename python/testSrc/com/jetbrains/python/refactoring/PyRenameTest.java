@@ -10,6 +10,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -411,6 +412,16 @@ public class PyRenameTest extends PyTestCase {
   // PY-17733
   public void testRenameClassAttributeDefinedInClassMethod() {
     doTest("renamed");
+  }
+
+  // PY-79967
+  public void testRenameVariableInTStringWithHTMLInjection() {
+    doTest("username");
+  }
+
+  // PY-79967
+  public void testRenameVariableInSimpleTemplateString() {
+    doTest("username");
   }
 
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
