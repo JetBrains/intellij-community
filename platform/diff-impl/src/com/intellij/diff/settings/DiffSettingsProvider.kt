@@ -7,6 +7,6 @@ import com.intellij.ide.settings.RemoteSettingInfoProvider
 
 internal class DiffSettingsProvider: RemoteSettingInfoProvider {
   override fun getRemoteSettingsInfo(): Map<String, RemoteSettingInfo> {
-    return mapOf(DiffSettingsHolder.SETTINGS_KEY to RemoteSettingInfo(RemoteSettingInfo.Direction.InitialFromBackend))
+    return mapOf(DiffSettingsHolder.SETTINGS_KEY to RemoteSettingInfo(RemoteSettingInfo.Direction.OnlyFromBackend))
   }
 }
