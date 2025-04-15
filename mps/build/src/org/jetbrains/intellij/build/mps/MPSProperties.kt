@@ -59,7 +59,6 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.vcs.github.community",
             "intellij.ant",
             "intellij.sh",
-            "intellij.vcs.changeReminder",
             "intellij.markdown",
             "intellij.grazie",
             "intellij.laf.macos"
