@@ -410,9 +410,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
-    <braceMatcher
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.codeinsight.EditorConfigBraceMatcher"/>
     <commenter
         language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigCommenter"/>
