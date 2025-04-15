@@ -67,7 +67,7 @@ object SeActionPresentationProvider {
       }
 
       presentation = presentation.run {
-        copy(toolTip = actionPresentation.description)
+        copy(toolTip = actionPresentation.description, isEnabled = actionPresentation.isEnabled)
       }
 
       @NlsSafe val actionId = ActionManager.getInstance().getId(anAction)
