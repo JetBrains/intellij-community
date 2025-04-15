@@ -23,10 +23,11 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
     setOf(ComposeResourcesModelBuilder::class.java, ComposeResourcesExtension::class.java)
 
   override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
+    super.populateModuleExtraModels(gradleModule, ideModule)
+    val mppModel = resolverCtx.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java) ?: return
     val composeResourcesModel = resolverCtx.getExtraProject(gradleModule, ComposeResourcesModel::class.java)
     val customComposeResourcesDirs = composeResourcesModel?.customComposeResourcesDirs.orEmpty()
     log.info("Custom composeResources registered for ${gradleModule.name}: $customComposeResourcesDirs")
-    val mppModel = resolverCtx.getExtraProject(gradleModule, KotlinMPPGradleModel::class.java) ?: return
     val composeResourcesDirs = gradleModule.commonComposeResourcesDirs() + mppModel.sourceSetsByName
       .keys
       .associateWith { sourceSetName ->
@@ -37,7 +38,6 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
 
     val composeResources = ComposeResourcesModelImpl(customComposeResourcesDirs = composeResourcesDirs)
     ideModule.createChild(COMPOSE_RESOURCES_KEY, composeResources)
-    super.populateModuleExtraModels(gradleModule, ideModule)
   }
 
   /**
