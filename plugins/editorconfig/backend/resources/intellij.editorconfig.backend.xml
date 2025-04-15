@@ -406,9 +406,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
-    <commenter
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.codeinsight.EditorConfigCommenter"/>
     <psiStructureViewFactory
         language="EditorConfig"
         implementationClass="org.editorconfig.language.structureview.EditorConfigStructureViewFactory"/>

@@ -10,5 +10,6 @@
     <lang.braceMatcher language="EditorConfig" implementationClass="com.intellij.editorconfig.common.lang.EditorConfigBraceMatcher"/>
     <lang.formatter language="EditorConfig"
                     implementationClass="com.intellij.editorconfig.common.formatting.EditorConfigFormattingModelBuilder"/>
+    <lang.commenter language="EditorConfig" implementationClass="com.intellij.editorconfig.common.lang.EditorConfigCommenter"/>
   </extensions>
 </idea-plugin>
