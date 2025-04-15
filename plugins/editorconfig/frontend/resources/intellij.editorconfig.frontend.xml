@@ -7,5 +7,7 @@
                                    implementationClass="com.intellij.editorconfig.frontend.highlighting.EditorConfigSyntaxHighlighterFactory"/>
     <annotator language="EditorConfig" implementationClass="com.intellij.editorconfig.frontend.highlighting.EditorConfigAnnotator"/>
     <colorSettingsPage implementation="com.intellij.editorconfig.frontend.settings.EditorConfigColorSettingsPage"/>
+    <lang.foldingBuilder language="EditorConfig"
+                         implementationClass="com.intellij.editorconfig.frontend.lang.editor.EditorConfigFoldingBuilder"/>
   </extensions>
 </idea-plugin>

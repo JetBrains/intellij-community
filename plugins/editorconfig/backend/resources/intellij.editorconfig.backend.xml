@@ -413,9 +413,6 @@
     <commenter
         language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigCommenter"/>
-    <foldingBuilder
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.codeinsight.EditorConfigFoldingBuilder"/>
     <formatter
         language="EditorConfig"
         implementationClass="org.editorconfig.language.formatting.EditorConfigFormattingModelBuilder"/>
