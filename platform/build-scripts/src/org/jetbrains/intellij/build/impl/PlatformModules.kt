@@ -90,6 +90,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
 
   "intellij.platform.externalSystem.impl",
   "intellij.platform.credentialStore.ui",
+  "intellij.platform.ide.impl.wsl",
 
   // do we need it?
   "intellij.platform.sqlite",

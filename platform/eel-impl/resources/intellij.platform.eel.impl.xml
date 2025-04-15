@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.EelNioBridgeService"
+                        serviceImplementation="com.intellij.platform.eel.impl.provider.EelNioBridgeServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalPosixEelApi"
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl"/>
+  </extensions>
+</idea-plugin>
