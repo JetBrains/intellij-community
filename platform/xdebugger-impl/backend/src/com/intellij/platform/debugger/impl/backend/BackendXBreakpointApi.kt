@@ -100,6 +100,13 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
+  override suspend fun setUserDescription(breakpointId: XBreakpointId, description: String?) {
+    val breakpoint = breakpointId.findValue() ?: return
+    edtWriteAction {
+      breakpoint.userDescription = description
+    }
+  }
+
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId? {
     val breakpoint = breakpointId.findValue() ?: return null
     val project = breakpoint.project

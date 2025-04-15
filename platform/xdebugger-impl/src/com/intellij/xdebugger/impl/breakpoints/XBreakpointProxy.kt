@@ -28,6 +28,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun getDisplayText(): @NlsSafe String
   fun getShortText(): @NlsSafe String
   fun getUserDescription(): @NlsSafe String?
+  fun setUserDescription(description: String?)
   fun getGroup(): String?
   fun getIcon(): Icon
   fun isEnabled(): Boolean
@@ -92,6 +93,10 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     override fun getShortText(): @NlsSafe String = XBreakpointUtil.getShortText(breakpoint)
 
     override fun getUserDescription(): String? = breakpoint.userDescription
+    
+    override fun setUserDescription(description: String?) {
+      breakpoint.userDescription = description
+    }
 
     override fun getGroup(): String? {
       return breakpoint.group

@@ -72,6 +72,14 @@ class FrontendXBreakpointProxy(
   }
 
   override fun getUserDescription(): String? = _state.value.userDescription
+  
+  override fun setUserDescription(description: String?) {
+    _state.update { it.copy(userDescription = description) }
+    onBreakpointChange()
+    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+      XBreakpointApi.getInstance().setUserDescription(id, description)
+    }
+  }
 
   override fun getGroup(): String? = _state.value.group
 

@@ -300,7 +300,7 @@ public class BreakpointsDialog extends DialogWrapper {
           res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode<?>)component).getGroup()));
         }
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
-          res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
+          res.add(new EditDescriptionAction((XBreakpointProxy)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
         }
         return res.toArray(AnAction.EMPTY_ARRAY);
       }
@@ -547,9 +547,9 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private final class EditDescriptionAction extends AnAction {
-    private final XBreakpointBase myBreakpoint;
+    private final XBreakpointProxy myBreakpoint;
 
-    private EditDescriptionAction(XBreakpointBase breakpoint) {
+    private EditDescriptionAction(XBreakpointProxy breakpoint) {
       super(XDebuggerBundle.message("breakpoints.dialog.edit.description"));
       myBreakpoint = breakpoint;
     }
