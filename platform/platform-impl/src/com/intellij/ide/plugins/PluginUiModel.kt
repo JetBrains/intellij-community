@@ -17,6 +17,11 @@ interface PluginUiModel {
   val name: String
 
   val source: PluginSource
+  
+  /**
+   * Returns true if the plugin requires an upgrade to a commercial IDE.
+   */
+  val requiresUpgrade: Boolean
 
   /**
    * Java compatibility method. Going to be removed after refactoring is done.

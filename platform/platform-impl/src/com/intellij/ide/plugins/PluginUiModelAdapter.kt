@@ -25,6 +25,11 @@ class PluginUiModelAdapter(
     }
 
   override val name: String = pluginDescriptor.name
+  
+  override val requiresUpgrade: Boolean
+    get() {
+      return pluginDescriptor is PluginNode && pluginDescriptor.suggestedCommercialIde != null
+    }
 
   override val source: PluginSource = PluginSource.LOCAL
 }

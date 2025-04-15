@@ -223,7 +223,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void setupNotAllowedMarkerButton() {
-    if (myMarketplace || myPluginModel.getModel().getState(myPlugin.getDescriptor()).isDisabled()) {
+    if (myMarketplace || myPluginModel.getState(myPlugin).isDisabled()) {
       myInstallButton.setButtonColors(false);
       myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.not.allowed"));
       myInstallButton.setToolTipText(IdeBundle.message("plugin.status.not.allowed.tooltip"));
@@ -236,7 +236,7 @@ public final class ListPluginComponent extends JPanel {
       myInstallButton.setBorderColor(JBColor.red);
       myInstallButton.setTextColor(JBColor.red);
       myInstallButton.addActionListener(e -> {
-        myPluginModel.getModel().disable(List.of(myPlugin.getDescriptor()));
+        myPluginModel.disable(myPlugin);
         setupNotAllowedMarkerButton();
       });
     }
@@ -257,7 +257,7 @@ public final class ListPluginComponent extends JPanel {
         myLayout.addButtonComponent(myInstallButton = createInstallButton());
 
         myInstallButton.addActionListener(
-          e -> myPluginModel.getModel().installOrUpdatePlugin(this, myPlugin.getDescriptor(), null, ModalityState.stateForComponent(myInstallButton)));
+          e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
         myInstallButton.setEnabled(showInstall, IdeBundle.message("plugin.status.installed"));
 
         ColorButton.setWidth72(myInstallButton);
@@ -276,7 +276,7 @@ public final class ListPluginComponent extends JPanel {
             else {
               myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
 
-              myPluginModel.getModel().addUninstalled(myInstalledDescriptorForMarketplace);
+              myPluginModel.addUninstalled(new PluginUiModelAdapter(myInstalledDescriptorForMarketplace));
             }
           }
           else {
@@ -301,7 +301,7 @@ public final class ListPluginComponent extends JPanel {
         else {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
 
-          myPluginModel.getModel().addUninstalled(myPlugin.getDescriptor());
+          myPluginModel.addUninstalled(myPlugin);
         }
       }
       else {
@@ -335,19 +335,17 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private @NotNull InstallButton createInstallButton() {
-    IdeaPluginDescriptor descriptor = myPlugin.getDescriptor();
-    boolean upgradeRequired = descriptor instanceof PluginNode && ((PluginNode)descriptor).getSuggestedCommercialIde() != null;
-    return new InstallButton(false, upgradeRequired);
+    return new InstallButton(false, myPlugin.getRequiresUpgrade());
   }
 
   private void createEnableDisableButton(@NotNull Supplier<? extends IdeaPluginDescriptor> descriptorFunction) {
     myEnableDisableButton = createEnableDisableButton(__ -> {
-      List<IdeaPluginDescriptor> descriptors = List.of(descriptorFunction.get());
-      if (myPluginModel.getModel().getState(myPlugin.getDescriptor()).isDisabled()) {
-        myPluginModel.getModel().enable(descriptors);
+      PluginUiModelAdapter pluginToSwitch = new PluginUiModelAdapter(descriptorFunction.get());
+      if (myPluginModel.getState(myPlugin).isDisabled()) {
+        myPluginModel.enable(pluginToSwitch);
       }
       else {
-        myPluginModel.getModel().disable(descriptors);
+        myPluginModel.disable(pluginToSwitch);
       }
     });
 
@@ -715,7 +713,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(myPluginModel.getModel().getIcon(myPlugin.getDescriptor(), false, errors, disabled));
+    myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, errors, disabled));
   }
 
   public void showProgress() {
