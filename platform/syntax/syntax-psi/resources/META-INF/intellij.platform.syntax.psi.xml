@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.syntax.psi">
+<idea-plugin>
   <extensionPoints>
     <extensionPoint name="syntax.elementTypeConverter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.ElementTypeConverterFactory"/>
