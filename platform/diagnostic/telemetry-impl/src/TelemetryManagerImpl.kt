@@ -240,7 +240,7 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
 
   for (item in ExtensionPointName<OpenTelemetryExporterProvider>("com.intellij.openTelemetryExporterProvider").filterableLazySequence()) {
     val pluginDescriptor = item.pluginDescriptor
-    if (!pluginDescriptor.isBundled) {
+    if (!pluginDescriptor.isBundled && !pluginDescriptor.isAllowedToExportOT()) {
       logger<OpenTelemetryExporterProvider>().error(PluginException("Plugin ${pluginDescriptor.pluginId} is not allowed " +
                                                                     "to provide OpenTelemetryExporterProvider", pluginDescriptor.pluginId))
       continue
