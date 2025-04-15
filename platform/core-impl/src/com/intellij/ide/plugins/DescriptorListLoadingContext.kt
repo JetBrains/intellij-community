@@ -32,7 +32,7 @@ class DescriptorListLoadingContext(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
-  val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
+  private val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
   private val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
   val essentialPlugins: List<PluginId> by lazy { customEssentialPlugins ?: ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() }
   private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }

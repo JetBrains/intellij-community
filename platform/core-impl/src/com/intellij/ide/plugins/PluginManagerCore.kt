@@ -671,14 +671,13 @@ object PluginManagerCore {
       pluginErrorsById[loadingError.plugin.pluginId] = loadingError
       pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
       val disabledDependencyId = loadingError.disabledDependency
-      if (disabledDependencyId != null && context.disabledPlugins.contains(disabledDependencyId)) {
+      if (disabledDependencyId != null && context.isPluginDisabled(disabledDependencyId)) {
         pluginsToEnable[disabledDependencyId] = idMap[disabledDependencyId]!!.getName()
       }
     }
 
     val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(disabler = { descriptor ->
-      val disabledPlugins = context.disabledPlugins
-      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, disabledPlugins, pluginErrorsById)
+      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, context::isPluginDisabled, pluginErrorsById)
       if (loadingError != null) {
         registerLoadingError(loadingError)
       }

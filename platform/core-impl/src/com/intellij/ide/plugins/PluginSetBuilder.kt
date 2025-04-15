@@ -294,12 +294,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     descriptor: IdeaPluginDescriptorImpl,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     fullIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    disabledPlugins: Set<PluginId>,
+    isPluginDisabled: (PluginId) -> Boolean,
     errors: MutableMap<PluginId, PluginLoadingError>,
   ): PluginLoadingError? {
     val isNotifyUser = !descriptor.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(descriptor.pluginId, fullIdMap)
     for (incompatibleId in descriptor.incompatiblePlugins) {
-      if (!enabledPluginIds.containsKey(incompatibleId) || disabledPlugins.contains(incompatibleId)) {
+      if (!enabledPluginIds.containsKey(incompatibleId) || isPluginDisabled(incompatibleId)) {
         continue
       }
 
