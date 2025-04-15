@@ -12,12 +12,9 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkFinder
@@ -53,13 +50,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.project.MavenConfigurableBundle
-import org.jetbrains.idea.maven.project.MavenHomeType
-import org.jetbrains.idea.maven.project.MavenInSpecificPath
-import org.jetbrains.idea.maven.project.MavenProjectBundle
-import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
-import org.jetbrains.idea.maven.project.staticOrBundled
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil.CONF_DIR
 import org.jetbrains.idea.maven.utils.MavenUtil.DOT_M2_DIR
@@ -80,13 +71,23 @@ import java.io.IOException
 import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
-object MavenEelUtil  {
+object MavenEelUtil {
   @JvmStatic
   fun EelApi?.resolveM2Dir(): Path {
     val localUserHome = Path.of(SystemProperties.getUserHome())
-    val userHome = if (this != null && this !is LocalEelApi) fs.user.home.asNioPath() else localUserHome
+    val mavenUserHomeVar = Environment.getVariable("MAVEN_USER_HOME")
+    if (mavenUserHomeVar == null) {
+      val userHome = if (this != null && this !is LocalEelApi) fs.user.home.asNioPath() else localUserHome
 
-    return userHome.resolve(DOT_M2_DIR)
+      return userHome.resolve(DOT_M2_DIR)
+    }
+    else {
+      if (this != null && this !is LocalEelApi) {
+        return fs.getPath(mavenUserHomeVar).asNioPath()
+      }
+      else return Path.of(mavenUserHomeVar)
+    }
+
   }
 
   @JvmStatic
@@ -293,8 +294,8 @@ object MavenEelUtil  {
     val filePath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)
     if (filePath != null) return Path.of(filePath)
     return resolveUsingEel(project,
-                                   { resolveGlobalSettingsFile(mavenHome) },
-                                   { resolveGlobalSettingsFile(mavenHome) })
+                           { resolveGlobalSettingsFile(mavenHome) },
+                           { resolveGlobalSettingsFile(mavenHome) })
   }
 
   @JvmStatic

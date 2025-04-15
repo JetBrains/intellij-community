@@ -15,6 +15,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.zip.JBZipFile
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -84,6 +85,7 @@ internal class MavenWrapperSupport {
             }
           }
           .forceHttps(false)
+          .useProxy(true)
           .connectTimeout(30_000)
           .readTimeout(30_000)
           .saveToFile(partFile, indicator)
