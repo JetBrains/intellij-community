@@ -463,7 +463,9 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - s:isUnitTestMode:Z
 - sf:addDisablePluginListener(java.lang.Runnable):V
 - sf:checkBuildNumberCompatibility(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):com.intellij.ide.plugins.PluginLoadingError
+- sf:disablePlugin(com.intellij.openapi.extensions.PluginId):Z
 - sf:disablePlugin(java.lang.String):Z
+- sf:enablePlugin(com.intellij.openapi.extensions.PluginId):Z
 - sf:enablePlugin(java.lang.String):Z
 - sf:getBuildNumber():com.intellij.openapi.util.BuildNumber
 - f:getIncompatibleOs(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginOsRequirement
