@@ -191,7 +191,7 @@ final class SyntaxGeneratedParserRuntime(
     fun getExpected(position: Int, expected: Boolean): String {
       val list = if (expected) variants else unexpected
       val strings = HashSet<String>(list.size)
-      for (i in 0..list.size) {
+      for (i in 0..list.size - 1) {
         val variant: Variant = list.get(i)
         if (position == variant.position) {
           val text: String = variant.`object`.toString()
