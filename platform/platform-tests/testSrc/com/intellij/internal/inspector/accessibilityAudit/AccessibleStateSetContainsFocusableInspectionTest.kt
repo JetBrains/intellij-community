@@ -11,21 +11,15 @@ class AccessibleStateSetContainsFocusableInspectionTest {
   @Test
   fun `valid role and no focusable in state set`() {
     val button = object : JButton() {
-      override fun isShowing(): Boolean {
-        return true
-      }
+      override fun isShowing(): Boolean = true
 
-      override fun isVisible(): Boolean {
-        return true
-      }
+      override fun isVisible(): Boolean = true
 
-      override fun isEnabled(): Boolean {
-        return true
-      }
+      override fun isEnabled(): Boolean = true
     }
 
     button.isFocusable = false
-    val result = AccessibleStateSetContainsFocusableInspection().passesInspection(button.accessibleContext)
+    val result = AccessibleStateSetContainsFocusableInspection().passesInspection(button)
 
     Assertions.assertFalse(result)
   }
@@ -33,21 +27,12 @@ class AccessibleStateSetContainsFocusableInspectionTest {
   @Test
   fun `valid role and focusable in state set`() {
     val button = object : JButton() {
-      override fun isShowing(): Boolean {
-        return true
-      }
-
-      override fun isVisible(): Boolean {
-        return true
-      }
-
-      override fun isEnabled(): Boolean {
-        return true
-      }
+      override fun isShowing(): Boolean = true
     }
-
+    button.isEnabled = true
+    button.isVisible = true
     button.isFocusable = true
-    val result = AccessibleStateSetContainsFocusableInspection().passesInspection(button.accessibleContext)
+    val result = AccessibleStateSetContainsFocusableInspection().passesInspection(button)
 
     Assertions.assertTrue(result)
   }
@@ -55,7 +40,7 @@ class AccessibleStateSetContainsFocusableInspectionTest {
   @Test
   fun `invalid role`() {
     val bar = JProgressBar()
-    val result = AccessibleStateSetContainsFocusableInspection().passesInspection(bar.accessibleContext)
+    val result = AccessibleStateSetContainsFocusableInspection().passesInspection(bar)
 
     Assertions.assertTrue(result)
   }

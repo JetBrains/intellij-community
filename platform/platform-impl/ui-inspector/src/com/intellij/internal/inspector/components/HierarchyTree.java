@@ -6,7 +6,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.*;
 import com.intellij.internal.inspector.accessibilityAudit.AccessibilityAuditManager;
-import com.intellij.internal.inspector.accessibilityAudit.Severity;
+import com.intellij.internal.inspector.accessibilityAudit.SeverityCount;
 import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.UiDataProvider;
@@ -39,8 +39,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public abstract class HierarchyTree extends JTree implements TreeSelectionListener {
@@ -277,7 +277,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       return accessibilityAudit.getFailedInspections();
     }
 
-    public void runAccessibilityTests(@NotNull AccessibleContext ac) { accessibilityAudit.runAccessibilityTests(ac); }
+    public void runAccessibilityTests(Accessible a) { accessibilityAudit.runAccessibilityTests(a); }
 
     public void clearAccessibilityTestsResult() { accessibilityAudit.clearAccessibilityTestsResult(); }
 
@@ -390,7 +390,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       boolean isRenderer = false;
 
       myAccessibilityAuditIcons.clear();
-      StringBuilder sb = new StringBuilder();
+      String toolTip = "";
 
       if (value instanceof ComponentNode componentNode) {
         isRenderer = componentNode.getUserObject() instanceof List<?> ||
@@ -471,52 +471,39 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
         }
 
         AccessibilityAuditManager accessibilityAudit = componentNode.accessibilityAudit;
-        List<UiInspectorAccessibilityInspection> accessibilityResult = accessibilityAudit.getFailedInspections();
-
-        int warningCount = 0;
-        int recommendationCount = 0;
 
         if (accessibilityAudit.isRunning()) {
           int fontHeight = getFontMetrics(getFont()).getHeight();
 
-          if (!accessibilityResult.isEmpty()) {
-            for (UiInspectorAccessibilityInspection inspection : accessibilityResult) {
-              if (inspection.getSeverity() == Severity.WARNING) {
-                warningCount++;
-              }
-              else if (inspection.getSeverity() == Severity.RECOMMENDATION) {
-                recommendationCount++;
-              }
+          SeverityCount count = accessibilityAudit.getSeverityCount();
+          if (count.getTotal() == 0) {
+            myAccessibilityAuditIcons.add(new IconWithErrorCount(
+              IconUtil.scale(AllIcons.General.GreenCheckmark, this, fontHeight / (float) AllIcons.General.GreenCheckmark.getIconHeight()), 0));
+          } else {
+            if (count.getErrors() > 0) {
+              myAccessibilityAuditIcons.add(new IconWithErrorCount(
+                IconUtil.scale(AllIcons.General.Error, this, fontHeight / (float)AllIcons.General.Error.getIconHeight()),
+                count.getErrors()
+              ));
             }
-            sb.append(InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltip", warningCount + recommendationCount));
-            if (warningCount > 0) {
+            if (count.getWarnings() > 0) {
               myAccessibilityAuditIcons.add(new IconWithErrorCount(
                 IconUtil.scale(AllIcons.General.Warning, this, fontHeight / (float)AllIcons.General.Warning.getIconHeight()),
-                warningCount
+                count.getWarnings()
               ));
-              sb.append(" ")
-                .append(InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltipWarnings", warningCount));
             }
-
-            if (recommendationCount > 0) {
+            if (count.getRecommendations() > 0) {
               myAccessibilityAuditIcons.add(new IconWithErrorCount(
                 IconUtil.scale(AllIcons.General.Information, this, fontHeight / (float)AllIcons.General.Information.getIconHeight()),
-                recommendationCount
+                count.getRecommendations()
               ));
-              sb.append(" ")
-                .append(InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltipRecommendations", warningCount));
             }
           }
-          else {
-            myAccessibilityAuditIcons.add(new IconWithErrorCount(
-              IconUtil.scale(AllIcons.General.GreenCheckmark, this, fontHeight / (float)AllIcons.General.GreenCheckmark.getIconHeight()),
-              0
-            ));
-            sb.append(InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltip", 0));
-          }
+          toolTip = InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltip", count.getTotal(), count.getErrors(), count.getWarnings(), count.getRecommendations());
         }
       }
-      myToolTipText = sb.toString();
+      myToolTipText = toolTip;
+
       if (isRenderer) {
         setIcon(AllIcons.Ide.Rating);
       }

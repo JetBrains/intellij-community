@@ -504,7 +504,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
         setSecondComponent(myTabs.getComponent());
 
         int inspectionCount = 0;
-        if (myFailedInspections != null && !myFailedInspections.isEmpty() && myModel.myComponent instanceof Accessible) {
+        if (myFailedInspections != null && !myFailedInspections.isEmpty()) {
           for (UiInspectorAccessibilityInspection failedInspection : myFailedInspections) {
             if (failedInspection.getPropertyName().equalsIgnoreCase(selectedProperty.trim())) {
               myTabs.setHideTabs(false);

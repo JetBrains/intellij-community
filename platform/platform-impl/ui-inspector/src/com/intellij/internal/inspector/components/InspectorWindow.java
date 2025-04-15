@@ -10,8 +10,8 @@ import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
-import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
 import com.intellij.internal.inspector.UiInspectorImpl;
+import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -530,19 +529,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
         Object node = path.getLastPathComponent();
         if (node instanceof HierarchyTree.ComponentNode componentNode) {
           if (showAccessibilityIssues) {
-            Component component = componentNode.getComponent();
             Accessible accessible = componentNode.getAccessible();
-            AccessibleContext ac = null;
-
-            if (component instanceof Accessible a) {
-              ac = a.getAccessibleContext();
-            }
-            else if (component == null && accessible != null) {
-              ac = accessible.getAccessibleContext();
-            }
-            if (ac != null) {
-              componentNode.runAccessibilityTests(ac);
-            }
+            componentNode.runAccessibilityTests(accessible);
           } else {
             componentNode.clearAccessibilityTestsResult();
           }

@@ -2,7 +2,7 @@
 package com.intellij.internal.inspector.accessibilityAudit
 
 import org.jetbrains.annotations.ApiStatus
-import javax.accessibility.AccessibleContext
+import javax.accessibility.Accessible
 import javax.accessibility.AccessibleRole
 
 @ApiStatus.Internal
@@ -11,7 +11,8 @@ class AccessibleTextNotNullInspection : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleText"
   override val severity: Severity = Severity.WARNING
 
-  override fun passesInspection(context: AccessibleContext): Boolean {
+  override fun passesInspection(accessible: Accessible?): Boolean {
+    val context = accessible?.accessibleContext ?: return true
     if (context.accessibleRole == AccessibleRole.TEXT || context.accessibleRole == AccessibleRole.PASSWORD_TEXT) {
       return context.accessibleText != null
     }
