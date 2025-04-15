@@ -1,6 +1,6 @@
 // "Create expected class in common module jvm" "true"
 // DISABLE_ERRORS
-// IGNORE_K2
+
 
 actual class First
 
