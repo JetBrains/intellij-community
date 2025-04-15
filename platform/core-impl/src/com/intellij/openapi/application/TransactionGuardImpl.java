@@ -199,7 +199,6 @@ public final class TransactionGuardImpl extends TransactionGuard {
       @Override
       public void run() {
         if (isWriteSafeModality(modalityState)) {
-          ApplicationManager.getApplication().assertWriteIntentLockAcquired();
           runWithWritingAllowed(runnable);
         }
         else {

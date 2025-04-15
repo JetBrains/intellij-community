@@ -230,6 +230,16 @@ public interface ApplicationEx extends Application {
     runnable.run();
   }
 
+  /**
+   * Similar to {@link #invokeAndWait(Runnable, ModalityState)}, but does not take the Write-Intent lock inside.
+   * This is useful when you still need to schedule a computation with the required modality state, but don't want to acqure the WI lock inside.
+   * In the future, this method may go public
+   */
+  @ApiStatus.Internal
+  default void invokeAndWaitRelaxed(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    invokeAndWait(runnable, modalityState);
+  }
+
   @ApiStatus.Internal
   default void allowTakingLocksInsideAndRun(@NotNull Runnable runnable) {
     runnable.run();

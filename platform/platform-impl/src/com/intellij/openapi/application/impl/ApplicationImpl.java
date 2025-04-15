@@ -473,9 +473,22 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
 
   @Override
+  public void invokeAndWaitRelaxed(@NotNull Runnable runnable, @NotNull ModalityState state) {
+    doInvokeAndWait(runnable, state, false);
+  }
+
+  @Override
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState state) {
+    doInvokeAndWait(runnable, state, true);
+  }
+
+  public void doInvokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState state, boolean wrapWithLocks) {
     if (EDT.isCurrentThreadEdt()) {
-      runIntendedWriteActionOnCurrentThread(runnable);
+      if (wrapWithLocks) {
+        runIntendedWriteActionOnCurrentThread(runnable);
+      } else {
+        runnable.run();
+      }
       return;
     }
 
@@ -487,7 +500,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     // Start from inner layer: transaction guard
     final Runnable guarded = myTransactionGuard.wrapLaterInvocation(runnable, state);
     // Middle layer: lock and modality
-    final Runnable locked = wrapWithRunIntendedWriteActionAndModality(guarded, ctxAware ? null : state);
+    final Runnable locked = wrapWithLocks ? wrapWithRunIntendedWriteActionAndModality(guarded, ctxAware ? null : state) : guarded;
     // Outer layer context capture & reset
     final Runnable finalRunnable = AppImplKt.rethrowExceptions(AppScheduledExecutorService::captureContextCancellationForRunnableThatDoesNotOutliveContextScope, locked);
 
