@@ -2673,13 +2673,6 @@ kt_jvm_import(
 )
 
 java_import(
-  name = "jet-sign",
-  jars = ["@jet-sign-45_64_http//file"],
-  srcjar = "@jet-sign-45_64-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
   name = "jet_check",
   jars = ["@jetCheck-0_2_2_http//file"],
   srcjar = "@jetCheck-0_2_2-sources_http//file",

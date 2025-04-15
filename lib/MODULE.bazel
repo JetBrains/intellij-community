@@ -3612,20 +3612,6 @@ http_file(
 )
 
 http_file(
-  name = "jet-sign-45_64_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/jcs/maven/com/jetbrains/jet-sign/45.64/jet-sign-45.64.jar",
-  sha256 = "9a87254101b96f31ef504f39516358b10e47834a9edccbc8d80aec60753ea1b7",
-  downloaded_file_path = "jet-sign-45.64.jar"
-)
-
-http_file(
-  name = "jet-sign-45_64-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/jcs/maven/com/jetbrains/jet-sign/45.64/jet-sign-45.64-sources.jar",
-  sha256 = "2cdf67b688b0e430cfd5a30059edc2d1ca759ecf037c3e2889e10d0dda6b71ae",
-  downloaded_file_path = "jet-sign-45.64-sources.jar"
-)
-
-http_file(
   name = "jetCheck-0_2_2_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jetCheck/0.2.2/jetCheck-0.2.2.jar",
   sha256 = "c5f95c97171311066a13eb750a6bb999fa7eeb43c1394705034926336c0b7b0f",

@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.java.psi` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "psi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "psi",
@@ -17,6 +23,7 @@ jvm_library(
   exports = [
     "//platform/core-api:core",
     "//java/java-frontback-psi-api:frontback-psi",
-  ]
+  ],
+  runtime_deps = [":psi_resources"]
 )
 ### auto-generated section `build intellij.java.psi` end
