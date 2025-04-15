@@ -37,6 +37,8 @@ private val logger = fileLogger()
  *  If a project has no module -- one will be created.
  *
  *  Use this function as a high-level API for various quick project creation wizards like Misc and Tour.
+ *
+ *  If you only need venv (no SDK), use [createVenv]
  */
 suspend fun createVenvAndSdk(
   project: Project,

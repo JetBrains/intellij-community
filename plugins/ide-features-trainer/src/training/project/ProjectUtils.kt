@@ -23,6 +23,8 @@ import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
@@ -42,14 +44,23 @@ import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 object ProjectUtils {
   private const val LEARNING_PROJECT_MODIFICATION = "LEARNING_PROJECT_MODIFICATION"
   private const val FEATURE_TRAINER_VERSION = "feature-trainer-version.txt"
   private val protectedDirNames = hashSetOf("idea", ".git", "git", "venv")
 
+
+  @ApiStatus.Internal
+  @Volatile
+  var customSystemPath: Path? = null
+    @TestOnly
+    set
+
   val learningProjectsPath: Path
-    get() = Paths.get(PathManager.getSystemPath(), "demo")
+    get() = Paths.get(customSystemPath?.pathString ?: PathManager.getSystemPath(), "demo")
+
 
   /**
    * For example:

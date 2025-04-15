@@ -4,36 +4,40 @@ package com.intellij.python.featuresTrainer.ift
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.Result
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.projectCreation.createVenvAndSdk
+import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
-import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
-import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
+import com.jetbrains.python.sdk.findBaseSdks
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import training.dsl.LessonContext
 import training.lang.AbstractLangSupport
 import training.learn.CourseManager
 import training.learn.course.KLesson
+import training.learn.exceptons.NoSdkException
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
 import training.statistic.LearningInternalProblems
@@ -47,7 +51,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.math.max
 
-internal class PythonLangSupport : AbstractLangSupport() {
+internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessageErrorSync) : AbstractLangSupport() {
 
   override val contentRootDirectoryName = "PyCharmLearningProject"
 
@@ -68,9 +72,11 @@ internal class PythonLangSupport : AbstractLangSupport() {
   override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean = true
   override val readMeCreator = ReadMeCreator()
 
-  override fun installAndOpenLearningProject(contentRoot: Path,
-                                             projectToClose: Project?,
-                                             postInitCallback: (learnProject: Project) -> Unit) {
+  override fun installAndOpenLearningProject(
+    contentRoot: Path,
+    projectToClose: Project?,
+    postInitCallback: (learnProject: Project) -> Unit,
+  ) {
     // if we open project with isProjectCreatedFromWizard flag as true, PythonSdkConfigurator will not run and configure our sdks,
     // and we will configure it individually without any race conditions
     val openProjectTask = OpenProjectTask {
@@ -80,56 +86,23 @@ internal class PythonLangSupport : AbstractLangSupport() {
     ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this, openProjectTask, postInitCallback)
   }
 
-  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
-    if (selectedSdk != null) {
-      val module = project.modules.first()
-      val existingSdks = getExistingSdks()
-      return applyBaseSdk(project, selectedSdk, existingSdks, module)
-    }
-    if (project.pythonSdk != null) return null  // sdk already configured
-
-    // Run in parallel, because we can not wait for SDK here
-    ApplicationManager.getApplication().executeOnPooledThread {
-      createAndSetVenvSdk(project)
-    }
-
-    return null
-  }
-
-  @RequiresBackgroundThread
-  private fun createAndSetVenvSdk(project: Project) {
-    val module = project.modules.first()
-    val existingSdks = getExistingSdks()
-    val baseSdks = findBaseSdks(existingSdks, module, project)
-    val preferredSdk = findPreferredVirtualEnvBaseSdk(baseSdks) ?: return
-    invokeLater {
-      val venvSdk = applyBaseSdk(project, preferredSdk, existingSdks, module)
-      if (venvSdk != null) {
-        applyProjectSdk(venvSdk, project)
+  @Throws(NoSdkException::class)
+  @RequiresEdt
+  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk = runWithModalProgressBlocking(project, "...") {
+    when (val r = createVenvAndSdk(project)) {
+      is Result.Failure -> {
+        errorSink.emit(r.error)
+        null
       }
-    }
+      is Result.Success -> r.result
+    } ?: throw NoSdkException()
   }
 
-  private fun applyBaseSdk(project: Project,
-                           preferredSdk: Sdk,
-                           existingSdks: List<Sdk>,
-                           module: Module?): Sdk? {
-    val venvRoot = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(project.basePath))
-    val venvSdk = createVirtualEnvAndSdkSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project)
-    return venvSdk.also {
-      SdkConfigurationUtil.addSdk(it)
-    }
-  }
 
   @RequiresEdt
   override fun applyProjectSdk(sdk: Sdk, project: Project) {
-    setReadyToUseSdk(project, project.modules.first(), sdk)
   }
 
-  private fun getExistingSdks(): List<Sdk> {
-    return PyConfigurableInterpreterList.getInstance(null).allPythonSdks
-      .sortedWith(PreferredSdkComparator.INSTANCE)
-  }
 
   override fun checkSdk(sdk: Sdk?, project: Project) {
   }
@@ -223,4 +196,18 @@ internal class PythonLangSupport : AbstractLangSupport() {
       }
     }
   }
+
+  @RequiresReadLock
+  override fun getProtectedDirs(project: Project): Set<Path> {
+    return project.getSdks().mapNotNull { it.homePath }.map { Path.of(it) }.toSet()
+  }
+}
+
+@RequiresReadLock
+private fun Project.getSdks(): Set<Sdk> {
+  val projectSdk = ProjectRootManager.getInstance(this).projectSdk
+  val moduleSdks = modules.mapNotNull {
+    ModuleRootManager.getInstance(it).sdk
+  }
+  return (moduleSdks + (projectSdk?.let { listOf(it) } ?: emptyList())).toSet()
 }
