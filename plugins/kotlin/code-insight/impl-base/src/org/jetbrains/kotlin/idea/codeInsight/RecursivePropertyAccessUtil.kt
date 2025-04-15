@@ -64,7 +64,7 @@ object RecursivePropertyAccessUtil {
         return element.parent !is KtCallableReferenceExpression
     }
 
-    private fun KaSession.hasThisAsReceiver(expression: KtQualifiedExpression) =
+    private fun hasThisAsReceiver(expression: KtQualifiedExpression) =
         expression.receiverExpression.textMatches(KtTokens.THIS_KEYWORD.value)
 
     private fun KaSession.hasObjectReceiver(expression: KtQualifiedExpression): Boolean {
@@ -74,7 +74,7 @@ object RecursivePropertyAccessUtil {
     }
 
     private fun KtBinaryExpression?.isAssignmentTo(expression: KtSimpleNameExpression): Boolean =
-      this != null && KtPsiUtil.isAssignment(this) && PsiTreeUtil.isAncestor(left, expression, false)
+        this != null && KtPsiUtil.isAssignment(this) && PsiTreeUtil.isAncestor(left, expression, false)
 
     private fun isSameAccessor(expression: KtSimpleNameExpression, isGetter: Boolean): Boolean {
         val binaryExpr = expression.getStrictParentOfType<KtBinaryExpression>()
@@ -97,41 +97,40 @@ object RecursivePropertyAccessUtil {
 
     fun KtSimpleNameExpression.isRecursivePropertyAccess(anyRecursionTypes: Boolean): Boolean {
         val propertyAccessor = getParentOfType<KtDeclarationWithBody>(true) as? KtPropertyAccessor ?: return false
-      analyze(this) {
-        val propertySymbol = resolveToCall()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return false
-        if (propertySymbol != propertyAccessor.property.symbol) return false
+        analyze(this) {
+            val propertySymbol = resolveToCall()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return false
+            if (propertySymbol != propertyAccessor.property.symbol) return false
 
-        (parent as? KtQualifiedExpression)?.let {
-          val propertyReceiverType = propertySymbol.receiverType
-          val receiverType = it.receiverExpression.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
-          if (anyRecursionTypes) {
-            if (receiverType != null && propertyReceiverType != null && !receiverType.isSubtypeOf(propertyReceiverType)) {
-              return false
+            (parent as? KtQualifiedExpression)?.let {
+                val propertyReceiverType = propertySymbol.receiverType
+                val receiverType = it.receiverExpression.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
+                if (anyRecursionTypes) {
+                    if (receiverType != null && propertyReceiverType != null && !receiverType.isSubtypeOf(propertyReceiverType)) {
+                        return false
+                    }
+                } else {
+                    if (!hasThisAsReceiver(it) && !hasObjectReceiver(it) && (propertyReceiverType == null || receiverType?.isSubtypeOf(
+                            propertyReceiverType
+                        ) == false)
+                    ) {
+                        return false
+                    }
+                }
             }
-          }
-          else {
-            if (!hasThisAsReceiver(it) && !hasObjectReceiver(it) && (propertyReceiverType == null || receiverType?.isSubtypeOf(
-                propertyReceiverType
-              ) == false)
-            ) {
-              return false
-            }
-          }
         }
-      }
         return isSameAccessor(this, propertyAccessor.isGetter)
     }
 
     private fun KtSimpleNameExpression.isRecursiveSyntheticPropertyAccess(): Boolean {
         val namedFunction = getParentOfType<KtDeclarationWithBody>(true) as? KtNamedFunction ?: return false
 
-      analyze(this) {
-        val syntheticSymbol = mainReference.resolveToSymbol() as? KaSyntheticJavaPropertySymbol ?: return false
-        val namedFunctionSymbol = namedFunction.symbol
-        if (namedFunctionSymbol != syntheticSymbol.javaGetterSymbol && namedFunctionSymbol != syntheticSymbol.javaSetterSymbol) {
-          return false
+        analyze(this) {
+            val syntheticSymbol = mainReference.resolveToSymbol() as? KaSyntheticJavaPropertySymbol ?: return false
+            val namedFunctionSymbol = namedFunction.symbol
+            if (namedFunctionSymbol != syntheticSymbol.javaGetterSymbol && namedFunctionSymbol != syntheticSymbol.javaSetterSymbol) {
+                return false
+            }
         }
-      }
 
         val name = namedFunction.name ?: return false
         val referencedName = text.capitalizeAsciiOnly()
