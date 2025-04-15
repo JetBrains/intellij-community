@@ -1,7 +1,8 @@
-// IGNORE_FE10_BINDING_BY_FIR
 fun test(foo: Int?, bar: Int): Int {
     val i = foo ?: return bar
-    return baz(i)
+    baz(i)
+    val j = i + 1
+    return j
 }
 
-fun baz(i: Int?) = 1
+fun baz(i: Int?) {}

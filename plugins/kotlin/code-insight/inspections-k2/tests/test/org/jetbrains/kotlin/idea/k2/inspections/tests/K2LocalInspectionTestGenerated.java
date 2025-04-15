@@ -5504,6 +5504,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNotNullable2.kt");
         }
 
+        @TestMetadata("VarUsedAsNotNullableInvoke.kt")
+        public void testVarUsedAsNotNullableInvoke() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNotNullableInvoke.kt");
+        }
+
         @TestMetadata("VarUsedAsNullable.kt")
         public void testVarUsedAsNullable() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNullable.kt");

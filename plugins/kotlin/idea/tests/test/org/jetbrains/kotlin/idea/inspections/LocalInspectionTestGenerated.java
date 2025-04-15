@@ -5848,6 +5848,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNotNullable2.kt");
         }
 
+        @TestMetadata("VarUsedAsNotNullableInvoke.kt")
+        public void testVarUsedAsNotNullableInvoke() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNotNullableInvoke.kt");
+        }
+
         @TestMetadata("VarUsedAsNullable.kt")
         public void testVarUsedAsNullable() throws Exception {
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNullable.kt");
